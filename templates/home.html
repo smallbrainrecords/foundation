@@ -1,0 +1,70 @@
+<title>Small Brain</title>
+Hi {{ request.user.get_full_name }}. Your role is {{ role }} | <a href="/admin/">Admin</a> | <a href="/logout/">Logout</a>
+{% if role == 'admin' %}
+<style>
+     body {background:white;     font:15px arial,sans-serif;}
+
+</style>
+
+<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+<script>
+var unregistered = [];
+function listUsers() {
+    $.get('/list_of_unregistered_users/', function(data) {
+        if (data.length == 0) {
+            unregistered = [];
+            $('#unregistered_users').html('<tr><th>User</th><th>Role</th></tr>');
+        }
+        var users = data;
+        for (var i=0;i<users.length;i++) {
+            if (jQuery.inArray(users[i].id, unregistered) == -1) {
+                unregistered.push(users[i].id);
+                var select = '<select name="role_'+users[i].id+'"><option value="patient">patient</option><option value="physician">physician</option><option value="admin">admin</option></select>';
+                $('#unregistered_users').append('<tr><td>'+users[i].full_name+' ('+users[i].username+')</td><td>'+select+'</td></tr>');
+
+            }
+        }
+    });
+}
+$(function() {
+    $.get('/list_of_users/', function(data) {
+                var users = data;
+        for (var i=0;i<users.length;i++) {
+            if (users[i]['is_patient'] == true) {
+                actions = '<a href="/patient/'+users[i]['id']+'/">View patient</a><br/>';
+            } else {
+                actions = '';
+            }
+            actions += '<a href="/admin/auth/user/'+users[i]['id']+'/">Edit in admin</a>';
+            $('#users').append('<tr><td>'+users[i].firstname+'</td><td>'+users[i].lastname+'</td><td>'+users[i].username+'</td><td></td><td></td><td></td><td>'+actions+'</td></tr>');
+
+            
+        }
+    });
+    setInterval(function() {listUsers(); },1000);
+    
+    $('#save').click(function() {
+        $.post('/register_users/', $( "select" ).serializeArray(), function(data) {$('#unregistered_users').html('<tr><th>User</th><th>Role</th></tr>'); });
+        
+    });
+
+});
+</script>
+<h3>Unregistered users</h3>
+<table id="unregistered_users">
+<tr><th>User</th><th>Role</th></tr>
+</table>
+<input type="button" id="save" value="save" />
+<h3>Users</h3>
+<table id="users">
+        <tr>
+          <th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>
+          <th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>
+          <th class="sort " sortBy='login' sortOrder="desc">Username</th>
+          <th class="sort " sortBy='birthDate' sortOrder="desc">Date of birth</th>
+          <th class="sort " sortBy='sex' sortOrder="desc">Sex</th>
+          <th>Contact Number</th>
+          <th>Action</th>
+        </tr>
+</table>
+{% endif %}
