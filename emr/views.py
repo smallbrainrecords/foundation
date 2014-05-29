@@ -291,8 +291,16 @@ def get_patient_data(request, patient_id):
         d['for_problem'] = todo.problem.problem_name if todo.problem else ''
         d['todo_id'] = todo.id
         d['todo'] = todo.todo
-        d['accomplished'] = goal.accomplished
+        d['accomplished'] = todo.accomplished
         data['todos']['not_accomplished'].append(d)
+    for todo in ToDo.objects.filter(patient=patient, accomplished=True).order_by('todo'):
+        d = {}
+        d['for_problem'] = todo.problem.problem_name if todo.problem else ''
+        d['todo_id'] = todo.id
+        d['todo'] = todo.todo
+        d['accomplished'] = todo.accomplished
+        data['todos']['accomplished'].append(d)
+        
         
     return HttpResponse(json.dumps(data), content_type="application/json")
 
