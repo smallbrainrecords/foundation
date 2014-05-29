@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render 
 from django.shortcuts import render_to_response
 from django.db.models.loading import get_model
 from django.http import HttpResponse, HttpResponseRedirect
