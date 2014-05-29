@@ -97,7 +97,7 @@ class Encounter(models.Model):
     #    content_type_field='content_type',
     #    object_id_field='object_id'
     #)
-    events = models.ManyToManyField('EncounterEvent')
+    events = models.ManyToManyField('EncounterEvent', blank=True)
     audio = models.FileField(upload_to=get_path, blank=True) 
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
