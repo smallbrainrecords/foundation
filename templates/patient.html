@@ -1020,6 +1020,23 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             html += '</div>';
             $('#todos').append(html)
         }
+        $('#accomplished_todos').html('');
+        var todos = raw_data['todos']['accomplished'];
+        for (var i=0;i<todos.length;i++) {
+            var todo = todos[i];
+            status = '<ul>';
+            status += '<li><input type="checkbox" attr="goal" id="'+todo['todo_id']+'" '+checked+'/> ';
+            status += 'Is accomplished</li>';
+            status += '</ul>';
+            if (todo['for_problem'] == '') {
+            	var for_problem = '';
+            } else {
+            	var for_problem = ' (for problem '+todo['for_problem']+')';
+            }
+            html = '<div><input type="checkbox" target="todo" attr="authenticated" id="'+todo['todo_id']+'" /> '+todo['todo']+for_problem;
+            html += '</div>';
+            $('#accomplished_todos').append(html)
+        }
 });   
     getStatus();
 }
@@ -1322,7 +1339,9 @@ background:#FFF;
 <div><input type="button" id="start_encounter" value="Start encounter" /><input type="button" id="view_encounter" value="View encounter" /></div>
 
 <h3>Problems</h3>
-<div id="add_problem_div"><strong>Add problem:</strong> <input type="text" value="Problem name" default="Problem name" id="problem_name" /> <input type="text" id="concept_id" default="Concept id" value="Concept id" /> <input type="button" id="addProblem" value="Submit" />
+<div id="add_problem_div"><strong>Add problem:</strong> <input type="text" value="Problem name" default="Problem name" id="problem_name" />
+<input type="text" id="concept_id" default="Concept id" value="Concept id" /> 
+<input type="button" id="addProblem" value="Submit" />
 <div id="results"></div>
 </div>
 
@@ -1343,6 +1362,7 @@ background:#FFF;
 </div>
 
 <div id="todos"></div>
+<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems" /><div id="accomplished_todos"></div>
 <h3>Pain History</h3>
 <div id="avatars"></div>
 <div id="controls"><input type="button" id="toggleSlideshow" value="Start slideshow" /><input type="button" id="forwards" value="<" /><input type="button" id="backwards" value=">" /><input type="button" id="reset" value="Reset database" /> <a href="/pain/create_pain_avatar/{{ patient.id }}/">Update Pain</a></div>
