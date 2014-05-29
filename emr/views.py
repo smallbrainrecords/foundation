@@ -122,7 +122,7 @@ def is_patient(user):
 @login_required
 def list_users(request):
 
-    users = [{'is_patient': is_patient(user), 'username': user.username, 'firstname': user.first_name, 'lastname': user.last_name, 'id': user.id, 'sex': UserProfile.objects.get(user=user).sex, 'contact_number': UserProfile.objects.get(user=user).contact_number, 'birthday': UserProfile.objects.get(user=user).birth_date.strftime('%m/%d/%Y') if UserProfile.objects.get(user=user).birth_date else ''} for user in User.objects.all().order_by('first_name')]
+    users = [{'is_patient': is_patient(user), 'username': user.username, 'firstname': user.first_name, 'lastname': user.last_name, 'id': user.id, 'sex': UserProfile.objects.get(user=user).sex, 'contact_number': UserProfile.objects.get(user=user).phone_number, 'birthday': UserProfile.objects.get(user=user).birth_date.strftime('%m/%d/%Y') if UserProfile.objects.get(user=user).birth_date else ''} for user in User.objects.all().order_by('first_name')]
     return HttpResponse(json.dumps(users), content_type="application/json")
 
 @login_required
