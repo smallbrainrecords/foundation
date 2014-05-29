@@ -51,7 +51,8 @@ class UserProfile(models.Model):
     data = models.TextField(blank=True) 
     cover_image = models.ImageField(upload_to='cover_image/', blank=True)
     portrait_image = models.ImageField(upload_to='cover_image/', blank=True)
-    ROLE_CHOICES = (
+    summary = models.TextField(blank=True)
+    SEX_CHOICES = (
         ('male', 'male'),
         ('female', 'female'),
     )
