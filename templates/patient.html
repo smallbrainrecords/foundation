@@ -1058,6 +1058,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
          window.location = '/patient/'+$(this).val()+'/';
     });
     $(document).on('click', '#toggle_inactive_problems', function() {$('#inactive_problems').toggle()})
+    $(document).on('click', '#toggle_accomplished_todos', function() {$('#accomplished_todos').toggle()})
 $(document).on('click', '.submit_data', function() {
     var parent_id = $(this).attr('parent');
 
@@ -1310,7 +1311,7 @@ padding:10px;
 display:none;
 background:#FFF;
 }
-#inactive_problems {
+#inactive_problems, #accomplished_todos {
 	display:none;
 	
 }
@@ -1362,7 +1363,7 @@ background:#FFF;
 </div>
 
 <div id="todos"></div>
-<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems" /><div id="accomplished_todos"></div>
+<input type="button" id="toggle_accomplished_todos" value="Toggle accomplished todos" /><div id="accomplished_todos"></div>
 <h3>Pain History</h3>
 <div id="avatars"></div>
 <div id="controls"><input type="button" id="toggleSlideshow" value="Start slideshow" /><input type="button" id="forwards" value="<" /><input type="button" id="backwards" value=">" /><input type="button" id="reset" value="Reset database" /> <a href="/pain/create_pain_avatar/{{ patient.id }}/">Update Pain</a></div>
