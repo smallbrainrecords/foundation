@@ -1024,16 +1024,13 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
         var todos = raw_data['todos']['accomplished'];
         for (var i=0;i<todos.length;i++) {
             var todo = todos[i];
-            status = '<ul>';
-            status += '<li><input type="checkbox" checked attr="goal" id="'+todo['todo_id']+'" /> ';
-            status += 'Is accomplished</li>';
-            status += '</ul>';
+            
             if (todo['for_problem'] == '') {
             	var for_problem = '';
             } else {
             	var for_problem = ' (for problem '+todo['for_problem']+')';
             }
-            html = '<div><input type="checkbox" target="todo" attr="authenticated" id="'+todo['todo_id']+'" /> '+todo['todo']+for_problem;
+            html = '<div><input type="checkbox" checked target="todo" attr="authenticated" id="'+todo['todo_id']+'" /> '+todo['todo']+for_problem;
             html += '</div>';
             $('#accomplished_todos').append(html)
         }
