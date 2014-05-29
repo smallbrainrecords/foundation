@@ -2,9 +2,11 @@
 #kill -9 $(pidof python)
 cd
 rm -rf core
-git clone https://github.com/ryanjam4/core.git
+git clone https://github.com/smallbrainrecords/foundation.git
+mv foundation core
+
 cd core
-mkdir static && cd static && git clone https://github.com/smallbrainrecords/foundation.git
+#mkdir static && cd static && git clone https://github.com/smallbrainrecords/foundation.git
 
 python manage.py syncdb
 #sudo netstat -plnt
