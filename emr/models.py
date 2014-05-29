@@ -51,7 +51,14 @@ class UserProfile(models.Model):
     data = models.TextField(blank=True) 
     cover_image = models.ImageField(upload_to='cover_image/', blank=True)
     portrait_image = models.ImageField(upload_to='cover_image/', blank=True)
-
+    ROLE_CHOICES = (
+        ('male', 'male'),
+        ('female', 'female'),
+    )
+    sex = models.CharField(max_length=6, choices=SEX_CHOICES, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
         
