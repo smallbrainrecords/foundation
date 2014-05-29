@@ -91,6 +91,8 @@ class Encounter(models.Model):
     #)
     events = models.ManyToManyField('EncounterEvent')
     audio = models.FileField(upload_to=get_path, blank=True) 
+    video = models.FileField(upload_to=get_path, blank=True)
+    note = models.TextField(blank=True)
     
     def __unicode__(self):
         return 'Patient: %s Time: %s' % (self.patient.get_full_name(), self.physician.get_full_name())
