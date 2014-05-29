@@ -6,6 +6,9 @@
 <html>
 <head><title>{{ patient.get_full_name }}</title>
 <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="http://jplayer.org/latest/js/jquery.jplayer.min.js"></script>
+<script type="text/javascript" src="http://jplayer.org/latest/js/jquery.jplayer.inspector.js"></script>
+
 <script>
 //! annyang
 //! version : 1.1.0
@@ -280,7 +283,24 @@
 </script>
 <script>
 $(function() {
+	$("#jquery_jplayer_1").jPlayer({
+		ready: function (event) {
+			$(this).jPlayer("setMedia", {
+				title: "Bubble",
+				m4a: "http://jplayer.org/audio/m4a/Miaow-07-Bubble.m4a",
+				oga: "http://jplayer.org/audio/ogg/Miaow-07-Bubble.ogg"
+			});
+		},
+		swfPath: "http://jplayer.org/latest/js",
+		supplied: "m4a, oga",
+		wmode: "window",
+		smoothPlayBar: true,
+		keyEnabled: true,
+		remainingDuration: true,
+		toggleDuration: true
+	});
 
+	$("#jplayer_inspector").jPlayerInspector({jPlayer:$("#jquery_jplayer_1")});
 var problems;
 var isDown = false;     //flag we use to keep track
 var x1, y1, x2, y2;     //to store the coords
