@@ -132,7 +132,7 @@ def view_patient(request, user_id):
     from pain.models import PainAvatar
     user = User.objects.get(id=user_id)
     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
-    if (not ((request.user == user) or (role in ['admin', 'physician']) or (Sharing.objects.filter(patient=user, other_patient=request.user)))):
+    if (not ((request.user == user) or (role in ['admin', 'physician']) or (Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
         return HttpResponse("Not allowed")
     if (not is_patient(user)):
         return HttpResponse("Error: this user isn't a patient")
@@ -199,14 +199,14 @@ def get_patient_data(request, patient_id):
     # At this point we know the user is allowed to view this patient. 
     # Now we have to detrimine what data can be provided to the requesting user
     # If the user requesting the patient data is the targeted patient or an admin or physician then we know it's OK to provide all the data
-    if ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician'])):
+   # if ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician'])):
         # Get all problems for the patient 
-        problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
+        #problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
     # Otherwise the requesting user is only allowed to see some of the patient's info    
-    else:
+    #else:
         # Get just the problems shared to the user
-        problems_query = [i.item for i in Sharing.objects.filter(content_type=ContentType.objects.get(app_label="emr", model="problem"), patient=patient, other_patient=request.user)]
-
+    #    problems_query = [i.item for i in Sharing.objects.filter(content_type=ContentType.objects.get(app_label="emr", model="problem"), patient=patient, other_patient=request.user)]
+    problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
     
     for problem in problems_query.filter(is_active=True):
         # We store the data for this problem in a dictionary called "d"
