@@ -1231,7 +1231,7 @@ if (annyang) {
         $(this).addClass('hide_nonproblem_goal');
         //$.get('/get_problems/{{ patient.id }}/', {'new_status': '{"scroll_to": "problem_'+$(this).attr('problem')+'", "action": "show", "show_what": ["'+$(this).attr('target')+'"]}'});
         // THIS IS THE ENCOUNTER REFERENCE: 
-        //$.post('/save_encounter_event/', {'summary': 'Physician clicked on problem: "'+$('#problem_'+$(this).attr('problem')).text()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+        $.post('/save_encounter_event/', {'summary': 'Physician clicked on goal: "'+$('#goal'+$(this).attr('goal')).text()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     });
     $('body').on('click', '.hide_nonproblem_goal', function () {
         $('.goal_data').hide();
