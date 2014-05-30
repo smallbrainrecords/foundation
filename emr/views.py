@@ -307,9 +307,12 @@ def get_patient_data(request, patient_id):
 @login_required
 def change_status(request):
     role = UserProfile.objects.get(user=request.user).role
+
+    authenticated = True if (role == 'physician' or role == 'admin') else False
     print request.POST
     if request.POST['target'] == 'problem':
         problem = Problem.objects.get(id=request.POST['id'])
+        problem.authenticated = authenticated
         value = True if request.POST['value'] == 'true' else False
         if (request.POST['attr'] == 'authenticated' and role == 'patient'):
             return HttpResponse("patients can't authenticate problems")
@@ -318,20 +321,33 @@ def change_status(request):
         problem.save()
     elif request.POST['target'] == 'goal':
         goal = Goal.objects.get(id=request.POST['id'])
+        if goal.problem:
+            goal.problem.authenticated = authenticated
+            goal.problem.save()
         value = True if request.POST['value'] == 'true' else False
         setattr(goal,'accomplished', value)
         goal.save()
     elif request.POST['target'] == 'goal_is_controlled':
+        
         goal = Goal.objects.get(id=request.POST['id'])
+        if goal.problem:
+            goal.problem.authenticated = authenticated
+            goal.problem.save()
         value = True if request.POST['value'] == 'true' else False
         setattr(goal,'is_controlled', value)
         goal.save()
     elif request.POST['target'] == 'todo':
         todo = ToDo.objects.get(id=request.POST['id'])
+        if todo.problem:
+            todo.problem.authenticated = authenticated
+            todo.problem.save()
         value = True if request.POST['value'] == 'true' else False
         setattr(todo,'accomplished', value)
         todo.save()
     elif request.POST['attr'] == 'effected_by':
+        problem = Problem.objects.get(id=request.POST['id'])
+        problem.authenticated = authenticated
+        problem.save()
         if request.POST['value'] == 'true':
             pr = ProblemRelationship(source=Problem.objects.get(id=request.POST['target']), target=Problem.objects.get(id=request.POST['id']))
             pr.save()
@@ -339,6 +355,9 @@ def change_status(request):
             pr = ProblemRelationship.objects.get(source=Problem.objects.get(id=request.POST['target']), target=Problem.objects.get(id=request.POST['id']))
             pr.delete()
     elif request.POST['attr'] == 'affects':
+        problem = Problem.objects.get(id=request.POST['id'])
+        problem.authenticated = authenticated
+        problem.save()
         if request.POST['value'] == 'true':
             pr = ProblemRelationship(source=Problem.objects.get(id=request.POST['id']), target=Problem.objects.get(id=request.POST['target']))
             pr.save()
@@ -350,11 +369,14 @@ def change_status(request):
 @login_required
 def submit_data_for_problem(request, problem_id):
     print request.POST
-    
+    role = UserProfile.objects.get(user=request.user).role
+
+    authenticated = True if (role == 'physician' or role == 'admin') else False
 
     if request.POST['type'] == 'note':
         
         problem = Problem.objects.get(id=problem_id)
+        problem.authenticated = authenticated
         note = TextNote(by=UserProfile.objects.get(user=request.user).role, note=request.POST['data'])
         note.save()
         problem.notes.add(note)
@@ -362,6 +384,7 @@ def submit_data_for_problem(request, problem_id):
     elif request.POST['type'] == 'problem_parent':
         
         problem = Problem.objects.get(id=problem_id)
+        problem.authenticated = authenticated
         if (request.POST['data'] == 'none'):
             problem.parent = None
         else:
@@ -370,6 +393,7 @@ def submit_data_for_problem(request, problem_id):
     elif request.POST['type'] == 'problem_start_date':
         print 'problem_start_date: '+str(request.POST)
         problem = Problem.objects.get(id=problem_id)
+        problem.authenticated = authenticated
         from datetime import datetime
         if not request.POST['data'].index('/') == 2:
             problem.start_date = datetime.strptime('0' + request.POST['data'], "%m/%d/%Y")
@@ -377,6 +401,9 @@ def submit_data_for_problem(request, problem_id):
             problem.start_date = datetime.strptime(request.POST['data'], "%m/%d/%Y")
         problem.save()
     elif request.POST['type'] == 'note_for_goal':
+        problem = Problem.objects.get(id=problem_id)
+        problem.authenticated = authenticated
+        problem.save()
         goal = Goal.objects.get(id=problem_id)
         note = TextNote(by=UserProfile.objects.get(user=request.user).role, note=request.POST['data'])
         note.save()
@@ -384,6 +411,7 @@ def submit_data_for_problem(request, problem_id):
         goal.save()
     elif request.POST['type'] == 'mark_parent':
         problem = Problem.objects.get(id=problem_id)
+        problem.authenticated = authenticated
         if (request.POST['data'] == 'none'):
             problem.parent = None
         else:
@@ -391,6 +419,8 @@ def submit_data_for_problem(request, problem_id):
         problem.save()
     else:
         problem = Problem.objects.get(id=problem_id)
+        problem.authenticated = authenticated
+        problem.save()
         model = get_model('emr', request.POST['type'].capitalize()) 
     
         m = model(patient=problem.patient, problem=problem)
@@ -404,7 +434,7 @@ def add_problem(request, patient_id):
     role = UserProfile.objects.get(user=request.user).role
     authenticated = True if (role == 'physician' or role == 'admin') else False
     if 'problem_name' in request.POST:
-        problem = Problem(patient=User.objects.get(id=patient_id), problem_name=request.POST['problem_name'], concept_id=request.POST['concept_id'], authenticated=authenticated)
+        problem = Problem(patient=User.objects.get(id=patient_id), problem_name=request.POST['problem_name'], concept_id=request.POST['concept_id'], authenticated=authenticated
         problem.save()
     elif 'goal' in request.POST:
         goal = Goal(patient=User.objects.get(id=patient_id), goal=request.POST['goal'])
