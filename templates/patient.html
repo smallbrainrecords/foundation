@@ -515,13 +515,14 @@ $('#reset').click(function() {
 });
 // ENCOUNTER POST FOR CLICKS.
     $(document).on("change", "input:checkbox", function(e) {
-    	
+    	var saved_encounter = false;
         //alert($(this).is(':checked')+$(this).attr('id'));
         if ( $(this).attr('attr') == 'is_controlled' ) {
             $("#problem_"+$(this).attr('id')).removeClass();
             $("#problem_"+$(this).attr('id')).addClass($(this).is(':checked').toString());
             $.post('/save_encounter_event/', {'summary': 'Physician changed "is controlled" for problem "'+$('#problem_'+$(this).attr('id')).text()+'" to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
             var target = 'problem';
+            saved_encounter = true;
         }
         if ($(this).attr('attr') == 'goal' || $(this).attr('attr') == 'todo' || $(this).attr('attr') == 'goal_is_controlled') {
             var target = $(this).attr('attr');
@@ -530,12 +531,17 @@ $('#reset').click(function() {
         } else if ($(this).attr('attr') != 'problem') {
             $.post('/change_status/', {'target': $(this).attr('target'), 'id': $(this).attr('id'), 'value': $(this).is(':checked'), 'attr': $(this).attr('attr')});
  	    $.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+$(this).attr('target')+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
-
+            saved_encounter = true;
         } else {
             var target = 'problem';
         }
+        if (saved_encounter != true) {
+        	$.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+target+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+
+        }
         console.log('target: '+target);
         $.post('/change_status/', {'target': target, 'id': $(this).attr('id'), 'value': $(this).is(':checked'), 'attr': $(this).attr('attr')});
+        
     });
     function makeid()
 {
