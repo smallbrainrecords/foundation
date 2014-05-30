@@ -224,13 +224,7 @@ class PatientImage(models.Model):
 class Sharing(models.Model):
     patient = models.ForeignKey(User, related_name='target_patient')
     other_patient = models.ForeignKey(User, related_name='other_patient')
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    item = generic.GenericForeignKey('content_type', 'object_id')
-    relationship_to_patient = models.CharField(max_length=20, blank=True)
-    relationship_to_patient_snomed = models.CharField(max_length=20, blank=True)
-    relationship_to_other_patient = models.CharField(max_length=20, blank=True)
-    relationship_to_other_patient_snomed = models.CharField(max_length=20, blank=True)
+    all = models.BooleanField(default=True)
     
     def __unicode__(self):
         return '%s %s' % (unicode(self.patient), unicode(self.other_patient))
