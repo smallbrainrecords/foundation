@@ -30,7 +30,14 @@ enctype="multipart/form-data">
 <input type="file" name="file" id="file"><br>
 <input type="submit" name="submit" value="Submit">
 </form>
-
+{% if not note %}
+<form action="" method="post">
+<strong>Note:</strong> <textarea name="note"></textarea>
+<input type="submit" name="submit" value="Submit">
+</form>
+{% else %}
+<strong>Note:</strong> {{ encounter.note }}
+{% endif %}
 <table>
 
 <tr><th>Time</th><th>Summary</th></tr>
