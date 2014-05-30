@@ -473,6 +473,10 @@ def save_event_summary(request):
 
 @login_required
 def encounter(request, encounter_id):
+    if request.FILES:
+        encounter = Encounter.objects.get(id=encounter_id)
+        encounter.audio = request.FILES['file']
+        encounter.save()
     context = {'encounter': Encounter.objects.get(id=encounter_id), 'events': Encounter.objects.get(id=encounter_id).events.all().order_by('datetime'), 'patient': Encounter.objects.get(id=encounter_id).patient}
     context = RequestContext(request, context)
     return render_to_response("encounter.html", context)
