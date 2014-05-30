@@ -1198,7 +1198,7 @@ if (annyang) {
 	            updateProblems();
 	            $('#goal_description').val($('goal_description').attr('default'));
 	        });
-	        //$.post('/save_encounter_event/', {'summary': 'Physician added problem "'+$('#problem_name').val()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+	        $.post('/save_encounter_event/', {'summary': 'Physician added goal "'+$('#goal_description').val()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
         
     });
     $('#addTodo').click(function() {
@@ -1207,7 +1207,7 @@ if (annyang) {
 	            updateProblems();
 	            $('#todo_description').val($('todo_description').attr('default'));
 	        });
-	        //$.post('/save_encounter_event/', {'summary': 'Physician added problem "'+$('#problem_name').val()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+	        $.post('/save_encounter_event/', {'summary': 'Physician added todo "'+$('#todo_description').val()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
         
     });
     $('body').on('click', '.show_problem', function () {
