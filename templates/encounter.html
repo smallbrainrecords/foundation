@@ -1,11 +1,15 @@
 <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 <a href="/patient/{{ patient.id }}/">Go back to patient {{ patient.get_full_name }}</a>
+{% if not encounter.audio %}
 <form action="" method="post"
 enctype="multipart/form-data">
 <label for="file">File:</label>
 <input type="file" name="file" id="file"><br>
 <input type="submit" name="submit" value="Submit">
 </form>
+{% else %}
+<a href="{{ encounter.audio }}">Audio file</a>
+{% endif %}
 {% if not encounter.note %}
 <form action="" method="post">
 <strong>Note:</strong> <textarea name="note"></textarea>
