@@ -503,7 +503,7 @@ def save_event_summary(request):
 
 @login_required
 def encounter(request, encounter_id):
-    if request.POST:
+    if 'note' in request.POST:
         encounter = Encounter.objects.get(id=encounter_id)
         encounter.note = request.POST['note']
         encounter.save()
