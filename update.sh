@@ -7,7 +7,8 @@ mv foundation core
 
 cd core
 #mkdir static && cd static && git clone https://github.com/smallbrainrecords/foundation.git
-
+mkdir static
+python manage.py collectstatic
 python manage.py syncdb
 #sudo netstat -plnt
 #echo $$
