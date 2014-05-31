@@ -503,6 +503,9 @@ def save_event_summary(request):
 
 @login_required
 def encounter(request, encounter_id):
+    print 'encounter debug'
+    print request.POST
+    print request.FILES
     if 'note' in request.POST:
         encounter = Encounter.objects.get(id=encounter_id)
         encounter.note = request.POST['note']
