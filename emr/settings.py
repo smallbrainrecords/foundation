@@ -156,8 +156,8 @@ AUTHENTICATION_BACKENDS = (
 )
 LOGIN_REDIRECT_URL = '/'
  
-GOOGLE_OAUTH2_CLIENT_ID = '431964346573-gc59qqurcgplvdtqjlfau9fetcef7efn.apps.googleusercontent.com' 
-GOOGLE_OAUTH2_CLIENT_SECRET = 'A14ve_2K6r0ABAxc3unHCCRK'
+GOOGLE_OAUTH2_CLIENT_ID = '574847173199-vnvlnuvr5n5vuasvb28moqp1i80eqbsl.apps.googleusercontent.com' 
+GOOGLE_OAUTH2_CLIENT_SECRET = 'faqH3LrYNErmcirkXleeCvMn'
 GOOGLE_WHITE_LISTED_DOMAINS = []
 SOCIAL_AUTH_USER_MODEL = 'auth.User'
 SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
