@@ -146,6 +146,7 @@ def view_patient(request, user_id):
 
 @login_required
 def get_patient_data(request, patient_id):
+    
     # Find out if user requesting the data is admin, physician, or patient
     role_of_user_requesting_the_data = UserProfile.objects.get(user=request.user).role
     # Get patient object from patient id
@@ -175,6 +176,7 @@ def get_patient_data(request, patient_id):
                 view_status = json.loads(vs[0].status)
             except:
                 pass
+            
     # this tracking section lets us coordinate multiple people/browser windows/tabs accessing a patient page at the same time
     if 'tracking_id' in request.GET:
         tracking_id = request.GET['tracking_id']
@@ -196,6 +198,8 @@ def get_patient_data(request, patient_id):
         return HttpResponse("Error: this user isn't a patient")
     
     data = {'problems': {'is_active': [], 'not_active': []}, 'goals': {'not_accomplished': [], 'accomplished': []}, 'notes': [], 'todos': {'not_accomplished': [], 'accomplished': []}, 'concept_ids': {}, 'viewers': viewers, 'view_status': view_status}
+    if 'get_only_status' in request.GET:
+        return HttpResponse(json.dumps(data), content_type="application/json")
     # At this point we know the user is allowed to view this patient. 
     # Now we have to detrimine what data can be provided to the requesting user
     # If the user requesting the patient data is the targeted patient or an admin or physician then we know it's OK to provide all the data
