@@ -538,7 +538,7 @@ var tracking_id = makeid();
 var old_status = '{}';
 function getStatus() {
 	console.log('get stauts')
-$.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function (data) {
+$.get('/get_problems/{{ patient.id }}/', {'get_only_status': true, 'tracking_id': tracking_id}, function (data) {
 	$('#viewers').text(JSON.stringify(data.viewers));
 	$('#viewers').append(JSON.stringify(data.view_status));
 	if (old_status != JSON.stringify(data.view_status)) {
