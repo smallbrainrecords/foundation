@@ -161,6 +161,7 @@ GOOGLE_OAUTH2_CLIENT_SECRET = 'faqH3LrYNErmcirkXleeCvMn'
 GOOGLE_WHITE_LISTED_DOMAINS = []
 SOCIAL_AUTH_USER_MODEL = 'auth.User'
 SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 #LOGIN_URL          = '/login/google-oauth2/'
 LOGIN_URL          = '/login/'
