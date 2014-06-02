@@ -517,9 +517,13 @@ def encounter(request, encounter_id):
         encounter = Encounter.objects.get(id=encounter_id)
         encounter.note = request.POST['note']
         encounter.save()
-    if request.FILES:
+    if 'audio_file' in request.FILES:
         encounter = Encounter.objects.get(id=encounter_id)
-        encounter.audio = request.FILES['file']
+        encounter.audio = request.FILES['audio_file']
+        encounter.save()
+    if 'video_file' in request.FILES:
+        encounter = Encounter.objects.get(id=encounter_id)
+        encounter.video = request.FILES['video_file']
         encounter.save()
     context = {'encounter': Encounter.objects.get(id=encounter_id), 'events': Encounter.objects.get(id=encounter_id).events.all().order_by('datetime'), 'patient': Encounter.objects.get(id=encounter_id).patient}
     context = RequestContext(request, context)
