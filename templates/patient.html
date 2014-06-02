@@ -1338,15 +1338,15 @@ background:#FFF;
      </select>
      {% endif %}
 {% if patient_profile.cover_image %}<img src="{{ patient_profile.cover_image.url }}" style="max-width:100%; max-height:50%;" /><br/>{% endif %}
-<h3>Voice commands</h3>
-<p>go to homepage, go to problems, go to problem [[ term ]], go to pain avatar, add goal [[ goal ]]</p>
+<!--<h3>Voice commands</h3>-->
+<!--<p>go to homepage, go to problems, go to problem [[ term ]], go to pain avatar, add goal [[ goal ]]</p>-->
 <div id="debug"></div>
 {% if request.user.id != patient.id %}<a href="/">Return to main page</a> | <a href="/admin/auth/user/{{ patient.id }}/">Admin</a> | {% endif %} <a href="/logout/">Logout</a> | {{ request.user }}
 <h2>{{ patient.get_full_name }} {{ patient.age }}</h2>
 
 {% if patient_profile.portrait_image %}<img src="{{ patient_profile.portrait_image.url }}" style="max-width:50%; max-height:25%;" /><br/>{% endif %}
 
-<div><input type="button" id="start_encounter" value="Start encounter" /><input type="button" id="view_encounter" value="View encounter" /></div>
+
 
 <h3>Problems</h3>
 <div id="add_problem_div"><strong>Add problem:</strong> <input type="text" value="Problem name" default="Problem name" id="problem_name" />
@@ -1373,9 +1373,12 @@ background:#FFF;
 
 <div id="todos"></div>
 <input type="button" id="toggle_accomplished_todos" value="Toggle accomplished todos" /><div id="accomplished_todos"></div>
+
 <h3>Pain History</h3>
 <div id="avatars"></div>
 <div id="controls"><input type="button" id="toggleSlideshow" value="Start slideshow" /><input type="button" id="forwards" value="<" /><input type="button" id="backwards" value=">" /><input type="button" id="reset" value="Reset database" /> <a href="/pain/create_pain_avatar/{{ patient.id }}/">Update Pain</a></div>
+
+<div><input type="button" id="start_encounter" value="Start encounter" /><input type="button" id="view_encounter" value="View encounter" /></div>
 <h3>Encounters</h3>
 <ul>
      {% for encounter in encounters %}
