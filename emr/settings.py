@@ -3,6 +3,10 @@
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+# toggle experimental features
+VOICE_CONTROLL = False
+SYNCING = False
+
 import os; os.environ['LANG'] = 'en_US.UTF-8'
 BASE_DIR = os.getcwd()
 
