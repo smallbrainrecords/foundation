@@ -139,6 +139,9 @@ def view_patient(request, user_id):
     context = {'patient': user, 'user_role': UserProfile.objects.get(user=request.user).role, 'patient_profile': UserProfile.objects.get(user=user), 'problems': Problem.objects.filter(patient=user)}
     context.update({'pain_avatars': PainAvatar.objects.filter(patient=user).order_by('-datetime')})
     context['encounters'] = Encounter.objects.filter(patient=user).order_by('-starttime')
+    import settings
+    context['voice_control'] = settings.VOICE_CONTROL
+    context['syncing'] = settings.SYNCING
     if (request.user == user):
         context['shared_patients'] = list(set([i.patient for i in Sharing.objects.filter(other_patient=user)]))
     context = RequestContext(request, context)
