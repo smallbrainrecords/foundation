@@ -4,11 +4,21 @@
 <form action="" method="post"
 enctype="multipart/form-data">
 <label for="file">File:</label>
-<input type="file" name="file" id="file"><br>
+<input type="file" name="audio_file" id="file"><br>
 <input type="submit" name="submit" value="Submit">
 </form>
 {% else %}
 <a href="{{ encounter.audio }}">Audio file</a>
+{% endif %}
+{% if not encounter.video %}
+<form action="" method="post"
+enctype="multipart/form-data">
+<label for="file">File:</label>
+<input type="file" name="video_file" id="file"><br>
+<input type="submit" name="submit" value="Submit">
+</form>
+{% else %}
+<a href="{{ encounter.video }}">Video file</a>
 {% endif %}
 {% if not encounter.note %}
 <form action="" method="post">
