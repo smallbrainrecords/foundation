@@ -795,58 +795,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
         for (var i=0;i<data.length;i++) {
             var problem = data[i];
             relationships = '<ul>';
-            var select = '<select class="problem_parent submit_data" id="change_problem_parent_'+problem['problem_id']+'" ';
-            select += 'target="change_problem_parent_'+problem['problem_id']+'" object_type="problem_parent" parent="'+problem['problem_id']+'">';
-            select += '<option value="none">none</option>';
-            for (var j=0; j<data.length;j++) {
-            	
-                if (data[j]['problem_name'] != problem['problem_name']) {
-                    selected = '';
-                    if (data[j]['problem_id'] == problem['effected_by']) {
-                        selected = ' selected';
-                    }
-                    select += '<option value="'+data[j]['problem_id']+'"'+selected+'>';
-                    select += data[j]['problem_name']+'</option>';
-                }
-            }
-            select += '</select>';
-            select = "<ul style='background:yellow'>";
-            for (var j=0; j<data.length;j++) {
-            	
-                if (data[j]['problem_name'] != problem['problem_name']) {
-                    console.log(problem['effected_by'][data[j]['problem_id'].toString()]);
-                    //console.log("problem['effected_by']['"+data[j]['problem_id'].toString()+"'])";
-                    if (problem['effected_by'][data[j]['problem_id'].toString()] == true) {
-	                var checked = ' checked ';
-	            } else {
-	                var checked = '';
-	            }
-                    select += '<li>';
-                    // 'target': target, 'id': $(this).attr('id'), 'value': $(this).is(':checked'), 'attr': $(this).attr('attr')
-            	    select += data[j]['problem_name'] + '<input type="checkbox" '+checked+' target="'+data[j]['problem_id']+'" ';
-            	    select += 'id="'+problem['problem_id']+'" attr="effected_by" />';
-            	    select += '</li>';
-                }
-            }
-            select += "</ul>";
-            select += problem['problem_name']+"<br/><ul style='background:yellow'>";
-            for (var j=0; j<data.length;j++) {
-            	
-                if (data[j]['problem_name'] != problem['problem_name']) {
-                    console.log(problem['affects'][data[j]['problem_id'].toString()]);
-                    //console.log("problem['effected_by']['"+data[j]['problem_id'].toString()+"'])";
-                    if (problem['affects'][data[j]['problem_id'].toString()] == true) {
-	                var checked = ' checked ';
-	            } else {
-	                var checked = '';
-	            }
-                    select += '<li>';
-            	    select += data[j]['problem_name'] + '<input type="checkbox" '+checked+' target="'+data[j]['problem_id']+'" ';
-            	    select += 'id="'+problem['problem_id']+'" attr="affects" />';
-            	    select += '</li>';
-                }
-            }
-            select += "</ul>";
+            select = '';
             affects = '';
             for (var j=0; j<problem['affects'].length;j++) {
             	var a = problem['affects'][j];
