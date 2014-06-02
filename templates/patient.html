@@ -1149,7 +1149,7 @@ if (annyang) {
         } else {
             concept_id = $('#concept_id').val();
         }
-        if (jQuery.inArray(concept_id, Object.keys(window.concept_ids)) != -1) {
+        if (jQuery.inArray(concept_id, Object.keys(window.concept_ids)) != -1 && (concept_id != '')) {
             var r = confirm("Go to existing problem");
     		if (r == true) {
     		    	window.current_problem = $(this).attr('problem');
