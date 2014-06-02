@@ -795,7 +795,8 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
         for (var i=0;i<data.length;i++) {
             var problem = data[i];
             relationships = '<ul>';
-            var select = '<select class="problem_parent" parent="'+problem['problem_id']+'">';
+            var select = '<select class="problem_parent submit_data" id="change_problem_parent_'+problem['problem_id']+'" ';
+            select += 'target="change_problem_parent_'+problem['problem_id']+'" object_type="problem_parent" parent="'+problem['problem_id']+'">';
             select += '<option value="none">none</option>';
             for (var j=0; j<data.length;j++) {
             	
@@ -804,11 +805,48 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                     if (data[j]['problem_id'] == problem['effected_by']) {
                         selected = ' selected';
                     }
-                    select += '<option value="'+problem['problem_id']+'"'+selected+'>';
-                    select += problem['problem_name']+'</option>';
+                    select += '<option value="'+data[j]['problem_id']+'"'+selected+'>';
+                    select += data[j]['problem_name']+'</option>';
                 }
             }
             select += '</select>';
+            select = "<ul style='background:yellow'>";
+            for (var j=0; j<data.length;j++) {
+            	
+                if (data[j]['problem_name'] != problem['problem_name']) {
+                    console.log(problem['effected_by'][data[j]['problem_id'].toString()]);
+                    //console.log("problem['effected_by']['"+data[j]['problem_id'].toString()+"'])";
+                    if (problem['effected_by'][data[j]['problem_id'].toString()] == true) {
+	                var checked = ' checked ';
+	            } else {
+	                var checked = '';
+	            }
+                    select += '<li>';
+                    // 'target': target, 'id': $(this).attr('id'), 'value': $(this).is(':checked'), 'attr': $(this).attr('attr')
+            	    select += data[j]['problem_name'] + '<input type="checkbox" '+checked+' target="'+data[j]['problem_id']+'" ';
+            	    select += 'id="'+problem['problem_id']+'" attr="effected_by" />';
+            	    select += '</li>';
+                }
+            }
+            select += "</ul>";
+            select += problem['problem_name']+"<br/><ul style='background:yellow'>";
+            for (var j=0; j<data.length;j++) {
+            	
+                if (data[j]['problem_name'] != problem['problem_name']) {
+                    console.log(problem['affects'][data[j]['problem_id'].toString()]);
+                    //console.log("problem['effected_by']['"+data[j]['problem_id'].toString()+"'])";
+                    if (problem['affects'][data[j]['problem_id'].toString()] == true) {
+	                var checked = ' checked ';
+	            } else {
+	                var checked = '';
+	            }
+                    select += '<li>';
+            	    select += data[j]['problem_name'] + '<input type="checkbox" '+checked+' target="'+data[j]['problem_id']+'" ';
+            	    select += 'id="'+problem['problem_id']+'" attr="affects" />';
+            	    select += '</li>';
+                }
+            }
+            select += "</ul>";
             affects = '';
             for (var j=0; j<problem['affects'].length;j++) {
             	var a = problem['affects'][j];
@@ -817,21 +855,25 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 affects += 'target="problem_data_'+a['problem_id']+'" ';
                 affects += 'problem="'+a['problem_id']+'" />';
             }
-            relationships += '<li><strong>Effected by:</strong> '+select+'</li>';
-            relationships += '<li><strong>Affects:</strong> '+affects+'</li></ul>';
+            relationships += '<li><strong>Start date:</strong> <input type="text" id="problem_start_date_'+problem['problem_id']+'" ';
+            relationships += 'value="'+problem['start_date']+'" />';
+            relationships += '<input type="button" value="Submit new date" parent="'+problem['problem_id']+'" ';
+            relationships += 'target="problem_start_date_'+problem['problem_id']+'" object_type="problem_start_date" class="submit_data"/></li>';
+            relationships += '<li>'+select+'</li>';
+            //relationships += '<li><strong>Affects:</strong> '+affects+'</li></ul>';
             if (problem['is_authenticated'] == true) {
                 checked = ' checked ';
             } else {
                 checked = '';
             }
-            status = '<ul><li><input class="status" attr="authenticated" id="'+problem['problem_id']+'" ';
+            status = '<ul><li><input class="status" attr="authenticated" target="problem" id="'+problem['problem_id']+'" ';
             status += 'type="checkbox" '+checked+'/> Is authenticated</li>';
             if (problem['is_controlled'] == true) {
                 checked = ' checked ';
             } else {
                 checked = '';
             }
-            status += '<li><input type="checkbox" attr="is_controlled" id="'+problem['problem_id']+'" '+checked+'/> ';
+            status += '<li><input type="checkbox" attr="is_controlled" target="problem" id="'+problem['problem_id']+'" '+checked+'/> ';
             status += 'Is controlled</li>';
             if (problem['is_active'] == true) {
                 checked = ' checked ';
@@ -958,7 +1000,11 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 images += '<li><a href="'+problem['images'][j]+'" target="_blank"><img src="'+problem['images'][j]+'" style="max-width:100px" /></a></li>';
             }
             images += '</ul>';
-            html += '<div id="problem_'+problem['problem_id']+'" class="'+problem['is_controlled']+'">'+problem['problem_name']+' <input type="button" value="Show problem" class="show_problem" id="control_display_for_problem_'+problem['problem_id']+'" target="problem_data_'+problem['problem_id']+'" problem="'+problem['problem_id']+'" /></div><div class="problem_data" id="problem_data_'+problem['problem_id']+'"><h4>Relationships</h4>'+relationships+'<h4>Status</h4>'+status+'<h4>Guidelines</h4>'+guidelines+'<h4>Goals</h4>'+goals+'<h4>ToDo</h4>'+todos+'<h4>Notes</h4>'+notes+'<h4>Images</h4>'+image_form+images+'</div>';
+            var authenticated = '';
+            if (problem['is_authenticated'] == false) {
+            	authenticated = '[Not authenticated]';
+            }
+            $('#problems').append('<div id="problem_'+problem['problem_id']+'" class="'+problem['is_controlled']+'">'+problem['problem_name']+' <input type="button" value="Show problem" class="show_problem" id="control_display_for_problem_'+problem['problem_id']+'" target="problem_data_'+problem['problem_id']+'" problem="'+problem['problem_id']+'" /> '+authenticated+'</div><div class="problem_data" id="problem_data_'+problem['problem_id']+'"><h4>Notes</h4>'+notes+'<h4>Goals</h4>'+goals+'<h4>ToDo</h4>'+todos+'<h4>Images</h4>'+image_form+images+'<h4>Relationships</h4>'+relationships+'<h4>Status</h4>'+status+'<h4>Guidelines</h4>'+guidelines+'</div>');
         }
         html += '</div>';
         $('#problems').append(html);
