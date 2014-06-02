@@ -838,7 +838,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             } else {
                 checked = '';
             }
-            status += '<li><input type="checkbox" attr="is_active" id="'+problem['problem_id']+'" '+checked+'/> ';
+            status += '<li><input type="checkbox" attr="is_active" target="problem" id="'+problem['problem_id']+'" '+checked+'/> ';
             status += 'Is active</li>';
             status += '</ul>';
             guidelines = '<ul>';
