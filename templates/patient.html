@@ -1268,7 +1268,7 @@ if (annyang) {
         window.clearTimeout(timeout);
     timeout = window.setTimeout(function(){
        $('#results').html('Searching for '+target.val());
-        $.get('/list_terms', {'query': target.val()}, function (data) {
+        $.get('/list_terms/', {'query': target.val()}, function (data) {
             $('#results').html('<ul>');
             $('#results').append('<li>Results for '+target.val()+'</li>');
             for (var i=0;i<data.length;i++) {
