@@ -483,6 +483,18 @@ def upload_image_to_problem(request, problem_id):
         problem.save()
         patient_image = PatientImage(patient=Problem.objects.get(id=problem_id).patient, problem=Problem.objects.get(id=problem_id), image=request.FILES['file'])
         patient_image.save()
+        try:
+            encounter = Encounter.objects.filter(patient=problem.patient, stoptime__isnull=True).order_by('-starttime')[0]
+            event_summary = EventSummary(patient=problem.patient), summary='Physician added image<br/><img src="/media/%s" />' % (patient_image.image))
+            event_summary.save()
+            
+            ctype = ContentType.objects.get_for_model(event_summary)
+            encounter_event = EncounterEvent(content_type=ctype, object_id=event_summary.id)
+            encounter_event.save()
+            encounter.events.add(encounter_event)
+            encounter.save()
+        except:
+            pass
         return HttpResponseRedirect('/patient/%s/' % (Problem.objects.get(id=problem_id).patient.id))
     else:
         context = RequestContext(request, {})
