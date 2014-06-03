@@ -58,7 +58,7 @@ enctype="multipart/form-data">
 
 <tr><th>Time</th><th>Summary</th></tr>
 {% for event in events %}
-<tr><td>{{ event.datetime }}</td><td>{{ event.event.summary }}</td>
+<tr><td>{{ event.datetime }}</td><td>{{ event.event.summary|safe }}</td>
 {% endfor %}
 </table>
 <div id="jquery_jplayer_1" class="jp-jplayer"></div>
