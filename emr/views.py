@@ -478,7 +478,7 @@ def upload_image_to_problem(request, problem_id):
         role = UserProfile.objects.get(user=request.user).role
 
         authenticated = True if (role == 'physician' or role == 'admin') else False
-        problem = Problem.objects.get(id=request.POST['id'])
+        problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
         problem.save()
         patient_image = PatientImage(patient=Problem.objects.get(id=problem_id).patient, problem=Problem.objects.get(id=problem_id), image=request.FILES['file'])
