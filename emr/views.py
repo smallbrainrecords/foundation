@@ -408,14 +408,16 @@ def submit_data_for_problem(request, problem_id):
             problem.start_date = datetime.strptime(request.POST['data'], "%m/%d/%Y")
         problem.save()
     elif request.POST['type'] == 'note_for_goal':
-        problem = Problem.objects.get(id=problem_id)
-        problem.authenticated = authenticated
-        problem.save()
+
         goal = Goal.objects.get(id=problem_id)
         note = TextNote(by=UserProfile.objects.get(user=request.user).role, note=request.POST['data'])
         note.save()
         goal.notes.add(note)
         goal.save()
+        if goal.problem:
+            problem = goal.problem
+            problem.authenticated = authenticated
+            problem.save()
     elif request.POST['type'] == 'mark_parent':
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
