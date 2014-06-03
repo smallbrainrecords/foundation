@@ -1327,16 +1327,7 @@ background:#FFF;
 </style>
 </head>
 <body>
-<div id="viewers"></div>
-{% if shared_patients %}
-<select id="change_patient">
-     <option></option>
-     {% for p in shared_patients %}
-     <option value="{{ p.id }}">{{ p.get_full_name }}</option>
-     {% endfor %}
-          
-     </select>
-     {% endif %}
+
 {% if patient_profile.cover_image %}<img src="{{ patient_profile.cover_image.url }}" style="max-width:100%; max-height:50%;" /><br/>{% endif %}
 <!--<h3>Voice commands</h3>-->
 <!--<p>go to homepage, go to problems, go to problem [[ term ]], go to pain avatar, add goal [[ goal ]]</p>-->
@@ -1385,5 +1376,16 @@ background:#FFF;
      <li><a href="/encounter/{{ encounter.id }}/">{{ encounter.starttime }}</a></li>
      {% endfor %}
 </ul>
+<div id="viewers"></div>
+{% if shared_patients %}
+<select id="change_patient">
+     
+     <option>View shared people</option>
+     {% for p in shared_patients %}
+     <option value="{{ p.id }}">{{ p.get_full_name }}</option>
+     {% endfor %}
+          
+     </select>
+     {% endif %}
 </body>
 </html>
