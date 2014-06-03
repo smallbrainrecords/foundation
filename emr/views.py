@@ -475,6 +475,12 @@ def list_snomed_terms(request):
 @login_required
 def upload_image_to_problem(request, problem_id):
     if request.POST:
+        role = UserProfile.objects.get(user=request.user).role
+
+        authenticated = True if (role == 'physician' or role == 'admin') else False
+        problem = Problem.objects.get(id=request.POST['id'])
+        problem.authenticated = authenticated
+        problem.save()
         patient_image = PatientImage(patient=Problem.objects.get(id=problem_id).patient, problem=Problem.objects.get(id=problem_id), image=request.FILES['file'])
         patient_image.save()
         return HttpResponseRedirect('/patient/%s/' % (Problem.objects.get(id=problem_id).patient.id))
