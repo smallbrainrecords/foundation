@@ -5,6 +5,7 @@
 <script>
   
   $(function() {
+  	{% if encounter.audio %}
     $("#jquery_jplayer_1").jPlayer({
 		ready: function (event) {
 			$(this).jPlayer("setMedia", {
@@ -22,6 +23,7 @@
 	});
 
 	$("#jplayer_inspector").jPlayerInspector({jPlayer:$("#jquery_jplayer_1")});
+	{% endif %}
     });
 </script>
 <a href="/patient/{{ patient.id }}/">Go back to patient {{ patient.get_full_name }}</a>
@@ -105,7 +107,7 @@ enctype="multipart/form-data">
 			<div id="jplayer_inspector"></div>
 			<video id="example_video_1" class="video-js vjs-default-skin"
   controls preload="auto" width="640" height="264"
-  poster="http://video-js.zencoder.com/oceans-clip.png"
+  poster=""
   data-setup='{"example_option":true}'>
  <source src="/media/{{ encounter.video }}" type='video/mp4' />
  <p class="vjs-no-js">To view this video please enable JavaScript, and consider upgrading to a web browser that <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a></p>
