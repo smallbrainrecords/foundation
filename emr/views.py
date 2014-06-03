@@ -485,7 +485,7 @@ def upload_image_to_problem(request, problem_id):
         patient_image.save()
         try:
             encounter = Encounter.objects.filter(patient=problem.patient, stoptime__isnull=True).order_by('-starttime')[0]
-            event_summary = EventSummary(patient=problem.patient, summary='Physician added image<br/><img src="/media/%s" />' % (patient_image.image))
+            event_summary = EventSummary(patient=problem.patient, summary='Physician added image<br/><a href="/media/%s"><img src="/media/%s" style="max-width:100px; max-height:100px" /></a>' % (patient_image.image, patient_image.image))
             event_summary.save()
             
             ctype = ContentType.objects.get_for_model(event_summary)
