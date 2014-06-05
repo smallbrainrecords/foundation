@@ -283,6 +283,10 @@
 $(function() {
 {% if current_encounter %}
 window.encounter_id = {{ current_encounter.id }};
+
+$('#encounter_buttons').html('<input type="button" id="stop_encounter" value="Stop encounter" /><input type="button" id="view_encounter" value="View encounter" />');
+{% else %}
+$('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start encounter" />');
 {% endif %}
 var problems;
 var isDown = false;     //flag we use to keep track
@@ -1291,15 +1295,14 @@ if (annyang) {
               window.encounter = true;
               window.encounter_id = data;
          });
-         $(this).val('Stop encounter');
-         $(this).attr('id', 'stop_encounter');
+        $('#encounter_buttons').html('<input type="button" id="stop_encounter" value="Stop encounter" /><input type="button" id="view_encounter" value="View encounter" />');
+
     });
     $(document).on('click', '#stop_encounter', function() {
          $.get('/stop_encounter/'+window.encounter_id+'/');
-         $(this).val('Start encounter');
-         $(this).attr('id', 'start_encounter');
+         $('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start encounter" />');
     });
-    $('#view_encounter').click(function() {
+    $(document).on('click', '#view_encounter', function() {
          window.location = '/encounter/'+window.encounter_id+'/';
     });
 });
@@ -1371,7 +1374,7 @@ background:#FFF;
 <div id="avatars"></div>
 <div id="controls"><input type="button" id="toggleSlideshow" value="Start slideshow" /><input type="button" id="forwards" value="<" /><input type="button" id="backwards" value=">" /><input type="button" id="reset" value="Reset database" /> <a href="/pain/create_pain_avatar/{{ patient.id }}/">Update Pain</a></div>
 
-<div><input type="button" id="start_encounter" value="Start encounter" /><input type="button" id="view_encounter" value="View encounter" /></div>
+<div id="encounter_buttons"></div>
 <h3>Encounters</h3>
 <ul>
      {% for encounter in encounters %}
