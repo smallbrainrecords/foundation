@@ -281,7 +281,9 @@
 </script>
 <script>
 $(function() {
-	
+{% if current_encounter %}
+window.encounter_id = {{ current_encounter.id }};
+{% endif %}
 var problems;
 var isDown = false;     //flag we use to keep track
 var x1, y1, x2, y2;     //to store the coords
