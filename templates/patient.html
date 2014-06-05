@@ -1314,6 +1314,10 @@ if (annyang) {
 -->
      
 <style>
+.true, .false {
+	font-size:1.25em;
+	padding:10px;
+}
 .true {
 background:green;
 }
@@ -1337,7 +1341,7 @@ background:#FFF;
 <!--<h3>Voice commands</h3>-->
 <!--<p>go to homepage, go to problems, go to problem [[ term ]], go to pain avatar, add goal [[ goal ]]</p>-->
 <div id="debug"></div>
-{% if request.user.id != patient.id %}<a href="/">Return to main page</a> | <a href="/admin/auth/user/{{ patient.id }}/">Admin</a> | {% endif %} <a href="/logout/">Logout</a> | {{ request.user }}
+{% if request.user.id != patient.id %}<a href="/">Return to main page</a>{% if request.user.is_superuser %} | <a href="/admin/auth/user/{{ patient.id }}/">Admin</a>{% endif %} | {% endif %} <a href="/logout/">Logout</a> | {{ request.user }}
 <h2>{{ patient.get_full_name }} {{ patient.age }}</h2>
 
 {% if patient_profile.portrait_image %}<img src="{{ patient_profile.portrait_image.url }}" style="max-width:50%; max-height:25%;" /><br/>{% endif %}
