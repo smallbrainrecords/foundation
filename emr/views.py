@@ -145,6 +145,12 @@ def view_patient(request, user_id):
     if (request.user == user):
         context['shared_patients'] = list(set([i.patient for i in Sharing.objects.filter(other_patient=user)]))
     context = RequestContext(request, context)
+    try:
+        encounter = Encounter.objects.filter(patient=problem.patient, stoptime__isnull=True).order_by('-starttime')[0]
+        context['current_encounter'] = encounter
+    except:
+        pass
+
     return render_to_response("patient.html", context)
 
 @login_required
