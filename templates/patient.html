@@ -964,7 +964,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 images += '<li><a href="'+problem['images'][j]+'" target="_blank"><img src="'+problem['images'][j]+'" style="max-width:100px" /></a></li>';
             }
             images += '</ul>';
-            html += '<div id="problem_container'+problem['problem_id']+'"><div id="problem_'+problem['problem_id']+'" class="'+problem['is_controlled']+'">'+problem['problem_name']+' <input type="button" value="Show problem" class="show_problem" id="control_display_for_problem_'+problem['problem_id']+'" target="problem_data_'+problem['problem_id']+'" problem="'+problem['problem_id']+'" /></div><div class="problem_data" id="problem_data_'+problem['problem_id']+'"><h4>Status</h4>'+status+'<h4>Guidelines</h4>'+guidelines+'<h4>Goals</h4>'+goals+'<h4>ToDo</h4>'+todos+'<h4>Notes</h4>'+notes+'<h4>Images</h4>'+image_form+images+'</div></div>';
+            html += '<div id="problem_container_'+problem['problem_id']+'"><div id="problem_'+problem['problem_id']+'" class="'+problem['is_controlled']+'">'+problem['problem_name']+' <input type="button" value="Show problem" class="show_problem" id="control_display_for_problem_'+problem['problem_id']+'" target="problem_data_'+problem['problem_id']+'" problem="'+problem['problem_id']+'" /></div><div class="problem_data" id="problem_data_'+problem['problem_id']+'"><h4>Status</h4>'+status+'<h4>Guidelines</h4>'+guidelines+'<h4>Goals</h4>'+goals+'<h4>ToDo</h4>'+todos+'<h4>Notes</h4>'+notes+'<h4>Images</h4>'+image_form+images+'</div></div>';
         }
         html += '</div>';
         $('#problems').append(html);
