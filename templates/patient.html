@@ -895,7 +895,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                       
                  }
                  notes += current_physician_note;
-                 notes += '</table></div>';
+                 //notes += '</table></div>';
                  
                 goals += '<li id="goal_'+problem['goals'][j]['id']+'" class="'+problem['goals'][j]['is_controlled']+'">'+problem['goals'][j]['goal']+'<input type="button" class="show_goal" value="Show goal" target="goal_notes_'+problem['goals'][j]['id']+'" goal="'+problem['goals'][j]['id']+'" />'+notes+'</li>';
             }
