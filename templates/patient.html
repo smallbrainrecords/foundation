@@ -1224,8 +1224,8 @@ if (annyang) {
         $('#show > #problem_'+$(this).attr('problem')).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
         var bottom = $('#show > #problem_'+$(this).attr('problem')).position().top + $('#problem_'+$(this).attr('problem')).outerHeight(true);
         $('#'+$(this).attr('target')).css({'display': 'block', 'position': 'absolute', 'z-index': 1, 'top': bottom, 'right': 0, 'left': '0', 'min-height': '100%'})
-        $(document).scrollTop( $('#problem_'+$(this).attr('problem')).offset().top );  
-        
+        //$(document).scrollTop( $('#problem_'+$(this).attr('problem')).offset().top );  
+        window.scrollTo(0,0);
         $.get('/get_problems/{{ patient.id }}/', {'new_status': '{"scroll_to": "problem_'+$(this).attr('problem')+'", "action": "show", "show_what": ["'+$(this).attr('target')+'"]}'});
         // THIS IS THE ENCOUNTER REFERENCE: 
         $.post('/save_encounter_event/', {'summary': 'Physician clicked on problem: "'+$('#problem_'+$(this).attr('problem')).text()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
