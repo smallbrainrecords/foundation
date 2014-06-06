@@ -1215,9 +1215,9 @@ if (annyang) {
         $('.problem_label').css({'position': 'inherit', 'width': 'inherit'});
         $('#'+$(this).attr('target')).show();
         $('#problem_'+$(this).attr('problem')).show()
-        $('#problem_'+$(this).attr('problem')).css({'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
+        $('#problem_'+$(this).attr('problem')).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
         var bottom = $('#problem_'+$(this).attr('problem')).position().top + $('#problem_'+$(this).attr('problem')).outerHeight(true);
-        $('#'+$(this).attr('target')).css({'position': 'absolute', 'z-index': 1, 'top': bottom, 'right': 0, 'left': '0', 'min-height': '100%'})
+        $('#'+$(this).attr('target')).css({'display': 'block', 'position': 'absolute', 'z-index': 1, 'top': bottom, 'right': 0, 'left': '0', 'min-height': '100%'})
         $(document).scrollTop( $('#problem_'+$(this).attr('problem')).offset().top );  
         $(this).val('Hide problem');
         $(this).removeClass();
