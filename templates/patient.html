@@ -1264,6 +1264,8 @@ if (annyang) {
         $.post('/save_encounter_event/', {'summary': 'Physician clicked on problem: "'+$('#problem_'+$(this).attr('problem')).text()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     });
     $('body').on('click', '.hide_problem', function () {
+    	$('#show').html('');
+    	$('#hide').show();
     	$('.problem_label').css({'position': 'inherit', 'width': 'inherit'});
         window.current_problem = null;
         $('.problem_data').hide();
