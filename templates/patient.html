@@ -1272,6 +1272,7 @@ if (annyang) {
         $('.hide_problem').val('Show problem');
         $('.hide_problem').removeClass().addClass('show_problem');
         $.get('/get_problems/{{ patient.id }}/', {'new_status': '{"action": "hide"}'});
+        $(document).scrollTop( $('#problem_'+$(this).attr('problem')).offset().top ); 
     });
     $('body').on('click', '.hide_goal', function () {
         //window.current_problem = null;
