@@ -1212,7 +1212,7 @@ if (annyang) {
         window.current_problem = $(this).attr('problem');
         $('.problem_data').hide();
         $('#'+$(this).attr('target')).show();
-        $('#'+$(this).attr('target')).css({'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%'});
+        $('#problem_'+$(this).attr('problem')).css({'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%'});
         $(document).scrollTop( $('#problem_'+$(this).attr('problem')).offset().top );  
         $(this).val('Hide problem');
         $(this).removeClass();
