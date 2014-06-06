@@ -1269,9 +1269,8 @@ if (annyang) {
     	$('.problem_label').css({'position': 'inherit', 'width': 'inherit'});
         window.current_problem = null;
         $('.problem_data').hide();
-        $(this).val('Show problem');
-        $(this).removeClass();
-        $(this).addClass('show_problem');
+        $('hide_problem').val('Show problem');
+        $('hide_problem').removeClass().addClass('show_problem');
         $.get('/get_problems/{{ patient.id }}/', {'new_status': '{"action": "hide"}'});
     });
     $('body').on('click', '.hide_goal', function () {
