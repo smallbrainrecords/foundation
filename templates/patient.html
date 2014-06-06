@@ -598,7 +598,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 }
             }
             select += '</select>';
-            select = "<ul style='background:yellow'>";
+            select = "<ul style='background:gray'>";
             for (var j=0; j<data.length;j++) {
             	
                 if (data[j]['problem_name'] != problem['problem_name']) {
@@ -617,7 +617,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 }
             }
             select += "</ul>";
-            select += problem['problem_name']+"<br/><ul style='background:yellow'>";
+            select += problem['problem_name']+"<br/><ul style='background:gray'>";
             for (var j=0; j<data.length;j++) {
             	
                 if (data[j]['problem_name'] != problem['problem_name']) {
