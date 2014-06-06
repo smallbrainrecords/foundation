@@ -1209,14 +1209,17 @@ if (annyang) {
         
     });
     $('body').on('click', '.show_problem', function () {
-    	$('body > *').hide()
         window.current_problem = $(this).attr('problem');
+        $('#show').html('');
+        $('#hide').hide();
         $('.problem_data').hide();
         $('.problem_label').css({'position': 'inherit', 'width': 'inherit'});
-        $('#'+$(this).attr('target')).show();
-        $('#problem_'+$(this).attr('problem')).show()
-        $('#problem_'+$(this).attr('problem')).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
-        var bottom = $('#problem_'+$(this).attr('problem')).position().top + $('#problem_'+$(this).attr('problem')).outerHeight(true);
+        $('#show').append($('#problem_'+$(this).attr('problem')).html());
+        $('#show').append($('#'+$(this).attr('target')).html());
+        $('#show > #'+$(this).attr('target')).show();
+        $('#show > #problem_'+$(this).attr('problem')).show()
+        $('#show > #problem_'+$(this).attr('problem')).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
+        var bottom = $('#show > #problem_'+$(this).attr('problem')).position().top + $('#problem_'+$(this).attr('problem')).outerHeight(true);
         $('#'+$(this).attr('target')).css({'display': 'block', 'position': 'absolute', 'z-index': 1, 'top': bottom, 'right': 0, 'left': '0', 'min-height': '100%'})
         $(document).scrollTop( $('#problem_'+$(this).attr('problem')).offset().top );  
         $(this).val('Hide problem');
@@ -1350,7 +1353,7 @@ background:#FFF;
 </style>
 </head>
 <body>
-
+<div id="show"></div><div id="hide">
 {% if patient_profile.cover_image %}<img src="{{ patient_profile.cover_image.url }}" style="max-width:100%; max-height:50%;" /><br/>{% endif %}
 <!--<h3>Voice commands</h3>-->
 <!--<p>go to homepage, go to problems, go to problem [[ term ]], go to pain avatar, add goal [[ goal ]]</p>-->
@@ -1410,5 +1413,6 @@ background:#FFF;
           
      </select>
      {% endif %}
+     </div>
 </body>
 </html>
