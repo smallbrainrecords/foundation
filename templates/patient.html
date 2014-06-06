@@ -1210,11 +1210,12 @@ if (annyang) {
     });
     $('body').on('click', '.show_problem', function () {
         window.current_problem = $(this).attr('problem');
-        $('#show').html('');
+        //$('#show').html('');
         $('#hide').hide();
         $('.problem_data').hide();
         $('.problem_label').css({'position': 'inherit', 'width': 'inherit'});
-        $('#show').append($('#problem_container_'+$(this).attr('problem')).html());
+        console.log($('#problem_container_'+$(this).attr('problem')).html());
+        $('#show').html($('#problem_container_'+$(this).attr('problem')).html());
         $('#show > #'+$(this).attr('target')).show();
         $('#show > #problem_'+$(this).attr('problem')).show()
         $('#show > #problem_'+$(this).attr('problem')).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
