@@ -515,6 +515,7 @@ $('#reset').click(function() {
             var target = $(this).attr('attr');
             $("#goal_"+$(this).attr('id')).removeClass();
             $("#goal_"+$(this).attr('id')).addClass($(this).is(':checked').toString());
+            console.log('todo clicked');
             if ($(this).attr('attr') == 'todo') {
             	$(this).parent().hide();
             }
