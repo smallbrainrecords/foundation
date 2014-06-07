@@ -1025,7 +1025,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
         for (var i=0;i<todos.length;i++) {
             var todo = todos[i];
             status = '<ul>';
-            status += '<li><input type="checkbox" attr="goal" id="'+todo['todo_id']+'" '+checked+'/> ';
+            status += '<li><input type="checkbox" attr="todo" id="'+todo['todo_id']+'" '+checked+'/> ';
             status += 'Is accomplished</li>';
             status += '</ul>';
             if (todo['for_problem'] == '') {
