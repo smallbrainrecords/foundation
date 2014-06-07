@@ -1055,7 +1055,9 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
         $('#show > #problem_'+window.current_problem).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
         var bottom = $('#show > #problem_'+window.current_problem).position().top + $('#problem_'+window.current_problem).outerHeight(true);
         $('#problem_data_'+window.current_problem).css({'display': 'block', 'position': 'absolute', 'z-index': 1, 'top': bottom, 'right': 0, 'left': '0', 'min-height': '100%'})
-        
+        $('#control_display_for_problem_'+window.current_problem).val('Hide problem');
+        $('#control_display_for_problem_'+window.current_problem).removeClass();
+        $('#control_display_for_problem_'+window.current_problem).addClass('hide_problem');       
 });   
 {% if syncing %}
     getStatus();
