@@ -1049,6 +1049,13 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             $('#accomplished_todos').append(html)
         }
         $('#show').html($('#problem_container_'+window.current_problem).html());
+        $('#show > #problem_'+$(this).attr('problem')).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
+        var bottom = $('#show > #problem_'+$(this).attr('problem')).position().top + $('#problem_'+$(this).attr('problem')).outerHeight(true);
+        $('#'+$(this).attr('target')).css({'display': 'block', 'position': 'absolute', 'z-index': 1, 'top': bottom, 'right': 0, 'left': '0', 'min-height': '100%'})
+        $('#show > #problem_'+window.current_problem).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
+        var bottom = $('#show > #problem_'+window.current_problem).position().top + $('#problem_'+$(this).attr('problem')).outerHeight(true);
+        $('#problem_data_'+window.current_problem).css({'display': 'block', 'position': 'absolute', 'z-index': 1, 'top': bottom, 'right': 0, 'left': '0', 'min-height': '100%'})
+        
 });   
 {% if syncing %}
     getStatus();
