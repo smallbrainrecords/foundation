@@ -130,10 +130,11 @@ class EncounterEvent(models.Model):
             if self in encounter.events.all():
                 encounter = encounter
                 break
-        x = encounter.datetime
-        e = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
+        x = encounter.starttime
+        s = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
         x = self.datetime
         e = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
+        return e - s
 
         
 class EventSummary(models.Model):
