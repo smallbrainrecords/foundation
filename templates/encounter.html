@@ -18,22 +18,11 @@
 <link href="//vjs.zencdn.net/4.6/video-js.css" rel="stylesheet">
 <script src="//vjs.zencdn.net/4.6/video.js"></script>
 <script>
-  
-  $(function() {
-  	
-  	function loadStart() {
+function loadStart() {
   		 window.myPlayer = _V_("video");
   		window.myPlayer.play();
 	        window.myPlayer.currentTime(7);
   	}
-  	   
-  	        function init()
-		{
-		    video.addEventListener('loadedmetadata', loadStart, false);
-		}
-		document.addEventListener("DOMContentLoaded", init, false);
-	    
-    });
 </script>
 <a href="/patient/{{ patient.id }}/">Go back to patient {{ patient.get_full_name }}</a>
 {% if not encounter.audio %}
@@ -66,7 +55,7 @@ enctype="multipart/form-data">
 <strong>Note:</strong> {{ encounter.note }}
 {% endif %}
 {% if encounter.video %}
-<video id="video" onloadedmetadata="alert('Got loadedmetadata!')" class="video-js vjs-default-skin"
+<video id="video" onloadedmetadata="alert('Got loadedmetadata!'); loadStart();" class="video-js vjs-default-skin"
   controls preload="auto" width="640" height="264"
   poster=""
   data-setup='{"example_option":true}'>
