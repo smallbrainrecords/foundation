@@ -6,6 +6,8 @@
      }
  td, th {
  	border:1px solid #000;
+ 	padding:10px;
+ 	text-align:left;
  }
 </style>
 
@@ -63,8 +65,8 @@ enctype="multipart/form-data">
 {% endif %}
 <table>
 
-<tr><th style="width:100px">Time</th><th>Summary</th></tr>
+<tr><th style="width:40px">Time</th><th>Summary</th></tr>
 {% for event in events %}
-<tr><td>{{ event.datetime }}</td><td>{{ event.event.summary|safe }}</td>
+<tr><td>{{ event.datetime|date:"H:i:s" }}</td><td>{{ event.event.summary|safe }}</td>
 {% endfor %}
 </table>
