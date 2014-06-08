@@ -19,9 +19,9 @@
 <script src="//vjs.zencdn.net/4.2/video.js"></script>
 <script>
 $(function() {
-      var player = videojs('myvideo');
+      window.player = videojs('myvideo');
      
-     player.ready(function() {
+     window.player.ready(function() {
        console.log('player is ready');
      });    
 });
