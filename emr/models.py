@@ -125,8 +125,15 @@ class EncounterEvent(models.Model):
     def video_seconds(self):
         import datetime
         import time
+        # find the Encounter (Wish I had made a foreignkey would be much easier to find)
+        for encounter in Encounter.objects.all():
+            if self in encounter.events.all():
+                encounter = encounter
+                break
+        x = encounter.datetime
+        e = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
         x = self.datetime
-        return int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
+        e = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
 
         
 class EventSummary(models.Model):
