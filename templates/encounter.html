@@ -66,7 +66,7 @@ enctype="multipart/form-data">
 <strong>Note:</strong> {{ encounter.note }}
 {% endif %}
 {% if encounter.video %}
-<video id="video" class="video-js vjs-default-skin"
+<video id="video" onloadedmetadata="alert('Got loadedmetadata!')" class="video-js vjs-default-skin"
   controls preload="auto" width="640" height="264"
   poster=""
   data-setup='{"example_option":true}'>
