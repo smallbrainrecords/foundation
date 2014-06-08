@@ -126,7 +126,7 @@ class EncounterEvent(models.Model):
         import datetime
         import time
         x = self.datetime
-        return int(datetime.timedelta(hours=x.tm_hour,minutes=x.tm_min,seconds=x.tm_sec).total_seconds())
+        return int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
 
         
 class EventSummary(models.Model):
