@@ -20,9 +20,19 @@
 <script>
   
   $(function() {
-  	    window.myPlayer = _V_("video");
-	        window.myPlayer.play();
+  	
+  	function loadStart() {
+  		 window.myPlayer = _V_("video");
+  		window.myPlayer.play();
 	        window.myPlayer.currentTime(7);
+  	}
+  	   
+  	        function init()
+		{
+		    video.addEventListener('loadedmetadata', loadStart, false);
+		}
+		document.addEventListener("DOMContentLoaded", init, false);
+	    
     });
 </script>
 <a href="/patient/{{ patient.id }}/">Go back to patient {{ patient.get_full_name }}</a>
