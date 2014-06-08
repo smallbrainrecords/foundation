@@ -18,26 +18,29 @@
 <link href="//vjs.zencdn.net/4.2/video-js.css" rel="stylesheet">
 <script src="//vjs.zencdn.net/4.2/video.js"></script>
 <script>
-var player = videojs('my_video_1');
-
-player.ready(function() {
-  console.log('player is ready');
-  
-  $('#0s').click(function(e){
-    e.preventDefault();
-    player.currentTime(0);
-  });
-  
-  $('#10s').click(function(e){
-    e.preventDefault();
-    player.currentTime(10);
-  });
-  
-  $('#20s').click(function(e){
-    e.preventDefault();
-    player.currentTime(20);
-  });
+$(function() {
+      var player = videojs('my_video_1');
+     
+     player.ready(function() {
+       console.log('player is ready');
+       
+       $('#0s').click(function(e){
+         e.preventDefault();
+         player.currentTime(0);
+       });
+       
+       $('#10s').click(function(e){
+         e.preventDefault();
+         player.currentTime(10);
+       });
+       
+       $('#20s').click(function(e){
+         e.preventDefault();
+         player.currentTime(20);
+       });
+     });    
 });
+
 </script>
  
   <video id="my_video_1" class="video-js vjs-default-skin" controls autoplay preload="auto" width="640px" height="360px" data-setup='{}'>
