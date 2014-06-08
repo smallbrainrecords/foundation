@@ -66,7 +66,9 @@ enctype="multipart/form-data">
 <table>
 
 <tr><th style="width:40px">Time</th><th>Summary</th></tr>
+<tr><td>{{ encounter.starttime|date:"H:i:s" }}</td><td>Encounter started</td>
 {% for event in events %}
 <tr><td>{{ event.datetime|date:"H:i:s" }}</td><td>{{ event.event.summary|safe }}</td>
 {% endfor %}
+<tr><td>{{ encounter.stoptime|date:"H:i:s" }}</td><td>Encounter stopped</td>
 </table>
