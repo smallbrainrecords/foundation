@@ -15,18 +15,16 @@
 
 <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 <script src="//cdn.jsdelivr.net/jplayer/2.6.1/jquery.jplayer.min.js"></script>
-<link href="//vjs.zencdn.net/4.6/video-js.css" rel="stylesheet">
-<script src="//vjs.zencdn.net/4.6/video.js"></script>
+<link href="//vjs.zencdn.net/4.2/video-js.css" rel="stylesheet">
+<script src="//vjs.zencdn.net/4.2/video.js"></script>
 <script>
-function loadStart() {
-	videojs("video").ready(function(){
-  window.myPlayer = this;
-  		window.myPlayer.play();
-	        window.myPlayer.currentTime(7);
+var player = videojs('video');
 
+player.ready(function() {
+  console.log('player is ready');
+  player.currentTime(10);
+  
 });
-  		 
-  	}
 </script>
 <a href="/patient/{{ patient.id }}/">Go back to patient {{ patient.get_full_name }}</a>
 {% if not encounter.audio %}
