@@ -65,10 +65,10 @@ enctype="multipart/form-data">
 {% endif %}
 <table>
 
-<tr><th style="width:40px">Time</th><th>Summary</th></tr>
-<tr><td>{{ encounter.starttime|date:"H:i:s" }}</td><td>Encounter started</td>
+<tr><th style="width:20px">Time (24 hour)</th><th style="width:20px">Video timestamp</th><th>Summary</th></tr>
+<tr><td>{{ encounter.starttime|date:"H:i:s" }}</td><td>0 seconds</td><td>Encounter started</td>
 {% for event in events %}
-<tr><td>{{ event.datetime|date:"H:i:s" }}</td><td>{{ event.event.summary|safe }}</td>
+<tr><td>{{ event.datetime|date:"H:i:s" }}</td><td>{{ event.video_seconds }} seconds</td><td>{{ event.event.summary|safe }}</td>
 {% endfor %}
-<tr><td>{{ encounter.stoptime|date:"H:i:s" }}</td><td>Encounter stopped</td>
+<tr><td>{{ encounter.stoptime|date:"H:i:s" }}</td><td></td><td>Encounter stopped</td>
 </table>
