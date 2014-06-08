@@ -1034,7 +1034,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             } else {
             	var for_problem = ' (for problem '+todo['for_problem']+')';
             }
-            html = '<div><input type="checkbox" target="todo" attr="authenticated" id="'+todo['todo_id']+'" /> '+todo['todo']+for_problem;
+            html = '<div><input type="checkbox" target="todo" attr="accomplished" id="'+todo['todo_id']+'" /> '+todo['todo']+for_problem;
             html += '</div>';
             $('#todos').append(html)
         }
