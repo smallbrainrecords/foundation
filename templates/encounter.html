@@ -1,3 +1,4 @@
+<title>Encounter</title>
 <style>
      body {background:white;     font:15px arial,sans-serif;}
      table {
@@ -19,11 +20,11 @@
 <script>
   
   $(function() {
-  	videojs("video").ready(function(){
-  		window.myPlayer = this;
-
-
-	});
+  	    VideoJS.DOMReady(function() {
+	        window.myPlayer = VideoJS.setup("video");
+	        window.myPlayer.play();
+	        window.myPlayer.currentTime(7);
+	    });
     });
 </script>
 <a href="/patient/{{ patient.id }}/">Go back to patient {{ patient.get_full_name }}</a>
