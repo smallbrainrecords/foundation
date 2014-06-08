@@ -122,6 +122,11 @@ class EncounterEvent(models.Model):
     def get_dict(self):
         return instance_dict(self)
 
+    def video_seconds(self):
+        import datetime
+        import time
+        x = self.datetime
+        return int(datetime.timedelta(hours=x.tm_hour,minutes=x.tm_min,seconds=x.tm_sec).total_seconds())
 
         
 class EventSummary(models.Model):
