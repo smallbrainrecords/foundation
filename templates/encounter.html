@@ -8,6 +8,7 @@
  	border:1px solid #000;
  	padding:10px;
  	text-align:left;
+ 	vertical-align:top;
  }
 </style>
 
@@ -70,5 +71,5 @@ enctype="multipart/form-data">
 {% for event in events %}
 <tr><td>{{ event.datetime|date:"H:i:s" }}</td><td>{{ event.video_seconds }} seconds</td><td>{{ event.event.summary|safe }}</td>
 {% endfor %}
-<tr><td>{{ encounter.stoptime|date:"H:i:s" }}</td><td></td><td>Encounter stopped</td>
+<tr><td>{{ encounter.stoptime|date:"H:i:s" }}</td><td>seconds</td><td>Encounter stopped</td>
 </table>
