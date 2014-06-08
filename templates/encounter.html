@@ -20,11 +20,9 @@
 <script>
   
   $(function() {
-  	    VideoJS.DOMReady(function() {
-	        window.myPlayer = VideoJS.setup("video");
+  	    window.myPlayer = _V_("video");
 	        window.myPlayer.play();
 	        window.myPlayer.currentTime(7);
-	    });
     });
 </script>
 <a href="/patient/{{ patient.id }}/">Go back to patient {{ patient.get_full_name }}</a>
