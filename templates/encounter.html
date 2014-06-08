@@ -18,7 +18,7 @@
 <link href="//vjs.zencdn.net/4.2/video-js.css" rel="stylesheet">
 <script src="//vjs.zencdn.net/4.2/video.js"></script>
 <script>
-var player = videojs('video');
+var player = videojs('myvideo');
 
 player.ready(function() {
   console.log('player is ready');
@@ -57,7 +57,7 @@ enctype="multipart/form-data">
 <strong>Note:</strong> {{ encounter.note }}
 {% endif %}
 {% if encounter.video %}
-<video id="video" onloadedmetadata="alert('Got loadedmetadata!'); loadStart();" class="video-js vjs-default-skin"
+<video id="myvideo"  class="video-js vjs-default-skin"
   controls preload="auto" width="640" height="264"
   poster=""
   data-setup='{"example_option":true}'>
