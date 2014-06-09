@@ -26,7 +26,16 @@ $(function() {
      });    
      setInterval(function() {
          $('#current_time').html(Math.floor( window.player.currentTime()));
-         $('#'+Math.floor( window.player.currentTime())+'_seconds').css({'background': 'yellow'});
+         var elements = [];
+    
+          $("tr").each(function(){
+             elements.push(this.id); 
+          });
+          
+          if (jQuery.inArray( window.player.currentTime())+'_seconds', elements.toString()) != -1) {
+               $('tr').css({'background': 'white'});
+              $('#'+Math.floor( window.player.currentTime())+'_seconds').css({'background': 'yellow'});
+          }
      }, 500);
 });
 
