@@ -135,7 +135,12 @@ class EncounterEvent(models.Model):
         x = self.datetime
         e = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
         return e - s
-
+        
+    def video_timestamp(self):
+        seconds = self.video_seconds()
+        h = seconds // 60
+        s = seconds % 60
+        return '%s:%s' % (h, s)
         
 class EventSummary(models.Model):
     patient = models.ForeignKey(User)
