@@ -816,6 +816,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
         data = raw_data.problems['not_active'];
         window.problems = data.problems;
         $('#problems').append(html);
+        html = '';
         for (var i=0;i<data.length;i++) {
             var problem = data[i];
             relationships = '<ul>';
