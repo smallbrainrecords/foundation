@@ -538,8 +538,15 @@ $('#reset').click(function() {
             var target = 'problem';
         }
         if (saved_encounter != true) {
-        	$.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+target+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+            if ($(this).attr('attr') == 'accomplished' && $(this).attr('target') == 'todo') {
+            	$(this).parent().hide();
+            	var summary = 'Marked todo "'+$(this).attr('content')+'" as accomplised';
+            	$.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
+            } else {
+            	$.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+target+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+
+            }
         }
         if ($(this).attr('attr') == 'accomplished' && $(this).attr('target') == 'todo') {
             	$(this).parent().hide();
@@ -1056,7 +1063,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             	var for_problem = ' (for problem '+todo['for_problem']+')';
             }
             html = '<div><input type="checkbox" target="todo" attr="accomplished" ';
-            html += 'id="'+todo['todo_id']+'" /> '+todo['todo']+for_problem;
+            html += 'id="'+todo['todo_id']+'" content="'+todo['todo']+for_problem+'" /> '+todo['todo']+for_problem;
             html += '</div>';
             $('#todos').append(html)
         }
