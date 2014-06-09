@@ -530,9 +530,14 @@ $('#reset').click(function() {
             
         } else if ($(this).attr('attr') != 'problem') {
             $.post('/change_status/', {'target': $(this).attr('target'), 'id': $(this).attr('id'), 'value': $(this).is(':checked'), 'attr': $(this).attr('attr')});
- 	    
- 	    $.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+$(this).attr('target')+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
-            
+ 	    if ($(this).attr('attr') == 'accomplished' && $(this).attr('target') == 'todo') {
+            	$(this).parent().hide();
+            	var summary = 'Marked todo "'+$(this).attr('content')+'" as accomplised';
+            	$.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+
+            } else {
+ 	        $.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+$(this).attr('target')+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+            }
             saved_encounter = true;
         } else {
             var target = 'problem';
