@@ -512,6 +512,10 @@ $('#reset').click(function() {
          $.post('/save_encounter_event/', {'summary': 'Typing in a new event summary', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
          
      });
+     $(document).on("click", ".mark_working_on", function() {
+     	 $.post('/save_encounter_event/', {'summary': $(this).attr('summary'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+
+     })
 // ENCOUNTER POST FOR CLICKS.
     $(document).on("change", "input:checkbox", function(e) {
     	var saved_encounter = false;
@@ -1069,7 +1073,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             }
             html = '<div><input type="checkbox" target="todo" attr="accomplished" ';
             html += 'id="'+todo['todo_id']+'" content="'+todo['todo']+for_problem+'" /> '+todo['todo']+for_problem;
-            html += '<input class="mark_working_on" type="button" value="I\'m working on this todo" ';
+            html += ' <input class="mark_working_on" type="button" value="I\'m working on this todo" ';
             html += 'summary="Working on todo \"'+todo['todo']+for_problem+'\"" />';
             html += '</div>';
             $('#todos').append(html)
