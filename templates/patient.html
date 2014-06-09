@@ -500,6 +500,12 @@ $('#reset').click(function() {
         window.location = '/pain/create_pain_avatar/';
     });
 });
+
+     $('#addEvent').click(function() {
+         
+         $.post('/save_encounter_event/', {'summary': $('#doing_summary').val(), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+
+     });
 // ENCOUNTER POST FOR CLICKS.
     $(document).on("change", "input:checkbox", function(e) {
     	var saved_encounter = false;
@@ -1446,6 +1452,7 @@ background:#FFF;
      </select>
      {% endif %}
      </div>
-     <div id="encounter_summary"><strong>What are you doing right now?</strong> <input type="text" id="doing_summary" /><input type="button" id="addEvent" value="Add event summary" /></div>
+     <div id="encounter_summary"><strong>What are you doing right now?</strong> 
+     <input type="text" id="doing_summary" /><input type="button" id="addEvent" value="Add event summary" /></div>
 </body>
 </html>
