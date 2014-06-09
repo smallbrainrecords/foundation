@@ -25,7 +25,8 @@ $(function() {
          console.log('player is ready');
      });    
      setInterval(function() {
-         $('#current_time').html(window.player.currentTime());
+         $('#current_time').html(Math.floor( window.player.currentTime()));
+         $('#'+Math.floor( window.player.currentTime())+'_seconds').css({'background': 'yellow'});
      }, 500);
 });
 
@@ -69,7 +70,7 @@ enctype="multipart/form-data">
 <table>
 
 <tr><th style="width:20px">Time (24 hour)</th><th style="width:20px">Video timestamp</th><th>Summary</th></tr>
-<tr><td>{{ encounter.starttime|date:"H:i:s" }}</td><td>
+<tr id="{{ event.video_seconds }}_seconds"><td>{{ encounter.starttime|date:"H:i:s" }}</td><td>
 <input type="button" value="0:00" onclick="window.player.play();window.player.currentTime(0);" />
 </td><td>Encounter started</td>
 {% for event in events %}
