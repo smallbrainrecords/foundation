@@ -19,11 +19,14 @@
 <script src="//vjs.zencdn.net/4.2/video.js"></script>
 <script>
 $(function() {
-      window.player = videojs('myvideo');
+     window.player = videojs('myvideo');
      
      window.player.ready(function() {
-       console.log('player is ready');
+         console.log('player is ready');
      });    
+     setInterval(function() {
+         $('#current_time').html(window.player.currentTime);
+     }, 500);
 });
 
 </script>
@@ -61,7 +64,7 @@ enctype="multipart/form-data">
 {% if encounter.video %}
   <video id="myvideo" class="video-js vjs-default-skin" controls preload="auto" width="640px" height="360px" data-setup='{}'>
    <source src="/media/{{ encounter.video }}" type='video/mp4'>
-  </video>
+  </video><span id="current_time"></span>
 {% endif %}
 <table>
 
