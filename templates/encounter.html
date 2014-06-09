@@ -31,9 +31,7 @@ $(function() {
           $("tr").each(function(){
              elements.push(this.id); 
           });
-          console.log(Math.floor(window.player.currentTime())+'_seconds')
-          console.log(elements.toString());
-          console.log(jQuery.inArray( Math.floor(window.player.currentTime())+'_seconds', elements));
+          
           if (jQuery.inArray( Math.floor(window.player.currentTime())+'_seconds', elements) != -1) {
                $('tr').css({'background': 'white'});
               $('tr#'+Math.floor( window.player.currentTime())+'_seconds').css({'background': 'yellow'});
