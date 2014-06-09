@@ -140,6 +140,8 @@ class EncounterEvent(models.Model):
         seconds = self.video_seconds()
         h = seconds // 60
         s = seconds % 60
+        if s < 10:
+            s = '0' + int(s)
         return '%s:%s' % (h, s)
         
 class EventSummary(models.Model):
