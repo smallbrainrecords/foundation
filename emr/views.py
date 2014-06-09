@@ -555,6 +555,12 @@ def encounter(request, encounter_id):
     context = RequestContext(request, context)
     return render_to_response("encounter.html", context)
 
+def save_patient_summary(request, patient_id):
+    profile = UserProfile.objects.get(user=User.objects.get(id=patient_id))
+    profile.summary = request.POST['summary']
+    profile.save()
+    return HttpResponseRedirect('/patient/%s/' % (patient_id))
+
 from django.core.urlresolvers import reverse
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
