@@ -141,7 +141,7 @@ class EncounterEvent(models.Model):
         h = seconds // 60
         s = seconds % 60
         if s < 10:
-            s = '0' + int(s)
+            s = '0' + str(s)
         return '%s:%s' % (h, s)
         
 class EventSummary(models.Model):
