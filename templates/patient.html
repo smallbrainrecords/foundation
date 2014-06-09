@@ -514,7 +514,7 @@ $('#reset').click(function() {
      });
      $(document).on("click", ".mark_working_on", function(e) {
      	 $.post('/save_encounter_event/', {'summary': $(this).attr('summary'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
-         $('#encounter_summary').append($(this).parent().outerHTML;
+         $('#encounter_summary').append($(this).parent().outerHTML);
      })
 // ENCOUNTER POST FOR CLICKS.
     $(document).on("change", "input:checkbox", function(e) {
