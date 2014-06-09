@@ -1440,7 +1440,7 @@ background:#FFF;
 
 
 <h3>Encounters</h3>
-<div id="encounter_buttons"></div>
+
 <ul>
      {% for encounter in encounters %}
      <li><a href="/encounter/{{ encounter.id }}/">{{ encounter.starttime }}</a></li>
@@ -1459,7 +1459,9 @@ background:#FFF;
      {% endif %}
      </div>
      </div>
-     <div id="encounter_summary"><strong>What are you doing right now?</strong> 
+     <div id="encounter_summary">
+     <span id="encounter_buttons"></span>
+     <strong>What are you doing right now?</strong> 
      <input type="text" id="doing_summary" /><input type="button" id="addEvent" value="Add event summary" /></div>
 </body>
 </html>
