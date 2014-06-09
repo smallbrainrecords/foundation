@@ -1366,6 +1366,13 @@ background:#FFF;
 	display:none;
 	
 }
+#encounter_summary {
+	background:yellow;
+	position:fixed;
+	left:0;
+	right:0;
+	bottom:0;
+}
 </style>
 </head>
 <body>
@@ -1431,5 +1438,6 @@ background:#FFF;
      </select>
      {% endif %}
      </div>
+     <div id="encounter_summary"><strong>What are you doing right now?</strong> <input type="text" id="doing_summary" /><input type="button" id="addEvent" value="Add event summary" /></div>
 </body>
 </html>
