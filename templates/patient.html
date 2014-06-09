@@ -283,9 +283,10 @@
 $(function() {
 {% if current_encounter %}
 window.encounter_id = {{ current_encounter.id }};
-
+$('#encounter_input').show();
 $('#encounter_buttons').html('<input type="button" id="stop_encounter" value="Stop encounter" /><input type="button" id="view_encounter" value="View encounter" />');
 {% else %}
+$('#encounter_input').hide();
 $('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start encounter" />');
 {% endif %}
 var problems;
@@ -1339,11 +1340,12 @@ if (annyang) {
               window.encounter_id = data;
          });
         $('#encounter_buttons').html('<input type="button" id="stop_encounter" value="Stop encounter" /><input type="button" id="view_encounter" value="View encounter" />');
-
+        $('#encounter_input').show();
     });
     $(document).on('click', '#stop_encounter', function() {
          $.get('/stop_encounter/'+window.encounter_id+'/');
          $('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start encounter" />');
+         $('#encounter_input').hide();
     });
     $(document).on('click', '#view_encounter', function() {
          window.location = '/encounter/'+window.encounter_id+'/';
@@ -1461,7 +1463,10 @@ background:#FFF;
      </div>
      <div id="encounter_summary">
      <span id="encounter_buttons"></span>
+     <span id="encounter_input">
      <strong>What are you doing right now?</strong> 
-     <input type="text" id="doing_summary" /><input type="button" id="addEvent" value="Add event summary" /></div>
+     <input type="text" id="doing_summary" /><input type="button" id="addEvent" value="Add event summary" />
+     	</span>
+     </div>
 </body>
 </html>
