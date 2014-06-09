@@ -59,7 +59,7 @@ enctype="multipart/form-data">
 <strong>Note:</strong> {{ encounter.note }}
 {% endif %}
 {% if encounter.video %}
-  <video id="myvideo" class="video-js vjs-default-skin" controls autoplay preload="auto" width="640px" height="360px" data-setup='{}'>
+  <video id="myvideo" class="video-js vjs-default-skin" controls preload="auto" width="640px" height="360px" data-setup='{}'>
    <source src="/media/{{ encounter.video }}" type='video/mp4'>
   </video>
 {% endif %}
