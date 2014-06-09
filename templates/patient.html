@@ -504,7 +504,7 @@ $('#reset').click(function() {
      $('#addEvent').click(function() {
          
          $.post('/save_encounter_event/', {'summary': $('#doing_summary').val(), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
-
+         $('#doing_summary').val('');
      });
 // ENCOUNTER POST FOR CLICKS.
     $(document).on("change", "input:checkbox", function(e) {
