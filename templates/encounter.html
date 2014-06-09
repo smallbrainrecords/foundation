@@ -70,11 +70,11 @@ enctype="multipart/form-data">
 <table>
 
 <tr><th style="width:20px">Time (24 hour)</th><th style="width:20px">Video timestamp</th><th>Summary</th></tr>
-<tr id="{{ event.video_seconds }}_seconds"><td>{{ encounter.starttime|date:"H:i:s" }}</td><td>
+<tr><td>{{ encounter.starttime|date:"H:i:s" }}</td><td>
 <input type="button" value="0:00" onclick="window.player.play();window.player.currentTime(0);" />
 </td><td>Encounter started</td>
 {% for event in events %}
-<tr><td>{{ event.datetime|date:"H:i:s" }}</td>
+<tr id="{{ event.video_seconds }}_seconds"><td>{{ event.datetime|date:"H:i:s" }}</td>
 <td><input type="button" value="{{ event.video_timestamp }}" onclick="window.player.play();window.player.currentTime({{ event.video_seconds }});" />
 </td><td>{{ event.event.summary|safe }}</td>
 {% endfor %}
