@@ -32,7 +32,7 @@ $(function() {
              elements.push(this.id); 
           });
           
-          if (jQuery.inArray( window.player.currentTime())+'_seconds', elements.toString()) != -1) {
+          if (jQuery.inArray( Math.floor(window.player.currentTime())+'_seconds', elements.toString()) != -1) {
                $('tr').css({'background': 'white'});
               $('#'+Math.floor( window.player.currentTime())+'_seconds').css({'background': 'yellow'});
           }
