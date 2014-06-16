@@ -1440,7 +1440,7 @@ background:#FFF;
 
 {% if patient_profile.portrait_image %}<img src="{{ patient_profile.portrait_image.url }}" style="max-width:50%; max-height:25%;" /><br/>{% endif %}
 <form action="/add_patient_summary/{{ patient.id }}/" method="POST">
-	<strong>Who I am:</strong> <textarea name="summary" rows="4" cols="50">{{ patient_profile.summary }}</textarea>
+	<strong>Who I am:<br></strong> <textarea name="summary" rows="4" cols="50">{{ patient_profile.summary }}</textarea>
 	<input type="submit" value="Save" />
 </form>
 
