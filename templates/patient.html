@@ -1092,7 +1092,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             html += '</div>';
             $('#accomplished_todos').append(html)
         }
-        if (typeof window.current_window != 'undefined') {
+        if (typeof window.current_problem != 'undefined') {
 	        $('#show').html($('#problem_container_'+window.current_problem).html());
 	        $('#show > #problem_'+window.current_problem).css({'display': 'block', 'position': 'fixed', 'z-index': 2, 'top': '0', 'left': '0', 'width': '100%'});
 	        var bottom = $('#show > #problem_'+window.current_problem).position().top + $('#problem_'+window.current_problem).outerHeight(true);
