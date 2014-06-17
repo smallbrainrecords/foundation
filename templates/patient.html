@@ -688,15 +688,15 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             } else {
                 checked = '';
             }
-            status = '<ul><li><input class="status" attr="authenticated" target="problem" id="'+problem['problem_id']+'" ';
-            status += 'type="checkbox" '+checked+'/> Is authenticated</li>';
+            status = '<ul><input class="status" attr="authenticated" target="problem" id="'+problem['problem_id']+'" ';
+            status += 'type="checkbox" '+checked+'/> Is authenticated';
             if (problem['is_controlled'] == true) {
                 checked = ' checked ';
             } else {
                 checked = '';
             }
-            status += '<li><input type="checkbox" attr="is_controlled" target="problem" id="'+problem['problem_id']+'" '+checked+'/> ';
-            status += 'Is controlled</li>';
+            status += '<input type="checkbox" attr="is_controlled" target="problem" id="'+problem['problem_id']+'" '+checked+'/> ';
+            status += 'Is controlled';
             if (problem['is_active'] == true) {
                 checked = ' checked ';
             } else {
