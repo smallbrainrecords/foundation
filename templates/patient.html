@@ -777,7 +777,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             todos += '</ul>';
             
             // Notes: both the physian and the patient have their own note space for documenting the problem.  A physician can only edit the physician's note, and a physician can ONLY view the patient's note.  A patient can ONLY view the physician's note, and a patient can edit a patient note.  The most recent version of a note is read from database each time the problem is visited.
-            notes = '<table id="note_'+problem['problem_id']+'">';
+            //notes = '<table id="note_'+problem['problem_id']+'">';
             var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
             current_physician_note = '';
             if (problem['notes']['by_physician'].length > 0) {
@@ -810,7 +810,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             
             // cols="50"    notes += '<tr><td colspan="2"><strong>Add:</strong> <textarea id="note_input_'+problem['problem_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" /></td></tr>';
             // notes += '<div>By physician<div>By patient</th></tr>';
-            notes += '<div>'+current_physician_note+'</div><div>'+current_patient_note+'</div>';
+            notes = '<div>'+current_physician_note+'</div><div>'+current_patient_note+'</div>';
             //for (var j=0;j<problem['notes'].length;j++) {
             //    notes += '<tr><td colspan="5">(by '+problem['notes'][j]['by']+') '+problem['notes'][j]['note']+'</td></tr>';
             //}
