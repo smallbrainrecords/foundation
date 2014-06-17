@@ -808,13 +808,13 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                  
             }
             
-            //notes += '<tr><td colspan="2"><strong>Add:</strong> <textarea id="note_input_'+problem['problem_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" /></td></tr>';
-            notes += '<tr><th>By physician</th><th>By patient</th></tr>';
-            notes += '<tr><td>'+current_physician_note+'</td><td>'+current_patient_note+'</td></tr>';
+            // cols="50"    notes += '<tr><td colspan="2"><strong>Add:</strong> <textarea id="note_input_'+problem['problem_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" /></td></tr>';
+            // notes += '<div>By physician<div>By patient</th></tr>';
+            notes += '<div>'+current_physician_note+'<div>patient_note+'</div>';
             //for (var j=0;j<problem['notes'].length;j++) {
             //    notes += '<tr><td colspan="5">(by '+problem['notes'][j]['by']+') '+problem['notes'][j]['note']+'</td></tr>';
             //}
-            notes += '</table>';
+            //notes += '</table>';
             
             
             var image_form = '<form action="/upload_image_to_problem/'+problem['problem_id']+'/" method="post" enctype="multipart/form-data"><label for="file">File:</label><input type="file" name="file" id="file"><input type="submit" name="submit" value="Submit"></form>';
@@ -921,11 +921,11 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                  if (problem['goals'][j]['notes'].length > 0) {
                      current_physician_note = problem['goals'][j]['notes'][0]['note'];
                      console.log(current_physician_note);
-                     current_physician_note = '<textarea id="note_input_for_goal_'+problem['goals'][j]['id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['goals'][j]['id']+'" target="note_input_for_goal_'+problem['goals'][j]['id']+'" object_type="note_for_goal" class="submit_data" />';
+                     current_physician_note = '<strong>Physician note:<br></strong><textarea id="note_input_for_goal_'+problem['goals'][j]['id']+'" value="'+current_physician_note+'" cols="50" >'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['goals'][j]['id']+'" target="note_input_for_goal_'+problem['goals'][j]['id']+'" object_type="note_for_goal" class="submit_data" />';
                           
                      
                  } else {
-                     current_physician_note = '<textarea id="note_input_for_goal_'+problem['goals'][j]['id']+'" value="'+current_physician_note+'" /><input type="button" value="Submit" parent="'+problem['goals'][j]['id']+'" target="note_input_for_goal_'+problem['goals'][j]['id']+'" object_type="note_for_goal" class="submit_data" />';
+                     current_physician_note = '<strong>Physician note:<br></strong><textarea id="note_input_for_goal_'+problem['goals'][j]['id']+'" value="'+current_physician_note+'" cols="50" /><input type="button" value="Submit" parent="'+problem['goals'][j]['id']+'" target="note_input_for_goal_'+problem['goals'][j]['id']+'" object_type="note_for_goal" class="submit_data" />';
                           
                      
                       
