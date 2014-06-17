@@ -684,21 +684,21 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             relationships += '<li>'+select+'</li>';
             //relationships += '<li><strong>Affects:</strong> '+affects+'</li></ul>';
             status = '';
-            if (problem['is_authenticated'] == true) {
+            if (problem['is_controlled'] == true) {
                 checked = ' checked ';
             } else {
                 checked = '';
             }
              status += '<input type="checkbox" attr="is_controlled" target="problem" id="'+problem['problem_id']+'" '+checked+'/> ';
             status += 'Is controlled&nbsp&nbsp&nbsp&nbsp';
-            if (problem['is_active'] == true) {
+            if (problem['is_authenticated'] == true) {
                 checked = ' checked ';
             } else {
                 checked = '';
             }
-            status += '<ul><input class="status" attr="authenticated" target="problem" id="'+problem['problem_id']+'" ';
+            status += '<input class="status" attr="authenticated" target="problem" id="'+problem['problem_id']+'" ';
             status += 'type="checkbox" '+checked+'/> Is authenticated&nbsp&nbsp&nbsp&nbsp';
-            if (problem['is_controlled'] == true) {
+            if (problem['is_active'] == true) {
                 checked = ' checked ';
             } else {
                 checked = '';
