@@ -811,7 +811,8 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             
             // cols="50"    notes += '<tr><td colspan="2"><strong>Add:</strong> <textarea id="note_input_'+problem['problem_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" /></td></tr>';
             // notes += '<div>By physician<div>By patient</th></tr>';
-            notes = '<div>'+current_physician_note+'</div><div>'+current_patient_note+'</div>';
+            notes = '<div><strong>Physician note:</strong><br/>'+current_physician_note+'</div>'
+            notes += '<div><strong>Patient note:</strong><br/>'+current_patient_note+'</div>';
             //for (var j=0;j<problem['notes'].length;j++) {
             //    notes += '<tr><td colspan="5">(by '+problem['notes'][j]['by']+') '+problem['notes'][j]['note']+'</td></tr>';
             //}
