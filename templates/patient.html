@@ -650,8 +650,8 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             	    select += '</li>';
                 }
             }
-            select += "</ul>";
-            select += problem['problem_name']+"<br/><ul style='background:gray'>";
+            select += "</ul>&darr;<br/>";
+            select += problem['problem_name']+"<br/>&darr;<br/><ul style='background:gray'>";
             for (var j=0; j<data.length;j++) {
             	
                 if (data[j]['problem_name'] != problem['problem_name']) {
