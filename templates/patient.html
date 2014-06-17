@@ -683,6 +683,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             relationships += 'target="problem_start_date_'+problem['problem_id']+'" object_type="problem_start_date" class="submit_data"/></li>';
             relationships += '<li>'+select+'</li>';
             //relationships += '<li><strong>Affects:</strong> '+affects+'</li></ul>';
+            status = '';
             if (problem['is_authenticated'] == true) {
                 checked = ' checked ';
             } else {
@@ -695,7 +696,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             } else {
                 checked = '';
             }
-            status = '<ul><input class="status" attr="authenticated" target="problem" id="'+problem['problem_id']+'" ';
+            status += '<ul><input class="status" attr="authenticated" target="problem" id="'+problem['problem_id']+'" ';
             status += 'type="checkbox" '+checked+'/> Is authenticated&nbsp&nbsp&nbsp&nbsp';
             if (problem['is_controlled'] == true) {
                 checked = ' checked ';
