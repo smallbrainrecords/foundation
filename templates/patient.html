@@ -523,7 +523,12 @@ $('#reset').click(function() {
         if ( $(this).attr('attr') == 'is_controlled' ) {
             $("#problem_"+$(this).attr('id')).removeClass();
             $("#problem_"+$(this).attr('id')).addClass($(this).is(':checked').toString());
-            $.post('/save_encounter_event/', {'summary': 'Physician changed "is controlled" for problem "'+$('#problem_'+$(this).attr('id')).text()+'" to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+            if ($(this).is(':checked') == true) {
+                var marked_as = 'controlled';
+            } else {
+            	var marked_as = 'not controlled';
+            }
+            $.post('/save_encounter_event/', {'summary': 'Marked problem "'+$('#problem_'+$(this).attr('id')).text()+'" as '+marked_as, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
             var target = 'problem';
             saved_encounter = true;
         }
