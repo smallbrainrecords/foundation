@@ -644,7 +644,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             var problem = data[i];
             relationships = '<ul>';
             var select = '<select class="problem_parent submit_data" id="change_problem_parent_'+problem['problem_id']+'" ';
-            select += 'target="change_problem_parent_'+problem['problem_id']+'" object_type="problem_parent" parent="'+problem['problem_id']+'">';
+            select += 'target="change_problem_parent_'+problem['problem_id']+'" object_type="problem_parent" parent_label="problem &quot;'+problem['problem_name']+'&quot;" parent="'+problem['problem_id']+'">';
             select += '<option value="none">none</option>';
             for (var j=0; j<data.length;j++) {
             	
@@ -1170,7 +1170,7 @@ $(document).on('click', '.submit_data', function() {
         console.log(data);
         updateProblems();
     });}
-    $.post('/save_encounter_event/', {'summary': 'Physician added "'+$(this).attr('object_type')+'" to "": '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+    $.post('/save_encounter_event/', {'summary': 'Added "'+$(this).attr('object_type')+'" to '+$(this).attr('parent')+': '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     
     updateProblems();
     $(document).scrollTop( $('#problem_'+window.current_problem).offset().top );  
