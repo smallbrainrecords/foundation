@@ -799,7 +799,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                     checked = '';
                 }
 
-                todos += '<li><input type="checkbox" attr="todo" id="'+problem['todos'][j]['id']+'" '+checked+'/>'+problem['todos'][j]['todo']+'</li>';
+                todos += '<li><input type="checkbox" attr="todo" content="'+problem['todos'][j]['todo']+' (for problem '+problem['problem_name']+')" id="'+problem['todos'][j]['id']+'" '+checked+'/>'+problem['todos'][j]['todo']+'</li>';
             }
             todos += '</ul>';
             
