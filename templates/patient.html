@@ -790,7 +790,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             
             
             todos = '<ul id="todo_'+problem['problem_id']+'">';
-            todos += '<li><strong>Add:</strong> <input type="text" id="todo_input_'+problem['problem_id']+'" /><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="todo_input_'+problem['problem_id']+'" object_type="todo" class="submit_data" /></li>';
+            todos += '<li><strong>Add:</strong> <input type="text" id="todo_input_'+problem['problem_id']+'" /><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="todo_input_'+problem['problem_id']+'" parentlabel="problem &quot;'+problem['problem_name']+'&quot;" object_type="todo" class="submit_data" /></li>';
 
             for (var j=0;j<problem['todos'].length;j++) {
                 if (problem['todos'][j]['accomplished'] == true) {
@@ -1170,7 +1170,7 @@ $(document).on('click', '.submit_data', function() {
         console.log(data);
         updateProblems();
     });}
-    $.post('/save_encounter_event/', {'summary': 'Added "'+$(this).attr('object_type')+'" to '+$(this).attr('parentlabel')+': '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+    $.post('/save_encounter_event/', {'summary': 'Added '+$(this).attr('object_type')+' to '+$(this).attr('parentlabel')+': '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     
     updateProblems();
     $(document).scrollTop( $('#problem_'+window.current_problem).offset().top );  
