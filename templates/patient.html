@@ -1170,7 +1170,7 @@ $(document).on('click', '.submit_data', function() {
         console.log(data);
         updateProblems();
     });}
-    $.post('/save_encounter_event/', {'summary': 'Added "'+$(this).attr('object_type')+'" to '+$(this).attr('parent')+': '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+    $.post('/save_encounter_event/', {'summary': 'Added "'+$(this).attr('object_type')+'" to '+$(this).attr('parent_label')+': '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     
     updateProblems();
     $(document).scrollTop( $('#problem_'+window.current_problem).offset().top );  
