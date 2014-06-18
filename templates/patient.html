@@ -545,7 +545,7 @@ $('#reset').click(function() {
             	$.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
             } else {
-            	if ($(this).attr('attr') == 'is_authenticated') {
+            	if ($(this).attr('attr') == 'authenticated') {
             	    if ($(this).is(':checked') == true) {
 	                var marked_as = 'authenticated';
 	            } else {
