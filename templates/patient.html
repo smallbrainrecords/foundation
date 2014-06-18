@@ -545,23 +545,28 @@ $('#reset').click(function() {
             	$.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
             } else {
-            	if ($(this).attr('attr') == 'authenticated') {
+            	if ($(this).attr('attr') == 'authenticated' && $(this).attr('target') == 'problem') {
             	    if ($(this).is(':checked') == true) {
 	                var marked_as = 'authenticated';
 	            } else {
 	            	var marked_as = 'not authenticated';
 	            }
-            	} else if ($(this).attr('attr') == 'is_active') {
+	            var summary = 'Marked '+$(this).attr('target')+' "'+$('#problem_'+$(this).attr('id')).text()+'" as '+marked_as;
+            	    $.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+
+            	} else if ($(this).attr('attr') == 'is_active' && $(this).attr('target') == 'problem') {
             	    if ($(this).is(':checked') == true) {
 	                var marked_as = 'active';
 	            } else {
 	            	var marked_as = 'not active';
-	            }            		
-            	}
-            	var summary = 'Marked '+$(this).attr('target')+' "'+$('#problem_'+$(this).attr('id')).text()+'" as '+marked_as;
-            	$.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+	            }    
+	            var summary = 'Marked '+$(this).attr('target')+' "'+$('#problem_'+$(this).attr('id')).text()+'" as '+marked_as;
+            	    $.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
+            	} else {
+            	
  	        $.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+$(this).attr('target')+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+            	}
             }
             saved_encounter = true;
         } else {
