@@ -1273,7 +1273,7 @@ if (annyang) {
 	            $('#concept_id').val($('#concept_id').attr('default'));
 	            $('#results').html('');
 	        });
-	        $.post('/save_encounter_event/', {'summary': 'Physician added problem "'+$('#problem_name').val()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+	        $.post('/save_encounter_event/', {'summary': 'Added problem "'+$('#problem_name').val()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
         }
     });
     $('#addGoal').click(function() {
@@ -1313,7 +1313,7 @@ if (annyang) {
         window.scrollTo(0,0);
         $.get('/get_problems/{{ patient.id }}/', {'new_status': '{"scroll_to": "problem_'+$(this).attr('problem')+'", "action": "show", "show_what": ["'+$(this).attr('target')+'"]}'});
         // THIS IS THE ENCOUNTER REFERENCE: 
-        $.post('/save_encounter_event/', {'summary': 'Physician clicked on problem: "'+$('#problem_'+$(this).attr('problem')).text()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+        $.post('/save_encounter_event/', {'summary': 'Clicked on problem: "'+$('#problem_'+$(this).attr('problem')).text()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     });
     $('body').on('click', '.show_nonproblem_goal', function () {
         $('.goal_data').hide();
@@ -1346,7 +1346,8 @@ if (annyang) {
         $(this).addClass('hide_goal');
         
         // THIS IS THE ENCOUNTER REFERENCE: 
-        $.post('/save_encounter_event/', {'summary': 'Physician clicked on problem: "'+$('#problem_'+$(this).attr('problem')).text()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+        // $('#problem_'+$(this).attr('problem')).text()
+        $.post('/save_encounter_event/', {'summary': 'Clicked on goal: "'+''+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     });
     $('body').on('click', '.hide_problem', function () {
     	$('#show').html('');
