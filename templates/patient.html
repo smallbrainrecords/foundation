@@ -1073,11 +1073,11 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             if (goal['notes'].length > 0) {
 	             current_physician_note = goal['notes'][0]['note'];
 	             console.log(current_physician_note);
-	             current_physician_note = '<textarea id="note_input_for_goal_'+goal['goal_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+goal['goal_id']+'" target="note_input_for_goal_'+goal['goal_id']+'" object_type="note_for_goal" class="submit_data" />';
+	             current_physician_note = '<strong>Motivation for setting this goal:</strong><br/><textarea id="note_input_for_goal_'+goal['goal_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+goal['goal_id']+'" target="note_input_for_goal_'+goal['goal_id']+'" object_type="note_for_goal" class="submit_data" />';
 	                  
 	             
 	         } else {
-	             current_physician_note = '<textarea id="note_input_for_goal_'+goal['goal_id']+'" value="'+current_physician_note+'" /><input type="button" value="Submit" parent="'+goal['goal_id']+'" target="note_input_for_goal_'+goal['goal_id']+'" object_type="note_for_goal" class="submit_data" />';
+	             current_physician_note = '<strong>Motivation for setting this goal:</strong><br/><textarea id="note_input_for_goal_'+goal['goal_id']+'" value="'+current_physician_note+'" /><input type="button" value="Submit" parent="'+goal['goal_id']+'" target="note_input_for_goal_'+goal['goal_id']+'" object_type="note_for_goal" class="submit_data" />';
 	                  
 	             
 	              
