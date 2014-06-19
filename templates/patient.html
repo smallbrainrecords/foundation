@@ -773,8 +773,8 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 
                 notes = '<div id="goal_notes_'+problem['goals'][j]['id']+'" class="goal_notes">';
                 notes += '<strong>Start date:</strong> '+problem['goals'][j]['start_date'];
-                notes += '<br/><input type="checkbox" attr="goal" id="'+problem['goals'][j]['id']+'" '+checked+'/> ';
-                notes += '<strong>Is accomplished</strong><br/><input type="checkbox" attr="goal_is_controlled" ';
+                notes += '<br/><input type="checkbox" target="goal" attr="goal" label="'+problem['goals'][j]['goal']+'(for probelm '+problem['problem_name']+')" id="'+problem['goals'][j]['id']+'" '+checked+'/> ';
+                notes += '<strong>Is accomplished</strong><br/><input type="checkbox" target="goal" attr="goal_is_controlled" ';
                 notes += 'id="'+problem['goals'][j]['id']+'" label="'+problem['goals'][j]['goal']+'(for probelm '+problem['problem_name']+')" '+is_controlled_checked+'/> ';
                 notes += '<strong>Is controlled</strong><br/><table id="note_'+problem['problem_id']+'">';
                  var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
