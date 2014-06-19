@@ -1347,6 +1347,7 @@ if (annyang) {
         
         // THIS IS THE ENCOUNTER REFERENCE: 
         // $('#problem_'+$(this).attr('problem')).text()
+        console.log('goal label:'+$(this).attr('goallabel'));
         $.post('/save_encounter_event/', {'summary': 'Clicked on goal: "'+$(this).attr('goallabel')+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     });
     $('body').on('click', '.hide_problem', function () {
