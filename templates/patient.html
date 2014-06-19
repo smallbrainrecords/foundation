@@ -584,7 +584,13 @@ $('#reset').click(function() {
             	$.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
             } else {
-            	$.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+target+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+            	    if ($(this).is(':checked') == true) {
+	                var marked_as = $(this).attr('attr');
+	            } else {
+	            	var marked_as = 'not '+$(this).attr('attr');
+	            }
+ 	            var summary = 'Marked '+$(this).attr('target')+' "'+$(this).attr('label')+'" as '+marked_as;
+            	    $.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
             }
         }
