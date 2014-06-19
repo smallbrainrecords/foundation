@@ -782,11 +782,11 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                  if (problem['goals'][j]['notes'].length > 0) {
                      current_physician_note = problem['goals'][j]['notes'][0]['note'];
                      console.log(current_physician_note);
-                     current_physician_note = '<strong>Motivation for setting this goal:</strong><textarea id="note_input_for_goal_'+problem['goals'][j]['id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['goals'][j]['id']+'" target="note_input_for_goal_'+problem['goals'][j]['id']+'" object_type="note_for_goal" class="submit_data" />';
+                     current_physician_note = '<strong>Motivation for setting this goal:</strong><textarea id="note_input_for_goal_'+problem['goals'][j]['id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['goals'][j]['id']+'" target="note_input_for_goal_'+problem['goals'][j]['id']+'" label="'+problem['goals'][j]['goal']+'(for probelm '+problem['problem_name']+')" object_type="note_for_goal" class="submit_data" />';
                           
                      
                  } else {
-                     current_physician_note = '<strong>Motivation for setting this goal:</strong><textarea id="note_input_for_goal_'+problem['goals'][j]['id']+'" value="'+current_physician_note+'" /><input type="button" value="Submit" parent="'+problem['goals'][j]['id']+'" target="note_input_for_goal_'+problem['goals'][j]['id']+'" object_type="note_for_goal" class="submit_data" />';
+                     current_physician_note = '<strong>Motivation for setting this goal:</strong><textarea id="note_input_for_goal_'+problem['goals'][j]['id']+'" value="'+current_physician_note+'" /><input type="button" value="Submit" parent="'+problem['goals'][j]['id']+'" target="note_input_for_goal_'+problem['goals'][j]['id']+'" label="'+problem['goals'][j]['goal']+'(for probelm '+problem['problem_name']+')" object_type="note_for_goal" class="submit_data" />';
                           
                      
                       
@@ -1181,8 +1181,12 @@ $(document).on('click', '.submit_data', function() {
         console.log(data);
         updateProblems();
     });}
-    $.post('/save_encounter_event/', {'summary': 'Added '+$(this).attr('object_type')+' to '+$(this).attr('parentlabel')+': '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
-    
+    if ($(this).attr('object_type') == 'note_for_goal') {
+    	$.post('/save_encounter_event/', {'summary': 'Changed moviation for goal '+$(this).attr('label')+' to: '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+
+    } else {
+        $.post('/save_encounter_event/', {'summary': 'Added '+$(this).attr('object_type')+' to '+$(this).attr('parentlabel')+': '+val, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+    }
     updateProblems();
     $(document).scrollTop( $('#problem_'+window.current_problem).offset().top );  
     setTimeout(function() { $('#problem_data_'+window.current_problem).show(); },2000);
