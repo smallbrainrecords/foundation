@@ -746,7 +746,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             // Goals: A problem may have zero to many associated with it.  Goals are a way for a patient to define and manage activities that they believe will be of value to them as an individual.  Goals are displayed with the red/green control state.  The goals that have not been set to 'accomplished' are displayed in the problem they are related to.  The note associated with a goal is to describe the motivation for adding that goal.  A GOAL DOES NOT HAVE TO BE ASSOCIATED WITH A PROBLEM.
             goals = '<ul id="goals_'+problem['problem_id']+'" title="goal_'+problem['problem_id']+'">';
             goals += '<li><strong>Add:</strong> <input type="text" id="goal_input_'+problem['problem_id']+'" />';
-            goals += '<input type="button" value="Submit" parent="'+problem['problem_id']+'" ';
+            goals += '<input type="button" value="Submit" parentlabel="problem &quot;'+problem['problem_name']+'&quot;" parent="'+problem['problem_id']+'" ';
             goals += 'target="goal_input_'+problem['problem_id']+'" object_type="goal" class="submit_data" /></li>';
             for (var j=0;j<problem['goals'].length;j++) {
                 if (problem['goals'][j]['accomplished'] == true) {
@@ -810,12 +810,12 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             if (problem['notes']['by_physician'].length > 0) {
                 current_physician_note = problem['notes']['by_physician'][0]['note'];
                 if (role == 'physician') {
-                    current_physician_note = '<textarea id="note_input_'+problem['problem_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" />';
+                    current_physician_note = '<textarea id="note_input_'+problem['problem_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parentlabel="problem &quot;'+problem['problem_name']+'&quot;" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" />';
                      
                 }
             } else {
                 if (role == 'physician') {
-                    current_physician_note = '<textarea id="note_input_'+problem['problem_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" />';
+                    current_physician_note = '<textarea id="note_input_'+problem['problem_id']+'" value="'+current_physician_note+'">'+current_physician_note+'</textarea><input type="button" value="Submit" parentlabel="problem &quot;'+problem['problem_name']+'&quot;" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" />';
                      
                 }
                  
@@ -824,12 +824,12 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             if (problem['notes']['by_patient'].length > 0) {
                 current_patient_note = problem['notes']['by_patient'][0]['note'];
                 if (role == 'patient') {
-                    current_patient_note = '<textarea id="note_input_'+problem['problem_id']+'" value="'+current_patient_note+'">'+current_patient_note+'</textarea><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" />';
+                    current_patient_note = '<textarea id="note_input_'+problem['problem_id']+'" value="'+current_patient_note+'">'+current_patient_note+'</textarea><input type="button" value="Submit" parentlabel="problem &quot;'+problem['problem_name']+'&quot;" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" />';
                      
                 }
             } else {
                 if (role == 'patient') {
-                    current_patient_note = '<textarea id="note_input_'+problem['problem_id']+'" value="'+current_patient_note+'">'+current_patient_note+'</textarea><input type="button" value="Submit" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" />';
+                    current_patient_note = '<textarea id="note_input_'+problem['problem_id']+'" value="'+current_patient_note+'">'+current_patient_note+'</textarea><input type="button" value="Submit" parentlabel="problem &quot;'+problem['problem_name']+'&quot;" parent="'+problem['problem_id']+'" target="note_input_'+problem['problem_id']+'" object_type="note" class="submit_data" />';
                      
                 } 
                  
