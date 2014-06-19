@@ -1081,7 +1081,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             	var for_problem = ' (for problem '+goal['for_problem']+')';
             }
             html = '<div id="goal_'+goal['goal_id']+'" class="'+goal['is_controlled']+'">'+goal['goal']+for_problem;
-            html += ' <input type="button" target="goal_data_'+goal['goal_id']+'" goal="'+goal['goal_id']+'" class="show_nonproblem_goal" value="Show goal" />';
+            html += ' <input type="button" goallabel="'+goal['goal']+for_problem+'" target="goal_data_'+goal['goal_id']+'" goal="'+goal['goal_id']+'" class="show_nonproblem_goal" value="Show goal" />';
             html += '</div>';
             html += '<div class="goal_data" id="goal_data_'+goal['goal_id']+'">'+status;
             html += '</div>';
@@ -1347,7 +1347,7 @@ if (annyang) {
         
         // THIS IS THE ENCOUNTER REFERENCE: 
         // $('#problem_'+$(this).attr('problem')).text()
-        $.post('/save_encounter_event/', {'summary': 'Clicked on goal: "'+''+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+        $.post('/save_encounter_event/', {'summary': 'Clicked on goal: "'+$(this).attr('goallabel')+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     });
     $('body').on('click', '.hide_problem', function () {
     	$('#show').html('');
