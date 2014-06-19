@@ -564,8 +564,13 @@ $('#reset').click(function() {
             	    $.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
             	} else {
-            	
- 	        $.post('/save_encounter_event/', {'summary': 'Physician changed "'+$(this).attr('attr')+'" for '+$(this).attr('target')+' to '+$(this).is(':checked'), 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+            	    if ($(this).is(':checked') == true) {
+	                var marked_as = $(this).attr('attr');
+	            } else {
+	            	var marked_as = 'not '+$(this).attr('attr');
+	            }
+ 	            var summary = 'Marked '+$(this).attr('target')+' "'+$(this).attr('label')+'" as '+marked_as;
+            	    $.post('/save_encounter_event/', {'summary': summary, 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
             	}
             }
             saved_encounter = true;
@@ -764,7 +769,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 notes += '<strong>Start date:</strong> '+problem['goals'][j]['start_date'];
                 notes += '<br/><input type="checkbox" attr="goal" id="'+problem['goals'][j]['id']+'" '+checked+'/> ';
                 notes += '<strong>Is accomplished</strong><br/><input type="checkbox" attr="goal_is_controlled" ';
-                notes += 'id="'+problem['goals'][j]['id']+'" '+is_controlled_checked+'/> ';
+                notes += 'id="'+problem['goals'][j]['id']+'" label="'+problem['goals'][j]['goal']+'(for probelm '+problem['problem_name']+')" '+is_controlled_checked+'/> ';
                 notes += '<strong>Is controlled</strong><br/><table id="note_'+problem['problem_id']+'">';
                  var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
                  current_physician_note = '';
@@ -1255,7 +1260,7 @@ if (annyang) {
 	            $('#concept_id').val($('#concept_id').attr('default'));
 	            $('#results').html('');
 	        });
-	        $.post('/save_encounter_event/', {'summary': 'Physician added problem "'+$('#problem_name').val()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
+	        $.post('/save_encounter_event/', {'summary': 'Added problem "'+$('#problem_name').val()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
     		}
              
