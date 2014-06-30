@@ -4,7 +4,7 @@
 </style>
 
 <title>Dr Ryan's</title>
-
+<h2>Dr Ryan's</h2>
 <h3>Login</h3>
 <form action='/login/' method="post">
 <strong>Email:</strong> <input type="text" name="email" autofocus/>
@@ -19,13 +19,15 @@
 <br/>
 <br/>
 <h3>Register</h3>
-<strong>Email:</strong> <input type="text" name="email" autofocus/>
+<form action="/register/" method="post">
 <p><strong>First time?</strong> All accounts are approved by Dr.Ryan, go ahead and enter your email address, and create a password below and we will be in touch with you soon.</p>
 <br/>
-<strong>Email:</strong> <input type="text" name="emailNew" />
+<strong>Email:</strong> <input type="text" name="email" />
 <br/>
 <strong>Password:</strong> <input type="password" name="password" />
 <br/>
-<strong>Re-enter password:</strong> <input type="password" name="password" />
+<strong>Re-enter password:</strong> <input type="password" name="password_confirm" /><br/>
+<strong>First name:</strong> <input type="text" name="first_name" /><br/>
+<strong>Last name:</strong> <input type="text" name="last_name" />
 <input type="submit" value="Register" />
-
+</form>
