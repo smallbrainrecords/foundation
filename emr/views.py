@@ -43,6 +43,20 @@ def login_user(request):
                 return HttpResponseRedirect('/')
     return render_to_response('login.html', context_instance=RequestContext(request))
 
+def register(request):
+    if request.POST:
+        email = request.POST['email']
+        password = request.POST['password']
+        if request.POST['password'] != request.POST['confirm_password']:
+            return HttpResponseRedirect('/')
+        u,created = User.objects.get_or_create(username=email, email=email)
+        if created:
+            u.set_password(password)
+            u.first_name = request.POST['first_name']
+            u.last_name = request.POST['last_name']
+            u.save()
+        return HttpResponseRedirect('/')
+
 from django.contrib.auth.decorators import user_passes_test
 
 @user_passes_test(lambda u: u.is_superuser)
