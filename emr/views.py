@@ -55,6 +55,11 @@ def register(request):
             u.first_name = request.POST['first_name']
             u.last_name = request.POST['last_name']
             u.save()
+            user = authenticate(username=email, password=password)
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    return HttpResponseRedirect('/')
         return HttpResponseRedirect('/')
 
 from django.contrib.auth.decorators import user_passes_test
