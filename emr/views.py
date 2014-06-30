@@ -47,7 +47,7 @@ def register(request):
     if request.POST:
         email = request.POST['email']
         password = request.POST['password']
-        if request.POST['password'] != request.POST['confirm_password']:
+        if request.POST['password'] != request.POST['password_confirm']:
             return HttpResponseRedirect('/')
         u,created = User.objects.get_or_create(username=email, email=email)
         if created:
