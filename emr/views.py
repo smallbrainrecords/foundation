@@ -555,6 +555,7 @@ def save_event_summary(request):
 
 @login_required
 def encounter(request, encounter_id):
+   
     print 'encounter debug'
     print request.POST
     print request.FILES
@@ -570,6 +571,11 @@ def encounter(request, encounter_id):
         encounter = Encounter.objects.get(id=encounter_id)
         encounter.video = request.FILES['video_file']
         encounter.save()
+    role_of_user_requesting_the_data = UserProfile.objects.get(user=request.user).role    
+    encounter = Encounter.objects.get(id=encounter_id)    
+    patient = encounter.patient        
+    if (not ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician']) or (Sharing.objects.filter(patient=patient, other_patient=request.user)))):
+        return HttpResponse("Not allowed")         
     context = {'encounter': Encounter.objects.get(id=encounter_id), 'events': Encounter.objects.get(id=encounter_id).events.all().order_by('datetime'), 'patient': Encounter.objects.get(id=encounter_id).patient}
     context = RequestContext(request, context)
     return render_to_response("encounter.html", context)
