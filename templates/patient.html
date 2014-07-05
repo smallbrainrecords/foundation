@@ -988,7 +988,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                     checked = '';
                 }
 
-                todos += '<li><label><input type="checkbox" attr="todo" id="'+problem['todos'][j]['id']+'" '+checked+'/></label>'+problem['todos'][j]['todo']+'</li>';
+                todos += '<li><input type="checkbox" attr="todo" id="'+problem['todos'][j]['id']+'" '+checked+'/>'+problem['todos'][j]['todo']+'</li>';
             }
             todos += '</ul>';
             
@@ -1111,8 +1111,8 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             } else {
             	var for_problem = ' (for problem '+todo['for_problem']+')';
             }
-            html = '<div><label><input type="checkbox" target="todo" attr="accomplished" ';
-            html += 'id="'+todo['todo_id']+'" content="'+todo['todo']+for_problem+'" /> </label>'+todo['todo']+for_problem;
+            html = '<div><input type="checkbox" target="todo" attr="accomplished" ';
+            html += 'id="'+todo['todo_id']+'" content="'+todo['todo']+for_problem+'" /> '+todo['todo']+for_problem;
             html += ' <!--<input class="mark_working_on" type="button" value="I\'m working on this todo" ';
             html += 'summary="Working on todo &quot;'+todo['todo']+for_problem+'&quot;" />-->';
             html += '</div>';
