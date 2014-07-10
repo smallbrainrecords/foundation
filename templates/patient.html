@@ -810,7 +810,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                     checked = '';
                 }
 
-                //todos += '<li><input type="checkbox" id="'+problem['todos'][j]['todo_id']+'" attr="accomplished" target="todo" content="'+problem['todos'][j]['todo']+' (for problem '+problem['problem_name']+')" id="'+problem['todos'][j]['id']+'" '+checked+'/>'+problem['todos'][j]['todo']+'</li>';
+                todos += '<li><input type="checkbox" id="'+problem['todos'][j]['todo_id']+'" attr="accomplished" target="todo" content="'+problem['todos'][j]['todo']+' (for problem '+problem['problem_name']+')" id="'+problem['todos'][j]['id']+'" '+checked+'/>'+problem['todos'][j]['todo']+'</li>';
                 todos += '<li><input h="h" type="checkbox" checked target="todo" attr="accomplished" id="'+problem['todos'][j]['todo_id']+'" /> '+problem['todos'][j]['todo']+'</li>';            }
             todos += '</ul>';
             var todos = raw_data['todos']['accomplished'];
