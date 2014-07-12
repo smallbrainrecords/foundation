@@ -776,7 +776,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 notes += '<br/><label><input type="checkbox" aswhat="accomplished" target="goal" attr="goal" label="'+problem['goals'][j]['goal']+'(for probelm '+problem['problem_name']+')" id="'+problem['goals'][j]['id']+'" '+checked+'/></label> ';
                 notes += '<strong>Is accomplished</strong><br/><input type="checkbox" target="goal" attr="goal_is_controlled" ';
                 notes += 'id="'+problem['goals'][j]['id']+'" aswhat="controlled" label="'+problem['goals'][j]['goal']+' (for probelm '+problem['problem_name']+')" '+is_controlled_checked+'/> ';
-                notes += '<strong>Is controlled</strong><br/><table id="note_'+problem['problem_id']+'">';
+                notes += '<strong>Currently succeeding</strong><br/><table id="note_'+problem['problem_id']+'">';
                  var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
                  current_physician_note = '';
                  if (problem['goals'][j]['notes'].length > 0) {
@@ -957,7 +957,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 notes += '<br/><label><input type="checkbox" attr="goal" id="'+problem['goals'][j]['id']+'" '+checked+'/></label> ';
                 notes += '<strong>Is accomplished</strong><br/><label><input type="checkbox" aswhat="controlled" label="'+problem['goals'][j]['goal']+' (for probelm '+problem['problem_name']+')" attr="goal_is_controlled" </label>';
                 notes += 'id="'+problem['goals'][j]['id']+'" '+is_controlled_checked+'/> ';
-                notes += '<strong>Is controlled</strong><br/><table id="note_'+problem['problem_id']+'">';
+                notes += '<strong>Currently succeeding</strong><br/><table id="note_'+problem['problem_id']+'">';
                  var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
                  current_physician_note = '';
                  if (problem['goals'][j]['notes'].length > 0) {
@@ -1064,7 +1064,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 checked = '';
             }
             status += '<li><labe><input type="checkbox" target="goal" aswhat="controlled" label="'+goal['goal']+for_problem+' (for probelm '+problem['problem_name']+')" attr="goal_is_controlled" id="'+goal['goal_id']+'" '+checked+'/> </labe>';
-            status += 'Is controlled</li>';
+            status += 'Currently succeeding</li>';
             if (problem['accomplished'] == true) {
                 checked = ' checked ';
             } else {
