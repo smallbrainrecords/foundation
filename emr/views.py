@@ -32,9 +32,10 @@ def login_user(request):
     if request.POST:
         email = request.POST['email']
         password = request.POST['password']
-        u,created = User.objects.get_or_create(username=email, email=email)
+        u,created = User.objects.get_or_create(username=email)
         if created:
             u.set_password(password)
+            u.email = email
             u.save()
         user = authenticate(username=email, password=password)
         if user is not None:
