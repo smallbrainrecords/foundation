@@ -1065,12 +1065,8 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             }
             status += '<li><labe><input type="checkbox" target="goal" aswhat="controlled"  attr="goal_is_controlled" id="'+goal['goal_id']+'" '+checked+'/> </labe>';
             status += 'Currently succeeding</li>';
-            if (problem['accomplished'] == true) {
-                checked = ' checked ';
-            } else {
-                checked = '';
-            }
-            status += '<li><label><input type="checkbox" target="goal" aswhat="accomplished" attr="goal" id="'+goal['goal_id']+'" '+checked+'/> </label>';
+           
+            status += '<li><label><input type="checkbox" target="goal" aswhat="accomplished" attr="goal" id="'+goal['goal_id']+'" /> </label>';
             status += 'Is accomplished</li>';
             current_physician_note = '';
             if (goal['notes'].length > 0) {
