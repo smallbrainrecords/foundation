@@ -2,6 +2,8 @@
 body {
 	margin-bottom:50px;
 }
+
+     body {background:white;     font:15px arial,sans-serif;}
 .true, .false {
 	font-size:1.25em;
 	padding:10px;
