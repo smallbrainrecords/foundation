@@ -16,15 +16,15 @@
         
         <div id="show"></div>
         <div id="hide">
-            {% if patient_profile.cover_image %}<img src="{{%20patient_profile.cover_image.url%20}}" style="max-width:100%; max-height:50%;"><br>
+            {% if patient_profile.cover_image %}<img src="{{ patient_profile.cover_image.url }}" style="max-width:100%; max-height:50%;"><br>
             {% endif %} <!--<h3>Voice commands</h3>-->
             <!--<p>go to homepage, go to problems, go to problem [[ term ]], go to pain avatar, add goal [[ goal ]]</p>-->
-            <div id="debug"></div>{% if request.user.id != patient.id %}<a href="/">Return to main page</a>{% if request.user.is_superuser %} | <a href="/admin/auth/user/{{%20patient.id%20}}/">Admin</a>{% endif %} | {% endif %} <a href="/logout/">Logout</a> | {{ request.user }}
+            <div id="debug"></div>{% if request.user.id != patient.id %}<a href="/">Return to main page</a>{% if request.user.is_superuser %} | <a href="/admin/auth/user/{{ patient.id }}/">Admin</a>{% endif %} | {% endif %} <a href="/logout/">Logout</a> | {{ request.user }}
             <h2>
                 {{ patient.get_full_name }} {{ patient.age }}
-            </h2>{% if patient_profile.portrait_image %}<img src="{{%20patient_profile.portrait_image.url%20}}" style="max-width:50%; max-height:25%;"><br>
+            </h2>{% if patient_profile.portrait_image %}<img src="{{ patient_profile.portrait_image.url }}" style="max-width:50%; max-height:25%;"><br>
             {% endif %}
-            <form action="/add_patient_summary/{{%20patient.id%20}}/" method="post">
+            <form action="/add_patient_summary/{{ patient.id }}/" method="post">
                 <strong>Who I am:<br></strong> 
                 <textarea name="summary" rows="4" cols="50">
 {{ patient_profile.summary }}
@@ -58,7 +58,7 @@
             </h3>
             <div id="avatars"></div>
             <div id="controls">
-                <input type="button" id="toggleSlideshow" value="Start slideshow"><input type="button" id="forwards" value="&lt;"><input type="button" id="backwards" value="&gt;"><a href="/pain/create_pain_avatar/{{%20patient.id%20}}/">Update Pain</a>
+                <input type="button" id="toggleSlideshow" value="Start slideshow"><input type="button" id="forwards" value="&lt;"><input type="button" id="backwards" value="&gt;"><a href="/pain/create_pain_avatar/{{ patient.id }}/">Update Pain</a>
             </div>
             <h3>
                 Encounters
@@ -67,7 +67,7 @@
                 <li style="list-style: none">{% for encounter in encounters %}
                 </li>
                 <li>
-                    <a href="/encounter/{{%20encounter.id%20}}/">{{ encounter.starttime }}</a>
+                    <a href="/encounter/{{ encounter.id }}/">{{ encounter.starttime }}</a>
                 </li>
                 <li style="list-style: none">{% endfor %}
                 </li>
