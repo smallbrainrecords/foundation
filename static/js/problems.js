@@ -1,4 +1,4 @@
-function updateProblems() {
+function updateData() {
     $.get('/get_problems/{{ patient.id }}/', {
         'tracking_id': tracking_id
     }, function(data) {
