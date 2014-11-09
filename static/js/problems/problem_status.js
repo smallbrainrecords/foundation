@@ -1,4 +1,4 @@
 function generateProblemStatusHtml(problemJson) {
     var problemStatusHtml = '';
-    return problemStatusHtml = '';
+    return problemStatusHtml;
 }
