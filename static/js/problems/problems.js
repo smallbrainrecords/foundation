@@ -27,3 +27,22 @@ function getProblemHtml(problemJson) {
     
     return problemHtml;
 }
+
+function getProblemsHtmlForActiveStatus(patientJson, activeStatus) {
+    var problemsJsonForActiveStatus = patientJson[activeStatus];
+    var problemsJsonForActiveStatusHtml = '';
+    for (var i=0;i<problemsJsonForActiveStatus.length;i++) {
+        var problemJson = problemsJsonForActiveStatus[i];
+        problemsJsonForActiveStatusHtml += getProblemHtml(problemJson);
+    }
+    return problemsJsonForActiveStatusHtml;
+}
+
+function getProblemsHtml(patientJson) {
+    var problemsHtml = '';
+    problemsHtml += getProblemsHtmlForActiveStatus(patientJson, 'is_active');
+    problemsHtml += '<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems" />'
+        + '<div id="inactive_problems">';
+    problemsHtml += getProblemsHtmlForActiveStatus(patientJson, 'not_active');
+    problemsHtml += '</div>';
+}
