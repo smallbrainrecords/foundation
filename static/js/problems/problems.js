@@ -1,10 +1,10 @@
-function generateProblemHtml(problemJson) {
+function generateProblemHeadingHtml(problemJson) {
     var authenticated = '';
     if (problemJson['is_authenticated'] == false) {
         authenticated = '[Not authenticated]';
     }
     
-    var problemHtml = '<div id="problem_container_' +
+    var problemHeadingHtml = '<div id="problem_container_' +
         problemJson['problem_id'] + '"><div id="problem_' +
         problemJson['problem_id'] + '" class="' + problemJson[
             'is_controlled'] + ' problem_label">' +
@@ -16,13 +16,24 @@ function generateProblemHtml(problemJson) {
             'problem_id'] + '" /> ' + authenticated +
         '</div><div class="problem_data" id="problem_data_' +
         problemJson['problem_id'] + '">';
+    return problemHeadingHtml;
+}
+
+function generateProblemElementsHtml(problemJson) {
+    var problemElementsHtml = '';
     var problemElements = ['Status', 'Notes', 'Goals', 'Todos', 'Images', 'Relationships', 'Guidelines', 'History'];    
     problemElements.forEach(function(problemElement) {
-        problemHtml += '<h4>'+problemElement+'</h4>';
-        problemHtml += '<div>';
-        problemHtml += window["generateProblem"+problemElement+"Html"](problemJson);
-        problemHtml += '</div>';
+        problemElementsHtml += '<h4>' + problemElement + '</h4>';
+        problemElementsHtml += '<div>';
+        problemElementsHtml += window["generateProblem"+problemElement+"Html"](problemJson);
+        problemElementsHtml += '</div>';
     });
+    return problemElementsHtml;
+}
+
+function generateProblemHtml(problemJson) {
+    problemHtml = generateProblemHeadingHtml(problemJson);
+    problemHtml += generateProblemElementsHtml(problemJson);
     problemHtml += '</div>';
     
     return problemHtml;
@@ -45,4 +56,5 @@ function generateProblemsHtml(patientJson) {
         + '<div id="inactive_problems">';
     problemsHtml += generateProblemsHtmlForActiveStatus(patientJson, 'not_active');
     problemsHtml += '</div>';
+    return problemsHtml;
 }
