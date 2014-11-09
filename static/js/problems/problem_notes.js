@@ -1,5 +1,5 @@
 function generateProblemNotesForRoleHtml(problemJson, role) {
-    problemNotesForRoleHtml = '<div><h5>'+role.capitalize()+' note:</h5>';
+    problemNotesForRoleHtml = '<div><h5>'+role.capitalize()+' note</h5>';
     if (problem['notes']['by_'+role].length > 0) {
         current_physician_note = problem['notes'][
             'by_' + role
