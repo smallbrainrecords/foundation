@@ -1,4 +1,4 @@
-function getProblemHtml(problemJson) {
+function generateProblemHtml(problemJson) {
     var authenticated = '';
     if (problemJson['is_authenticated'] == false) {
         authenticated = '[Not authenticated]';
@@ -28,7 +28,7 @@ function getProblemHtml(problemJson) {
     return problemHtml;
 }
 
-function getProblemsHtmlForActiveStatus(patientJson, activeStatus) {
+function generateProblemsHtmlForActiveStatus(patientJson, activeStatus) {
     var problemsJsonForActiveStatus = patientJson[activeStatus];
     var problemsJsonForActiveStatusHtml = '';
     for (var i=0;i<problemsJsonForActiveStatus.length;i++) {
@@ -38,11 +38,11 @@ function getProblemsHtmlForActiveStatus(patientJson, activeStatus) {
     return problemsJsonForActiveStatusHtml;
 }
 
-function getProblemsHtml(patientJson) {
+function generateProblemsHtml(patientJson) {
     var problemsHtml = '';
-    problemsHtml += getProblemsHtmlForActiveStatus(patientJson, 'is_active');
+    problemsHtml += generateProblemsHtmlForActiveStatus(patientJson, 'is_active');
     problemsHtml += '<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems" />'
         + '<div id="inactive_problems">';
-    problemsHtml += getProblemsHtmlForActiveStatus(patientJson, 'not_active');
+    problemsHtml += generateProblemsHtmlForActiveStatus(patientJson, 'not_active');
     problemsHtml += '</div>';
 }
