@@ -4,7 +4,7 @@ function getProblemHtml(problemJson) {
     problemElements.forEach(function(problemElement) {
         problemHtml += '<h4>'+problemElement+'</h4>';
         problemHtml += '<div>';
-        problemHtml += window["generate"+problemElement+"Html"](problemJson);
+        problemHtml += window["generateProblem"+problemElement+"Html"](problemJson);
         problemHtml += '</div>';
     });
     
