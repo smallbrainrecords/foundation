@@ -1,3 +1,13 @@
+/*
+* status: line 126
+* notes: line 193
+* goals: line 171
+* todos: 258
+* images: 373
+* relationships: line 113
+* guidelines: line 157
+* history
+*/
 function updateData() {
     $.get('/get_problems/{{ patient.id }}/', {
         'tracking_id': tracking_id
