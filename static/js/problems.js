@@ -1,4 +1,16 @@
 /*
+* problems are health issues that are managed through its sub-elements 
+* a patient may have zero or many problems.
+* problem relationships are how one problem affects another problem
+* guidelines are a set of statements used to guide the management of a problem
+* images are media files that are associated with a problem
+* goals are tasks that are managed over time to create a desired change
+* todos are tasks that are done at a particular point in time
+* notes are the free text that describe and problem
+* status are functional elements of a problem authenticated, controlled, and active
+*/
+
+/*
 * status: line 126
 * notes: line 291
 * goals: line 171
