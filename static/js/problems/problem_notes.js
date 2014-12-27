@@ -1,7 +1,7 @@
 function generateProblemNotesForRoleHtml(problemJson, role) {
     problemNotesForRoleHtml = '<div><h5>'+role.capitalize()+' note</h5>';
     if (problemJson['notes']['by_'+role].length > 0) {
-        current_physician_note = problem['notes'][
+        current_physician_note = problemJson['notes'][
             'by_' + role
         ][0]['note'];
         if (userRole == role) {
@@ -11,7 +11,7 @@ function generateProblemNotesForRoleHtml(problemJson, role) {
                 current_physician_note + '">' +
                 current_physician_note +
                 '</textarea><input type="button" value="Submit" parentlabel="problem &quot;' +
-                problem['problem_name'] +
+                problemJson['problem_name'] +
                 '&quot;" parent="' + problemJson['problem_id'] +
                 '" target="note_input_' + problemJson[
                     'problem_id'] +
@@ -26,7 +26,7 @@ function generateProblemNotesForRoleHtml(problemJson, role) {
                 current_physician_note + '">' +
                 current_physician_note +
                 '</textarea><input type="button" value="Submit" parentlabel="problem &quot;' +
-                problem['problem_name'] +
+                problemJson['problem_name'] +
                 '&quot;" parent="' + problemJson['problem_id'] +
                 '" target="note_input_' + problemJson[
                     'problem_id'] +
