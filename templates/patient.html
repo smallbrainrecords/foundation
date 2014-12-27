@@ -13,6 +13,7 @@
         <script src="/static/js/problems/problems.js"></script>
         <script>
             $.get('/get_problems/{{ patient.id }}/', function(patientJson) {
+                var userRole = {{ user_role }};
                 console.log(JSON.stringify(patientJson['problems']));
                 generateProblemsHtml(patientJson['problems']);
             });
