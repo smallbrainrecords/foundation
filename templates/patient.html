@@ -18,7 +18,7 @@
             $.get('/get_problems/{{ patient.id }}/', function(patientJson) {
                 
                 console.log(JSON.stringify(patientJson['problems']));
-                generateProblemsHtml(patientJson['problems']);
+                $('#problems').html(generateProblemsHtml(patientJson['problems']));
             });
         </script>
         <link rel="stylesheet" type="text/css" href="/static/css/patient.css">
