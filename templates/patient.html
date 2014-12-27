@@ -6,10 +6,16 @@
             {{ patient.get_full_name }}
         </title>
         <script src="//code.jquery.com/jquery-1.11.0.min.js" type="text/javascript"></script>
-        <script src="/static/js/problems/problems.js"></script>
+        
         {% for problem_element in problem_elements %}
             <script src="/static/js/problems/problem_{{ problem_element }}.js"></script>
         {% endfor %}
+        <script src="/static/js/problems/problems.js"></script>
+        <script>
+            $.get('/get_problems/{{ patient.id }}/', function(problemsJson) {
+                generateProblemsHtml(problemsJson);
+            });
+        </script>
         <link rel="stylesheet" type="text/css" href="/static/css/patient.css">
     </head>
     <body>
