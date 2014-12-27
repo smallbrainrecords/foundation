@@ -1,33 +1,33 @@
 function generateProblemNotesForRoleHtml(problemJson, role) {
     problemNotesForRoleHtml = '<div><h5>'+role.capitalize()+' note</h5>';
-    if (problem['notes']['by_'+role].length > 0) {
+    if (problemJson['notes']['by_'+role].length > 0) {
         current_physician_note = problem['notes'][
             'by_' + role
         ][0]['note'];
         if (userRole == role) {
             current_physician_note =
-                '<textarea id="note_input_' + problem[
+                '<textarea id="note_input_' + problemJson[
                     'problem_id'] + '" value="' +
                 current_physician_note + '">' +
                 current_physician_note +
                 '</textarea><input type="button" value="Submit" parentlabel="problem &quot;' +
                 problem['problem_name'] +
-                '&quot;" parent="' + problem['problem_id'] +
-                '" target="note_input_' + problem[
+                '&quot;" parent="' + problemJson['problem_id'] +
+                '" target="note_input_' + problemJson[
                     'problem_id'] +
                 '" object_type="note" class="submit_data" />';
         }
     } else {
         if (userRole == role) {
             current_physician_note =
-                '<textarea id="note_input_' + problem[
+                '<textarea id="note_input_' + problemJson[
                     'problem_id'] + '" value="' +
                 current_physician_note + '">' +
                 current_physician_note +
                 '</textarea><input type="button" value="Submit" parentlabel="problem &quot;' +
                 problem['problem_name'] +
-                '&quot;" parent="' + problem['problem_id'] +
-                '" target="note_input_' + problem[
+                '&quot;" parent="' + problemJson['problem_id'] +
+                '" target="note_input_' + problemJson[
                     'problem_id'] +
                 '" object_type="note" class="submit_data" />';
         } else {
