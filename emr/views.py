@@ -170,7 +170,9 @@ def view_patient(request, user_id):
         context['current_encounter'] = encounter
     except:
         pass
-
+    import os
+    improt re
+    context['problem_elements'] = [ re.search('problem_(?P<element>\w+)', f).group('element') for f in listdir('/root/foundation/static/js/problems/') if not f == 'problem_element_template.js']
     return render_to_response("patient.html", context)
 
 @login_required
