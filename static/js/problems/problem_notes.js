@@ -5,7 +5,7 @@ function generateProblemNotesForRoleHtml(problemJson, role) {
             'by_' + role
         ][0]['note'];
         if (userRole == role) {
-            current_physician_note =
+            problemNotesForRoleHtml +=
                 '<textarea id="note_input_' + problemJson[
                     'problem_id'] + '" value="' +
                 current_physician_note + '">' +
@@ -19,7 +19,8 @@ function generateProblemNotesForRoleHtml(problemJson, role) {
         }
     } else {
         if (userRole == role) {
-            current_physician_note =
+            current_physician_note = '';
+            problemNotesForRoleHtml += 
                 '<textarea id="note_input_' + problemJson[
                     'problem_id'] + '" value="' +
                 current_physician_note + '">' +
@@ -35,6 +36,7 @@ function generateProblemNotesForRoleHtml(problemJson, role) {
         }
     }
     problemNotesForRoleHtml += '</div>';
+    return problemNotesForRoleHtml;
 }
 
 function generateProblemNotesHtml(problemJson) {
