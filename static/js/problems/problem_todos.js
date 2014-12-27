@@ -8,7 +8,7 @@ function generateProblemTodosHtml(problemJson) {
         problemJson['problem_id'] + '" target="todo_input_' +
         problemJson['problem_id'] +
         '" object_type="todo" class="submit_data" /></li>';
-    for (var j = 0; j < problem['todos'].length; j++) {
+    for (var j = 0; j < problemJson['todos'].length; j++) {
         if (problemJson['todos'][j]['accomplished'] == true) {
             checked = ' checked ';
         } else {
