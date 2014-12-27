@@ -1,4 +1,4 @@
-function generateProblemGoalsHtml(problemJson) {
+function generateProblemGoalsHtml(problem) {
     var problemGoalsHtml = '<ul id="goals_' + problem['problem_id'] +
         '" title="goal_' + problem['problem_id'] + '">';
     goals +=
