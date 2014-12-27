@@ -44,7 +44,7 @@ function generateProblemsHtmlForActiveStatus(patientJson, activeStatus) {
     var problemsJsonForActiveStatusHtml = '';
     for (var i=0;i<problemsJsonForActiveStatus.length;i++) {
         var problemJson = problemsJsonForActiveStatus[i];
-        problemsJsonForActiveStatusHtml += getProblemHtml(problemJson);
+        problemsJsonForActiveStatusHtml += generateProblemHtml(problemJson);
     }
     return problemsJsonForActiveStatusHtml;
 }
