@@ -12,8 +12,8 @@
         {% endfor %}
         <script src="/static/js/problems/problems.js"></script>
         <script>
-            $.get('/get_problems/{{ patient.id }}/', function(problemsJson) {
-                console.log(JSON.stringify(problemsJson));
+            $.get('/get_problems/{{ patient.id }}/', function(patientJson) {
+                console.log(JSON.stringify(patientJson['problems']));
                 generateProblemsHtml(problemsJson);
             });
         </script>
