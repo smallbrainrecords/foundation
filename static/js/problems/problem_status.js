@@ -4,7 +4,7 @@ String.prototype.capitalize = function() {
 
 function generateProblemStatusHtml(problemJson) {
     var problemStatusHtml = '';
-    var problemStatusItems = ["is_controlled", "is_authenticated", "is_active"];
+    var problemStatusElements = ["is_controlled", "is_authenticated", "is_active"];
     problemStatusElements.forEach(function(problemStatusElement) {
         if (problemJson[problemStatusElement] == true) {
             var checked = ' checked ';
