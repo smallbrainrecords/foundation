@@ -25,7 +25,7 @@ function generateProblemElementsHtml(problemJson) {
     var problemElements = ['History', 'Status', 'Notes', 'Goals', 'Todos', 'Images', 'Relationships', 'Guidelines'];    
     problemElements.forEach(function(problemElement) {
         problemElementsHtml += '<h4>' + problemElement + '</h4>';
-        problemElementsHtml += '<div style="background:orange">';
+        problemElementsHtml += '<div>';
         problemElementsHtml += window["generateProblem"+problemElement+"Html"](problemJson);
         problemElementsHtml += '</div>';
     });
@@ -53,7 +53,7 @@ function generateProblemsHtmlForActiveStatus(patientJson, activeStatus) {
 function generateProblemsHtml(patientJson) {
     var problemsHtml = '';
     problemsHtml += generateProblemsHtmlForActiveStatus(patientJson, 'is_active');
-    problemsHtml += '<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems test" />'
+    problemsHtml += '<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems" />'
         + '<div id="inactive_problems">';
     problemsHtml += generateProblemsHtmlForActiveStatus(patientJson, 'not_active');
     problemsHtml += '</div>';
