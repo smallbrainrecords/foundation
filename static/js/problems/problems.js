@@ -22,7 +22,7 @@ function generateProblemHeadingHtml(problemJson) {
 function generateProblemElementsHtml(problemJson) {
     var problemElementsHtml = '';
     //var problemElements = ['Status', 'Notes', 'Goals', 'Todos', 'Images', 'Relationships', 'Guidelines', 'History'];    
-    var problemElements = ['Status', 'Notes', 'Goals', 'Todos', 'Images', 'Guidelines', 'History'];    
+    var problemElements = ['History', 'Status', 'Notes', 'Goals', 'Todos', 'Images', 'Relationships', 'Guidelines'];    
     problemElements.forEach(function(problemElement) {
         problemElementsHtml += '<h4>' + problemElement + '</h4>';
         problemElementsHtml += '<div style="background:orange">';
