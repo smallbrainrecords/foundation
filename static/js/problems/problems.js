@@ -25,7 +25,7 @@ function generateProblemElementsHtml(problemJson) {
     var problemElements = ['Status', 'Notes', 'Goals', 'Todos', 'Images', 'Guidelines', 'History'];    
     problemElements.forEach(function(problemElement) {
         problemElementsHtml += '<h4>' + problemElement + '</h4>';
-        problemElementsHtml += '<div>';
+        problemElementsHtml += '<div style="background:orange">';
         problemElementsHtml += window["generateProblem"+problemElement+"Html"](problemJson);
         problemElementsHtml += '</div>';
     });
