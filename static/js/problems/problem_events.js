@@ -36,12 +36,7 @@
             $.post('/save_encounter_event/', {
                 'summary': 'Marked problem "' + $('#problem_' + $(this).attr('id')).text() + '" as ' + marked_as,
                 'encounter_id': window.encounter_id,
-                'patient_id': {
-                    {
-                        patient.id
-                    }
-                }
-            });
+                'patient_id': patient.id});
             var target = 'problem';
             saved_encounter = true;
         } else if ($(this).attr('attr') == 'goal' || $(this).attr('attr') == 'todo' || $(this).attr('attr') == 'goal_is_controlled') {
@@ -75,12 +70,7 @@
                     $.post('/save_encounter_event/', {
                         'summary': summary,
                         'encounter_id': window.encounter_id,
-                        'patient_id': {
-                            {
-                                patient.id
-                            }
-                        }
-                    });
+                        'patient_id': patient.id});
 
                 } else if ($(this).attr('attr') == 'is_active' && $(this).attr('target') == 'problem') {
                     if ($(this).is(':checked') == true) {
@@ -785,12 +775,7 @@
             $.post('/save_encounter_event/', {
                 'summary': 'Changed moviation for goal ' + $(this).attr('label') + ' to: ' + val,
                 'encounter_id': window.encounter_id,
-                'patient_id': {
-                    {
-                        patient.id
-                    }
-                }
-            });
+                'patient_id': patient.id});
 
         } else {
             $.post('/save_encounter_event/', {
