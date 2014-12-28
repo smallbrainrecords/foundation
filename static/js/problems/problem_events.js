@@ -1,3 +1,4 @@
+$(function() {
     $('#addEvent').click(function() {
 
         $.post('/save_encounter_event/', {
@@ -1024,3 +1025,4 @@
     $(document).on('click', '#view_encounter', function() {
         window.location = '/encounter/' + window.encounter_id + '/';
     });
+});
