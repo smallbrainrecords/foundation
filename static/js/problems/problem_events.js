@@ -151,7 +151,7 @@
 
     function getStatus() {
         console.log('get stauts')
-        $.get('/get_problems/{{ patient.id }}/', {
+        $.get('/get_problems/'+patient.id, {
             'get_only_status': true,
             'tracking_id': tracking_id
         }, function(data) {
@@ -185,7 +185,7 @@
     }
 
     function updateProblems() {
-        $.get('/get_problems/{{ patient.id }}/', {
+        $.get('/get_problems/'+patient.id, {
             'tracking_id': tracking_id
         }, function(data) {
             var raw_data = data;
@@ -809,7 +809,7 @@
                 $('#problem_' + problem).show();
                 $(document).scrollTop($('#problem_' + problem).offset().top);
             } else {
-                $.post('/patient/{{ patient.id }}/add_problem/', {
+                $.post('/patient/'+patient.id+'/add_problem/', {
                     'problem_name': $('#problem_name').val(),
                     'concept_id': concept_id
                 }, function(data) {
@@ -833,7 +833,7 @@
             //$.post('/save_encounter_event/', {'summary': 'Physician clicked on problem: "'+$('#problem_'+$(this).attr('problem')).text()+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
 
         } else {
-            $.post('/patient/{{ patient.id }}/add_problem/', {
+            $.post('/patient/'+patient.id+'/add_problem/', {
                 'problem_name': $('#problem_name').val(),
                 'concept_id': concept_id
             }, function(data) {
@@ -918,12 +918,7 @@
         $.post('/save_encounter_event/', {
             'summary': 'Clicked on problem: "' + $('#problem_' + $(this).attr('problem')).text() + '"',
             'encounter_id': window.encounter_id,
-            'patient_id': {
-                {
-                    patient.id
-                }
-            }
-        });
+            'patient_id': patient.id });
     });
     $('body').on('click', '.show_nonproblem_goal', function() {
         $('.goal_data').hide();
@@ -977,7 +972,7 @@
         $('.problem_data').hide();
         $('.hide_problem').val('Show problem');
         $('.hide_problem').removeClass().addClass('show_problem');
-        $.get('/get_problems/{{ patient.id }}/', {
+        $.get('/get_problems/'+patient.id, {
             'new_status': '{"action": "hide"}'
         });
         $(document).scrollTop($('#problem_' + $(this).attr('problem')).offset().top);
@@ -1014,7 +1009,7 @@
         $(document).scrollTop($('#add_problem_div').offset().top);
     });
     $(document).on('click', '#start_encounter', function() {
-        $.get('/create_encounter/{{ patient.id }}/', function(data) {
+        $.get('/create_encounter/'+patient.id, function(data) {
             window.encounter = true;
             window.encounter_id = data;
         });
