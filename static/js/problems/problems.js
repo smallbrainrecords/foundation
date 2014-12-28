@@ -53,7 +53,7 @@ function generateProblemsHtmlForActiveStatus(patientJson, activeStatus) {
 function generateProblemsHtml(patientJson) {
     var problemsHtml = '';
     problemsHtml += generateProblemsHtmlForActiveStatus(patientJson, 'is_active');
-    problemsHtml += '<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems" />'
+    problemsHtml += '<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems test" />'
         + '<div id="inactive_problems">';
     problemsHtml += generateProblemsHtmlForActiveStatus(patientJson, 'not_active');
     problemsHtml += '</div>';
