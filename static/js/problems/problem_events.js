@@ -322,7 +322,7 @@
                     notes += '<strong>Is accomplished</strong><br/><input type="checkbox" target="goal" attr="goal_is_controlled" ';
                     notes += 'id="' + problem['goals'][j]['id'] + '" aswhat="controlled" label="' + problem['goals'][j]['goal'] + ' (for probelm ' + problem['problem_name'] + ')" ' + is_controlled_checked + '/> ';
                     notes += '<strong>Currently succeeding</strong><br/><table id="note_' + problem['problem_id'] + '">';
-                    var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
+                    var role = userRole;
                     current_physician_note = '';
                     if (problem['goals'][j]['notes'].length > 0) {
                         current_physician_note = problem['goals'][j]['notes'][0]['note'];
@@ -364,7 +364,7 @@
 
                 // Notes: both the physian and the patient have their own note space for documenting the problem.  A physician can only edit the physician's note, and a physician can ONLY view the patient's note.  A patient can ONLY view the physician's note, and a patient can edit a patient note.  The most recent version of a note is read from database each time the problem is visited.
                 //notes = '<table id="note_'+problem['problem_id']+'">';
-                var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
+                var role = userRole;
                 current_physician_note = '';
                 if (problem['notes']['by_physician'].length > 0) {
                     current_physician_note = problem['notes']['by_physician'][0]['note'];
@@ -503,7 +503,7 @@
                     notes += '<strong>Is accomplished</strong><br/><label><input type="checkbox" aswhat="controlled" label="' + problem['goals'][j]['goal'] + ' (for probelm ' + problem['problem_name'] + ')" attr="goal_is_controlled" </label>';
                     notes += 'id="' + problem['goals'][j]['id'] + '" ' + is_controlled_checked + '/> ';
                     notes += '<strong>Currently succeeding</strong><br/><table id="note_' + problem['problem_id'] + '">';
-                    var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
+                    var role = userRole;
                     current_physician_note = '';
                     if (problem['goals'][j]['notes'].length > 0) {
                         current_physician_note = problem['goals'][j]['notes'][0]['note'];
@@ -542,7 +542,7 @@
 
                 // Notes: both the physian and the patient have their own note space for documenting the problem.  A physician can only edit the physician's note, and a physician can ONLY view the patient's note.  A patient can ONLY view the physician's note, and a patient can edit a patient note.  The most recent version of a note is read from database each time the problem is visited.
                 notes = '<table id="note_' + problem['problem_id'] + '">';
-                var role = "{% if user_role == 'admin' %}physician{% else %}{{ user_role }}{% endif %}";
+                var role = userRole;
                 current_physician_note = '';
                 if (problem['notes']['by_physician'].length > 0) {
                     current_physician_note = problem['notes']['by_physician'][0]['note'];
@@ -788,68 +788,7 @@
         setTimeout(function() {
             $('#goal_notes_' + window.goal).show()
         }, 2000);
-    }); { %
-        if voice_control %
-    }
-    if (annyang) {
-        // Let's define our first command. First the text we expect, and then the function it should call
-        var commands = {
-            'go to problems': function() {
-                $(document).scrollTop($("#problems").offset().top);
-            },
-            'go to problem': function() {
-                $(document).scrollTop($("#problems").offset().top);
-            },
-            'go to homepage': function() {
-                window.location = '/';
-            },
-            'go to pain avatar': function() {
-                $(document).scrollTop($("#pain_avatar").offset().top);
-            },
-            'go to problem *term': function(term) {
-                for (var i = 0; i < window.problems.length; i++) {
-                    //alert(window.problems[i]["problem_name"].toLowerCase());
-                    if (window.problems[i]["problem_name"].toLowerCase().indexOf(term.toLowerCase()) >= 0) {
-
-                        $('#problem_data_' + window.problems[i]['problem_id']).show();
-                        $(document).scrollTop($('#problem_' + window.problems[i]['problem_id']).offset().top);
-                    }
-                }
-            },
-            'go to problems *term': function(term) {
-                for (var i = 0; i < window.problems.length; i++) {
-                    //alert(window.problems[i]["problem_name"].toLowerCase());
-                    if (window.problems[i]["problem_name"].toLowerCase().indexOf(term.toLowerCase()) >= 0) {
-
-                        $('#problem_data_' + window.problems[i]['problem_id']).show();
-                        $(document).scrollTop($('#problem_' + window.problems[i]['problem_id']).offset().top);
-                    }
-                }
-            },
-            'add goal *goal': function(goal) {
-                var parent_id = window.current_problem;
-
-                var object_type = 'goal';
-                var val = goal;
-
-                $.post('/submit_data_for_problem/' + parent_id + '/', {
-                    'type': object_type,
-                    'data': val
-                }, function() {
-                    $('#' + object_type + '_' + parent_id).append('<li>' + val + '</li>');
-                });
-            },
-
-
-        };
-
-        // Add our commands to annyang
-        annyang.addCommands(commands);
-
-        // Start listening. You can call this here, or attach this call to an event, button, etc.
-        annyang.start();
-    } { % endif %
-    }
+    }); 
     $('div').on('focusin', 'input:text', function() {
         if ($(this).attr('default') == $(this).val()) {
             $(this).val('');
