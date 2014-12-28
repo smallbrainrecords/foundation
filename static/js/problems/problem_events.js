@@ -1,28 +1,4 @@
 $(function() {
-    $('#addEvent').click(function() {
-
-        $.post('/save_encounter_event/', {
-            'summary': $('#doing_summary').val(),
-            'encounter_id': window.encounter_id,
-            'patient_id': patient.id});
-        $('#doing_summary').val('');
-    });
-    $('#doing_summary').click(function() {
-
-        $.post('/save_encounter_event/', {
-            'summary': 'Typing in a new event summary',
-            'encounter_id': window.encounter_id,
-            'patient_id': patient.id});
-
-    });
-    $(document).on("click", ".mark_working_on", function(e) {
-            $.post('/save_encounter_event/', {
-                'summary': $(this).attr('summary'),
-                'encounter_id': window.encounter_id,
-                'patient_id': patient.id});
-            $('#encounter_summary').append('<span class="current_todo">' + $(this).parent().html() + '</span>');
-        })
-        // ENCOUNTER POST FOR CLICKS.
     $(document).on("change", "input:checkbox", function(e) {
         var saved_encounter = false;
         //alert($(this).is(':checked')+$(this).attr('id'));
