@@ -738,9 +738,6 @@ $(function() {
         });
 
     });
-    $(document).on('change', '#change_patient', function() {
-        window.location = '/patient/' + $(this).val() + '/';
-    });
     $(document).on('click', '#toggle_inactive_problems', function() {
         $('#inactive_problems').toggle()
     })
@@ -1008,21 +1005,5 @@ $(function() {
         $('#problem_name').val($(this).val());
         $('#concept_id').val($(this).attr('concept_id'));
         $(document).scrollTop($('#add_problem_div').offset().top);
-    });
-    $(document).on('click', '#start_encounter', function() {
-        $.get('/create_encounter/'+patient.id, function(data) {
-            window.encounter = true;
-            window.encounter_id = data;
-        });
-        $('#encounter_buttons').html('<input type="button" id="stop_encounter" value="Stop encounter" /><input type="button" id="view_encounter" value="View encounter" />');
-        $('#encounter_input').show();
-    });
-    $(document).on('click', '#stop_encounter', function() {
-        $.get('/stop_encounter/' + window.encounter_id + '/');
-        $('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start encounter" />');
-        $('#encounter_input').hide();
-    });
-    $(document).on('click', '#view_encounter', function() {
-        window.location = '/encounter/' + window.encounter_id + '/';
     });
 });
