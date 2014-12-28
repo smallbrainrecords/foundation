@@ -3,12 +3,7 @@
         $.post('/save_encounter_event/', {
             'summary': $('#doing_summary').val(),
             'encounter_id': window.encounter_id,
-            'patient_id': {
-                {
-                    patient.id
-                }
-            }
-        });
+            'patient_id': patient.id});
         $('#doing_summary').val('');
     });
     $('#doing_summary').click(function() {
