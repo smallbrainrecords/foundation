@@ -11,24 +11,14 @@
         $.post('/save_encounter_event/', {
             'summary': 'Typing in a new event summary',
             'encounter_id': window.encounter_id,
-            'patient_id': {
-                {
-                    patient.id
-                }
-            }
-        });
+            'patient_id': patient.id});
 
     });
     $(document).on("click", ".mark_working_on", function(e) {
             $.post('/save_encounter_event/', {
                 'summary': $(this).attr('summary'),
                 'encounter_id': window.encounter_id,
-                'patient_id': {
-                    {
-                        patient.id
-                    }
-                }
-            });
+                'patient_id': patient.id});
             $('#encounter_summary').append('<span class="current_todo">' + $(this).parent().html() + '</span>');
         })
         // ENCOUNTER POST FOR CLICKS.
@@ -72,12 +62,7 @@
                 $.post('/save_encounter_event/', {
                     'summary': summary,
                     'encounter_id': window.encounter_id,
-                    'patient_id': {
-                        {
-                            patient.id
-                        }
-                    }
-                });
+                    'patient_id': patient.id});
 
             } else {
                 if ($(this).attr('attr') == 'authenticated' && $(this).attr('target') == 'problem') {
@@ -107,12 +92,7 @@
                     $.post('/save_encounter_event/', {
                         'summary': summary,
                         'encounter_id': window.encounter_id,
-                        'patient_id': {
-                            {
-                                patient.id
-                            }
-                        }
-                    });
+                        'patient_id': patient.id});
 
                 } else {
                     if ($(this).is(':checked') == true) {
@@ -124,12 +104,7 @@
                     $.post('/save_encounter_event/', {
                         'summary': summary,
                         'encounter_id': window.encounter_id,
-                        'patient_id': {
-                            {
-                                patient.id
-                            }
-                        }
-                    });
+                        'patient_id': patient.id});
                 }
             }
             saved_encounter = true;
@@ -143,12 +118,7 @@
                 $.post('/save_encounter_event/', {
                     'summary': summary,
                     'encounter_id': window.encounter_id,
-                    'patient_id': {
-                        {
-                            patient.id
-                        }
-                    }
-                });
+                    'patient_id': patient.id});
 
             } else {
                 if ($(this).is(':checked') == true) {
@@ -160,12 +130,7 @@
                 $.post('/save_encounter_event/', {
                     'summary': summary,
                     'encounter_id': window.encounter_id,
-                    'patient_id': {
-                        {
-                            patient.id
-                        }
-                    }
-                });
+                    'patient_id': patient.id});
 
             }
         }
@@ -831,12 +796,7 @@
             $.post('/save_encounter_event/', {
                 'summary': 'Added ' + $(this).attr('object_type') + ' to ' + $(this).attr('parentlabel') + ': ' + val,
                 'encounter_id': window.encounter_id,
-                'patient_id': {
-                    {
-                        patient.id
-                    }
-                }
-            });
+                'patient_id': patient.id});
         }
         updateProblems();
         $(document).scrollTop($('#problem_' + window.current_problem).offset().top);
@@ -941,12 +901,7 @@
                 $.post('/save_encounter_event/', {
                     'summary': 'Added problem "' + $('#problem_name').val() + '"',
                     'encounter_id': window.encounter_id,
-                    'patient_id': {
-                        {
-                            patient.id
-                        }
-                    }
-                });
+                    'patient_id': patient.id});
 
             }
 
@@ -970,12 +925,7 @@
             $.post('/save_encounter_event/', {
                 'summary': 'Added problem "' + $('#problem_name').val() + '"',
                 'encounter_id': window.encounter_id,
-                'patient_id': {
-                    {
-                        patient.id
-                    }
-                }
-            });
+                'patient_id': patient.id});
         }
     });
     $('#addGoal').click(function() {
@@ -988,12 +938,7 @@
         $.post('/save_encounter_event/', {
             'summary': 'Added goal "' + $('#goal_description').val() + '"',
             'encounter_id': window.encounter_id,
-            'patient_id': {
-                {
-                    patient.id
-                }
-            }
-        });
+            'patient_id': patient.id});
 
     });
     $('#addTodo').click(function() {
@@ -1007,12 +952,7 @@
         $.post('/save_encounter_event/', {
             'summary': 'Added todo "' + $('#todo_description').val() + '"',
             'encounter_id': window.encounter_id,
-            'patient_id': {
-                {
-                    patient.id
-                }
-            }
-        });
+            'patient_id': patient.id});
 
     });
     $('body').on('click', '.show_problem', function() {
@@ -1078,12 +1018,7 @@
         $.post('/save_encounter_event/', {
             'summary': 'Clicked on goal: "' + $(this).attr('goallabel') + '"',
             'encounter_id': window.encounter_id,
-            'patient_id': {
-                {
-                    patient.id
-                }
-            }
-        });
+            'patient_id': patient.id});
 
     });
     $('body').on('click', '.hide_nonproblem_goal', function() {
