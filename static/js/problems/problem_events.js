@@ -718,11 +718,7 @@
                 $('#control_display_for_problem_' + window.current_problem).removeClass();
                 $('#control_display_for_problem_' + window.current_problem).addClass('hide_problem');
             }
-        }); { %
-            if syncing %
-        }
-        getStatus(); { % endif %
-        }
+        }); 
     }
     updateProblems();
     $(document).on('change', '.problem_parent', function() {
