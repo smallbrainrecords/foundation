@@ -14,7 +14,9 @@ background:green;
 .false {
 background:red;
 }
-
+h3 {
+	font-style:italic;
+}
 .problem_data, .goal_notes, .goal_data {
 padding:10px;
 display:none;
