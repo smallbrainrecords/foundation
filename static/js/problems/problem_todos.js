@@ -1,7 +1,7 @@
 function generateProblemTodosHtml(problemJson) {
     var problemTodosHtml = '';
-    todos = '<ul id="todo_' + problemJson['problem_id'] + '">';
-    todos +=
+    problemTodosHtml = '<ul id="todo_' + problemJson['problem_id'] + '">';
+    problemTodosHtml +=
         '<li><strong>Add:</strong> <input type="text" id="todo_input_' +
         problemJson['problem_id'] +
         '" /><input type="button" value="Submit" parent="' +
@@ -14,11 +14,11 @@ function generateProblemTodosHtml(problemJson) {
         } else {
             checked = '';
         }
-        todos +=
+        problemTodosHtml +=
             '<li><input type="checkbox" attr="todo" id="' +
             problemJson['todos'][j]['id'] + '" ' + checked +
             '/>' + problemJson['todos'][j]['todo'] + '</li>';
     }
-    todos += '</ul>';
+    problemTodosHtml += '</ul>';
     return problemTodosHtml;
 }
