@@ -31,7 +31,7 @@ function generateProblemGoalsHtml(problem) {
             '<strong>Is accomplished</strong><br/><label><input type="checkbox" aswhat="controlled" label="' +
             problem['goals'][j]['goal'] + ' (for probelm ' +
             problem['problem_name'] +
-            ')" attr="goal_is_controlled" </label>';
+            ')" attr="goal_is_controlled" ';
         notes += 'id="' + problem['goals'][j]['id'] + '" ' +
             is_controlled_checked + '/> ';
         notes +=
