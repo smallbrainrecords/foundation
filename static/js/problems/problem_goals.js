@@ -1,12 +1,12 @@
 function generateProblemGoalsHtml(problem) {
     var problemGoalsHtml = '<ul id="goals_' + problem['problem_id'] +
         '" title="goal_' + problem['problem_id'] + '">';
-    goals +=
+    problemGoalsHtml +=
         '<li><strong>Add:</strong> <input type="text" id="goal_input_' +
         problem['problem_id'] + '" />';
-    goals += '<input type="button" value="Submit" parent="' +
+    problemGoalsHtml += '<input type="button" value="Submit" parent="' +
         problem['problem_id'] + '" ';
-    goals += 'target="goal_input_' + problem['problem_id'] +
+    problemGoalsHtml += 'target="goal_input_' + problem['problem_id'] +
         '" object_type="goal" class="submit_data" /></li>';
     for (var j = 0; j < problem['goals'].length; j++) {
         if (problem['goals'][j]['accomplished'] == true) {
@@ -68,7 +68,7 @@ function generateProblemGoalsHtml(problem) {
         }
         notes += current_physician_note;
         //notes += '</table></div>';
-        goals += '<li id="goal_' + problem['goals'][j]['id'] +
+        problemGoalsHtml += '<li id="goal_' + problem['goals'][j]['id'] +
             '" class="' + problem['goals'][j][
                 'is_controlled'
             ] + '">' + problem['goals'][j]['goal'] +
@@ -77,6 +77,6 @@ function generateProblemGoalsHtml(problem) {
             problem['goals'][j]['id'] + '" />' + notes +
             '</li>';
     }
-    goals += '</ul>';    
+    problemGoalsHtml += '</ul>';    
     return problemGoalsHtml;
 }
