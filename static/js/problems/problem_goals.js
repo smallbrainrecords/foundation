@@ -74,7 +74,8 @@ function generateProblemGoalsHtml(problem) {
             ] + '">' + problem['goals'][j]['goal'] +
             '<input type="button" class="show_goal" value="Show goal" target="goal_notes_' +
             problem['goals'][j]['id'] + '" goal="' +
-            problem['goals'][j]['id'] + '" />' + notes + 'test</div></li>';
+            problem['goals'][j]['id'] + '" /></div></li>';
+            //problem['goals'][j]['id'] + '" />' + notes + 'test</div></li>';
     }
     problemGoalsHtml += 'another test</ul>big test';    
     return problemGoalsHtml;
