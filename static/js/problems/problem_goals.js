@@ -19,11 +19,18 @@ function generateProblemGoalCurrentlySuceedingHtml(goal) {
     return '<strong>Currently succeeding</strong>';
 }
 function generateProblemGoalHtml(goal) {
-    problemGoalHtml = '';
+    problemGoalHtml = '<li id="goal_' + goal['id'] +
+            '" class="' + goal[
+                'is_controlled'
+            ] + '">' + goal['goal'] +
+            '<input type="button" class="show_goal" value="Show goal" target="goal_notes_' +
+            goal['id'] + '" goal="' +
+            goal['id'] + '" /></li>';
     var problemGoalElements = ['StartDate', 'IsAccomplished', 'CurrentlySuceeding'];    
     problemGoalElements.forEach(function(problemGoalElement) {
-        problemElementsHtml += window["generateProblemGoal"+problemGoalElement+"Html"](goal);
+        problemGoalHtml += window["generateProblemGoal"+problemGoalElement+"Html"](goal);
     });
+    return problemGoalHtml;
 }
 
 function generateProblemGoalsHtml(problem) {
@@ -37,7 +44,7 @@ function generateProblemGoalsHtml(problem) {
     problemGoalsHtml += 'target="goal_input_' + problem['problem_id'] +
         '" object_type="goal" class="submit_data" /></li>';
     for (var j = 0; j < problem['goals'].length; j++) {
-        generateProblemGoalsHtml(problem['goals'][j]);
+        problemGoalsHtml += generateProblemGoalsHtml(problem['goals'][j]);
         if (problem['goals'][j]['accomplished'] == true) {
             checked = ' checked ';
         } else {
@@ -97,13 +104,7 @@ function generateProblemGoalsHtml(problem) {
         }
         notes += current_physician_note;
         notes += '</div>';
-        problemGoalsHtml += '<li id="goal_' + problem['goals'][j]['id'] +
-            '" class="' + problem['goals'][j][
-                'is_controlled'
-            ] + '">' + problem['goals'][j]['goal'] +
-            '<input type="button" class="show_goal" value="Show goal" target="goal_notes_' +
-            problem['goals'][j]['id'] + '" goal="' +
-            problem['goals'][j]['id'] + '" /></li>';
+        
             //problem['goals'][j]['id'] + '" />' + notes + 'test</div></li>';
     }
     problemGoalsHtml += '</ul>';    
