@@ -35,7 +35,7 @@ function generateProblemElementsHtml(problemJson) {
 function generateProblemHtml(problemJson) {
     problemHtml = generateProblemHeadingHtml(problemJson);
     problemHtml += generateProblemElementsHtml(problemJson);
-    //problemHtml += '</div>';
+    problemHtml += '</div>';
     
     return problemHtml;
 }
