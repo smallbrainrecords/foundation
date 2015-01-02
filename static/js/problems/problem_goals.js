@@ -76,6 +76,6 @@ function generateProblemGoalsHtml(problem) {
             problem['goals'][j]['id'] + '" goal="' +
             problem['goals'][j]['id'] + '" />' + notes + 'test</div></li>';
     }
-    problemGoalsHtml += 'another test</ul>';    
+    problemGoalsHtml += 'another test</ul>big test';    
     return problemGoalsHtml;
 }
