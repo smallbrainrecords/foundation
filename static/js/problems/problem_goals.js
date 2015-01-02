@@ -1,16 +1,22 @@
 function generateProblemGoalStartDateHtml(goal) {
     return '<strong>Start date:</strong> ' + goal['start_date'];
 }
+
 function generateProblemGoalIsAccomplishedHtml(goal) {
+    if (goal['is_controlled'] == true) {
+        is_controlled_checked = ' checked ';
+    } else {
+        is_controlled_checked = '';
+    }
     return '<strong>Is accomplished</strong><br/><label><input type="checkbox" aswhat="controlled" label="' +
-            problem['goals'][j]['goal'] + ' (for probelm ' +
+            goal['goal'] + ' (for probelm ' +
             problem['problem_name'] +
-            ')" attr="goal_is_controlled" ';
-        notes += 'id="' + problem['goals'][j]['id'] + '" ' +
+            ')" attr="goal_is_controlled" id="' + goal['goal'] + '" ' +
             is_controlled_checked + '/> ';
 }
+
 function generateProblemGoalCurrentlySuceedingHtml(goal) {
-    
+    return '<strong>Currently succeeding</strong>';
 }
 function generateProblemGoalHtml(goal) {
     problemGoalHtml = '';
