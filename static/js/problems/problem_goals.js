@@ -1,3 +1,25 @@
+function generateProblemGoalStartDateHtml(goal) {
+    return '<strong>Start date:</strong> ' + goal['start_date'];
+}
+function generateProblemGoalIsAccomplishedHtml(goal) {
+    return '<strong>Is accomplished</strong><br/><label><input type="checkbox" aswhat="controlled" label="' +
+            problem['goals'][j]['goal'] + ' (for probelm ' +
+            problem['problem_name'] +
+            ')" attr="goal_is_controlled" ';
+        notes += 'id="' + problem['goals'][j]['id'] + '" ' +
+            is_controlled_checked + '/> ';
+}
+function generateProblemGoalCurrentlySuceedingHtml(goal) {
+    
+}
+function generateProblemGoalHtml(goal) {
+    problemGoalHtml = '';
+    var problemGoalElements = ['StartDate', 'IsAccomplished', 'CurrentlySuceeding'];    
+    problemGoalElements.forEach(function(problemGoalElement) {
+        problemElementsHtml += window["generateProblemGoal"+problemGoalElement+"Html"](goal);
+    });
+}
+
 function generateProblemGoalsHtml(problem) {
     var problemGoalsHtml = '<ul id="goals_' + problem['problem_id'] +
         '" title="goal_' + problem['problem_id'] + '">';
@@ -9,6 +31,7 @@ function generateProblemGoalsHtml(problem) {
     problemGoalsHtml += 'target="goal_input_' + problem['problem_id'] +
         '" object_type="goal" class="submit_data" /></li>';
     for (var j = 0; j < problem['goals'].length; j++) {
+        generateProblemGoalsHtml(problem['goals'][j]);
         if (problem['goals'][j]['accomplished'] == true) {
             checked = ' checked ';
         } else {
