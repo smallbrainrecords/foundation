@@ -43,6 +43,7 @@ function generateProblemGoalsHtml(problem) {
         problem['problem_id'] + '" ';
     problemGoalsHtml += 'target="goal_input_' + problem['problem_id'] +
         '" object_type="goal" class="submit_data" /></li>';
+    console.log(JSON.stringify(problem));
     for (var j = 0; j < problem['goals'].length; j++) {
         problemGoalsHtml += generateProblemGoalsHtml(problem['goals'][j]);
         if (problem['goals'][j]['accomplished'] == true) {
