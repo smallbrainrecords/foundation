@@ -67,7 +67,7 @@ function generateProblemGoalsHtml(problem) {
                 '" object_type="note_for_goal" class="submit_data" />';
         }
         notes += current_physician_note;
-        //notes += '</table></div>';
+        notes += '</div>';
         problemGoalsHtml += '<li id="goal_' + problem['goals'][j]['id'] +
             '" class="' + problem['goals'][j][
                 'is_controlled'
