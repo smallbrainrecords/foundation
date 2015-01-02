@@ -24,9 +24,9 @@ function generateProblemGoalsHtml(problem) {
         notes += '<strong>Start date:</strong> ' + problem[
             'goals'][j]['start_date'];
         notes +=
-            '<br/><label><input type="checkbox" attr="goal" id="' +
+            '<br/><input type="checkbox" attr="goal" id="' +
             problem['goals'][j]['id'] + '" ' + checked +
-            '/></label> ';
+            '/> ';
         notes +=
             '<strong>Is accomplished</strong><br/><label><input type="checkbox" aswhat="controlled" label="' +
             problem['goals'][j]['goal'] + ' (for probelm ' +
