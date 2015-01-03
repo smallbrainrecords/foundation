@@ -1,3 +1,7 @@
+/*
+* 
+*/
+
 $(function() {
     $(document).on("change", "input:checkbox", function(e) {
         var saved_encounter = false;
