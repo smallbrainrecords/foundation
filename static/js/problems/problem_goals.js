@@ -1,3 +1,12 @@
+/*
+* this displays goals that are associated with problems
+*
+* goal start date is the date goal was created.
+* goals may be associated with a particular problem or independent of a problem.
+* goal is_controlled means that the goal is being met and is still active, it will have a green color if controlled, red if not.
+* goal is_accomplished determines if the goal is still visible or active.
+*/
+
 function generateProblemGoalStartDateHtml(goal) {
     return '<strong>Start date:</strong> ' + goal['start_date'];
 }
@@ -9,7 +18,7 @@ function generateProblemGoalIsAccomplishedHtml(goal) {
         is_controlled_checked = '';
     }
     return '<strong>Is accomplished</strong><br/><label><input type="checkbox" aswhat="controlled" label="' +
-            goal['goal'] + ' (for probelm ' +
+            goal['goal'] + ' (for problem ' +
             problem['problem_name'] +
             ')" attr="goal_is_controlled" id="' + goal['goal'] + '" ' +
             is_controlled_checked + '/> ';
