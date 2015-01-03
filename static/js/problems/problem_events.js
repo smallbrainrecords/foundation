@@ -1,5 +1,5 @@
 /*
-* 
+* on click events for problem elements
 */
 
 $(function() {
