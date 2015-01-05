@@ -1,3 +1,14 @@
+/*
+* the pain avatar is for graphically managing pain.  
+* the user is initially shown a blank graphic of the body.
+* when a region is selected it turns red, if clicked again it turns grey.  
+* once the painful areas have been selected the user clicks save. 
+* visually currently painful areas shown as red, 
+* areas that previously had been painful but are no longer so are green.
+* areas that have no history of pain are grey.
+* each record of the pain array can be viewed manually or played as slide show.
+*/
+
 $(function() {
 {% if current_encounter %}
 window.encounter_id = {{ current_encounter.id }};
@@ -15,7 +26,11 @@ var painAvatars = [
 {% if not forloop.last %},{% endif %}
 {% endfor %}
 ];
-var bodyParts = [{'name': 'head part', 'center': [100,35], 'radius':30, 'snomed_id': '123850002', 'status': 'gray', 'shape_type': 'circle'},
+var bodyParts = [
+
+		// HEAD
+
+		{‘name': 'head part', 'center': [100,35], 'radius':30, 'snomed_id': '123850002', 'status': 'gray', 'shape_type': 'circle'},
                
                  // SPINE
                  
@@ -62,6 +77,7 @@ var bodyParts = [{'name': 'head part', 'center': [100,35], 'radius':30, 'snomed_
                  {'name': 'Structure of left foot', 'coordinates': [[125,425],[145,425],[145,440],[125,440]], 'snomed_id': '22335008', 'status': 'gray', 'shape_type': 'polygon'},
                  
                 ];
+
 //var cycle = {'gray': 'red', 'red': 'green', 'green': 'gray'};
 var cycle = {'gray': 'red', 'red': 'gray'};
 function pnpoly( nvert, vertx, verty, testx, testy ) {
@@ -195,6 +211,7 @@ $('.pain_avatar').hide();window.t-=1;$('#pain_avatar'+window.t).show();
             ctx.fill();
         }
     }
+
 window.t=0;
 $('.pain_avatar').hide();
 $('#pain_avatar'+t).show();
