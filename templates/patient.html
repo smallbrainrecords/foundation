@@ -1389,7 +1389,7 @@ if (annyang) {
     // You may replace `c` with whatever key you want
         if ( e.ctrlKey && ( String.fromCharCode(e.which) === 'h' || String.fromCharCode(e.which) === 'H' ) ) {
 
-            
+            e.preventDefault();
             $('#show').html('');
             $('#hide').show();
             $('.problem_label').css({'position': 'inherit', 'width': 'inherit'});
