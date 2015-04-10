@@ -264,9 +264,9 @@ def get_patient_data(request, patient_id):
             else:
                 affects[int(i.id)] = False
         d['affects'] = affects
-        d['problem_name'] = problem.problem_name
+        d['problem_name'] = problem.problem_name 
         d['images'] = [g.image.url for g in PatientImage.objects.filter(problem=problem)]
-        d['guidelines'] = [{'guideline': g.guideline, 'reference_url': g.reference_url} for g in Guideline.objects.filter(concept_id=problem.concept_id)]
+        d['guidelines'] = [{'guideline': g.guideline, 'reference_url': g.reference_url, 'form': g.get_form()} for g in Guideline.objects.filter(concept_id=problem.concept_id)]
         d['is_controlled'] = problem.is_controlled
         d['is_authenticated'] = problem.authenticated
         d['is_active'] = problem.is_active

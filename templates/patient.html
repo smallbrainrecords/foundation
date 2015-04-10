@@ -280,6 +280,15 @@
 <script>
 </script>
 <script>
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
 $(function() {
 {% if current_encounter %}
 window.encounter_id = {{ current_encounter.id }};
@@ -287,7 +296,7 @@ $('#encounter_input').show();
 $('#encounter_buttons').html('<input type="button" id="stop_encounter" value="Stop encounter" /><input type="button" id="view_encounter" value="View encounter" />');
 {% else %}
 $('#encounter_input').hide();
-$('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start encounter" />');
+$('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start new encounter" />');
 {% endif %}
 var problems;
 var isDown = false;     //flag we use to keep track
@@ -457,7 +466,7 @@ $('.pain_avatar').hide();window.t-=1;$('#pain_avatar'+window.t).show();
     }
 
     for (var i=0;i<painAvatars.length;i++) {
-        $('#avatars').append('<div class="pain_avatar" id="pain_avatar'+i+'"><canvas id="myCanvas'+i+'" width="214" height="442" style="border:1px solid #000000;"></canvas><p>'+painAvatars[i]['datetime']+' ('+(i+1)+'/'+painAvatars.length+')</p></div>');
+        $('#avatars').append('<div class="pain_avatar" id="pain_avatar'+i+'"><canvas id="myCanvas'+i+'" width="214" height="442" style="background:#FFF; border:1px solid #000000;"></canvas><p>'+painAvatars[i]['datetime']+' ('+(i+1)+'/'+painAvatars.length+')</p></div>');
         for (var j=0; j<bodyParts.length; j++) {
             
             var c = bodyParts[j];
@@ -669,7 +678,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 }
             }
             select += '</select>';
-            select = "<ul style='background:gray'>";
+            select = "<ul style='background:whitesmoke'>";
             for (var j=0; j<data.length;j++) {
             	
                 if (data[j]['problem_name'] != problem['problem_name']) {
@@ -688,7 +697,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 }
             }
             select += "</ul>&darr;<br/>";
-            select += problem['problem_name']+"<br/>&darr;<br/><ul style='background:gray'>";
+            select += problem['problem_name']+"<br/>&darr;<br/><ul style='background:whitesmoke'>";
             for (var j=0; j<data.length;j++) {
             	
                 if (data[j]['problem_name'] != problem['problem_name']) {
@@ -714,11 +723,12 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
                 affects += 'target="problem_data_'+a['problem_id']+'" ';
                 affects += 'problem="'+a['problem_id']+'" />';
             }
-            relationships += '<li><strong>Start date:</strong> <input type="text" id="problem_start_date_'+problem['problem_id']+'" ';
-            relationships += 'value="'+problem['start_date']+'" />';
-            relationships += '<input type="button" value="Submit new date" parent="'+problem['problem_id']+'" ';
-            relationships += 'target="problem_start_date_'+problem['problem_id']+'" object_type="problem_start_date" class="submit_data"/></li>';
+            startdate = '<h4>Start date</h4><input type="text" id="problem_start_date_'+problem['problem_id']+'" ';
+            startdate += 'value="'+problem['start_date']+'" />';
+            startdate += '<input type="button" value="Submit new date" parent="'+problem['problem_id']+'" ';
+            startdate += 'target="problem_start_date_'+problem['problem_id']+'" object_type="problem_start_date" class="submit_data"/>';
             relationships += '<li>'+select+'</li>';
+            
             //relationships += '<li><strong>Affects:</strong> '+affects+'</li></ul>';
             status = '';
             if (problem['is_controlled'] == true) {
@@ -748,7 +758,15 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             for (var j=0;j<problem['guidelines'].length;j++) {
                 guidelines += '<li>'+problem['guidelines'][j]['guideline'];
                 guidelines += ' <a href="'+problem['guidelines'][j]['reference_url']+'">';
-                guidelines += problem['guidelines'][j]['reference_url']+'</a></li>';
+                guidelines += problem['guidelines'][j]['reference_url']+'</a>';
+                var formHtml = '';
+                var form = JSON.parse(problem['guidelines'][j]['form']);
+                var uid = guid();
+                for (var j = 0; j<form.length; j++) {
+                    formHtml += '<br/>'+form[j]['label']+' <input id="'+uid+form[j]['name']+'" class="'+uid+'" type="text" />';
+                }
+                //guidelines += formHtml;
+                //guidelines += '<br/><input type="button" value="Save" onclick="alert(JSON.stringify($(\'.'+uid+'\').val()))" /></li>';
             }
             guidelines += '</ul>';
             
@@ -869,7 +887,7 @@ $.get('/get_problems/{{ patient.id }}/', {'tracking_id': tracking_id}, function 
             if (problem['is_authenticated'] == false) {
             	authenticated = '[Not authenticated]';
             }
-            $('#problems').append('<div id="problem_container_'+problem['problem_id']+'"><div id="problem_'+problem['problem_id']+'" class="'+problem['is_controlled']+' problem_label">'+problem['problem_name']+' <input type="button" value="Show problem" class="show_problem" id="control_display_for_problem_'+problem['problem_id']+'" target="problem_data_'+problem['problem_id']+'" problem="'+problem['problem_id']+'" /> '+authenticated+'</div><div class="problem_data" id="problem_data_'+problem['problem_id']+'"><h4>Status</h4>'+status+'<h4>Notes</h4>'+notes+'<h4>Goals</h4>'+goals+'<h4>ToDo</h4>'+todos+'<h4>Images</h4>'+image_form+images+'<h4>Relationships</h4>'+relationships+'<h4>Guidelines</h4>'+guidelines+'</div></div>');
+            $('#problems').append('<div id="problem_container_'+problem['problem_id']+'"><div id="problem_'+problem['problem_id']+'" class="'+problem['is_controlled']+' problem_label">'+problem['problem_name']+' <input type="button" value="Show problem" class="show_problem" id="control_display_for_problem_'+problem['problem_id']+'" target="problem_data_'+problem['problem_id']+'" problem="'+problem['problem_id']+'" /> '+authenticated+'</div><div class="problem_data" id="problem_data_'+problem['problem_id']+'"><h4>Status</h4>'+status+'<h4>Notes</h4>'+notes+'<h4>Goals</h4>'+goals+'<h4>ToDo</h4>'+todos+'<h4>Images</h4>'+image_form+images+startdate+'<h4>Relationships</h4>'+relationships+'</ul><h4>Guidelines</h4>'+guidelines+'</div></div>');
         }
         var html = '<input type="button" id="toggle_inactive_problems" value="Toggle inactive problems" /><div id="inactive_problems">';
         data = raw_data.problems['not_active'];
@@ -1367,6 +1385,22 @@ if (annyang) {
         console.log('goal label:'+$(this).attr('goallabel'));
         //$.post('/save_encounter_event/', {'summary': 'Clicked on goal: "'+$(this).attr('goallabel')+'"', 'encounter_id': window.encounter_id, 'patient_id': {{ patient.id }}});
     });
+    $(document).on('keydown', function ( e ) {
+    // You may replace `c` with whatever key you want
+        if ( e.ctrlKey && ( String.fromCharCode(e.which) === 'h' || String.fromCharCode(e.which) === 'H' ) ) {
+
+            
+            $('#show').html('');
+            $('#hide').show();
+            $('.problem_label').css({'position': 'inherit', 'width': 'inherit'});
+            window.current_problem = null;
+            $('.problem_data').hide();
+            $('.hide_problem').val('Show problem');
+            $('.hide_problem').removeClass().addClass('show_problem');
+            $.get('/get_problems/{{ patient.id }}/', {'new_status': '{"action": "hide"}'});
+            $(document).scrollTop( $('#problem_'+$(this).attr('problem')).offset().top ); 
+        }
+    });
     $('body').on('click', '.hide_problem', function () {
     	$('#show').html('');
     	$('#hide').show();
@@ -1417,7 +1451,7 @@ if (annyang) {
     });
     $(document).on('click', '#stop_encounter', function() {
          $.get('/stop_encounter/'+window.encounter_id+'/');
-         $('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start encounter" />');
+         $('#encounter_buttons').html('<input type="button" id="start_encounter" value="Start new encounter" />');
          $('#encounter_input').hide();
     });
     $(document).on('click', '#view_encounter', function() {
@@ -1478,6 +1512,9 @@ background:#FFF;
 textarea {
 	width:100%;
 }
+#encounters_list {
+display:none;
+}
 </style>
 </head>
 <body>
@@ -1523,18 +1560,19 @@ textarea {
 <input type="button" id="toggle_accomplished_todos" value="Toggle accomplished todos" /><div id="accomplished_todos"></div>
 
 <h3>Pain History</h3>
-<div id="avatars"></div>
-<div id="controls"><input type="button" id="toggleSlideshow" value="Start slideshow" /><input type="button" id="forwards" value="<" /><input type="button" id="backwards" value=">" /><a href="/pain/create_pain_avatar/{{ patient.id }}/">Update Pain</a></div>
+<div id="avatars" style="float:left; margin-right:10px;"></div>
+<div id="controls" style="background:whitesmoke"><input type="button" id="toggleSlideshow" value="Start slideshow" /><input type="button" id="forwards" value="<" /><input type="button" id="backwards" value=">" /> <a href="/pain/create_pain_avatar/{{ patient.id }}/">Update Pain</a></div>
+<div id="avatar_id"></div>
 
+<h3 style="clear:both">Encounters</h3>
+<div style="background:whitesmoke"><input type="button" value="Explore previous encounters" id="toggle_encounters" onclick="$('#encounters_list').toggle();$('html, body').animate({scrollTop: $('#encounters_list').offset().top}, 2000);" /></div><br/>
 
-<h3>Encounters</h3>
-
-<ul>
+<ul  id="encounters_list">
      {% for encounter in encounters %}
      <li><a href="/encounter/{{ encounter.id }}/">{{ encounter.starttime }}</a></li>
      {% endfor %}
 </ul>
-<div id="viewers"></div>
+<div id="viewers" style="display:none"></div>
 {% if shared_patients %}
 <select id="change_patient">
      

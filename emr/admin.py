@@ -1,30 +1,30 @@
 from django.contrib import admin
 from django.contrib.contenttypes.generic import GenericTabularInline
-from models import UserProfile, AccessLog, Encounter, EncounterEvent, TextNote, Problem, Goal, ToDo, Guideline, PatientImage, Sharing, ProblemRelationship
+from models import UserProfile, AccessLog, Encounter, EncounterEvent, TextNote, Problem, Goal, ToDo, Guideline, GuidelineForm, PatientImage, Sharing, ProblemRelationship
 from django.contrib.auth.models import User
 admin.site.disable_action('delete_selected')
 from django.contrib.auth.admin import UserAdmin as AuthUserAdmin
 from reversion.helpers import patch_admin 
 patch_admin(User)
 class UserProfileInline(admin.StackedInline):
- model = UserProfile
- max_num = 1
- can_delete = False
+    model = UserProfile
+    max_num = 1
+    can_delete = False
 
 class ProblemInline(admin.StackedInline):
- model = Problem
- extra = 0
+    model = Problem
+    extra = 0
 
 class GoalInline(admin.StackedInline):
- model = Goal
- extra = 0
+    model = Goal
+    extra = 0
 
 class ToDoInline(admin.StackedInline):
- model = ToDo
- extra = 0
+    model = ToDo
+    extra = 0
 
 class UserAdmin(AuthUserAdmin):
- inlines = [UserProfileInline, ProblemInline, GoalInline, ToDoInline]
+    inlines = [UserProfileInline, ProblemInline, GoalInline, ToDoInline]
 
 # unregister old user admin
 admin.site.unregister(User)
@@ -85,3 +85,4 @@ class PatientImageAdmin(reversion.VersionAdmin):
 admin.site.register(PatientImage, PatientImageAdmin)
 admin.site.register(Sharing)
 admin.site.register(ProblemRelationship)
+admin.site.register(GuidelineForm)

@@ -232,10 +232,23 @@ class Guideline(models.Model):
     def __unicode__(self):
         return '%s %s' % (self.concept_id, self.guideline)
 
-        
+         
     def get_dict(self):
         return instance_dict(self)
-
+        
+    def get_form(self):
+        try:
+            return GuidelineForm.objects.get(guideline=self).form
+        except:
+            return "[]"
+        
+class GuidelineForm(models.Model):
+    guideline = models.OneToOneField(Guideline)
+    form = models.TextField()
+    
+    def __unicode__(self):
+        return self.guideline.__unicode__()
+    
 class PatientImage(models.Model):
     patient = models.ForeignKey(User)
     problem = models.ForeignKey(Problem, null=True, blank=True)
