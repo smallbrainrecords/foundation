@@ -80,7 +80,7 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = BASE_DIR
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -88,7 +88,7 @@ STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'staticdev'),
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -100,7 +100,10 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+     'compressor.finders.CompressorFinder',
+
 )
+
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'p3%wq49-jg0ovn-#50#9-zpwn4-et_b_p7ho1k*v9)(q34+7hr'
@@ -158,6 +161,7 @@ INSTALLED_APPS = (
     'pain',
     'social_auth',
     'genericadmin',
+    'compressor',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -215,4 +219,7 @@ try:
     from local_settings import *
 except ImportError as e:
     pass
+
+
+
 

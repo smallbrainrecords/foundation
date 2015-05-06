@@ -1,3 +1,25 @@
+ <html>
+
+ <head>
+ 	<title></title>
+ </head>
+
+ <body>
+
+
+{% load compress %}
+
+{% compress css %}
+<link rel="stylesheet" href="/static/bower_components/bootstrap/dist/css/bootstrap.css" type="text/css" charset="utf-8">
+{% endcompress %}
+
+
+{% compress js %}
+<script src="/static/bower_components/jquery/dist/jquery.js" type="text/javascript" charset="utf-8"></script>
+{% endcompress %}
+
+
+
 <style>
      body {background:white;     font:15px arial,sans-serif;}
      
@@ -31,3 +53,6 @@
 <strong>Last name:</strong> <input type="text" name="last_name" /><br/>
 <input type="submit" value="Register" />
 </form>
+</body>
+
+</html>
