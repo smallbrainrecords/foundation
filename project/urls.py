@@ -27,7 +27,11 @@ urlpatterns = patterns('',
     url(r'^list_of_unregistered_users/$', 'emr.views.list_of_unregistered_users'),
     url(r'^register_users/$', 'emr.views.register_users'),
     url(r'^list_of_users/$', 'emr.views.list_users'),
+
     url(r'^patient/(?P<user_id>\d+)/$', 'emr.views.view_patient'),
+
+    url(r'^patient/manage/(?P<user_id>\d+)/$', 'emr.views.manage_patient'),
+
     url(r'^get_problems/(?P<patient_id>\d+)/$', 'emr.views.get_patient_data'),
     url(r'^change_status/$', 'emr.views.change_status'),
     url(r'^patient/(?P<patient_id>\d+)/add_problem/$', 'emr.views.add_problem'),

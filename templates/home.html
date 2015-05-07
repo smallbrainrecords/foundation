@@ -30,7 +30,7 @@ $(function() {
                 var users = data;
         for (var i=0;i<users.length;i++) {
             if (users[i]['is_patient'] == true) {
-                actions = '<a href="/patient/'+users[i]['id']+'/">View patient</a><br/>';
+                actions = '<a href="/patient/'+users[i]['id']+'/">View patient</a><br/><a href="/patient/manage/'+users[i]['id']+'/">Manage patient</a><br/>';
             } else {
                 actions = '';
             }
