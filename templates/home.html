@@ -1,12 +1,11 @@
-<title>Small Brain</title>
-Hi {{ request.user.get_full_name }}. Your role is {{ role }} | <a href="/admin/">Admin</a> | <a href="/logout/">Logout</a>
+{% extends "base/base.html" %}
+
+{% block content %}
+
+
+    Hi {{ request.user.get_full_name }}. Your role is {{ role }} | <a href="/admin/">Admin</a> | <a href="/logout/">Logout</a>
 {% if role == 'admin' %}
-<style>
-     body {background:white;     font:15px arial,sans-serif;}
 
-</style>
-
-<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 <script>
 var unregistered = [];
 function listUsers() {
@@ -41,7 +40,7 @@ $(function() {
             
         }
     });
-    setInterval(function() {listUsers(); },1000);
+    setInterval(function() {listUsers(); },10000);
     
     $('#save').click(function() {
         $.post('/register_users/', $( "select" ).serializeArray(), function(data) {$('#unregistered_users').html('<tr><th>User</th><th>Role</th></tr>'); });
@@ -51,12 +50,15 @@ $(function() {
 });
 </script>
 <h3>Unregistered users</h3>
-<table id="unregistered_users">
+<table id="unregistered_users" class='table'>
 <tr><th>User</th><th>Role</th></tr>
 </table>
 <input type="button" id="save" value="save" />
+
+<hr>
+
 <h3>Users</h3>
-<table id="users">
+<table id="users" class='table'>
         <tr>
           <th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>
           <th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>
@@ -68,3 +70,14 @@ $(function() {
         </tr>
 </table>
 {% endif %}
+
+
+{% endblock %}
+
+
+{% block page_js %}
+
+
+
+
+{% endblock %}

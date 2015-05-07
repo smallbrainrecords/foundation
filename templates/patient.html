@@ -1,12 +1,11 @@
+{% extends "base/base.html" %}
+
+
+{% block title %}  {{ patient.get_full_name }}   {% endblock %}
 {% load mptt_tags %}
-<style>
-     body {background:white;     font:15px arial,sans-serif;}
 
-</style>
-<html>
-<head><title>{{ patient.get_full_name }}</title>
-<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 
+{% block content %}
 <script>
 //! annyang
 //! version : 1.1.0
@@ -1516,8 +1515,8 @@ textarea {
 display:none;
 }
 </style>
-</head>
-<body>
+
+
 <div id="show"></div><div id="hide">
 {% if patient_profile.cover_image %}<img src="{{ patient_profile.cover_image.url }}" style="max-width:100%; max-height:50%;" /><br/>{% endif %}
 <!--<h3>Voice commands</h3>-->
@@ -1592,5 +1591,6 @@ display:none;
      <input type="text" id="doing_summary" /><input type="button" id="addEvent" value="Add event summary" />
      	</span>
      </div>
-</body>
-</html>
+
+
+{% endblock %}

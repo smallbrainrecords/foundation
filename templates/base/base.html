@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="../static/ico/favicon.png">
+
+    <title> {% block title %} Small Brain {% endblock %}</title>
+    <!-- Bootstrap core CSS -->
+
+{% load compress %}
+
+{% compress css %}
+<link rel="stylesheet" href="/static/bower_components/bootstrap/dist/css/bootstrap.css" type="text/css" charset="utf-8">
+<link rel="stylesheet" href="/static/css/main.css" type="text/css" charset="utf-8">
+{% endcompress %}
+
+{% compress js %}
+<script src="/static/bower_components/jquery/dist/jquery.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/bower_components/bootstrap/dist/js/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+{% endcompress %}
+
+
+  </head>
+  <body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Small Brain</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="/">Home</a></li>
+            
+            {% if user.is_authenticated %}
+              <li><a href="/admin">Admin</a></li>
+              <li><a href="/dashboard">Dashboard</a></li>
+              
+            {% endif %}
+
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+
+
+
+
+
+      <div id='dvmain' class='container'>
+        {% block content %}
+        {% endblock %}
+      </div>
+      <div class="footer container">
+        <p>&copy; Dr Ryan</p>
+      </div>
+
+
+
+
+      <style type='text/css'>
+      #dvmain{
+      min-height: 550px;
+      }
+      </style>
+      {% block page_css %}
+      {% endblock %}
+      {% block page_js %}
+      {% endblock %}
+    </body>
+  </html>
