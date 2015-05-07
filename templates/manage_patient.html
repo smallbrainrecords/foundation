@@ -5,7 +5,20 @@
 
 
 {% block content %}
+<script src="/static/apps/patient_manager/app.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/patient_manager/controllers/home.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/patient_manager/services/services.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/patient_manager/directives/directives.js" type="text/javascript" charset="utf-8"></script>
 
+
+<div id='ng-app' ng-app='ManagerApp' class='no-js' lang='en'>
+
+
+<div ng-view>
+	Loading ....
+</div>
+
+</div>
 
 
 {% endblock %}
