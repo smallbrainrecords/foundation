@@ -5,10 +5,15 @@
 
 
 <hr>
-
+{{patient_info.first_name}} {{patient_info.last_name}}
+<hr>
+{{patient_info.summary}}
 
 <h3> Problems </h3>
 
+<div class='row' ng-repeat='problem in problems'>
+{{problem.problem_name}}
+</div>
 
 <hr>
 

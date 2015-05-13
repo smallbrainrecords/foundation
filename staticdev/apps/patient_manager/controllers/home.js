@@ -4,13 +4,19 @@
 
 
 	angular.module('ManagerApp')
-		.controller('HomeCtrl', function($scope, $routeParams){
+		.controller('HomeCtrl', function($scope, $routeParams, patientService){
 
 
+			var patient_id = $('#patient_id').val();
 
-			$scope.patient_info = {};
+			patientService.fetchPatientInfo(patient_id).then(function(data){
+				$scope.patient_info = data['info'];
 
-			$scope.problems = {};
+				$scope.problems = data['problems'];
+			});
+			
+
+			
 
 			$scope.goals = {};
 
@@ -18,7 +24,7 @@
 
 			$scope.encounters = {};
 
-			
+
 
 
 		}); /* End of controller */

@@ -40,22 +40,29 @@ def instance_dict(instance, key_format=None):
             d[key(field.name)] = []
     return d
 
-class UserProfile(models.Model):
-    user = models.ForeignKey(User, unique=True)
-    ROLE_CHOICES = (
+
+
+ROLE_CHOICES = (
         ('patient', 'patient'),
         ('physician', 'physician'),
         ('admin', 'admin'),
-    )
+)
+
+
+SEX_CHOICES = (
+        ('male', 'male'),
+        ('female', 'female'),
+)
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='patient')
     data = models.TextField(blank=True) 
     cover_image = models.ImageField(upload_to='cover_image/', blank=True)
     portrait_image = models.ImageField(upload_to='cover_image/', blank=True)
     summary = models.TextField(blank=True)
-    SEX_CHOICES = (
-        ('male', 'male'),
-        ('female', 'female'),
-    )
+
     sex = models.CharField(max_length=6, choices=SEX_CHOICES, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
@@ -65,6 +72,21 @@ class UserProfile(models.Model):
         
     def get_dict(self):
         return instance_dict(self)
+
+
+    def generate_dict(self):
+        obj_dict = {}
+        obj_dict['first_name'] = self.user.first_name
+        obj_dict['last_name'] = self.user.last_name
+        obj_dict['role'] = self.role
+        obj_dict['data'] = self.data
+        obj_dict['summary'] = self.summary
+        obj_dict['sex'] = self.sex
+        obj_dict['date_of_birth'] = str(self.date_of_birth)
+        obj_dict['phone_number'] = self.phone_number
+
+        return obj_dict
+
 
 class AccessLog(models.Model):
     user = models.ForeignKey(User)
@@ -192,6 +214,18 @@ class Problem(MPTTModel):
         
     def get_dict(self):
         return instance_dict(self)
+
+    def generate_dict(self):
+        obj_dict = {}
+
+        obj_dict['user_id'] = self.patient.id
+        obj_dict['concept_id'] = self.concept_id
+        obj_dict['is_controlled']  = self.is_controlled
+        obj_dict['is_active'] = self.is_active
+        obj_dict['is_authenticated'] = self.authenticated
+        obj_dict['problem_name'] = self.problem_name
+
+        return obj_dict
 
 class Goal(models.Model):
     patient = models.ForeignKey(User)

@@ -9,6 +9,19 @@ import traceback
 from django.contrib.auth.decorators import login_required
 import json
 import os
+from pain.models import PainAvatar
+import settings
+
+from django.http import *
+from django.shortcuts import render_to_response,redirect
+from django.template import RequestContext
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+
+
+from django.contrib.auth.decorators import user_passes_test
+
+from datetime import datetime, timedelta
 
 class AccessLogMiddleware(object):
 
@@ -17,11 +30,7 @@ class AccessLogMiddleware(object):
             access_log = AccessLog(user=request.user, summary=request.path)
             access_log.save()
 
-from django.http import *
-from django.shortcuts import render_to_response,redirect
-from django.template import RequestContext
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
+
  
 def login_user(request):
     logout(request)
@@ -63,7 +72,7 @@ def register(request):
                     return HttpResponseRedirect('/')
         return HttpResponseRedirect('/')
 
-from django.contrib.auth.decorators import user_passes_test
+
 
 @user_passes_test(lambda u: u.is_superuser)
 def update(request):
@@ -149,7 +158,7 @@ def list_users(request):
 def view_patient(request, user_id):
     role = UserProfile.objects.get(user=request.user).role
     
-    from pain.models import PainAvatar
+    
     user = User.objects.get(id=user_id)
     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
     if (not ((request.user == user) or (role in ['admin', 'physician']) or (Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
@@ -159,7 +168,7 @@ def view_patient(request, user_id):
     context = {'patient': user, 'user_role': UserProfile.objects.get(user=request.user).role, 'patient_profile': UserProfile.objects.get(user=user), 'problems': Problem.objects.filter(patient=user)}
     context.update({'pain_avatars': PainAvatar.objects.filter(patient=user).order_by('-datetime')})
     context['encounters'] = Encounter.objects.filter(patient=user).order_by('-starttime')
-    import settings
+
     context['voice_control'] = settings.VOICE_CONTROL
     context['syncing'] = settings.SYNCING
     if (request.user == user):
@@ -184,7 +193,7 @@ def get_patient_data(request, patient_id):
     # and concept ids of the problems as well as the snomed parents and children of those problems mapped to a problem id
     # This way we can prevent duplicate problems from being added
     viewers = []
-    from datetime import datetime, timedelta
+    
 
     time_threshold = datetime.now() - timedelta(seconds=5)
     viewers = list(set([viewer.viewer for viewer in Viewer.objects.filter(patient=patient, datetime__gte=time_threshold)]))
@@ -612,11 +621,13 @@ class LoginError(View):
 
 
 
+
+
 @login_required
 def manage_patient(request, user_id):
     role = UserProfile.objects.get(user=request.user).role
     
-    from pain.models import PainAvatar
+    
     user = User.objects.get(id=user_id)
     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
     if (not ((request.user == user) or (role in ['admin', 'physician']) or (Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
@@ -626,7 +637,7 @@ def manage_patient(request, user_id):
     context = {'patient': user, 'user_role': UserProfile.objects.get(user=request.user).role, 'patient_profile': UserProfile.objects.get(user=user), 'problems': Problem.objects.filter(patient=user)}
     context.update({'pain_avatars': PainAvatar.objects.filter(patient=user).order_by('-datetime')})
     context['encounters'] = Encounter.objects.filter(patient=user).order_by('-starttime')
-    import settings
+    
     context['voice_control'] = settings.VOICE_CONTROL
     context['syncing'] = settings.SYNCING
     if (request.user == user):
@@ -639,3 +650,27 @@ def manage_patient(request, user_id):
         pass
 
     return render_to_response("manage_patient.html", context)
+
+
+@login_required
+def patient_info(request, patient_id):
+
+    patient_user = User.objects.get(id=patient_id)
+    patient_profile = UserProfile.objects.get(user=patient_user)
+
+    problems = Problem.objects.filter(patient=patient_user)
+
+
+    problem_list = []
+    for problem in problems:
+        problem_list.append(problem.generate_dict())
+
+
+    goals = []
+    resp = {}
+
+
+    resp['info'] = patient_profile.generate_dict()
+    resp['problems'] = problem_list
+
+    return HttpResponse(json.dumps(resp))

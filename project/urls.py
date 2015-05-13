@@ -47,4 +47,6 @@ urlpatterns = patterns('',
     url(r'^stop_encounter/(?P<encounter_id>\d+)/$', 'emr.views.stop_encounter'),
     url(r'^save_encounter_event/$', 'emr.views.save_event_summary'),
     url(r'^encounter/(?P<encounter_id>\d+)/$', 'emr.views.encounter'),
+
+    url(r'^patient/(?P<patient_id>\d+)/info$', 'emr.views.patient_info'),
 )
