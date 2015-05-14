@@ -703,3 +703,14 @@ def patient_info(request, patient_id):
 
 
 
+@login_required
+def problem_info(request, problem_id):
+
+    problem_info = Problem.objects.get(id=problem_id)
+
+
+    resp = {}
+    resp['info'] = problem_info.generate_dict()
+
+    return HttpResponse(json.dumps(resp))
+    

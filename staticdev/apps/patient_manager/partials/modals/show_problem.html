@@ -1,9 +1,27 @@
 
-<h4>  Problem </h4>
+<h4>  Problem : {{current_problem.problem_name}} </h4>
 
 <hr>
 
-<b> Todo </b>
+<b> Status </b>
+
+<div class='row'>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='current_problem.is_controlled'> 
+		Is controlled
+	</div>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='current_problem.is_authenticated'>
+		Is authenticated
+	</div>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='current_problem.is_active'>
+		Is active
+	</div>
+</div>
+
+
+
 
 
 
