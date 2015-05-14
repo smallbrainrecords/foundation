@@ -84,6 +84,8 @@ class UserProfile(models.Model):
         obj_dict['sex'] = self.sex
         obj_dict['date_of_birth'] = str(self.date_of_birth)
         obj_dict['phone_number'] = self.phone_number
+        obj_dict['cover_image'] = self.cover_image.url
+        obj_dict['portrait_image'] = self.portrait_image.url
 
         return obj_dict
 
@@ -130,6 +132,22 @@ class Encounter(models.Model):
         
     def get_dict(self):
         return instance_dict(self)
+
+    def generate_dict(self):
+        obj_dict = {}
+
+        obj_dict['id'] = self.id
+        obj_dict['physician'] = unicode(self.physician)
+        obj_dict['patient'] = unicode(self.patient)
+        obj_dict['starttime'] = str(self.starttime.strftime("%Y-%m-%d %H:%M"))
+        obj_dict['stoptime'] = str(self.stoptime.strftime("%Y-%m-%d %H:%M"))
+        obj_dict['duration'] = str(self.stoptime-self.starttime)
+
+        obj_dict['note'] = self.note
+
+        return obj_dict
+
+
 
 class EncounterEvent(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
@@ -217,8 +235,8 @@ class Problem(MPTTModel):
 
     def generate_dict(self):
         obj_dict = {}
-
-        obj_dict['user_id'] = self.patient.id
+        obj_dict['id'] = self.id
+        obj_dict['patient_id'] = self.patient.id
         obj_dict['concept_id'] = self.concept_id
         obj_dict['is_controlled']  = self.is_controlled
         obj_dict['is_active'] = self.is_active
@@ -243,6 +261,19 @@ class Goal(models.Model):
     def get_dict(self):
         return instance_dict(self)
 
+    def generate_dict(self):
+        obj_dict = {}
+        obj_dict['id'] = self.id
+        obj_dict['patient_id'] = self.patient.id
+        obj_dict['problem'] = unicode(self.problem)
+        obj_dict['goal'] = self.goal
+        obj_dict['is_controlled'] = self.is_controlled
+        obj_dict['accomplished'] = self.accomplished
+        obj_dict['start_date'] = str(self.start_date)
+
+        return obj_dict
+
+
 class ToDo(models.Model):
     patient = models.ForeignKey(User)
     problem = models.ForeignKey(Problem, null=True, blank=True)
@@ -257,6 +288,20 @@ class ToDo(models.Model):
         
     def get_dict(self):
         return instance_dict(self)
+
+    def generate_dict(self):
+        obj_dict = {}
+        obj_dict['patient_id'] = self.patient.id
+
+        if self.problem:
+            obj_dict['problem'] = self.problem.problem_name
+        else:
+            obj_dict['problem'] = 'None'
+
+        obj_dict['todo'] = self.todo
+        obj_dict['accomplished'] = self.accomplished
+
+        return obj_dict
 
 class Guideline(models.Model):
     concept_id = models.CharField(max_length=20, blank=True)

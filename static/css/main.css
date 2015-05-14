@@ -3,3 +3,41 @@
 .google-login-img{
 	height: 50px;
 }
+
+.ul-clean{
+	list-style-type: none;
+}
+
+.ul-clean li{
+	margin-top:15px;
+}
+
+.item-box{
+	min-height: 50px;
+	padding: 12px;
+	border: 1px solid #ccc;
+}
+
+.green-box{
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+    color: #3c763d;
+}
+
+
+
+.red-box{
+    background-color: #f2dede;
+    border-color: #ebccd1;
+    color: #a94442;
+}
+
+.large-modal .ngdialog-content{
+	width: 65%;
+	min-height: 275px;
+
+}
+
+.small-modal .ngdialog-content{
+	width: 500px;
+}

@@ -658,19 +658,48 @@ def patient_info(request, patient_id):
     patient_user = User.objects.get(id=patient_id)
     patient_profile = UserProfile.objects.get(user=patient_user)
 
-    problems = Problem.objects.filter(patient=patient_user)
-
-
+    # Active Problems
+    problems = Problem.objects.filter(patient=patient_user, is_active=True)
     problem_list = []
     for problem in problems:
         problem_list.append(problem.generate_dict())
 
+    # Not accomplished Goals
+    goals = Goal.objects.filter(patient=patient_user, accomplished=False)
+    goal_list = []
+    for goal in goals:
+        goal_list.append(goal.generate_dict())
 
-    goals = []
+
+    # Not accomplished Todos
+    pending_todos = ToDo.objects.filter(patient=patient_user, accomplished=False)
+    pending_todo_list = []
+    for todo in pending_todos:
+        pending_todo_list.append(todo.generate_dict())
+
+    # Accomplished Todos
+    accomplished_todos = ToDo.objects.filter(patient=patient_user, accomplished=True)
+    accomplished_todo_list = []
+    for todo in accomplished_todos:
+        accomplished_todo_list.append(todo.generate_dict())
+
+    encounters = Encounter.objects.filter(patient=patient_user)
+    encounter_list = []
+    for encounter in encounters:
+        encounter_list.append(encounter.generate_dict())
+
+
+
     resp = {}
-
-
     resp['info'] = patient_profile.generate_dict()
     resp['problems'] = problem_list
+    resp['goals'] = goal_list
+    resp['pending_todos'] = pending_todo_list
+    resp['accomplished_todos'] = accomplished_todo_list
 
+    resp['encounters'] = encounter_list
     return HttpResponse(json.dumps(resp))
+
+
+
+

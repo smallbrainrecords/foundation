@@ -49,4 +49,5 @@ urlpatterns = patterns('',
     url(r'^encounter/(?P<encounter_id>\d+)/$', 'emr.views.encounter'),
 
     url(r'^patient/(?P<patient_id>\d+)/info$', 'emr.views.patient_info'),
+    
 )
