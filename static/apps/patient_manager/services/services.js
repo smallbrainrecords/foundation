@@ -27,6 +27,24 @@
 		};
 
 
+		this.fetchProblemInfo = function(problem_id){
+
+			var deferred = $q.defer();
+
+			$http({
+				"method":"GET",
+				"url" : "/problem/"+problem_id+"/info",
+			}).success(function(data){
+
+				deferred.resolve(data);
+
+			}).error(function(data){
+
+				deferred.resolve(data);
+			})
+
+			return deferred.promise;
+		};
 
 
 

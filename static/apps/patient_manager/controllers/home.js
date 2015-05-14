@@ -58,7 +58,7 @@
 				console.log($scope.new_goal);
 			}
 
-			$scope.show_problem = function(){
+			$scope.show_problem = function(problem_id){
 
 
 				ngDialog.open({
@@ -69,13 +69,18 @@
                         controller: ['$scope',
                             function($scope) {
 
+                            	patientService.fetchProblemInfo(problem_id).then(function(data){
+
+                            		$scope.current_problem = data['info'];
+                            	});
+
                             }]
                         });
 
 			}
 
 
-			$scope.show_goal = function(){
+			$scope.show_goal = function(goal_id){
 
 
 				ngDialog.open({
