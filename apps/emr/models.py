@@ -211,9 +211,21 @@ class TextNote(models.Model):
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)
 
-        
+    def __unicode__(self):
+        return "%s %s" %(self.by, self.note)
+
     def get_dict(self):
         return instance_dict(self)
+
+    def generate_dict(self):
+        obj_dict = {}
+        obj_dict['by'] = self.by
+        obj_dict['by_label'] = self.get_by_display()
+        obj_dict['note'] = self.note
+        obj_dict['date'] = self.datetime.strftime("%Y-%m-%d %H:%M")
+
+        return obj_dict
+        
 
 class Problem(MPTTModel):
     patient = models.ForeignKey(User)

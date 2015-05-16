@@ -708,9 +708,19 @@ def problem_info(request, problem_id):
 
     problem_info = Problem.objects.get(id=problem_id)
 
+    patient_notes = problem_info.notes.filter(by='patient')
+    physician_notes = problem_info.notes.filter(by='physician')
 
+    patient_note_holder = []
+    for note in patient_notes:
+        patient_note_holder.append(note.generate_dict())
+
+    physician_note_holder = []
+    for note in physician_notes:
+        physician_note_holder.append(note.generate_dict())
+        
     resp = {}
     resp['info'] = problem_info.generate_dict()
-
+    resp['patient_notes'] = patient_note_holder
+    resp['physician_notes'] = physician_note_holder
     return HttpResponse(json.dumps(resp))
-    
