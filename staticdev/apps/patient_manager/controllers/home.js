@@ -9,6 +9,9 @@
 
 			var patient_id = $('#patient_id').val();
 
+
+			$scope.patient_id = patient_id;
+			
 			patientService.fetchPatientInfo(patient_id).then(function(data){
 				$scope.patient_info = data['info'];
 
@@ -20,6 +23,15 @@
 				$scope.accomplished_todos = data['accomplished_todos'];
 
 				$scope.encounters = data['encounters'];
+
+
+			});
+
+
+			patientService.fetchPainAvatars(patient_id).then(function(data){
+
+				$scope.pain_avatars = data['pain_avatars'];
+
 			});
 
 
@@ -58,43 +70,9 @@
 				console.log($scope.new_goal);
 			}
 
-			$scope.show_problem = function(problem_id){
 
 
-				ngDialog.open({
-                        template: '/static/apps/patient_manager/partials/modals/show_problem.html',
-                        className: 'ngdialog-theme-default large-modal',
-                        scope: $scope,
-                        cache: false,
-                        controller: ['$scope',
-                            function($scope) {
 
-                            	patientService.fetchProblemInfo(problem_id).then(function(data){
-
-                            		$scope.current_problem = data['info'];
-                            	});
-
-                            }]
-                        });
-
-			}
-
-
-			$scope.show_goal = function(goal_id){
-
-
-				ngDialog.open({
-                        template: '/static/apps/patient_manager/partials/modals/show_goal.html',
-                        className: 'ngdialog-theme-default large-modal',
-                        scope: $scope,
-                        cache: false,
-                        controller: ['$scope',
-                            function($scope) {
-
-                            }]
-                        });
-
-			}
 
 
 			

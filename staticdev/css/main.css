@@ -41,3 +41,33 @@
 .small-modal .ngdialog-content{
 	width: 500px;
 }
+
+
+.note-box{
+	width: 400px;
+}
+
+.footer{
+	margin-top: 75px;
+}
+
+
+.small-img{
+	width: 80%;
+}
+
+#bottom-bar{
+	position: fixed;
+	height: 65px;
+	bottom: 0px;
+	left:0px;
+	width: 100%;
+	z-index: 1000;
+	background-color: rgba(255, 255, 255, 0.9);
+
+
+	border-top: 2px solid grey;
+	border-radius: 3px;
+	padding-top: 10px;
+
+}

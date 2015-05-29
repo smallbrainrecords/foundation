@@ -6,6 +6,8 @@ admin.site.disable_action('delete_selected')
 from django.contrib.auth.admin import UserAdmin as AuthUserAdmin
 from reversion.helpers import patch_admin 
 patch_admin(User)
+
+
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
     max_num = 1
@@ -32,7 +34,7 @@ admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 import reversion
 
-class EncounterEventInline(GenericTabularInline):
+class EncounterEventInline(admin.StackedInline):
     model = EncounterEvent
 
 class UserProfileAdmin(reversion.VersionAdmin):

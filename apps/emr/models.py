@@ -4,6 +4,11 @@ from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from mptt.models import MPTTModel, TreeForeignKey
 
+
+import datetime
+import time
+
+
 def instance_dict(instance, key_format=None):
     """
     Returns a dictionary containing field names and values for the given
@@ -112,22 +117,22 @@ def get_path(instance, filename):
     def get_dict(self):
         return instance_dict(self)
  
+
+
 class Encounter(models.Model):
-    physician = models.ForeignKey(User, related_name="physician")
-    patient = models.ForeignKey(User, related_name="patient")
+    physician = models.ForeignKey(User, related_name="physician_encounters")
+    patient = models.ForeignKey(User, related_name="patient_encounters")
     starttime = models.DateTimeField(auto_now_add=True)
     stoptime = models.DateTimeField(null=True, blank=True)
-    #events = generic.GenericRelation('EncounterEvent',
-    #    content_type_field='content_type',
-    #    object_id_field='object_id'
-    #)
-    events = models.ManyToManyField('EncounterEvent', blank=True)
+
+    
     audio = models.FileField(upload_to=get_path, blank=True) 
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
     
     def __unicode__(self):
-        return 'Patient: %s Time: %s' % (self.patient.get_full_name(), self.physician.get_full_name())
+        return 'Patient: %s Time: %s' % (
+            self.patient.get_full_name(), self.physician.get_full_name())
 
         
     def get_dict(self):
@@ -137,11 +142,34 @@ class Encounter(models.Model):
         obj_dict = {}
 
         obj_dict['id'] = self.id
-        obj_dict['physician'] = unicode(self.physician)
-        obj_dict['patient'] = unicode(self.patient)
-        obj_dict['starttime'] = str(self.starttime.strftime("%Y-%m-%d %H:%M"))
-        obj_dict['stoptime'] = str(self.stoptime.strftime("%Y-%m-%d %H:%M"))
-        obj_dict['duration'] = str(self.stoptime-self.starttime)
+        obj_dict['physician'] = self.physician.id
+        obj_dict['patient'] = self.patient.id
+
+        if self.starttime:
+            obj_dict['starttime'] = str(self.starttime.strftime("%Y-%m-%d %H:%M"))
+        else:
+            obj_dict['starttime'] = None
+
+        if self.stoptime:
+            obj_dict['stoptime'] = str(self.stoptime.strftime("%Y-%m-%d %H:%M"))
+        else:
+            obj_dict['stoptime'] = None
+        
+        if self.starttime and self.stoptime:
+            obj_dict['duration'] = str(self.stoptime-self.starttime)
+        else:
+            obj_dict['duration'] = None
+
+        if self.audio:
+            obj_dict['audio'] = self.audio.url
+        else:
+            obj_dict['audio'] = None
+
+        if self.video:
+            obj_dict['video'] = self.video.url
+        else:
+            obj_dict['video'] = None    
+        
 
         obj_dict['note'] = self.note
 
@@ -150,27 +178,22 @@ class Encounter(models.Model):
 
 
 class EncounterEvent(models.Model):
+    encounter = models.ForeignKey(Encounter, related_name='encounter_events',
+        null=True, blank=True)
+
     datetime = models.DateTimeField(auto_now_add=True)
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    event = generic.GenericForeignKey('content_type', 'object_id')
+    summary = models.TextField(default='')
+    
 
     def __unicode__(self):
-        return unicode(self.event)
-        
-        
+        return unicode(self.summary)
+            
     def get_dict(self):
         return instance_dict(self)
 
     def video_seconds(self):
-        import datetime
-        import time
-        # find the Encounter (Wish I had made a foreignkey would be much easier to find)
-        for encounter in Encounter.objects.all():
-            if self in encounter.events.all():
-                encounter = encounter
-                break
-        x = encounter.starttime
+
+        x = self.encounter.starttime
         s = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
         x = self.datetime
         e = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
@@ -183,24 +206,20 @@ class EncounterEvent(models.Model):
         if s < 10:
             s = '0' + str(s)
         return '%s:%s' % (h, s)
+
+    def generate_dict(self):
+
+        obj_dict = {}
+        obj_dict['id'] = self.id
+        obj_dict['encounter_id'] = self.encounter.id
+        obj_dict['datetime'] = self.datetime.strftime("%Y-%m-%d %H:%M")
+        obj_dict['summary'] = self.summary
+        obj_dict['video_seconds'] = self.video_seconds()
+        obj_dict['video_timestamp'] = self.video_timestamp()
+
+        return obj_dict
+
         
-class EventSummary(models.Model):
-    patient = models.ForeignKey(User)
-    datetime = models.DateTimeField(auto_now_add=True)
-    summary = models.TextField()
-
-    def __unicode__(self):
-        return '%s %s' % (unicode(self.patient), self.summary)
-
-        
-    def get_dict(self):
-        return instance_dict(self)
-
-    def video_seconds(self):
-        import datetime
-        import time
-        x = self.datetime
-        return int(datetime.timedelta(hours=x.tm_hour,minutes=x.tm_min,seconds=x.tm_sec).total_seconds())
 
 class TextNote(models.Model):
     BY_CHOICES = (
@@ -281,7 +300,7 @@ class Goal(models.Model):
         obj_dict['goal'] = self.goal
         obj_dict['is_controlled'] = self.is_controlled
         obj_dict['accomplished'] = self.accomplished
-        obj_dict['start_date'] = str(self.start_date)
+        obj_dict['start_date'] = str(self.start_date.strftime("%Y-%m-%d"))
 
         return obj_dict
 
@@ -352,6 +371,17 @@ class PatientImage(models.Model):
         
     def get_dict(self):
         return instance_dict(self)
+
+
+    def generate_dict(self):
+        obj_dict = {}
+        obj_dict['id'] = self.id
+        obj_dict['patient_id'] = self.patient.id
+        obj_dict['problem_id'] = self.problem_id
+        obj_dict['image_url'] = self.image.url
+        obj_dict['datetime'] = self.datetime.strftime("%Y-%m-%d %H:%M")
+        return obj_dict
+
         
 class Sharing(models.Model):
     patient = models.ForeignKey(User, related_name='target_patient')
@@ -390,3 +420,12 @@ class ProblemRelationship(models.Model):
     
     def __unicode__(self):
         return "%s %s" % (unicode(self.source), unicode(self.target))
+
+
+    def generate_dict(self):
+        obj_dict = {}
+        obj_dict['id'] = self.id
+        obj_dict['source'] = self.source.generate_dict()
+        obj_dict['target'] = self.target.generate_dict()
+
+        return obj_dict

@@ -48,7 +48,18 @@ urlpatterns = patterns('',
     url(r'^save_encounter_event/$', 'emr.views.save_event_summary'),
     url(r'^encounter/(?P<encounter_id>\d+)/$', 'emr.views.encounter'),
 
-    url(r'^patient/(?P<patient_id>\d+)/info$', 'emr.views.patient_info'),
-    url(r'^problem/(?P<problem_id>\d+)/info$', 'emr.views.problem_info'),
+    url(r'^patient/(?P<patient_id>\d+)/info$', 'emr.views.get_patient_info'),
+    url(r'^problem/(?P<problem_id>\d+)/info$', 'emr.views.get_problem_info'),
+    url(r'^goal/(?P<goal_id>\d+)/info$', 'emr.views.get_goal_info'),
+    url(r'^encounter/(?P<encounter_id>\d+)/info$', 'emr.views.get_encounter_info'),
 
+    url(r'^patient/(?P<patient_id>\d+)/encounter/status$', 'emr.views.patient_encounter_status'),
+
+    url(r'^patient/(?P<patient_id>\d+)/encounter/start$', 'emr.views.create_new_encounter'),
+
+    url(r'^encounter/(?P<encounter_id>\d+)/stop$', 'emr.views.stop_patient_encounter'),
+
+    url(r'^encounter/add/event_summary$', 'emr.views.add_event_summary'),
+
+    url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars')
 )

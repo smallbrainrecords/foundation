@@ -369,6 +369,8 @@ function intersects(x, y, cx, cy, r) {
     var dy = y-cy
     return dx*dx+dy*dy <= r*r
 }
+
+
 function getObject(x,y) {
     for (var i=0; i<bodyParts.length; i++) {
         var c = bodyParts[i];
@@ -485,9 +487,12 @@ $('.pain_avatar').hide();window.t-=1;$('#pain_avatar'+window.t).show();
             ctx.fill();
         }
     }
+
+
 window.t=0;
 $('.pain_avatar').hide();
 $('#pain_avatar'+t).show();
+
 $('#toggleSlideshow').click(function(e) {
     //alert($(this).val());
     if ($(this).val() == 'Start slideshow') {

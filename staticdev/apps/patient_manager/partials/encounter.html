@@ -1,0 +1,112 @@
+<a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
+
+<hr>
+
+<h4>  Encounter : {{encounter.starttime}} to {{encounter.stoptime}} </h4>
+
+
+
+<hr>
+
+<div class='row'>
+
+	<div class='col-md-6'>
+<form class='form'>
+
+	<div class='form-group'>
+		<label> Note </label>
+	</div>
+
+	<div class='form-group'>
+		<textarea  class='form-control' ng-model='encounter.note' placeholder='Add a note....'></textarea>
+	</div>
+
+	<button type='submit' class='btn btn-default'>
+		Update
+	</button>
+
+
+</form>
+	</div>
+
+	<div class='col-md-6'>
+
+		<div ng-if='encounter.video!=null'>
+			<strong> >> Play Video File [Todo] </strong>
+
+		</div>
+		<div ng-if='encounter.video==null'>
+
+			<form class='form'>
+
+				<div class='form-group'>
+					<label for="video_file">Video File:</label>
+					<input type="file" name="video_file" id="file">
+				</div>
+
+				<div class='form-group'>
+					<button type='button' class='btn btn-default'>
+						Upload
+					</button>
+				</div>
+
+			</form>
+
+		</div>
+		<hr>
+		<div ng-if='encounter.audio!=null'>
+			<strong> >> Play Audio File [Todo] </strong>
+		</div>
+		<div ng-if='encounter.audio==null'>
+
+
+			<form class='form'>
+
+				<div class='form-group'>
+					<label for="audio_file">Audio File:</label>
+					<input type="file" name="audio_file" id="audio_file">
+				</div>
+
+				<div class='form-group'>
+					<button type='button' class='btn btn-default'>
+						Upload
+					</button>
+				</div>
+
+			</form>
+
+
+		</div>
+	</div>
+</div>
+
+<hr>
+
+<center>
+	<h3 class='text-info' ng-if='!encounter_events.length'>
+		No Events
+	</h3>
+</center>
+
+<table class='table' ng-if='encounter_events.length>0'>
+
+	<thead>
+
+		<th> Time (24 hour) </th>
+		<th> Video Timestamp </th>
+		<th> Summary </th>
+	</thead>
+
+	<tbody>
+
+		<tr ng-repeat='event in encounter_events'>
+			<td> {{event.video_seconds }} </td>
+			<td> {{event.video_timestamp}} </td>
+			<td> {{event.summary}} </td>
+		</tr>
+	</tbody>
+
+</table>
+
+
+

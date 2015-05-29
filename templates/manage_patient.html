@@ -1,36 +1,77 @@
 {% extends "base/base.html" %}
-
-
 {% block title %}  Manage Patient - {{ patient.get_full_name }}   {% endblock %}
-
-
 {% block content %}
-<script src="/static/apps/patient_manager/app.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/patient_manager/controllers/home.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/patient_manager/services/services.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/patient_manager/directives/directives.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/apps/patient_manager/app.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/apps/patient_manager/controllers/home.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/apps/patient_manager/controllers/problems.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/apps/patient_manager/controllers/goals.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/apps/patient_manager/controllers/encounters.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/apps/patient_manager/controllers/encountersMain.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/apps/patient_manager/controllers/pain.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/apps/patient_manager/services/services.js" type="text/javascript" charset="utf-8"></script>
 
 
-<div id='ng-app' ng-app='ManagerApp' class='no-js' lang='en'>
 
 
-<input type='hidden' id='patient_id' value='{{patient.id}}'>
-<div ng-view>
-	Loading ....
-</div>
+	<script src="/static/apps/patient_manager/directives/directives.js" type="text/javascript" charset="utf-8"></script>
+	<div id='ng-app' ng-app='ManagerApp' class='no-js' lang='en'>
 
-</div>
+		<input type='hidden' id='patient_id' value='{{patient.id}}'>
+
+		<div ng-view>
+			Loading ....
+		</div>
+
+		{% verbatim %}
 
 
+		<div id='bottom-bar' ng-controller='EncountersMainCtrl'>
+
+			<div class='row' style='width:90%;margin:0 auto;'>
+
+				<div class='col-md-12' ng-show='encounter_flag==false'>
+					<button class='btn btn-info btn-md' ng-click='start_encounter()' >
+					Start Encounter
+					</button>
+				</div>
+
+				<div class='col-md-12' ng-show='encounter_flag==true'>
+
+					<div class='row'>
+						<div class='col-md-3'>
+
+							<button class='btn btn-danger btn-md' ng-click='stop_encounter()' >
+							Stop Encounter
+							</button>
+							<button class='btn btn-default btn-md' ng-click='view_encounter()' >
+							View Encounter
+							</button>
+						</div>
+
+						<div class='col-md-6'>
+
+							<input type='text'
+						placeholder='What are you doing right now ?' class='form-control' ng-model='event_summary'>
+
+						</div>
+
+						<div class='col-md-3'>
+						
+						<button class='btn btn-primary btn-md'  ng-click='add_event_summary()'>
+
+						Add Event Summary
+						</button>
+
+						</div>
+					</div>
+
+					</div>
+				</div>
+			</div>
+		{% endverbatim %}
+	</div>
 {% endblock %}
-
-
 {% block page_js %}
-
-
 {% endblock %}
-
-
 {% block page_css %}
-
 {% endblock %}

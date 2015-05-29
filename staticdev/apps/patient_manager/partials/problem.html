@@ -1,0 +1,272 @@
+
+<a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
+
+<hr>
+
+<h4>  Problem : {{problem.problem_name}} </h4>
+
+<hr>
+
+
+<div class='row'>
+
+	<div class='col-md-8'>
+
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'>Status</div>
+
+	<div class='panel-body'>
+
+
+<div class='row'>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='problem.is_controlled'> 
+		Is controlled
+	</div>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='problem.is_authenticated'>
+		Is authenticated
+	</div>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='problem.is_active'>
+		Is active
+	</div>
+</div>
+
+
+
+	</div>
+
+</div>
+
+
+
+	</div>
+	<div class='col-md-4'>
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'>Start Date</div>
+
+	<div class='panel-body'>
+
+		<form class='form form-inline'>
+
+			<div class='form-group'>
+				<input type='text' class='form-control'>
+			</div>
+			<div class='form-group'>
+				<button type='button' class='btn btn-default'> Update </button>
+			</div>	
+		</form>
+
+	</div>
+
+
+	</div>
+
+</div>
+
+</div>
+
+
+
+
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'>Notes</div>
+
+	<div class='panel-body'>
+
+
+<div class='row'>
+
+	<div class='col-md-6'>
+		<b> Patient Notes </b> 
+
+		<form class='form-inline'>
+
+		<textarea class='form-control note-box' style='width: 450px; height: 80px;'></textarea>
+
+		<button class='btn btn-default btn-lg'> Add </button>
+
+		</form>
+
+		<ul class='ul-clean'>
+
+			<li ng-show='!patient_notes.length'> No Notes </li>
+			<li ng-repeat='note in patient_notes'>
+				{{note.note}}
+			</li>
+		</ul>
+	</div>
+
+	<div class='col-md-6'>
+		<b> Physician Notes </b>
+
+		<form class='form-inline'>
+
+		<textarea class='form-control note-box' style='width: 450px; height: 80px;'></textarea>
+
+		<button class='btn btn-default btn-lg'> Add </button>
+
+		</form>
+
+		<ul class='ul-clean'>
+
+			<li ng-show='!physician_notes.length'> No Notes </li>
+			<li ng-repeat='note in physician_notes'>
+				{{note.note}}
+			</li>
+		</ul>
+	</div>
+</div>
+
+
+	</div>
+
+</div>
+
+
+
+
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'> Goals and Todos </div>
+
+
+	<div class='panel-body'>
+
+
+<div class='row'>
+
+	<div class='col-md-6'>
+
+		<b> Goals </b>
+		<hr>
+		<form class='form-inline'>
+
+			<div class='form-group'>
+				<label> Add </label>
+				<input type='text' class='form-control'>
+			</div>
+
+			<div class='form-group'>
+				<input type='submit' value='Submit' class='btn btn-default'>
+			</div>
+
+		</form>
+
+		<ul class='ul-clean'>
+			<li ng-show='!problem_goals.length'> No Goals </li>
+			<li ng-repeat='goal in problem_goals'>
+				{{goal.goal}}
+			</li>
+		</ul>
+
+
+
+	</div>
+
+	<div class='col-md-6'>
+
+		<b> Todo </b>
+		<hr>
+		<form class='form-inline'>
+
+			<div class='form-group'>
+				<label> Add </label>
+				<input type='text' class='form-control'>
+			</div>
+
+			<div class='form-group'>
+				<input type='submit' value='Submit' class='btn btn-default'>
+			</div>
+
+
+		</form>
+
+
+		<ul class='ul-clean'>
+			<li ng-show='!problem_todos.length'> No Todos </li>
+			<li ng-repeat='todo in problem_todos'>
+				{{todo.todo}}
+			</li>
+		</ul>
+
+	</div>
+
+
+</div>
+
+
+
+
+	</div>
+
+
+</div>
+
+
+<div class='panel panel-default'>
+
+
+	<div class='panel-heading'> Images </div>
+
+	<div class='panel-body'>
+
+		<form class='form-inline'>
+			<label for="file">File:</label>
+			<input type="file" name="file" id="file">
+			<input type="submit" name="submit" value="Upload">
+		</form>
+
+		<hr>
+
+		<div class='row'>
+
+			<div class='col-md-4' ng-repeat='image in problem_images'>
+
+				<center>
+					<img src='{{image.image_url}}' class='thumbnail small-img'>
+				</center>
+			</div>
+
+		</div>
+
+	</div>
+
+</div>
+
+
+<!-- Relationships -->
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'> Relationships </div>
+
+	<div class='panel-body'>
+
+		<ul class='ul-clean'>
+			<li ng-repeat='relationship in problem_relationships'>
+				{{relationship.target.problem_name}}
+			</li>
+		</ul>
+	</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
