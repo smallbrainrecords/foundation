@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('HomeCtrl', function($scope, $routeParams, patientService, ngDialog){
+		.controller('HomeCtrl', function($scope, $routeParams, patientService, ngDialog, toaster){
 
 
 			var patient_id = $('#patient_id').val();
@@ -35,6 +35,22 @@
 			});
 
 
+			$scope.update_patient_summary = function(){
+
+					var form = {
+						'patient_id': $scope.patient_id,
+						'summary' : $scope.patient_info.summary
+					};
+
+					patientService.updatePatientSummary(form).then(function(data){
+
+						toaster.pop('success', 'Done', 'Patient summary updated!');
+
+					});
+
+			};
+
+
 			$scope.show_accomplished_todos = false;
 
 			$scope.toggle_accomplished_todos  = function(){
@@ -57,21 +73,60 @@
 				console.log($scope.new_problem);
 			}
 
-			$scope.add_todo = function(){
 
-				alert("To be implemented");
-				console.log($scope.new_todo);
+
+
+			$scope.add_goal = function(form){
+
+				form.patient_id = $scope.patient_id;
+				patientService.addGoal(form).then(function(data){
+
+					
+					var new_goal = data['goal'];
+
+					$scope.goals.push(new_goal);
+
+					toaster.pop('success', "Done", "New goal created successfully!");
+					console.log('pop');
+					
+				});
+				
 			}
 
 
-			$scope.add_goal = function(){
+			$scope.add_todo = function(form){
 
-				alert("To be implemented");
-				console.log($scope.new_goal);
-			}
+				form.patient_id = $scope.patient_id;
+
+				patientService.addToDo(form).then(function(data){
+
+					
+					var new_todo = data['todo'];
+					$scope.pending_todos.push(new_todo);
+					toaster.pop('success', 'Done', 'New Todo added successfully');
+
+				});
+
+			};
 
 
 
+
+			$scope.$watch('new_problem.name', function(newVal, oldVal){
+
+				if (newVal==undefined){
+					return false;
+				}		
+
+				if(newVal.length>2){
+
+					patientService.listTerms(newVal).then(function(data){
+
+						// console.log(data);
+					});
+				}
+
+			});
 
 
 

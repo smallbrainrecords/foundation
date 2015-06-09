@@ -1,27 +1,20 @@
-from django.shortcuts import render 
-from django.shortcuts import render_to_response
-from django.db.models.loading import get_model
-from django.http import HttpResponse, HttpResponseRedirect
-from django.contrib.auth.models import User
-from django.template import RequestContext
-from models import UserProfile, AccessLog, Problem, Goal, ToDo, Guideline, TextNote, PatientImage, Encounter, EncounterEvent,  Sharing, Viewer, ViewStatus, ProblemRelationship
-import traceback
-from django.contrib.auth.decorators import login_required
-import json
-import os
+from common.views import *
+
+from models import UserProfile, AccessLog, Problem, \
+ Goal, ToDo, Guideline, TextNote, PatientImage, \
+ Encounter, EncounterEvent,  Sharing, Viewer, \
+ ViewStatus, ProblemRelationship
+
+
+
 from pain.models import PainAvatar
-import settings
 
-from django.http import *
-from django.shortcuts import render_to_response,redirect
-from django.template import RequestContext
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
+import project.settings as settings
+
+import pymedtermino
 
 
-from django.contrib.auth.decorators import user_passes_test
-
-from datetime import datetime, timedelta
+import logging
 
 class AccessLogMiddleware(object):
 
@@ -34,10 +27,9 @@ class AccessLogMiddleware(object):
  
 def login_user(request):
     logout(request)
-    username = password = ''
+    username = ''
+    password = ''
     
-          
-
     if request.POST:
         email = request.POST['email']
         password = request.POST['password']
@@ -285,7 +277,7 @@ def get_patient_data(request, patient_id):
         data['problems']['is_active'].append(d)
         try:
             data['concept_ids'][problem.concept_id] = problem.id
-            import pymedtermino.snomedct
+
             for j in [i.__dict__ for i in pymedtermino.snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
                 data['concept_ids'][j['code']] = problem.id
             for j in [i.__dict__ for i in pymedtermino.snomedct.SNOMEDCT[int(problem.concept_id)].children]:
@@ -311,7 +303,7 @@ def get_patient_data(request, patient_id):
         data['problems']['not_active'].append(d)
         try:
             data['concept_ids'][problem.concept_id] = problem.id
-            import pymedtermino.snomedct
+            
             for j in [i.__dict__ for i in pymedtermino.snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
                 data['concept_ids'][j['code']] = problem.id
             for j in [i.__dict__ for i in pymedtermino.snomedct.SNOMEDCT[int(problem.concept_id)].children]:
@@ -436,7 +428,7 @@ def submit_data_for_problem(request, problem_id):
         print 'problem_start_date: '+str(request.POST)
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
-        from datetime import datetime
+
         if not request.POST['data'].index('/') == 2:
             problem.start_date = datetime.strptime('0' + request.POST['data'], "%m/%d/%Y")
         else:
@@ -490,12 +482,14 @@ def add_problem(request, patient_id):
         todo.save()
     return HttpResponse('added')
 
+
+
 @login_required
 def list_snomed_terms(request):
     # We list snomed given a query
     query = request.GET['query']
     
-    import pymedtermino.snomedct
+    
     raw_results = pymedtermino.snomedct.SNOMEDCT.search(query)
     matching_disorders = [i.__dict__ for i in raw_results if '(disorder)' in i.__dict__['term']]
     matching_disorders = sorted(matching_disorders, key=lambda x: x["term"])
@@ -546,14 +540,13 @@ def create_encounter(request, patient_id):
 
 @login_required
 def stop_encounter(request, encounter_id):
-    from datetime import datetime
+
     encounter = Encounter.objects.get(id=encounter_id)
     encounter.stoptime = datetime.now()
     encounter.save()
     return HttpResponse('saved', content_type="text/plain")
 
-from django.contrib.contenttypes import generic
-from django.contrib.contenttypes.models import ContentType
+
 
 
 @login_required 
@@ -615,12 +608,7 @@ def save_patient_summary(request, patient_id):
     profile.save()
     return HttpResponseRedirect('/patient/%s/' % (patient_id))
 
-from django.core.urlresolvers import reverse
-from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect
-from django.views.generic.base import View
-from social_auth.exceptions import AuthFailed
-from social_auth.views import complete
+
  
  
   
@@ -672,6 +660,8 @@ def manage_patient(request, user_id):
 
 
 #######****************** New Code *********************#########
+
+
 @login_required
 def get_patient_info(request, patient_id):
 
@@ -720,7 +710,7 @@ def get_patient_info(request, patient_id):
     resp['accomplished_todos'] = accomplished_todo_list
 
     resp['encounters'] = encounter_list
-    return HttpResponse(json.dumps(resp))
+    return ajax_response(resp)
 
 
 
@@ -730,8 +720,8 @@ def get_problem_info(request, problem_id):
 
     problem_info = Problem.objects.get(id=problem_id)
 
-    patient_notes = problem_info.notes.filter(by='patient')
-    physician_notes = problem_info.notes.filter(by='physician')
+    patient_notes = problem_info.notes.filter(by='patient').order_by('-id')
+    physician_notes = problem_info.notes.filter(by='physician').order_by('-id')
     
     problem_goals = Goal.objects.filter(problem=problem_info)
     problem_todos = ToDo.objects.filter(problem=problem_info)
@@ -776,7 +766,7 @@ def get_problem_info(request, problem_id):
     resp['problem_todos'] = problem_todos_holder
     resp['problem_images'] = problem_images_holder
     resp['problem_relationships'] = problem_relationships_holder
-    return HttpResponse(json.dumps(resp))
+    return ajax_response(resp)
 
 
 
@@ -784,11 +774,17 @@ def get_problem_info(request, problem_id):
 def get_goal_info(request, goal_id):
 
     goal = Goal.objects.get(id=goal_id)
+    goal_notes = goal.notes.all().order_by('-id')
+
+    goal_notes_holder = []
+    for note in goal_notes:
+        goal_notes_holder.append(note.generate_dict())
 
     resp = {}
     resp['goal'] = goal.generate_dict()
+    resp['goal_notes'] = goal_notes_holder
 
-    return HttpResponse(json.dumps(resp))
+    return ajax_response(resp)
 
 
 @login_required
@@ -809,7 +805,7 @@ def get_encounter_info(request, encounter_id):
     resp['encounter'] = encounter.generate_dict()
     resp['encounter_events'] = encounter_events_holder
 
-    return HttpResponse(json.dumps(resp))
+    return ajax_response(resp)
     
 
 
@@ -836,7 +832,7 @@ def patient_encounter_status(request, patient_id):
             resp['encounter_running'] = True
             resp['encounter'] = latest_encounter.generate_dict()
 
-    return HttpResponse(json.dumps(resp))
+    return ajax_response(resp)
 
 
 @login_required
@@ -859,7 +855,7 @@ def create_new_encounter(request, patient_id):
         resp['success'] = True
         resp['encounter'] = encounter.generate_dict()
 
-    return HttpResponse(json.dumps(resp))
+    return ajax_response(resp)
 
 
 @login_required
@@ -879,7 +875,7 @@ def stop_patient_encounter(request, encounter_id):
     resp['success'] = True
     resp['msg'] = 'Encounter is stopped'
 
-    return HttpResponse(json.dumps(resp))
+    return ajax_response(resp)
 
 
 @login_required
@@ -904,9 +900,277 @@ def add_event_summary(request):
         encounter_event.save()
 
         resp['success'] = True
-    return HttpResponse(json.dumps(resp))
+    return ajax_response(resp)
 
 
+from .operations import op_add_event
+
+@login_required
+def add_patient_goal(request, patient_id):
+
+    resp = {}
+
+    resp['success'] = False
+
+    goal_name = request.POST.get('name')
+    goal_problem = request.POST.get('problem')
+
+    patient = User.objects.get(id=patient_id)
+
+    new_goal = Goal(patient=patient, goal=goal_name)
+    new_goal.save()
 
 
+    physician = request.user
+    summary = 'Added goal %s' %goal_name
 
+    
+    op_add_event(physician, patient, summary)
+
+    resp['success'] = True
+
+    resp['goal'] = new_goal.generate_dict()
+
+    return ajax_response(resp)
+
+
+@login_required
+def add_patient_todo(request, patient_id):
+
+    resp = {}
+    resp['success'] = False
+
+    todo_name = request.POST.get('name')
+    todo_problem = request.POST.get('problem')
+
+    patient = User.objects.get(id=patient_id)
+    physician = request.user
+
+    new_todo = ToDo(patient=patient, todo=todo_name)
+    new_todo.save()
+
+    summary = 'Added ToDo %s' %todo_name
+
+    op_add_event(physician, patient, summary)
+
+    resp['success'] = True
+
+    resp['todo'] = new_todo.generate_dict()
+
+    return ajax_response(resp)
+
+
+@login_required
+def update_patient_summary(request, patient_id):
+
+    resp = {}
+
+    resp['success'] = False
+
+    new_summary = request.POST.get('summary')
+
+    patient = User.objects.get(id=patient_id)
+
+    patient_profile = UserProfile.objects.get(user=patient, role='patient')
+
+    patient_profile.summary = new_summary
+
+    patient_profile.save()
+
+    resp['success'] = True
+
+    return ajax_response(resp)
+
+    
+
+@login_required
+def update_problem_status(request, patient_id, problem_id):
+
+    resp = {}
+
+    resp['success'] = False
+
+    patient = User.objects.get(id=patient_id)
+
+    problem = Problem.objects.get(id=problem_id, patient=patient)
+
+    is_controlled = request.POST.get('is_controlled') == 'true'
+    is_active = request.POST.get('is_active') == 'true'
+    authenticated = request.POST.get('is_authenticated') == 'true'
+
+    problem.is_controlled = is_controlled
+    problem.is_active = is_active
+    problem.authenticated = authenticated
+
+    problem.save()
+
+    resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def update_start_date(request, patient_id, problem_id):
+
+    resp = {}  
+
+    resp['success'] = False
+
+    patient = User.objects.get(id=patient_id)
+    problem = Problem.objects.get(id=problem_id, patient=patient)
+
+    start_date = request.POST.get('start_date')
+    problem.start_date = get_date(start_date)
+
+    problem.save()
+
+    resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def add_patient_note(request, patient_id, problem_id):
+
+    resp = {}
+
+    resp['success'] = False
+    patient = User.objects.get(id=patient_id)
+    problem = Problem.objects.get(id=problem_id, patient=patient)
+
+    note = request.POST.get('note')
+
+    new_note = TextNote(
+        by='patient',
+        note=note)
+    new_note.save()
+
+    problem.notes.add(new_note)
+
+    resp['success'] = True
+    resp['note'] = new_note.generate_dict()
+    return ajax_response(resp)
+
+@login_required
+def add_physician_note(request, patient_id, problem_id):
+
+    resp = {}
+    resp['success'] = False
+    patient = User.objects.get(id=patient_id)
+    problem = Problem.objects.get(id=problem_id, patient=patient)
+
+    note = request.POST.get('note')
+
+    physician = request.user
+
+
+    new_note = TextNote(
+        by='physician',
+        note=note)
+    new_note.save()
+
+    problem.notes.add(new_note)
+
+    resp['note'] = new_note.generate_dict()
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def add_problem_goal(request, patient_id, problem_id):
+
+    resp = {}
+
+    resp['success'] = False
+
+    patient = User.objects.get(id=patient_id)
+    problem = Problem.objects.get(id=problem_id, patient=patient)
+
+    goal = request.POST.get('name')
+
+    new_goal = Goal(
+            patient=patient,
+            problem=problem,
+            goal=goal,
+
+        )
+    new_goal.save()
+
+    resp['success'] = True
+    resp['goal'] = new_goal.generate_dict()
+    return ajax_response(resp)
+
+@login_required
+def add_problem_todo(request, patient_id, problem_id):
+
+    resp = {}
+    resp['success'] = False
+
+
+    patient = User.objects.get(id=patient_id)
+    problem = Problem.objects.get(id=problem_id, patient=patient)
+
+    todo = request.POST.get('name')
+
+    new_todo = ToDo(
+            patient=patient,
+            problem=problem,
+            todo=todo
+        )
+
+    new_todo.save()
+
+    resp['success'] = True
+    resp['todo'] = new_todo.generate_dict()
+
+    return ajax_response(resp)
+
+
+@login_required
+def update_goal_status(request, patient_id, goal_id):
+
+    resp = {}
+    resp['success'] = False
+
+    patient = User.objects.get(id=patient_id)
+    goal = Goal.objects.get(id=goal_id, patient=patient)
+
+    is_controlled = request.POST.get('is_controlled') == 'true'
+    accomplished = request.POST.get('accomplished') == 'true'
+
+    goal.is_controlled = is_controlled
+    goal.accomplished = accomplished
+
+    goal.save()
+
+    resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def add_goal_note(request, patient_id, goal_id):
+    resp = {}
+    resp['success'] = False
+
+    actor = request.user
+
+    actor_profile = UserProfile.objects.get(user=actor)
+
+    patient = User.objects.get(id=patient_id)
+    goal = Goal.objects.get(id=goal_id, patient=patient)
+
+    note = request.POST.get('new_note')
+
+    new_note = TextNote(
+            note = note,
+            by = actor_profile.role
+        )
+
+    new_note.save()
+
+    goal.notes.add(new_note)
+
+    resp['success'] = True
+    resp['note'] = new_note.generate_dict()
+
+    return ajax_response(resp)

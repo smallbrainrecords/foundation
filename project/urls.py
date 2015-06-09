@@ -48,6 +48,9 @@ urlpatterns = patterns('',
     url(r'^save_encounter_event/$', 'emr.views.save_event_summary'),
     url(r'^encounter/(?P<encounter_id>\d+)/$', 'emr.views.encounter'),
 
+
+    # New URLS
+
     url(r'^patient/(?P<patient_id>\d+)/info$', 'emr.views.get_patient_info'),
     url(r'^problem/(?P<problem_id>\d+)/info$', 'emr.views.get_problem_info'),
     url(r'^goal/(?P<goal_id>\d+)/info$', 'emr.views.get_goal_info'),
@@ -61,5 +64,32 @@ urlpatterns = patterns('',
 
     url(r'^encounter/add/event_summary$', 'emr.views.add_event_summary'),
 
-    url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars')
+    url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars'),
+
+    url(r'^patient/(?P<patient_id>\d+)/goals/add/new_goal$', 'emr.views.add_patient_goal'),
+
+    url(r'^patient/(?P<patient_id>\d+)/todos/add/new_todo$', 'emr.views.add_patient_todo'),
+
+    url(r'^patient/(?P<patient_id>\d+)/profile/update_summary$', 'emr.views.update_patient_summary'),
+
+
+    url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', 'pain.views.add_pain_avatar'),
+
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/update_status$', 'emr.views.update_problem_status'),
+
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/update_start_date$', 'emr.views.update_start_date'),
+
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/add_patient_note$', 'emr.views.add_patient_note'),
+
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/add_physician_note$', 'emr.views.add_physician_note'),
+
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/add_goal$', 'emr.views.add_problem_goal'),
+
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/add_todo$', 'emr.views.add_problem_todo'),
+
+
+    url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/add_note$', 'emr.views.add_goal_note'),
+
+    url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/update_status$', 'emr.views.update_goal_status'),
+
 )

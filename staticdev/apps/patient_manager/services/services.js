@@ -221,6 +221,128 @@
 		};
 
 
+		this.listTerms = function(query){
+
+			var data = {'query':query};
+
+			var deferred = $q.defer();
+
+			$http({
+				"method":"GET",
+				"url" : "/list_terms/",
+				'params':data
+			}).success(function(data){
+
+				deferred.resolve(data);
+
+			}).error(function(data){
+
+				deferred.resolve(data);
+			})
+
+			return deferred.promise;
+
+		};
+
+
+		this.addGoal = function(form){
+
+
+			var deferred = $q.defer();
+
+
+			//form.csrfmiddlewaretoken = this.csrf_token();
+		
+
+		$http({
+
+			'method':'POST',
+			'url' : '/patient/'+form.patient_id+'/goals/add/new_goal',
+			'data' : $.param(form),
+			'headers':
+			{
+				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+			}
+		}).success(function(data){
+
+			deferred.resolve(data);
+
+		}).error(function(data){
+			deferred.resolve(data);
+		});
+
+		return deferred.promise;
+
+
+
+		};
+
+
+		this.addToDo = function(form){
+
+
+			var deferred = $q.defer();
+
+
+			//form.csrfmiddlewaretoken = this.csrf_token();
+		
+
+		$http({
+
+			'method':'POST',
+			'url' : '/patient/'+form.patient_id+'/todos/add/new_todo',
+			'data' : $.param(form),
+			'headers':
+			{
+				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+			}
+		}).success(function(data){
+
+			deferred.resolve(data);
+
+		}).error(function(data){
+			deferred.resolve(data);
+		});
+
+		return deferred.promise;
+
+
+
+		};
+
+
+		this.updatePatientSummary = function(form){
+
+
+			var deferred = $q.defer();
+
+
+			//form.csrfmiddlewaretoken = this.csrf_token();
+		
+
+		$http({
+
+			'method':'POST',
+			'url' : '/patient/'+form.patient_id+'/profile/update_summary',
+			'data' : $.param(form),
+			'headers':
+			{
+				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+			}
+		}).success(function(data){
+
+			deferred.resolve(data);
+
+		}).error(function(data){
+			deferred.resolve(data);
+		});
+
+		return deferred.promise;
+
+
+
+		};
+
 
 		});
 

@@ -1,6 +1,7 @@
 <a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
 
 <hr>
+<toaster-container></toaster-container>
 
 <h4>  Goal : {{goal.goal}} </h4>
 
@@ -23,13 +24,23 @@
 <hr>
 
 <p>
-	<b> Motivation for setting this goal: </b>
+	<b> Motivation notes for this goal: </b>
 	<hr>
 
-	<textarea class='form-control'></textarea>
+	<textarea class='form-control' ng-model='new_note' placeholder='Add note...'></textarea>
 	<hr>
-	<button class='btn btn-default'>
+	<button class='btn btn-default' ng-click='update_motivation()'>
 		Submit
 	</button>
+
+</p>
+
+
+<p>
+	<ul class='ul-clean'>
+
+		<li ng-repeat='note in goal_notes'>
+			{{note.note}}
+		</li>
 
 </p>

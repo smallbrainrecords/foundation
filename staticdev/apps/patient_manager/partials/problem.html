@@ -7,6 +7,7 @@
 
 <hr>
 
+<toaster-container></toaster-container>
 
 <div class='row'>
 
@@ -52,13 +53,14 @@
 
 	<div class='panel-body'>
 
-		<form class='form form-inline'>
+		<form class='form form-inline' >
 
 			<div class='form-group'>
-				<input type='text' class='form-control'>
+				<input type='text' class='form-control' ng-model='problem.start_date'>
+
 			</div>
 			<div class='form-group'>
-				<button type='button' class='btn btn-default'> Update </button>
+				<button ng-click='update_start_date()' class='btn btn-default' > Update </button>
 			</div>	
 		</form>
 
@@ -87,11 +89,11 @@
 	<div class='col-md-6'>
 		<b> Patient Notes </b> 
 
-		<form class='form-inline'>
+		<form class='form-inline' ng-submit='add_patient_note(patient_note_form)'>
 
-		<textarea class='form-control note-box' style='width: 450px; height: 80px;'></textarea>
+		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='patient_note_form.note'></textarea>
 
-		<button class='btn btn-default btn-lg'> Add </button>
+		<button class='btn btn-default btn-lg' type='submit'> Add </button>
 
 		</form>
 
@@ -107,11 +109,11 @@
 	<div class='col-md-6'>
 		<b> Physician Notes </b>
 
-		<form class='form-inline'>
+		<form class='form-inline' ng-submit='add_physician_note(physician_note_form)'>
 
-		<textarea class='form-control note-box' style='width: 450px; height: 80px;'></textarea>
+		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='physician_note_form.note'></textarea>
 
-		<button class='btn btn-default btn-lg'> Add </button>
+		<button class='btn btn-default btn-lg' type='submit'> Add </button>
 
 		</form>
 
@@ -148,11 +150,11 @@
 
 		<b> Goals </b>
 		<hr>
-		<form class='form-inline'>
+		<form class='form-inline' ng-submit='add_goal(goal_form)'>
 
 			<div class='form-group'>
 				<label> Add </label>
-				<input type='text' class='form-control'>
+				<input type='text' class='form-control' ng-model='goal_form.name'>
 			</div>
 
 			<div class='form-group'>
@@ -176,11 +178,11 @@
 
 		<b> Todo </b>
 		<hr>
-		<form class='form-inline'>
+		<form class='form-inline' ng-submit='add_todo(todo_form)'>
 
 			<div class='form-group'>
 				<label> Add </label>
-				<input type='text' class='form-control'>
+				<input type='text' class='form-control' ng-model='todo_form.name'>
 			</div>
 
 			<div class='form-group'>

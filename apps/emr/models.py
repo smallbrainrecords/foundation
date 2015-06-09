@@ -138,9 +138,15 @@ class Encounter(models.Model):
     def get_dict(self):
         return instance_dict(self)
 
+    def is_active(self):
+
+        if self.stoptime:
+            return False
+        else:
+            return True
+
     def generate_dict(self):
         obj_dict = {}
-
         obj_dict['id'] = self.id
         obj_dict['physician'] = self.physician.id
         obj_dict['patient'] = self.patient.id
@@ -154,7 +160,7 @@ class Encounter(models.Model):
             obj_dict['stoptime'] = str(self.stoptime.strftime("%Y-%m-%d %H:%M"))
         else:
             obj_dict['stoptime'] = None
-        
+
         if self.starttime and self.stoptime:
             obj_dict['duration'] = str(self.stoptime-self.starttime)
         else:
@@ -168,8 +174,7 @@ class Encounter(models.Model):
         if self.video:
             obj_dict['video'] = self.video.url
         else:
-            obj_dict['video'] = None    
-        
+            obj_dict['video'] = None  
 
         obj_dict['note'] = self.note
 
@@ -273,6 +278,7 @@ class Problem(MPTTModel):
         obj_dict['is_active'] = self.is_active
         obj_dict['is_authenticated'] = self.authenticated
         obj_dict['problem_name'] = self.problem_name
+        obj_dict['start_date'] = str(self.start_date)
 
         return obj_dict
 
@@ -283,7 +289,7 @@ class Goal(models.Model):
     is_controlled = models.BooleanField(default=False)
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
-    start_date = models.DateTimeField(auto_now_add=True)
+    start_date = models.DateField(auto_now_add=True)
 
     def __unicode__(self):
         return '%s %s' % (unicode(self.patient), unicode(self.problem))

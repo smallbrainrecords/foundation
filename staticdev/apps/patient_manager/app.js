@@ -3,7 +3,7 @@
 	'use strict';
 
 
-	var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'ngCookies', 'ngDialog', 'myTools']);
+	var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate']);
 
 
     ManagerApp.config(function($routeProvider) {
