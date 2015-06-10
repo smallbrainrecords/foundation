@@ -183,7 +183,58 @@
 			return deferred.promise;
 
 
-		}
+		};
+
+		this.unRelateProblem = function(form){
+
+			var deferred = $q.defer();
+			//form.csrfmiddlewaretoken = this.csrf_token();
+
+			$http({
+				'method':'POST',
+				'url' : '/problem/'+form.problem_id+'/unrelate/'+form.relationship_id+'/',
+				'data' : $.param(form),
+				'headers':
+				{
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}).success(function(data){
+				deferred.resolve(data);
+			}).error(function(data){
+				deferred.resolve(data);
+			});
+
+			return deferred.promise;
+
+
+		};
+
+		this.relateProblem = function(form){
+
+			var deferred = $q.defer();
+			//form.csrfmiddlewaretoken = this.csrf_token();
+
+			$http({
+				'method':'POST',
+				'url' : '/problem/'+form.problem_id+'/relate/'+form.target_problem_id+'/',
+				'data' : $.param(form),
+				'headers':
+				{
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}).success(function(data){
+				deferred.resolve(data);
+			}).error(function(data){
+				deferred.resolve(data);
+			});
+
+			return deferred.promise;
+
+
+
+		};
+
+
 
 		});
 

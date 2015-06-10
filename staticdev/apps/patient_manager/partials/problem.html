@@ -267,11 +267,56 @@
 
 	<div class='panel-body'>
 
+		<center> <h3> Relationship of {{problem.problem_name}} with other patient's problems. </h3></center>
+
+		<hr>
+
+		<div class='row'>
+
+			<div class='col-md-6'>
+
+				<h4> Related Problems </h4>
 		<ul class='list-group' >
-			<li ng-repeat='relationship in problem_relationships' class='list-group-item'>
+			<li ng-if='!problem_relations.length' class='list-group-item'>
+				<center>
+					No related problems found ! 
+				</center>
+			</li>
+			<li ng-repeat='relationship in problem_relationships' class='list-group-item box50'>
 				{{relationship.target.problem_name}}
+				<button class='btn btn-sm btn-default pull-right' ng-click='unrelate(relationship)'> Unrelate </button>
+			</li>
+
+		</ul>
+
+
+			</div>
+
+			<div class='col-md-6'>
+
+				<h4> Not Related Problems </h4>
+		<ul class='list-group' >
+
+			<li ng-if='!not_related_problems.length' class='list-group-item'>
+				<center>
+					No non-related problems found ! 
+				</center>
+			</li>
+
+
+			<li ng-repeat='problem in not_related_problems' class='list-group-item box50'>
+				{{problem.problem_name}}
+				<button class='btn btn-sm btn-default pull-right' ng-click='relate_problem(problem)'> Relate </button>
+
 			</li>
 		</ul>
+
+
+			</div>
+
+		</div>
+
+
 	</div>
 
 </div>

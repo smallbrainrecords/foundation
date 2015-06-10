@@ -719,6 +719,7 @@ def get_patient_info(request, patient_id):
 def get_problem_info(request, problem_id):
 
     problem_info = Problem.objects.get(id=problem_id)
+    patient = problem_info.patient
 
     patient_notes = problem_info.notes.filter(by='patient').order_by('-id')
     physician_notes = problem_info.notes.filter(by='physician').order_by('-id')
@@ -755,8 +756,17 @@ def get_problem_info(request, problem_id):
         problem_images_holder.append(image.generate_dict())
 
     problem_relationships_holder = []
+    related_problems_ids = []
     for relationship in problem_relationships:
         problem_relationships_holder.append(relationship.generate_dict())
+        related_problems_ids.append(relationship.target.id)
+
+
+    not_related_problems = Problem.objects.filter(patient=patient).exclude(id__in=related_problems_ids)
+
+    not_related_problems_holder = []
+    for problem in not_related_problems:
+        not_related_problems_holder.append(problem.generate_dict())
 
     resp = {}
     resp['info'] = problem_info.generate_dict()
@@ -766,6 +776,7 @@ def get_problem_info(request, problem_id):
     resp['problem_todos'] = problem_todos_holder
     resp['problem_images'] = problem_images_holder
     resp['problem_relationships'] = problem_relationships_holder
+    resp['not_related_problems'] = not_related_problems_holder
     return ajax_response(resp)
 
 
@@ -1229,3 +1240,33 @@ def delete_problem_image(request, problem_id, image_id):
 
     return ajax_response(resp)
 
+
+@login_required
+def unrelate_problem(request, problem_id, relationship_id):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        relationship = ProblemRelationship.objects.get(id= relationship_id)
+        relationship.delete()
+        resp ['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def relate_problem(request, problem_id, target_problem_id):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == "POST":
+        source = Problem.objects.get(id=problem_id)
+        target = Problem.objects.get(id=target_problem_id)
+
+        relationship = ProblemRelationship(source=source, target=target)
+        relationship.save()
+
+        resp['success'] = True
+        resp['relationship'] = relationship.generate_dict()
+
+    return ajax_response(resp)

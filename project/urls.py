@@ -96,4 +96,8 @@ urlpatterns = patterns('',
 
     url(r'^problem/(?P<problem_id>\d+)/image/(?P<image_id>\d+)/delete/$', 'emr.views.delete_problem_image'),
 
+    url(r'^problem/(?P<problem_id>\d+)/unrelate/(?P<relationship_id>\d+)/$', 'emr.views.unrelate_problem'),
+
+    url(r'^problem/(?P<problem_id>\d+)/relate/(?P<target_problem_id>\d+)/$', 'emr.views.relate_problem'),
+
 )
