@@ -92,4 +92,8 @@ urlpatterns = patterns('',
 
     url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/update_status$', 'emr.views.update_goal_status'),
 
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/upload_image$', 'emr.views.upload_problem_image'),
+
+    url(r'^problem/(?P<problem_id>\d+)/image/(?P<image_id>\d+)/delete/$', 'emr.views.delete_problem_image'),
+
 )

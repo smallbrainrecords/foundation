@@ -11,6 +11,8 @@
 			$scope.patient_id = patient_id;
 			var problem_id = $routeParams.problem_id;
 
+			$scope.problem_id = problem_id;
+
 			$scope.loading = true;
 
 			patientService.fetchProblemInfo(problem_id).then(function(data){
@@ -146,7 +148,53 @@
 
 
 
+			$scope.image_upload_url = function(){
 
+				var patient_id = $scope.patient_id;
+				var problem_id = $scope.problem_id;
+				var url = '/patient/'+patient_id+'/problem/'+problem_id+'/upload_image';
+				return url;
+			}
+
+
+			$scope.open_image_box = function(image){
+
+				    ngDialog.open({
+                        template:'/static/apps/patient_manager/partials/modals/image.html',
+                        className:'ngdialog-theme-default large-modal',
+                        scope:$scope,
+                        cache:false,
+                        controller: ['$scope',
+                        function($scope){
+
+                        	$scope.image = image;
+
+                        }]
+                    });
+
+			};
+
+			$scope.delete_problem_image = function(image){
+
+				var c = confirm("Are you sure ?");
+
+				if(c==false){
+					return false;
+				}
+
+				var form = {};
+				form.patient_id = $scope.patient_id;
+				form.problem_id = $scope.problem.id;
+				form.image_id = image.id;
+
+				problemService.deleteProblemImage(form).then(function(data){
+
+					var image_index = $scope.problem_images.indexOf(image);
+
+					$scope.problem_images.splice(image_index, 1);
+					toaster.pop('success', 'Done', 'Added Todo!');
+				});
+			};
 
 
 

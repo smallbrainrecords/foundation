@@ -97,10 +97,12 @@
 
 		</form>
 
-		<ul class='ul-clean'>
+		<hr>
+
+		<ul class='list-group'>
 
 			<li ng-show='!patient_notes.length'> No Notes </li>
-			<li ng-repeat='note in patient_notes'>
+			<li ng-repeat='note in patient_notes' class='list-group-item'>
 				{{note.note}}
 			</li>
 		</ul>
@@ -117,10 +119,12 @@
 
 		</form>
 
-		<ul class='ul-clean'>
+		<hr>
+
+		<ul class='list-group'>
 
 			<li ng-show='!physician_notes.length'> No Notes </li>
-			<li ng-repeat='note in physician_notes'>
+			<li ng-repeat='note in physician_notes' class='list-group-item'>
 				{{note.note}}
 			</li>
 		</ul>
@@ -163,9 +167,11 @@
 
 		</form>
 
-		<ul class='ul-clean'>
+		<hr>
+
+		<ul class='list-group'>
 			<li ng-show='!problem_goals.length'> No Goals </li>
-			<li ng-repeat='goal in problem_goals'>
+			<li ng-repeat='goal in problem_goals' class='list-group-item'>
 				{{goal.goal}}
 			</li>
 		</ul>
@@ -192,10 +198,11 @@
 
 		</form>
 
+		<hr>
 
-		<ul class='ul-clean'>
+		<ul class='list-group'>
 			<li ng-show='!problem_todos.length'> No Todos </li>
-			<li ng-repeat='todo in problem_todos'>
+			<li ng-repeat='todo in problem_todos' class='list-group-item'>
 				{{todo.todo}}
 			</li>
 		</ul>
@@ -221,7 +228,7 @@
 
 	<div class='panel-body'>
 
-		<form class='form-inline'>
+		<form class='form-inline' action='{{image_upload_url()}}' method='POST' enctype='multipart/form-data' id='uploadProblemImageFrm'>
 			<label for="file">File:</label>
 			<input type="file" name="file" id="file">
 			<input type="submit" name="submit" value="Upload">
@@ -234,7 +241,14 @@
 			<div class='col-md-4' ng-repeat='image in problem_images'>
 
 				<center>
-					<img src='{{image.image_url}}' class='thumbnail small-img'>
+					<img src='{{image.image_url}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
+					<br>
+					
+					<button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button>
+					<button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)'>
+						Delete 
+					</button>
+					<hr>
 				</center>
 			</div>
 
@@ -253,8 +267,8 @@
 
 	<div class='panel-body'>
 
-		<ul class='ul-clean'>
-			<li ng-repeat='relationship in problem_relationships'>
+		<ul class='list-group' >
+			<li ng-repeat='relationship in problem_relationships' class='list-group-item'>
 				{{relationship.target.problem_name}}
 			</li>
 		</ul>
@@ -263,7 +277,23 @@
 </div>
 
 
+<script type='text/javascript'>
+/* To BE REPLACED BY ANGULARJS DIRECTIVE */
 
+var options = {
+	success: function(data){
+		if(data['success']==true){
+			alert("Uploaded Image!");
+			location.reload();
+		}else{
+			alert("Something went wrong!");
+		}
+	}
+};
+
+$('#uploadProblemImageFrm').ajaxForm(options);
+
+</script>
 
 
 

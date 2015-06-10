@@ -32,14 +32,14 @@
     color: #a94442;
 }
 
-.large-modal .ngdialog-content{
-	width: 65%;
+#ngdialog1.large-modal .ngdialog-content{
+	width: 600px;
 	min-height: 275px;
 
 }
 
-.small-modal .ngdialog-content{
-	width: 500px;
+#ngdialog1.small-modal .ngdialog-content{
+	width: 450px;
 }
 
 
@@ -53,6 +53,11 @@
 
 
 .small-img{
+	width: 200px;
+	height:200px;
+}
+
+.modal-image{
 	width: 80%;
 }
 

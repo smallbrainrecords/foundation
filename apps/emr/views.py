@@ -1174,3 +1174,58 @@ def add_goal_note(request, patient_id, goal_id):
     resp['note'] = new_note.generate_dict()
 
     return ajax_response(resp)
+
+
+@login_required
+def upload_problem_image(request, patient_id, problem_id):
+
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+
+        actor = request.user
+        actor_profile = UserProfile.objects.get(user=actor)
+
+        role = actor_profile.role
+        
+        if role in ['physician' ,'admin']:
+            authenticated = True
+        else:
+            authenticated = False
+
+        problem = Problem.objects.get(id=problem_id)
+        problem.authenticated = authenticated
+        problem.save()
+
+        patient = problem.patient
+
+        patient_image = PatientImage(
+            patient=patient,
+            problem=problem,
+            image=request.FILES['file'])
+
+        patient_image.save()
+
+
+        summary='Physician added image<br/><a href="/media/%s"><img src="/media/%s" style="max-width:100px; max-height:100px" /></a>' % (
+                patient_image.image, patient_image.image)
+
+        op_add_event(actor, patient, summary)
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def delete_problem_image(request, problem_id, image_id):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        image = PatientImage.objects.get(id=image_id)
+        image.delete()
+        resp['success'] = True
+
+    return ajax_response(resp)
+
