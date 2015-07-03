@@ -311,6 +311,31 @@
 		};
 
 
+		this.addProblem = function(form){
+
+
+			var deferred = $q.defer();
+			//form.csrfmiddlewaretoken = this.csrf_token();
+		
+			$http({
+				'method':'POST',
+				'url' : '/patient/'+form.patient_id+'/problems/add/new_problem',
+				'data' : $.param(form),
+				'headers':
+					{
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+					}
+				}).success(function(data){
+					deferred.resolve(data);
+				}).error(function(data){
+					deferred.resolve(data);
+				});
+
+			return deferred.promise;
+
+		};
+
+
 		this.updatePatientSummary = function(form){
 
 

@@ -66,6 +66,8 @@ urlpatterns = patterns('',
 
     url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars'),
 
+     url(r'^patient/(?P<patient_id>\d+)/problems/add/new_problem$', 'emr.views.add_patient_problem'),
+
     url(r'^patient/(?P<patient_id>\d+)/goals/add/new_goal$', 'emr.views.add_patient_goal'),
 
     url(r'^patient/(?P<patient_id>\d+)/todos/add/new_todo$', 'emr.views.add_patient_todo'),
@@ -99,5 +101,12 @@ urlpatterns = patterns('',
     url(r'^problem/(?P<problem_id>\d+)/unrelate/(?P<relationship_id>\d+)/$', 'emr.views.unrelate_problem'),
 
     url(r'^problem/(?P<problem_id>\d+)/relate/(?P<target_problem_id>\d+)/$', 'emr.views.relate_problem'),
+
+    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/update_note$', 'emr.views.update_encounter_note'),
+
+    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/upload_video/$', 'emr.views.upload_encounter_video'),
+    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/upload_audio/$', 'emr.views.upload_encounter_audio'),
+
+
 
 )

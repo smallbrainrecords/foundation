@@ -35,6 +35,8 @@ from django.views.generic.base import View
 from social_auth.exceptions import AuthFailed
 from social_auth.views import complete
 
+from django.core import serializers
+
 
 def ajax_response(resp):
 

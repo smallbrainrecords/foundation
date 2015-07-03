@@ -5,6 +5,9 @@
     var myTools = angular.module('myTools', []);
 
 
+
+
+
     var bodyParts = [{
             'name': 'head part',
             'center': [100, 35],
@@ -478,6 +481,126 @@
 
         }
     ]);
+
+
+myTools.directive('fileModel', ['$parse', function ($parse) {
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs) {
+            var model = $parse(attrs.fileModel);
+            var modelSetter = model.assign;
+            
+
+            element.bind('change', function(){
+                scope.$apply(function(){
+                    modelSetter(scope, element[0].files[0]);
+                });
+            });
+        }
+    };
+}]);
+
+
+function setGlobalPlayer(id){
+
+    if(typeof(videojs)=='undefined'){
+
+        setTimeout(function(){
+            setGlobalPlayer(id);
+        }, 2000);
+    }else{
+        window.player = videojs(id);    
+    }
+}
+
+myTools.directive('ngVideoPlayerJump', ['$parse', function ($parse) {
+    return {
+        restrict: 'A',
+        link: function($scope, $element, $attrs) {
+
+            var video_seconds = $attrs.videoSeconds;
+
+            $element.click(function(){
+                window.player.play();
+                window.player.currentTime(video_seconds);
+            });
+        }
+    };
+}]);
+
+myTools.directive('ngVideoPlayer',  function ($compile) {
+    
+    var component = {};
+
+    component.restrict = 'A';
+    component.link = function($scope, $element, $attrs) {
+
+            var id = $attrs.videoId;
+            $scope.video_id = id;
+            $scope.video_src = $attrs.videoSrc;
+            $scope.video_type = $attrs.videoType;
+            
+
+            var template = '';
+
+            template += '<video id="{{video_id}}" class="video-js vjs-default-skin" ';
+            template += ' controls preload="auto" width="640" height="264" ';
+            template +=  ' > ';
+            template +=  '<source src="{{video_src}}" type="{{video_type}}" />';
+            template += '</video>';
+
+            $scope.$watch($attrs.videoSrc, function(newVal, oldVal){
+
+                $scope.video_src = newVal;
+
+                if(oldVal==undefined){
+                    var elem_html = $compile(template)($scope);
+                    $element.html(elem_html);
+                    setGlobalPlayer(id);
+                }
+            });
+
+
+            
+        };
+
+
+
+    return component;
+    
+});
+
+
+myTools.directive('ngAudioPlayer', ['$parse', function ($parse) {
+
+    var component = {}
+
+    component.restrict = 'A';
+    component.link = function($scope, $element, $attrs) {
+
+            $scope.audio_src = $attrs.audioSrc;
+            $scope.audio_type = $attrs.audioType;
+        
+        };
+
+    
+
+    component.template = function($element, $attrs){
+        var template = '';
+        template += '<audio controls>';
+        template += '<source src="{{audio_src}}" type="{{audio_type}}" >';
+        template += 'Your browser does not support the audio element.';
+        template += '</audio>';
+
+        return template;
+
+    };
+
+    return component;
+}]);
+
+
+
 
 
 })();

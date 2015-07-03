@@ -8,30 +8,23 @@
 
 
 			var patient_id = $('#patient_id').val();
-
-
 			$scope.patient_id = patient_id;
-			
+			$scope.show_accomplished_todos = false;
+			$scope.problem_terms = [];
+			$scope.new_problem = {set:false};
+
 			patientService.fetchPatientInfo(patient_id).then(function(data){
 				$scope.patient_info = data['info'];
-
 				$scope.problems = data['problems'];
-
 				$scope.goals = data['goals'];
-
 				$scope.pending_todos = data['pending_todos'];
 				$scope.accomplished_todos = data['accomplished_todos'];
-
 				$scope.encounters = data['encounters'];
-
-
 			});
 
 
 			patientService.fetchPainAvatars(patient_id).then(function(data){
-
 				$scope.pain_avatars = data['pain_avatars'];
-
 			});
 
 
@@ -43,15 +36,11 @@
 					};
 
 					patientService.updatePatientSummary(form).then(function(data){
-
 						toaster.pop('success', 'Done', 'Patient summary updated!');
-
 					});
 
 			};
 
-
-			$scope.show_accomplished_todos = false;
 
 			$scope.toggle_accomplished_todos  = function(){
 
@@ -67,11 +56,7 @@
 			}
 
 
-			$scope.add_problem = function(){
 
-				alert("To be implemented");
-				console.log($scope.new_problem);
-			}
 
 
 
@@ -112,18 +97,24 @@
 
 
 
-			$scope.$watch('new_problem.name', function(newVal, oldVal){
+			$scope.$watch('problem_term', function(newVal, oldVal){
 
 				if (newVal==undefined){
 					return false;
-				}		
+				}
+
 
 				if(newVal.length>2){
 
 					patientService.listTerms(newVal).then(function(data){
 
-						// console.log(data);
+						$scope.problem_terms = data;
+
 					});
+				}else{
+
+					$scope.problem_terms = [];
+
 				}
 
 			});
@@ -132,10 +123,47 @@
 
 			
 
+			$scope.set_new_problem = function(problem){
+
+					$scope.new_problem.set = true;
+					$scope.new_problem.active = problem.active;
+					$scope.new_problem.term = problem.term;
+					$scope.new_problem.code = problem.code;
 
 
+			};
 
 
+			$scope.unset_new_problem = function(problem){
+
+				$scope.new_problem.set = false;
+
+			};
+
+
+			$scope.add_problem = function(){
+
+				var c = confirm("Are you sure?");
+
+				if(c==false){
+					return false;
+				}
+
+				var form = {};
+				form.patient_id = $scope.patient_id;
+				form.term = $scope.new_problem.term;
+				form.code = $scope.new_problem.code;
+				form.active = $scope.new_problem.active;
+
+				patientService.addProblem(form).then(function(data){
+
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'New Problem added successfully');
+					};
+				});
+
+
+			}
 
 		}); /* End of controller */
 

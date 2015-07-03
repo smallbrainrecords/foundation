@@ -11,7 +11,7 @@ from pain.models import PainAvatar
 
 import project.settings as settings
 
-import pymedtermino
+
 
 
 import logging
@@ -176,6 +176,7 @@ def view_patient(request, user_id):
 
 @login_required
 def get_patient_data(request, patient_id):
+    from pymedtermino import snomedct
     
     # Find out if user requesting the data is admin, physician, or patient
     role_of_user_requesting_the_data = UserProfile.objects.get(user=request.user).role
@@ -278,9 +279,9 @@ def get_patient_data(request, patient_id):
         try:
             data['concept_ids'][problem.concept_id] = problem.id
 
-            for j in [i.__dict__ for i in pymedtermino.snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
+            for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
                 data['concept_ids'][j['code']] = problem.id
-            for j in [i.__dict__ for i in pymedtermino.snomedct.SNOMEDCT[int(problem.concept_id)].children]:
+            for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].children]:
                 data['concept_ids'][j['code']] = problem.id
         except:
             pass
@@ -304,9 +305,9 @@ def get_patient_data(request, patient_id):
         try:
             data['concept_ids'][problem.concept_id] = problem.id
             
-            for j in [i.__dict__ for i in pymedtermino.snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
+            for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
                 data['concept_ids'][j['code']] = problem.id
-            for j in [i.__dict__ for i in pymedtermino.snomedct.SNOMEDCT[int(problem.concept_id)].children]:
+            for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].children]:
                 data['concept_ids'][j['code']] = problem.id
         except:
             pass
@@ -486,20 +487,38 @@ def add_problem(request, patient_id):
 
 @login_required
 def list_snomed_terms(request):
+    import pymedtermino.snomedct
     # We list snomed given a query
     query = request.GET['query']
+    results = pymedtermino.snomedct.SNOMEDCT.search(query)
     
+    # matching_disorders = [i.__dict__ for i in raw_results if '(disorder)' in i.__dict__['term']]
+    # matching_disorders = sorted(matching_disorders, key=lambda x: x["term"])
+    # matching_findings = [i.__dict__ for i in raw_results if '(finding)' in i.__dict__['term']]
+    # matching_findings = sorted(matching_findings, key=lambda x: x["term"])
+    # results = []
+    # results.extend(matching_disorders)
+    # results.extend(matching_findings)
     
-    raw_results = pymedtermino.snomedct.SNOMEDCT.search(query)
-    matching_disorders = [i.__dict__ for i in raw_results if '(disorder)' in i.__dict__['term']]
-    matching_disorders = sorted(matching_disorders, key=lambda x: x["term"])
-    matching_findings = [i.__dict__ for i in raw_results if '(finding)' in i.__dict__['term']]
-    matching_findings = sorted(matching_findings, key=lambda x: x["term"])
-    results = []
-    results.extend(matching_disorders)
-    results.extend(matching_findings)
-    results = json.dumps(results)
-    return HttpResponse(results, content_type="application/json")
+
+    results_holder = []
+    disorders = []
+    findings = []
+    for result in results:
+        if '(disorder)' in result.term:
+            disorders.append({'term':result.term,'code':result.code,'active':result.active})
+        if '(finding)' in result.term:
+            findings.append({'term':result.term,'code':result.code,'active':result.active})
+
+    disorders = sorted(disorders, key=lambda x: x['term'])
+    findings = sorted(findings, key=lambda x: x['term'])
+
+    results_holder.extend(disorders)
+    results_holder.extend(findings)
+
+    results_holder = json.dumps(results_holder)
+
+    return HttpResponse(results_holder, content_type="application/json")
 
 @login_required
 def upload_image_to_problem(request, problem_id):
@@ -916,11 +935,45 @@ def add_event_summary(request):
 
 from .operations import op_add_event
 
+
+@login_required
+def add_patient_problem(request, patient_id):
+
+    resp = {}
+    resp['success'] = False
+
+
+    if request.method == 'POST':
+
+        term = request.POST.get('term')
+        concept_id = request.POST.get('code')
+
+        patient = User.objects.get(id=patient_id)
+
+        new_problem = Problem(
+            patient = patient,
+            problem_name = term,
+            concept_id = concept_id
+        )
+
+        new_problem.save()
+
+        physician = request.user
+        summary = 'Added problem %s' %term
+    
+        op_add_event(physician, patient, summary)
+
+        resp['success'] = True
+        resp['problem'] = new_problem.generate_dict()
+
+    return ajax_response(resp)
+
+
+
 @login_required
 def add_patient_goal(request, patient_id):
 
     resp = {}
-
     resp['success'] = False
 
     goal_name = request.POST.get('name')
@@ -931,15 +984,12 @@ def add_patient_goal(request, patient_id):
     new_goal = Goal(patient=patient, goal=goal_name)
     new_goal.save()
 
-
     physician = request.user
     summary = 'Added goal %s' %goal_name
-
     
     op_add_event(physician, patient, summary)
 
     resp['success'] = True
-
     resp['goal'] = new_goal.generate_dict()
 
     return ajax_response(resp)
@@ -1270,3 +1320,53 @@ def relate_problem(request, problem_id, target_problem_id):
         resp['relationship'] = relationship.generate_dict()
 
     return ajax_response(resp)
+
+
+@login_required
+def update_encounter_note(request, patient_id, encounter_id):
+    resp = {}
+    resp['success' ] = False
+
+
+    if request.method == "POST":
+        note = request.POST.get('note')
+        encounter = Encounter.objects.get(id=encounter_id)
+        encounter.note = note
+        encounter.save()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def upload_encounter_audio(request, patient_id, encounter_id):
+
+    resp = {}
+    resp['success'] = False
+
+    audio_file = request.FILES['file']
+
+    if request.method == 'POST':
+        encounter = Encounter.objects.get(id=encounter_id)
+        encounter.audio = audio_file
+        encounter.save()
+
+    return ajax_response(resp)
+
+@login_required
+def upload_encounter_video(request, patient_id, encounter_id):
+
+    resp = {}
+    resp['success'] = False
+
+    video_file = request.FILES['file']
+
+    if request.method == 'POST':
+        encounter = Encounter.objects.get(id=encounter_id)
+        encounter.video = video_file
+        encounter.save()
+
+    return ajax_response(resp)
+
+

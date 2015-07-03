@@ -48,7 +48,7 @@
 
 <div class='row'>
 
-	<div class='col-md-6'>
+	<div class='col-md-7'>
 
 <div class='panel panel-info'>
 
@@ -57,23 +57,33 @@
 	<div class='panel-body'>
 
 		<div class='row'>
-			<div class='col-md-10 col-md-offset-1'>
+			<div class='col-md-12'>
 			
-			<form   role='form' ng-submit='add_problem()'>
-				<div class='form-group'>
-					<label> Problem Name </label>
-					<input type='text' ng-model='new_problem.name' class='form-control'>
+					<input type='text' ng-model='problem_term' class='form-control' placeholder='Search Problem....'>
+					
+					
+
+					<div ng-show='new_problem.set==true'>
+						<hr>
+						<label> {{new_problem.code}} </label>
+						{{new_problem.term}} <br>
+						<button class='btn btn-sm btn-danger' ng-click='add_problem()'>
+							Add Problem
+						</button>
+						<button class='btn btn-sm btn-warning' ng-click='unset_new_problem()'>
+							Cancel
+						</button>
+						<hr>
+					</div>
+
+			</div>
+			<div class='col-md-12'  style='max-height:375px; overflow-y:auto;'>
+				<div ng-repeat='problem_term in problem_terms' style='margin-top:12px;'>
+					<button class='btn btn-sm btn-default' title='{{problem_term.code}}' ng-click='set_new_problem(problem_term)'>
+						{{problem_term.term}}
+					</button>
 				</div>
-				<div class='form-group'>
-					<label> Concept ID </label>
-					<input type='text' ng-model='new_problem.concept_id' class='form-control'>
-				</div>
-
-				<button type='submit' class='btn btn-default'> Add Problem </button>
-
-			</form>
-
-			</div>	
+			</div>
 		</div>
 
 		<hr>
@@ -98,7 +108,7 @@
 	</div>
 
 
-	<div class='col-md-6'>
+	<div class='col-md-5'>
 
 <div class='panel panel-info'>
 

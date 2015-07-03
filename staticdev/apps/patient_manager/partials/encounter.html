@@ -5,12 +5,15 @@
 <h4>  Encounter : {{encounter.starttime}} to {{encounter.stoptime}} </h4>
 
 
+<link href="//vjs.zencdn.net/4.12/video-js.css" rel="stylesheet">
+<script src="//vjs.zencdn.net/4.12/video.js"></script>
+
 
 <hr>
 
 <div class='row'>
 
-	<div class='col-md-6'>
+	<div class='col-md-4'>
 <form class='form'>
 
 	<div class='form-group'>
@@ -18,10 +21,10 @@
 	</div>
 
 	<div class='form-group'>
-		<textarea  class='form-control' ng-model='encounter.note' placeholder='Add a note....'></textarea>
+		<textarea style='height:275px;' class='form-control' ng-model='encounter.note' placeholder='Add a note....'></textarea > 
 	</div>
 
-	<button type='submit' class='btn btn-default'>
+	<button type='submit' class='btn btn-default' ng-click='update_note()'>
 		Update
 	</button>
 
@@ -29,23 +32,31 @@
 </form>
 	</div>
 
-	<div class='col-md-6'>
+	<div class='col-md-8'>
 
-		<div ng-if='encounter.video!=null'>
-			<strong> >> Play Video File [Todo] </strong>
+		<div ng-show='encounter.video!=null'>
+			<strong> Encounter Video </strong>
+
+
+			<div  video-id='video1' ng-video-player video-src="encounter.video" video-type='video/mp4' >
+
+			</div>
+
+
+
 
 		</div>
-		<div ng-if='encounter.video==null'>
+		<div ng-show='encounter.video==null'>
 
-			<form class='form'>
+			<form class='form' ng-submit='upload_video()'>
 
 				<div class='form-group'>
 					<label for="video_file">Video File:</label>
-					<input type="file" name="video_file" id="file">
+					<input type="file" file-model='video_file'>
 				</div>
 
 				<div class='form-group'>
-					<button type='button' class='btn btn-default'>
+					<button type='submit' class='btn btn-default'>
 						Upload
 					</button>
 				</div>
@@ -54,21 +65,25 @@
 
 		</div>
 		<hr>
-		<div ng-if='encounter.audio!=null'>
-			<strong> >> Play Audio File [Todo] </strong>
+		<div ng-show='encounter.audio!=null'>
+			<strong> Encounter Audio </strong>
+			<div ng-audio-player audio-src="/media/29/jalma%20resham%20filili%20by%20dj%20himal.mp3" audio-type="audio/mpeg">
+			</div>
+
+
 		</div>
-		<div ng-if='encounter.audio==null'>
+		<div ng-show='encounter.audio==null'>
 
 
-			<form class='form'>
+			<form class='form' ng-submit='upload_audio()'>
 
 				<div class='form-group'>
 					<label for="audio_file">Audio File:</label>
-					<input type="file" name="audio_file" id="audio_file">
+					<input type="file" file-model='audio_file'>
 				</div>
 
 				<div class='form-group'>
-					<button type='button' class='btn btn-default'>
+					<button type='submit' class='btn btn-default'>
 						Upload
 					</button>
 				</div>
@@ -100,8 +115,14 @@
 	<tbody>
 
 		<tr ng-repeat='event in encounter_events'>
-			<td> {{event.video_seconds }} </td>
-			<td> {{event.video_timestamp}} </td>
+			<td> {{event.video_seconds }} 
+				<button class='btn btn-default' ng-video-player-jump video-seconds='{{event.video_seconds}}'> 
+					<i class='glyphicon glyphicon-play'></i>
+				</button>
+			</td>
+			<td> {{event.video_timestamp}} 
+
+			</td>
 			<td> {{event.summary}} </td>
 		</tr>
 	</tbody>
