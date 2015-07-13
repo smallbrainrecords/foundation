@@ -6,4 +6,6 @@ urlpatterns = patterns('project_admin_app.views',
 
 	url(r'^list/users/$', 'list_users', name='pa_list_users'),
 
+	url(r'^user/(?P<user_id>\d+)/info/$', 'user_info', name='pa_user_info'),
+
 )

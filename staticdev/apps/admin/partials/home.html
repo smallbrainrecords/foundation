@@ -1,7 +1,7 @@
 <div class='row'>
 
 
-<div class='col-md-4'>
+<div class='col-md-3'>
 
 
 	<div class='panel panel-default'>
@@ -18,7 +18,7 @@
 </div>
 
 
-<div class='col-md-8'>
+<div class='col-md-9'>
 
 		<div class='panel panel-default'>
 
@@ -44,6 +44,31 @@
         	</thead>
 
         	<tbody>
+
+        		<tr ng-repeat='user in users'>
+        			<td> {{user.user.first_name}} </td>
+        			<td> {{user.user.last_name}} </td>
+        			<td> {{user.user.username}} </td>
+        			<td> {{user.date_of_birth}} </td>
+        			<td> {{user.sex}} </td>
+        			<td> {{user.phone_number}} </td>
+        			<td>
+
+        				<a href='#/edit/{{user.user.id}}/'  class='btn btn-sm btn-default'>
+        					Edit 
+        				</a>
+
+        				<a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'  ng-show='user.role=="patient"'>
+        					Manage
+        				</a>
+
+        				
+
+
+        			</td>
+
+
+        		</tr>
 
         	</tbody>
 

@@ -1,0 +1,294 @@
+
+<center> <h3> <a href='#/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Admin </a> </h3> </center>
+<hr>
+
+<center> <h3> Edit Patient Profile </h3> </center>
+<hr>
+
+
+
+<div class='row'>
+
+	<div class='col-md-3'>
+
+		<div style='position:fixed; top:200px;'>
+
+		<h3> Options </h3>
+
+		<ul style='list-style-type:none; '>
+			<li>
+				<button class='btn btn-link' ng-click='navigate("basicInfo")'>
+					Basic Information
+				</button>
+			</li>
+
+			<li>
+				<button class='btn btn-link' ng-click='navigate("profileInfo")'>
+					Profile Information
+				</button>
+			</li>
+
+			<li>
+				<button class='btn btn-link' ng-click='navigate("emailInfo")'>
+					Email Information
+				</button>
+			</li>
+
+			<li>
+				<button class='btn btn-link' ng-click='navigate("passwordInfo")'>
+					Password Information
+				</button>
+			</li>
+
+
+		</ul>
+
+	</div>
+		
+	</div>
+
+	<div class='col-md-9'>
+
+
+
+		<div class='panel panel-default' id='basicInfo'>
+
+			<div class='panel-heading'> <h3> Basic Information </h3> </div>
+
+			<div class='panel-body'>
+
+
+				<form class='form' ng-submit='update_profile()'>
+
+
+				<div class='form-group'>
+
+					<label> First Name </label>
+
+					<input type='text' ng-model='user_profile.user.first_name' class='form-control'>
+
+				</div>
+
+				<div class='form-group'>
+
+					<label> Last Name </label>
+
+					<input type='text' ng-model='user_profile.user.last_name' class='form-control'>
+
+				</div>
+
+
+				<div class='form-group'>
+
+					<label> Email </label>
+
+					<input type='text' ng-model='user_profile.user.email' class='form-control' disabled>
+
+				</div>
+
+
+
+				<div class='form-group'>
+
+					<label> Username </label>
+
+					<input type='text' ng-model='user_profile.user.username' class='form-control' disabled>
+
+				</div>
+
+
+				<div class='form-group'>
+
+					<center>
+
+						<input type='submit' value='Update' class='btn btn-info btn-lg'>
+
+					</center>
+
+				</div>
+
+
+
+				</form>
+
+
+			</div>
+
+		</div>
+	
+
+
+
+		<div class='panel panel-default' id='profileInfo'>
+
+			<div class='panel-heading'> <h3> Profile Information  </h3> </div>
+
+			<div class='panel-body'>
+
+
+				<form class='form' ng-submit='update_profile()'>
+
+
+				<div class='form-group'>
+
+					<label> Phone/Contact </label>
+
+					<input type='text' ng-model='user_profile.phone_number' class='form-control'>
+
+				</div>
+
+
+
+				<div class='form-group'>
+
+					<label> Sex </label>
+
+					<select ng-model='user_profile.sex' class='form-control'>
+						<option value=''> ---- </option>
+						<option value='male'> Male </option>
+						<option value='female'> Female </option>
+					</select>
+				</div>
+
+				<div class='form-group'>
+
+					<label> Role </label>
+
+					<select ng-model='user_profile.role' class='form-control'>
+						<option value=''> ---- </option>
+
+						<option value='physician'> Physician </option>
+						<option value='patient'> Patient </option>
+						<option value='admin'> Admin </option>
+
+					</select>
+				</div>
+
+
+				<div class='form-group'>
+
+					<label> Summary </label>
+
+					<textarea ng-model='user_profile.summary' class='form-control'></textarea>
+				</div>
+
+
+				<div class='form-group'>
+
+					<img src='{{user_profile.cover_image}}' class='thumbnail' alt='Cover Image'>
+
+
+					<label> Cover Image </label>
+
+					<input type='file'>
+				</div>
+
+
+				<div class='form-group'>
+
+					<img src='{{user_profile.portrait_image}}' class='thumbnail' alt='Portrait Image'>
+
+					<label> Portrait Image </label>
+
+					<input type='file'>
+				</div>
+
+
+
+
+
+
+
+
+				<div class='form-group'>
+
+					<center>
+
+						<input type='submit' value='Update' class='btn btn-info btn-lg'>
+
+					</center>
+
+				</div>
+
+
+
+				</form>
+
+
+			</div>
+
+		</div>
+
+
+		<div class='panel panel-default' id='emailInfo'>
+
+			<div class='panel-heading'> <h3> Email </h3> </div>
+			<div class='panel-body'>
+
+
+			<form class='form' ng-submit='update_profile()'>
+
+				<div class='form-group'>
+					<label> Email </label>
+					<input type='text' class='form-control' ng-model='user_profile.user.email'>
+				</div>
+
+				<div class='form-group'>
+
+					<input type='submit' value='Change Email' class='btn btn-warning btn-lg'>
+
+				</div>
+
+			</form>
+
+
+
+
+
+			</div>
+		</div>
+
+		<div class='panel panel-default' id='passwordInfo'>
+
+			<div class='panel-heading'> <h3>  Password  </h3> </div>
+			<div class='panel-body'>
+
+
+			<form class='form' ng-submit='update_profile()'>
+
+				<div class='form-group'>
+					<label> New Password </label>
+					<input type='password' class='form-control' >
+				</div>
+
+
+				<div class='form-group'>
+					<label> Verify Password </label>
+					<input type='password' class='form-control' >
+				</div>
+
+				<div class='form-group'>
+
+					<input type='submit' value='Change Password' class='btn btn-danger btn-lg'>
+
+				</div>
+
+			</form>
+
+
+
+
+			</div>
+		</div>
+
+
+
+
+
+</div>
+
+</div>
+
+<div style='height:375px; width:100%;'>
+ 	
+</div>

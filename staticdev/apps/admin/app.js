@@ -13,7 +13,13 @@
 
                 templateUrl: '/static/apps/admin/partials/home.html',
                 controller: 'HomeCtrl'
+            })
+            .when('/edit/:userId', {
+
+                templateUrl: '/static/apps/admin/partials/edit.html',
+                controller: 'EditCtrl'
             });
+;
 
 
     });

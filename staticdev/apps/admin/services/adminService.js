@@ -13,6 +13,15 @@
 		};
 
 
+
+		this.getUserInfo = function(user_id){
+
+			var params = {user_id:user_id};
+			var url = '/project/admin/user/'+user_id+'/info/';
+			return httpService.get(params, url);
+
+		};
+
 	});
 
 })();
