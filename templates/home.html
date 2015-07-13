@@ -3,9 +3,15 @@
 {% block content %}
 
 
-    Hi {{ request.user.get_full_name }}. Your role is {{ role }} | <a href="/admin/">Admin</a> | <a href="/logout/">Logout</a>
+    Hi {{ request.user.get_full_name }}. Your role is {{ role }} | <a href="/admin/">Admin</a> | <a href="/logout/">Logout</a> 
 {% if role == 'admin' %}
 
+    <div class='well'>
+
+        <a href='/project/admin'> New Admin </a>
+
+    </div>
+    
 <script>
 var unregistered = [];
 function listUsers() {
@@ -30,7 +36,7 @@ $(function() {
                 var users = data;
         for (var i=0;i<users.length;i++) {
             if (users[i]['is_patient'] == true) {
-                actions = '<a href="/patient/'+users[i]['id']+'/">View patient</a><br/><a href="/patient/manage/'+users[i]['id']+'/">Manage patient</a><br/>';
+                actions = '<a href="/patient/'+users[i]['id']+'/">View patient</a><br/><a href="/u/patient/manage/'+users[i]['id']+'/">Manage patient</a><br/>';
             } else {
                 actions = '';
             }

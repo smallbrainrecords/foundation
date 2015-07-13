@@ -20,7 +20,7 @@
 
 			$http({
 				"method":"GET",
-				"url" : "/patient/"+patient_id+"/info",
+				"url" : "/u/patient/"+patient_id+"/info",
 			}).success(function(data){
 
 				deferred.resolve(data);
@@ -40,7 +40,7 @@
 
 			$http({
 				"method":"GET",
-				"url" : "/problem/"+problem_id+"/info",
+				"url" : "/p/problem/"+problem_id+"/info",
 			}).success(function(data){
 
 				deferred.resolve(data);
@@ -59,7 +59,7 @@
 
 			$http({
 				"method":"GET",
-				"url" : "/goal/"+goal_id+"/info",
+				"url" : "/g/goal/"+goal_id+"/info",
 			}).success(function(data){
 
 				deferred.resolve(data);
@@ -78,7 +78,7 @@
 
 			$http({
 				"method":"GET",
-				"url" : "/encounter/"+encounter_id+"/info",
+				"url" : "/enc/encounter/"+encounter_id+"/info",
 			}).success(function(data){
 
 				deferred.resolve(data);
@@ -99,7 +99,7 @@
 
 			$http({
 				"method":"GET",
-				"url" : "/patient/"+patient_id+"/encounter/status",
+				"url" : "/enc/patient/"+patient_id+"/encounter/status",
 			}).success(function(data){
 
 				deferred.resolve(data);
@@ -126,7 +126,7 @@
 		$http({
 
 			'method':'POST',
-			'url' : '/patient/'+patient_id+'/encounter/start',
+			'url' : '/enc/patient/'+patient_id+'/encounter/start',
 			'data' : $.param(data),
 			'headers':
 			{
@@ -151,7 +151,7 @@
 
 			$http({
 				"method":"GET",
-				"url" : "/encounter/"+encounter_id+"/stop",
+				"url" : "/enc/encounter/"+encounter_id+"/stop",
 			}).success(function(data){
 
 				deferred.resolve(data);
@@ -179,7 +179,7 @@
 		$http({
 
 			'method':'POST',
-			'url' : '/encounter/add/event_summary',
+			'url' : '/enc/encounter/add/event_summary',
 			'data' : $.param(form),
 			'headers':
 			{
@@ -257,7 +257,7 @@
 		$http({
 
 			'method':'POST',
-			'url' : '/patient/'+form.patient_id+'/goals/add/new_goal',
+			'url' : '/g/patient/'+form.patient_id+'/goals/add/new_goal',
 			'data' : $.param(form),
 			'headers':
 			{
@@ -290,7 +290,7 @@
 		$http({
 
 			'method':'POST',
-			'url' : '/patient/'+form.patient_id+'/todos/add/new_todo',
+			'url' : '/todo/patient/'+form.patient_id+'/todos/add/new_todo',
 			'data' : $.param(form),
 			'headers':
 			{
@@ -319,7 +319,7 @@
 		
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/problems/add/new_problem',
+				'url' : '/p/patient/'+form.patient_id+'/problems/add/new_problem',
 				'data' : $.param(form),
 				'headers':
 					{
@@ -348,7 +348,7 @@
 		$http({
 
 			'method':'POST',
-			'url' : '/patient/'+form.patient_id+'/profile/update_summary',
+			'url' : '/u/patient/'+form.patient_id+'/profile/update_summary',
 			'data' : $.param(form),
 			'headers':
 			{

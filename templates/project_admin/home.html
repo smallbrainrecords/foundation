@@ -1,0 +1,18 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<script src="/static/apps/admin/services/httpModule.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/app.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/controllers/homeController.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/services/adminService.js" type="text/javascript" charset="utf-8"></script>
+<div id='ng-app' ng-app='AdminApp' class='no-js' lang-'en'>
+
+	<div ng-view>
+		Loading...
+	</div>
+
+</div>
+
+{% endblock %}
+
+

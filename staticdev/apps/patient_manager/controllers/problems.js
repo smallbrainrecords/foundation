@@ -37,7 +37,7 @@
 
 			/* Track Status */
 
-			$scope.$watch('[problem.is_controlled,problem.is_authenticated, problem.is_active]', function(nV, oV){
+			$scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function(nV, oV){
 
 				if($scope.loading==true){
 					return false;
@@ -54,7 +54,7 @@
 				form.patient_id = $scope.patient_id;
 				form.problem_id = $scope.problem.id;
 				form.is_controlled = $scope.problem.is_controlled;
-				form.is_authenticated = $scope.problem.is_authenticated;
+				form.authenticated = $scope.problem.authenticated;
 				form.is_active = $scope.problem.is_active;
 
 
@@ -154,7 +154,7 @@
 
 				var patient_id = $scope.patient_id;
 				var problem_id = $scope.problem_id;
-				var url = '/patient/'+patient_id+'/problem/'+problem_id+'/upload_image';
+				var url = '/p/patient/'+patient_id+'/problem/'+problem_id+'/upload_image';
 				return url;
 			}
 

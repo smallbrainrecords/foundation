@@ -27,7 +27,7 @@
 		Is controlled
 	</div>
 	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_authenticated'>
+		<input type='checkbox' ng-model='problem.authenticated'>
 		Is authenticated
 	</div>
 	<div class='col-md-4'>
@@ -241,7 +241,7 @@
 			<div class='col-md-4' ng-repeat='image in problem_images'>
 
 				<center>
-					<img src='{{image.image_url}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
+					<img src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
 					<br>
 					
 					<button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button>
@@ -277,7 +277,7 @@
 
 				<h4> Related Problems </h4>
 		<ul class='list-group' >
-			<li ng-if='!problem_relations.length' class='list-group-item'>
+			<li ng-show='problem_relations.length<1'class='list-group-item'>
 				<center>
 					No related problems found ! 
 				</center>
@@ -297,7 +297,7 @@
 				<h4> Not Related Problems </h4>
 		<ul class='list-group' >
 
-			<li ng-if='!not_related_problems.length' class='list-group-item'>
+			<li ng-show='not_related_problems.length<1' class='list-group-item'>
 				<center>
 					No non-related problems found ! 
 				</center>

@@ -20,7 +20,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/goal/'+form.goal_id+'/update_status',
+				'url' : '/g/patient/'+form.patient_id+'/goal/'+form.goal_id+'/update_status',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -44,7 +44,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/goal/'+form.goal_id+'/add_note',
+				'url' : '/g/patient/'+form.patient_id+'/goal/'+form.goal_id+'/add_note',
 				'data' : $.param(form),
 				'headers':
 				{

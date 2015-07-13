@@ -159,6 +159,7 @@
 
 					if(data['success']==true){
 						toaster.pop('success', 'Done', 'New Problem added successfully');
+						$scope.problems.push(data['problem']);
 					};
 				});
 

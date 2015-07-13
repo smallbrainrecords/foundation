@@ -128,7 +128,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'reversion.middleware.RevisionMiddleware',
-    'emr.views.AccessLogMiddleware',
+    'emr.middleware.AccessLogMiddleware',
 )
 
 ROOT_URLCONF = 'project.urls'

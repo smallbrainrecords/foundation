@@ -38,6 +38,9 @@ from social_auth.views import complete
 from django.core import serializers
 
 
+
+
+        
 def ajax_response(resp):
 
 	return HttpResponse(json.dumps(resp), content_type="application/json" )

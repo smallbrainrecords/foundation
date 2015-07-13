@@ -16,6 +16,9 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+
+    url(r'^project/admin/', include('project_admin_app.urls')),
+
     url('^pain/create_pain_avatar/(?P<patient_id>\d+)/$', 'pain.views.create_pain_avatar'),
     url('^pain/reset/$', 'pain.views.reset'),
     url(r'^login-error/$', LoginError.as_view()),
@@ -27,16 +30,12 @@ urlpatterns = patterns('',
     url(r'^list_of_unregistered_users/$', 'emr.views.list_of_unregistered_users'),
     url(r'^register_users/$', 'emr.views.register_users'),
     url(r'^list_of_users/$', 'emr.views.list_users'),
-
     url(r'^patient/(?P<user_id>\d+)/$', 'emr.views.view_patient'),
-
-    url(r'^patient/manage/(?P<user_id>\d+)/$', 'emr.views.manage_patient'),
-
     url(r'^get_problems/(?P<patient_id>\d+)/$', 'emr.views.get_patient_data'),
     url(r'^change_status/$', 'emr.views.change_status'),
     url(r'^patient/(?P<patient_id>\d+)/add_problem/$', 'emr.views.add_problem'),
     url(r'^add_patient_summary/(?P<patient_id>\d+)/$', 'emr.views.save_patient_summary'),
-    url(r'^list_terms/$', 'emr.views.list_snomed_terms'),
+    
     (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),
     (r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_ROOT, 'show_indexes': True}),
         (r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': '/home/tim/core/static', 'show_indexes': True}),
@@ -50,63 +49,30 @@ urlpatterns = patterns('',
 
 
     # New URLS
+    url(r'^list_terms/$', 'emr.views.list_snomed_terms'),
 
-    url(r'^patient/(?P<patient_id>\d+)/info$', 'emr.views.get_patient_info'),
-    url(r'^problem/(?P<problem_id>\d+)/info$', 'emr.views.get_problem_info'),
-    url(r'^goal/(?P<goal_id>\d+)/info$', 'emr.views.get_goal_info'),
-    url(r'^encounter/(?P<encounter_id>\d+)/info$', 'emr.views.get_encounter_info'),
+    # Users
+    url(r'^u/', include('users_app.urls')),
 
-    url(r'^patient/(?P<patient_id>\d+)/encounter/status$', 'emr.views.patient_encounter_status'),
 
-    url(r'^patient/(?P<patient_id>\d+)/encounter/start$', 'emr.views.create_new_encounter'),
+    # Problems 
+    url(r'^p/', include('problems_app.urls')),
 
-    url(r'^encounter/(?P<encounter_id>\d+)/stop$', 'emr.views.stop_patient_encounter'),
 
-    url(r'^encounter/add/event_summary$', 'emr.views.add_event_summary'),
 
+    # Goals
+    url(r'^g/', include('goals_app.urls')),
+
+
+
+    # Encounters
+    url(r'^enc/', include('encounters_app.urls')),
+
+    # Todos
+    url(r'^todo/', include('todo_app.urls')),
+
+    # Pain Avatars
     url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars'),
-
-     url(r'^patient/(?P<patient_id>\d+)/problems/add/new_problem$', 'emr.views.add_patient_problem'),
-
-    url(r'^patient/(?P<patient_id>\d+)/goals/add/new_goal$', 'emr.views.add_patient_goal'),
-
-    url(r'^patient/(?P<patient_id>\d+)/todos/add/new_todo$', 'emr.views.add_patient_todo'),
-
-    url(r'^patient/(?P<patient_id>\d+)/profile/update_summary$', 'emr.views.update_patient_summary'),
-
-
     url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', 'pain.views.add_pain_avatar'),
-
-    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/update_status$', 'emr.views.update_problem_status'),
-
-    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/update_start_date$', 'emr.views.update_start_date'),
-
-    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/add_patient_note$', 'emr.views.add_patient_note'),
-
-    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/add_physician_note$', 'emr.views.add_physician_note'),
-
-    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/add_goal$', 'emr.views.add_problem_goal'),
-
-    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/add_todo$', 'emr.views.add_problem_todo'),
-
-
-    url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/add_note$', 'emr.views.add_goal_note'),
-
-    url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/update_status$', 'emr.views.update_goal_status'),
-
-    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/upload_image$', 'emr.views.upload_problem_image'),
-
-    url(r'^problem/(?P<problem_id>\d+)/image/(?P<image_id>\d+)/delete/$', 'emr.views.delete_problem_image'),
-
-    url(r'^problem/(?P<problem_id>\d+)/unrelate/(?P<relationship_id>\d+)/$', 'emr.views.unrelate_problem'),
-
-    url(r'^problem/(?P<problem_id>\d+)/relate/(?P<target_problem_id>\d+)/$', 'emr.views.relate_problem'),
-
-    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/update_note$', 'emr.views.update_encounter_note'),
-
-    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/upload_video/$', 'emr.views.upload_encounter_video'),
-    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/upload_audio/$', 'emr.views.upload_encounter_audio'),
-
-
 
 )

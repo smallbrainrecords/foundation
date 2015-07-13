@@ -20,7 +20,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/problem/'+form.problem_id+'/update_status',
+				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/update_status',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -46,7 +46,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/problem/'+form.problem_id+'/update_start_date',
+				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/update_start_date',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -71,7 +71,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_patient_note',
+				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_patient_note',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -95,7 +95,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_physician_note',
+				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_physician_note',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -119,7 +119,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_goal',
+				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_goal',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -144,7 +144,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_todo',
+				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_todo',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -168,7 +168,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/problem/'+form.problem_id+'/image/'+form.image_id+'/delete/',
+				'url' : '/p/problem/'+form.problem_id+'/image/'+form.image_id+'/delete/',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -192,7 +192,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/problem/'+form.problem_id+'/unrelate/'+form.relationship_id+'/',
+				'url' : '/p/problem/'+form.problem_id+'/unrelate/'+form.relationship_id+'/',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -216,7 +216,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/problem/'+form.problem_id+'/relate/'+form.target_problem_id+'/',
+				'url' : '/p/problem/'+form.problem_id+'/relate/'+form.target_problem_id+'/',
 				'data' : $.param(form),
 				'headers':
 				{

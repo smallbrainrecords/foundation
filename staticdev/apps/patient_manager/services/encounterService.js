@@ -20,7 +20,7 @@
 
 			$http({
 				'method':'POST',
-				'url' : '/patient/'+form.patient_id+'/encounter/'+form.encounter_id+'/update_note',
+				'url' : '/enc/patient/'+form.patient_id+'/encounter/'+form.encounter_id+'/update_note',
 				'data' : $.param(form),
 				'headers':
 				{
@@ -41,7 +41,7 @@
 
 			var deferred = $q.defer();
 
-			var uploadUrl = '/patient/'+form.patient_id;
+			var uploadUrl = '/enc/patient/'+form.patient_id;
 			uploadUrl += '/encounter/'+form.encounter_id;
 			uploadUrl += '/upload_audio/';
 
@@ -75,7 +75,7 @@
 
 			var deferred = $q.defer();
 			
-			var uploadUrl = '/patient/'+form.patient_id;
+			var uploadUrl = '/enc/patient/'+form.patient_id;
 			uploadUrl += '/encounter/'+form.encounter_id;
 			uploadUrl += '/upload_video/';
 
