@@ -1,0 +1,349 @@
+
+<a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
+
+<hr>
+
+<h4>  Problem : {{problem.problem_name}} </h4>
+
+<hr>
+
+<toaster-container></toaster-container>
+
+<div class='row'>
+
+	<div class='col-md-8'>
+
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'>Status</div>
+
+	<div class='panel-body'>
+
+
+<div class='row'>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='problem.is_controlled'> 
+		Is controlled
+	</div>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='problem.authenticated'>
+		Is authenticated
+	</div>
+	<div class='col-md-4'>
+		<input type='checkbox' ng-model='problem.is_active'>
+		Is active
+	</div>
+</div>
+
+
+
+	</div>
+
+</div>
+
+
+
+	</div>
+	<div class='col-md-4'>
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'>Start Date</div>
+
+	<div class='panel-body'>
+
+		<form class='form form-inline' >
+
+			<div class='form-group'>
+				<input type='text' class='form-control' ng-model='problem.start_date'>
+
+			</div>
+			<div class='form-group'>
+				<button ng-click='update_start_date()' class='btn btn-default' > Update </button>
+			</div>	
+		</form>
+
+	</div>
+
+
+	</div>
+
+</div>
+
+</div>
+
+
+
+
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'>Notes</div>
+
+	<div class='panel-body'>
+
+
+<div class='row'>
+
+	<div class='col-md-6'>
+		<b> Patient Notes </b> 
+
+		<form class='form-inline' ng-submit='add_patient_note(patient_note_form)'>
+
+		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='patient_note_form.note'></textarea>
+
+		<button class='btn btn-default btn-lg' type='submit'> Add </button>
+
+		</form>
+
+		<hr>
+
+		<ul class='list-group'>
+
+			<li ng-show='!patient_notes.length'> No Notes </li>
+			<li ng-repeat='note in patient_notes' class='list-group-item'>
+				{{note.note}}
+			</li>
+		</ul>
+	</div>
+
+	<div class='col-md-6'>
+		<b> Physician Notes </b>
+
+		<form class='form-inline' ng-submit='add_physician_note(physician_note_form)'>
+
+		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='physician_note_form.note'></textarea>
+
+		<button class='btn btn-default btn-lg' type='submit'> Add </button>
+
+		</form>
+
+		<hr>
+
+		<ul class='list-group'>
+
+			<li ng-show='!physician_notes.length'> No Notes </li>
+			<li ng-repeat='note in physician_notes' class='list-group-item'>
+				{{note.note}}
+			</li>
+		</ul>
+	</div>
+</div>
+
+
+	</div>
+
+</div>
+
+
+
+
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'> Goals and Todos </div>
+
+
+	<div class='panel-body'>
+
+
+<div class='row'>
+
+	<div class='col-md-6'>
+
+		<b> Goals </b>
+		<hr>
+		<form class='form-inline' ng-submit='add_goal(goal_form)'>
+
+			<div class='form-group'>
+				<label> Add </label>
+				<input type='text' class='form-control' ng-model='goal_form.name'>
+			</div>
+
+			<div class='form-group'>
+				<input type='submit' value='Submit' class='btn btn-default'>
+			</div>
+
+		</form>
+
+		<hr>
+
+		<ul class='list-group'>
+			<li ng-show='!problem_goals.length'> No Goals </li>
+			<li ng-repeat='goal in problem_goals' class='list-group-item'>
+				{{goal.goal}}
+			</li>
+		</ul>
+
+
+
+	</div>
+
+	<div class='col-md-6'>
+
+		<b> Todo </b>
+		<hr>
+		<form class='form-inline' ng-submit='add_todo(todo_form)'>
+
+			<div class='form-group'>
+				<label> Add </label>
+				<input type='text' class='form-control' ng-model='todo_form.name'>
+			</div>
+
+			<div class='form-group'>
+				<input type='submit' value='Submit' class='btn btn-default'>
+			</div>
+
+
+		</form>
+
+		<hr>
+
+		<ul class='list-group'>
+			<li ng-show='!problem_todos.length'> No Todos </li>
+			<li ng-repeat='todo in problem_todos' class='list-group-item'>
+				{{todo.todo}}
+			</li>
+		</ul>
+
+	</div>
+
+
+</div>
+
+
+
+
+	</div>
+
+
+</div>
+
+
+<div class='panel panel-default'>
+
+
+	<div class='panel-heading'> Images </div>
+
+	<div class='panel-body'>
+
+		<form class='form-inline' action='{{image_upload_url()}}' method='POST' enctype='multipart/form-data' id='uploadProblemImageFrm'>
+			<label for="file">File:</label>
+			<input type="file" name="file" id="file">
+			<input type="submit" name="submit" value="Upload">
+		</form>
+
+		<hr>
+
+		<div class='row'>
+
+			<div class='col-md-4' ng-repeat='image in problem_images'>
+
+				<center>
+					<img src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
+					<br>
+					
+					<button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button>
+					<button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)'>
+						Delete 
+					</button>
+					<hr>
+				</center>
+			</div>
+
+		</div>
+
+	</div>
+
+</div>
+
+
+<!-- Relationships -->
+
+<div class='panel panel-default'>
+
+	<div class='panel-heading'> Relationships </div>
+
+	<div class='panel-body'>
+
+		<center> <h3> Relationship of {{problem.problem_name}} with other patient's problems. </h3></center>
+
+		<hr>
+
+		<div class='row'>
+
+			<div class='col-md-6'>
+
+				<h4> Related Problems </h4>
+		<ul class='list-group' >
+			<li ng-show='problem_relations.length<1'class='list-group-item'>
+				<center>
+					No related problems found ! 
+				</center>
+			</li>
+			<li ng-repeat='relationship in problem_relationships' class='list-group-item box50'>
+				{{relationship.target.problem_name}}
+				<button class='btn btn-sm btn-default pull-right' ng-click='unrelate(relationship)'> Unrelate </button>
+			</li>
+
+		</ul>
+
+
+			</div>
+
+			<div class='col-md-6'>
+
+				<h4> Not Related Problems </h4>
+		<ul class='list-group' >
+
+			<li ng-show='not_related_problems.length<1' class='list-group-item'>
+				<center>
+					No non-related problems found ! 
+				</center>
+			</li>
+
+
+			<li ng-repeat='problem in not_related_problems' class='list-group-item box50'>
+				{{problem.problem_name}}
+				<button class='btn btn-sm btn-default pull-right' ng-click='relate_problem(problem)'> Relate </button>
+
+			</li>
+		</ul>
+
+
+			</div>
+
+		</div>
+
+
+	</div>
+
+</div>
+
+
+<script type='text/javascript'>
+/* To BE REPLACED BY ANGULARJS DIRECTIVE */
+
+var options = {
+	success: function(data){
+		if(data['success']==true){
+			alert("Uploaded Image!");
+			location.reload();
+		}else{
+			alert("Something went wrong!");
+		}
+	}
+};
+
+$('#uploadProblemImageFrm').ajaxForm(options);
+
+</script>
+
+
+
+
+
+
+
+

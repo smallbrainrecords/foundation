@@ -32,12 +32,51 @@
     color: #a94442;
 }
 
-.large-modal .ngdialog-content{
-	width: 65%;
+#ngdialog1.large-modal .ngdialog-content{
+	width: 600px;
 	min-height: 275px;
 
 }
 
-.small-modal .ngdialog-content{
-	width: 500px;
+#ngdialog1.small-modal .ngdialog-content{
+	width: 450px;
+}
+
+
+.note-box{
+	width: 400px;
+}
+
+.footer{
+	margin-top: 75px;
+}
+
+
+.small-img{
+	width: 200px;
+	height:200px;
+}
+
+.modal-image{
+	width: 80%;
+}
+
+#bottom-bar{
+	position: fixed;
+	height: 65px;
+	bottom: 0px;
+	left:0px;
+	width: 100%;
+	z-index: 1000;
+	background-color: rgba(255, 255, 255, 0.9);
+
+
+	border-top: 2px solid grey;
+	border-radius: 3px;
+	padding-top: 10px;
+
+}
+
+.box50{
+	height:50px;
 }

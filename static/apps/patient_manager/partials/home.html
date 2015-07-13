@@ -11,7 +11,8 @@
 </div>
 
 -->
-<div class='panel-group'>
+
+<toaster-container></toaster-container>
 
 <div class='panel panel-info'>
 
@@ -26,10 +27,14 @@
 	</div>
 
 	<div class='col-md-8'>
-		<strong> {{patient_info.first_name}} {{patient_info.last_name}} </strong>
+		<strong> {{patient_info.user.first_name}} {{patient_info.user.last_name}} </strong>
 		<hr>
-		{{patient_info.summary}}
-
+		
+		<textarea class='form-control' ng-model='patient_info.summary'></textarea>
+		<br>
+		<button class='btn btn-default btn-info' ng-click='update_patient_summary()'>
+			Update
+		</button>
 	</div>
 
 </div>
@@ -39,7 +44,11 @@
 </div>
 
 
+<hr>
 
+<div class='row'>
+
+	<div class='col-md-7'>
 
 <div class='panel panel-info'>
 
@@ -48,33 +57,45 @@
 	<div class='panel-body'>
 
 		<div class='row'>
-			<div class='col-md-10 col-md-offset-1'>
+			<div class='col-md-12'>
 			
-			<form class='form-inline' role='form' ng-submit='add_problem()'>
-				<div class='form-group'>
-					<label> Problem Name </label>
-					<input type='text' ng-model='new_problem.name'>
+					<input type='text' ng-model='problem_term' class='form-control' placeholder='Search Problem....'>
+					
+					
+
+					<div ng-show='new_problem.set==true'>
+						<hr>
+						<label> {{new_problem.code}} </label>
+						{{new_problem.term}} <br>
+						<button class='btn btn-sm btn-danger' ng-click='add_problem()'>
+							Add Problem
+						</button>
+						<button class='btn btn-sm btn-warning' ng-click='unset_new_problem()'>
+							Cancel
+						</button>
+						<hr>
+					</div>
+
+			</div>
+			<div class='col-md-12'  style='max-height:375px; overflow-y:auto;'>
+				<div ng-repeat='problem_term in problem_terms' style='margin-top:12px;'>
+					<button class='btn btn-sm btn-default' title='{{problem_term.code}}' ng-click='set_new_problem(problem_term)'>
+						{{problem_term.term}}
+					</button>
 				</div>
-				<div class='form-group'>
-					<label> Concept ID </label>
-					<input type='text' ng-model='new_problem.concept_id'>
-				</div>
-
-				<button type='submit' class='btn btn-default'> Add Problem </button>
-
-			</form>
-
-			</div>	
+			</div>
 		</div>
+
+		<hr>
 
 		<ul class='ul-clean'>
 		<li  ng-repeat='problem in problems'>
 			
 			<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 
-				<button class='btn  btn-default btn-sm' ng-click='show_problem(problem.id)'>
-					Show Problem
-				</button>
+				<a class='btn  btn-default btn-sm' href='#/problem/{{problem.id}}'>
+					View
+				</a>
 
 				{{problem.problem_name}}
 			</div>
@@ -84,7 +105,10 @@
 	</div>
 </div>
 
+	</div>
 
+
+	<div class='col-md-5'>
 
 <div class='panel panel-info'>
 
@@ -97,14 +121,16 @@
 			<div class='col-md-10 col-md-offset-1'>
 
 
-			<form class='form-inline' role='form' ng-submit='add_goal()'>
+			<form   role='form' ng-submit='add_goal(new_goal)'>
+
+				
 				<div class='form-group'>
 					<label> Goal Name </label>
-					<input type='text' ng-model='new_goal.name'>
+					<input type='text' ng-model='new_goal.name' class='form-control'>
 				</div>
 				<div class='form-group'>
 					<label> Problem (optional) </label>
-					<input type='text' ng-model='new_goal.problem'>
+					<input type='text' ng-model='new_goal.problem' class='form-control'>
 				</div>
 
 				<button type='submit' class='btn btn-default'> Add Goal </button>
@@ -116,12 +142,14 @@
 			</div>	
 		</div>
 
+		<hr>
+
 		<ul class='ul-clean'>
 		<li  ng-repeat='goal in goals'>
 			<div class='item-box' ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
-				<button class='btn  btn-default btn-sm' ng-click='show_goal()'>
-					Show Goal
-				</button>
+				<a class='btn  btn-default btn-sm' href='#/goal/{{goal.id}}'>
+					View
+				</a>
 
 				{{goal.goal}}
 			</div>
@@ -130,6 +158,12 @@
 
 	</div>
 </div>
+
+	</div>
+
+</div>
+
+
 
 <div class='panel panel-info'>
 
@@ -141,7 +175,7 @@
 			<div class='col-md-12'>
 
 
-			<form class='form-inline' role='form' ng-submit='add_todo()'>
+			<form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
 				<div class='form-group'>
 					<label> Todo Name </label>
 					<input type='text' ng-model='new_todo.name'>
@@ -163,6 +197,7 @@
 
 		<table class='table'>
 			<thead>
+				<th> Accomplished </th>
 				<th> Item </th>
 				<th> For Problem </th>
 			</thead>
@@ -170,6 +205,7 @@
 			<tbody>
 
 				<tr ng-repeat='todo in pending_todos'>
+					<td> <input type='checkbox' ng-model='todo.accomplished'> </td>
 					<td> {{todo.todo}}</td>
 
 					<td>{{todo.problem }} </td>
@@ -185,6 +221,7 @@
 
 		<table class='table' ng-if='show_accomplished_todos==true'>
 			<thead>
+				<th> Accomplished </th>
 				<th> Item </th>
 				<th> For Problem </th>
 			</thead>
@@ -192,6 +229,8 @@
 			<tbody>
 
 				<tr ng-repeat='todo in accomplished_todos'>
+					<td> <input type='checkbox' ng-model='todo.accomplished'>
+					</td>
 					<td> <span class='text-success'> {{todo.todo}} </span> </td>
 
 					<td>{{todo.problem }} </td>
@@ -216,7 +255,9 @@
 
 			<div class='row'>
 				<div class='col-md-6'>
+					<a href='#/encounter/{{encounter.id}}'>
 			From <b> {{encounter.starttime | date:'medium'}} </b> to <b>{{encounter.stoptime | date:'medium'}}</b>  
+					</a>
 				</div>
 
 				<div class='col-md-4'>
@@ -229,7 +270,21 @@
 </div>
 
 
+<div class='panel panel-info'>
 
+	<div class='panel-heading'> Pain History </div>
+
+	<div class='panel-body'>
+
+		<a href="/patient/{{patient_id}}/pain/add_pain_avatar" class='btn btn-default pull-right'>Update Pain</a>
+		<div pain-avatar  pain-data='pain_avatars'></div>
+
+	</div>
 </div>
+
+
+
+
+
 
 
