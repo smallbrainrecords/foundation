@@ -23,11 +23,11 @@
 		<div class='panel panel-default'>
 
 		<div class='panel-heading'>
-			Dashboard
+			Registered Users
 		</div>
 		<div class='panel-body'>
 			<center>
-			<h4 class='text-info'> Users </h4>
+			<h4 class='text-info'> Registered Users </h4>
 			</center>
 			<hr>
 			<table class='table' >
@@ -36,7 +36,7 @@
           <th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>
           <th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>
           <th class="sort " sortBy='login' sortOrder="desc">Username</th>
-          <th class="sort " sortBy='birthDate' sortOrder="desc">Date of birth</th>
+          <th class="sort " sortBy='birthDate' sortOrder="desc">Role</th>
           <th class="sort " sortBy='sex' sortOrder="desc">Sex</th>
           <th>Contact Number</th>
           <th>Action</th>
@@ -49,7 +49,7 @@
         			<td> {{user.user.first_name}} </td>
         			<td> {{user.user.last_name}} </td>
         			<td> {{user.user.username}} </td>
-        			<td> {{user.date_of_birth}} </td>
+        			<td> {{user.role}} </td>
         			<td> {{user.sex}} </td>
         			<td> {{user.phone_number}} </td>
         			<td>
@@ -76,6 +76,62 @@
 
 		</div>
 	</div>
+
+
+
+    <div class='panel panel-default'>
+
+    <div class='panel-heading'>
+      Users Pending Registration
+    </div>
+    <div class='panel-body'>
+
+      <button class='btn btn-default pull-right' ng-click='refresh_pending_users()'>
+        Refresh
+      </button>
+
+      <center>
+      <h4 class='text-info'> Users Waiting Approval </h4>
+      </center>
+      <hr>
+      <table class='table' >
+        <thead>
+        <tr>
+          <th>Full Name</th>
+          <th>Username</th>
+          <th> Assign </th>
+          <th> Actions </th>
+        </tr>
+          </thead>
+
+          <tbody>
+
+            <tr ng-repeat='user in pending_users'>
+              <td> {{user.full_name}} </td>
+
+              <td> {{user.username}} </td>
+
+              <td> <select ng-model='user.role'>
+                    <option value=''>--Role--</option>
+                    <option value='patient'>Patient</option>
+                    <option value='physician'>Physician</option>
+                    <option value='admin'>Admin </option>
+                  </select>
+               </td>
+
+
+               <td> <button class='btn btn-default' ng-click='update_pending_user(user)'> Save </button>
+               </td>
+
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+    </div>
+  </div>
 
 </div>
 

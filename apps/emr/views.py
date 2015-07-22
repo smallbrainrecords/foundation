@@ -11,7 +11,7 @@ from .operations import op_add_event
 
 import project.settings as settings
 
-
+import datetime
 
 
  
@@ -23,11 +23,17 @@ def login_user(request):
     if request.POST:
         email = request.POST['email']
         password = request.POST['password']
-        u,created = User.objects.get_or_create(username=email)
-        if created:
+
+        try:
+            u = User.objects.get(username=email)
+        except User.DoesNotExist as e:
+            # Temp fix
+            current = datetime.datetime.now()
+            u = User.objects.create(username=email, email=email, last_login=current)
             u.set_password(password)
-            u.email = email
             u.save()
+
+
         user = authenticate(username=email, password=password)
         if user is not None:
             if user.is_active:

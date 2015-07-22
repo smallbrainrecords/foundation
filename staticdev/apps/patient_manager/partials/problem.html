@@ -203,7 +203,7 @@
 		<ul class='list-group'>
 			<li ng-show='!problem_todos.length'> No Todos </li>
 			<li ng-repeat='todo in problem_todos' class='list-group-item'>
-				{{todo.todo}}
+				 <input type='checkbox' ng-model='todo.accomplished' class='input-lg'  ng-change='update_todo_status(todo)'>  {{todo.todo}}
 			</li>
 		</ul>
 

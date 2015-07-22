@@ -16,7 +16,9 @@
 			patientService.fetchPatientInfo(patient_id).then(function(data){
 				$scope.patient_info = data['info'];
 				$scope.problems = data['problems'];
+				$scope.inactive_problems = data['inactive_problems'];
 				$scope.goals = data['goals'];
+				$scope.completed_goals = data['completed_goals'];
 				$scope.pending_todos = data['pending_todos'];
 				$scope.accomplished_todos = data['accomplished_todos'];
 				$scope.encounters = data['encounters'];
@@ -163,6 +165,21 @@
 					};
 				});
 
+
+			}
+
+			$scope.update_todo_status = function(todo){
+
+				patientService.updateTodoStatus(todo).then(function(data){
+
+					if(data['success']==true){
+
+						console.log('updated');	
+					}else{
+						alert("Something went wrong!");
+					}
+					
+				});				
 
 			}
 

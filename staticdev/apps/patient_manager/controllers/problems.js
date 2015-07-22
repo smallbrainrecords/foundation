@@ -245,7 +245,20 @@
 
 			};
 
+			$scope.update_todo_status = function(todo){
 
+				patientService.updateTodoStatus(todo).then(function(data){
+
+					if(data['success']==true){
+
+						console.log('updated');	
+					}else{
+						alert("Something went wrong!");
+					}
+					
+				});				
+
+			}
 
 		}); /* End of controller */
 

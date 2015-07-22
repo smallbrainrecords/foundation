@@ -48,7 +48,7 @@
 
 <div class='row'>
 
-	<div class='col-md-7'>
+	<div class='col-md-12'>
 
 <div class='panel panel-info'>
 
@@ -88,6 +88,20 @@
 
 		<hr>
 
+<div class='row'>
+	<div class='col-md-6 col-md-offset-4'>
+  <ul class="nav nav-pills" role="tablist">
+    <li role="presentation" class="active"><a href=".tab-active-problem" aria-controls="home" role="tab" data-toggle="tab">Active Problems</a></li>
+    <li role="presentation"><a href=".tab-inactive-problem" aria-controls="profile" role="tab" data-toggle="tab">Inactive Problems</a></li>
+
+  </ul>
+</div>
+</div>
+
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active tab-active-problem" >
+
+    	<div style='max-height:375px; overflow-y:auto;'>
 		<ul class='ul-clean'>
 		<li  ng-repeat='problem in problems'>
 			
@@ -101,6 +115,38 @@
 			</div>
 		</li>
 		</ul>
+	</div>
+
+
+    </div>
+
+    <div role="tabpanel" class="tab-pane  tab-inactive-problem" >
+
+    	<div style='max-height:375px; overflow-y:auto;'>
+		<ul class='ul-clean'>
+		<li  ng-repeat='problem in inactive_problems'>
+			
+			<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+
+				<a class='btn  btn-default btn-sm' href='#/problem/{{problem.id}}'>
+					View
+				</a>
+
+				{{problem.problem_name}}
+			</div>
+		</li>
+		</ul>
+	</div>
+
+
+    </div>
+
+
+
+  </div>
+
+
+
 
 	</div>
 </div>
@@ -108,7 +154,7 @@
 	</div>
 
 
-	<div class='col-md-5'>
+	<div class='col-md-12'>
 
 <div class='panel panel-info'>
 
@@ -144,6 +190,21 @@
 
 		<hr>
 
+<div class='row'>
+	<div class='col-md-6 col-md-offset-4'>
+  <ul class="nav nav-pills" role="tablist">
+  	<li role="presentation" class="active"><a href=".tab-incomplete-goals" aria-controls="goals" role="tab" data-toggle="tab"> Current/Incomplete Goals </a></li>
+    <li role="presentation" ><a href=".tab-completed-goals" aria-controls="incomplete_goals" role="tab" data-toggle="tab">Completed Goals</a></li>
+    
+
+  </ul>
+</div>
+</div>
+
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active tab-incomplete-goals">
+    <div style='max-height:375px; overflow-y:auto;'>
+
 		<ul class='ul-clean'>
 		<li  ng-repeat='goal in goals'>
 			<div class='item-box' ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
@@ -155,6 +216,31 @@
 			</div>
 		</li>
 		</ul>
+	</div>
+
+    </div>
+    <div role="tabpanel" class="tab-pane tab-completed-goals" > 
+
+    	<div style='max-height:375px; overflow-y:auto;'>
+
+		<ul class='ul-clean'>
+		<li  ng-repeat='goal in completed_goals'>
+			<div class='item-box' ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
+				<a class='btn  btn-default btn-sm' href='#/goal/{{goal.id}}'>
+					View
+				</a>
+
+				{{goal.goal}}
+			</div>
+		</li>
+		</ul>
+
+	</div>
+
+    </div>
+
+  </div>
+
 
 	</div>
 </div>
@@ -194,7 +280,7 @@
 			</div>	
 		</div>
 
-
+<div style='max-height:375px; overflow-y:auto;'>
 		<table class='table'>
 			<thead>
 				<th> Accomplished </th>
@@ -205,20 +291,22 @@
 			<tbody>
 
 				<tr ng-repeat='todo in pending_todos'>
-					<td> <input type='checkbox' ng-model='todo.accomplished'> </td>
+					<td> <input type='checkbox' ng-model='todo.accomplished'  ng-change='update_todo_status(todo)'> </td>
 					<td> {{todo.todo}}</td>
 
-					<td>{{todo.problem }} </td>
+					<td>{{todo.problem.problem_name }} </td>
 				</tr>
 			</tbody>
 
 		</table>
-
-		<a class='btn btn-link' ng-click='toggle_accomplished_todos()'> 
+</div>
+<hr>
+		<a class='btn btn-info btn-md' ng-click='toggle_accomplished_todos()'> 
 			<span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
 			<span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
 		</a>
-
+<hr>
+<div style='max-height:375px; overflow-y:auto;'>
 		<table class='table' ng-if='show_accomplished_todos==true'>
 			<thead>
 				<th> Accomplished </th>
@@ -229,15 +317,16 @@
 			<tbody>
 
 				<tr ng-repeat='todo in accomplished_todos'>
-					<td> <input type='checkbox' ng-model='todo.accomplished'>
+					<td> <input type='checkbox' ng-model='todo.accomplished' ng-change='update_todo_status(todo)'>
 					</td>
 					<td> <span class='text-success'> {{todo.todo}} </span> </td>
 
-					<td>{{todo.problem }} </td>
+					<td>{{todo.problem.problem_name }} </td>
 				</tr>
 			</tbody>
 
 		</table>
+</div>
 
 	</div>
 </div>

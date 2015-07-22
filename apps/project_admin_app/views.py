@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 from emr.models import UserProfile
 
 from users_app.serializers import UserProfileSerializer
+import logging
+from .forms import UpdateProfileForm, UpdateBasicProfileForm
+from .forms import UpdateEmailForm, UpdatePasswordForm
 
 @login_required
 def home(request):
@@ -19,13 +22,25 @@ def home(request):
 
 
 @login_required
-def list_users(request):
+def list_registered_users(request):
 
 	user_profiles = UserProfile.objects.all()
 	user_profiles_holder = UserProfileSerializer(user_profiles, many=True).data
 
 	return ajax_response(user_profiles_holder)
-	
+
+
+@login_required
+def list_unregistered_users(request):
+    
+    users = []
+    for user in User.objects.all():
+        try:
+            profile = UserProfile.objects.get(user=user)
+        except:
+            users.append({'id': user.id, 'username': user.username, 'full_name': user.get_full_name()})
+    return HttpResponse(json.dumps(users), content_type="application/json")
+
 
 
 @login_required
@@ -43,4 +58,144 @@ def user_info(request, user_id):
 	resp['user_profile'] = user_profile_dict
 	return ajax_response(resp)
 
+
+@login_required
+def approve_user(request):
+
+	resp = {}
+	resp['success'] = False
+
+	user_id = request.POST.get('id')
+	role = request.POST.get('role')
+
+	try:
+		user = User.objects.get(id=long(user_id))
+	except User.DoesNotExist:
+		user = None
+
+	if user is not None and role in ['physician', 'admin', 'patient']:
+		user_profile = UserProfile(user=user, role=role)
+		user_profile.save()
+
+		if role == 'admin':
+			user.is_superuser = True
+			user.is_staff = True
+			user.save()
+
+		resp['success'] = True
+		resp['msg'] = 'User was assigned given role and made active'
+
+	return ajax_response(resp)
+
+
+
+@login_required
+def update_profile(request):
+
+	resp = {}
+	
+	resp['success'] = False
+
+	if request.method=='POST':
+		form = UpdateProfileForm(request.POST, request.FILES)
+		if form.is_valid():
+			user_id = form.cleaned_data['user_id']
+			sex = form.cleaned_data['sex']
+			role = form.cleaned_data['role']
+			phone_number = form.cleaned_data['phone_number']
+			summary = form.cleaned_data['summary']
+			cover_image = form.cleaned_data['cover_image']
+			portrait_image = form.cleaned_data['portrait_image']
+			date_of_birth = form.cleaned_data['date_of_birth']
+
+			user = User.objects.get(id=user_id)
+
+			user_profile = UserProfile.objects.get(user=user)
+
+			user_profile.phone_number = phone_number
+			user_profile.sex = sex
+			user_profile.role = role
+			user_profile.summary = summary
+			user_profile.date_of_birth = date_of_birth
+
+			if cover_image:
+				user_profile.cover_image = cover_image
+
+			if portrait_image:
+				user_profile.portrait_image = portrait_image
+
+			user_profile.save()
+
+			resp['success'] = True
+
+	return ajax_response(resp)
+
+
+@login_required
+def update_basic_profile(request):
+
+	resp = {}
+
+	resp['success'] = False
+
+	if request.method=='POST':
+		form = UpdateBasicProfileForm(request.POST)
+		if form.is_valid():
+			first_name = form.cleaned_data['first_name']
+			last_name = form.cleaned_data['last_name']
+			user_id = form.cleaned_data['user_id']
+
+			user = User.objects.get(id=user_id)
+			user.first_name = first_name
+			user.last_name = last_name
+			user.save()
+
+			resp['success'] = True
+
+
+	return ajax_response(resp)
+
+
+@login_required
+def update_email(request):
+	resp = {}
+	resp['success'] = False
+
+	if request.method=='POST':
+		form = UpdateEmailForm(request.POST)
+		if form.is_valid():
+			email = form.cleaned_data['email']
+			user_id = form.cleaned_data['user_id']
+
+			user = User.objects.get(id=user_id)
+			user.email = email
+
+			user.save()
+
+			resp['success'] = True
+	return ajax_response(resp)
+
+@login_required
+def update_password(request):
+	resp = {}
+
+	resp['success'] = False
+	
+	if request.method=='POST':
+		form = UpdatePasswordForm(request.POST)
+		if form.is_valid():
+			
+			user_id = form.cleaned_data['user_id']
+			new_password = form.cleaned_data['new_password']
+			verify_password = form.cleaned_data['verify_password']
+
+			if len(new_password)>3 and new_password==verify_password:
+				user = User.objects.get(id=user_id)
+				user.set_password(new_password)
+				user.save()
+
+			resp['success'] = True
+
+
+	return ajax_response(resp)
 

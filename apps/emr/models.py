@@ -21,8 +21,8 @@ ROLE_CHOICES = (
 
 
 SEX_CHOICES = (
-        ('male', 'male'),
-        ('female', 'female'),
+        ('male', 'Male'),
+        ('female', 'Female'),
 )
 
 

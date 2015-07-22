@@ -3,15 +3,26 @@
 	'use strict';
 
 	angular.module('AdminApp').service('adminService',
-		function( $q, httpService){
+		function( $q,$cookies, $http, httpService){
 
+		this.csrf_token = function(){
+
+			var token = $cookies.csrftoken;
+			return token;
+		};
 
 		this.getUsersList = function(){
 			var params = {};
-			var url = '/project/admin/list/users/';
+			var url = '/project/admin/list/registered/users/';
 			return httpService.get(params, url);
 		};
 
+
+		this.getPendingRegistrationUsersList = function(){
+			var params = {};
+			var url = '/project/admin/list/unregistered/users/';
+			return httpService.get(params, url);
+		};
 
 
 		this.getUserInfo = function(user_id){
@@ -21,6 +32,72 @@
 			return httpService.get(params, url);
 
 		};
+
+		this.approveUser = function(user){
+
+			var form = user;
+			var url = '/project/admin/user/approve/';
+			return httpService.post(form, url);
+
+		};
+
+		this.updateBasicProfile = function(form){
+			var url = '/project/admin/user/update/basic/';
+			return httpService.post(form, url);
+
+		};
+
+
+		this.updateProfile = function(form, files ){
+        
+
+        	var deferred = $q.defer();
+
+        	var uploadUrl = '/project/admin/user/update/profile/';
+
+        	var fd = new FormData();
+
+        	fd.append('csrfmiddlewaretoken', this.csrf_token() );
+
+        	angular.forEach(form, function(value, key) {
+  					fd.append(key, value);
+			});
+
+        	angular.forEach(files, function(value, key){
+        		fd.append(key, value);
+        	});
+        	
+
+        	$http.post(uploadUrl, fd, {
+            		transformRequest: angular.identity,
+
+            		headers: {'Content-Type': undefined}
+    	    	})
+	        	.success(function(data){
+	        		deferred.resolve(data);
+        		})
+        		.error(function(data){
+        			deferred.resolve(data);
+
+        		});
+
+        	return deferred.promise;
+
+    	};
+
+
+
+		this.updateEmail = function(form){
+			var url = '/project/admin/user/update/email/';
+			return httpService.post(form, url);
+		};
+
+		this.updatePassword = function(form){
+			var url = '/project/admin/user/update/password/';
+			return httpService.post(form, url);
+		};
+
+
 
 	});
 

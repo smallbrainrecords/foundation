@@ -58,7 +58,7 @@
 			<div class='panel-body'>
 
 
-				<form class='form' ng-submit='update_profile()'>
+				<form class='form' ng-submit='update_basic_profile()'>
 
 
 				<div class='form-group'>
@@ -131,9 +131,17 @@
 
 				<div class='form-group'>
 
+					<label> Date of birth </label>
+
+					<input type='text' ng-model='user_profile.date_of_birth' class='form-control' required id='dob'>
+
+				</div>
+
+				<div class='form-group'>
+
 					<label> Phone/Contact </label>
 
-					<input type='text' ng-model='user_profile.phone_number' class='form-control'>
+					<input type='text' ng-model='user_profile.phone_number' class='form-control' required>
 
 				</div>
 
@@ -172,6 +180,8 @@
 					<textarea ng-model='user_profile.summary' class='form-control'></textarea>
 				</div>
 
+				
+
 
 				<div class='form-group'>
 
@@ -180,7 +190,7 @@
 
 					<label> Cover Image </label>
 
-					<input type='file'>
+					<input type='file'  file-model='files.cover_image'>
 				</div>
 
 
@@ -190,7 +200,7 @@
 
 					<label> Portrait Image </label>
 
-					<input type='file'>
+					<input type='file' file-model='files.portrait_image' >
 				</div>
 
 
@@ -226,7 +236,7 @@
 			<div class='panel-body'>
 
 
-			<form class='form' ng-submit='update_profile()'>
+			<form class='form' ng-submit='update_email()'>
 
 				<div class='form-group'>
 					<label> Email </label>
@@ -254,17 +264,17 @@
 			<div class='panel-body'>
 
 
-			<form class='form' ng-submit='update_profile()'>
+			<form class='form' ng-submit='update_password()'>
 
 				<div class='form-group'>
 					<label> New Password </label>
-					<input type='password' class='form-control' >
+					<input type='password' class='form-control' ng-model='password_form.new_password' >
 				</div>
 
 
 				<div class='form-group'>
 					<label> Verify Password </label>
-					<input type='password' class='form-control' >
+					<input type='password' class='form-control' ng-model='password_form.verify_password'>
 				</div>
 
 				<div class='form-group'>
@@ -292,3 +302,13 @@
 <div style='height:375px; width:100%;'>
  	
 </div>
+
+
+<script type='text/javascript'>
+	
+	$(document).ready(function(){
+
+		$( "#dob" ).datepicker({ dateFormat: 'yy-mm-dd' });
+
+	});
+</script>

@@ -51,3 +51,19 @@ def add_patient_todo(request, patient_id):
     return ajax_response(resp)
 
 
+@login_required
+def update_todo_status(request, todo_id):
+
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+
+        todo = ToDo.objects.get(id=todo_id)
+        accomplished = request.POST.get('accomplished') == 'true'
+        todo.accomplished = accomplished
+        todo.save()
+
+        resp['success'] = True
+
+    return  ajax_response(resp)

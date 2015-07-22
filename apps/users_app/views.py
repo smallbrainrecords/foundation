@@ -70,12 +70,28 @@ def get_patient_info(request, patient_id):
     	problem_dict = ProblemSerializer(problem).data
         problem_list.append(problem_dict)
 
+    # Inactive Problems
+    inactive_problems = Problem.objects.filter(patient=patient_user, is_active=False)
+    inactive_problems_list = []
+    for problem in inactive_problems:
+        problem_dict = ProblemSerializer(problem).data
+        inactive_problems_list.append(problem_dict)
+
     # Not accomplished Goals
     goals = Goal.objects.filter(patient=patient_user, accomplished=False)
     goal_list = []
     for goal in goals:
     	goal_dict = GoalSerializer(goal).data
         goal_list.append(goal_dict)
+
+
+    #accomplished Goals
+    completed_goals = Goal.objects.filter(patient=patient_user, accomplished=True)
+    completed_goals_list = []
+    for goal in completed_goals:
+        goal_dict = GoalSerializer(goal).data
+        completed_goals_list.append(goal_dict)
+
 
 
     # Not accomplished Todos
@@ -109,6 +125,8 @@ def get_patient_info(request, patient_id):
     resp['goals'] = goal_list
     resp['pending_todos'] = pending_todo_list
     resp['accomplished_todos'] = accomplished_todo_list
+    resp['inactive_problems'] = inactive_problems_list
+    resp['completed_goals'] = completed_goals_list
 
     resp['encounters'] = encounter_list
     return ajax_response(resp)
