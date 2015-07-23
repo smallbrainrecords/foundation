@@ -151,6 +151,7 @@ class TextNote(models.Model):
         ('patient', 'patient'),
         ('physician', 'physician'),
     )
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
     by = models.CharField(max_length=20, choices=BY_CHOICES)
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)

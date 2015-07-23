@@ -87,11 +87,22 @@ def create_new_encounter(request, patient_id):
 
     resp = {}
     if request.method == 'POST':
+        physician = request.user
         # You may want to tell user that if already an encounter is running 
         encounter = Encounter(
             patient=User.objects.get(id=patient_id), 
             physician=request.user)
         encounter.save()
+
+        # Add event started encounter
+
+        event_summary = 'Started encounter by <b>%s</b>' %physician.username
+        encounter_event = EncounterEvent(
+            encounter=encounter,
+            summary=event_summary)
+
+        encounter_event.save()
+
 
         encounter_dict = EncounterSerializer(encounter).data
         resp['success'] = True
@@ -113,6 +124,15 @@ def stop_patient_encounter(request, encounter_id):
 
     latest_encounter.stoptime = datetime.now()
     latest_encounter.save()
+
+
+    event_summary = 'Stopped encounter by <b>%s</b>' %physician.username
+    encounter_event = EncounterEvent(
+            encounter=latest_encounter,
+            summary=event_summary)
+
+    encounter_event.save()
+
 
     resp = {}
     resp['success'] = True

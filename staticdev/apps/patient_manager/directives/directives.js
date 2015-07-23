@@ -600,7 +600,44 @@ myTools.directive('ngAudioPlayer', ['$parse', function ($parse) {
 }]);
 
 
+    myTools.directive('fixedZone', ['$parse' , function($parse) {
 
+        return {
+
+            link: function($scope, $element, $attrs) {
+
+
+
+              if($(window).width()<1200){
+                return false;
+              }
+
+              var offset_orientation = $attrs.offsetOrientation;
+
+              if(offset_orientation=='top'){
+
+                var offset_top = parseInt($attrs.offsetTop);
+                $element.affix({
+                   offset: { top: offset_top  } 
+                 });
+
+              }else{ 
+
+                var offset_bottom = parseInt($attrs.offsetBottom);
+                $element.affix({
+                   offset: {
+                     top: offset_bottom
+                }});
+
+
+              }
+              
+              }
+
+
+    }
+
+  }]);
 
 
 })();

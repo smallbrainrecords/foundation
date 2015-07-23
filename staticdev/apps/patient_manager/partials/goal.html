@@ -1,9 +1,30 @@
+<style type='text/css'>
+
+.controlled-div{
+	background-color: green;
+	color:white;
+	padding: 7px;
+}
+
+.uncontrolled-div{
+	background-color: red;
+	color: white;
+	padding: 7px;
+}
+
+</style>
+
 <a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
 
 <hr>
 <toaster-container></toaster-container>
 
-<h4>  Goal : {{goal.goal}} </h4>
+
+<div ng-class="goal.is_controlled==true?'controlled-div':'uncontrolled-div'" class='row'>
+	<h4>  Goal : {{goal.goal}}  </h4>
+</div>
+
+Problem  : <b> {{goal.problem.problem_name}} </b> 
 
 
 

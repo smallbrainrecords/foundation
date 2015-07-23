@@ -39,7 +39,11 @@ def add_patient_todo(request, patient_id):
     new_todo = ToDo(patient=patient, todo=todo_name)
     new_todo.save()
 
-    summary = 'Added ToDo %s' %todo_name
+    if new_todo.problem:
+        problem_name = todo.problem.problem_name
+    else:
+        problem_name  = ''
+    summary = 'Added <u>todo</u> <b>%s</b> for <u>problem</u> <b>%s</b> ' %(todo_name, problem_name)
 
     op_add_event(physician, patient, summary)
 
@@ -63,6 +67,23 @@ def update_todo_status(request, todo_id):
         accomplished = request.POST.get('accomplished') == 'true'
         todo.accomplished = accomplished
         todo.save()
+
+
+        physician = request.user
+        patient = todo.patient
+
+        if todo.problem:
+            problem_name = todo.problem.problem_name
+        else:
+            problem_name = ''
+
+        accomplished_label = 'accomplished' if accomplished==True else 'not accomplished'
+
+
+        summary = "Updated status of <u>todo</u> : <b>%s</b> , <u>problem</u> <b>%s</b> to <b>%s</b>" %(todo.todo, problem_name, accomplished_label)
+
+
+        op_add_event(physician, patient, summary)
 
         resp['success'] = True
 

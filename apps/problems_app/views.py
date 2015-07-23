@@ -32,9 +32,26 @@ def is_patient(user):
 
 
 
+@login_required
+def track_problem_click(request, problem_id):
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+
+    if actor_profile.role in ['physician', 'admin']:
+        problem = Problem.objects.get(id=problem_id)
+        patient = problem.patient
+
+        summary = "Clicked <u>problem</u>: <b>%s</b>" %problem.problem_name
+        op_add_event(actor, patient, summary)
+    resp = {}
+    return ajax_response(resp)
+
+
 # Problem
 @login_required
 def get_problem_info(request, problem_id):
+
+    
 
     problem_info = Problem.objects.get(id=problem_id)
     patient = problem_info.patient
@@ -96,6 +113,8 @@ def get_problem_info(request, problem_id):
 
     problem_dict = ProblemSerializer(problem_info).data
 
+
+
     resp = {}
     resp['info'] = problem_dict
     resp['patient_notes'] = patient_note_holder
@@ -133,7 +152,7 @@ def add_patient_problem(request, patient_id):
         new_problem.save()
 
         physician = request.user
-        summary = 'Added problem %s' %term
+        summary = 'Added <u>problem</u> <b>%s</b>' %term
     
         op_add_event(physician, patient, summary)
 
@@ -166,6 +185,18 @@ def update_problem_status(request, patient_id, problem_id):
 
     problem.save()
 
+    status_labels = {}
+    status_labels['problem_name'] = problem.problem_name
+    status_labels['is_controlled'] = "controlled" if is_controlled==True else "not controlled"
+    status_labels['is_active'] = "active" if is_active == True else "inactive"
+    status_labels['authenticated'] = "authenticated" if authenticated == True else "not authenticated"
+    
+
+    physician = request.user
+
+    summary = "Changed <u>problem</u>: <b>%(problem_name)s</b> status to : <b>%(is_controlled)s</b> , <b>%(is_active)s</b> , <b>%(authenticated)s</b>" %status_labels
+    op_add_event(physician, patient, summary)
+
     resp['success'] = True
 
     return ajax_response(resp)
@@ -187,6 +218,11 @@ def update_start_date(request, patient_id, problem_id):
 
     problem.save()
 
+    physician = request.user
+
+    summary = "Changed <u>problem</u> : <b>%s</b> start date to <b>%s</b>" %(problem.problem_name, problem.start_date)
+    op_add_event(physician, patient, summary)
+
     resp['success'] = True
 
     return ajax_response(resp)
@@ -199,16 +235,21 @@ def add_patient_note(request, patient_id, problem_id):
 
     resp['success'] = False
     patient = User.objects.get(id=patient_id)
+    patient_profile = UserProfile.objects.get(user=patient)
+
     problem = Problem.objects.get(id=problem_id, patient=patient)
 
     note = request.POST.get('note')
 
     new_note = TextNote(
+        author = patient_profile,
         by='patient',
         note=note)
     new_note.save()
 
     problem.notes.add(new_note)
+
+
 
     new_note_dict = TextNoteSerializer(new_note).data
     resp['success'] = True
@@ -229,13 +270,18 @@ def add_physician_note(request, patient_id, problem_id):
 
     physician = request.user
 
+    physician_profile = UserProfile.objects.get(user=physician)
 
     new_note = TextNote(
+        author = physician_profile,
         by='physician',
         note=note)
     new_note.save()
 
     problem.notes.add(new_note)
+
+    summary = "Added <u>note</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>"  %(note, problem.problem_name)
+    op_add_event(physician, patient, summary)
 
     new_note_dict = TextNoteSerializer(new_note).data
     resp['note'] = new_note_dict
@@ -263,6 +309,12 @@ def add_problem_goal(request, patient_id, problem_id):
         )
     new_goal.save()
 
+
+    physician = request.user
+
+    summary = "Added <u> goal </u> : <b>%s</b> to <u>problem</u> : <b>%s</b>"  %(goal, problem.problem_name)
+    op_add_event(physician, patient, summary)
+
     new_goal_dict = GoalSerializer(new_goal).data
     resp['success'] = True
     resp['goal'] = new_goal_dict
@@ -289,6 +341,12 @@ def add_problem_todo(request, patient_id, problem_id):
         )
 
     new_todo.save()
+
+    physician = request.user
+
+    summary = "Added <u>todo</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>"  %(todo, problem.problem_name)
+    op_add_event(physician, patient, summary)
+
 
     new_todo_dict = TodoSerializer(new_todo).data
 
@@ -333,8 +391,8 @@ def upload_problem_image(request, patient_id, problem_id):
         patient_image.save()
 
 
-        summary='Physician added image<br/><a href="/media/%s"><img src="/media/%s" style="max-width:100px; max-height:100px" /></a>' % (
-                patient_image.image, patient_image.image)
+        summary='Physician added <u>image</u> to <u>problem</u> <b>%s</b> <br/><a href="/media/%s"><img src="/media/%s" style="max-width:100px; max-height:100px" /></a>' % (
+                problem.problem_name, patient_image.image, patient_image.image)
 
         op_add_event(actor, patient, summary)
 
@@ -349,8 +407,17 @@ def delete_problem_image(request, problem_id, image_id):
     resp['success'] = False
 
     if request.method == 'POST':
+        problem = Problem.objects.get(id=problem_id)
+        patient = problem.patient
+
         image = PatientImage.objects.get(id=image_id)
         image.delete()
+
+        physician = request.user
+        summary = "Deleted <u>image</u> from <u>problem</u> : <b>%s</b>"  %problem.problem_name
+        op_add_event(physician, patient, summary)
+
+
         resp['success'] = True
 
     return ajax_response(resp)
@@ -363,7 +430,20 @@ def unrelate_problem(request, problem_id, relationship_id):
     resp['success'] = False
 
     if request.method == 'POST':
+
+
         relationship = ProblemRelationship.objects.get(id= relationship_id)
+        problem = relationship.source
+
+        summary = "Deleting <u>relationship</u> of <u>problem</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>"  %(
+            relationship.source.problem_name, relationship.target.problem_name)
+
+        patient = problem.patient
+        physician = request.user
+
+        op_add_event(physician, patient, summary)
+
+        
         relationship.delete()
         resp ['success'] = True
 
@@ -382,6 +462,12 @@ def relate_problem(request, problem_id, target_problem_id):
 
         relationship = ProblemRelationship(source=source, target=target)
         relationship.save()
+
+        patient = source.patient
+        physician = request.user
+        summary = "Related <u>problem</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>"  %(
+            source.problem_name, target.problem_name)
+        op_add_event(physician, patient, summary)
 
         relationship_dict = ProblemRelationshipSerializer(relationship).data
 

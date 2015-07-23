@@ -80,3 +80,8 @@
 .box50{
 	height:50px;
 }
+
+
+ce-entity ce-flag{
+	font-weight: bold;
+}

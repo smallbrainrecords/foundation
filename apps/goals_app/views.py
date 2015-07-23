@@ -72,7 +72,7 @@ def add_patient_goal(request, patient_id):
 
 
     physician = request.user
-    summary = 'Added goal %s' %goal_name
+    summary = 'Added <u>goal</u> <b>%s</b>' %goal_name
     
     op_add_event(physician, patient, summary)
 
@@ -100,6 +100,26 @@ def update_goal_status(request, patient_id, goal_id):
     goal.accomplished = accomplished
 
     goal.save()
+
+    if goal.problem:
+        problem_name = goal.problem.problem_name
+    else:
+        problem_name = ''
+
+
+    status_labels = {}
+    status_labels['goal'] = goal.goal
+    status_labels['is_controlled'] = 'controlled' if goal.is_controlled==True else 'not controlled'
+    status_labels['accomplished'] = 'accomplished' if  goal.accomplished==True else 'not accomplished'
+    status_labels['problem'] = problem_name
+
+    physician = request.user
+    summary  = "Change <u>goal</u>: <b>%(goal)s</b> <u>status</u>" 
+    summary += " to <b>%(is_controlled)s</b> <b>%(accomplished)s</b>"
+    summary += " for <u>problem</u> <b>%(problem)s</b> " 
+    summary = summary %status_labels
+
+    op_add_event(physician, patient, summary)
 
     resp['success'] = True
 
@@ -131,6 +151,17 @@ def add_goal_note(request, patient_id, goal_id):
     new_note.save()
 
     goal.notes.add(new_note)
+
+    if goal.problem:
+        problem_name = goal.problem.problem_name
+    else:
+        problem_name = ''
+
+    physician = request.user
+    patient = goal.patient
+    summary = 'Added <u>note</u> <b>%s</b> for <u>goal</u>: <b>%s</b> , <u> problem </u>: <b>%s</b> ' %(note, goal.goal, problem_name)
+    op_add_event(physician, patient, summary)
+
 
     new_note_dict = TextNoteSerializer(new_note).data 
 

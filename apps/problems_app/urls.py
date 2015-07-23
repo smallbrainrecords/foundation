@@ -4,6 +4,8 @@ from django.conf.urls import patterns, include, url
 urlpatterns = patterns('problems_app.views',
 
     url(r'^problem/(?P<problem_id>\d+)/info$', 'get_problem_info'),
+    url(r'^problem/(?P<problem_id>\d+)/track/click/$', 'track_problem_click'),
+    
     url(r'^patient/(?P<patient_id>\d+)/problems/add/new_problem$', 'add_patient_problem'),
 
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/update_status$', 'update_problem_status'),

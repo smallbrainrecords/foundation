@@ -37,6 +37,32 @@
 		};
 
 
+
+		this.trackProblemClickEvent = function(form){
+
+			var deferred = $q.defer();
+			//form.csrfmiddlewaretoken = this.csrf_token();
+
+			$http({
+				'method':'POST',
+				'url' : '/p/problem/'+form.problem_id+'/track/click/',
+				'data' : $.param(form),
+				'headers':
+				{
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}).success(function(data){
+				deferred.resolve(data);
+			}).error(function(data){
+				deferred.resolve(data);
+			});
+
+			return deferred.promise;
+
+		};
+
+
+
 		this.updateStartDate = function(form){
 
 			

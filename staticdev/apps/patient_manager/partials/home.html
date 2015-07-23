@@ -107,7 +107,7 @@
 			
 			<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 
-				<a class='btn  btn-default btn-sm' href='#/problem/{{problem.id}}'>
+				<a class='btn  btn-default btn-sm'  ng-click='open_problem(problem)'>
 					View
 				</a>
 

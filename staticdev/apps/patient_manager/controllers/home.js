@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('HomeCtrl', function($scope, $routeParams, patientService, ngDialog, toaster){
+		.controller('HomeCtrl', function($scope, $routeParams, patientService, problemService, ngDialog, toaster, $location){
 
 
 			var patient_id = $('#patient_id').val();
@@ -174,7 +174,7 @@
 
 					if(data['success']==true){
 
-						console.log('updated');	
+						toaster.pop('success', "Done", "Updated Todo status !");
 					}else{
 						alert("Something went wrong!");
 					}
@@ -182,6 +182,19 @@
 				});				
 
 			}
+
+			$scope.open_problem = function(problem){
+
+				var form = {};
+				form.problem_id = problem.id;
+				problemService.trackProblemClickEvent(form).then(function(data){
+
+					$location.path('/problem/'+problem.id);
+
+				});
+				
+
+			};
 
 		}); /* End of controller */
 

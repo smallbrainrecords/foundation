@@ -251,7 +251,7 @@
 
 					if(data['success']==true){
 
-						console.log('updated');	
+						toaster.pop('success', "Done", "Updated Todo status !");
 					}else{
 						alert("Something went wrong!");
 					}

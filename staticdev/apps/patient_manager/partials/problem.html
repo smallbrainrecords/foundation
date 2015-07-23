@@ -1,9 +1,38 @@
+<style type='text/css'>
+
+#problem-header{
+
+	z-index: 999;
+	width: 1200px;
+	margin: 0 auto;
+	border-bottom: 1px solid #ccc;
+	padding-top:7px;
+	padding-bottom: 7px;
+}
+
+#problem-header.affix{
+	top:0;
+}
+
+.problem-controlled{
+	background-color: green;
+	color:white;
+}
+
+.problem-uncontrolled{
+	background-color: red;
+	color: white;
+}
+</style>
+
 
 <a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
 
 <hr>
 
+<div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'>
 <h4>  Problem : {{problem.problem_name}} </h4>
+</div>
 
 <hr>
 
@@ -103,7 +132,7 @@
 
 			<li ng-show='!patient_notes.length'> No Notes </li>
 			<li ng-repeat='note in patient_notes' class='list-group-item'>
-				{{note.note}}
+				<b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
 			</li>
 		</ul>
 	</div>
@@ -125,7 +154,7 @@
 
 			<li ng-show='!physician_notes.length'> No Notes </li>
 			<li ng-repeat='note in physician_notes' class='list-group-item'>
-				{{note.note}}
+				<b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
 			</li>
 		</ul>
 	</div>
