@@ -17,8 +17,7 @@ urlpatterns = patterns('problems_app.views',
 
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/upload_image$', 'upload_problem_image'),
     url(r'^problem/(?P<problem_id>\d+)/image/(?P<image_id>\d+)/delete/$', 'delete_problem_image'),
-    url(r'^problem/(?P<problem_id>\d+)/unrelate/(?P<relationship_id>\d+)/$', 'unrelate_problem'),
-    url(r'^problem/(?P<problem_id>\d+)/relate/(?P<target_problem_id>\d+)/$', 'relate_problem'),
+
 
 
 	)

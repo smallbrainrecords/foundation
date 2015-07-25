@@ -234,6 +234,7 @@ def add_patient_note(request, patient_id, problem_id):
     resp = {}
 
     resp['success'] = False
+    errors = []
     patient = User.objects.get(id=patient_id)
     patient_profile = UserProfile.objects.get(user=patient)
 
@@ -241,19 +242,22 @@ def add_patient_note(request, patient_id, problem_id):
 
     note = request.POST.get('note')
 
-    new_note = TextNote(
-        author = patient_profile,
-        by='patient',
-        note=note)
-    new_note.save()
+    if request.user == patient:
+        new_note = TextNote(
+            author = patient_profile,
+            by='patient',
+            note=note)
+        new_note.save()
 
-    problem.notes.add(new_note)
+        problem.notes.add(new_note)
 
+        new_note_dict = TextNoteSerializer(new_note).data
+        resp['success'] = True
+        resp['note'] = new_note_dict
+    else:
+        errors.append("Permission Error: Only patient can add patient note.")
 
-
-    new_note_dict = TextNoteSerializer(new_note).data
-    resp['success'] = True
-    resp['note'] = new_note_dict
+    resp['errors'] = errors
     return ajax_response(resp)
 
 
@@ -423,56 +427,7 @@ def delete_problem_image(request, problem_id, image_id):
     return ajax_response(resp)
 
 
-# Problems
-@login_required
-def unrelate_problem(request, problem_id, relationship_id):
-    resp = {}
-    resp['success'] = False
-
-    if request.method == 'POST':
 
 
-        relationship = ProblemRelationship.objects.get(id= relationship_id)
-        problem = relationship.source
 
-        summary = "Deleting <u>relationship</u> of <u>problem</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>"  %(
-            relationship.source.problem_name, relationship.target.problem_name)
-
-        patient = problem.patient
-        physician = request.user
-
-        op_add_event(physician, patient, summary)
-
-        
-        relationship.delete()
-        resp ['success'] = True
-
-    return ajax_response(resp)
-
-
-# Problems
-@login_required
-def relate_problem(request, problem_id, target_problem_id):
-    resp = {}
-    resp['success'] = False
-
-    if request.method == "POST":
-        source = Problem.objects.get(id=problem_id)
-        target = Problem.objects.get(id=target_problem_id)
-
-        relationship = ProblemRelationship(source=source, target=target)
-        relationship.save()
-
-        patient = source.patient
-        physician = request.user
-        summary = "Related <u>problem</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>"  %(
-            source.problem_name, target.problem_name)
-        op_add_event(physician, patient, summary)
-
-        relationship_dict = ProblemRelationshipSerializer(relationship).data
-
-        resp['success'] = True
-        resp['relationship'] = relationship_dict
-
-    return ajax_response(resp)
 

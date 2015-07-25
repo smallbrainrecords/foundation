@@ -181,7 +181,7 @@ $('#save').click(function() {
     }
     json = JSON.stringify(json);
     $.post('/patient/{{ patient_id }}/pain/add_pain_avatar', {'json': json}, function () {
-        window.location = '/patient/manage/{{ patient_id }}/';
+        window.location = '/u/patient/manage/{{ patient_id }}/';
     });
 });
 });

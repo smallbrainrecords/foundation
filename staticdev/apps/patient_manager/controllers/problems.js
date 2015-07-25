@@ -15,6 +15,12 @@
 
 			$scope.loading = true;
 
+			patientService.fetchActiveUser().then(function(data){
+
+				$scope.active_user = data['user_profile'];
+
+			});
+
 			patientService.fetchProblemInfo(problem_id).then(function(data){
 
                     $scope.problem = data['info'];
@@ -26,9 +32,7 @@
                     $scope.problem_todos = data['problem_todos'];
 
                     $scope.problem_images = data['problem_images'];
-                    $scope.problem_relationships = data['problem_relationships'];
 
-                    $scope.not_related_problems = data['not_related_problems'];
 
                     $scope.loading = false;
             });
@@ -94,9 +98,20 @@
 				form.problem_id = $scope.problem.id;
 				problemService.addPatientNote(form).then(function(data){
 
-					$scope.patient_notes.unshift(data['note']);
+					if(data['success']==true){
 
-					toaster.pop('success', 'Done','Added Patient Note!');
+						$scope.patient_notes.unshift(data['note']);
+						toaster.pop('success', 'Done','Added Patient Note!');
+
+
+					}else{
+
+						angular.forEach(data['errors'], function(value, key){
+							alert(value);
+						});
+
+					}
+
 				});
 
 			}
@@ -198,52 +213,8 @@
 				});
 			};
 
-			$scope.unrelate = function(relationship){
 
-				var c = confirm("Are you sure ?");
 
-				if(c==false){
-					return false;
-				}
-				var form = {};
-				form.problem_id = $scope.problem.id;
-				form.relationship_id = relationship.id;
-
-				problemService.unRelateProblem(form).then(function(data){
-					var relationship_index = $scope.problem_relationships.indexOf(relationship);
-					$scope.problem_relationships.splice(relationship_index, 1);
-
-					$scope.not_related_problems.push(relationship.target);
-
-					toaster.pop('success', "Done", "Problem relationship removed !");
-				});
-
-			};
-
-			$scope.relate_problem = function(problem){
-
-				var c = confirm("Are you sure ?");
-
-				if(c==false){
-					return false;
-				}
-
-				var form = {};
-				form.problem_id = $scope.problem_id;
-				form.target_problem_id = problem.id;
-
-				problemService.relateProblem(form).then(function(data){
-
-					var problem_index = $scope.not_related_problems.indexOf(problem);
-					$scope.not_related_problems.splice(problem_index, 1);
-
-					$scope.problem_relationships.push(data['relationship']);
-
-					toaster.pop('success', "Done", "Added problem relationship!");
-
-				});
-
-			};
 
 			$scope.update_todo_status = function(todo){
 

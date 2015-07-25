@@ -156,3 +156,16 @@ def update_patient_summary(request, patient_id):
     return ajax_response(resp)
 
 
+@login_required
+def fetch_active_user(request):
+
+    user = User.objects.get(id=request.user.id)
+
+    user_profile = UserProfile.objects.get(user=user)
+
+    user_profile = UserProfileSerializer(user_profile).data
+
+    resp = {}
+    resp['user_profile'] = user_profile
+
+    return ajax_response(resp)

@@ -26,7 +26,13 @@
 </style>
 
 
-<a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
+<a href='#/'><b> Manage Patient </b></a>
+
+<span class='text-default'>
+	<i class='glyphicon glyphicon-menu-right'></i> 
+</span>
+
+<span class='text-muted'><b>   Problem: {{problem.problem_name}} </b></span>
 
 <hr>
 
@@ -118,7 +124,9 @@
 	<div class='col-md-6'>
 		<b> Patient Notes </b> 
 
-		<form class='form-inline' ng-submit='add_patient_note(patient_note_form)'>
+
+
+		<form class='form-inline' ng-submit='add_patient_note(patient_note_form)' ng-show='active_user.user.id==problem.patient'>
 
 		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='patient_note_form.note'></textarea>
 
@@ -200,7 +208,8 @@
 
 		<ul class='list-group'>
 			<li ng-show='!problem_goals.length'> No Goals </li>
-			<li ng-repeat='goal in problem_goals' class='list-group-item'>
+			<li ng-repeat='goal in problem_goals' class='list-group-item' ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
+				<a class='btn btn-default' href='#/goal/{{goal.id}}'> View </a>
 				{{goal.goal}}
 			</li>
 		</ul>
@@ -212,8 +221,9 @@
 	<div class='col-md-6'>
 
 		<b> Todo </b>
-		<hr>
-		<form class='form-inline' ng-submit='add_todo(todo_form)'>
+		<hr>  
+
+		<form class='form-inline' ng-submit='add_todo(todo_form)' >
 
 			<div class='form-group'>
 				<label> Add </label>
@@ -232,7 +242,7 @@
 		<ul class='list-group'>
 			<li ng-show='!problem_todos.length'> No Todos </li>
 			<li ng-repeat='todo in problem_todos' class='list-group-item'>
-				 <input type='checkbox' ng-model='todo.accomplished' class='input-lg'  ng-change='update_todo_status(todo)'>  {{todo.todo}}
+				 <input type='checkbox' ng-model='todo.accomplished'   ng-change='update_todo_status(todo)' ng-show='todo.accomplished==false'> &nbsp;&nbsp; {{todo.todo}}
 			</li>
 		</ul>
 
@@ -296,54 +306,7 @@
 
 	<div class='panel-body'>
 
-		<center> <h3> Relationship of {{problem.problem_name}} with other patient's problems. </h3></center>
 
-		<hr>
-
-		<div class='row'>
-
-			<div class='col-md-6'>
-
-				<h4> Related Problems </h4>
-		<ul class='list-group' >
-			<li ng-show='problem_relations.length<1'class='list-group-item'>
-				<center>
-					No related problems found ! 
-				</center>
-			</li>
-			<li ng-repeat='relationship in problem_relationships' class='list-group-item box50'>
-				{{relationship.target.problem_name}}
-				<button class='btn btn-sm btn-default pull-right' ng-click='unrelate(relationship)'> Unrelate </button>
-			</li>
-
-		</ul>
-
-
-			</div>
-
-			<div class='col-md-6'>
-
-				<h4> Not Related Problems </h4>
-		<ul class='list-group' >
-
-			<li ng-show='not_related_problems.length<1' class='list-group-item'>
-				<center>
-					No non-related problems found ! 
-				</center>
-			</li>
-
-
-			<li ng-repeat='problem in not_related_problems' class='list-group-item box50'>
-				{{problem.problem_name}}
-				<button class='btn btn-sm btn-default pull-right' ng-click='relate_problem(problem)'> Relate </button>
-
-			</li>
-		</ul>
-
-
-			</div>
-
-		</div>
 
 
 	</div>
