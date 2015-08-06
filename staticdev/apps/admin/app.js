@@ -17,9 +17,14 @@
             .when('/edit/:userId', {
 
                 templateUrl: '/static/apps/admin/partials/edit.html',
-                controller: 'EditCtrl'
-            });
-;
+                controller: 'EditUserCtrl'
+            })
+             .when('/add/user', {
+
+                templateUrl: '/static/apps/admin/partials/add_user.html',
+                controller: 'AddUserCtrl'
+            });;
+
 
 
     });

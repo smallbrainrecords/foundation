@@ -284,7 +284,7 @@
 				form.target_id = problem.id;
 				form.relationship = effecting;
 				problemService.relateProblem(form).then(function(data){
-
+					toaster.pop('success', "Done", "Updated relationship !");
 
 				});
 
@@ -301,6 +301,7 @@
 				form.relationship = effected;
 
 				problemService.relateProblem(form).then(function(data){
+					toaster.pop('success', "Done", "Updated relationship !");
 
 
 				});

@@ -4,7 +4,7 @@
 
 
 	angular.module('AdminApp')
-		.controller('EditCtrl', function(
+		.controller('EditUserCtrl', function(
 			$scope, $routeParams, ngDialog, 
 			adminService, $location, $anchorScroll, toaster){
 
