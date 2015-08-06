@@ -162,7 +162,13 @@
 					if(data['success']==true){
 						toaster.pop('success', 'Done', 'New Problem added successfully');
 						$scope.problems.push(data['problem']);
-					};
+					}else if(data['success']==false){
+						alert(data['msg']);
+					}else{
+						alert("Something went wrong");
+					}
+
+
 				});
 
 

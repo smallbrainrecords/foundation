@@ -143,23 +143,32 @@ def add_patient_problem(request, patient_id):
 
         patient = User.objects.get(id=patient_id)
 
-        new_problem = Problem(
-            patient = patient,
-            problem_name = term,
-            concept_id = concept_id
-        )
 
-        new_problem.save()
+        problem_exists = Problem.objects.filter(
+                concept_id=concept_id, patient=patient).exists()
 
-        physician = request.user
-        summary = 'Added <u>problem</u> <b>%s</b>' %term
-    
-        op_add_event(physician, patient, summary)
+        if problem_exists is not True:
 
-        new_problem_dict = ProblemSerializer(new_problem).data
+            new_problem = Problem(
+                patient = patient,
+                problem_name = term,
+                concept_id = concept_id
+            )
 
-        resp['success'] = True
-        resp['problem'] = new_problem_dict
+            new_problem.save()
+
+            physician = request.user
+            summary = 'Added <u>problem</u> <b>%s</b>' %term
+        
+            op_add_event(physician, patient, summary)
+
+            new_problem_dict = ProblemSerializer(new_problem).data
+
+            resp['success'] = True
+            resp['problem'] = new_problem_dict
+
+        else:
+            resp['msg'] = 'Problem already added'
 
     return ajax_response(resp)
 
