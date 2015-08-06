@@ -212,6 +212,35 @@
 		};
 
 
+		this.relateProblem = function(form){
+
+
+
+			var deferred = $q.defer();
+			//form.csrfmiddlewaretoken = this.csrf_token();
+
+			$http({
+				'method':'POST',
+				'url' : '/p/problem/relate/',
+				'data' : $.param(form),
+				'headers':
+				{
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}).success(function(data){
+				deferred.resolve(data);
+			}).error(function(data){
+				deferred.resolve(data);
+			});
+
+			return deferred.promise;
+
+
+
+
+		};
+
+
 
 
 

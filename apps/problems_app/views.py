@@ -95,25 +95,22 @@ def get_problem_info(request, problem_id):
     	image_dict = PatientImageSerializer(image).data
         problem_images_holder.append(image_dict)
 
-    problem_relationships_holder = []
-    related_problems_ids = []
-    for relationship in problem_relationships:
-    	relationship_dict = ProblemRelationshipSerializer(relationship).data
-
-        problem_relationships_holder.append(relationship_dict)
-        related_problems_ids.append(relationship.target.id)
-
-
-    not_related_problems = Problem.objects.filter(patient=patient).exclude(id__in=related_problems_ids)
-
-    not_related_problems_holder = []
-    for problem in not_related_problems:
-    	problem_dict = ProblemSerializer(problem).data
-        not_related_problems_holder.append(problem_dict)
 
     problem_dict = ProblemSerializer(problem_info).data
 
 
+    effecting_problems = ProblemRelationship.objects.filter(target=problem_info)
+    effecting_problems_holder = []
+    for relationship in effecting_problems:
+        effecting_problems_holder.append(relationship.source.id)
+
+    effected_problems = ProblemRelationship.objects.filter(source=problem_info)
+    effected_problems_holder = []
+    for relationship in effected_problems:
+        effected_problems_holder.append(relationship.target.id)
+
+    patient_problems = Problem.objects.filter(patient=patient)
+    patient_problems_holder = ProblemSerializer(patient_problems, many=True).data
 
     resp = {}
     resp['info'] = problem_dict
@@ -122,8 +119,11 @@ def get_problem_info(request, problem_id):
     resp['problem_goals'] = problem_goals_holder
     resp['problem_todos'] = problem_todos_holder
     resp['problem_images'] = problem_images_holder
-    resp['problem_relationships'] = problem_relationships_holder
-    resp['not_related_problems'] = not_related_problems_holder
+
+    resp['effecting_problems'] = effecting_problems_holder
+    resp['effected_problems'] = effected_problems_holder
+    resp['patient_problems'] = patient_problems_holder
+
     return ajax_response(resp)
 
 
@@ -437,6 +437,36 @@ def delete_problem_image(request, problem_id, image_id):
 
 
 
+@login_required
+def relate_problem(request):
+
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        relationship = request.POST.get('relationship')=='true'
+        source_id = request.POST.get('source_id', None)
+        target_id = request.POST.get('target_id', None)
+
+        source = Problem.objects.get(id=source_id)
+        target = Problem.objects.get(id=target_id)
+
+        if relationship:
+            try:
+                problem_relationship = ProblemRelationship.objects.get(
+                    source=source, target=target)
+                    
+            except ProblemRelationship.DoesNotExist as e:
+                problem_relationship = ProblemRelationship.objects.create(
+                    source=source, target=target)
+        else:
+
+            problem_relationship = ProblemRelationship.objects.get(
+                source= source, target=target)
+
+            problem_relationship.delete()
 
 
+        resp['success'] = True
 
+    return ajax_response(resp)

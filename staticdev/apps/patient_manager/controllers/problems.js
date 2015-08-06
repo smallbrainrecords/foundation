@@ -25,6 +25,8 @@
 
                     $scope.problem = data['info'];
 
+                    console.log($scope.problem);
+
                     $scope.patient_notes = data['patient_notes'];
                     $scope.physician_notes = data['physician_notes'];
 
@@ -33,6 +35,30 @@
 
                     $scope.problem_images = data['problem_images'];
 
+                    $scope.effecting_problems = data['effecting_problems'];
+                    $scope.effected_problems = data['effected_problems'];
+
+                    var patient_problems = data['patient_problems'];
+
+                    
+
+
+                    for(var index in patient_problems){
+
+                    	var id = patient_problems[index].id;
+
+                    	if ($scope.id_exists(id, $scope.effecting_problems)==true){
+                    		patient_problems[index].effecting=true
+                    	}
+
+                    	if ($scope.id_exists(id, $scope.effected_problems)==true){
+                    		patient_problems[index].effected=true
+                    	}
+
+
+                    }
+
+                    $scope.patient_problems = patient_problems;
 
                     $scope.loading = false;
             });
@@ -230,6 +256,58 @@
 				});				
 
 			}
+
+
+			$scope.id_exists = function(id, item_list){
+
+				var found = false;
+
+				angular.forEach(item_list, function(value){
+					
+					if(value==id){
+						found = true;
+					}
+
+				});
+
+				return found;
+
+			}
+
+
+			$scope.change_effecting_problem = function(source, problem){
+
+				var effecting = source.effecting;
+
+				var form = {};
+				form.source_id = source.id;
+				form.target_id = problem.id;
+				form.relationship = effecting;
+				problemService.relateProblem(form).then(function(data){
+
+
+				});
+
+			}
+
+			$scope.change_effected_problem = function(problem, target){
+
+				
+				var effected = target.effected;
+
+				var form = {};
+				form.source_id = problem.id;
+				form.target_id = target.id;
+				form.relationship = effected;
+
+				problemService.relateProblem(form).then(function(data){
+
+
+				});
+
+			}
+
+
 
 		}); /* End of controller */
 

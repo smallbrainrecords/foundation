@@ -32,12 +32,12 @@
 	<i class='glyphicon glyphicon-menu-right'></i> 
 </span>
 
-<span class='text-muted'><b>   Problem: {{problem.problem_name}} </b></span>
+<span class='text-muted'><b>  Problem: {{problem.problem_name}} </b></span>
 
 <hr>
 
 <div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'>
-<h4>  Problem : {{problem.problem_name}} </h4>
+<h4>  {{problem.id}} Problem : {{problem.problem_name}} </h4>
 </div>
 
 <hr>
@@ -304,9 +304,35 @@
 
 	<div class='panel-heading'> Relationships </div>
 
-	<div class='panel-body'>
+	<div class='panel-body' style='padding:20px;'>
+
+<div class='row'>
+	<div class='col-md-4'>
+
+<h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i> </h4>
+<div class='row' ng-repeat='eff_problem in patient_problems' style='padding:7px; border-bottom:1px solid #ccc;'>
 
 
+<input type='checkbox'   ng-model='eff_problem.effecting' ng-change='change_effecting_problem(eff_problem, problem)'> {{eff_problem.problem_name}}
+
+</div>
+
+	</div>
+
+	<div class='col-md-3'>
+<h3> {{problem.problem_name}} </h3>
+	</div>
+
+	<div class='col-md-4'>
+
+<h4> <i class='glyphicon glyphicon-arrow-right'></i>  EffectedProblems </h4>
+<div class='row' ng-repeat='eff_problem in patient_problems'  style='padding:7px; border-bottom:1px solid #ccc;'>
+
+<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)'>  {{eff_problem.problem_name}}
+
+</div>
+
+	</div>
 
 
 	</div>
