@@ -41,6 +41,17 @@ class UpdateEmailForm(forms.Form):
 	email = forms.EmailField(required=True)
 
 
-
-
-
+class CreateUserForm(forms.Form):
+	first_name = forms.CharField(max_length=255, required=True)
+	last_name = forms.CharField(max_length=255, required=True)
+	username = forms.CharField(max_length=255, required=True)
+	email = forms.EmailField(required=True)
+	role = forms.ChoiceField(choices=ROLE_CHOICES, required=True)
+	password = forms.CharField(max_length=255, required=True)
+	verify_password = forms.CharField(max_length=255, required=True)
+	date_of_birth = forms.DateField(required=True)
+	sex = forms.ChoiceField(choices=SEX_CHOICES, required=True)
+	phone_number = forms.CharField(max_length=255, required=True)
+	cover_image = forms.ImageField(required=False)
+	portrait_image = forms.ImageField(required=False)
+	summary = forms.CharField(required=False)

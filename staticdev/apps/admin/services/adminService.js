@@ -97,6 +97,11 @@
 			return httpService.post(form, url);
 		};
 
+		this.addUser = function(form){
+			var url  = '/project/admin/user/create/';
+			return httpService.post(form, url);
+		};
+
 
 
 	});

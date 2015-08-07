@@ -20,4 +20,6 @@ urlpatterns = patterns('project_admin_app.views',
 
 	url(r'^user/update/password/$', 'update_password', name='pa_update_password'),
 
+	url(r'^user/create/$', 'create_user', name='pa_create_user'),
+
 )
