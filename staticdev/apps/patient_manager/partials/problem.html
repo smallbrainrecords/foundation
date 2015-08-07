@@ -148,7 +148,7 @@
 	<div class='col-md-6'>
 		<b> Physician Notes </b>
 
-		<form class='form-inline' ng-submit='add_physician_note(physician_note_form)'>
+		<form class='form-inline' ng-submit='add_physician_note(physician_note_form)' ng-show='active_user.role=="admin"'>
 
 		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='physician_note_form.note'></textarea>
 
