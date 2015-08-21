@@ -22,6 +22,7 @@
 						$location.path('/');
 					}else if(data['success']==false){
 						
+						
 						angular.forEach(data['errors'], function(value){
 							alert(value);
 						});

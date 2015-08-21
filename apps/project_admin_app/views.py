@@ -294,7 +294,8 @@ def create_user(request):
 		
 
 		else:
-			logging.error(form.errors)
+			for error in form.errors.items():
+				errors.append(error)
 			resp['msg'] = 'Please fill valid data!'
 		
 	resp['errors'] = errors
