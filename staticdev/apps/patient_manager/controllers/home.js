@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('HomeCtrl', function($scope, $routeParams, patientService, problemService, ngDialog, toaster, $location){
+		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, ngDialog, toaster, $location){
 
 
 			var patient_id = $('#patient_id').val();
@@ -90,8 +90,12 @@
 					
 					var new_todo = data['todo'];
 					$scope.pending_todos.push(new_todo);
-					toaster.pop('success', 'Done', 'New Todo added successfully');
 
+					$scope.new_todo = {};
+
+					toaster.pop('success', 'Done', 'New Todo added successfully');
+					
+					$('#todoNameInput').focus();
 				});
 
 			};

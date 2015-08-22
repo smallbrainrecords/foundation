@@ -22,7 +22,7 @@
 						$location.path('/');
 					}else if(data['success']==false){
 						
-						
+						alert(data['msg']);
 						angular.forEach(data['errors'], function(value){
 							alert(value);
 						});
