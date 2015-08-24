@@ -14,7 +14,8 @@ import project.settings as settings
 import datetime
 
 
- 
+
+# OLD
 def login_user(request):
     logout(request)
     username = ''
@@ -41,6 +42,7 @@ def login_user(request):
                 return HttpResponseRedirect('/')
     return render_to_response('login.html', context_instance=RequestContext(request))
 
+# OLD
 def register(request):
     if request.POST:
         email = request.POST['email']
@@ -76,6 +78,7 @@ def update(request):
     """
     return HttpResponse(html)
 
+# OLD
 @login_required
 def home(request):
     try:
@@ -86,6 +89,7 @@ def home(request):
         context['role'] = role
         context = RequestContext(request, context)
         if (role == 'patient'):
+            #BAD
             return view_patient(request, request.user.id)
         
         return render_to_response("home.html", context)
@@ -98,9 +102,10 @@ def home(request):
             context = RequestContext(request, context)
             return render_to_response("home.html", context)
 
-            
         return HttpResponse('<script>setTimeout(function() { window.location = "/" }, 1000);</script> Waiting on manual approval')
-    
+
+
+# OLD    
 @login_required
 def list_of_unregistered_users(request):
     
@@ -112,6 +117,7 @@ def list_of_unregistered_users(request):
             users.append({'id': user.id, 'username': user.username, 'full_name': user.get_full_name()})
     return HttpResponse(json.dumps(users), content_type="application/json")
 
+# OLD
 @login_required
 def register_users(request): 
     for i in request.POST:

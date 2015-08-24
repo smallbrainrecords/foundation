@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import generic
+
 from django.contrib.contenttypes.models import ContentType
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -38,7 +38,7 @@ def get_path(instance, filename):
 
 
 class UserProfile(models.Model):
-    user = models.ForeignKey(User, unique=True)
+    user = models.OneToOneField(User)
 
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='patient')
     data = models.TextField(blank=True) 
@@ -54,7 +54,12 @@ class UserProfile(models.Model):
         return '%s' % (self.user.get_full_name())
         
 
-
+# Many To Many Relation
+class PatientController(models.Model):
+    patient = models.ForeignKey(User, related_name='patient_physicians')
+    physician = models.ForeignKey(User, related_name='physician_patients')
+    author = models.BooleanField()
+    
 
 
 

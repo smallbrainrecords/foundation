@@ -7,6 +7,10 @@
 		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, ngDialog, toaster, $location){
 
 
+			patientService.fetchActiveUser().then(function(data){
+				$scope.active_user = data['user_profile'];
+			});
+
 			var patient_id = $('#patient_id').val();
 			$scope.patient_id = patient_id;
 			$scope.show_accomplished_todos = false;
@@ -94,7 +98,8 @@
 					$scope.new_todo = {};
 
 					toaster.pop('success', 'Done', 'New Todo added successfully');
-					
+
+					/* Not-angular-way */
 					$('#todoNameInput').focus();
 				});
 

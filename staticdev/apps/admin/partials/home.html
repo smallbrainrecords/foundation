@@ -1,3 +1,13 @@
+
+
+      <b>Name</b> : {{active_user.user.first_name}} {{active_user.user.last_name}}
+      <br>
+      <b>Username</b> : {{active_user.user.username}}
+      <br>
+      <b>Role</b> : {{active_user.role}}
+
+    <hr>
+
 <div class='row'>
 
 
@@ -25,6 +35,9 @@
 <div class='col-md-9'>
 
 		<div class='panel panel-default'>
+
+
+
 
 		<div class='panel-heading'>
 			Registered Users
@@ -83,7 +96,7 @@
 
 
 
-    <div class='panel panel-default'>
+    <div class='panel panel-default' ng-show='active_user.role=="admin"'>
 
     <div class='panel-heading'>
       Users Pending Registration

@@ -18,19 +18,37 @@
 
 
 
+			$scope.init = function(){
 
-			$scope.users = [];
+
+				$scope.users = [];
 
 
-			adminService.getUsersList().then(function(data){
+				adminService.fetchActiveUser().then(function(data){
 
-				$scope.users = data;
-			});
+					$scope.active_user = data['user_profile'];
 
-			adminService.getPendingRegistrationUsersList().then(function(data){
+					var role_form = {
 
-				$scope.pending_users = data;
-			});
+						'actor_role':$scope.active_user.role,
+						'actor_id':$scope.active_user.user.id
+					}
+
+
+					adminService.getUsersList(role_form).then(function(data){
+						$scope.users = data;
+					});
+
+
+					
+					adminService.getPendingRegistrationUsersList(role_form).then(function(data){
+
+						$scope.pending_users = data;
+					});
+
+				});
+
+			};
 
 
 			$scope.refresh_pending_users  = function(){
@@ -65,7 +83,7 @@
 			};
 
 
-			
+			$scope.init();
 
 		}); /* End of controller */
 

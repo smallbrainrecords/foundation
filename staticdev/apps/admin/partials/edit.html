@@ -40,6 +40,12 @@
 				</button>
 			</li>
 
+			<li ng-show='user_profile.role=="patient"'>
+				<button class='btn btn-link' ng-click='navigate("physiciansInfo")'>
+					Physicians assigned
+				</button>
+			</li>
+
 
 		</ul>
 
@@ -185,7 +191,7 @@
 
 				<div class='form-group'>
 
-					<img src='{{user_profile.cover_image}}' class='thumbnail' alt='Cover Image'>
+					<img ng-src='{{user_profile.cover_image}}' class='thumbnail' alt='Cover Image'>
 
 
 					<label> Cover Image </label>
@@ -196,7 +202,7 @@
 
 				<div class='form-group'>
 
-					<img src='{{user_profile.portrait_image}}' class='thumbnail' alt='Portrait Image'>
+					<img ng-src='{{user_profile.portrait_image}}' class='thumbnail' alt='Portrait Image'>
 
 					<label> Portrait Image </label>
 
@@ -291,6 +297,43 @@
 			</div>
 		</div>
 
+
+
+		<div class='panel panel-default' id='physiciansInfo' ng-show='user_profile.role=="patient"'>
+
+			<div class='panel-heading'> <h3>  Physicians Assigned  </h3> </div>
+			<div class='panel-body'>
+
+				<form class='form' >
+
+					<div class='form-group'>
+						<label> Select physician </label>
+						<select ng-model='assign_form.physician' class='form-control'>
+							<option value='' > ---- </option>
+							<option value='1' > Physician 1 </option>
+							<option value='2'> Physician 2 </option>
+							<option value='3'> Physician 3 </option>
+							<option value='4'> Physician 4 </option>
+							<option value='5'> Physician 5 </option>
+						</select>
+					</div>
+
+					<div class='form-group'>
+						<input type='submit' value='Assign' class='btn btn-default'>
+					</div>
+
+				</form>
+
+				<hr>
+				<b> Assigned physicians </b>
+				<ul>
+					<li ng-repeat='physician in patient_physicians'>
+						{{physician.user.first_name}} {{physician.user.last_name}}
+					</li>
+				</ul>
+
+			</div>
+		</div>
 
 
 

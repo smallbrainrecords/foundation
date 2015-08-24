@@ -13,6 +13,7 @@ from .forms import CreateUserForm
 
 import datetime
 
+from emr.models import PatientController
 
 @login_required
 def home(request):
@@ -28,7 +29,19 @@ def home(request):
 @login_required
 def list_registered_users(request):
 
-    user_profiles = UserProfile.objects.all()
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+
+    if actor_profile.role == 'physician':
+
+        controlled_patients = PatientController.objects.filter(physician=actor)
+        patients_ids = [ long(x.patient.id) for x in controlled_patients]
+        user_profiles = UserProfile.objects.filter( user__id__in=patients_ids)
+
+    if actor_profile.role == 'admin':
+
+        user_profiles = UserProfile.objects.all()
+
     user_profiles_holder = UserProfileSerializer(user_profiles, many=True).data
 
     return ajax_response(user_profiles_holder)
@@ -206,6 +219,16 @@ def create_user(request):
     resp['success'] = False
     errors = []
 
+    actor = request.user
+
+    resp['msg'] = 'Operation Failed'
+
+    try:
+        actor_profile = UserProfile.objects.get(user=actor)
+    except UserProfile.DoesNotExist:
+        actor_profile = None
+
+
     if request.method == 'POST':
 
         form = CreateUserForm(request.POST, request.FILES)
@@ -282,6 +305,16 @@ def create_user(request):
 
                     user_profile.save()
 
+
+                    if actor_profile is not None and role == 'patient':
+                        if actor_profile.role == 'physician':
+                            patient_controller = PatientController(
+                                patient=new_user,
+                                physician=actor,
+                                author=True)
+                            patient_controller.save()
+
+
                     resp['success'] = True
 
         else:
@@ -289,4 +322,32 @@ def create_user(request):
                 errors.append(error)
             resp['msg'] = 'Please fill valid data!'
     resp['errors'] = errors
+    return ajax_response(resp)
+
+
+@login_required
+def list_patient_physicians(request):
+    resp = {}
+    resp['success'] = True
+
+    actor = request.user
+    patient_id = request.GET.get('patient_id')
+
+    physicians_list = []
+
+    try:
+        patient = User.objects.get(id=patient_id)
+        patient_profile = UserProfile.objects.get(user=patient)
+
+        controllers = PatientController.objects.filter(patient=patient)
+
+        physician_ids = [ long(x.physician.id) for x in controllers ]
+        physicians = UserProfile.objects.filter(user__id__in=physician_ids)
+
+        physicians_list = UserProfileSerializer(physicians, many=True).data
+    except Exception as e:
+        resp['error'] = str(e)
+
+    resp['physicians'] = physicians_list
+
     return ajax_response(resp)

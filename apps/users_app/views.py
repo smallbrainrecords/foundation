@@ -19,12 +19,153 @@ from encounters_app.serializers import EncounterSerializer
 
 import logging
 
+from .forms import LoginForm, RegisterForm
+
+import datetime
+
 def is_patient(user):
     try:
         profile = UserProfile.objects.get(user=user)
         return profile.role == 'patient'
     except:
         return False
+
+
+
+def login_user(request):
+    if request.method == 'POST':
+        logout(request)
+
+        form = LoginForm(request.POST)
+
+        errors = []
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+
+            user = authenticate(username=username, password=password)
+
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    return HttpResponseRedirect('/u/home/')
+                else:
+                    errors.append('User is not verified or active.')
+            else:
+                errors.append('Incorrect username or password.')
+        else:
+            errors.append('Please fill valid data.')
+
+        content = {
+                'login_errors':errors,
+                'form': form
+                }
+        return render(
+            request,
+            'users/login.html',
+            content)
+
+    if request.method == 'GET':
+        content = {}
+        return render(
+            request,
+            'users/login.html',
+            content)
+
+
+def logout_user(request):
+    logout(user)
+    return HttpResponseRedirect('/u/login/')
+
+    
+def register_user(request):
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+
+        errors = []
+
+        if form.is_valid():
+
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            verify_password = form.cleaned_data['verify_password']
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+
+            user_exists = User.objects.filter( Q(email=email) | Q(username=email)).exists()
+
+            if len(password)>2 and password == verify_password:
+
+                if not user_exists:
+                    current = datetime.datetime.now()
+                    user = User(
+                        username=email,
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name,
+                        last_login=current)
+                    user.set_password(password)
+                    user.save()
+
+                    user = authenticate(username=email, password=password)
+                    login(request, user)
+
+                    return HttpResponseRedirect('/u/home')
+
+                else:
+                    errors.append('User with same email or username already exists')
+            else:
+                errors.append('Passwords must match')
+        else:
+            errors.append('Please fill data')
+
+        content = {}
+        content['register_form'] = form
+        content['register_errors'] = errors
+
+        return render(
+            request,
+            'users/login.html',
+            content)
+
+
+@login_required
+def home(request):
+
+    if request.method == 'GET':
+
+        user = request.user
+
+        try:
+            user_profile = UserProfile.objects.get(user=user)
+        except UserProfile.DoesNotExist:
+            user_profile = None
+
+        if user_profile is not None:
+            role = user_profile.role
+
+            if role in ['admin', 'physician']:
+                # Manage Users
+                return HttpResponseRedirect('/project/admin')
+
+
+            if role == 'patient':
+                # Manage Patient
+                return HttpResponseRedirect('/u/patient/manage/%s/' %user.id)
+
+            return HttpResponse('Something went wrong !')
+
+        unapproved_user_message = '''
+            <script>
+                setTimeout(function() { window.location = "/u/home/" }, 5000);
+            </script> 
+            <p style="padding:100px;font-size:20px;"">
+            Your account is created but your profile is not verified. <br>
+            Waiting on manual approval. <br>
+            <a href='/logout/'>Logout</a>
+            </p>
+        '''
+        return HttpResponse(unapproved_user_message)
 
 
 # Users

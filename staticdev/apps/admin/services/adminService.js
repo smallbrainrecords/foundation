@@ -11,15 +11,26 @@
 			return token;
 		};
 
-		this.getUsersList = function(){
+
+
+		this.fetchActiveUser = function(){
+
 			var params = {};
+			var url = '/u/active/user/';
+
+			return httpService.get(params, url);
+
+		};
+
+		this.getUsersList = function(form){
+			var params = form;
 			var url = '/project/admin/list/registered/users/';
 			return httpService.get(params, url);
 		};
 
 
-		this.getPendingRegistrationUsersList = function(){
-			var params = {};
+		this.getPendingRegistrationUsersList = function(form){
+			var params = form;
 			var url = '/project/admin/list/unregistered/users/';
 			return httpService.get(params, url);
 		};
@@ -102,6 +113,13 @@
 			return httpService.post(form, url);
 		};
 
+
+		this.getPatientPhysicians = function(params){
+
+			var url = '/project/admin/patient/physicians/';
+			return httpService.get(params, url);
+
+		};
 
 
 	});

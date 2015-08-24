@@ -23,7 +23,7 @@ import os, json
 
 import traceback
 
-from django.contrib.contenttypes import generic
+
 from django.contrib.contenttypes.models import ContentType
 
 
@@ -37,8 +37,7 @@ from social_auth.views import complete
 
 from django.core import serializers
 
-
-
+from django.db.models import Q
 
         
 def ajax_response(resp):

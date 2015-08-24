@@ -401,29 +401,26 @@
 
 		this.fetchActiveUser = function(){
 
-		var deferred = $q.defer();
-		$http({
+			var deferred = $q.defer();
+			$http({
 
-			'method':'GET',
-			'url' : '/u/active/user/',
-			'headers':
-			{
-				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-			}
-		}).success(function(data){
+				'method':'GET',
+				'url' : '/u/active/user/',
+				'headers':
+				{
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				}
+			}).success(function(data){
 
-			deferred.resolve(data);
+				deferred.resolve(data);
 
-		}).error(function(data){
-			deferred.resolve(data);
-		});
+			}).error(function(data){
+				deferred.resolve(data);
+			});
 
-		return deferred.promise;
+			return deferred.promise;
 
-		};
-
-
-
+			};
 
 		});
 

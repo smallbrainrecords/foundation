@@ -9,18 +9,40 @@
 			adminService, $location, $anchorScroll, toaster){
 
 
+			$scope.init = function(){
+
+				adminService.fetchActiveUser().then(function(data){
+					$scope.active_user = data['user_profile'];
+				});
+
+				$scope.user_id = $routeParams['userId'];
+
+				adminService.getUserInfo($scope.user_id).then(function(data){
+
+					$scope.user_profile = data['user_profile'];
+
+					// For patients, load physicians
+
+					if($scope.user_profile.role=='patient'){
+
+						console.log('ok');
+						var form = {'patient_id':$scope.user_id};
+						adminService.getPatientPhysicians(form).then(function(data){
+							$scope.patient_physicians = data['physicians'];
+						});
+
+					}
 
 
-			$scope.user_id = $routeParams['userId'];
+				});
 
-			adminService.getUserInfo($scope.user_id).then(function(data){
 
-				$scope.user_profile = data['user_profile'];
+				$scope.files = {};
+				$scope.password_form = {};
 
-			});
+			}
 
-			$scope.files = {};
-			$scope.password_form = {};
+
 
 			$scope.update_basic_profile = function(){
 
@@ -148,6 +170,11 @@
 				
 				$("html, body").animate({ scrollTop: $('#'+l).offset().top-100 }, 500);
 			};
+
+
+
+
+			$scope.init();
 
 		}); /* End of controller */
 

@@ -1,10 +1,15 @@
 from django.contrib import admin
-from django.contrib.contenttypes.generic import GenericTabularInline
+
 from models import UserProfile, AccessLog, Encounter, EncounterEvent, TextNote, Problem, Goal, ToDo, Guideline, GuidelineForm, PatientImage, Sharing, ProblemRelationship
 from django.contrib.auth.models import User
-admin.site.disable_action('delete_selected')
+
+
 from django.contrib.auth.admin import UserAdmin as AuthUserAdmin
 from reversion.helpers import patch_admin 
+
+import reversion
+
+admin.site.disable_action('delete_selected')
 patch_admin(User)
 
 
@@ -32,28 +37,29 @@ class UserAdmin(AuthUserAdmin):
 admin.site.unregister(User)
 # register new user admin
 admin.site.register(User, UserAdmin)
-import reversion
+
 
 class EncounterEventInline(admin.StackedInline):
     model = EncounterEvent
 
 class UserProfileAdmin(reversion.VersionAdmin):
-
     pass
 
 admin.site.register(UserProfile, UserProfileAdmin)
+
+
 class AccessLogAdmin(reversion.VersionAdmin):
     actions = []
 
 admin.site.register(AccessLog, AccessLogAdmin)
-from genericadmin.admin import GenericAdminModelAdmin
-class EncounterAdmin(reversion.VersionAdmin, GenericAdminModelAdmin):
+
+class EncounterAdmin(reversion.VersionAdmin):
 
     inlines = [EncounterEventInline]
 
 admin.site.register(Encounter, EncounterAdmin)
 
-class EncounterEventAdmin(reversion.VersionAdmin, GenericAdminModelAdmin):
+class EncounterEventAdmin(reversion.VersionAdmin):
     pass
 
 admin.site.register(EncounterEvent, EncounterEventAdmin)
@@ -84,6 +90,7 @@ admin.site.register(Guideline, GuidelineAdmin)
 
 class PatientImageAdmin(reversion.VersionAdmin):
     pass
+
 admin.site.register(PatientImage, PatientImageAdmin)
 admin.site.register(Sharing)
 admin.site.register(ProblemRelationship)

@@ -174,7 +174,7 @@ SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 #LOGIN_URL          = '/login/google-oauth2/'
-LOGIN_URL          = '/login/'
+LOGIN_URL          = '/u/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGIN_ERROR_URL    = '/login-error/'
 

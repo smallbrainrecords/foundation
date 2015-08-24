@@ -22,4 +22,6 @@ urlpatterns = patterns('project_admin_app.views',
 
 	url(r'^user/create/$', 'create_user', name='pa_create_user'),
 
+	url(r'^patient/physicians/$', 'list_patient_physicians', name='pa_list_patient_physicians'),
+
 )
