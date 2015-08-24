@@ -3,7 +3,8 @@
 	'use strict';
 
 
-	var AdminApp = angular.module('AdminApp', ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster']);
+	var AdminApp = angular.module( 'AdminApp', 
+        ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster']);
 
 
     AdminApp.config(function($routeProvider) {
