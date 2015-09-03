@@ -1,0 +1,88 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+
+
+<div class='row'>
+
+	<div class='col-md-3'>
+		<div class='panel panel-default'>
+
+			<div class='panel-heading'>
+				 Info
+			</div>
+			<div class='panel-body'>
+				<b> Name </b>:  {{user.first_name}} {{user.last_name}} 
+				<br>
+				<b> Role </b>:  {{user_profile.get_role_display}}
+				<br>
+				<b> Username </b>:  {{user.username}}
+
+			</div>
+
+		</div>
+	</div>
+
+	<div class='col-md-9'>
+
+
+		<div class='panel panel-default'>
+
+			<div class='panel-heading'>
+				 Physicians Assigned
+			</div>
+			<div class='panel-body'>
+
+				{% for physician in physicians %}
+
+					{{physician.first_name}} {{physician.last_name}} {{physician.username}}
+				{% endfor %}
+
+			</div>
+
+		</div>
+
+		<div class='panel panel-default'>
+			<div class='panel-heading'>
+				 Patients Assigned
+			</div>
+			<div class='panel-body'>
+
+				<table class='table'>
+
+					<thead>
+						<th> Name </th>
+						<th> Username </th>
+						<th> Actions </th>
+					</thead>
+
+					<tbody>
+						{% for patient in patients %}
+						<tr>
+							<td> {{patient.first_name}} {{patient.last_name}} </td>
+							<td> {{patient.username}} </td>
+							<td>
+								<a href='/u/patient/manage/{{patient.id}}/'>
+									Manage Patient 
+								</a> 
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+
+
+			</div>
+
+
+
+		</div>
+
+
+	</div>
+
+</div>
+
+
+
+{% endblock %}

@@ -1,66 +1,61 @@
 from django.db import models
 from django.contrib.auth.models import User
-
-from django.contrib.contenttypes.models import ContentType
 from mptt.models import MPTTModel, TreeForeignKey
 
-
 import datetime
-import time
-
-
-
 
 # DATA
 
 ROLE_CHOICES = (
-        ('patient', 'patient'),
-        ('physician', 'physician'),
-        ('admin', 'admin'),
-)
+    ('patient', 'Patient'),
+    ('physician', 'Physician'),
+    ('mid-level', 'Mid Level PA/NP'),
+    ('nurse', 'Nurse'),
+    ('secretary', 'Secretary'),
+    ('admin', 'Admin'),)
 
 
 SEX_CHOICES = (
-        ('male', 'Male'),
-        ('female', 'Female'),
-)
+    ('male', 'Male'),
+    ('female', 'Female'),)
 
 
 # UTILITIES
-
 def get_path(instance, filename):
     try:
-        return '%s/%s/%s' % (instance.patient.id, instance.problem.id, filename)
+        return '%s/%s/%s' % (
+            instance.patient.id, instance.problem.id, filename)
     except:
         return '%s/%s' % (instance.patient.id, filename)
 
 
-
-
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
-
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='patient')
-    data = models.TextField(blank=True) 
+    role = models.CharField(
+        max_length=10, choices=ROLE_CHOICES, default='patient')
+    data = models.TextField(blank=True)
     cover_image = models.ImageField(upload_to='cover_image/', blank=True)
     portrait_image = models.ImageField(upload_to='cover_image/', blank=True)
     summary = models.TextField(blank=True)
-
     sex = models.CharField(max_length=6, choices=SEX_CHOICES, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
-    
+
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
-        
+
 
 # Many To Many Relation
 class PatientController(models.Model):
     patient = models.ForeignKey(User, related_name='patient_physicians')
     physician = models.ForeignKey(User, related_name='physician_patients')
-    author = models.BooleanField()
-    
+    author = models.BooleanField(default=False)
 
+
+class PhysicianTeam(models.Model):
+    # Need to add  save_admin to check if member is physician
+    physician = models.ForeignKey(User, related_name='physician_helpers')
+    member = models.ForeignKey(User, related_name='user_leaders')
 
 
 class AccessLog(models.Model):
@@ -71,74 +66,52 @@ class AccessLog(models.Model):
     def __unicode__(self):
         return '%s %s %s' % (self.user.username, self.datetime, self.summary)
 
-        
-
-
-
-        
-
- 
-
 
 class Encounter(models.Model):
     physician = models.ForeignKey(User, related_name="physician_encounters")
     patient = models.ForeignKey(User, related_name="patient_encounters")
     starttime = models.DateTimeField(auto_now_add=True)
     stoptime = models.DateTimeField(null=True, blank=True)
-
-    
-    audio = models.FileField(upload_to=get_path, blank=True) 
+    audio = models.FileField(upload_to=get_path, blank=True)
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
-    
+
     def __unicode__(self):
         return 'Patient: %s Time: %s' % (
             self.patient.get_full_name(), self.physician.get_full_name())
 
-        
-
-
     def is_active(self):
-
         if self.stoptime:
             return False
         else:
             return True
 
     def duration(self):
-
         if self.stoptime:
-            return str(self.stoptime-self.starttime)
+            return str(self.stoptime - self.starttime)
         else:
             return 0
 
 
-
-
-
-
-
 class EncounterEvent(models.Model):
-    encounter = models.ForeignKey(Encounter, related_name='encounter_events',
-        null=True, blank=True)
+    encounter = models.ForeignKey(
+        Encounter, related_name='encounter_events', null=True, blank=True)
 
     datetime = models.DateTimeField(auto_now_add=True)
     summary = models.TextField(default='')
-    
 
     def __unicode__(self):
         return unicode(self.summary)
-            
-
 
     def video_seconds(self):
-
         x = self.encounter.starttime
-        s = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
+        time_diff = datetime.timedelta(
+            hours=x.hour, minutes=x.minute, seconds=x.second)
+        s = int(time_diff.total_seconds())
         x = self.datetime
-        e = int(datetime.timedelta(hours=x.hour,minutes=x.minute,seconds=x.second).total_seconds())
+        e = int(time_diff.total_seconds())
         return e - s
-        
+
     def video_timestamp(self):
         seconds = self.video_seconds()
         h = seconds // 60
@@ -147,9 +120,6 @@ class EncounterEvent(models.Model):
             s = '0' + str(s)
         return '%s:%s' % (h, s)
 
-
-
-        
 
 class TextNote(models.Model):
     BY_CHOICES = (
@@ -162,16 +132,13 @@ class TextNote(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return "%s %s" %(self.by, self.note)
+        return "%s %s" % (self.by, self.note)
 
-
-
-
-        
 
 class Problem(MPTTModel):
     patient = models.ForeignKey(User)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    parent = TreeForeignKey(
+        'self', null=True, blank=True, related_name='children')
     problem_name = models.CharField(max_length=200)
     concept_id = models.CharField(max_length=20, blank=True)
     is_controlled = models.BooleanField(default=False)
@@ -179,12 +146,9 @@ class Problem(MPTTModel):
     authenticated = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
     start_date = models.DateField(auto_now_add=True)
-    
+
     def __unicode__(self):
         return '%s %s' % (self.patient, self.problem_name)
-
-
-
 
 
 class Goal(models.Model):
@@ -200,22 +164,15 @@ class Goal(models.Model):
         return '%s %s' % (unicode(self.patient), unicode(self.problem))
 
 
-
-
-
-
 class ToDo(models.Model):
     patient = models.ForeignKey(User)
     problem = models.ForeignKey(Problem, null=True, blank=True)
     todo = models.TextField()
-    accomplished = models.BooleanField(default=False)    
+    accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
-
 
     def __unicode__(self):
         return '%s' % (unicode(self.patient))
-
-
 
 
 class Guideline(models.Model):
@@ -225,66 +182,59 @@ class Guideline(models.Model):
 
     def __unicode__(self):
         return '%s %s' % (self.concept_id, self.guideline)
-        
+
     def get_form(self):
         try:
             return GuidelineForm.objects.get(guideline=self).form
         except:
             return "[]"
 
-        
+
 class GuidelineForm(models.Model):
     guideline = models.OneToOneField(Guideline)
     form = models.TextField()
-    
+
     def __unicode__(self):
         return self.guideline.__unicode__()
 
 
-        
 class PatientImage(models.Model):
     patient = models.ForeignKey(User)
     problem = models.ForeignKey(Problem, null=True, blank=True)
-    image = models.ImageField(upload_to=get_path) 
+    image = models.ImageField(upload_to=get_path)
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.patient))
-        
 
 
-
-
-
-        
 class Sharing(models.Model):
     patient = models.ForeignKey(User, related_name='target_patient')
     other_patient = models.ForeignKey(User, related_name='other_patient')
     all = models.BooleanField(default=True)
-    
+
     def __unicode__(self):
         return '%s %s' % (unicode(self.patient), unicode(self.other_patient))
 
 
-        
 class Viewer(models.Model):
     patient = models.ForeignKey(User, related_name='viewed_patient')
     viewer = models.ForeignKey(User, related_name='viewer')
     datetime = models.DateTimeField(auto_now=True)
-    tracking_id = models.CharField(max_length=20, blank=True) # for tracking open browser instances e.g. multiple tabs
-    user_agent = models.CharField(max_length=200, blank=True) # user agent is type of browser/OS/version
+    # for tracking open browser instances e.g. multiple tabs
+    tracking_id = models.CharField(max_length=20, blank=True)
+    # user agent is type of browser/OS/version
+    user_agent = models.CharField(max_length=200, blank=True)
 
 
-    
 class ViewStatus(models.Model):
     patient = models.ForeignKey(User)
     status = models.TextField()
-    
-   
+
 
 class ProblemRelationship(models.Model):
     source = models.ForeignKey(Problem, related_name="source")
     target = models.ForeignKey(Problem, related_name="target")
-    
+
     def __unicode__(self):
         return "%s %s" % (unicode(self.source), unicode(self.target))

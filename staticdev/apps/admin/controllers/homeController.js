@@ -46,6 +46,26 @@
 						$scope.pending_users = data;
 					});
 
+
+					if($scope.active_user.role=='physician'){
+
+						var form = {'physician_id':$scope.active_user.user.id};
+						adminService.getPhysicianTeam(form).then(function(data){
+
+							$scope.team = data['team'];
+							
+						});
+
+						adminService.getPhysicianPatients(form).then(function(data){
+
+							$scope.patients = data['patients'];
+
+						});
+
+
+
+					}
+
 				});
 
 			};

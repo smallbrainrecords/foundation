@@ -47,6 +47,8 @@
 			<h4 class='text-info'> Registered Users </h4>
 			</center>
 			<hr>
+      <input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>
+      <hr>
 			<table class='table' >
 				<thead>
         <tr>
@@ -62,7 +64,7 @@
 
         	<tbody>
 
-        		<tr ng-repeat='user in users'>
+        		<tr ng-repeat='user in users|filter:query_users'>
         			<td> {{user.user.first_name}} </td>
         			<td> {{user.user.last_name}} </td>
         			<td> {{user.user.username}} </td>
@@ -96,12 +98,15 @@
 
 
 
-    <div class='panel panel-default' ng-show='active_user.role=="admin"'>
+    <div class='panel panel-default' ng-if='active_user.role=="admin"'>
 
     <div class='panel-heading'>
       Users Pending Registration
     </div>
     <div class='panel-body'>
+
+      <input type='text' class='form-control' ng-model='query_pending' placeholder='Search...'>
+      <hr>
 
       <button class='btn btn-default pull-right' ng-click='refresh_pending_users()'>
         Refresh
@@ -123,7 +128,7 @@
 
           <tbody>
 
-            <tr ng-repeat='user in pending_users'>
+            <tr ng-repeat='user in pending_users | filter:query_pending'>
               <td> {{user.full_name}} </td>
 
               <td> {{user.username}} </td>
@@ -149,6 +154,88 @@
 
     </div>
   </div>
+
+
+    <div class='physician-view' ng-if='active_user.role=="physician"'>
+
+      <div class='panel panel-default' id='patientsAssignedInfo'>
+
+        <div class='panel-heading'> Patients Assigned</div>
+
+        <div class='panel-body'>
+
+          <div ng-repeat='patient in patients'>
+              <span class='text-info'>
+                <b>
+                  {{patient.user.first_name}} {{patient.user.last_name}}
+                </b>
+              </span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class='panel panel-default' id='nursesAssignedInfo'>
+
+        <div class='panel-heading'> Nurses Assigned</div>
+
+        <div class='panel-body'>
+
+          <div ng-repeat='nurse in team.nurses'>
+              <span class='text-info'>
+                <b>
+                  {{nurse.user.first_name}} {{nurse.user.last_name}}
+                </b>
+              </span>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class='panel panel-default' id='midLevelAssignedInfo'>
+
+        <div class='panel-heading'> Mid-Level Assigned</div>
+
+        <div class='panel-body'>
+
+          <div ng-repeat='staff in team.mid_level_staffs'>
+            <span class='text-info'>
+                <b>
+                {{staff.user.first_name}} {{staff.user.last_name}}
+              </b>
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class='panel panel-default' id='secretaryAssignedInfo'>
+
+        <div class='panel-heading'> Secretary Assigned</div>
+
+        <div class='panel-body'>
+
+          <div ng-repeat='staff in team.secretaries'>
+            <span class='text-info'>
+                <b>
+              {{staff.user.first_name}} {{staff.user.last_name}}
+                </b>
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+    </div>
+
 
 </div>
 

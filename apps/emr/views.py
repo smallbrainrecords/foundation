@@ -1,26 +1,21 @@
-import logging
 from common.views import *
 
 from models import UserProfile, AccessLog, Problem, \
  Goal, ToDo, Guideline, TextNote, PatientImage, \
- Encounter, EncounterEvent,  Sharing, Viewer, \
+ Encounter, EncounterEvent, Sharing, Viewer, \
  ViewStatus, ProblemRelationship
 from pain.models import PainAvatar
-
-from .operations import op_add_event
 
 import project.settings as settings
 
 import datetime
 
 
-
 # OLD
 def login_user(request):
     logout(request)
-    username = ''
+    email = ''
     password = ''
-    
     if request.POST:
         email = request.POST['email']
         password = request.POST['password']
@@ -30,17 +25,19 @@ def login_user(request):
         except User.DoesNotExist as e:
             # Temp fix
             current = datetime.datetime.now()
-            u = User.objects.create(username=email, email=email, last_login=current)
+            u = User.objects.create(
+                username=email, email=email, last_login=current)
             u.set_password(password)
             u.save()
-
 
         user = authenticate(username=email, password=password)
         if user is not None:
             if user.is_active:
                 login(request, user)
                 return HttpResponseRedirect('/')
-    return render_to_response('login.html', context_instance=RequestContext(request))
+    return render_to_response(
+        'login.html', context_instance=RequestContext(request))
+
 
 # OLD
 def register(request):
@@ -49,9 +46,9 @@ def register(request):
         password = request.POST['password']
         if request.POST['password'] != request.POST['password_confirm']:
             return HttpResponseRedirect('/')
-        u,created = User.objects.get_or_create(username=email, email=email)
+        u, created = User.objects.get_or_create(username=email, email=email)
         if created:
-            u.set_password(password)  
+            u.set_password(password) 
             u.first_name = request.POST['first_name']
             u.last_name = request.POST['last_name']
             u.save()
@@ -63,7 +60,6 @@ def register(request):
         return HttpResponseRedirect('/')
 
 
-
 @user_passes_test(lambda u: u.is_superuser)
 def update(request):
     os.system('sh /home/tim/core/update.sh &')
@@ -72,29 +68,28 @@ def update(request):
     <title>Update</title>
     <script>
     var seconds = 60;
-    setInterval(function() { $('#time_left').text(seconds); seconds -= 1; }, 1000);
+    setInterval(function(){ $('#time_left').text(seconds);seconds -= 1;},1000);
     setTimeout(function() { window.location = "/" }, 60000);
     </script> Going to homepage in <span id="time_left">60</span> seconds
     """
     return HttpResponse(html)
 
+
 # OLD
 @login_required
 def home(request):
     try:
-        
         profile = UserProfile.objects.get(user=request.user)
         role = profile.role
         context = {}
         context['role'] = role
         context = RequestContext(request, context)
         if (role == 'patient'):
-            #BAD
+            # BAD
             return view_patient(request, request.user.id)
-        
         return render_to_response("home.html", context)
 
-    except: 
+    except:
         traceback.print_exc()
         if request.user.is_superuser:
             context = {}
@@ -102,27 +97,38 @@ def home(request):
             context = RequestContext(request, context)
             return render_to_response("home.html", context)
 
-        return HttpResponse('<script>setTimeout(function() { window.location = "/" }, 1000);</script> Waiting on manual approval')
+        response_str = """
+            <script>
+                setTimeout(function() { window.location = "/" }, 1000);
+            </script>
+             Waiting on manual approval
+        """
+        return HttpResponse(response_str)
 
 
-# OLD    
+# OLD
 @login_required
 def list_of_unregistered_users(request):
-    
     users = []
     for user in User.objects.all():
         try:
             profile = UserProfile.objects.get(user=user)
-        except:
-            users.append({'id': user.id, 'username': user.username, 'full_name': user.get_full_name()})
+        except UserProfile.DoesNotExist:
+            users.append(
+                {'id': user.id,
+                 'username': user.username,
+                 'full_name': user.get_full_name()})
     return HttpResponse(json.dumps(users), content_type="application/json")
+
 
 # OLD
 @login_required
-def register_users(request): 
+def register_users(request):
     for i in request.POST:
         try:
-            user_profile = UserProfile(user=User.objects.get(id=i.split('_')[1]), role=request.POST[i])
+            user_profile = UserProfile(
+                user=User.objects.get(
+                    id=i.split('_')[1]), role=request.POST[i])
             user_profile.save()
             if (request.POST[i] == 'admin'):
                 user = User.objects.get(id=i.split('_')[1])
@@ -140,7 +146,7 @@ def is_patient(user):
         return profile.role == 'patient'
     except:
         return False
-    
+
 
 @login_required
 def list_users(request):
@@ -148,11 +154,10 @@ def list_users(request):
     users = [{'is_patient': is_patient(user), 'username': user.username, 'firstname': user.first_name, 'lastname': user.last_name, 'id': user.id, 'sex': UserProfile.objects.get(user=user).sex, 'contact_number': UserProfile.objects.get(user=user).phone_number, 'birthday': UserProfile.objects.get(user=user).date_of_birth.strftime('%m/%d/%Y') if UserProfile.objects.get(user=user).date_of_birth else ''} for user in User.objects.all().order_by('first_name') if UserProfile.objects.filter(user=user)]
     return HttpResponse(json.dumps(users), content_type="application/json")
 
+
 @login_required
 def view_patient(request, user_id):
     role = UserProfile.objects.get(user=request.user).role
-    
-    
     user = User.objects.get(id=user_id)
     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
     if (not ((request.user == user) or (role in ['admin', 'physician']) or (Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
@@ -176,10 +181,11 @@ def view_patient(request, user_id):
 
     return render_to_response("patient.html", context)
 
+
 @login_required
 def get_patient_data(request, patient_id):
     from pymedtermino import snomedct
-    
+
     # Find out if user requesting the data is admin, physician, or patient
     role_of_user_requesting_the_data = UserProfile.objects.get(user=request.user).role
     # Get patient object from patient id
@@ -188,7 +194,6 @@ def get_patient_data(request, patient_id):
     # and concept ids of the problems as well as the snomed parents and children of those problems mapped to a problem id
     # This way we can prevent duplicate problems from being added
     viewers = []
-    
 
     time_threshold = datetime.datetime.now() - timedelta(seconds=5)
     viewers = list(set([viewer.viewer for viewer in Viewer.objects.filter(patient=patient, datetime__gte=time_threshold)]))
@@ -205,16 +210,14 @@ def get_patient_data(request, patient_id):
             vs[0].delete()
         else:
             try:
-                
                 view_status = json.loads(vs[0].status)
             except:
                 pass
-            
     # this tracking section lets us coordinate multiple people/browser windows/tabs accessing a patient page at the same time
     if 'tracking_id' in request.GET:
         tracking_id = request.GET['tracking_id']
         patient = User.objects.get(id=patient_id)
-        
+
         p, created = Viewer.objects.get_or_create(patient=patient, viewer=request.user, tracking_id=tracking_id)
         p.save()
     if 'new_status' in request.GET:
@@ -222,21 +225,21 @@ def get_patient_data(request, patient_id):
         p, created = ViewStatus.objects.get_or_create(patient=patient)
         p.status = request.GET['new_status']
         p.save()
-    
+
     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
     if (not ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician']) or (Sharing.objects.filter(patient=patient, other_patient=request.user)))):
         return HttpResponse("Not allowed")
     # Right now only users with role == patient have a patient page
     if (not is_patient(patient)):
         return HttpResponse("Error: this user isn't a patient")
-    
+
     data = {'problems': {'is_active': [], 'not_active': []}, 'goals': {'not_accomplished': [], 'accomplished': []}, 'notes': [], 'todos': {'not_accomplished': [], 'accomplished': []}, 'concept_ids': {}, 'viewers': viewers, 'view_status': view_status}
     if 'get_only_status' in request.GET:
         return HttpResponse(json.dumps(data), content_type="application/json")
     # At this point we know the user is allowed to view this patient. 
     # Now we have to detrimine what data can be provided to the requesting user
     # If the user requesting the patient data is the targeted patient or an admin or physician then we know it's OK to provide all the data
-   # if ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician'])):
+    # if ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician'])):
         # Get all problems for the patient 
         #problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
     # Otherwise the requesting user is only allowed to see some of the patient's info    
@@ -244,7 +247,7 @@ def get_patient_data(request, patient_id):
         # Get just the problems shared to the user
     #    problems_query = [i.item for i in Sharing.objects.filter(content_type=ContentType.objects.get(app_label="emr", model="problem"), patient=patient, other_patient=request.user)]
     problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
-    
+
     for problem in problems_query.filter(is_active=True):
         # We store the data for this problem in a dictionary called "d"
         d = {}
@@ -306,7 +309,7 @@ def get_patient_data(request, patient_id):
         data['problems']['not_active'].append(d)
         try:
             data['concept_ids'][problem.concept_id] = problem.id
-            
+
             for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
                 data['concept_ids'][j['code']] = problem.id
             for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].children]:
@@ -337,9 +340,9 @@ def get_patient_data(request, patient_id):
         d['todo'] = todo.todo
         d['accomplished'] = todo.accomplished
         data['todos']['accomplished'].append(d)
-        
-        
+
     return HttpResponse(json.dumps(data), content_type="application/json")
+
 
 @login_required
 def change_status(request):
@@ -354,7 +357,7 @@ def change_status(request):
         if (request.POST['attr'] == 'authenticated' and role == 'patient'):
             return HttpResponse("patients can't authenticate problems")
 
-        setattr(problem,request.POST['attr'], value)
+        setattr(problem, request.POST['attr'], value)
         problem.save()
     elif request.POST['target'] == 'goal':
         goal = Goal.objects.get(id=request.POST['id'])
@@ -362,10 +365,9 @@ def change_status(request):
             goal.problem.authenticated = authenticated
             goal.problem.save()
         value = True if request.POST['value'] == 'true' else False
-        setattr(goal,'accomplished', value)
+        setattr(goal, 'accomplished', value)
         goal.save()
     elif request.POST['target'] == 'goal_is_controlled':
-        
         goal = Goal.objects.get(id=request.POST['id'])
         if goal.problem:
             goal.problem.authenticated = authenticated
@@ -403,6 +405,7 @@ def change_status(request):
             pr.delete()
     return HttpResponse('saved')
 
+
 @login_required
 def submit_data_for_problem(request, problem_id):
     print request.POST
@@ -411,7 +414,6 @@ def submit_data_for_problem(request, problem_id):
     authenticated = True if (role == 'physician' or role == 'admin') else False
 
     if request.POST['type'] == 'note':
-        
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
         note = TextNote(by=UserProfile.objects.get(user=request.user).role, note=request.POST['data'])
@@ -419,7 +421,6 @@ def submit_data_for_problem(request, problem_id):
         problem.notes.add(note)
         problem.save()
     elif request.POST['type'] == 'problem_parent':
-        
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
         if (request.POST['data'] == 'none'):
@@ -468,6 +469,7 @@ def submit_data_for_problem(request, problem_id):
         return HttpResponse(m.id)
     return HttpResponse('saved')
 
+
 @login_required
 def add_problem(request, patient_id):
     role = UserProfile.objects.get(user=request.user).role
@@ -486,9 +488,6 @@ def add_problem(request, patient_id):
     return HttpResponse('added')
 
 
-
-
-
 @login_required
 def upload_image_to_problem(request, problem_id):
     if request.POST:
@@ -501,7 +500,7 @@ def upload_image_to_problem(request, problem_id):
         patient_image = PatientImage(patient=Problem.objects.get(id=problem_id).patient, problem=Problem.objects.get(id=problem_id), image=request.FILES['file'])
         patient_image.save()
         try:
-            summary='Physician added image<br/><a href="/media/%s"><img src="/media/%s" style="max-width:100px; max-height:100px" /></a>' % (
+            summary = 'Physician added image<br/><a href="/media/%s"><img src="/media/%s" style="max-width:100px; max-height:100px" /></a>' % (
                 patient_image.image, patient_image.image)
 
             encounter = Encounter.objects.filter(
@@ -520,11 +519,13 @@ def upload_image_to_problem(request, problem_id):
         context = RequestContext(request, {})
         return render_to_response('upload_image_to_problem.html', context)
 
+
 @login_required
 def create_encounter(request, patient_id):
     encounter = Encounter(patient=User.objects.get(id=patient_id), physician=User.objects.get(id=request.user.id))
     encounter.save()
     return HttpResponse(encounter.id, content_type="text/plain")
+
 
 @login_required
 def stop_encounter(request, encounter_id):
@@ -533,8 +534,6 @@ def stop_encounter(request, encounter_id):
     encounter.stoptime = datetime.now()
     encounter.save()
     return HttpResponse('saved', content_type="text/plain")
-
-
 
 
 @login_required 
@@ -553,9 +552,9 @@ def save_event_summary(request):
 
     return HttpResponse('ok')
 
+
 @login_required
 def encounter(request, encounter_id):
-   
     print 'encounter debug'
     print request.POST
     print request.FILES
@@ -586,9 +585,9 @@ def encounter(request, encounter_id):
         'events':events,
         'patient':patient
     }
-    
     context = RequestContext(request, context)
     return render_to_response("encounter.html", context)
+
 
 def save_patient_summary(request, patient_id):
     profile = UserProfile.objects.get(user=User.objects.get(id=patient_id))
@@ -597,28 +596,24 @@ def save_patient_summary(request, patient_id):
     return HttpResponseRedirect('/patient/%s/' % (patient_id))
 
 
- 
- 
-  
 class AuthComplete(View):
     def get(self, request, *args, **kwargs):
         backend = kwargs.pop('backend')
         try:
             return complete(request, backend, *args, **kwargs)
         except AuthFailed:
-            messages.error(request, "Your Google Apps domain isn't authorized for this app")
+            messages.error(
+                request,
+                "Your Google Apps domain isn't authorized for this app")
             return HttpResponseRedirect(reverse('home'))
- 
- 
+
+
 class LoginError(View):
     def get(self, request, *args, **kwargs):
-        return HttpResponse(status=401)   
+        return HttpResponse(status=401)
 
 
-
-#######****************** New Code *********************#########
-
-
+# ****************** New Code *********************
 @login_required
 def list_snomed_terms(request):
     import pymedtermino.snomedct
@@ -630,9 +625,11 @@ def list_snomed_terms(request):
     findings = []
     for result in results:
         if '(disorder)' in result.term:
-            disorders.append({'term':result.term,'code':result.code,'active':result.active})
+            disorders.append(
+                {'term': result.term, 'code': result.code, 'active': result.active})
         if '(finding)' in result.term:
-            findings.append({'term':result.term,'code':result.code,'active':result.active})
+            findings.append(
+                {'term': result.term, 'code': result.code, 'active': result.active})
 
     disorders = sorted(disorders, key=lambda x: x['term'])
     findings = sorted(findings, key=lambda x: x['term'])
@@ -643,46 +640,3 @@ def list_snomed_terms(request):
     results_holder = json.dumps(results_holder)
 
     return HttpResponse(results_holder, content_type="application/json")
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

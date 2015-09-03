@@ -121,6 +121,27 @@
 
 		};
 
+		this.getPhysicianData= function(params){
+
+			var url = '/project/admin/physician/data/';
+			return httpService.get(params, url);
+		};
+
+		this.getAssignedPhysicians = function(params){
+			var url = '/project/admin/assigned/physicians/';
+			return httpService.get(params, url);
+		};
+
+		this.assignMember = function(form){
+
+			var url = '/project/admin/physician/assign/member/';
+			return httpService.post(form, url);
+		};
+
+		this.unassignMember = function(form){
+			var url = '/project/admin/physician/unassign/member/';
+			return httpService.post(form, url);
+		};
 
 	});
 

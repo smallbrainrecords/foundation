@@ -1,5 +1,3 @@
-
-
 from common.views import *
 
 from django.contrib.auth.models import User
@@ -9,11 +7,12 @@ from users_app.serializers import UserProfileSerializer
 import logging
 from .forms import UpdateProfileForm, UpdateBasicProfileForm
 from .forms import UpdateEmailForm, UpdatePasswordForm
-from .forms import CreateUserForm
+from .forms import CreateUserForm, AssignPhysicianMemberForm
 
 import datetime
 
-from emr.models import PatientController
+from emr.models import PatientController, PhysicianTeam
+
 
 @login_required
 def home(request):
@@ -35,8 +34,8 @@ def list_registered_users(request):
     if actor_profile.role == 'physician':
 
         controlled_patients = PatientController.objects.filter(physician=actor)
-        patients_ids = [ long(x.patient.id) for x in controlled_patients]
-        user_profiles = UserProfile.objects.filter( user__id__in=patients_ids)
+        patients_ids = [long(x.patient.id) for x in controlled_patients]
+        user_profiles = UserProfile.objects.filter(user__id__in=patients_ids)
 
     if actor_profile.role == 'admin':
 
@@ -53,36 +52,31 @@ def list_unregistered_users(request):
     users = []
     for user in User.objects.all():
         try:
-            profile = UserProfile.objects.get(user=user)
+            UserProfile.objects.get(user=user)
         except UserProfile.DoesNotExist:
             users.append({
                 'id': user.id,
                 'username': user.username,
                 'full_name': user.get_full_name()})
-    return HttpResponse(json.dumps(users), content_type="application/json")
+    return ajax_response(users)
 
 
 @login_required
 def user_info(request, user_id):
-
-    resp = {}
-    resp['success'] = False
-
     user = User.objects.get(id=user_id)
     user_profile = UserProfile.objects.get(user=user)
 
     user_profile_dict = UserProfileSerializer(user_profile).data
 
-    resp['success'] = True
+    resp = {}
+    resp['success'] = False
     resp['user_profile'] = user_profile_dict
     return ajax_response(resp)
 
 
 @login_required
 def approve_user(request):
-
-    resp = {}
-    resp['success'] = False
+    success = False
 
     user_id = request.POST.get('id')
     role = request.POST.get('role')
@@ -101,9 +95,12 @@ def approve_user(request):
             user.is_staff = True
             user.save()
 
-        resp['success'] = True
-        resp['msg'] = 'User was assigned given role and made active'
+        success = True
+        msg = 'User was assigned given role and made active'
 
+    resp = {}
+    resp['success'] = success
+    resp['msg'] = msg
     return ajax_response(resp)
 
 
@@ -215,19 +212,14 @@ def update_password(request):
 
 @login_required
 def create_user(request):
-    resp = {}
-    resp['success'] = False
     errors = []
-
     actor = request.user
-
-    resp['msg'] = 'Operation Failed'
-
+    msg = 'Operation Failed'
+    success = False
     try:
         actor_profile = UserProfile.objects.get(user=actor)
     except UserProfile.DoesNotExist:
         actor_profile = None
-
 
     if request.method == 'POST':
 
@@ -305,7 +297,6 @@ def create_user(request):
 
                     user_profile.save()
 
-
                     if actor_profile is not None and role == 'patient':
                         if actor_profile.role == 'physician':
                             patient_controller = PatientController(
@@ -314,40 +305,260 @@ def create_user(request):
                                 author=True)
                             patient_controller.save()
 
-
-                    resp['success'] = True
+                    success = True
 
         else:
             for error in form.errors.items():
                 errors.append(error)
-            resp['msg'] = 'Please fill valid data!'
+            msg = 'Please fill valid data!'
+    resp = {}
+    resp['success'] = success
+    resp['msg'] = msg
     resp['errors'] = errors
     return ajax_response(resp)
 
 
 @login_required
 def list_patient_physicians(request):
-    resp = {}
-    resp['success'] = True
 
-    actor = request.user
     patient_id = request.GET.get('patient_id')
 
     physicians_list = []
 
     try:
         patient = User.objects.get(id=patient_id)
-        patient_profile = UserProfile.objects.get(user=patient)
-
         controllers = PatientController.objects.filter(patient=patient)
 
-        physician_ids = [ long(x.physician.id) for x in controllers ]
+        physician_ids = [long(x.physician.id) for x in controllers]
         physicians = UserProfile.objects.filter(user__id__in=physician_ids)
 
         physicians_list = UserProfileSerializer(physicians, many=True).data
     except Exception as e:
         resp['error'] = str(e)
 
+    resp = {}
+    resp['success'] = True
     resp['physicians'] = physicians_list
 
+    return ajax_response(resp)
+
+
+@login_required
+def fetch_physician_data(request):
+
+    success = False
+
+    physician_id = request.GET.get('physician_id')
+    physician = User.objects.get(id=physician_id)
+
+    team_members = PhysicianTeam.objects.filter(physician=physician)
+    user_ids = [long(x.member.id) for x in team_members]
+
+    user_profiles = UserProfile.objects.all().exclude(
+        Q(role='physician') | Q(role='patient'))
+
+    nurses = []
+    nurses_list = []
+    secretaries = []
+    secretaries_list = []
+    mid_level_staffs = []
+    mid_level_staffs_list = []
+
+    for user_profile in user_profiles:
+        profile_dict = UserProfileSerializer(user_profile).data
+        if user_profile.user.id in user_ids:
+            if user_profile.role == 'nurse':
+                nurses.append(profile_dict)
+            if user_profile.role == 'mid-level':
+                mid_level_staffs.append(profile_dict)
+            if user_profile.role == 'secretary':
+                secretaries.append(profile_dict)
+        else:
+            if user_profile.role == 'nurse':
+                nurses_list.append(profile_dict)
+            if user_profile.role == 'mid-level':
+                mid_level_staffs_list.append(profile_dict)
+            if user_profile.role == 'secretary':
+                secretaries_list.append(profile_dict)
+
+    patients = PatientController.objects.filter(physician=physician)
+    patient_ids = [long(x.patient.id) for x in patients]
+
+    patient_profiles = UserProfile.objects.filter(user__id__in=patient_ids)
+    patient_profiles_dict = UserProfileSerializer(
+        patient_profiles, many=True).data
+
+    unassigned_patient_profiles = UserProfile.objects.filter(
+        role='patient').exclude(user__id__in=patient_ids)
+    unassigned_patients_dict = UserProfileSerializer(
+        unassigned_patient_profiles, many=True).data
+
+    success = True
+
+    resp = {}
+    resp['success'] = success
+    resp['patients'] = patient_profiles_dict
+    team = {}
+    team['nurses'] = nurses
+    team['secretaries'] = secretaries
+    team['mid_level_staffs'] = mid_level_staffs
+    resp['team'] = team
+    resp['nurses_list'] = nurses_list
+    resp['secretaries_list'] = secretaries_list
+    resp['mid_level_staffs_list'] = mid_level_staffs_list
+    resp['unassigned_patients'] = unassigned_patients_dict
+
+    return ajax_response(resp)
+
+
+@login_required
+def assign_physician_member(request):
+
+    success = False
+    errors = []
+
+    if request.method == 'POST':
+        form = AssignPhysicianMemberForm(request.POST)
+
+        if form.is_valid():
+            user_id = form.cleaned_data['user_id']
+            member_type = form.cleaned_data['member_type']
+            physician_id = form.cleaned_data['physician_id']
+
+            user = None
+            user_profile = None
+            physician = None
+            physician_profile = None
+
+            try:
+                user = User.objects.get(id=user_id)
+                user_profile = UserProfile.objects.get(
+                    user=user, role=member_type)
+            except User.DoesNotExist:
+                errors.append('User does not exist.')
+            except UserProfile.DoesNotExist:
+                errors.append('%s profile does not exist' % member_type)
+
+            try:
+                physician = User.objects.get(id=physician_id)
+                physician_profile = UserProfile.objects.get(
+                    user=physician, role='physician')
+            except User.DoesNotExist:
+                errors.append('Physician doesnot exist.')
+            except UserProfile.DoesNotExist:
+                errors.append('Physician profile does not exist')
+
+            if user_profile is not None and physician_profile is not None:
+                if member_type == 'patient':
+                    controller = PatientController(
+                        patient=user,
+                        physician=physician)
+                    controller.save()
+                else:
+                    team_member = PhysicianTeam(
+                        member=user,
+                        physician=physician)
+                    team_member.save()
+                success = True
+
+    resp = {}
+    resp['success'] = success
+    resp['errors'] = errors
+    return ajax_response(resp)
+
+
+@login_required
+def unassign_physician_member(request):
+
+    success = False
+    errors = []
+
+    if request.method == 'POST':
+        # Unassign form fields are same as assign form
+        form = AssignPhysicianMemberForm(request.POST)
+
+        if form.is_valid():
+            user_id = form.cleaned_data['user_id']
+            member_type = form.cleaned_data['member_type']
+            physician_id = form.cleaned_data['physician_id']
+
+            user = None
+            physician = None
+
+            try:
+                user = User.objects.get(id=user_id)
+                physician = User.objects.get(id=physician_id)
+            except User.DoesNotExist:
+                errors.append('User does not exist!')
+
+            if user is not None and physician is not None:
+
+                if member_type == 'patient':
+                    try:
+                        controller = PatientController.objects.get(
+                            patient=user, physician=physician)
+                        controller.delete()
+                        success = True
+                    except PatientController.DoesNotExist:
+                        errors.append('The patient was never assigned.')
+
+                elif member_type in ['nurse', 'secretary', 'mid-level']:
+                    try:
+                        member = PhysicianTeam.objects.get(
+                            physician=physician, member=user)
+                        member.delete()
+                        success = True
+                    except PhysicianTeam.DoesNotExist:
+                        errors.append('The staff was never assigned.')
+
+        resp = {}
+        resp['success'] = success
+        resp['errors'] = errors
+
+        return ajax_response(resp)
+
+
+@login_required
+def list_assigned_physicians(request):
+    ''' Returns both assigned and unassigned_physicians '''
+    success = False
+    errors = []
+    physicians_list = []
+    unassigned_physicians_list = []
+    if request.method == 'GET':
+        user_id = request.GET.get('user_id')
+        member_type = request.GET.get('member_type')
+
+        if member_type in ['nurse', 'secretary', 'mid-level', 'patient']:
+            user = None
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                errors.append('User doesnot exist')
+            if user is not None:
+                if member_type == 'patient':
+                    controllers = PatientController.objects.filter(
+                        patient=user)
+                    physician_ids = [x.physician.id for x in controllers]
+                else:
+                    teams = PhysicianTeam.objects.filter(member=user)
+                    physician_ids = [x.physician.id for x in teams]
+
+                physicians = UserProfile.objects.filter(
+                    user__id__in=physician_ids)
+                physicians_list = UserProfileSerializer(
+                    physicians, many=True).data
+
+                unassigned_physicians = UserProfile.objects.filter(
+                    role='physician').exclude(user__id__in=physician_ids)
+                unassigned_physicians_list = UserProfileSerializer(
+                    unassigned_physicians, many=True).data
+
+                success = True
+
+    resp = {}
+    resp['success'] = success
+    resp['errors'] = errors
+    resp['physicians'] = physicians_list
+    resp['unassigned_physicians'] = unassigned_physicians_list
     return ajax_response(resp)

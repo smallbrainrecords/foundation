@@ -1,15 +1,10 @@
 from common.views import *
 
-from emr.models import UserProfile, AccessLog, Problem, \
- Goal, ToDo, Guideline, TextNote, PatientImage, \
- Encounter, EncounterEvent,  Sharing, Viewer, \
- ViewStatus, ProblemRelationship
+from emr.models import UserProfile, Problem
+from emr.models import Goal, ToDo
+from emr.models import Encounter, Sharing
 
-
-
-from pain.models import PainAvatar
-
-import project.settings as settings
+from emr.models import PhysicianTeam, PatientController
 
 from problems_app.serializers import ProblemSerializer
 from goals_app.serializers import GoalSerializer
@@ -17,11 +12,10 @@ from .serializers import UserProfileSerializer
 from todo_app.serializers import TodoSerializer
 from encounters_app.serializers import EncounterSerializer
 
-import logging
-
 from .forms import LoginForm, RegisterForm
 
 import datetime
+
 
 def is_patient(user):
     try:
@@ -29,7 +23,6 @@ def is_patient(user):
         return profile.role == 'patient'
     except:
         return False
-
 
 
 def login_user(request):
@@ -56,10 +49,8 @@ def login_user(request):
         else:
             errors.append('Please fill valid data.')
 
-        content = {
-                'login_errors':errors,
-                'form': form
-                }
+        content = {'login_errors': errors, 'form': form}
+
         return render(
             request,
             'users/login.html',
@@ -77,7 +68,7 @@ def logout_user(request):
     logout(user)
     return HttpResponseRedirect('/u/login/')
 
-    
+
 def register_user(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -92,9 +83,10 @@ def register_user(request):
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
 
-            user_exists = User.objects.filter( Q(email=email) | Q(username=email)).exists()
+            user_exists = User.objects.filter(
+                Q(email=email) | Q(username=email)).exists()
 
-            if len(password)>2 and password == verify_password:
+            if len(password) > 2 and password == verify_password:
 
                 if not user_exists:
                     current = datetime.datetime.now()
@@ -113,7 +105,8 @@ def register_user(request):
                     return HttpResponseRedirect('/u/home')
 
                 else:
-                    errors.append('User with same email or username already exists')
+                    errors.append(
+                        'User with same email or username already exists')
             else:
                 errors.append('Passwords must match')
         else:
@@ -147,18 +140,18 @@ def home(request):
             if role in ['admin', 'physician']:
                 # Manage Users
                 return HttpResponseRedirect('/project/admin')
-
-
             if role == 'patient':
                 # Manage Patient
-                return HttpResponseRedirect('/u/patient/manage/%s/' %user.id)
+                return HttpResponseRedirect('/u/patient/manage/%s/' % user.id)
+            if role in ['secretary', 'nurse', 'mid-level']:
+                return HttpResponseRedirect('/u/staff/')
 
             return HttpResponse('Something went wrong !')
 
         unapproved_user_message = '''
             <script>
                 setTimeout(function() { window.location = "/u/home/" }, 5000);
-            </script> 
+            </script>
             <p style="padding:100px;font-size:20px;"">
             Your account is created but your profile is not verified. <br>
             Waiting on manual approval. <br>
@@ -172,27 +165,38 @@ def home(request):
 @login_required
 def manage_patient(request, user_id):
     role = UserProfile.objects.get(user=request.user).role
-    
-    
+
     user = User.objects.get(id=user_id)
     actor_profile = UserProfile.objects.get(user=request.user)
     patient_profile = UserProfile.objects.get(user=user)
 
-    # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
-    if (not ((request.user == user) or (role in ['admin', 'physician']) or (Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
+    # Allowed viewers
+    # The patient, admin/physician, and other patients the patient has shared
+    allowed = False
+    shared = Sharing.objects.filter(
+        patient=user, other_patient=request.user).exists()
+
+    controllers = PatientController.objects.filter(patient=user)
+    physician_ids = [x.physician.id for x in controllers]
+    is_staff = PhysicianTeam.objects.filter(
+        physician__id__in=physician_ids).exists()
+    user_patient = request.user == user
+
+    if user_patient or role in ['admin', 'physician'] or shared or is_staff:
+        allowed = True
+
+    if not allowed:
         return HttpResponse("Not allowed")
     if (not is_patient(user)):
         return HttpResponse("Error: this user isn't a patient")
 
     context = {}
 
-
     context['patient'] = user
-    context['user_role']  = actor_profile.role
+    context['user_role'] = actor_profile.role
     context['patient_profile'] = patient_profile
 
     context = RequestContext(request, context)
-
 
     return render_to_response("manage_patient.html", context)
 
@@ -208,11 +212,12 @@ def get_patient_info(request, patient_id):
     problems = Problem.objects.filter(patient=patient_user, is_active=True)
     problem_list = []
     for problem in problems:
-    	problem_dict = ProblemSerializer(problem).data
+        problem_dict = ProblemSerializer(problem).data
         problem_list.append(problem_dict)
 
     # Inactive Problems
-    inactive_problems = Problem.objects.filter(patient=patient_user, is_active=False)
+    inactive_problems = Problem.objects.filter(
+        patient=patient_user, is_active=False)
     inactive_problems_list = []
     for problem in inactive_problems:
         problem_dict = ProblemSerializer(problem).data
@@ -222,31 +227,31 @@ def get_patient_info(request, patient_id):
     goals = Goal.objects.filter(patient=patient_user, accomplished=False)
     goal_list = []
     for goal in goals:
-    	goal_dict = GoalSerializer(goal).data
+        goal_dict = GoalSerializer(goal).data
         goal_list.append(goal_dict)
 
-
-    #accomplished Goals
-    completed_goals = Goal.objects.filter(patient=patient_user, accomplished=True)
+    # Accomplished Goals
+    completed_goals = Goal.objects.filter(
+        patient=patient_user, accomplished=True)
     completed_goals_list = []
     for goal in completed_goals:
         goal_dict = GoalSerializer(goal).data
         completed_goals_list.append(goal_dict)
 
-
-
     # Not accomplished Todos
-    pending_todos = ToDo.objects.filter(patient=patient_user, accomplished=False)
+    pending_todos = ToDo.objects.filter(
+        patient=patient_user, accomplished=False)
     pending_todo_list = []
     for todo in pending_todos:
-    	todo_dict = TodoSerializer(todo).data
+        todo_dict = TodoSerializer(todo).data
         pending_todo_list.append(todo_dict)
 
     # Accomplished Todos
-    accomplished_todos = ToDo.objects.filter(patient=patient_user, accomplished=True)
+    accomplished_todos = ToDo.objects.filter(
+        patient=patient_user, accomplished=True)
     accomplished_todo_list = []
     for todo in accomplished_todos:
-    	todo_dict = TodoSerializer(todo).data
+        todo_dict = TodoSerializer(todo).data
         accomplished_todo_list.append(todo_dict)
 
     encounters = Encounter.objects.filter(
@@ -254,9 +259,8 @@ def get_patient_info(request, patient_id):
 
     encounter_list = []
     for encounter in encounters:
-    	encounter_dict = EncounterSerializer(encounter).data
+        encounter_dict = EncounterSerializer(encounter).data
         encounter_list.append(encounter_dict)
-
 
     patient_profile_dict = UserProfileSerializer(patient_profile).data
 
@@ -271,7 +275,6 @@ def get_patient_info(request, patient_id):
 
     resp['encounters'] = encounter_list
     return ajax_response(resp)
-
 
 
 # Users
@@ -310,3 +313,34 @@ def fetch_active_user(request):
     resp['user_profile'] = user_profile
 
     return ajax_response(resp)
+
+
+@login_required
+def staff(request):
+
+    user = request.user
+    user_profile = UserProfile.objects.get(user=user)
+
+    content = {}
+    content['user'] = user
+    content['user_profile'] = user_profile
+
+    physicians = PhysicianTeam.objects.filter(member=user)
+
+    physician_ids = [long(x.physician.id)for x in physicians]
+
+    patients = PatientController.objects.filter(
+        physician__id__in=physician_ids)
+
+    patients = [x.patient for x in patients]
+    physicians = [x.physician for x in physicians]
+
+    content = {}
+    content['physicians'] = physicians
+    content['patients'] = patients
+    content['user'] = user
+    content['user_profile'] = user_profile
+    return render(
+        request,
+        'staff.html',
+        content)
