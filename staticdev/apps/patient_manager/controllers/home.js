@@ -9,6 +9,8 @@
 
 			patientService.fetchActiveUser().then(function(data){
 				$scope.active_user = data['user_profile'];
+
+				console.log(data['user_profile'].role);
 			});
 
 			var patient_id = $('#patient_id').val();
