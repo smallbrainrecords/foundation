@@ -3,6 +3,7 @@
 '''
 from .models import UserProfile
 
+
 ROLES = (
     ('patient', 'Patient'),
     ('physician', 'Physician'),
@@ -13,24 +14,31 @@ ROLES = (
 
 GLOBAL_PERMISSIONS = [
     # Problem
-    ('add_problem', 'Add Problem'),
-    ('modify_problem', 'Modify Problem'),
-    ('add_problem_image', 'Add Problem Image'),
-    ('set_problem_authenticated', 'Set Problem Authentication Status'),
-    ('set_problem_controlled', 'Set Problem Controlled Status'),
-    ('set_problem_active', 'Set Problem Active Status'),
-    ('add_problem_note', 'Add Problem Note'),
+    'add_problem',
+    'modify_problem',
+    'add_problem_image',
+    'delete_problem_image',
+    'set_problem_authenticated',
+    'set_problem_controlled',
+    'set_problem_active',
+    'relate_problem',
+    # Problem Notes
+    'add_patient_problem_note',
+    'add_physician_problem_note',
+    'add_nurse_problem_note',
     # Goal
-    ('add_goal', 'Add Goal'),
-    ('modify_goal', 'Modify Goal'),
+    'add_goal', 'Add Goal',
+    'modify_goal', 'Modify Goal',
     # Todo
-    ('add_todo', 'Add Todo'),
-    ('set_todo_status', 'Set Todo Status'),
+    'add_todo',
+    'set_todo_status',
     # Patient Profile
-    ('update_patient_profile', 'Update Patient Profile'),
+    'update_patient_profile',
     # Encounter
-    ('add_encounter', 'Add Encounter'),
-    ('add_encounter_event', 'Add Encounter Event'), ]
+    'add_encounter',
+    'add_encounter_event',
+    # Pain
+    'update_pain', ]
 
 
 ROLE_PERMISSIONS = {}
@@ -40,88 +48,104 @@ ROLE_PERMISSIONS['admin'] = GLOBAL_PERMISSIONS
 
 ROLE_PERMISSIONS['patient'] = [
     # Problem
-    ('add_problem', 'Add Problem'),
-    ('modify_problem', 'Modify Problem'),
-    ('add_problem_image', 'Add Problem Image'),
-    ('add_problem_note', 'Add Problem Note'),
+    'add_problem',
+    'modify_problem',
+    'add_problem_image',
+    'add_patient_problem_note',
     # Goal
-    ('add_goal', 'Add Goal'),
-    ('modify_goal', 'Modify Goal'),
+    'add_goal',
+    'modify_goal',
     # Todo
-    ('add_todo', 'Add Todo'),
-    ('set_todo_status', 'Set Todo Status'),
+    'add_todo',
+    'set_todo_status',
     # Patient Profile
-    ('update_patient_profile', 'Update Patient Profile'), ]
+    'update_patient_profile',
+    # Pain
+    'update_pain', ]
 
 
 ROLE_PERMISSIONS['physician'] = [
     # Problem
-    ('add_problem', 'Add Problem'),
-    ('modify_problem', 'Modify Problem'),
-    ('add_problem_image', 'Add Problem Image'),
-    ('set_problem_authenticated', 'Set Problem Authentication Status'),
-    ('set_problem_controlled', 'Set Problem Controlled Status'),
-    ('set_problem_active', 'Set Problem Active Status'),
-    ('add_problem_note', 'Add Problem Note'),
+    'add_problem',
+    'modify_problem',
+    'add_problem_image',
+    'delete_problem_image',
+    'set_problem_authenticated',
+    'set_problem_controlled',
+    'set_problem_active',
+    'add_physician_problem_note',
+    'relate_problem',
     # Goal
-    ('add_goal', 'Add Goal'),
-    ('modify_goal', 'Modify Goal'),
+    'add_goal',
+    'modify_goal',
     # Todo
-    ('add_todo', 'Add Todo'),
-    ('set_todo_status', 'Set Todo Status'),
+    'add_todo',
+    'set_todo_status',
     # Patient Profile
-    ('update_patient_profile', 'Update Patient Profile'),
+    'update_patient_profile',
     # Encounter
-    ('add_encounter', 'Add Encounter'),
-    ('add_encounter_event', 'Add Encounter Event'), ]
+    'add_encounter',
+    'add_encounter_event',
+    # Pain
+    'update_pain', ]
 
 ROLE_PERMISSIONS['mid-level'] = [
     # Problem
-    ('add_problem', 'Add Problem'),
-    ('modify_problem', 'Modify Problem'),
-    ('add_problem_image', 'Add Problem Image'),
-    ('set_problem_authenticated', 'Set Problem Authentication Status'),
-    ('set_problem_controlled', 'Set Problem Controlled Status'),
-    ('set_problem_active', 'Set Problem Active Status'),
-    ('add_problem_note', 'Add Problem Note'),
+    'add_problem',
+    'modify_problem',
+    'add_problem_image',
+    'delete_problem_image',
+    'set_problem_authenticated',
+    'set_problem_controlled',
+    'set_problem_active',
+    'add_physician_problem_note',
+    'relate_problem',
     # Goal
-    ('add_goal', 'Add Goal'),
-    ('modify_goal', 'Modify Goal'),
+    'add_goal',
+    'modify_goal',
     # Todo
-    ('add_todo', 'Add Todo'),
-    ('set_todo_status', 'Set Todo Status'),
+    'add_todo',
+    'set_todo_status',
     # Patient Profile
-    ('update_patient_profile', 'Update Patient Profile'),
+    'update_patient_profile',
     # Encounter
-    ('add_encounter', 'Add Encounter'),
-    ('add_encounter_event', 'Add Encounter Event'), ]
+    'add_encounter',
+    'add_encounter_event',
+    # Pain
+    'update_pain', ]
 
 
 ROLE_PERMISSIONS['nurse'] = [
     # Problem
-    ('add_problem', 'Add Problem'),
-    ('modify_problem', 'Modify Problem'),
-    ('add_problem_image', 'Add Problem Image'),
-    ('add_problem_note', 'Add Problem Note'),
+    'add_problem',
+    'modify_problem',
+    'add_problem_image',
+    'add_nurse_problem_note',
     # Goal
-    ('add_goal', 'Add Goal'),
-    ('modify_goal', 'Modify Goal'),
+    'add_goal',
+    'modify_goal',
     # Todo
-    ('add_todo', 'Add Todo'),
-    ('set_todo_status', 'Set Todo Status'),
+    'add_todo',
+    'set_todo_status',
     # Patient Profile
-    ('update_patient_profile', 'Update Patient Profile'), ]
+    'update_patient_profile',
+    # Pain
+    'update_pain', ]
 
 
 ROLE_PERMISSIONS['secretary'] = [
     # Todo
-    ('add_todo', 'Add Todo'),
-    ('set_todo_status', 'Set Todo Status'),
+    'add_todo',
+    'set_todo_status',
     # Patient Profile
-    ('update_patient_profile', 'Update Patient Profile'), ]
+    'update_patient_profile', ]
 
 
 def contains(list1, list2):
+
+    if len(list1) < 1:
+        return False
+
     for item in list1:
         if item not in list2:
             return False
@@ -131,7 +155,7 @@ def contains(list1, list2):
 def check_permissions(permission, actor):
     try:
         actor_profile = UserProfile.objects.get(user=actor)
-    except:
+    except UserProfile.DoesNotExist:
         actor_profile = None
 
     permitted = False

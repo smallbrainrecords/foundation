@@ -104,13 +104,9 @@ class EncounterEvent(models.Model):
         return unicode(self.summary)
 
     def video_seconds(self):
-        x = self.encounter.starttime
-        time_diff = datetime.timedelta(
-            hours=x.hour, minutes=x.minute, seconds=x.second)
-        s = int(time_diff.total_seconds())
-        x = self.datetime
-        e = int(time_diff.total_seconds())
-        return e - s
+        time_diff = self.datetime - self.encounter.starttime
+        x = int(time_diff.total_seconds())
+        return x
 
     def video_timestamp(self):
         seconds = self.video_seconds()

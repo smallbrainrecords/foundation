@@ -2,30 +2,22 @@ from common.views import *
 
 from emr.models import UserProfile, AccessLog, Problem, \
  Goal, ToDo, Guideline, TextNote, PatientImage, \
- Encounter, EncounterEvent,  Sharing, Viewer, \
+ Encounter, EncounterEvent, Sharing, Viewer, \
  ViewStatus, ProblemRelationship
-
-
 
 from pain.models import PainAvatar
 
-import project.settings as settings
-
-
-
-
-import logging
-
 from .serializers import EncounterSerializer, EncounterEventSerializer
+
+from emr.manage_patient_permissions import check_permissions
 
 
 def is_patient(user):
     try:
         profile = UserProfile.objects.get(user=user)
         return profile.role == 'patient'
-    except:
+    except UserProfile.DoesNotExist:
         return False
-
 
 
 # Encounter
@@ -40,7 +32,7 @@ def get_encounter_info(request, encounter_id):
     encounter_events_holder = []
 
     for event in encounter_events:
-    	event_dict = EncounterEventSerializer(event).data
+        event_dict = EncounterEventSerializer(event).data
         encounter_events_holder.append(event_dict)
 
     encounter_dict = EncounterSerializer(encounter).data
@@ -51,34 +43,38 @@ def get_encounter_info(request, encounter_id):
     return ajax_response(resp)
 
 
-
 # Encounter
 @login_required
 def patient_encounter_status(request, patient_id):
 
+    encounter_active = False
+    current_encounter = None
+    permissions = ['add_encounter']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        physician = request.user
+        patient = User.objects.get(id=patient_id)
+
+        latest_encounter = Encounter.objects.filter(
+            physician=physician,
+            patient=patient).order_by('-starttime')
+
+        if latest_encounter.exists():
+            latest_encounter = latest_encounter[0]
+
+            if latest_encounter.stoptime is None:
+                encounter_active = True
+                latest_encounter_dict = EncounterSerializer(
+                    latest_encounter).data
+                current_encounter = latest_encounter_dict
+
     resp = {}
-
-    resp['encounter_running'] = False
-
-
-    physician = request.user
-
-    patient = User.objects.get(id=patient_id)
-
-    latest_encounter = Encounter.objects.filter(
-        physician=physician,
-        patient=patient).order_by('-starttime')
-
-    if latest_encounter.exists():
-        latest_encounter = latest_encounter[0]
-
-        if latest_encounter.stoptime == None:
-            resp['encounter_running'] = True
-            latest_encounter_dict = EncounterSerializer(latest_encounter).data
-            resp['encounter'] = latest_encounter_dict
-
+    resp['permitted'] = permitted
+    resp['current_encounter'] = current_encounter
+    resp['encounter_active'] = encounter_active
     return ajax_response(resp)
-
 
 
 # Encounter
@@ -88,21 +84,19 @@ def create_new_encounter(request, patient_id):
     resp = {}
     if request.method == 'POST':
         physician = request.user
-        # You may want to tell user that if already an encounter is running 
+        patient = User.objects.get(id=patient_id)
+        # You may want to tell user that if already an encounter is running
         encounter = Encounter(
-            patient=User.objects.get(id=patient_id), 
-            physician=request.user)
+            patient=patient, physician=request.user)
         encounter.save()
 
         # Add event started encounter
-
-        event_summary = 'Started encounter by <b>%s</b>' %physician.username
+        event_summary = 'Started encounter by <b>%s</b>' % physician.username
         encounter_event = EncounterEvent(
             encounter=encounter,
             summary=event_summary)
 
         encounter_event.save()
-
 
         encounter_dict = EncounterSerializer(encounter).data
         resp['success'] = True
@@ -116,7 +110,6 @@ def create_new_encounter(request, patient_id):
 def stop_patient_encounter(request, encounter_id):
 
     physician = request.user
-    
 
     latest_encounter = Encounter.objects.get(
         physician=physician,
@@ -125,14 +118,11 @@ def stop_patient_encounter(request, encounter_id):
     latest_encounter.stoptime = datetime.now()
     latest_encounter.save()
 
-
-    event_summary = 'Stopped encounter by <b>%s</b>' %physician.username
+    event_summary = 'Stopped encounter by <b>%s</b>' % physician.username
     encounter_event = EncounterEvent(
-            encounter=latest_encounter,
-            summary=event_summary)
+        encounter=latest_encounter, summary=event_summary)
 
     encounter_event.save()
-
 
     resp = {}
     resp['success'] = True
@@ -167,13 +157,11 @@ def add_event_summary(request):
     return ajax_response(resp)
 
 
-
 # Encounter
 @login_required
 def update_encounter_note(request, patient_id, encounter_id):
     resp = {}
-    resp['success' ] = False
-
+    resp['success'] = False
 
     if request.method == "POST":
         note = request.POST.get('note')

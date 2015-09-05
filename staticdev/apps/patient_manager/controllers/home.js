@@ -6,11 +6,11 @@
 	angular.module('ManagerApp')
 		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, ngDialog, toaster, $location){
 
+			
 
 			patientService.fetchActiveUser().then(function(data){
 				$scope.active_user = data['user_profile'];
 
-				console.log(data['user_profile'].role);
 			});
 
 			var patient_id = $('#patient_id').val();
@@ -210,6 +210,26 @@
 
 				});
 				
+
+			};
+
+
+			$scope.permitted = function(permissions){
+
+				if($scope.active_user==undefined){
+					return false;
+				}
+
+				var user_permissions = $scope.active_user.permissions;
+
+				for(var key in permissions){
+
+					if(user_permissions.indexOf(permissions[key])<0){
+						return false;
+					}
+				}
+
+				return true;
 
 			};
 

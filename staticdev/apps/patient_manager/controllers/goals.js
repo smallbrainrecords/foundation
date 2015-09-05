@@ -16,6 +16,14 @@
 
 			$scope.loading = true;
 
+
+			patientService.fetchActiveUser().then(function(data){
+
+				$scope.active_user = data['user_profile'];
+
+			});
+
+
 			patientService.fetchGoalInfo(goal_id).then(function(data){
 
 				$scope.goal = data['goal'];
@@ -73,6 +81,26 @@
 
 			};
 
+
+			$scope.permitted = function(permissions){
+
+				console.log('hello');
+				if($scope.active_user==undefined){
+					return false;
+				}
+
+				var user_permissions = $scope.active_user.permissions;
+
+				for(var key in permissions){
+
+					if(user_permissions.indexOf(permissions[key])<0){
+						return false;
+					}
+				}
+
+				return true;
+
+			};
 
 
 

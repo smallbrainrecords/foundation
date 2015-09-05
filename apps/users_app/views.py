@@ -16,6 +16,8 @@ from .forms import LoginForm, RegisterForm
 
 import datetime
 
+from emr.manage_patient_permissions import ROLE_PERMISSIONS
+
 
 def is_patient(user):
     try:
@@ -306,8 +308,11 @@ def fetch_active_user(request):
     user = User.objects.get(id=request.user.id)
 
     user_profile = UserProfile.objects.get(user=user)
+    user_role = user_profile.role
 
     user_profile = UserProfileSerializer(user_profile).data
+
+    user_profile['permissions'] = ROLE_PERMISSIONS[user_role]
 
     resp = {}
     resp['user_profile'] = user_profile

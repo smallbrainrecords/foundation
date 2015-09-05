@@ -10,6 +10,7 @@
 
 			var patient_id = $('#patient_id').val();
 
+			$scope.show_encounter_ui = false;
 
 			$scope.patient_id = patient_id;
 
@@ -20,9 +21,11 @@
 
 			patientService.getEncounterStatus(patient_id).then(function(data){
 
-				if(data['encounter_running']==true){
+				$scope.show_encounter_ui = data['permitted'];
+
+				if(data['encounter_active']==true){
 					$scope.encounter_flag = true;
-					$scope.encounter = data['encounter'];
+					$scope.encounter = data['current_encounter'];
 				}else{
 					$scope.encounter_flag = false;
 				}

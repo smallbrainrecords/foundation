@@ -61,7 +61,7 @@
 	width: 80%;
 }
 
-#bottom-bar{
+.bottom-bar{
 	position: fixed;
 	height: 65px;
 	bottom: 0px;
@@ -75,6 +75,11 @@
 	border-radius: 3px;
 	padding-top: 10px;
 
+}
+
+.bottom-bar #encounter-box{
+	width:90%;
+	margin:0 auto;
 }
 
 .box50{

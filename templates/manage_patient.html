@@ -24,12 +24,14 @@
 			Loading ....
 		</div>
 
+
+
 		{% verbatim %}
 
 
-		<div id='bottom-bar' ng-controller='EncountersMainCtrl'>
+		<div id='encounter-bar' class='bottom-bar'  ng-controller='EncountersMainCtrl'>
 
-			<div class='row' style='width:90%;margin:0 auto;'>
+			<div class='row' id='encounter-box' ng-show='show_encounter_ui==true'>
 
 				<div class='col-md-12' ng-show='encounter_flag==false'>
 					<button class='btn btn-warning btn-md' ng-click='start_encounter()' >

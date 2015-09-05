@@ -58,15 +58,15 @@
 
 <div class='row'>
 	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_controlled'> 
+		<input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'> 
 		Is controlled
 	</div>
 	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.authenticated'>
+		<input type='checkbox' ng-model='problem.authenticated' ng-disabled='!permitted(["set_problem_authenticated"])'>
 		Is authenticated
 	</div>
 	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_active'>
+		<input type='checkbox' ng-model='problem.is_active'  ng-disabled='!permitted(["set_problem_active"])'>
 		Is active
 	</div>
 </div>
@@ -95,7 +95,7 @@
 
 			</div>
 			<div class='form-group'>
-				<button ng-click='update_start_date()' class='btn btn-default' > Update </button>
+				<button ng-click='update_start_date()' class='btn btn-default' ng-show='permitted(["modify_problem"])'> Update </button>
 			</div>	
 		</form>
 
@@ -126,7 +126,7 @@
 
 
 
-		<form class='form-inline' ng-submit='add_patient_note(patient_note_form)' ng-show='active_user.user.id==problem.patient'>
+		<form class='form-inline' ng-submit='add_patient_note(patient_note_form)' ng-show='permitted(["add_patient_problem_note"])'>
 
 		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='patient_note_form.note'></textarea>
 
@@ -148,7 +148,9 @@
 	<div class='col-md-6'>
 		<b> Physician Notes </b>
 
-		<form class='form-inline' ng-submit='add_physician_note(physician_note_form)' ng-show='active_user.role=="admin"'>
+		<form class='form-inline' ng-submit='add_physician_note(physician_note_form)' 
+
+		ng-show='permitted(["add_physician_problem_note"])'>
 
 		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='physician_note_form.note'></textarea>
 
@@ -190,9 +192,11 @@
 	<div class='col-md-6'>
 
 		<b> Goals </b>
+		
 		<hr>
-		<form class='form-inline' ng-submit='add_goal(goal_form)'>
 
+		<form class='form-inline' ng-submit='add_goal(goal_form)' ng-show='permitted(["add_goal"])'>
+		
 			<div class='form-group'>
 				<label> Add </label>
 				<input type='text' class='form-control' ng-model='goal_form.name'>
@@ -201,10 +205,10 @@
 			<div class='form-group'>
 				<input type='submit' value='Submit' class='btn btn-default'>
 			</div>
-
+		<hr>
 		</form>
 
-		<hr>
+		
 
 		<ul class='list-group'>
 			<li ng-show='!problem_goals.length'> No Goals </li>
@@ -267,24 +271,31 @@
 
 	<div class='panel-body'>
 
+		<div class='row' ng-show='permitted(["add_problem_image"])'>
+			<div class='col-md-12'>
 		<form class='form-inline' action='{{image_upload_url()}}' method='POST' enctype='multipart/form-data' id='uploadProblemImageFrm'>
 			<label for="file">File:</label>
 			<input type="file" name="file" id="file">
 			<input type="submit" name="submit" value="Upload">
+
 		</form>
 
-		<hr>
+			<hr>
+
+			</div>
+		</div>
+		
 
 		<div class='row'>
 
 			<div class='col-md-4' ng-repeat='image in problem_images'>
 
 				<center>
-					<img src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
+					<img ng-src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
 					<br>
 					
 					<button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button>
-					<button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)'>
+					<button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)' ng-show='permitted(["delete_problem_image"])'>
 						Delete 
 					</button>
 					<hr>
@@ -313,7 +324,8 @@
 <div class='row' ng-repeat='eff_problem in patient_problems' style='padding:7px; border-bottom:1px solid #ccc;'>
 
 
-<input type='checkbox'   ng-model='eff_problem.effecting' ng-change='change_effecting_problem(eff_problem, problem)'> {{eff_problem.problem_name}}
+<input type='checkbox'   ng-model='eff_problem.effecting' ng-change='change_effecting_problem(eff_problem, problem)' 
+ng-disabled='!permitted(["relate_problem"])'> {{eff_problem.problem_name}}
 
 </div>
 
@@ -328,7 +340,7 @@
 <h4> <i class='glyphicon glyphicon-arrow-right'></i>  EffectedProblems </h4>
 <div class='row' ng-repeat='eff_problem in patient_problems'  style='padding:7px; border-bottom:1px solid #ccc;'>
 
-<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)'>  {{eff_problem.problem_name}}
+<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>  {{eff_problem.problem_name}}
 
 </div>
 

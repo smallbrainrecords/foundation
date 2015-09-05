@@ -46,18 +46,20 @@ Problem  : <b> {{goal.problem.problem_name}} </b>
 </p>
 
 <p>
-	<input type='checkbox' ng-model='goal.is_controlled'> Currently Succeeding
+	<input type='checkbox' ng-model='goal.is_controlled' ng-disabled='!permitted(["modify_goal"])'>  Currently Succeeding
 </p>
 
 <p>
-	<input type='checkbox' ng-model='goal.accomplished'> Is Accomplished ?
+	<input type='checkbox' ng-model='goal.accomplished'  ng-disabled='!permitted(["modify_goal"])'> Is Accomplished ?
 </p>
 
 <hr>
+<b> Motivation notes for this goal: </b>
+<hr>
+<div ng-show='permitted(["modify_goal"])'>
+	
 
-<p>
-	<b> Motivation notes for this goal: </b>
-	<hr>
+
 
 	<textarea class='form-control' ng-model='new_note' placeholder='Add note...'></textarea>
 	<hr>
@@ -65,7 +67,7 @@ Problem  : <b> {{goal.problem.problem_name}} </b>
 		Submit
 	</button>
 
-</p>
+</div>
 
 
 <p>

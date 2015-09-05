@@ -27,7 +27,7 @@
 		
 		<textarea class='form-control' ng-model='patient_info.summary'></textarea>
 		<br>
-		<button class='btn btn-default' ng-click='update_patient_summary()'>
+		<button class='btn btn-default' ng-click='update_patient_summary()' ng-show='permitted(["update_patient_profile"])'>
 			Update
 		</button>
 	</div>
@@ -51,7 +51,7 @@
 
 	<div class='panel-body'>
 
-		<div class='row'>
+		<div class='row' ng-show='permitted(["add_problem"])'>
 			<div class='col-md-12'>
 			
 					<input type='text' ng-model='problem_term' class='form-control' placeholder='Search Problem....'>
@@ -158,7 +158,7 @@
 	<div class='panel-body'>
 
 
-		<div class='row'>
+		<div class='row' ng-show='permitted(["add_goal"])'>
 			<div class='col-md-10 col-md-offset-1'>
 
 
@@ -252,7 +252,7 @@
 
 	<div class='panel-body'>
 
-		<div class='row'>
+		<div class='row' ng-show='permitted(["add_todo"])'>
 			<div class='col-md-12'>
 
 
@@ -359,7 +359,9 @@
 
 	<div class='panel-body'>
 
-		<a href="/patient/{{patient_id}}/pain/add_pain_avatar" class='btn btn-default pull-right'>Update Pain</a>
+		<a href="/patient/{{patient_id}}/pain/add_pain_avatar" class='btn btn-default pull-right' ng-show='permitted(["update_pain"])'>
+			Update Pain
+		</a>
 		<div pain-avatar  pain-data='pain_avatars'></div>
 
 	</div>

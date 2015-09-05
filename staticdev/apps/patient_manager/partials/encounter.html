@@ -9,12 +9,12 @@
 <script src="//vjs.zencdn.net/4.12/video.js"></script>
 
 
-<hr>
+
 
 <div class='row'>
 
 	<div class='col-md-4'>
-<form class='form'>
+<form class='form' ng-show='permitted(["add_encounter"])'>
 
 	<div class='form-group'>
 		<label> Note </label>
@@ -46,7 +46,7 @@
 
 
 		</div>
-		<div ng-show='encounter.video==null'>
+		<div ng-show='encounter.video==null && permitted(["add_encounter"])'>
 
 			<form class='form' ng-submit='upload_video()'>
 
@@ -64,15 +64,15 @@
 			</form>
 
 		</div>
-		<hr>
-		<div ng-show='encounter.audio!=null'>
+
+		<div ng-show='encounter.audio!=null '>
 			<strong> Encounter Audio </strong>
 			<div ng-audio-player audio-src="/media/29/jalma%20resham%20filili%20by%20dj%20himal.mp3" audio-type="audio/mpeg">
 			</div>
 
 
 		</div>
-		<div ng-show='encounter.audio==null'>
+		<div ng-show='encounter.audio==null  && permitted(["add_encounter"]) '>
 
 
 			<form class='form' ng-submit='upload_audio()'>

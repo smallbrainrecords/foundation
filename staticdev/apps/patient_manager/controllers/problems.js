@@ -309,6 +309,25 @@
 			}
 
 
+			$scope.permitted = function(permissions){
+
+				if($scope.active_user==undefined){
+					return false;
+				}
+
+				var user_permissions = $scope.active_user.permissions;
+
+				for(var key in permissions){
+
+					if(user_permissions.indexOf(permissions[key])<0){
+						return false;
+					}
+				}
+
+				return true;
+
+			};
+
 
 		}); /* End of controller */
 
