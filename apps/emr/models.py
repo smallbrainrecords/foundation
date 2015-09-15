@@ -2,10 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
-import datetime
 
 # DATA
-
 ROLE_CHOICES = (
     ('patient', 'Patient'),
     ('physician', 'Physician'),
@@ -18,6 +16,16 @@ ROLE_CHOICES = (
 SEX_CHOICES = (
     ('male', 'Male'),
     ('female', 'Female'),)
+
+
+BY_CHOICES = (
+    ('patient', 'patient'),
+    ('physician', 'physician'), )
+
+
+NOTE_TYPE_CHOICES = (
+    ('wiki', 'Wiki'),
+    ('history', 'History'), )
 
 
 # UTILITIES
@@ -118,10 +126,7 @@ class EncounterEvent(models.Model):
 
 
 class TextNote(models.Model):
-    BY_CHOICES = (
-        ('patient', 'patient'),
-        ('physician', 'physician'),
-    )
+
     author = models.ForeignKey(UserProfile, null=True, blank=True)
     by = models.CharField(max_length=20, choices=BY_CHOICES)
     note = models.TextField()
@@ -140,11 +145,21 @@ class Problem(MPTTModel):
     is_controlled = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     authenticated = models.BooleanField(default=False)
-    notes = models.ManyToManyField(TextNote, blank=True)
     start_date = models.DateField(auto_now_add=True)
 
     def __unicode__(self):
         return '%s %s' % (self.patient, self.problem_name)
+
+
+class ProblemNote(models.Model):
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    problem = models.ForeignKey(Problem, null=True, blank=True)
+    note = models.TextField()
+    note_type = models.CharField(choices=NOTE_TYPE_CHOICES, max_length=50)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "%s %s" % (self.author, self.note)
 
 
 class Goal(models.Model):

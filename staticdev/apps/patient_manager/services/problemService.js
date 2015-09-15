@@ -3,61 +3,23 @@
 	'use strict';
 
 	angular.module('ManagerApp').service('problemService',
-		function($http, $q, $cookies){
+		function($http, $q, $cookies, httpService){
 
 
-		this.csrf_token = function(){
-
-			var token = $cookies.csrftoken;
-			return token;
-		};
 
 
 		this.updateProblemStatus = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/update_status',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
+			var url = '/p/problem/'+form.problem_id+'/update_status';
+			return httpService.post(form, url);
 
 		};
 
 
-
 		this.trackProblemClickEvent = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/problem/'+form.problem_id+'/track/click/',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
+			var url = '/p/problem/'+form.problem_id+'/track/click/';
+			return httpService.post(form, url);
 
 		};
 
@@ -65,178 +27,53 @@
 
 		this.updateStartDate = function(form){
 
-			
-
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/update_start_date',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/update_start_date';
+			return httpService.post(form, url);
 
 		};
 
 
-		this.addPatientNote = function(form){
+		this.addWikiNote = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_patient_note',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/add_wiki_note';
+			return httpService.post(form, url);
 
 		};
 
-		this.addPhysicianNote = function(form){
+		this.addHistoryNote = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_physician_note',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/add_history_note';
+			return httpService.post(form, url);
 
 		};
 
 		this.addGoal = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_goal',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/add_goal';
+			return httpService.post(form, url);
 
 		};
 
 
 		this.addTodo = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_todo',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/add_todo';
+			return httpService.post(form, url);
 
 		};
 
+
 		this.deleteProblemImage = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/problem/'+form.problem_id+'/image/'+form.image_id+'/delete/',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
-
+			var url = '/p/problem/'+form.problem_id+'/image/'+form.image_id+'/delete/';
+			return httpService.post(form, url);
 		};
 
 
 		this.relateProblem = function(form){
 
-
-
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/problem/relate/',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
-
-
+			var url = '/p/problem/relate/';
+			return httpService.post(form, url);
 
 		};
 

@@ -1,11 +1,6 @@
 from common.views import *
 
-from emr.models import UserProfile, AccessLog, Problem, \
- Goal, ToDo, Guideline, TextNote, PatientImage, \
- Encounter, EncounterEvent, Sharing, Viewer, \
- ViewStatus, ProblemRelationship
-
-from pain.models import PainAvatar
+from emr.models import UserProfile, Encounter, EncounterEvent
 
 from .serializers import EncounterSerializer, EncounterEventSerializer
 
@@ -83,24 +78,30 @@ def create_new_encounter(request, patient_id):
 
     resp = {}
     if request.method == 'POST':
-        physician = request.user
-        patient = User.objects.get(id=patient_id)
-        # You may want to tell user that if already an encounter is running
-        encounter = Encounter(
-            patient=patient, physician=request.user)
-        encounter.save()
 
-        # Add event started encounter
-        event_summary = 'Started encounter by <b>%s</b>' % physician.username
-        encounter_event = EncounterEvent(
-            encounter=encounter,
-            summary=event_summary)
+        permissions = ['add_encounter']
+        actor_profile, permitted = check_permissions(permissions, request.user)
 
-        encounter_event.save()
+        if permitted:
+            physician = request.user
+            patient = User.objects.get(id=patient_id)
+            # You may want to tell user that if already an encounter is running
+            encounter = Encounter(
+                patient=patient, physician=request.user)
+            encounter.save()
 
-        encounter_dict = EncounterSerializer(encounter).data
-        resp['success'] = True
-        resp['encounter'] = encounter_dict
+            # Add event started encounter
+            event_summary = 'Started encounter by <b>%s</b>' % (
+                physician.username)
+            encounter_event = EncounterEvent(
+                encounter=encounter,
+                summary=event_summary)
+
+            encounter_event.save()
+
+            encounter_dict = EncounterSerializer(encounter).data
+            resp['success'] = True
+            resp['encounter'] = encounter_dict
 
     return ajax_response(resp)
 
@@ -111,22 +112,26 @@ def stop_patient_encounter(request, encounter_id):
 
     physician = request.user
 
-    latest_encounter = Encounter.objects.get(
-        physician=physician,
-        id=encounter_id)
+    permissions = ['add_encounter']
+    actor_profile, permitted = check_permissions(permissions, request.user)
 
-    latest_encounter.stoptime = datetime.now()
-    latest_encounter.save()
+    if permitted:
 
-    event_summary = 'Stopped encounter by <b>%s</b>' % physician.username
-    encounter_event = EncounterEvent(
-        encounter=latest_encounter, summary=event_summary)
+        latest_encounter = Encounter.objects.get(
+            physician=physician, id=encounter_id)
 
-    encounter_event.save()
+        latest_encounter.stoptime = datetime.now()
+        latest_encounter.save()
 
-    resp = {}
-    resp['success'] = True
-    resp['msg'] = 'Encounter is stopped'
+        event_summary = 'Stopped encounter by <b>%s</b>' % physician.username
+        encounter_event = EncounterEvent(
+            encounter=latest_encounter, summary=event_summary)
+
+        encounter_event.save()
+
+        resp = {}
+        resp['success'] = True
+        resp['msg'] = 'Encounter is stopped'
 
     return ajax_response(resp)
 
@@ -137,7 +142,10 @@ def add_event_summary(request):
 
     resp = {}
 
-    if request.method == 'POST':
+    permissions = ['add_event_summary']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+    if request.method == 'POST' and permitted:
 
         physician = request.user
         encounter_id = request.POST.get('encounter_id')
@@ -163,7 +171,11 @@ def update_encounter_note(request, patient_id, encounter_id):
     resp = {}
     resp['success'] = False
 
-    if request.method == "POST":
+    permissions = ['add_encounter']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == "POST" and permitted:
         note = request.POST.get('note')
         encounter = Encounter.objects.get(id=encounter_id)
         encounter.note = note
@@ -181,9 +193,13 @@ def upload_encounter_audio(request, patient_id, encounter_id):
     resp = {}
     resp['success'] = False
 
+    permissions = ['add_encounter']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
     audio_file = request.FILES['file']
 
-    if request.method == 'POST':
+    if request.method == 'POST' and permitted:
         encounter = Encounter.objects.get(id=encounter_id)
         encounter.audio = audio_file
         encounter.save()
@@ -200,9 +216,13 @@ def upload_encounter_video(request, patient_id, encounter_id):
     resp = {}
     resp['success'] = False
 
+    permissions = ['add_encounter']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
     video_file = request.FILES['file']
 
-    if request.method == 'POST':
+    if request.method == 'POST' and permitted:
         encounter = Encounter.objects.get(id=encounter_id)
         encounter.video = video_file
         encounter.save()

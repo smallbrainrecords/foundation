@@ -16,14 +16,14 @@ from .forms import LoginForm, RegisterForm
 
 import datetime
 
-from emr.manage_patient_permissions import ROLE_PERMISSIONS
+from emr.manage_patient_permissions import ROLE_PERMISSIONS, check_permissions
 
 
 def is_patient(user):
     try:
         profile = UserProfile.objects.get(user=user)
         return profile.role == 'patient'
-    except:
+    except UserProfile.DoesNotExist:
         return False
 
 
@@ -284,20 +284,20 @@ def get_patient_info(request, patient_id):
 def update_patient_summary(request, patient_id):
 
     resp = {}
-
     resp['success'] = False
 
-    new_summary = request.POST.get('summary')
+    permissions = ['update_patient_profile']
 
-    patient = User.objects.get(id=patient_id)
+    actor_profile, permitted = check_permissions(permissions, request.user)
 
-    patient_profile = UserProfile.objects.get(user=patient, role='patient')
+    if permitted:
 
-    patient_profile.summary = new_summary
-
-    patient_profile.save()
-
-    resp['success'] = True
+        new_summary = request.POST.get('summary')
+        patient = User.objects.get(id=patient_id)
+        patient_profile = UserProfile.objects.get(user=patient, role='patient')
+        patient_profile.summary = new_summary
+        patient_profile.save()
+        resp['success'] = True
 
     return ajax_response(resp)
 

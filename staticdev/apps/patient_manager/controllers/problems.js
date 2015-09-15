@@ -14,6 +14,9 @@
 			$scope.problem_id = problem_id;
 
 			$scope.loading = true;
+			$scope.show_other_notes = false;
+			$scope.history_note_form = {};
+			$scope.wiki_note_form = {};
 
 			patientService.fetchActiveUser().then(function(data){
 
@@ -37,6 +40,25 @@
 
                     $scope.effecting_problems = data['effecting_problems'];
                     $scope.effected_problems = data['effected_problems'];
+
+                    $scope.history_note = data['history_note'];
+                    
+                    var wiki_notes = data['wiki_notes'];
+
+                    $scope.patient_wiki_notes = wiki_notes['patient'];
+                    $scope.physician_wiki_notes = wiki_notes['physician'];
+                    $scope.other_wiki_notes = wiki_notes['other'];
+
+
+                    if($scope.history_note!=null){
+
+                    	$scope.history_note_form = {
+                    		note: $scope.history_note.note
+                    	};
+
+                    }
+                    
+
 
                     var patient_problems = data['patient_problems'];
 
@@ -97,7 +119,7 @@
 			});
 
 
-			/* TODO */
+			
 
 			$scope.update_start_date = function(){
 
@@ -114,48 +136,56 @@
 				});
 			}
 
-			$scope.add_patient_note = function(form){
-
-				if(form==undefined){
-					return false;
-				}
-
+			$scope.add_wiki_note = function(form){
 				form.patient_id = $scope.patient_id;
 				form.problem_id = $scope.problem.id;
-				problemService.addPatientNote(form).then(function(data){
+
+				problemService.addWikiNote(form).then(function(data){
 
 					if(data['success']==true){
 
-						$scope.patient_notes.unshift(data['note']);
-						toaster.pop('success', 'Done','Added Patient Note!');
+						toaster.pop('success', 'Done', 'Added Wiki Note');
+						var note = data['note'];
+						if($scope.active_user.role=='patient'){
+							$scope.patient_wiki_notes.unshift(note);
+						}else if($scope.active_user.role=='physician'){
+							$scope.physician_wiki_notes.unshift(note);
+						}else{
+							$scope.show_other_notes = true;
+							$scope.other_wiki_notes.unshift(note);
+						}
 
+						form.note = '';
 
+					}else if(data['success']==false){
+						toaster.pop('error', 'Warning', 'Action Failed');
 					}else{
+						toaster.pop('error', 'Warning', 'Something went wrong!');
+					}
 
-						angular.forEach(data['errors'], function(value, key){
-							alert(value);
-						});
 
+				});
+
+			};
+
+
+			$scope.add_history_note = function(form){
+				form.patient_id = $scope.patient_id;
+				form.problem_id = $scope.problem.id;
+
+				problemService.addHistoryNote(form).then(function(data){
+
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Added History Note');
+					}else if(data['success']==false){
+						toaster.pop('error', 'Warning', 'Action Failed');
+					}else{
+						toaster.pop('error', 'Warning', 'Something went wrong!');
 					}
 
 				});
 
-			}
-
-			$scope.add_physician_note = function(form){
-
-				if(form==undefined){
-					return false;
-				}
-
-				form.patient_id = $scope.patient_id;
-				form.problem_id = $scope.problem.id;
-				problemService.addPhysicianNote(form).then(function(data){
-
-					$scope.physician_notes.unshift(data['note']);
-					toaster.pop('success', 'Done', 'Added Physician Note!');
-				});
-			}
+			};
 
 
 			$scope.add_goal = function(form){
@@ -195,7 +225,7 @@
 
 				var patient_id = $scope.patient_id;
 				var problem_id = $scope.problem_id;
-				var url = '/p/patient/'+patient_id+'/problem/'+problem_id+'/upload_image';
+				var url = '/p/problem/'+problem_id+'/upload_image';
 				return url;
 			}
 
@@ -329,6 +359,14 @@
 			};
 
 
+			$scope.toggle_other_notes = function(){
+
+				if($scope.show_other_notes==true){
+					$scope.show_other_notes = false;
+				}else{
+					$scope.show_other_notes = true;
+				}
+			};
 		}); /* End of controller */
 
 

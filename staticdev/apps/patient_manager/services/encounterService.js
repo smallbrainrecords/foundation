@@ -3,36 +3,15 @@
 	'use strict';
 
 	angular.module('ManagerApp').service('encounterService',
-		function($http, $q, $cookies){
+		function($http, $q, $cookies, httpService){
 
 
-		this.csrf_token = function(){
-
-			var token = $cookies.csrftoken;
-			return token;
-		};
 
 
 		this.updateNote = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/enc/patient/'+form.patient_id+'/encounter/'+form.encounter_id+'/update_note',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
+			var url  = '/enc/patient/'+form.patient_id+'/encounter/'+form.encounter_id+'/update_note';
+			return httpService.post(form, url);
 
 		};
 

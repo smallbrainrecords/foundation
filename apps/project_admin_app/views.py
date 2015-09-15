@@ -333,7 +333,7 @@ def list_patient_physicians(request):
         physicians = UserProfile.objects.filter(user__id__in=physician_ids)
 
         physicians_list = UserProfileSerializer(physicians, many=True).data
-    except Exception as e:
+    except User.DoesNotExist as e:
         resp['error'] = str(e)
 
     resp = {}

@@ -110,36 +110,65 @@
 
 
 
+<div class='panel panel-default'>
+
+	<div class='panel-heading'> Problem History </div>
+	<div class='panel-body'>
+
+		<form class='form' ng-submit='add_history_note(history_note_form)'>
+
+			<div class='form-group'>
+				<textarea ng-model='history_note_form.note' class='form-control ' style='height:125px;' required></textarea>
+			</div>
+			<div class='form-group'>
+				<button type='submit' class='btn btn-default' ng-show="permitted(['modify_problem'])">
+					Update
+				</button>
+			</div>
+		</form>
+	</div>
+
+</div>
 
 
 <div class='panel panel-default'>
 
-	<div class='panel-heading'>Notes</div>
+	<div class='panel-heading'> Wiki Notes</div>
 
 	<div class='panel-body'>
 
+<div class='row'>
+
+	<div class='col-md-12'>
+
+		<form class='form' ng-submit='add_wiki_note(wiki_note_form)'>
+
+			<div class='form-group'>
+				<textarea ng-model='wiki_note_form.note' class='form-control' style='height:75px;' required></textarea>
+			</div>
+			<div class='form-group'>
+				<button type='submit' class='btn btn-default'>
+				 Add
+				</button>
+			</div>
+		</form>
+	</div>
+
+</div>
+
+<hr>
 
 <div class='row'>
 
 	<div class='col-md-6'>
 		<b> Patient Notes </b> 
 
-
-
-		<form class='form-inline' ng-submit='add_patient_note(patient_note_form)' ng-show='permitted(["add_patient_problem_note"])'>
-
-		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='patient_note_form.note'></textarea>
-
-		<button class='btn btn-default btn-lg' type='submit'> Add </button>
-
-		</form>
-
 		<hr>
 
 		<ul class='list-group'>
 
-			<li ng-show='!patient_notes.length'> No Notes </li>
-			<li ng-repeat='note in patient_notes' class='list-group-item'>
+			<li ng-show='!patient_wiki_notes.length' class='list-group-item'> No Notes </li>
+			<li ng-repeat='note in patient_wiki_notes' class='list-group-item'>
 				<b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
 			</li>
 		</ul>
@@ -148,25 +177,36 @@
 	<div class='col-md-6'>
 		<b> Physician Notes </b>
 
-		<form class='form-inline' ng-submit='add_physician_note(physician_note_form)' 
-
-		ng-show='permitted(["add_physician_problem_note"])'>
-
-		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='physician_note_form.note'></textarea>
-
-		<button class='btn btn-default btn-lg' type='submit'> Add </button>
-
-		</form>
-
 		<hr>
 
 		<ul class='list-group'>
 
-			<li ng-show='!physician_notes.length'> No Notes </li>
-			<li ng-repeat='note in physician_notes' class='list-group-item'>
+			<li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes </li>
+			<li ng-repeat='note in physician_wiki_notes' class='list-group-item'>
 				<b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
 			</li>
 		</ul>
+	</div>
+</div>
+
+<hr>
+
+<div class='row'>
+	<div class='col-md-12'>
+		<button class='btn btn-link' ng-click='toggle_other_notes()'>
+			<span ng-show='show_other_notes'>Hide Other Notes </span>
+			<span ng-show='!show_other_notes'> Show Other Notes </span>
+		</button>
+
+		<ul class='list-group' ng-show='show_other_notes==true'>
+
+			<li ng-show='!other_wiki_notes.length' class='list-group-item'> No Notes </li>
+			<li ng-repeat='note in other_wiki_notes' class='list-group-item'>
+				<b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
+			</li>
+		</ul>
+
+
 	</div>
 </div>
 

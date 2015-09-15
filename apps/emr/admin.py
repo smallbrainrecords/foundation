@@ -5,7 +5,7 @@ from .models import UserProfile, AccessLog, Encounter, \
     GuidelineForm, PatientImage, Sharing, ProblemRelationship
 
 from .models import PatientController, PhysicianTeam
-
+from .models import ProblemNote
 from django.contrib.auth.models import User
 
 
@@ -121,3 +121,4 @@ admin.site.register(ProblemRelationship)
 admin.site.register(GuidelineForm)
 admin.site.register(PatientController, PatientControllerAdmin)
 admin.site.register(PhysicianTeam)
+admin.site.register(ProblemNote)

@@ -52,6 +52,9 @@ ROLE_PERMISSIONS['patient'] = [
     'modify_problem',
     'add_problem_image',
     'add_patient_problem_note',
+    'set_problem_controlled',
+    'set_problem_active',
+    'relate_problem',
     # Goal
     'add_goal',
     'modify_goal',
@@ -95,7 +98,6 @@ ROLE_PERMISSIONS['mid-level'] = [
     'modify_problem',
     'add_problem_image',
     'delete_problem_image',
-    'set_problem_authenticated',
     'set_problem_controlled',
     'set_problem_active',
     'add_physician_problem_note',
