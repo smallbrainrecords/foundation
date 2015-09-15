@@ -177,6 +177,9 @@
 
 					if(data['success']==true){
 						toaster.pop('success', 'Done', 'Added History Note');
+
+						$scope.history_note = data['note'];
+						
 					}else if(data['success']==false){
 						toaster.pop('error', 'Warning', 'Action Failed');
 					}else{
