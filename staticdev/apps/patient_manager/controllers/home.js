@@ -147,7 +147,7 @@
 			};
 
 
-			$scope.unset_new_problem = function(problem){
+			$scope.unset_new_problem = function(){
 
 				$scope.new_problem.set = false;
 
@@ -173,6 +173,9 @@
 					if(data['success']==true){
 						toaster.pop('success', 'Done', 'New Problem added successfully');
 						$scope.problems.push(data['problem']);
+						$scope.problem_term = '';
+						$scope.unset_new_problem();
+						
 					}else if(data['success']==false){
 						alert(data['msg']);
 					}else{
