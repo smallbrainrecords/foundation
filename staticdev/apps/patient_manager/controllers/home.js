@@ -116,6 +116,7 @@
 					return false;
 				}
 
+				$scope.unset_new_problem();
 
 				if(newVal.length>2){
 
@@ -175,7 +176,9 @@
 						$scope.problems.push(data['problem']);
 						$scope.problem_term = '';
 						$scope.unset_new_problem();
-						
+						/* Not-angular-way */
+						$('#problemTermInput').focus();
+
 					}else if(data['success']==false){
 						alert(data['msg']);
 					}else{

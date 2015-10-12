@@ -46,11 +46,11 @@ Problem  : <b> {{goal.problem.problem_name}} </b>
 </p>
 
 <p>
-	<input type='checkbox' ng-model='goal.is_controlled' ng-disabled='!permitted(["modify_goal"])'>  Currently Succeeding
+	<input type='checkbox' ng-model='goal.is_controlled' ng-disabled='!permitted(["modify_goal"])' id='is_controlled_checkbox'>  <label for='is_controlled_checkbox'> Currently Succeeding </label>
 </p>
 
 <p>
-	<input type='checkbox' ng-model='goal.accomplished'  ng-disabled='!permitted(["modify_goal"])'> Is Accomplished ?
+	<input type='checkbox' ng-model='goal.accomplished'  ng-disabled='!permitted(["modify_goal"])' id='is_accomplished_checkbox'> <label for='is_accomplished_checkbox'> Is Accomplished ? </label>
 </p>
 
 <hr>

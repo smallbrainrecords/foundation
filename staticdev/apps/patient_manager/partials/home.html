@@ -54,7 +54,7 @@
 		<div class='row' ng-show='permitted(["add_problem"])'>
 			<div class='col-md-12'>
 			
-					<input type='text' ng-model='problem_term' class='form-control' placeholder='Search Problem....'>
+					<input type='text' ng-model='problem_term' class='form-control' id='problemTermInput' placeholder='Search Problem....'>
 					
 					
 
@@ -62,10 +62,10 @@
 						<hr>
 						<label> {{new_problem.code}} </label>
 						{{new_problem.term}} <br>
-						<button class='btn btn-sm btn-danger' ng-click='add_problem()'>
+						<button class='btn btn-sm btn-default' ng-click='add_problem()'>
 							Add Problem
 						</button>
-						<button class='btn btn-sm btn-warning' ng-click='unset_new_problem()'>
+						<button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
 							Cancel
 						</button>
 						<hr>

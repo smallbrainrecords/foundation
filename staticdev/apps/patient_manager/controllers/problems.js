@@ -197,12 +197,20 @@
 					return false;
 				}
 
+				if(form.name.trim().length<1){
+					return false;
+				}
+
 				form.patient_id = $scope.patient_id;
 				form.problem_id = $scope.problem.id;
 				problemService.addGoal(form).then(function(data){
 
+					form.name = '';
 					$scope.problem_goals.push(data['goal']);
 					toaster.pop('success', 'Done', 'Added Goal!');
+
+					/* Not-angular-way */
+					$('#goalNameInput').focus();
 				});
 			}
 
@@ -213,12 +221,19 @@
 					return false;
 				}
 
+				if(form.name.trim().length<1){
+					return false;
+				}
+
 				form.patient_id = $scope.patient_id;
 				form.problem_id = $scope.problem.id;
 				problemService.addTodo(form).then(function(data){
 
+					form.name = '';
 					$scope.problem_todos.push(data['todo']);
 					toaster.pop('success', 'Done', 'Added Todo!');
+					/* Not-angular-way */
+					$('#todoNameInput').focus();
 				});
 			}
 

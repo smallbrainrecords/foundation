@@ -123,7 +123,8 @@ def get_problem_info(request, problem_id):
     for relationship in effected_problems:
         effected_problems_holder.append(relationship.target.id)
 
-    patient_problems = Problem.objects.filter(patient=patient)
+    patient_problems = Problem.objects.filter(
+        patient=patient).exclude(id=problem_id)
     patient_problems_holder = ProblemSerializer(
         patient_problems, many=True).data
 
@@ -169,6 +170,8 @@ def add_patient_problem(request, patient_id):
 
             new_problem = Problem(
                 patient=patient, problem_name=term, concept_id=concept_id)
+            if actor_profile.role == 'physician':
+                new_problem.authenticated = True
 
             new_problem.save()
 

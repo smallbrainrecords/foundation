@@ -7,6 +7,7 @@ from emr.operations import op_add_event
 
 from .serializers import GoalSerializer
 from emr.serializers import TextNoteSerializer
+from emr.manage_patient_permissions import check_permissions
 
 
 def is_patient(user):
