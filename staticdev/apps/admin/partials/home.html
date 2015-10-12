@@ -14,19 +14,19 @@
 <div class='col-md-3'>
 
 
-	<div class='panel panel-default'>
+    <div class='panel panel-default'>
 
-		<div class='panel-heading'>
-			Options
-		</div>
-		<div class='panel-body'>
+        <div class='panel-heading'>
+            Options
+        </div>
+        <div class='panel-body'>
 
       <a class='btn btn-default' href='#/add/user'>
         Add User
       </a>
 
-		</div>
-	</div>
+        </div>
+    </div>
 
 
 </div>
@@ -34,23 +34,23 @@
 
 <div class='col-md-9'>
 
-		<div class='panel panel-default'>
+        <div class='panel panel-default'>
 
 
 
 
-		<div class='panel-heading'>
-			Registered Users
-		</div>
-		<div class='panel-body'>
-			<center>
-			<h4 class='text-info'> Registered Users </h4>
-			</center>
-			<hr>
+        <div class='panel-heading'>
+            Registered Users
+        </div>
+        <div class='panel-body'>
+            <center>
+            <h4 class='text-info'> Registered Users </h4>
+            </center>
+            <hr>
       <input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>
       <hr>
-			<table class='table' >
-				<thead>
+            <table class='table' >
+                <thead>
         <tr>
           <th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>
           <th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>
@@ -60,41 +60,41 @@
           <th>Contact Number</th>
           <th>Action</th>
         </tr>
-        	</thead>
+            </thead>
 
-        	<tbody>
+            <tbody>
 
-        		<tr ng-repeat='user in users|filter:query_users'>
-        			<td> {{user.user.first_name}} </td>
-        			<td> {{user.user.last_name}} </td>
-        			<td> {{user.user.username}} </td>
-        			<td> {{user.role}} </td>
-        			<td> {{user.sex}} </td>
-        			<td> {{user.phone_number}} </td>
-        			<td>
+                <tr ng-repeat='user in users|filter:query_users'>
+                    <td> {{user.user.first_name}} </td>
+                    <td> {{user.user.last_name}} </td>
+                    <td> {{user.user.username}} </td>
+                    <td> {{user.role}} </td>
+                    <td> {{user.sex}} </td>
+                    <td> {{user.phone_number}} </td>
+                    <td>
 
-        				<a href='#/edit/{{user.user.id}}/'  class='btn btn-sm btn-default'>
-        					Edit 
-        				</a>
+                        <a href='#/edit/{{user.user.id}}/'  class='btn btn-sm btn-default'>
+                            Edit 
+                        </a>
 
-        				<a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'  ng-show='user.role=="patient"'>
-        					Manage
-        				</a>
+                        <a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'  ng-show='user.role=="patient"'>
+                            Manage
+                        </a>
 
-        				
-
-
-        			</td>
+                        
 
 
-        		</tr>
+                    </td>
 
-        	</tbody>
+
+                </tr>
+
+            </tbody>
 
         </table>
 
-		</div>
-	</div>
+        </div>
+    </div>
 
 
 
@@ -164,13 +164,25 @@
 
         <div class='panel-body'>
 
-          <div ng-repeat='patient in patients'>
-              <span class='text-info'>
-                <b>
-                  {{patient.user.first_name}} {{patient.user.last_name}}
-                </b>
-              </span>
-          </div>
+          <table class='table'>
+                <thead>
+                    <th> Name </th>
+                    <th> Username </th>
+                    <th> Contact Number </th>
+                    <th> Actions </th>
+                </thead>
+                <tbody>
+                    <tr ng-repeat='patient in patients'>
+                        <td> {{patient.user.first_name}} {{patient.user.last_name}} </td>
+                        <td> {{patient.user.username}} </td>
+                        <td> {{patient.phone_number}} </td>
+                        <td> <a href='/u/patient/manage/{{patient.user.id}}/' class='btn btn-sm btn-default'         ng-show='patient.role=="patient"'>
+                                Manage
+                             </a>
+                        </td>
+                    </tr>
+                </tbody>
+         </table>
 
         </div>
 
@@ -182,13 +194,22 @@
 
         <div class='panel-body'>
 
-          <div ng-repeat='nurse in team.nurses'>
-              <span class='text-info'>
-                <b>
-                  {{nurse.user.first_name}} {{nurse.user.last_name}}
-                </b>
-              </span>
-          </div>
+
+          <table class='table'>
+                <thead>
+                    <th> Name </th>
+                    <th> Username </th>
+                    <th> Contact Number </th>
+
+                </thead>
+                <tbody>
+                    <tr ng-repeat='nurse  in team.nurses'>
+                        <td> {{nurse.user.first_name}} {{nurse.user.last_name}} </td>
+                        <td> {{nurse.user.username}} </td>
+                        <td> {{nurse.phone_number}} </td>
+                    </tr>
+                </tbody>
+         </table>
 
         </div>
 
@@ -201,13 +222,21 @@
 
         <div class='panel-body'>
 
-          <div ng-repeat='staff in team.mid_level_staffs'>
-            <span class='text-info'>
-                <b>
-                {{staff.user.first_name}} {{staff.user.last_name}}
-              </b>
-            </span>
-          </div>
+          <table class='table'>
+                <thead>
+                    <th> Name </th>
+                    <th> Username </th>
+                    <th> Contact Number </th>
+
+                </thead>
+                <tbody>
+                    <tr ng-repeat='staff  in team.mid_level_staffs'>
+                        <td> {{staff.user.first_name}} {{staff.user.last_name}} </td>
+                        <td> {{staff.user.username}} </td>
+                        <td> {{staff.phone_number}} </td>
+                    </tr>
+                </tbody>
+         </table>
 
         </div>
 
@@ -220,13 +249,21 @@
 
         <div class='panel-body'>
 
-          <div ng-repeat='staff in team.secretaries'>
-            <span class='text-info'>
-                <b>
-              {{staff.user.first_name}} {{staff.user.last_name}}
-                </b>
-            </span>
-          </div>
+         <table class='table'>
+                <thead>
+                    <th> Name </th>
+                    <th> Username </th>
+                    <th> Contact Number </th>
+
+                </thead>
+                <tbody>
+                    <tr ng-repeat='staff  in team.secretaries'>
+                        <td> {{staff.user.first_name}} {{staff.user.last_name}} </td>
+                        <td> {{staff.user.username}} </td>
+                        <td> {{staff.phone_number}} </td>
+                    </tr>
+                </tbody>
+         </table>
 
         </div>
 

@@ -2,6 +2,8 @@
     PERMISSIONS for managing patient
 '''
 from .models import UserProfile
+from .models import PatientController, PhysicianTeam
+import logging
 
 
 ROLES = (
@@ -168,6 +170,36 @@ def check_permissions(permission, actor):
             permitted = True
 
     return actor_profile, permitted
+
+
+def check_access(patient, actor_profile):
+    '''
+        Buggy - Fix IT
+    '''
+
+    allowed = False
+
+    if actor_profile.role == 'physician':
+        is_controller = PatientController.objects.filter(
+            patient=patient, physician=actor_profile.user).exists()
+        allowed = is_controller
+    elif actor_profile.role == 'patient':
+        if patient.id == actor_profile.user.id:
+            allowed = True
+    elif actor_profile.role == 'admin':
+        allowed = True
+    else:
+        controllers = PatientController.objects.filter(
+            patient=actor_profile.user)
+        physician_ids = [x.physician.id for x in controllers]
+        is_staff = PhysicianTeam.objects.filter(
+            physician__id__in=physician_ids).exists()
+
+        logging.error(is_staff)
+
+        allowed = is_staff
+
+    return allowed
 
 
 def sample_view(request):

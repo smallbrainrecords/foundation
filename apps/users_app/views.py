@@ -18,6 +18,8 @@ import datetime
 
 from emr.manage_patient_permissions import ROLE_PERMISSIONS, check_permissions
 
+from emr.manage_patient_permissions import check_access
+
 
 def is_patient(user):
     try:
@@ -166,7 +168,6 @@ def home(request):
 # Users
 @login_required
 def manage_patient(request, user_id):
-    role = UserProfile.objects.get(user=request.user).role
 
     user = User.objects.get(id=user_id)
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -175,17 +176,7 @@ def manage_patient(request, user_id):
     # Allowed viewers
     # The patient, admin/physician, and other patients the patient has shared
     allowed = False
-    shared = Sharing.objects.filter(
-        patient=user, other_patient=request.user).exists()
-
-    controllers = PatientController.objects.filter(patient=user)
-    physician_ids = [x.physician.id for x in controllers]
-    is_staff = PhysicianTeam.objects.filter(
-        physician__id__in=physician_ids).exists()
-    user_patient = request.user == user
-
-    if user_patient or role in ['admin', 'physician'] or shared or is_staff:
-        allowed = True
+    allowed = check_access(patient_profile.user, actor_profile)
 
     if not allowed:
         return HttpResponse("Not allowed")
