@@ -77,6 +77,12 @@
 
 		};
 
+		this.getProblemActivity = function(problem_id){
+			var params = {};
+			var url ='/p/problem/'+problem_id+'/activity/';
+			return httpService.get(params, url);
+		}
+
 
 });
 

@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 
 from emr.models import Problem, PatientImage, ProblemRelationship
-from emr.models import ProblemNote
+from emr.models import ProblemNote, ProblemActivity
 
 from users_app.serializers import UserProfileSerializer
 
@@ -61,4 +61,18 @@ class ProblemNoteSerializer(serializers.ModelSerializer):
             'problem',
             'note',
             'note_type',
+            'created_on')
+
+
+class ProblemActivitySerializer(serializers.ModelSerializer):
+
+    author = UserProfileSerializer()
+
+    class Meta:
+        model = ProblemActivity
+
+        fields = (
+            'author',
+            'activity',
+            'problem',
             'created_on')

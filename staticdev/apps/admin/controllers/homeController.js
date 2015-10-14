@@ -3,16 +3,6 @@
 	'use strict';
 
 
-	function loop(payload){
-
-		payload();
-
-		setTimeout(function(){
-			loop(payload);
-		}, 5000);
-
-	};
-
 	angular.module('AdminApp')
 		.controller('HomeCtrl', function($scope, $routeParams, ngDialog, adminService){
 

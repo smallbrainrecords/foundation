@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('ProblemsCtrl', function($scope, $routeParams, patientService, problemService, ngDialog, toaster){
+		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster){
 
 
 			var patient_id = $('#patient_id').val();
@@ -49,6 +49,7 @@
                     $scope.physician_wiki_notes = wiki_notes['physician'];
                     $scope.other_wiki_notes = wiki_notes['other'];
 
+                    $scope.activities = data['activities'];
 
                     if($scope.history_note!=null){
 
@@ -385,6 +386,17 @@
 					$scope.show_other_notes = true;
 				}
 			};
+
+
+			$scope.refresh_problem_activity=function(){
+				problemService.getProblemActivity($scope.problem_id).then(function(data){
+					$scope.activities = data['activities'];
+				})
+			}
+
+			$interval(function(){
+				$scope.refresh_problem_activity();
+			}, 4000);
 		}); /* End of controller */
 
 

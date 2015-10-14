@@ -3,17 +3,18 @@ from common.views import *
 from emr.models import UserProfile, Problem
 from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
-from emr.models import ProblemNote
+from emr.models import ProblemNote, ProblemActivity
 
 from emr.operations import op_add_event
 
 from .serializers import ProblemSerializer, PatientImageSerializer
-from .serializers import ProblemNoteSerializer
+from .serializers import ProblemNoteSerializer, ProblemActivitySerializer
 from emr.serializers import TextNoteSerializer
 from todo_app.serializers import TodoSerializer
 from goals_app.serializers import GoalSerializer
 
 from emr.manage_patient_permissions import check_permissions
+from problems_app.operations import add_problem_activity
 
 
 def is_patient(user):
@@ -35,6 +36,10 @@ def track_problem_click(request, problem_id):
 
         summary = "Clicked <u>problem</u>: <b>%s</b>" % problem.problem_name
         op_add_event(actor, patient, summary)
+
+        activity = "Visited <u>problem</u>: <b>%s</b>" % problem.problem_name
+        add_problem_activity(problem, actor_profile, activity)
+
     resp = {}
     return ajax_response(resp)
 
@@ -128,7 +133,11 @@ def get_problem_info(request, problem_id):
     patient_problems_holder = ProblemSerializer(
         patient_problems, many=True).data
 
+    activites = ProblemActivity.objects.filter(problem=problem_info)
+    activity_holder = ProblemActivitySerializer(activites, many=True).data
+
     resp = {}
+    resp['success'] = True
     resp['info'] = problem_dict
     resp['patient_notes'] = patient_note_holder
     resp['physician_notes'] = physician_note_holder
@@ -141,6 +150,25 @@ def get_problem_info(request, problem_id):
     resp['patient_problems'] = patient_problems_holder
     resp['history_note'] = history_note_holder
     resp['wiki_notes'] = wiki_notes_holder
+    resp['activities'] = activity_holder
+
+    return ajax_response(resp)
+
+
+@login_required
+def get_problem_activity(request, problem_id):
+    resp = {}
+    resp['success'] = False
+
+    try:
+        problem = Problem.objects.get(id=problem_id)
+    except Problem.DoesNotExist:
+        raise Http404("Problem DoesNotExist")
+
+    activites = ProblemActivity.objects.filter(problem=problem)
+    activity_holder = ProblemActivitySerializer(activites, many=True).data
+    resp['activities'] = activity_holder
+    resp['success'] = True
 
     return ajax_response(resp)
 
@@ -176,9 +204,12 @@ def add_patient_problem(request, patient_id):
             new_problem.save()
 
             physician = request.user
-            summary = 'Added <u>problem</u> <b>%s</b>' % term
 
+            summary = 'Added <u>problem</u> <b>%s</b>' % term
             op_add_event(physician, patient, summary)
+
+            activity = "Added <u>problem</u>: <b>%s</b>" % term
+            add_problem_activity(new_problem, actor_profile, activity)
 
             new_problem_dict = ProblemSerializer(new_problem).data
 
@@ -200,6 +231,9 @@ def update_problem_status(request, problem_id):
     resp = {}
 
     resp['success'] = False
+
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
 
     problem = Problem.objects.get(id=problem_id)
     patient = problem.patient
@@ -242,6 +276,9 @@ def update_problem_status(request, problem_id):
     """ % status_labels
     op_add_event(physician, patient, summary)
 
+    activity = summary
+    add_problem_activity(problem, actor_profile, activity)
+
     resp['success'] = True
 
     return ajax_response(resp)
@@ -276,6 +313,9 @@ def update_start_date(request, problem_id):
         ''' % (problem.problem_name, problem.start_date)
         op_add_event(physician, patient, summary)
 
+        activity = summary
+        add_problem_activity(problem, actor_profile, activity)
+
         resp['success'] = True
 
     return ajax_response(resp)
@@ -307,6 +347,9 @@ def add_history_note(request, problem_id):
 
             new_note.save()
 
+            activity = 'Added History Note'
+            add_problem_activity(problem, actor_profile, activity)
+
             new_note_dict = ProblemNoteSerializer(new_note).data
             resp['note'] = new_note_dict
 
@@ -323,6 +366,8 @@ def add_wiki_note(request, problem_id):
 
     # Check if user is able to view patient
     # Todo
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
 
     if request.method == 'POST':
         patient_id = request.POST.get('patient_id')
@@ -343,6 +388,10 @@ def add_wiki_note(request, problem_id):
                 note=note, note_type='wiki')
 
             new_note.save()
+
+            activity = 'Added wiki note'
+            add_problem_activity(problem, actor_profile, activity)
+
             new_note_dict = ProblemNoteSerializer(new_note).data
             resp['note'] = new_note_dict
 
@@ -372,6 +421,9 @@ def add_patient_note(request, problem_id):
         new_note.save()
 
         problem.notes.add(new_note)
+
+        activity = 'Added patient note'
+        add_problem_activity(problem, patient_profile, activity)
 
         new_note_dict = TextNoteSerializer(new_note).data
         resp['success'] = True
@@ -412,6 +464,9 @@ def add_physician_note(request, problem_id):
     ''' % (note, problem.problem_name)
     op_add_event(physician, patient, summary)
 
+    activity = summary
+    add_problem_activity(problem, physician_profile, activity)
+
     new_note_dict = TextNoteSerializer(new_note).data
     resp['note'] = new_note_dict
     resp['success'] = True
@@ -448,6 +503,8 @@ def add_problem_goal(request, problem_id):
         ''' % (goal, problem.problem_name)
         op_add_event(physician, patient, summary)
 
+        activity = summary
+        add_problem_activity(problem, actor_profile, activity)
         new_goal_dict = GoalSerializer(new_goal).data
         resp['success'] = True
         resp['goal'] = new_goal_dict
@@ -482,6 +539,9 @@ def add_problem_todo(request, problem_id):
             Added <u>todo</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>
         ''' % (todo, problem.problem_name)
         op_add_event(physician, patient, summary)
+
+        activity = summary
+        add_problem_activity(problem, actor_profile, activity)
 
         new_todo_dict = TodoSerializer(new_todo).data
 
@@ -537,6 +597,9 @@ def upload_problem_image(request, problem_id):
 
         op_add_event(actor, patient, summary)
 
+        activity = summary
+        add_problem_activity(problem, actor_profile, activity)
+
         resp['success'] = True
 
     return ajax_response(resp)
@@ -563,6 +626,9 @@ def delete_problem_image(request, problem_id, image_id):
             Deleted <u>image</u> from <u>problem</u> : <b>%s</b>
             ''' % problem.problem_name
         op_add_event(physician, patient, summary)
+
+        activity = summary
+        add_problem_activity(problem, actor_profile, activity)
 
         resp['success'] = True
 
@@ -593,12 +659,19 @@ def relate_problem(request):
             except ProblemRelationship.DoesNotExist:
                 problem_relationship = ProblemRelationship.objects.create(
                     source=source, target=target)
+                activity = 'Created Problem Relationship'
+                add_problem_activity(source, actor_profile, activity)
+                add_problem_activity(target, actor_profile, activity)
         else:
 
             problem_relationship = ProblemRelationship.objects.get(
                 source=source, target=target)
 
             problem_relationship.delete()
+
+            activity = 'Removed Problem Relationship'
+            add_problem_activity(source, actor_profile, activity)
+            add_problem_activity(target, actor_profile, activity)
 
         resp['success'] = True
 

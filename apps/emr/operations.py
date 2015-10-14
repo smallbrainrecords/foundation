@@ -1,8 +1,5 @@
 
-from django.contrib.auth.models import User
-
 from .models import Encounter, EncounterEvent
-
 
 
 def op_add_event(physician, patient, event_summary):
@@ -13,11 +10,11 @@ def op_add_event(physician, patient, event_summary):
 
     if latest_encounter.exists():
         latest_encounter = latest_encounter[0]
-        if latest_encounter.is_active() == True:
+        if latest_encounter.is_active():
 
             encounter_event = EncounterEvent(
                 encounter=latest_encounter,
                 summary=event_summary)
             encounter_event.save()
 
-	return True
+    return True

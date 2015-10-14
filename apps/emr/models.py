@@ -151,6 +151,16 @@ class Problem(MPTTModel):
         return '%s %s' % (self.patient, self.problem_name)
 
 
+class ProblemActivity(models.Model):
+    problem = models.ForeignKey(Problem)
+    activity = models.TextField()
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_on']
+
+
 class ProblemNote(models.Model):
     author = models.ForeignKey(UserProfile, null=True, blank=True)
     problem = models.ForeignKey(Problem, null=True, blank=True)

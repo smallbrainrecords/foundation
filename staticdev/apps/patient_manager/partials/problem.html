@@ -395,7 +395,29 @@ ng-disabled='!permitted(["relate_problem"])'> {{eff_problem.problem_name}}
 	</div>
 
 </div>
+</div>
 
+<div class='row'>
+	<div class='col-md-12'>
+		<div class='panel panel-default'>
+			<div class='panel-heading'> Problem activity </div>
+			<div class='panel-body'>
+				<div ng-repeat='activity in activities' class='row' style='margin-bottom:4px; border-top:1px solid #ccc;'>
+					<div class='col-md-3'>
+					<b>{{activity.author.user.first_name}} {{activity.author.user.last_name}} - {{activity.author.role}} </b>
+				</div>
+					<div class='col-md-7'>
+					<span ng-bind-html='activity.activity'></span>
+					</div>
+					<div class='col-md-2'>
+						{{activity.created_on | date }}
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 
 <script type='text/javascript'>
 /* To BE REPLACED BY ANGULARJS DIRECTIVE */
