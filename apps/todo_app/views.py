@@ -6,6 +6,7 @@ from emr.operations import op_add_event
 from .serializers import TodoSerializer
 
 from emr.manage_patient_permissions import check_permissions
+from problems_app.operations import add_problem_activity
 
 
 def is_patient(user):
@@ -87,6 +88,9 @@ def update_todo_status(request, todo_id):
             """ % (todo.todo, problem_name, accomplished_label)
 
         op_add_event(physician, patient, summary, todo.problem)
+
+        if todo.problem:
+            add_problem_activity(todo.problem, actor_profile, summary)
 
         resp['success'] = True
 

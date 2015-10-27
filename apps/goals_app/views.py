@@ -1,13 +1,14 @@
 from common.views import *
 
 from emr.models import UserProfile, Goal, TextNote
-
-
 from emr.operations import op_add_event
 
 from .serializers import GoalSerializer
+
 from emr.serializers import TextNoteSerializer
 from emr.manage_patient_permissions import check_permissions
+
+from problems_app.operations import add_problem_activity
 
 
 def is_patient(user):
@@ -119,6 +120,9 @@ def update_goal_status(request, patient_id, goal_id):
 
         op_add_event(physician, patient, summary, goal.problem)
 
+        if goal.problem:
+            add_problem_activity(goal.problem, actor_profile, summary)
+
         resp['success'] = True
 
     return ajax_response(resp)
@@ -165,6 +169,9 @@ def add_goal_note(request, patient_id, goal_id):
         """ % (note, goal.goal, problem_name)
 
         op_add_event(physician, patient, summary, goal.problem)
+
+        if goal.problem:
+            add_problem_activity(goal.problem, actor_profile, summary)
 
         new_note_dict = TextNoteSerializer(new_note).data
 

@@ -345,9 +345,7 @@ def add_history_note(request, problem_id):
     actor_profile, permitted = check_permissions(permissions, request.user)
 
     if request.method == 'POST' and permitted:
-        patient_id = request.POST.get('patient_id')
         note = request.POST.get('note')
-
         try:
             problem = Problem.objects.get(id=problem_id)
         except Problem.DoesNotExist:
@@ -361,7 +359,7 @@ def add_history_note(request, problem_id):
 
             new_note.save()
 
-            activity = 'Added History Note'
+            activity = 'Added History Note  %s' % note
             add_problem_activity(problem, actor_profile, activity)
 
             new_note_dict = ProblemNoteSerializer(new_note).data
@@ -384,7 +382,6 @@ def add_wiki_note(request, problem_id):
     actor_profile = UserProfile.objects.get(user=actor)
 
     if request.method == 'POST':
-        patient_id = request.POST.get('patient_id')
         note = request.POST.get('note')
 
         try:
@@ -403,7 +400,7 @@ def add_wiki_note(request, problem_id):
 
             new_note.save()
 
-            activity = 'Added wiki note'
+            activity = 'Added wiki note: %s' % note
             add_problem_activity(problem, actor_profile, activity)
 
             new_note_dict = ProblemNoteSerializer(new_note).data
@@ -673,7 +670,10 @@ def relate_problem(request):
             except ProblemRelationship.DoesNotExist:
                 problem_relationship = ProblemRelationship.objects.create(
                     source=source, target=target)
-                activity = 'Created Problem Relationship'
+                activity = '''
+                    Created Problem Relationship: <b>%s</b> effects <b>%s</b>
+                ''' % (source.problem_name, target.problem_name)
+
                 add_problem_activity(source, actor_profile, activity)
                 add_problem_activity(target, actor_profile, activity)
         else:
@@ -683,7 +683,10 @@ def relate_problem(request):
 
             problem_relationship.delete()
 
-            activity = 'Removed Problem Relationship'
+            activity = '''
+                    Removed Problem Relationship: <b>%s</b> effects <b>%s</b>
+                ''' % (source.problem_name, target.problem_name)
+
             add_problem_activity(source, actor_profile, activity)
             add_problem_activity(target, actor_profile, activity)
 
