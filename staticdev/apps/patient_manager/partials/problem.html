@@ -370,13 +370,20 @@
 
 
 <input type='checkbox'   ng-model='eff_problem.effecting' ng-change='change_effecting_problem(eff_problem, problem)' 
-ng-disabled='!permitted(["relate_problem"])'> {{eff_problem.problem_name}}
+ng-disabled='!permitted(["relate_problem"])'>
+
+	<span ng-if='eff_problem.effecting==true'  style='font-size:14px; font-weight:bold'>
+	 <a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
+	</span>
+	<span ng-if='eff_problem.effecting!=true'>
+		{{eff_problem.problem_name}}
+	</span>
 
 </div>
 
 	</div>
 
-	<div class='col-md-3'>
+	<div class='col-md-4'>
 <h3> {{problem.problem_name}} </h3>
 	</div>
 
@@ -385,7 +392,14 @@ ng-disabled='!permitted(["relate_problem"])'> {{eff_problem.problem_name}}
 <h4> <i class='glyphicon glyphicon-arrow-right'></i>  EffectedProblems </h4>
 <div class='row' ng-repeat='eff_problem in patient_problems'  style='padding:7px; border-bottom:1px solid #ccc;'>
 
-<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>  {{eff_problem.problem_name}}
+<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>  
+
+	<span ng-if='eff_problem.effected==true' style='font-size:14px; font-weight:bold'>
+	 <a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
+	</span>
+	<span ng-if='eff_problem.effected!=true'>
+		{{eff_problem.problem_name}}
+	</span>
 
 </div>
 
