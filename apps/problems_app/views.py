@@ -4,14 +4,17 @@ from emr.models import UserProfile, Problem
 from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity
+from emr.models import EncounterProblemRecord, Encounter
 
 from emr.operations import op_add_event
+
 
 from .serializers import ProblemSerializer, PatientImageSerializer
 from .serializers import ProblemNoteSerializer, ProblemActivitySerializer
 from emr.serializers import TextNoteSerializer
 from todo_app.serializers import TodoSerializer
 from goals_app.serializers import GoalSerializer
+from encounters_app.serializers import EncounterSerializer
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
@@ -136,6 +139,15 @@ def get_problem_info(request, problem_id):
     activites = ProblemActivity.objects.filter(problem=problem_info)
     activity_holder = ProblemActivitySerializer(activites, many=True).data
 
+    encounter_records = EncounterProblemRecord.objects.filter(
+        problem=problem_info)
+    encounter_ids = [long(x.encounter.id) for x in encounter_records]
+
+    related_encounters = Encounter.objects.filter(id__in=encounter_ids)
+
+    related_encounter_holder = EncounterSerializer(
+        related_encounters, many=True).data
+
     resp = {}
     resp['success'] = True
     resp['info'] = problem_dict
@@ -151,6 +163,8 @@ def get_problem_info(request, problem_id):
     resp['history_note'] = history_note_holder
     resp['wiki_notes'] = wiki_notes_holder
     resp['activities'] = activity_holder
+
+    resp['related_encounters'] = related_encounter_holder
 
     return ajax_response(resp)
 
@@ -206,7 +220,7 @@ def add_patient_problem(request, patient_id):
             physician = request.user
 
             summary = 'Added <u>problem</u> <b>%s</b>' % term
-            op_add_event(physician, patient, summary)
+            op_add_event(physician, patient, summary, new_problem)
 
             activity = "Added <u>problem</u>: <b>%s</b>" % term
             add_problem_activity(new_problem, actor_profile, activity)
@@ -274,7 +288,7 @@ def update_problem_status(request, problem_id):
         <b>%(is_active)s</b> ,
         <b>%(authenticated)s</b>
     """ % status_labels
-    op_add_event(physician, patient, summary)
+    op_add_event(physician, patient, summary, problem)
 
     activity = summary
     add_problem_activity(problem, actor_profile, activity)
@@ -311,7 +325,7 @@ def update_start_date(request, problem_id):
             Changed <u>problem</u> :
             <b>%s</b> start date to <b>%s</b>
         ''' % (problem.problem_name, problem.start_date)
-        op_add_event(physician, patient, summary)
+        op_add_event(physician, patient, summary, problem)
 
         activity = summary
         add_problem_activity(problem, actor_profile, activity)
@@ -462,7 +476,7 @@ def add_physician_note(request, problem_id):
         Added <u>note</u> : <b>%s</b> to
         <u>problem</u> : <b>%s</b>
     ''' % (note, problem.problem_name)
-    op_add_event(physician, patient, summary)
+    op_add_event(physician, patient, summary, problem)
 
     activity = summary
     add_problem_activity(problem, physician_profile, activity)
@@ -501,7 +515,7 @@ def add_problem_goal(request, problem_id):
         summary = '''
             Added <u> goal </u> : <b>%s</b> to <u>problem</u> : <b>%s</b>
         ''' % (goal, problem.problem_name)
-        op_add_event(physician, patient, summary)
+        op_add_event(physician, patient, summary, problem)
 
         activity = summary
         add_problem_activity(problem, actor_profile, activity)
@@ -538,7 +552,7 @@ def add_problem_todo(request, problem_id):
         summary = '''
             Added <u>todo</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>
         ''' % (todo, problem.problem_name)
-        op_add_event(physician, patient, summary)
+        op_add_event(physician, patient, summary, problem)
 
         activity = summary
         add_problem_activity(problem, actor_profile, activity)
@@ -595,7 +609,7 @@ def upload_problem_image(request, problem_id):
             </a>
         ''' % (problem.problem_name, patient_image.image, patient_image.image)
 
-        op_add_event(actor, patient, summary)
+        op_add_event(actor, patient, summary, problem)
 
         activity = summary
         add_problem_activity(problem, actor_profile, activity)
@@ -625,7 +639,7 @@ def delete_problem_image(request, problem_id, image_id):
         summary = '''
             Deleted <u>image</u> from <u>problem</u> : <b>%s</b>
             ''' % problem.problem_name
-        op_add_event(physician, patient, summary)
+        op_add_event(physician, patient, summary, problem)
 
         activity = summary
         add_problem_activity(problem, actor_profile, activity)

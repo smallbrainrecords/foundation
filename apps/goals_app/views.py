@@ -117,7 +117,7 @@ def update_goal_status(request, patient_id, goal_id):
         summary += " for <u>problem</u> <b>%(problem)s</b> "
         summary = summary % status_labels
 
-        op_add_event(physician, patient, summary)
+        op_add_event(physician, patient, summary, goal.problem)
 
         resp['success'] = True
 
@@ -164,7 +164,7 @@ def add_goal_note(request, patient_id, goal_id):
             <u> problem </u>: <b>%s</b>
         """ % (note, goal.goal, problem_name)
 
-        op_add_event(physician, patient, summary)
+        op_add_event(physician, patient, summary, goal.problem)
 
         new_note_dict = TextNoteSerializer(new_note).data
 

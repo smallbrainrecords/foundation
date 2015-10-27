@@ -86,7 +86,7 @@ def update_todo_status(request, todo_id):
             <u>problem</u> <b>%s</b> to <b>%s</b>
             """ % (todo.todo, problem_name, accomplished_label)
 
-        op_add_event(physician, patient, summary)
+        op_add_event(physician, patient, summary, todo.problem)
 
         resp['success'] = True
 

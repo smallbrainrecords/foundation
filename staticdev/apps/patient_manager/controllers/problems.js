@@ -48,6 +48,7 @@
                     $scope.patient_wiki_notes = wiki_notes['patient'];
                     $scope.physician_wiki_notes = wiki_notes['physician'];
                     $scope.other_wiki_notes = wiki_notes['other'];
+                    $scope.related_encounters = data['related_encounters'];
 
                     $scope.activities = data['activities'];
 

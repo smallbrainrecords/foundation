@@ -259,3 +259,13 @@ class ProblemRelationship(models.Model):
 
     def __unicode__(self):
         return "%s %s" % (unicode(self.source), unicode(self.target))
+
+
+class EncounterProblemRecord(models.Model):
+    encounter = models.ForeignKey(
+        Encounter, related_name='encounter_problem_records')
+    problem = models.ForeignKey(
+        Problem, related_name='problem_encounter_records')
+
+    def __unicode__(self):
+        return "%s %s" % (unicode(self.encounter), unicode(self.problem))

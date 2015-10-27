@@ -53,8 +53,8 @@
 
 
 .small-img{
-	width: 200px;
-	height:200px;
+	width: 100px;
+	height:100px;
 }
 
 .modal-image{
@@ -97,4 +97,9 @@ ce-entity ce-flag{
 .nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
     background-color: grey;
     color:white;
+}
+
+.activity-item img{
+	height:100px;
+	width: 100px;
 }

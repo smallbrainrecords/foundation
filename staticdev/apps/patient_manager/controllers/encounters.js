@@ -22,7 +22,7 @@
 
 			$scope.encounter = data['encounter'];
 			$scope.encounter_events = data['encounter_events'];
-
+                  $scope.related_problems = data['related_problems'];
             });
 
 

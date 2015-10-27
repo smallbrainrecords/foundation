@@ -1,8 +1,10 @@
 from common.views import *
 
 from emr.models import UserProfile, Encounter, EncounterEvent
+from emr.models import EncounterProblemRecord, Problem
 
 from .serializers import EncounterSerializer, EncounterEventSerializer
+from problems_app.serializers import ProblemSerializer
 
 from emr.manage_patient_permissions import check_permissions
 
@@ -19,21 +21,30 @@ def is_patient(user):
 @login_required
 def get_encounter_info(request, encounter_id):
 
+    # Encounter
     encounter = Encounter.objects.get(id=encounter_id)
+    encounter_dict = EncounterSerializer(encounter).data
 
+    # Encounter Events
     encounter_events = EncounterEvent.objects.filter(
         encounter=encounter).order_by('datetime')
+    encounter_events_holder = EncounterEventSerializer(
+        encounter_events, many=True).data
 
-    encounter_events_holder = []
+    # Related problems
+    related_problem_records = EncounterProblemRecord.objects.filter(
+        encounter=encounter)
+    related_problem_ids = [long(x.problem.id) for x in related_problem_records]
 
-    for event in encounter_events:
-        event_dict = EncounterEventSerializer(event).data
-        encounter_events_holder.append(event_dict)
+    related_problems = Problem.objects.filter(id__in=related_problem_ids)
 
-    encounter_dict = EncounterSerializer(encounter).data
+    related_problem_holder = ProblemSerializer(
+        related_problems, many=True).data
+
     resp = {}
     resp['encounter'] = encounter_dict
     resp['encounter_events'] = encounter_events_holder
+    resp['related_problems'] = related_problem_holder
 
     return ajax_response(resp)
 
