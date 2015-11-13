@@ -106,7 +106,7 @@
             'name': 'Structure of right wrist ',
             'center': [30, 252],
             'radius': 8,
-            'snomed_id': '368149001',
+            'snomed_id': '9736006',
             'status': 'gray',
             'shape_type': 'circle'
         }, {
