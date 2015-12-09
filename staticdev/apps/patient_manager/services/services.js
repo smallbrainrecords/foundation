@@ -176,11 +176,62 @@
 
 			return httpService.get(params, url);
 
-			};
+		};
 
-		
 
-		});
+		this.updatePatientPassword = function(form){
 
+			var url = '/u/patient/'+form.patient_id+'/profile/update_password';
+
+			return httpService.post(form, url);
+
+		};
+
+		this.updateBasicProfile = function(form) {
+			var url = '/u/patient/'+form.user_id+'/update/basic';
+			return httpService.post(form, url);
+		};
+
+		this.updateProfile = function(form, files){
+        
+
+        	var deferred = $q.defer();
+
+        	var uploadUrl = '/u/patient/'+form.user_id+'/update/profile';
+
+        	var fd = new FormData();
+
+        	fd.append('csrfmiddlewaretoken', this.csrf_token());
+
+        	angular.forEach(form, function(value, key) {
+  				fd.append(key, value);
+			});
+
+        	angular.forEach(files, function(value, key){
+        		fd.append(key, value);
+        	});
+        	
+
+        	$http.post(uploadUrl, fd, {
+            		transformRequest: angular.identity,
+            		headers: {'Content-Type': undefined}
+    	    	})
+	        	.success(function(data){
+	        		deferred.resolve(data);
+        		})
+        		.error(function(data){
+        			deferred.resolve(data);
+
+        		});
+
+        	return deferred.promise;
+    	};
+
+    	this.updateEmail = function(form){
+			var url = '/u/patient/'+form.user_id+'/update/email';
+			return httpService.post(form, url);
+		};
+
+	});
 
 })();

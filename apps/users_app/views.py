@@ -12,7 +12,7 @@ from .serializers import UserProfileSerializer
 from todo_app.serializers import TodoSerializer
 from encounters_app.serializers import EncounterSerializer
 
-from .forms import LoginForm, RegisterForm
+from .forms import LoginForm, RegisterForm, UpdateBasicProfileForm, UpdateProfileForm, UpdateEmailForm
 
 import datetime
 
@@ -290,6 +290,119 @@ def update_patient_summary(request, patient_id):
         patient_profile.save()
         resp['success'] = True
 
+    return ajax_response(resp)
+
+
+@login_required
+def update_patient_password(request, patient_id):
+    resp = {}
+    resp['success'] = False
+    resp['message'] = ''
+
+    permissions = ['update_patient_profile']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        old_password = request.POST.get('old_password')
+        password = request.POST.get('password')
+        patient = User.objects.get(id=patient_id)
+        if patient.check_password(old_password):
+            patient.set_password(password)
+            patient.save()
+            resp['success'] = True
+        else:
+            resp['message'] = 'Incorrect password.'
+    else:
+        resp['message'] = 'Not allowed'
+
+    return ajax_response(resp)
+
+
+@login_required
+def update_basic_profile(request, patient_id):
+    resp = {}
+
+    resp['success'] = False
+
+    if request.method == 'POST':
+        form = UpdateBasicProfileForm(request.POST)
+        if form.is_valid():
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            user_id = form.cleaned_data['user_id']
+
+            if int(patient_id) == int(user_id):
+                user = User.objects.get(id=user_id)
+                user.first_name = first_name
+                user.last_name = last_name
+                user.save()
+
+                resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def update_profile(request, patient_id):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        form = UpdateProfileForm(request.POST, request.FILES)
+        if form.is_valid():
+            user_id = form.cleaned_data['user_id']
+            sex = form.cleaned_data['sex']
+            phone_number = form.cleaned_data['phone_number']
+            summary = form.cleaned_data['summary']
+            cover_image = form.cleaned_data['cover_image']
+            portrait_image = form.cleaned_data['portrait_image']
+            date_of_birth = form.cleaned_data['date_of_birth']
+
+            if int(patient_id) == int(user_id):
+                user = User.objects.get(id=user_id)
+
+                user_profile = UserProfile.objects.get(user=user)
+
+                user_profile.phone_number = phone_number
+                user_profile.sex = sex
+                user_profile.summary = summary
+                user_profile.date_of_birth = date_of_birth
+
+                if cover_image:
+                    user_profile.cover_image = cover_image
+
+                if portrait_image:
+                    user_profile.portrait_image = portrait_image
+
+                user_profile.save()
+
+                resp['success'] = True
+                patient_profile_dict = UserProfileSerializer(user_profile).data
+                resp['info'] = patient_profile_dict
+
+    return ajax_response(resp)
+
+
+@login_required
+def update_patient_email(request, patient_id):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        form = UpdateEmailForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            user_id = form.cleaned_data['user_id']
+
+            if int(patient_id) == int(user_id):
+                user = User.objects.get(id=user_id)
+                user.email = email
+
+                user.save()
+
+                resp['success'] = True
     return ajax_response(resp)
 
 

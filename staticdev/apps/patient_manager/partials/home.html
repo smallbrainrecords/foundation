@@ -15,24 +15,25 @@
 
 	<div class='panel-body'>
 
-<div class='row'>
+		<div class='row'>
 
-	<div class='col-md-4'>
-		<img ng-src='{{patient_info.portrait_image}}' class='thumbnail'> 
-	</div>
+			<div class='col-md-4'>
+				<img ng-src='{{patient_info.portrait_image}}' class='thumbnail'> 
+			</div>
 
-	<div class='col-md-8'>
-		<strong> {{patient_info.user.first_name}} {{patient_info.user.last_name}} </strong>
-		<hr>
-		
-		<textarea class='form-control' ng-model='patient_info.summary'></textarea>
-		<br>
-		<button class='btn btn-default' ng-click='update_patient_summary()' ng-show='permitted(["update_patient_profile"])'>
-			Update
-		</button>
-	</div>
+			<div class='col-md-8'>
+				<strong> {{patient_info.user.first_name}} {{patient_info.user.last_name}} </strong>
+				<a href='#/edit/'  class='btn btn-sm btn-default'>Edit</a>
+				<hr>
+				
+				<textarea class='form-control' ng-model='patient_info.summary'></textarea>
+				<br>
+				<button class='btn btn-default' ng-click='update_patient_summary()' ng-show='permitted(["update_patient_profile"])'>
+					Update
+				</button>
+			</div>
 
-</div>
+		</div>
 
 
 	</div><!-- End of Panel Body -->

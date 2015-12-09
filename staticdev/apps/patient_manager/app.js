@@ -14,6 +14,11 @@
                 templateUrl: '/static/apps/patient_manager/partials/home.html',
                 controller: 'HomeCtrl'
             })
+            .when('/edit/', {
+
+                templateUrl: '/static/apps/patient_manager/partials/edit.html',
+                controller: 'EditUserCtrl'
+            })
             .when('/problem/:problem_id',{
 
             	templateUrl: '/static/apps/patient_manager/partials/problem.html',

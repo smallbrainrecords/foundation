@@ -14,5 +14,17 @@ urlpatterns = patterns(
     url(
         r'^patient/(?P<patient_id>\d+)/profile/update_summary$',
         'update_patient_summary'),
+    url(
+        r'^patient/(?P<patient_id>\d+)/profile/update_password$',
+        'update_patient_password'),
+    url(
+        r'^patient/(?P<patient_id>\d+)/update/basic$',
+        'update_basic_profile'),
+    url(
+        r'^patient/(?P<patient_id>\d+)/update/profile$',
+        'update_profile'),
+    url(
+        r'^patient/(?P<patient_id>\d+)/update/email$',
+        'update_patient_email'),
 
     url(r'^active/user/$', 'fetch_active_user'),)
