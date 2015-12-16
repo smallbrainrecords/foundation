@@ -120,7 +120,9 @@
 
 			});
 
-
+			$scope.set_authentication_false = function() {
+				$scope.problem.authenticated = false;
+			}
 			
 
 			$scope.update_start_date = function(){
@@ -134,7 +136,7 @@
 				problemService.updateStartDate(form).then(function(data){
 
 					toaster.pop('success', 'Done', 'Updated Start Date');
-
+					$scope.set_authentication_false();
 				});
 			}
 
@@ -158,7 +160,7 @@
 						}
 
 						form.note = '';
-
+						$scope.set_authentication_false();
 					}else if(data['success']==false){
 						toaster.pop('error', 'Warning', 'Action Failed');
 					}else{
@@ -181,6 +183,7 @@
 						toaster.pop('success', 'Done', 'Added History Note');
 
 						$scope.history_note = data['note'];
+						$scope.set_authentication_false();
 						
 					}else if(data['success']==false){
 						toaster.pop('error', 'Warning', 'Action Failed');
@@ -210,7 +213,7 @@
 					form.name = '';
 					$scope.problem_goals.push(data['goal']);
 					toaster.pop('success', 'Done', 'Added Goal!');
-
+					$scope.set_authentication_false();
 					/* Not-angular-way */
 					$('#goalNameInput').focus();
 				});
@@ -234,6 +237,7 @@
 					form.name = '';
 					$scope.problem_todos.push(data['todo']);
 					toaster.pop('success', 'Done', 'Added Todo!');
+					$scope.set_authentication_false();
 					/* Not-angular-way */
 					$('#todoNameInput').focus();
 				});
@@ -262,6 +266,7 @@
 
                         	$scope.image = image;
 
+                        	$scope.set_authentication_false();
                         }]
                     });
 
@@ -286,6 +291,7 @@
 
 					$scope.problem_images.splice(image_index, 1);
 					toaster.pop('success', 'Done', 'Added Todo!');
+					$scope.set_authentication_false();
 				});
 			};
 
@@ -299,6 +305,7 @@
 					if(data['success']==true){
 
 						toaster.pop('success', "Done", "Updated Todo status !");
+						$scope.set_authentication_false();
 					}else{
 						alert("Something went wrong!");
 					}
@@ -335,7 +342,7 @@
 				form.relationship = effecting;
 				problemService.relateProblem(form).then(function(data){
 					toaster.pop('success', "Done", "Updated relationship !");
-
+					$scope.set_authentication_false();
 				});
 
 			}
@@ -352,7 +359,7 @@
 
 				problemService.relateProblem(form).then(function(data){
 					toaster.pop('success', "Done", "Updated relationship !");
-
+					$scope.set_authentication_false();
 
 				});
 

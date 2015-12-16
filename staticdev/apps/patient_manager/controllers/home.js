@@ -112,6 +112,7 @@
 
 			$scope.$watch('problem_term', function(newVal, oldVal){
 
+				console.log(newVal);
 				if (newVal==undefined){
 					return false;
 				}

@@ -616,6 +616,7 @@ class LoginError(View):
 # ****************** New Code *********************
 @login_required
 def list_snomed_terms(request):
+    from pymedtermino import *
     import pymedtermino.snomedct
     # We list snomed given a query
     query = request.GET['query']
