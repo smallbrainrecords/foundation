@@ -56,7 +56,9 @@
 			<div class='col-md-12'>
 			
 					<input type='text' ng-model='problem_term' class='form-control' id='problemTermInput' placeholder='Search Problem....'>
-					
+					<button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
+						Add Problem
+					</button>
 					
 
 					<div ng-show='new_problem.set==true'>

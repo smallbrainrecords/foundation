@@ -121,7 +121,8 @@
 			});
 
 			$scope.set_authentication_false = function() {
-				$scope.problem.authenticated = false;
+				if($scope.active_user.role == "patient")
+					$scope.problem.authenticated = false;
 			}
 			
 

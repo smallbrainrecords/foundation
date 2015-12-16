@@ -201,12 +201,12 @@ def add_patient_problem(request, patient_id):
     if request.method == 'POST' and permitted:
 
         term = request.POST.get('term')
-        concept_id = request.POST.get('code')
+        concept_id = request.POST.get('code', None)
 
         patient = User.objects.get(id=patient_id)
 
         problem_exists = Problem.objects.filter(
-            concept_id=concept_id, patient=patient).exists()
+            problem_name=term, patient=patient).exists()
 
         if problem_exists is not True:
 

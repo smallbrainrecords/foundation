@@ -192,6 +192,34 @@
 
 			}
 
+			$scope.add_new_problem = function(problem_term) {
+				var c = confirm("Are you sure?");
+
+				if(c==false){
+					return false;
+				}
+
+				var form = {};
+				form.patient_id = $scope.patient_id;
+				form.term = problem_term;
+
+				patientService.addProblem(form).then(function(data){
+
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'New Problem added successfully');
+						$scope.problems.push(data['problem']);
+						$scope.problem_term = '';
+						$scope.unset_new_problem();
+						/* Not-angular-way */
+						$('#problemTermInput').focus();
+					}else if(data['success']==false){
+						toaster.pop('error', 'Error', data['msg']);
+					}else{
+						toaster.pop('error', 'Error', 'Something went wrong');
+					}
+				});
+			}
+
 			$scope.update_todo_status = function(todo){
 
 				patientService.updateTodoStatus(todo).then(function(data){

@@ -141,7 +141,7 @@ class Problem(MPTTModel):
     parent = TreeForeignKey(
         'self', null=True, blank=True, related_name='children')
     problem_name = models.CharField(max_length=200)
-    concept_id = models.CharField(max_length=20, blank=True)
+    concept_id = models.CharField(max_length=20, blank=True, null=True)
     is_controlled = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     authenticated = models.BooleanField(default=False)
