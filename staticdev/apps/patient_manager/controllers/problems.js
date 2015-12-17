@@ -121,7 +121,7 @@
 			});
 
 			$scope.set_authentication_false = function() {
-				if($scope.active_user.role == "patient")
+				if($scope.active_user.role != "physician" || $scope.active_user.role != "admin")
 					$scope.problem.authenticated = false;
 			}
 			

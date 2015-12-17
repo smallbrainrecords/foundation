@@ -212,7 +212,7 @@ def add_patient_problem(request, patient_id):
 
             new_problem = Problem(
                 patient=patient, problem_name=term, concept_id=concept_id)
-            if actor_profile.role == 'physician':
+            if actor_profile.role == 'physician' or actor_profile.role == 'admin':
                 new_problem.authenticated = True
 
             new_problem.save()
