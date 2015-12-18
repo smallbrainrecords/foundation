@@ -322,7 +322,7 @@
 <div style='max-height:375px; overflow-y:auto;'>
 		<table class='table' ng-if='show_accomplished_todos==true'>
 			<thead>
-
+				<th> Accomplished </th>
 				<th> Item </th>
 				<th> For Problem </th>
 			</thead>
@@ -330,7 +330,7 @@
 			<tbody>
 
 				<tr ng-repeat='todo in accomplished_todos'>
-
+					<td> <input type='checkbox' ng-model='todo.accomplished' ng-change='update_todo_status(todo)'> </td>
 					<td> <span class='text-success'> {{todo.todo}} </span> </td>
 
 					<td>{{todo.problem.problem_name }} </td>

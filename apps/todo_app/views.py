@@ -102,4 +102,13 @@ def update_todo_status(request, todo_id):
             accomplished_todo_list.append(todo_dict)
         resp['accomplished_todos'] = accomplished_todo_list
 
+        # Not accomplished Todos
+        pending_todos = ToDo.objects.filter(
+            patient=patient, accomplished=False)
+        pending_todo_list = []
+        for todo in pending_todos:
+            todo_dict = TodoSerializer(todo).data
+            pending_todo_list.append(todo_dict)
+        resp['pending_todos'] = pending_todo_list
+
     return ajax_response(resp)
