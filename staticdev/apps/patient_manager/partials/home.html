@@ -303,8 +303,8 @@
 
 			<tbody>
 
-				<tr ng-repeat='todo in pending_todos'>
-					<td> <input type='checkbox' ng-model='todo.accomplished'  ng-change='update_todo_status(todo)' ng-show='todo.accomplished==false'> </td>
+				<tr ng-repeat='todo in pending_todos' ng-show='todo.accomplished==false'>
+					<td> <input type='checkbox' ng-model='todo.accomplished'  ng-change='update_todo_status(todo)'> </td>
 					<td> {{todo.todo}}</td>
 
 					<td>{{todo.problem.problem_name }} </td>

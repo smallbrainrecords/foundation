@@ -225,7 +225,7 @@
 				patientService.updateTodoStatus(todo).then(function(data){
 
 					if(data['success']==true){
-
+						$scope.accomplished_todos = data['accomplished_todos'];
 						toaster.pop('success', "Done", "Updated Todo status !");
 					}else{
 						alert("Something went wrong!");

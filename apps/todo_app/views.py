@@ -93,5 +93,13 @@ def update_todo_status(request, todo_id):
             add_problem_activity(todo.problem, actor_profile, summary)
 
         resp['success'] = True
+         # Accomplished Todos
+        accomplished_todos = ToDo.objects.filter(
+            patient=patient, accomplished=True)
+        accomplished_todo_list = []
+        for todo in accomplished_todos:
+            todo_dict = TodoSerializer(todo).data
+            accomplished_todo_list.append(todo_dict)
+        resp['accomplished_todos'] = accomplished_todo_list
 
     return ajax_response(resp)
