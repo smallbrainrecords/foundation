@@ -283,6 +283,10 @@
 					<label> Problem (optional) </label>
 					<input type='text' ng-model='new_todo.problem'>
 				</div>
+				<div class='form-group'>
+					<label> Due Date </label>
+					<input type='text' ng-model='new_todo.due_date' id='due_date'>
+				</div>
 
 				<button type='submit' class='btn btn-default'> Add Todo </button>
 
@@ -299,15 +303,26 @@
 				<th> Accomplished </th>
 				<th> Item </th>
 				<th> For Problem </th>
+				<th> Due Date </th>
+				<th></th>
 			</thead>
 
 			<tbody>
 
-				<tr ng-repeat='todo in pending_todos' ng-show='todo.accomplished==false'>
+				<tr ng-repeat='todo in pending_todos' ng-show='todo.accomplished==false' class="todo">
 					<td> <input type='checkbox' ng-model='todo.accomplished'  ng-change='update_todo_status(todo)'> </td>
 					<td> {{todo.todo}}</td>
 
 					<td>{{todo.problem.problem_name }} </td>
+					<td>{{todo.due_date }} </td>
+					<td>
+						<a href="#" class="btn-custom"><i class="fa fa-pencil"></i></a>
+						<!-- <div class="quick-card-editor-card" ng-show='todo.accomplished==false'>
+							<div class="quick-card-editor-buttons">
+								<a href="#"><i class="fa fa-clock-o"></i>Change Due Date</a>
+							</div>
+						</div> -->
+					</td>
 				</tr>
 			</tbody>
 
@@ -325,6 +340,7 @@
 				<th> Accomplished </th>
 				<th> Item </th>
 				<th> For Problem </th>
+				<th> Due Date </th>
 			</thead>
 
 			<tbody>
@@ -334,6 +350,7 @@
 					<td> <span class='text-success'> {{todo.todo}} </span> </td>
 
 					<td>{{todo.problem.problem_name }} </td>
+					<td>{{todo.due_date }} </td>
 				</tr>
 			</tbody>
 
@@ -386,7 +403,14 @@
 </div>
 
 
+<script type='text/javascript'>
+	
+	$(document).ready(function(){
 
+		$( "#due_date" ).datepicker({ dateFormat: 'yy-mm-dd' });
+
+	});
+</script>
 
 
 

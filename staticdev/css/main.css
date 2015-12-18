@@ -107,3 +107,24 @@ ce-entity ce-flag{
 .cover-image {
 	margin: 0 auto;
 }
+
+/*    TO DO     */
+
+.todo {
+	position: relative;
+}
+
+.btn-custom {
+	color: #333;
+	display: none;
+}
+
+.todo:hover .btn-custom{
+	display: block;
+}
+
+.todo .quick-card-editor-card {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}

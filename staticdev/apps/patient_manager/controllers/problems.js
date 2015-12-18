@@ -12,6 +12,7 @@
 			var problem_id = $routeParams.problem_id;
 
 			$scope.problem_id = problem_id;
+			$scope.show_accomplished_todos = false;
 
 			$scope.loading = true;
 			$scope.show_other_notes = false;
@@ -401,6 +402,19 @@
 				problemService.getProblemActivity($scope.problem_id).then(function(data){
 					$scope.activities = data['activities'];
 				})
+			}
+
+			$scope.toggle_accomplished_todos  = function(){
+
+				var flag = $scope.show_accomplished_todos;
+
+				if(flag==true){
+					flag = false;
+				}else{
+					flag=true;
+				}
+
+				$scope.show_accomplished_todos = flag;
 			}
 
 			$interval(function(){

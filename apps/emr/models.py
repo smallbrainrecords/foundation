@@ -191,6 +191,7 @@ class ToDo(models.Model):
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
+    due_date = models.DateField(blank=True, null=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.patient))

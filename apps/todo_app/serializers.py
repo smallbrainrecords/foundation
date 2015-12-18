@@ -19,4 +19,5 @@ class TodoSerializer(serializers.ModelSerializer):
 			'problem',
 			'todo',
 			'accomplished',
+			'due_date',
 			)

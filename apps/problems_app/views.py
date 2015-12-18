@@ -1,3 +1,4 @@
+from datetime import datetime
 from common.views import *
 
 from emr.models import UserProfile, Problem
@@ -538,9 +539,12 @@ def add_problem_todo(request, problem_id):
         patient = problem.patient
 
         todo = request.POST.get('name')
+        due_date = request.POST.get('due_date', None)
+        if due_date:
+            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
 
         new_todo = ToDo(
-            patient=patient, problem=problem, todo=todo)
+            patient=patient, problem=problem, todo=todo, due_date=due_date)
 
         new_todo.save()
 

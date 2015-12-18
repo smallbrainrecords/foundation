@@ -280,6 +280,11 @@
 			</div>
 
 			<div class='form-group'>
+				<label> Due Date </label>
+				<input type='text' ng-model='todo_form.due_date' id='due_date'>
+			</div>
+
+			<div class='form-group'>
 				<input type='submit' value='Submit' class='btn btn-default'>
 			</div>
 
@@ -290,8 +295,20 @@
 
 		<ul class='list-group'>
 			<li ng-show='!problem_todos.length'> No Todos </li>
-			<li ng-repeat='todo in problem_todos' class='list-group-item'>
-				 <input type='checkbox' ng-model='todo.accomplished'   ng-change='update_todo_status(todo)' ng-show='todo.accomplished==false'> &nbsp;&nbsp; {{todo.todo}}
+			<li ng-repeat='todo in problem_todos' class='list-group-item'  ng-show='todo.accomplished==false'>
+				 <input type='checkbox' ng-model='todo.accomplished'   ng-change='update_todo_status(todo)'> &nbsp;&nbsp; {{todo.todo}} {{todo.due_date}}
+			</li>
+		</ul>
+		<hr>
+		<a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'> 
+			<span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
+			<span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
+		</a>
+		<hr>
+		<ul class='list-group' ng-if='show_accomplished_todos==true'>
+			<li ng-show='!problem_todos.length'> No Todos </li>
+			<li ng-repeat='todo in problem_todos' class='list-group-item' ng-show='todo.accomplished==true'>
+				 <input type='checkbox' ng-model='todo.accomplished'  ng-change='update_todo_status(todo)'> &nbsp;&nbsp; {{todo.todo}} {{todo.due_date}}
 			</li>
 		</ul>
 
@@ -467,6 +484,15 @@ var options = {
 
 $('#uploadProblemImageFrm').ajaxForm(options);
 
+</script>
+
+<script type='text/javascript'>
+	
+	$(document).ready(function(){
+
+		$( "#due_date" ).datepicker({ dateFormat: 'yy-mm-dd' });
+
+	});
 </script>
 
 
