@@ -606,7 +606,7 @@ def upload_problem_image(request, problem_id):
             Physician added <u>image</u> to <u>problem</u>
             <b>%s</b> <br/>
             <a href="/media/%s">
-            <img src="/media/%s" style="max-width:100px; max-height:100px" />
+            <img src="/media/%s" style="max-width:100px; max-height:100px" class="thumbnail" />
             </a>
         ''' % (problem.problem_name, patient_image.image, patient_image.image)
 

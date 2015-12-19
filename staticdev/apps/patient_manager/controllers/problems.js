@@ -400,7 +400,8 @@
 
 			$scope.refresh_problem_activity=function(){
 				problemService.getProblemActivity($scope.problem_id).then(function(data){
-					$scope.activities = data['activities'];
+					if ($scope.activities.length != data['activities'].length)
+						$scope.activities = data['activities'];
 				})
 			}
 
