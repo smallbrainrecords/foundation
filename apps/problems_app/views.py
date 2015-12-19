@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+try:
+    from PIL import Image, ImageOps
+except ImportError:
+    import Image
+    import ImageOps
+
 from datetime import datetime
 from common.views import *
 
@@ -602,11 +609,21 @@ def upload_problem_image(request, problem_id):
 
         patient_image.save()
 
+        if request.FILES['file']:
+            filename = str(patient_image.image.path)
+            img = Image.open(filename)
+
+            if img.mode not in ('L', 'RGB'):
+                img = img.convert('RGB')
+
+            img.thumbnail((160,160), Image.ANTIALIAS)
+            img.save(filename)
+
         summary = '''
             Physician added <u>image</u> to <u>problem</u>
             <b>%s</b> <br/>
             <a href="/media/%s">
-            <img src="/media/%s" style="max-width:100px; max-height:100px" class="thumbnail" />
+            <img src="/media/%s" class="thumbnail thumbnail-custom" />
             </a>
         ''' % (problem.problem_name, patient_image.image, patient_image.image)
 

@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+try:
+    from PIL import Image, ImageOps
+except ImportError:
+    import Image
+    import ImageOps
+
 from common.views import *
 
 from emr.models import UserProfile, Problem
@@ -377,6 +384,16 @@ def update_profile(request, patient_id):
                     user_profile.portrait_image = portrait_image
 
                 user_profile.save()
+
+                if portrait_image:
+                    filename = str(user_profile.portrait_image.path)
+                    img = Image.open(filename)
+
+                    if img.mode not in ('L', 'RGB'):
+                        img = img.convert('RGB')
+
+                    img.thumbnail((160,160), Image.ANTIALIAS)
+                    img.save(filename)
 
                 resp['success'] = True
                 patient_profile_dict = UserProfileSerializer(user_profile).data
