@@ -118,7 +118,7 @@ def update_goal_status(request, patient_id, goal_id):
         summary += " for <u>problem</u> <b>%(problem)s</b> "
         summary = summary % status_labels
 
-        # op_add_event(physician, patient, summary, goal.problem)
+        op_add_event(physician, patient, summary, goal.problem)
 
         if goal.problem:
             add_problem_activity(goal.problem, actor_profile, summary)
