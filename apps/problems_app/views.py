@@ -360,7 +360,7 @@ def add_history_note(request, problem_id):
 
             new_note.save()
 
-            activity = 'Added History Note  %s' % note
+            activity = 'Added History Note  <b>%s</b>' % note
             add_problem_activity(problem, actor_profile, activity)
 
             new_note_dict = ProblemNoteSerializer(new_note).data
@@ -401,7 +401,7 @@ def add_wiki_note(request, problem_id):
 
             new_note.save()
 
-            activity = 'Added wiki note: %s' % note
+            activity = 'Added wiki note: <b>%s</b>' % note
             add_problem_activity(problem, actor_profile, activity)
 
             new_note_dict = ProblemNoteSerializer(new_note).data
@@ -680,6 +680,8 @@ def relate_problem(request):
 
                 add_problem_activity(source, actor_profile, activity)
                 add_problem_activity(target, actor_profile, activity)
+
+                op_add_event(request.user, source.patient, activity)
         else:
 
             problem_relationship = ProblemRelationship.objects.get(
@@ -693,6 +695,8 @@ def relate_problem(request):
 
             add_problem_activity(source, actor_profile, activity)
             add_problem_activity(target, actor_profile, activity)
+
+            op_add_event(request.user, source.patient, activity)
 
         resp['success'] = True
 

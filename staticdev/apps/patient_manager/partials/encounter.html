@@ -2,7 +2,7 @@
 
 <hr>
 
-<h4>  Encounter : {{encounter.starttime}} to {{encounter.stoptime}} </h4>
+<h4>  Encounter : <span ng-if="encounter.starttime">{{encounter.starttime | date:'medium'}}</span> <span ng-if="encounter.stoptime">to {{encounter.stoptime | date:'medium'}}</span> </h4>
 
 
 <link href="//vjs.zencdn.net/4.12/video-js.css" rel="stylesheet">
