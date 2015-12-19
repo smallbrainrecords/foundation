@@ -190,7 +190,7 @@ def check_access(patient, actor_profile):
         allowed = True
     else:
         controllers = PatientController.objects.filter(
-            patient=actor_profile.user)
+            patient=patient)
         physician_ids = [x.physician.id for x in controllers]
         is_staff = PhysicianTeam.objects.filter(
             physician__id__in=physician_ids).exists()
