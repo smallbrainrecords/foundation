@@ -13,6 +13,7 @@
 
 			$scope.problem_id = problem_id;
 			$scope.show_accomplished_todos = false;
+			$scope.show_accomplished_goals = false;
 
 			$scope.loading = true;
 			$scope.show_other_notes = false;
@@ -416,6 +417,19 @@
 				}
 
 				$scope.show_accomplished_todos = flag;
+			}
+
+			$scope.toggle_accomplished_goals  = function(){
+
+				var flag = $scope.show_accomplished_goals;
+
+				if(flag==true){
+					flag = false;
+				}else{
+					flag=true;
+				}
+
+				$scope.show_accomplished_goals = flag;
 			}
 
 			$interval(function(){

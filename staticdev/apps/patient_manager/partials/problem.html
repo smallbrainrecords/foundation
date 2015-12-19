@@ -257,12 +257,26 @@
 
 		<ul class='list-group'>
 			<li ng-show='!problem_goals.length'> No Goals </li>
-			<li ng-repeat='goal in problem_goals' class='list-group-item' ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
+			<li ng-repeat='goal in problem_goals' class='list-group-item' ng-class='goal.is_controlled==true ? "green-box" : "red-box" ' ng-show='goal.accomplished==false'>
 				<a class='btn btn-default' href='#/goal/{{goal.id}}'> View </a>
 				{{goal.goal}}
 			</li>
 		</ul>
 
+		<hr>
+		<a class='btn btn-default btn-md' ng-click='toggle_accomplished_goals()'> 
+			<span ng-if='show_accomplished_goals==false'>Show accomplished Goals </span>
+			<span ng-if='show_accomplished_goals==true'>Hide accomplished Goals </span>
+		</a>
+		<hr>
+
+		<ul class='list-group' ng-if='show_accomplished_goals==true'>
+			<li ng-show='!problem_goals.length'> No Goals </li>
+			<li ng-repeat='goal in problem_goals' class='list-group-item' ng-class='goal.is_controlled==true ? "green-box" : "red-box" ' ng-show='goal.accomplished==true'>
+				<a class='btn btn-default' href='#/goal/{{goal.id}}'> View </a>
+				{{goal.goal}}
+			</li>
+		</ul>
 
 
 	</div>
