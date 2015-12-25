@@ -106,6 +106,7 @@ ce-entity ce-flag{
 
 .cover-image {
 	margin: 0 auto;
+	max-width: 50%;
 }
 
 /*    TO DO     */

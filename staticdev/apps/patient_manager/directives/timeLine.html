@@ -1,0 +1,61 @@
+<html>
+<head>
+<title></title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
+<script src="timeLineDirective.js"></script>
+
+<script type="text/javascript">
+    window.aApp = angular.module('aApp', []);
+    window.aApp.controller('c1', function ($scope) {
+        $scope.timelineSave = function (newData) { console.log(JSON.stringify(newData)); };
+        $scope.timeline = {
+            Name: 'testing', birthday: '30/11/1970 12:00:00', problems: [
+             {
+                 name: 'Test problem01', events: [
+                                               { event_id: 123, startTime: '30/11/2000 12:00:00', state: 'inactive' },
+                                               { event_id: 124, startTime: '01/05/2015 12:00:00', state: 'controlled' },
+                                               { event_id: 125, startTime: '01/09/2015 12:00:00', state: 'uncontrolled' },
+                                               { event_id: 126, startTime: '10/11/2015 12:00:00', state: 'controlled' },
+                 ]
+             },
+            {
+                name: 'Test problem02', events: [
+                                               { event_id: 127, startTime: '01/02/2008 12:00:00', state: 'inactive' },
+                                               { event_id: 128, startTime: '15/04/2015 12:00:00', state: 'uncontrolled' },
+                                               { event_id: 129, startTime: '25/10/2015 12:00:00', state: 'controlled' },
+                ]
+            },
+            {
+                name: 'Test problem03', events: [
+                                               { event_id: 132, startTime: '01/01/2015 12:00:00', state: 'uncontrolled' },
+                                               { event_id: 145, startTime: '01/11/2015 12:00:00', state: 'controlled' }
+                ]
+            },
+            {
+                name: 'Test problem04', events: [
+                                               { event_id: 156, startTime: '15/05/2015 12:00:00', state: 'controlled' },
+                                               { event_id: 165, startTime: '10/11/2015 12:00:00', state: 'inactive' }
+                ]
+            }
+            ]
+        };
+
+    });
+
+    window.aApp.directive('problemTimeline', timelineDirective);
+
+</script>
+</head>
+
+<body style="background-color:#eae0c2;">
+ 
+<div id="c1" ng-app="aApp" ng-controller="c1" style="margin-left:auto;margin-right:auto;width:70%;position:relative;text-align:center;margin-top:200px;">
+
+
+        <problem-timeline ng-model="timeline"></problem-timeline>
+
+</div>
+
+</body>
+</html>
