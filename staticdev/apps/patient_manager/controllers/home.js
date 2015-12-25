@@ -21,57 +21,16 @@
 
 			$scope.timelineSave = function (newData) { console.log(JSON.stringify(newData)); };
 
-			// $scope.timeline = {
-	  //           Name: 'testing', birthday: '30/11/1970 12:00:00', 
-	  //           problems: [
-	  //            {
-	  //                name: 'Test problem01', 
-	  //                events: [
-	  //                           { event_id: 123, startTime: '30/11/2000 12:00:00', state: 'inactive' },
-	  //                ]
-	  //            },
-	  //            {
-	  //                name: 'Test problem02', 
-	  //                events: [
-	  //                           { event_id: 123, startTime: '30/11/2000 12:00:00', state: 'inactive' },
-	  //                ]
-	  //            },
-	  //            {
-	  //                name: 'Test problem03', 
-	  //                events: [
-	  //                           { event_id: 127, startTime: '01/02/2008 12:00:00', state: 'inactive' },
-   //                             { event_id: 128, startTime: '15/04/2015 12:00:00', state: 'uncontrolled' },
-   //                             { event_id: 129, startTime: '25/10/2015 12:00:00', state: 'controlled' },
-	  //                ]
-	  //            },
-	  //            {
-	  //                name: 'Test problem04', 
-	  //                events: [
-	  //                           { event_id: 123, startTime: '30/11/2000 12:00:00', state: 'inactive' },
-	  //                ]
-	  //            },
-	  //            {
-	  //                name: 'Test problem05', 
-	  //                events: [
-	  //                           { event_id: 123, startTime: '30/11/2000 12:00:00', state: 'inactive' },
-	  //                ]
-	  //            },
-	  //            {
-	  //                name: 'Test problem03', 
-	  //                events: [
-	  //                           { event_id: 123, startTime: '30/11/2000 12:00:00', state: 'inactive' },
-	  //                ]
-	  //            }
-	  //           ]
-	  //       };
-
 	  		function convertDateTime(dateTime){
-			    var date = dateTime.split("-");
-			    var yyyy = date[0];
-			    var mm = date[1]-1;
-			    var dd = date[2];
+				if(dateTime) {
+					var date = dateTime.split("-");
+				    var yyyy = date[0];
+				    var mm = date[1];
+				    var dd = date[2];
 
-			    return dd + '/' + mm + '/' + yyyy + ' 12:00:00';
+				    return dd + '/' + mm + '/' + yyyy + ' 12:00:00';
+				}
+			    return '30/11/1970 12:00:00';
 			}
 
 			patientService.fetchPatientInfo(patient_id).then(function(data){
@@ -86,7 +45,7 @@
 
 				// problem timeline
 				var timeline_problems = [];
-				angular.forEach(data['problems'], function(value, key) {
+				angular.forEach(data['timeline_problems'], function(value, key) {
 					var timeline_problem = {};
 				  	timeline_problem['name'] = value.problem_name;
 				  	var events = [];
@@ -106,7 +65,7 @@
 
 				$scope.timeline = {
 					Name: data['info']['user']['first_name'] + data['info']['user']['last_name'], 
-					birthday: data['info']['date_of_birth'], 
+					birthday: convertDateTime(data['info']['date_of_birth']), 
 					problems: timeline_problems
 				}
 			});

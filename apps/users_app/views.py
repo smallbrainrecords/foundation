@@ -208,6 +208,13 @@ def get_patient_info(request, patient_id):
     patient_user = User.objects.get(id=patient_id)
     patient_profile = UserProfile.objects.get(user=patient_user)
 
+    # Timeline Problems
+    timeline_problems = Problem.objects.filter(patient=patient_user)
+    timeline_problems_list = []
+    for problem in timeline_problems:
+        problem_dict = ProblemSerializer(problem).data
+        timeline_problems_list.append(problem_dict)
+
     # Active Problems
     problems = Problem.objects.filter(patient=patient_user, is_active=True)
     problem_list = []
@@ -271,6 +278,7 @@ def get_patient_info(request, patient_id):
     resp['pending_todos'] = pending_todo_list
     resp['accomplished_todos'] = accomplished_todo_list
     resp['inactive_problems'] = inactive_problems_list
+    resp['timeline_problems'] = timeline_problems_list
     resp['completed_goals'] = completed_goals_list
 
     resp['encounters'] = encounter_list

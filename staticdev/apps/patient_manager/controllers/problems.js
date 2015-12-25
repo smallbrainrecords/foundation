@@ -26,11 +26,47 @@
 
 			});
 
+			function convertDateTime(dateTime){
+				if(dateTime) {
+					var date = dateTime.split("-");
+				    var yyyy = date[0];
+				    var mm = date[1];
+				    var dd = date[2];
+
+				    return dd + '/' + mm + '/' + yyyy + ' 12:00:00';
+				}
+			    return '30/11/1970 12:00:00';
+			}
+
 			patientService.fetchProblemInfo(problem_id).then(function(data){
 
                     $scope.problem = data['info'];
 
-                    console.log($scope.problem);
+                    // problem timeline
+                    var state;
+				  	if ($scope.problem.is_controlled) {
+				  		state = 'controlled';
+				  	} else if ($scope.problem.is_active) {
+				  		state = 'uncontrolled';
+				  	} else {
+				  		state = 'inactive';
+				  	}
+					var timeline_problems = [
+						{
+							'name': $scope.problem.problem_name,
+							events: [
+			                    { event_id: null, startTime: convertDateTime($scope.problem.start_date), state: state },
+							]
+						}
+					];
+
+					$scope.$watch('active_user', function(nV, oV){
+						$scope.timeline = {
+							Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'], 
+							birthday: convertDateTime($scope.active_user['date_of_birth']), 
+							problems: timeline_problems
+						};
+					});
 
                     $scope.patient_notes = data['patient_notes'];
                     $scope.physician_notes = data['physician_notes'];
