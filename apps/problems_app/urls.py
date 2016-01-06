@@ -38,4 +38,5 @@ urlpatterns = patterns(
     url(r'^problem/(?P<problem_id>\d+)/image/(?P<image_id>\d+)/delete/$',
         'delete_problem_image'),
 
-    url(r'^problem/relate/$', 'relate_problem'), )
+    url(r'^problem/relate/$', 'relate_problem'), 
+    url(r'^problem/update_by_ptw/$', 'update_by_ptw'), )

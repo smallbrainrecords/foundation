@@ -82,6 +82,13 @@
 			var url ='/p/problem/'+problem_id+'/activity/';
 			return httpService.get(params, url);
 		};
+
+		this.updateByPTW = function(form){
+
+			var url = '/p/problem/update_by_ptw/';
+			return httpService.postJson(form, url);
+
+		};
 });
 
 

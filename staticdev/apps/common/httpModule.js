@@ -39,6 +39,30 @@
 
 		};
 
+		this.postJson = function(data, url){
+
+			var deferred = $q.defer();
+
+			//data.csrfmiddlewaretoken = this.csrf_token();
+
+			$http({
+				'method':'POST',
+				'url' : url,
+				'data' : data,
+				'headers':
+				{
+					'Content-Type': 'application/json; charset=UTF-8'
+				}
+			}).success(function(data){
+				deferred.resolve(data);
+			}).error(function(data){
+				deferred.resolve(data);
+			});
+
+			return deferred.promise;
+
+		};
+
 		this.get = function(params, url){
 
 			var deferred = $q.defer();

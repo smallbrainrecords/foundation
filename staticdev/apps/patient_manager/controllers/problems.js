@@ -56,13 +56,12 @@
 				var form = {};
 
 				form.patient_id = $scope.patient_id;
-				form.problem_id = $scope.problem.id;
-				form.start_date = convertDateTimeBack(newData.problems[0].events[0].startTime);
-				$scope.problem.start_date = form.start_date;
+				form.timeline_data = newData;
+				$scope.problem.start_date = convertDateTimeBack(newData.problems[0].events[0].startTime);
 
-				problemService.updateStartDate(form).then(function(data){
+				problemService.updateByPTW(form).then(function(data){
 
-					toaster.pop('success', 'Done', 'Updated Start Date');
+					toaster.pop('success', 'Done', 'Updated Problem');
 					$scope.set_authentication_false();
 				});
 			};
@@ -83,8 +82,9 @@
 					var timeline_problems = [
 						{
 							'name': $scope.problem.problem_name,
+							'id': $scope.problem.id,
 							events: [
-			                    { event_id: null, startTime: convertDateTime($scope.problem.start_date), state: state },
+			                    { event_id: $scope.problem.id, startTime: convertDateTime($scope.problem.start_date), state: state },
 							]
 						}
 					];

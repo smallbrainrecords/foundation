@@ -5,6 +5,7 @@ except ImportError:
     import Image
     import ImageOps
 
+import json
 from datetime import datetime
 from common.views import *
 
@@ -716,5 +717,42 @@ def relate_problem(request):
             op_add_event(request.user, source.patient, activity)
 
         resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def update_by_ptw(request):
+    
+    resp = {}
+
+    resp['success'] = False
+
+    permissions = ['modify_problem']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        timeline_data = json.loads(request.body)['timeline_data']
+        for problem_json in timeline_data['problems']:
+            problem = Problem.objects.get(id=int(problem_json['id']))
+            patient = problem.patient
+
+            start_date = problem_json['events'][0]['startTime']
+            problem.start_date = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").date()
+
+            problem.save()
+
+            physician = request.user
+
+            summary = '''
+                Changed <u>problem</u> :
+                <b>%s</b>
+            ''' % (problem.problem_name)
+            op_add_event(physician, patient, summary, problem)
+
+            activity = summary
+            add_problem_activity(problem, actor_profile, activity)
+
+            resp['success'] = True
 
     return ajax_response(resp)

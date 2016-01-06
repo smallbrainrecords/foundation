@@ -19,8 +19,6 @@
 			$scope.problem_terms = [];
 			$scope.new_problem = {set:false};
 
-			$scope.timelineSave = function (newData) { console.log(JSON.stringify(newData)); };
-
 	  		function convertDateTime(dateTime){
 				if(dateTime) {
 					var date = dateTime.split("-");
@@ -32,6 +30,19 @@
 				}
 			    return '30/11/1970 12:00:00';
 			}
+
+			$scope.timelineSave = function (newData) { 
+				var form = {};
+
+				form.patient_id = $scope.patient_id;
+				form.timeline_data = newData;
+
+				problemService.updateByPTW(form).then(function(data){
+
+					toaster.pop('success', 'Done', 'Updated Problems');
+					$scope.set_authentication_false();
+				});
+			};
 
 			patientService.fetchPatientInfo(patient_id).then(function(data){
 				$scope.patient_info = data['info'];
@@ -48,6 +59,7 @@
 				angular.forEach(data['timeline_problems'], function(value, key) {
 					var timeline_problem = {};
 				  	timeline_problem['name'] = value.problem_name;
+				  	timeline_problem['id'] = value.id;
 				  	var events = [];
 				  	var state;
 				  	if (value.is_controlled) {
@@ -58,7 +70,7 @@
 				  		state = 'inactive';
 				  	}
 
-				  	events.push({event_id: null, startTime: convertDateTime(value.start_date), state: state});
+				  	events.push({event_id: value.id, startTime: convertDateTime(value.start_date), state: state});
 				  	timeline_problem['events'] = events;
 				  	timeline_problems.push(timeline_problem);
 				});
