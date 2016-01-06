@@ -205,6 +205,8 @@
 
 					toaster.pop('success', 'Done', 'Updated Start Date');
 					$scope.set_authentication_false();
+					$scope.timeline.problems[0].events[0].startTime = convertDateTime($scope.problem.start_date);
+					console.log($scope.timeline);
 				});
 			}
 

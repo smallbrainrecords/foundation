@@ -746,8 +746,8 @@ def update_by_ptw(request):
 
             summary = '''
                 Changed <u>problem</u> :
-                <b>%s</b>
-            ''' % (problem.problem_name)
+                <b>%s</b> start date to <b>%s</b>
+            ''' % (problem.problem_name, problem.start_date)
             op_add_event(physician, patient, summary, problem)
 
             activity = summary

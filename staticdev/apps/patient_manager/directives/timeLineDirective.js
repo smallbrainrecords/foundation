@@ -6,6 +6,19 @@ function timelineDirective() {
 
     var timeline = {}; 
 
+            timeline.reset = function() {
+                var element = document.getElementsByTagName("path");
+                for (index = element.length - 1; index >= 0; index--) {
+                    element[index].parentNode.removeChild(element[index]);
+                }
+                var element = document.getElementsByTagName("text");
+                for (index = element.length - 1; index >= 0; index--) {
+                    element[index].parentNode.removeChild(element[index]);
+                }
+                // timeline.wrapSvg.removeChild('path');
+                // timeline.wrapSvg.removeChild('text');
+            }
+
             timeline.renderPath = function (c, d, path) {
                 !path && (path = timeline.wrapSvg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'path')));
                 path.setAttribute('d', c.d || d);
@@ -391,7 +404,8 @@ function timelineDirective() {
                 scope: false,
                 link: function (scope, element, att, model) {
                     scope.$watch('timeline', function(newVal, oldVal) {
-                        if(newVal && oldVal == undefined) { 
+                        if(newVal) {
+                            timeline.reset();
                             timeline.renderXst = 200.5; timeline.renderXw = 750;
                             timeline.viewClr = '#ffffff'; timeline.editClr = '#ffffff';
                             timeline.renderYst = 10.5; timeline.renderYh = (scope.timeline.problems.length+1) * 90; timeline.renderHx = 155; window.n = 'innerHTML';

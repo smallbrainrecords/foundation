@@ -40,7 +40,6 @@
 				problemService.updateByPTW(form).then(function(data){
 
 					toaster.pop('success', 'Done', 'Updated Problems');
-					$scope.set_authentication_false();
 				});
 			};
 
