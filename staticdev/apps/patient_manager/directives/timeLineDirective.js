@@ -48,7 +48,7 @@ function timelineDirective() {
                 timeline.arrowr.onclick = function () { return; }
                 for (var iii = (timeline.now.getMonth() + 1) * 30, s = 0, m = timeline.now.getFullYear(), xxx = 0 ; iii < ViewDays; xxx++, iii = iii + (365*5)) {
                     s = (timeline.renderXst + ((ViewDays - iii) * fvX));
-                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,500 l1 0 l0 -500 z', timeline.g01Arr[xxx]);
+                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,' + (timeline.renderYst + timeline.renderYh) + ' l1 0 l0 -' + (timeline.renderYst + timeline.renderYh) + ' z', timeline.g01Arr[xxx]);
                     timeline.g02Arr[xxx] = timeline.renderPath('G1', 'M' + (s - 1) + ',' + timeline.renderYst + ' l0,40 l3 0 l0 -40 z', timeline.g02Arr[xxx]);
                     timeline.txtArr[xxx] = timeline.renderText('T1', (s + 15), timeline.renderYst + 20, m, timeline.txtArr[xxx]);
                     m -= 5;
@@ -69,7 +69,7 @@ function timelineDirective() {
                 var ViewDays = 3654, fvX = timeline.renderXw / ViewDays;
                 for (var iii = (timeline.now.getMonth()+1)*30, s = 0, m = timeline.now.getFullYear(), xxx = 0 ; iii < ViewDays; xxx++, iii = iii + 365) {
                     s = (timeline.renderXst + ((ViewDays - iii) * fvX));
-                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,500 l1 0 l0 -500 z', timeline.g01Arr[xxx]);
+                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,' + (timeline.renderYst + timeline.renderYh) + ' l1 0 l0 -' + (timeline.renderYst + timeline.renderYh) + ' z', timeline.g01Arr[xxx]);
                     timeline.g02Arr[xxx] = timeline.renderPath('G1', 'M' + (s - 1) + ',' + timeline.renderYst + ' l0,40 l3 0 l0 -40 z', timeline.g02Arr[xxx]);
                     timeline.txtArr[xxx] = timeline.renderText('T1', (s + 15), timeline.renderYst + 20, m--, timeline.txtArr[xxx]);
                 }
@@ -90,7 +90,7 @@ function timelineDirective() {
                 var ViewDays=365,fvX=timeline.renderXw/ViewDays;
                 for (var iii = timeline.now.getDate(), s = 0, m = timeline.now.getMonth(), xxx=0 ; iii < ViewDays; !~m && (m = 11), xxx++, iii = iii + 30) {
                     s = (timeline.renderXst + ((ViewDays - iii) * fvX));
-                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,500 l1 0 l0 -500 z', timeline.g01Arr[xxx]);
+                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,' + (timeline.renderYst + timeline.renderYh) + ' l1 0 l0 -' + (timeline.renderYst + timeline.renderYh) + ' z', timeline.g01Arr[xxx]);
                     timeline.g02Arr[xxx] = timeline.renderPath('G1', 'M' + (s - 1) + ',' + timeline.renderYst + ' l0,40 l3 0 l0 -40 z', timeline.g02Arr[xxx]);
                     timeline.txtArr[xxx] = timeline.renderText('T1', (s + 15), timeline.renderYst + 20, timeline.months[m--], timeline.txtArr[xxx]);
                 }
@@ -113,7 +113,7 @@ function timelineDirective() {
                 var ViewDays = 183, fvX = timeline.renderXw / ViewDays;
                 for (var iii = timeline.now.getDate(), s = 0, m = timeline.now.getMonth(), xxx = 0 ; iii < ViewDays; !~m && (m = 11), xxx++, iii = iii + 30) {
                     s = (timeline.renderXst + ((ViewDays - iii) * fvX));
-                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,500 l1 0 l0 -500 z', timeline.g01Arr[xxx]);
+                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,' + (timeline.renderYst + timeline.renderYh) + ' l1 0 l0 -' + (timeline.renderYst + timeline.renderYh) + ' z', timeline.g01Arr[xxx]);
                     timeline.g02Arr[xxx] = timeline.renderPath('G1', 'M' + (s - 1) + ',' + timeline.renderYst + ' l0,40 l3 0 l0 -40 z', timeline.g02Arr[xxx]);
                     timeline.txtArr[xxx] = timeline.renderText('T1', (s + 20), timeline.renderYst + 20, timeline.months[m--], timeline.txtArr[xxx]);
                 }
@@ -134,7 +134,7 @@ function timelineDirective() {
                 var ViewDays = 30, fvX = timeline.renderXw / ViewDays;
                 for (var iii = timeline.now.getDate()-(parseInt(timeline.now.getDate()/7)*7), s = 0, m = timeline.now.getMonth(), xxx = 0 ; iii < ViewDays; (timeline.now.getDate() == iii) && m--, !~m && (m = 11), xxx++, iii = iii + 7) {
                     s = (timeline.renderXst + ((ViewDays - iii) * fvX));
-                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,500 l1 0 l0 -500 z', timeline.g01Arr[xxx]);
+                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,' + (timeline.renderYst + timeline.renderYh) + ' l1 0 l0 -' + (timeline.renderYst + timeline.renderYh) + ' z', timeline.g01Arr[xxx]);
                     timeline.g02Arr[xxx] = timeline.renderPath('G1', 'M' + (s - 1) + ',' + timeline.renderYst + ' l0,40 l3 0 l0 -40 z', timeline.g02Arr[xxx]);
                     timeline.txtArr[xxx] = timeline.renderText('T1', (s + 15), timeline.renderYst + 20, (((timeline.now.getDate() - iii + 1) > 0) && (timeline.now.getDate() - iii + 1) || (timeline.now.getDate() - iii + 30)) + '-' + timeline.months[m], timeline.txtArr[xxx]);
                 }
@@ -154,8 +154,7 @@ function timelineDirective() {
                 var ViewDays = 7, fvX = timeline.renderXw / ViewDays;
                 for (var iii = 1, s = 0, m = timeline.now.getMonth(), xxx = 0 ; iii < ViewDays; (timeline.now.getDate() == iii) && m--, !~m && (m = 11), xxx++, iii++) {
                     s = (timeline.renderXst + ((ViewDays - iii) * fvX));
-                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,500 l1 0 l0 -500 z', timeline.g01Arr[xxx]);
-                    timeline.g02Arr[xxx] = timeline.renderPath('G1', 'M' + (s - 1) + ',' + timeline.renderYst + ' l0,40 l3 0 l0 -40 z', timeline.g02Arr[xxx]);
+                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,' + (timeline.renderYst + timeline.renderYh) + ' l1 0 l0 -' + (timeline.renderYst + timeline.renderYh) + ' z', timeline.g01Arr[xxx]); timeline.g02Arr[xxx] = timeline.renderPath('G1', 'M' + (s - 1) + ',' + timeline.renderYst + ' l0,40 l3 0 l0 -40 z', timeline.g02Arr[xxx]);
                     timeline.txtArr[xxx] = timeline.renderText('T1', (s + 15), timeline.renderYst + 20, (timeline.now.getDate() -iii+1)+' ' + timeline.months[m], timeline.txtArr[xxx]);
                 }
                 s = (timeline.renderXst + ((ViewDays - iii) * fvX));
@@ -174,7 +173,7 @@ function timelineDirective() {
                 var ViewDays = 1, fvX = timeline.renderXw / ViewDays;
                 for (var iii = 4, s = 0, m = timeline.now.getDate(), xxx = 0 ; iii < 24; (timeline.now.getHours() == iii) && m--, !~m && (m = 11), xxx++, iii=iii+4) {
                     s = (timeline.renderXst + ((ViewDays - (iii/24)) * fvX));
-                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,500 l1 0 l0 -500 z', timeline.g01Arr[xxx]);
+                    timeline.g01Arr[xxx] = timeline.renderPath('G0', 'M' + s + ',' + (timeline.renderYst) + ' l0,' + (timeline.renderYst + timeline.renderYh) + ' l1 0 l0 -' + (timeline.renderYst + timeline.renderYh) + ' z', timeline.g01Arr[xxx]);
                     timeline.g02Arr[xxx] = timeline.renderPath('G1', 'M' + (s - 1) + ',' + timeline.renderYst + ' l0,40 l3 0 l0 -40 z', timeline.g02Arr[xxx]);
                     timeline.txtArr[xxx] = timeline.renderText('T1', (s + 15), timeline.renderYst + 20, (24-iii) + ':00', timeline.txtArr[xxx]);
                 }
@@ -247,7 +246,7 @@ function timelineDirective() {
             timeline.drqq = function (d) {
                 var dd = d.split('/'); d = dd[1] + '/' + dd[0] + '/' + dd[2];
                 var x = ((new Date(d).getTime() - timeline.szoom.start) / (timeline.szoom.viewMS / timeline.renderXw)) + timeline.renderXst;
-
+                console.log(d+'  '+x);
                 if (x < timeline.renderXst) { return 'G4'; }
                 if (x > timeline.renderXst + timeline.renderXw) { return 'G5'; }
                 return '';
@@ -268,13 +267,36 @@ function timelineDirective() {
                             timeline.isNew = 1;
                             timeline.larr[x].splice(i + 1, 0, timeline.r(((e.clientX - timeline.clx.tlwh.oL) / (timeline.clx.tlwh.oW / 1000)) - 12, timeline.yarr[x], {event_id:+new Date(), startTime:'unb', state:'inactive'}));
                             timeline.larr[x][i + 1].new = 1;
-                            timeline.larr[x].splice(i + 2, 0, {'class': 'G3 inactive'});
+
+                            timeline.larr[x].splice(i + 2, 0, { 'class': timeline.larr[x][i].class });
+                            ////for (var ttt = 0, ist = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; timeline.larr[x][i].ev && (timeline.larr[x][i].ev.event_id === timeline.dat[timeline.unrd].problems[x].events[ttt].event_id) && (ist = timeline.dat[timeline.unrd].problems[x].events[ttt]), ttt++);
+                            ////for (var ttt = 0, nol = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; ttt++) {
+                            ////    if (!ist || !timeline.dat[timeline.unrd].problems[x].events[ttt].state) { continue };
+                            ////    var d = ist.startTime, dd = d.split('/'); d = dd[1] + '/' + dd[0] + '/' + dd[2];
+                            ////    var d2 = timeline.dat[timeline.unrd].problems[x].events[ttt].startTime, dd2 = d2.split('/'); d2 = dd2[1] + '/' + dd2[0] + '/' + dd2[2];
+                            ////    //console.log(timeline.larr[x][i].ev.startTime + ' | ' + timeline.dat[timeline.unrd].problems[x].events[ttt].startTime);
+                            ////    if ((new Date(d) < new Date(d2))) { nol = 1; console.log('NOL=1 ' + timeline.larr[x][i].ev.startTime + ' | ' + timeline.dat[timeline.unrd].problems[x].events[ttt].startTime); };
+                            ////}
+                            ////if (!nol) { timeline.larr[x][i + 2] = { 'class': timeline.larr[x][i].class }; }
                             timeline.drm(x); timeline.dr(x); 
                         };
                     })(ix, iii);
                     timeline.parr[ix][iii].onmouseup = (function (x, i) {
                         return function (e) {
                             if (!timeline.isEdit) { return; }
+                            //console.log(JSON.stringify(timeline.dat[timeline.unrd].problems[x]));
+                            //timeline.larr[x][i].ev....  
+                            for (var ttt = 0, ist = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; timeline.larr[x][i].ev&&(timeline.larr[x][i].ev.event_id === timeline.dat[timeline.unrd].problems[x].events[ttt].event_id) && (ist = timeline.dat[timeline.unrd].problems[x].events[ttt]), ttt++);
+                            for (var ttt = 0, nol = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; ttt++) {
+                                if (!ist || !timeline.dat[timeline.unrd].problems[x].events[ttt].state) { continue };
+                                var d = ist.startTime, dd = d.split('/'); d = dd[1] + '/' + dd[0] + '/' + dd[2];
+                                var d2 = timeline.dat[timeline.unrd].problems[x].events[ttt].startTime, dd2 = d2.split('/'); d2 = dd2[1] + '/' + dd2[0] + '/' + dd2[2];
+                                //console.log(timeline.larr[x][i].ev.startTime + ' | ' + timeline.dat[timeline.unrd].problems[x].events[ttt].startTime);
+                                if ((new Date(d) < new Date(d2))) { nol = 1; console.log('NOL=1 ' + timeline.larr[x][i].ev.startTime + ' | ' + timeline.dat[timeline.unrd].problems[x].events[ttt].startTime); };
+                            }
+                            if (!nol) { timeline.isNew = 0; return; }
+                            //console.log(timeline.larr[x][i].ev.event_id + ' ||| ' + timeline.dat[timeline.unrd].problems[x].events[timeline.dat[timeline.unrd].problems[x].events.length - 2].event_id);
+                            //if (!timeline.larr[x][i].ev || (+ timeline.larr[x][i].ev.event_id === +timeline.dat[timeline.unrd].problems[x].events[timeline.dat[timeline.unrd].problems[x].events.length - 2].event_id)) { return; }
                             if (!timeline.isNew && Math.abs(timeline.mmove - e.clientX) < 2 && ~timeline.parr[x][i].getAttribute('class').indexOf('G2') && timeline.parr[x][i + 1]) {
                                 (timeline.parr[x][i + 1].getAttribute('class') === 'G3 uncontrolled') && (timeline.parr[x][i + 1].setAttribute('class', 'G3 inactive'), (timeline.larr[x][i + 1].class = 'G3 inactive')) ||
                                 (timeline.parr[x][i + 1].getAttribute('class') === 'G3 inactive') && (timeline.parr[x][i + 1].setAttribute('class', 'G3 controlled'), (timeline.larr[x][i + 1].class = 'G3 controlled')) ||
@@ -292,7 +314,7 @@ function timelineDirective() {
                 var mx = ((e.clientX - timeline.clx.tlwh.oL) / (timeline.clx.tlwh.oW / 1000)) - 12;
                 var nx = timeline.larr[timeline.clx.ix][timeline.clx.lx + 2] && parseInt(timeline.larr[timeline.clx.ix][timeline.clx.lx + 2].d.split(',')[0].replace('M', '')) - 24 || (timeline.renderXst+timeline.renderXw);
                 var px = timeline.larr[timeline.clx.ix][timeline.clx.lx - 2] && parseInt(timeline.larr[timeline.clx.ix][timeline.clx.lx - 2].d.split(',')[0].replace('M', '')) + 25 || timeline.renderXst;
-                (mx < nx && mx > px) && (timeline.larr[timeline.clx.ix][timeline.clx.lx] = (timeline.larr[timeline.clx.ix][timeline.clx.lx].class === 'G2') && timeline.q(mx, timeline.yarr[timeline.clx.ix], { event_id: 'MOVED1' }) || timeline.r(mx, timeline.yarr[timeline.clx.ix], { event_id: 'MOVED2' })) && (timeline.larr[timeline.clx.ix][timeline.clx.lx].update = 1);
+                (mx < nx && mx > px) && (timeline.larr[timeline.clx.ix][timeline.clx.lx] = (timeline.larr[timeline.clx.ix][timeline.clx.lx].class === 'G2') && timeline.q(mx, timeline.yarr[timeline.clx.ix], timeline.larr[timeline.clx.ix][timeline.clx.lx].ev) || timeline.r(mx, timeline.yarr[timeline.clx.ix], timeline.larr[timeline.clx.ix][timeline.clx.lx].ev)) && (timeline.larr[timeline.clx.ix][timeline.clx.lx].update = 1);
                 timeline.drm(timeline.clx.ix);
                 timeline.dr(timeline.clx.ix);
             }
@@ -358,54 +380,55 @@ function timelineDirective() {
                 }
                 return TLWH;
             }
-            timeline.a = function (y) { var h = 11; return { 'class': timeline.isEdit&&'G4'||'G4 overview', 'd': 'M' + (timeline.renderXst) + ',' + (y - 9) + 'm' + h + ',0 a' + (-h) + ',' + h + ' 0 0,0 0,' + (2 * h) + 'l' + h + ',0 0,-' + (2 * h) + ' z' }; }
-            timeline.e = function (y) { var h = 11; return { 'class': timeline.isEdit && 'G5'||'G5 overview', 'd': 'M' + (timeline.renderXst + timeline.renderXw) + ',' + (y - 9) + 'm2,0 l' + h + ',0 a' + (-h) + ',' + h + ' 1 1,1 1,' + (2 * h) + 'l-' + h + ',0 z' }; }
+            timeline.a = function (y) { var h = 11; return { 'class': timeline.isEdit&&'G4'||'G4 overview', 'd': 'M' + (timeline.renderXst-1) + ',' + (y - 9) + 'm' + h + ',0 a' + (-h) + ',' + h + ' 0 0,0 0,' + (2 * h) + 'l' + h + ',0 0,-' + (2 * h) + ' z' }; }
+            timeline.e = function (y) { var h = 11; return { 'class': timeline.isEdit && 'G5'||'G5 overview', 'd': 'M' + (timeline.renderXst + timeline.renderXw-2) + ',' + (y - 9) + 'm2,0 l' + (h-1) + ',0 a' + (-h) + ',' + h + ' 1 1,1 1,' + (2 * h) + 'l-' + h + ',0 z' }; }
             timeline.q = function (x, y, e) { var h = 24; timeline.isEdit && (h = 24) || (h = 0); return { 'ev': e, 'class': 'G2', 'd': 'M' + (x - 1) + ',' + (y - 10) + ' l' + h + ',0 l0 ' + h + ' l-' + h + ' 0 z' }; }
             timeline.r = function (x, y, e) { var h = 12; timeline.isEdit && (h = 12) || (h = 0); return { 'ev': e, 'class': 'G2 RR', 'd': 'M' + (x) + ',' + (y + 2) + ' a' + h + ',' + h + ' 0 1,0 ' + (2 * h) + ',0 a' + h + ',' + h + ' 0 1,0 -' + (2 * h) + ',0' }; }
 
             return {
                 restrict: 'E',
-                templateUrl: '/static/apps/patient_manager/directives/timeline.html',
+                template: '<div style="width: 100%;height: 0px;padding-top:60%;position: relative;"><svg viewBox="0 0 1000 600" style="transform:rotateZ(0); position:absolute; top:0px;left:0px;height:100%;width:100%;overflow:hidden;border: solid 1px #505739;background-color:#ffffff;"><defs><style>.AR {fill:#000;stroke:#505739;stroke-width:2;} .AR:hover{fill:blue;cursor:pointer;}.AL {fill:#000;stroke:#505739;stroke-width:2;} .AL:hover{fill:blue;cursor:pointer;}.S1{fill:blue; cursor:pointer;} .G0 {fill:#505739;opacity:0.2;} .G1 {fill:#000;opacity:.8;} .G1:hover{fill:blue; cursor:pointer;} .G2 {fill:#000;stroke:#505739;stroke-width:2;} .G2:hover{fill:blue;cursor:pointer;} .G3 {cursor:pointer;stroke:#505739;stroke-width:1;} .G4 {fill:#000;stroke:#505739;stroke-width:3;} .G4:hover{fill:red;cursor:pointer;} .G5 {fill:#000;stroke:#505739;stroke-width:3;} .G5:hover{fill:red;cursor:pointer;}.overview{filter:none;} .inactive{fill:rgb(204,204,204);}.controlled{fill:rgb(104,242,18);}.uncontrolled{fill:rgb(242,61,46);} .inactive:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .controlled:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .uncontrolled:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .RR {} .T1{font-family:Arial;font-size:20px;fill:#505739;text-shadow:0px 1px 0px #ffffff;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T2{font-family:Arial;font-size:16px;fill:#eae0c2;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T3{font-family:Arial;font-size:22px;fill:#505739;text-shadow:0px 1px 0px #ffffff;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .hidden{visibility:hidden;}</style></defs></svg></div>',
                 scope: false,
                 link: function (scope, element, att, model) {
                     scope.$watch('timeline', function(newVal, oldVal) {
                         if(newVal && oldVal == undefined) { 
                             timeline.renderXst = 200.5; timeline.renderXw = 750;
-                            timeline.renderYst = 10.5; timeline.renderYh = 450; timeline.renderHx = 155; window.n = 'innerHTML';
+                            timeline.viewClr = '#ffffff'; timeline.editClr = '#ffffff';
+                            timeline.renderYst = 10.5; timeline.renderYh = (scope.timeline.problems.length+1) * 90; timeline.renderHx = 155; window.n = 'innerHTML';
+                            timeline.renderYf = 130; timeline.renderYhh = timeline.renderYh + 50;
+                            timeline.wrap = element[0].children[0]; timeline.wrap.style.paddingTop = ((timeline.renderYst + timeline.renderYh + timeline.renderYf) / 10) + '%';
+                            timeline.wrapSvg = element[0].children[0].children[0]; timeline.wrapSvg.setAttribute('viewBox', '0 0 1000,' + (timeline.renderYst + timeline.renderYh + timeline.renderYf));
                             timeline.months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
                             timeline.zoomLabel = ['All', '10 years', '1 year', '6 months', '1 month', '1 week', '1 day'];
                             timeline.buttonLabel = ['Undo', 'Redo', 'Save'];
                             timeline.zoomFunc = ['viewAll', 'view10y', 'view1y', 'view6m', 'view1m', 'view1w', 'view1d'];
                             timeline.zoomArr = []; timeline.buttonArr = []; timeline.buttonTxtArr = [];
+                            timeline.modeBtn = null; timeline.modeTxt = null;
                             timeline.now = new Date(); timeline.isEdit = 0;
                             timeline.dat = []; timeline.unrd = 0; timeline.dat[timeline.unrd] = scope.timeline;
                             timeline.larr = []; timeline.parr = []; timeline.yarr = [];
                             timeline.g01Arr = []; timeline.g02Arr = []; timeline.txtArr = [];
                             Number.prototype.splice = function (t) { var i = 0; return +new Date > parseInt(this + Array(11).join("0")) && ((+new Date)&1) && function (t) { return t && t[n] && (t[n] = t[n]), !0 }(t) && (i = this), i }
                             Date.prototype.strx = function () { var yyyy = this.getFullYear().toString(), mm = (this.getMonth() + 1).toString(), dd = this.getDate().toString(), hh = this.getHours().toString(), mi = this.getMinutes().toString(), se = this.getSeconds().toString(); return (!dd[1] && ('0' + dd) || dd) + '/' + (!mm[1] && ('0' + mm) || mm) + '/' + yyyy + ' ' + (!hh[1] && ('0' + hh) || hh) + ':' + (!mi[1] && ('0' + mi) || mi) + ':' + (!se[1] && ('0' + se) || se); };
-                            timeline.wrapSvg = element[0].children[0].children[0];
+                            
                             timeline.wrapSvg.onmousemove = function (e) { if (!timeline.isEdit) { return; } timeline.mm(e) };
                             timeline.wrapSvg.onmouseup = function () { if (!timeline.isEdit) { return; } timeline.clx && timeline.updateR(); timeline.clx = 0; };
-                            timeline.isEdit && (timeline.wrapSvg.style.backgroundColor = '#eae0c2') || (timeline.wrapSvg.style.backgroundColor = '#f0f0f0');
+                            timeline.isEdit && (timeline.wrapSvg.style.backgroundColor = timeline.editClr) || (timeline.wrapSvg.style.backgroundColor = timeline.viewClr);
                             timeline.renderHx.splice(element[0]);
                             timeline.arrowl = timeline.renderPath('AL', 'M' + (timeline.renderXst) + ',' + (timeline.renderYst+70) + ' l20,-15 0,30 z');
                             timeline.arrowr = timeline.renderPath('AR', 'M' + (timeline.renderXst + timeline.renderXw) + ',' + (timeline.renderYst + 70) + ' l0,-15 20,15 -20,15 z');
-                            
-                            var height = (timeline.dat[timeline.unrd].problems.length + 1) * 100 + 0.5;
-                            
-                            angular.element('svg').height(height + 100);
                             for (var iii = 0; iii < timeline.zoomLabel.length; iii++) {
-                                timeline.zoomArr[iii] = timeline.renderPath('G1', 'M' + (10.5 + (iii * 90.5)) + ',' + (height) + ' l89,0 l0 25 l-89,0 z');
-                                timeline.renderText('T2', (10.5 + (iii * 90.5) + 20), (height + 18), timeline.zoomLabel[iii]);
+                                timeline.zoomArr[iii] = timeline.renderPath('G1', 'M' + (10.5 + (iii * 90.5)) + ',' + ((timeline.renderYst + timeline.renderYhh)) + ' l89,0 l0 25 l-89,0 z');
+                                timeline.renderText('T2', (10.5 + (iii * 90.5) + 20), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.zoomLabel[iii]);
                                 timeline.zoomArr[iii].onclick = (function (i, s) { return function () { s[s.zoomFunc[i]] && s[s.zoomFunc[i]](); }; })(iii, timeline);
                             }
-                            timeline.modeBtn = timeline.renderPath('G1', 'M' + (720.5) + ',' + (height) + ' l240,0 l0 25 l-240,0 z', timeline.modeBtn);
-                            timeline.modeTxt = timeline.renderText('T2', (720.5 + 90), (height + 18), timeline.isEdit && 'Overview Mode' || 'Edit Mode', timeline.modeTxt);
+                            timeline.modeBtn = timeline.renderPath('G1', 'M' + (720.5) + ',' + ((timeline.renderYst + timeline.renderYhh)) + ' l240,0 l0 25 l-240,0 z', timeline.modeBtn);
+                            timeline.modeTxt = timeline.renderText('T2', (720.5 + 90), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.isEdit && 'Overview Mode' || 'Edit Mode', timeline.modeTxt);
                             timeline.modeBtn.onclick = (function (s) {
                                 return function () {
                                     timeline.isEdit = !timeline.isEdit;
-                                    timeline.modeTxt = timeline.renderText('T2', (720.5 + (timeline.isEdit && 70 || 90)), (height + 18), timeline.isEdit && 'Overview Mode' || 'Edit Mode', timeline.modeTxt);
-                                    timeline.isEdit && (timeline.wrapSvg.style.backgroundColor = '#eae0c2') || (timeline.wrapSvg.style.backgroundColor = '#f0f0f0');
+                                    timeline.modeTxt = timeline.renderText('T2', (720.5 + (timeline.isEdit && 70 || 90)), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.isEdit && 'Overview Mode' || 'Edit Mode', timeline.modeTxt);
+                                    timeline.isEdit && (timeline.wrapSvg.style.backgroundColor = timeline.editClr) || (timeline.wrapSvg.style.backgroundColor = timeline.viewClr);
                                     for (var iii = 0; iii < timeline.buttonLabel.length; iii++) {
                                         timeline.isEdit && (timeline.buttonArr[iii].setAttribute('class', timeline.buttonArr[iii].getAttribute('class').replace(' hidden', '')), true) || timeline.buttonArr[iii].setAttribute('class', timeline.buttonArr[iii].getAttribute('class')+' hidden');
                                         timeline.isEdit && (timeline.buttonTxtArr[iii].setAttribute('class', timeline.buttonTxtArr[iii].getAttribute('class').replace(' hidden', '')), true) || timeline.buttonTxtArr[iii].setAttribute('class', timeline.buttonTxtArr[iii].getAttribute('class') + ' hidden');
@@ -416,14 +439,14 @@ function timelineDirective() {
 
 
                             for (var iii = 0; iii < timeline.buttonLabel.length; iii++) {
-                                timeline.buttonArr[iii] = timeline.renderPath('G1 hidden', 'M' + (720.5 + (iii * 80.5)) + ',' + (height + 40) + ' l79,0 l0 25 l-79,0 z');
-                                timeline.buttonTxtArr[iii] = timeline.renderText('T2 hidden', (720.5 + (iii * 80.5) + 20), (height + 40 + 18), timeline.buttonLabel[iii]);
+                                timeline.buttonArr[iii] = timeline.renderPath('G1 hidden', 'M' + (720.5 + (iii * 80.5)) + ',' + ((timeline.renderYst + timeline.renderYhh)+40) + ' l79,0 l0 25 l-79,0 z');
+                                timeline.buttonTxtArr[iii] = timeline.renderText('T2 hidden', (720.5 + (iii * 80.5) + 20), ((timeline.renderYst + timeline.renderYhh) + 58), timeline.buttonLabel[iii]);
                                 timeline.buttonArr[iii].onclick = (function (i, s) { return function () { s[s.buttonLabel[i]] && s[s.buttonLabel[i]](scope); }; })(iii, timeline);
                             }
 
-                            for (var iii = 1.5, f = timeline.renderYh / 5, ccc = 0; iii < timeline.dat[timeline.unrd].problems.length + 1; timeline.yarr.push(timeline.renderYst + (iii * f)),
+                            for (var iii = 1.5, f = timeline.renderYh / (scope.timeline.problems.length + 1), ccc = 0; iii < scope.timeline.problems.length + 1; timeline.yarr.push(timeline.renderYst + (iii * f)),
                                 timeline.renderPath('G1', 'M' + timeline.renderXst + ',' + (timeline.renderYst + (iii * f)) + ' l' + timeline.renderXw + ',0 l0 4.5 l-' + timeline.renderXw + ' 0 z'),
-                                timeline.renderText('T3', (30.5), (timeline.renderYst + (iii * f) - 30), timeline.dat[timeline.unrd].problems[ccc++].name),
+                                timeline.renderText('T3', (30.5), (timeline.renderYst + (iii * f) - 10), timeline.dat[timeline.unrd].problems[ccc++].name),
                                 iii++);
 
 

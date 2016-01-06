@@ -26,6 +26,8 @@
 
 			});
 
+			
+
 			function convertDateTime(dateTime){
 				if(dateTime) {
 					var date = dateTime.split("-");
@@ -37,6 +39,33 @@
 				}
 			    return '30/11/1970 12:00:00';
 			}
+
+			function convertDateTimeBack(dateTime){
+				if(dateTime) {
+					var date = dateTime.split("/");
+				    var yyyy = date[2].split(" ")[0];
+				    var mm = date[1];
+				    var dd = date[0];
+
+				    return yyyy + '-' + mm + '-' + dd;
+				}
+			    return '1970-11-30';
+			} 
+
+			$scope.timelineSave = function (newData) { 
+				var form = {};
+
+				form.patient_id = $scope.patient_id;
+				form.problem_id = $scope.problem.id;
+				form.start_date = convertDateTimeBack(newData.problems[0].events[0].startTime);
+				$scope.problem.start_date = form.start_date;
+
+				problemService.updateStartDate(form).then(function(data){
+
+					toaster.pop('success', 'Done', 'Updated Start Date');
+					$scope.set_authentication_false();
+				});
+			};
 
 			patientService.fetchProblemInfo(problem_id).then(function(data){
 
