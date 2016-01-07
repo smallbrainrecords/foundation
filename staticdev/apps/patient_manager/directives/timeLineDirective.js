@@ -1,8 +1,8 @@
 var timeLine = angular.module('timeLine', []);
 
-timeLine.directive('problemTimeline', timelineDirective);
+timeLine.directive('problemTimeline', ['$location', timelineDirective]);
 
-function timelineDirective() {
+function timelineDirective($location) {
 
     var timeline = {}; 
 
@@ -34,6 +34,17 @@ function timelineDirective() {
                 text.setAttribute('class', c.c || c);
                 text.setAttribute('pointer-events', 'none');
                 text.setAttribute('display', 'inline');
+                text.appendChild(document.createTextNode(txt));
+                return text;
+            }
+            timeline.renderTextProblem = function (id, c, x, y, txt, text) {
+                !text && (text = timeline.wrapSvg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'text')));
+                for (var iii = 0; iii < text.childNodes.length; text.childNodes[iii] && text.removeChild(text.childNodes[iii]), iii++);
+                text.setAttribute('x', c.x || x);
+                text.setAttribute('y', c.y || y);
+                text.setAttribute('class', c.c || c);
+                text.setAttribute('display', 'inline');
+                text.setAttribute('problem-id', id);
                 text.appendChild(document.createTextNode(txt));
                 return text;
             }
@@ -400,7 +411,7 @@ function timelineDirective() {
 
             return {
                 restrict: 'E',
-                template: '<div style="width: 100%;height: 0px;padding-top:60%;position: relative;"><svg viewBox="0 0 1000 600" style="transform:rotateZ(0); position:absolute; top:0px;left:0px;height:100%;width:100%;overflow:hidden;border: solid 1px #505739;background-color:#ffffff;"><defs><style>.AR {fill:#000;stroke:#505739;stroke-width:2;} .AR:hover{fill:blue;cursor:pointer;}.AL {fill:#000;stroke:#505739;stroke-width:2;} .AL:hover{fill:blue;cursor:pointer;}.S1{fill:blue; cursor:pointer;} .G0 {fill:#505739;opacity:0.2;} .G1 {fill:#000;opacity:.8;} .G1:hover{fill:blue; cursor:pointer;} .G2 {fill:#000;stroke:#505739;stroke-width:2;} .G2:hover{fill:blue;cursor:pointer;} .G3 {cursor:pointer;stroke:#505739;stroke-width:1;} .G4 {fill:#000;stroke:#505739;stroke-width:3;} .G4:hover{fill:red;cursor:pointer;} .G5 {fill:#000;stroke:#505739;stroke-width:3;} .G5:hover{fill:red;cursor:pointer;}.overview{filter:none;} .inactive{fill:rgb(204,204,204);}.controlled{fill:rgb(104,242,18);}.uncontrolled{fill:rgb(242,61,46);} .inactive:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .controlled:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .uncontrolled:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .RR {} .T1{font-family:Arial;font-size:20px;fill:#505739;text-shadow:0px 1px 0px #ffffff;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T2{font-family:Arial;font-size:16px;fill:#eae0c2;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T3{font-family:Arial;font-size:22px;fill:#505739;text-shadow:0px 1px 0px #ffffff;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .hidden{visibility:hidden;}</style></defs></svg></div>',
+                template: '<div style="width: 100%;height: 0px;padding-top:60%;position: relative;"><svg viewBox="0 0 1000 600" style="transform:rotateZ(0); position:absolute; top:0px;left:0px;height:100%;width:100%;overflow:hidden;border: solid 1px #505739;background-color:#ffffff;"><defs><style>.AR {fill:#000;stroke:#505739;stroke-width:2;} .AR:hover{fill:blue;cursor:pointer;}.AL {fill:#000;stroke:#505739;stroke-width:2;} .AL:hover{fill:blue;cursor:pointer;}.S1{fill:blue; cursor:pointer;} .G0 {fill:#505739;opacity:0.2;} .G1 {fill:#000;opacity:.8;} .G1:hover{fill:blue; cursor:pointer;} .G2 {fill:#000;stroke:#505739;stroke-width:2;} .G2:hover{fill:blue;cursor:pointer;} .G3 {cursor:pointer;stroke:#505739;stroke-width:1;} .G4 {fill:#000;stroke:#505739;stroke-width:3;} .G4:hover{fill:red;cursor:pointer;} .G5 {fill:#000;stroke:#505739;stroke-width:3;} .G5:hover{fill:red;cursor:pointer;}.overview{filter:none;} .inactive{fill:rgb(204,204,204);}.controlled{fill:rgb(104,242,18);}.uncontrolled{fill:rgb(242,61,46);} .inactive:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .controlled:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .uncontrolled:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .RR {} .T1{font-family:Arial;font-size:20px;fill:#505739;text-shadow:0px 1px 0px #ffffff;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T2{font-family:Arial;font-size:16px;fill:#eae0c2;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T3{font-family:Arial;font-size:22px;fill:#505739;text-shadow:0px 1px 0px #ffffff;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T3:hover {cursor: pointer;} .hidden{visibility:hidden;}</style></defs></svg></div>',
                 scope: false,
                 link: function (scope, element, att, model) {
                     scope.$watch('timeline', function(newVal, oldVal) {
@@ -418,6 +429,7 @@ function timelineDirective() {
                             timeline.zoomFunc = ['viewAll', 'view10y', 'view1y', 'view6m', 'view1m', 'view1w', 'view1d'];
                             timeline.zoomArr = []; timeline.buttonArr = []; timeline.buttonTxtArr = [];
                             timeline.modeBtn = null; timeline.modeTxt = null;
+                            timeline.problemTxtArr = [];
                             timeline.now = new Date(); timeline.isEdit = 0;
                             timeline.dat = []; timeline.unrd = 0; timeline.dat[timeline.unrd] = scope.timeline;
                             timeline.larr = []; timeline.parr = []; timeline.yarr = [];
@@ -458,10 +470,15 @@ function timelineDirective() {
                                 timeline.buttonArr[iii].onclick = (function (i, s) { return function () { s[s.buttonLabel[i]] && s[s.buttonLabel[i]](scope); }; })(iii, timeline);
                             }
 
-                            for (var iii = 1.5, f = timeline.renderYh / (scope.timeline.problems.length + 1), ccc = 0; iii < scope.timeline.problems.length + 1; timeline.yarr.push(timeline.renderYst + (iii * f)),
-                                timeline.renderPath('G1', 'M' + timeline.renderXst + ',' + (timeline.renderYst + (iii * f)) + ' l' + timeline.renderXw + ',0 l0 4.5 l-' + timeline.renderXw + ' 0 z'),
-                                timeline.renderText('T3', (30.5), (timeline.renderYst + (iii * f) - 10), timeline.dat[timeline.unrd].problems[ccc++].name),
-                                iii++);
+                            for (var iii = 1.5, f = timeline.renderYh / (scope.timeline.problems.length + 1), ccc = 0; iii < scope.timeline.problems.length + 1; iii++) {
+                                timeline.yarr.push(timeline.renderYst + (iii * f));
+                                timeline.renderPath('G1', 'M' + timeline.renderXst + ',' + (timeline.renderYst + (iii * f)) + ' l' + timeline.renderXw + ',0 l0 4.5 l-' + timeline.renderXw + ' 0 z');
+                                timeline.problemTxtArr[iii] = timeline.renderTextProblem(timeline.dat[timeline.unrd].problems[ccc].id, 'T3', (30.5), (timeline.renderYst + (iii * f) - 10), timeline.dat[timeline.unrd].problems[ccc].name);
+                                timeline.problemTxtArr[iii].onclick = function () { 
+                                    scope.$apply($location.url('/problem/' + this.getAttribute('problem-id')));
+                                };
+                                ccc++;
+                            }
 
 
                             timeline.view1y();
