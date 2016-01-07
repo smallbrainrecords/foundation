@@ -740,6 +740,14 @@ def update_by_ptw(request):
             start_date = problem_json['events'][0]['startTime']
             problem.start_date = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").date()
 
+            role = actor_profile.role
+
+            if role in ['physician', 'admin']:
+                authenticated = True
+            else:
+                authenticated = False
+            problem.authenticated = authenticated
+
             problem.save()
 
             physician = request.user

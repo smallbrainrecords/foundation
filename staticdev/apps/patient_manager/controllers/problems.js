@@ -50,7 +50,16 @@
 				    return yyyy + '-' + mm + '-' + dd;
 				}
 			    return '1970-11-30';
-			} 
+			}
+
+			function getTimelineWidgetState(problem) {
+				if (problem.is_controlled) {
+					return 'controlled';
+				} else if (problem.is_active) {
+					return 'uncontrolled';
+				}
+				return 'inactive';
+			}
 
 			$scope.timelineSave = function (newData) { 
 				var form = {};
@@ -60,9 +69,7 @@
 				$scope.problem.start_date = convertDateTimeBack(newData.problems[0].events[0].startTime);
 
 				problemService.updateByPTW(form).then(function(data){
-
 					toaster.pop('success', 'Done', 'Updated Problem');
-					$scope.set_authentication_false();
 				});
 			};
 
@@ -71,14 +78,8 @@
                     $scope.problem = data['info'];
 
                     // problem timeline
-                    var state;
-				  	if ($scope.problem.is_controlled) {
-				  		state = 'controlled';
-				  	} else if ($scope.problem.is_active) {
-				  		state = 'uncontrolled';
-				  	} else {
-				  		state = 'inactive';
-				  	}
+                    var state = getTimelineWidgetState($scope.problem);
+				  	
 					var timeline_problems = [
 						{
 							'name': $scope.problem.problem_name,
@@ -168,8 +169,6 @@
 					return false;
 				}
 
-				
-
 				var form = {};
 
 				form.patient_id = $scope.patient_id;
@@ -180,7 +179,7 @@
 
 
 				problemService.updateProblemStatus(form).then(function(data){
-
+					$scope.timeline.problems[0].events[0].state = getTimelineWidgetState($scope.problem);
 					toaster.pop('success', 'Done', 'Updated Problem Status');
 
 				});
