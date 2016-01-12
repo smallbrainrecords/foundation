@@ -12,7 +12,7 @@ from common.views import *
 from emr.models import UserProfile, Problem
 from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
-from emr.models import ProblemNote, ProblemActivity
+from emr.models import ProblemNote, ProblemActivity, ProblemSegment
 from emr.models import EncounterProblemRecord, Encounter
 
 from emr.operations import op_add_event
@@ -737,7 +737,7 @@ def update_by_ptw(request):
             problem = Problem.objects.get(id=int(problem_json['id']))
             patient = problem.patient
 
-            start_date = problem_json['events'][0]['startTime']
+            start_date = problem_json['events'][-1]['startTime']
             problem.start_date = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").date()
 
             role = actor_profile.role
@@ -749,6 +749,36 @@ def update_by_ptw(request):
             problem.authenticated = authenticated
 
             problem.save()
+
+            if len(problem_json['events']) > 1:
+                i = 1
+                for event in problem_json['events']:
+                    # break if the last one, this is current problem
+                    if i == len(problem_json['events']):
+                        break
+                    i = i + 1
+                    try:
+                        event_id = int(event['event_id'])
+                        try:
+                            problem_segment = ProblemSegment.objects.get(event_id=event_id)
+                        except ProblemSegment.DoesNotExist:
+                            problem_segment = ProblemSegment()
+                            problem_segment.event_id = event_id
+                            problem_segment.problem = problem
+                        
+                        problem_segment.start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").date()
+                        if event['state'] == 'uncontrolled':
+                            problem_segment.is_active = True
+                            problem_segment.is_controlled = False
+                        if event['state'] == 'controlled':
+                            problem_segment.is_active = True
+                            problem_segment.is_controlled = True
+                        if event['state'] == 'inactive':
+                            problem_segment.is_active = False
+                            problem_segment.is_controlled = False
+                        problem_segment.save()
+                    except ValueError:
+                        event_id = None
 
             physician = request.user
 

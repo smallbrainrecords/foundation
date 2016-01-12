@@ -2,18 +2,35 @@ from rest_framework import serializers
 
 
 from emr.models import Problem, PatientImage, ProblemRelationship
-from emr.models import ProblemNote, ProblemActivity
+from emr.models import ProblemNote, ProblemActivity, ProblemSegment
 
 from users_app.serializers import UserProfileSerializer
 
 
+class ProblemSegmentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ProblemSegment
+
+        fields = (
+            'id',
+            'problem',
+            'is_controlled',
+            'is_active',
+            'authenticated',
+            'event_id',
+            'start_date',)
+
+
 class ProblemSerializer(serializers.ModelSerializer):
+    problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Problem
 
         fields = (
             'id',
+            'problem_segment',
             'patient',
             'parent',
             'problem_name',

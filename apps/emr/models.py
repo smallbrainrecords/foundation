@@ -151,6 +151,21 @@ class Problem(MPTTModel):
         return '%s %s' % (self.patient, self.problem_name)
 
 
+class ProblemSegment(models.Model):
+    problem = models.ForeignKey(Problem, related_name='problem_segment')
+    is_controlled = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    authenticated = models.BooleanField(default=False)
+    event_id = models.BigIntegerField(null=True, blank=True)
+    start_date = models.DateField()
+
+    class Meta:
+        ordering = ('start_date',)
+
+    def __unicode__(self):
+        return '%s segment %s' % (self.problem.problem_name, self.start_date)
+
+
 class ProblemActivity(models.Model):
     problem = models.ForeignKey(Problem)
     activity = models.TextField()

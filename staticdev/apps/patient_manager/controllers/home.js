@@ -31,6 +31,56 @@
 			    return '30/11/1970 12:00:00';
 			}
 
+			function getTimelineWidgetState(problem) {
+				if (problem.is_controlled) {
+					return 'controlled';
+				} else if (problem.is_active) {
+					return 'uncontrolled';
+				}
+				return 'inactive';
+			}
+
+			function parseTimelineWithoutSegment(problem) {
+                var state = getTimelineWidgetState(problem);
+
+				var timeline_problem = {
+					'name': problem.problem_name,
+					'id': problem.id,
+					events: [
+						{ 
+							event_id: new Date().getTime(), 
+							startTime: convertDateTime(problem.start_date), 
+							state: state 
+						},
+					]
+				};
+
+				return timeline_problem;
+			}
+
+			function parseTimelineWithSegment(problem) {
+				var events = [];
+				var event;
+				
+				angular.forEach(problem.problem_segment, function(value) {
+					event = {};
+					event['event_id'] = value.event_id;
+					event['startTime'] = convertDateTime(value.start_date);
+					event['state'] = getTimelineWidgetState(value);
+					events.push(event);
+				});
+
+				events.push({event_id: new Date().getTime(), startTime: convertDateTime(problem.start_date), state: getTimelineWidgetState(problem)});
+
+				var timeline_problem = {
+					'name': problem.problem_name,
+					'id': problem.id,
+					events: events
+				};
+
+				return timeline_problem;
+			}
+
 			$scope.timelineSave = function (newData) { 
 				var form = {};
 
@@ -56,21 +106,12 @@
 				// problem timeline
 				var timeline_problems = [];
 				angular.forEach(data['timeline_problems'], function(value, key) {
-					var timeline_problem = {};
-				  	timeline_problem['name'] = value.problem_name;
-				  	timeline_problem['id'] = value.id;
-				  	var events = [];
-				  	var state;
-				  	if (value.is_controlled) {
-				  		state = 'controlled';
-				  	} else if (value.is_active) {
-				  		state = 'uncontrolled';
-				  	} else {
-				  		state = 'inactive';
-				  	}
 
-				  	events.push({event_id: value.id, startTime: convertDateTime(value.start_date), state: state});
-				  	timeline_problem['events'] = events;
+                    if (value.problem_segment) {
+                    	var timeline_problem = parseTimelineWithSegment(value);
+                    } else {
+                    	var timeline_problem = parseTimelineWithoutSegment(value);
+                    }
 				  	timeline_problems.push(timeline_problem);
 				});
 

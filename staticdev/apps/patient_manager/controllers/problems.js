@@ -61,12 +61,57 @@
 				return 'inactive';
 			}
 
+			function parseTimelineWithoutSegment(problem) {
+                var state = getTimelineWidgetState(problem);
+
+				var timeline_problems = [
+					{
+						'name': problem.problem_name,
+						'id': problem.id,
+						events: [
+							{ 
+								event_id: new Date().getTime(), 
+								startTime: convertDateTime(problem.start_date), 
+								state: state 
+							},
+						]
+					}
+				];
+
+				return timeline_problems;
+			}
+
+			function parseTimelineWithSegment(problem) {
+				var events = [];
+				var event;
+				
+				angular.forEach(problem.problem_segment, function(value) {
+					event = {};
+					event['event_id'] = value.event_id;
+					event['startTime'] = convertDateTime(value.start_date);
+					event['state'] = getTimelineWidgetState(value);
+					events.push(event);
+				});
+
+				events.push({event_id: new Date().getTime(), startTime: convertDateTime(problem.start_date), state: getTimelineWidgetState(problem)});
+
+				var timeline_problems = [
+					{
+						'name': problem.problem_name,
+						'id': problem.id,
+						events: events
+					}
+				];
+
+				return timeline_problems;
+			}
+
 			$scope.timelineSave = function (newData) { 
 				var form = {};
 
 				form.patient_id = $scope.patient_id;
 				form.timeline_data = newData;
-				$scope.problem.start_date = convertDateTimeBack(newData.problems[0].events[0].startTime);
+				$scope.problem.start_date = convertDateTimeBack(newData.problems[0].events[newData.problems[0].events.length - 1].startTime);
 
 				problemService.updateByPTW(form).then(function(data){
 					toaster.pop('success', 'Done', 'Updated Problem');
@@ -78,17 +123,11 @@
                     $scope.problem = data['info'];
 
                     // problem timeline
-                    var state = getTimelineWidgetState($scope.problem);
-				  	
-					var timeline_problems = [
-						{
-							'name': $scope.problem.problem_name,
-							'id': $scope.problem.id,
-							events: [
-			                    { event_id: $scope.problem.id, startTime: convertDateTime($scope.problem.start_date), state: state },
-							]
-						}
-					];
+                    if ($scope.problem.problem_segment.length > 0) {
+                    	var timeline_problems = parseTimelineWithSegment($scope.problem);
+                    } else {
+                    	var timeline_problems = parseTimelineWithoutSegment($scope.problem);
+                    }
 
 					$scope.$watch('active_user', function(nV, oV){
 						$scope.timeline = {
@@ -204,7 +243,7 @@
 
 					toaster.pop('success', 'Done', 'Updated Start Date');
 					$scope.set_authentication_false();
-					$scope.timeline.problems[0].events[0].startTime = convertDateTime($scope.problem.start_date);
+					$scope.timeline.problems[0].events[$scope.timeline.problems[0].events.length - 2].startTime = convertDateTime($scope.problem.start_date);
 					console.log($scope.timeline);
 				});
 			}

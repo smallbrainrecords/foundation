@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from .models import UserProfile, AccessLog, Encounter, \
     EncounterEvent, TextNote, Problem, Goal, ToDo, Guideline,\
-    GuidelineForm, PatientImage, Sharing, ProblemRelationship
+    GuidelineForm, PatientImage, Sharing, ProblemRelationship, \
+    ProblemSegment
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -81,6 +82,12 @@ class ProblemAdmin(reversion.VersionAdmin):
     pass
 
 admin.site.register(Problem, ProblemAdmin)
+
+
+class ProblemSegmentAdmin(reversion.VersionAdmin):
+    pass
+
+admin.site.register(ProblemSegment, ProblemSegmentAdmin)
 
 
 class GoalAdmin(reversion.VersionAdmin):

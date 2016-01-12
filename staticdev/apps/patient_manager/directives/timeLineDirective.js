@@ -15,8 +15,6 @@ function timelineDirective($location) {
                 for (index = element.length - 1; index >= 0; index--) {
                     element[index].parentNode.removeChild(element[index]);
                 }
-                // timeline.wrapSvg.removeChild('path');
-                // timeline.wrapSvg.removeChild('text');
             }
 
             timeline.renderPath = function (c, d, path) {
