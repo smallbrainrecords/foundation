@@ -135,6 +135,8 @@
 							birthday: convertDateTime($scope.active_user['date_of_birth']), 
 							problems: timeline_problems
 						};
+
+						$scope.timeline_changed = true;
 					});
 
                     $scope.patient_notes = data['patient_notes'];
@@ -218,9 +220,9 @@
 
 
 				problemService.updateProblemStatus(form).then(function(data){
-					$scope.timeline.problems[0].events[0].state = getTimelineWidgetState($scope.problem);
+					$scope.timeline.problems[0].events[$scope.timeline.problems[0].events.length - 2].state = getTimelineWidgetState($scope.problem);
+					$scope.timeline_changed = true;
 					toaster.pop('success', 'Done', 'Updated Problem Status');
-
 				});
 
 			});
@@ -244,7 +246,7 @@
 					toaster.pop('success', 'Done', 'Updated Start Date');
 					$scope.set_authentication_false();
 					$scope.timeline.problems[0].events[$scope.timeline.problems[0].events.length - 2].startTime = convertDateTime($scope.problem.start_date);
-					console.log($scope.timeline);
+					$scope.timeline_changed = true;
 				});
 			}
 

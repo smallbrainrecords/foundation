@@ -119,7 +119,9 @@
 					Name: data['info']['user']['first_name'] + data['info']['user']['last_name'], 
 					birthday: convertDateTime(data['info']['date_of_birth']), 
 					problems: timeline_problems
-				}
+				};
+
+				$scope.timeline_changed = true;
 			});
 
 

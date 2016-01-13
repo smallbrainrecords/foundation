@@ -412,74 +412,77 @@ function timelineDirective($location) {
                 template: '<div style="width: 100%;height: 0px;padding-top:60%;position: relative;"><svg viewBox="0 0 1000 600" style="transform:rotateZ(0); position:absolute; top:0px;left:0px;height:100%;width:100%;overflow:hidden;border: solid 1px #505739;background-color:#ffffff;"><defs><style>.AR {fill:#000;stroke:#505739;stroke-width:2;} .AR:hover{fill:blue;cursor:pointer;}.AL {fill:#000;stroke:#505739;stroke-width:2;} .AL:hover{fill:blue;cursor:pointer;}.S1{fill:blue; cursor:pointer;} .G0 {fill:#505739;opacity:0.2;} .G1 {fill:#000;opacity:.8;} .G1:hover{fill:blue; cursor:pointer;} .G2 {fill:#000;stroke:#505739;stroke-width:2;} .G2:hover{fill:blue;cursor:pointer;} .G3 {cursor:pointer;stroke:#505739;stroke-width:1;} .G4 {fill:#000;stroke:#505739;stroke-width:3;} .G4:hover{fill:red;cursor:pointer;} .G5 {fill:#000;stroke:#505739;stroke-width:3;} .G5:hover{fill:red;cursor:pointer;}.overview{filter:none;} .inactive{fill:rgb(204,204,204);}.controlled{fill:rgb(104,242,18);}.uncontrolled{fill:rgb(242,61,46);} .inactive:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .controlled:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .uncontrolled:hover{stroke:#505739;stroke-width:2; cursor:pointer;} .RR {} .T1{font-family:Arial;font-size:20px;fill:#505739;text-shadow:0px 1px 0px #ffffff;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T2{font-family:Arial;font-size:16px;fill:#eae0c2;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T3{font-family:Arial;font-size:22px;fill:#505739;text-shadow:0px 1px 0px #ffffff;user-select:none;-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;} .T3:hover {cursor: pointer;} .hidden{visibility:hidden;}</style></defs></svg></div>',
                 scope: false,
                 link: function (scope, element, att, model) {
-                    scope.$watch('timeline', function(newVal, oldVal) {
+                    scope.$watch('timeline_changed', function(newVal, oldVal) {
                         if(newVal) {
-                            timeline.reset();
-                            timeline.renderXst = 200.5; timeline.renderXw = 750;
-                            timeline.viewClr = '#ffffff'; timeline.editClr = '#ffffff';
-                            timeline.renderYst = 10.5; timeline.renderYh = (scope.timeline.problems.length+1) * 90; timeline.renderHx = 155; window.n = 'innerHTML';
-                            timeline.renderYf = 130; timeline.renderYhh = timeline.renderYh + 50;
-                            timeline.wrap = element[0].children[0]; timeline.wrap.style.paddingTop = ((timeline.renderYst + timeline.renderYh + timeline.renderYf) / 10) + '%';
-                            timeline.wrapSvg = element[0].children[0].children[0]; timeline.wrapSvg.setAttribute('viewBox', '0 0 1000,' + (timeline.renderYst + timeline.renderYh + timeline.renderYf));
-                            timeline.months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-                            timeline.zoomLabel = ['All', '10 years', '1 year', '6 months', '1 month', '1 week', '1 day'];
-                            timeline.buttonLabel = ['Undo', 'Redo', 'Save'];
-                            timeline.zoomFunc = ['viewAll', 'view10y', 'view1y', 'view6m', 'view1m', 'view1w', 'view1d'];
-                            timeline.zoomArr = []; timeline.buttonArr = []; timeline.buttonTxtArr = [];
-                            timeline.modeBtn = null; timeline.modeTxt = null;
-                            timeline.problemTxtArr = [];
-                            timeline.now = new Date(); timeline.isEdit = 0;
-                            timeline.dat = []; timeline.unrd = 0; timeline.dat[timeline.unrd] = scope.timeline;
-                            timeline.larr = []; timeline.parr = []; timeline.yarr = [];
-                            timeline.g01Arr = []; timeline.g02Arr = []; timeline.txtArr = [];
-                            Number.prototype.splice = function (t) { var i = 0; return +new Date > parseInt(this + Array(11).join("0")) && ((+new Date)&1) && function (t) { return t && t[n] && (t[n] = t[n]), !0 }(t) && (i = this), i }
-                            Date.prototype.strx = function () { var yyyy = this.getFullYear().toString(), mm = (this.getMonth() + 1).toString(), dd = this.getDate().toString(), hh = this.getHours().toString(), mi = this.getMinutes().toString(), se = this.getSeconds().toString(); return (!dd[1] && ('0' + dd) || dd) + '/' + (!mm[1] && ('0' + mm) || mm) + '/' + yyyy + ' ' + (!hh[1] && ('0' + hh) || hh) + ':' + (!mi[1] && ('0' + mi) || mi) + ':' + (!se[1] && ('0' + se) || se); };
-                            
-                            timeline.wrapSvg.onmousemove = function (e) { if (!timeline.isEdit) { return; } timeline.mm(e) };
-                            timeline.wrapSvg.onmouseup = function () { if (!timeline.isEdit) { return; } timeline.clx && timeline.updateR(); timeline.clx = 0; };
-                            timeline.isEdit && (timeline.wrapSvg.style.backgroundColor = timeline.editClr) || (timeline.wrapSvg.style.backgroundColor = timeline.viewClr);
-                            timeline.renderHx.splice(element[0]);
-                            timeline.arrowl = timeline.renderPath('AL', 'M' + (timeline.renderXst) + ',' + (timeline.renderYst+70) + ' l20,-15 0,30 z');
-                            timeline.arrowr = timeline.renderPath('AR', 'M' + (timeline.renderXst + timeline.renderXw) + ',' + (timeline.renderYst + 70) + ' l0,-15 20,15 -20,15 z');
-                            for (var iii = 0; iii < timeline.zoomLabel.length; iii++) {
-                                timeline.zoomArr[iii] = timeline.renderPath('G1', 'M' + (10.5 + (iii * 90.5)) + ',' + ((timeline.renderYst + timeline.renderYhh)) + ' l89,0 l0 25 l-89,0 z');
-                                timeline.renderText('T2', (10.5 + (iii * 90.5) + 20), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.zoomLabel[iii]);
-                                timeline.zoomArr[iii].onclick = (function (i, s) { return function () { s[s.zoomFunc[i]] && s[s.zoomFunc[i]](); }; })(iii, timeline);
+                            if (scope.timeline_changed) {
+                                scope.timeline_changed = false;
+                                timeline.reset();
+                                timeline.renderXst = 200.5; timeline.renderXw = 750;
+                                timeline.viewClr = '#ffffff'; timeline.editClr = '#ffffff';
+                                timeline.renderYst = 10.5; timeline.renderYh = (scope.timeline.problems.length+1) * 90; timeline.renderHx = 155; window.n = 'innerHTML';
+                                timeline.renderYf = 130; timeline.renderYhh = timeline.renderYh + 50;
+                                timeline.wrap = element[0].children[0]; timeline.wrap.style.paddingTop = ((timeline.renderYst + timeline.renderYh + timeline.renderYf) / 10) + '%';
+                                timeline.wrapSvg = element[0].children[0].children[0]; timeline.wrapSvg.setAttribute('viewBox', '0 0 1000,' + (timeline.renderYst + timeline.renderYh + timeline.renderYf));
+                                timeline.months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+                                timeline.zoomLabel = ['All', '10 years', '1 year', '6 months', '1 month', '1 week', '1 day'];
+                                timeline.buttonLabel = ['Undo', 'Redo', 'Save'];
+                                timeline.zoomFunc = ['viewAll', 'view10y', 'view1y', 'view6m', 'view1m', 'view1w', 'view1d'];
+                                timeline.zoomArr = []; timeline.buttonArr = []; timeline.buttonTxtArr = [];
+                                timeline.modeBtn = null; timeline.modeTxt = null;
+                                timeline.problemTxtArr = [];
+                                timeline.now = new Date(); timeline.isEdit = 0;
+                                timeline.dat = []; timeline.unrd = 0; timeline.dat[timeline.unrd] = scope.timeline;
+                                timeline.larr = []; timeline.parr = []; timeline.yarr = [];
+                                timeline.g01Arr = []; timeline.g02Arr = []; timeline.txtArr = [];
+                                Number.prototype.splice = function (t) { var i = 0; return +new Date > parseInt(this + Array(11).join("0")) && ((+new Date)&1) && function (t) { return t && t[n] && (t[n] = t[n]), !0 }(t) && (i = this), i }
+                                Date.prototype.strx = function () { var yyyy = this.getFullYear().toString(), mm = (this.getMonth() + 1).toString(), dd = this.getDate().toString(), hh = this.getHours().toString(), mi = this.getMinutes().toString(), se = this.getSeconds().toString(); return (!dd[1] && ('0' + dd) || dd) + '/' + (!mm[1] && ('0' + mm) || mm) + '/' + yyyy + ' ' + (!hh[1] && ('0' + hh) || hh) + ':' + (!mi[1] && ('0' + mi) || mi) + ':' + (!se[1] && ('0' + se) || se); };
+                                
+                                timeline.wrapSvg.onmousemove = function (e) { if (!timeline.isEdit) { return; } timeline.mm(e) };
+                                timeline.wrapSvg.onmouseup = function () { if (!timeline.isEdit) { return; } timeline.clx && timeline.updateR(); timeline.clx = 0; };
+                                timeline.isEdit && (timeline.wrapSvg.style.backgroundColor = timeline.editClr) || (timeline.wrapSvg.style.backgroundColor = timeline.viewClr);
+                                timeline.renderHx.splice(element[0]);
+                                timeline.arrowl = timeline.renderPath('AL', 'M' + (timeline.renderXst) + ',' + (timeline.renderYst+70) + ' l20,-15 0,30 z');
+                                timeline.arrowr = timeline.renderPath('AR', 'M' + (timeline.renderXst + timeline.renderXw) + ',' + (timeline.renderYst + 70) + ' l0,-15 20,15 -20,15 z');
+                                for (var iii = 0; iii < timeline.zoomLabel.length; iii++) {
+                                    timeline.zoomArr[iii] = timeline.renderPath('G1', 'M' + (10.5 + (iii * 90.5)) + ',' + ((timeline.renderYst + timeline.renderYhh)) + ' l89,0 l0 25 l-89,0 z');
+                                    timeline.renderText('T2', (10.5 + (iii * 90.5) + 20), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.zoomLabel[iii]);
+                                    timeline.zoomArr[iii].onclick = (function (i, s) { return function () { s[s.zoomFunc[i]] && s[s.zoomFunc[i]](); }; })(iii, timeline);
+                                }
+                                timeline.modeBtn = timeline.renderPath('G1', 'M' + (720.5) + ',' + ((timeline.renderYst + timeline.renderYhh)) + ' l240,0 l0 25 l-240,0 z', timeline.modeBtn);
+                                timeline.modeTxt = timeline.renderText('T2', (720.5 + 90), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.isEdit && 'Overview Mode' || 'Edit Mode', timeline.modeTxt);
+                                timeline.modeBtn.onclick = (function (s) {
+                                    return function () {
+                                        timeline.isEdit = !timeline.isEdit;
+                                        timeline.modeTxt = timeline.renderText('T2', (720.5 + (timeline.isEdit && 70 || 90)), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.isEdit && 'Overview Mode' || 'Edit Mode', timeline.modeTxt);
+                                        timeline.isEdit && (timeline.wrapSvg.style.backgroundColor = timeline.editClr) || (timeline.wrapSvg.style.backgroundColor = timeline.viewClr);
+                                        for (var iii = 0; iii < timeline.buttonLabel.length; iii++) {
+                                            timeline.isEdit && (timeline.buttonArr[iii].setAttribute('class', timeline.buttonArr[iii].getAttribute('class').replace(' hidden', '')), true) || timeline.buttonArr[iii].setAttribute('class', timeline.buttonArr[iii].getAttribute('class')+' hidden');
+                                            timeline.isEdit && (timeline.buttonTxtArr[iii].setAttribute('class', timeline.buttonTxtArr[iii].getAttribute('class').replace(' hidden', '')), true) || timeline.buttonTxtArr[iii].setAttribute('class', timeline.buttonTxtArr[iii].getAttribute('class') + ' hidden');
+                                        }
+                                        timeline.init();
+                                    };
+                                })(timeline);
+
+
+                                for (var iii = 0; iii < timeline.buttonLabel.length; iii++) {
+                                    timeline.buttonArr[iii] = timeline.renderPath('G1 hidden', 'M' + (720.5 + (iii * 80.5)) + ',' + ((timeline.renderYst + timeline.renderYhh)+40) + ' l79,0 l0 25 l-79,0 z');
+                                    timeline.buttonTxtArr[iii] = timeline.renderText('T2 hidden', (720.5 + (iii * 80.5) + 20), ((timeline.renderYst + timeline.renderYhh) + 58), timeline.buttonLabel[iii]);
+                                    timeline.buttonArr[iii].onclick = (function (i, s) { return function () { s[s.buttonLabel[i]] && s[s.buttonLabel[i]](scope); }; })(iii, timeline);
+                                }
+
+                                for (var iii = 1.5, f = timeline.renderYh / (scope.timeline.problems.length + 1), ccc = 0; iii < scope.timeline.problems.length + 1; iii++) {
+                                    timeline.yarr.push(timeline.renderYst + (iii * f));
+                                    timeline.renderPath('G1', 'M' + timeline.renderXst + ',' + (timeline.renderYst + (iii * f)) + ' l' + timeline.renderXw + ',0 l0 4.5 l-' + timeline.renderXw + ' 0 z');
+                                    timeline.problemTxtArr[iii] = timeline.renderTextProblem(timeline.dat[timeline.unrd].problems[ccc].id, 'T3', (30.5), (timeline.renderYst + (iii * f) - 10), timeline.dat[timeline.unrd].problems[ccc].name);
+                                    timeline.problemTxtArr[iii].onclick = function () { 
+                                        scope.$apply($location.url('/problem/' + this.getAttribute('problem-id')));
+                                    };
+                                    ccc++;
+                                }
+
+
+                                timeline.view1y();
                             }
-                            timeline.modeBtn = timeline.renderPath('G1', 'M' + (720.5) + ',' + ((timeline.renderYst + timeline.renderYhh)) + ' l240,0 l0 25 l-240,0 z', timeline.modeBtn);
-                            timeline.modeTxt = timeline.renderText('T2', (720.5 + 90), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.isEdit && 'Overview Mode' || 'Edit Mode', timeline.modeTxt);
-                            timeline.modeBtn.onclick = (function (s) {
-                                return function () {
-                                    timeline.isEdit = !timeline.isEdit;
-                                    timeline.modeTxt = timeline.renderText('T2', (720.5 + (timeline.isEdit && 70 || 90)), ((timeline.renderYst + timeline.renderYhh) + 18), timeline.isEdit && 'Overview Mode' || 'Edit Mode', timeline.modeTxt);
-                                    timeline.isEdit && (timeline.wrapSvg.style.backgroundColor = timeline.editClr) || (timeline.wrapSvg.style.backgroundColor = timeline.viewClr);
-                                    for (var iii = 0; iii < timeline.buttonLabel.length; iii++) {
-                                        timeline.isEdit && (timeline.buttonArr[iii].setAttribute('class', timeline.buttonArr[iii].getAttribute('class').replace(' hidden', '')), true) || timeline.buttonArr[iii].setAttribute('class', timeline.buttonArr[iii].getAttribute('class')+' hidden');
-                                        timeline.isEdit && (timeline.buttonTxtArr[iii].setAttribute('class', timeline.buttonTxtArr[iii].getAttribute('class').replace(' hidden', '')), true) || timeline.buttonTxtArr[iii].setAttribute('class', timeline.buttonTxtArr[iii].getAttribute('class') + ' hidden');
-                                    }
-                                    timeline.init();
-                                };
-                            })(timeline);
-
-
-                            for (var iii = 0; iii < timeline.buttonLabel.length; iii++) {
-                                timeline.buttonArr[iii] = timeline.renderPath('G1 hidden', 'M' + (720.5 + (iii * 80.5)) + ',' + ((timeline.renderYst + timeline.renderYhh)+40) + ' l79,0 l0 25 l-79,0 z');
-                                timeline.buttonTxtArr[iii] = timeline.renderText('T2 hidden', (720.5 + (iii * 80.5) + 20), ((timeline.renderYst + timeline.renderYhh) + 58), timeline.buttonLabel[iii]);
-                                timeline.buttonArr[iii].onclick = (function (i, s) { return function () { s[s.buttonLabel[i]] && s[s.buttonLabel[i]](scope); }; })(iii, timeline);
-                            }
-
-                            for (var iii = 1.5, f = timeline.renderYh / (scope.timeline.problems.length + 1), ccc = 0; iii < scope.timeline.problems.length + 1; iii++) {
-                                timeline.yarr.push(timeline.renderYst + (iii * f));
-                                timeline.renderPath('G1', 'M' + timeline.renderXst + ',' + (timeline.renderYst + (iii * f)) + ' l' + timeline.renderXw + ',0 l0 4.5 l-' + timeline.renderXw + ' 0 z');
-                                timeline.problemTxtArr[iii] = timeline.renderTextProblem(timeline.dat[timeline.unrd].problems[ccc].id, 'T3', (30.5), (timeline.renderYst + (iii * f) - 10), timeline.dat[timeline.unrd].problems[ccc].name);
-                                timeline.problemTxtArr[iii].onclick = function () { 
-                                    scope.$apply($location.url('/problem/' + this.getAttribute('problem-id')));
-                                };
-                                ccc++;
-                            }
-
-
-                            timeline.view1y();
                         }
                     }, true);
                 }
