@@ -89,6 +89,13 @@
 			return httpService.postJson(form, url);
 
 		};
+
+		this.updateStateToPTW = function(form){
+
+			var url = '/p/problem/update_state_to_ptw/';
+			return httpService.postJson(form, url);
+
+		};
 });
 
 

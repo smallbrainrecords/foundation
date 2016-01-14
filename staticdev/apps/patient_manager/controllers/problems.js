@@ -106,6 +106,15 @@
 				return timeline_problems;
 			}
 
+			function getStateChangedEvent(problem) {
+				var event = {}
+				event['event_id'] = new Date().getTime();
+				event['startTime'] = moment().format('DD/MM/YYYY HH:mm:ss');
+				event['state'] = getTimelineWidgetState(problem);
+
+				return event;
+			}
+
 			$scope.timelineSave = function (newData) { 
 				var form = {};
 
@@ -218,11 +227,20 @@
 				form.authenticated = $scope.problem.authenticated;
 				form.is_active = $scope.problem.is_active;
 
+				var event = getStateChangedEvent($scope.problem);
+				$scope.timeline.problems[0].events.splice(-1,1);
+				$scope.timeline.problems[0].events.push(event);
 
 				problemService.updateProblemStatus(form).then(function(data){
-					$scope.timeline.problems[0].events[$scope.timeline.problems[0].events.length - 2].state = getTimelineWidgetState($scope.problem);
-					$scope.timeline_changed = true;
-					toaster.pop('success', 'Done', 'Updated Problem Status');
+					var form_problem = {};
+
+					form_problem.patient_id = $scope.patient_id;
+					form_problem.timeline_data = $scope.timeline;
+					$scope.problem.start_date = convertDateTimeBack($scope.timeline.problems[0].events[$scope.timeline.problems[0].events.length - 1].startTime);;
+					problemService.updateStateToPTW(form_problem).then(function(data){
+						$scope.timeline_changed = true;
+						toaster.pop('success', 'Done', 'Updated Problem Status');
+					});
 				});
 
 			});

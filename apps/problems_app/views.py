@@ -794,3 +794,57 @@ def update_by_ptw(request):
             resp['success'] = True
 
     return ajax_response(resp)
+
+@login_required
+def update_state_to_ptw(request):
+    
+    resp = {}
+
+    resp['success'] = False
+
+    permissions = ['modify_problem']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        timeline_data = json.loads(request.body)['timeline_data']
+        for problem_json in timeline_data['problems']:
+            problem = Problem.objects.get(id=int(problem_json['id']))
+
+            start_date = problem_json['events'][-1]['startTime']
+            problem.start_date = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").date()
+            problem.save()
+
+            if len(problem_json['events']) > 1:
+                i = 1
+                for event in problem_json['events']:
+                    # break if the last one, this is current problem
+                    if i == len(problem_json['events']):
+                        break
+                    i = i + 1
+                    try:
+                        event_id = int(event['event_id'])
+                        try:
+                            problem_segment = ProblemSegment.objects.get(event_id=event_id)
+                        except ProblemSegment.DoesNotExist:
+                            problem_segment = ProblemSegment()
+                            problem_segment.event_id = event_id
+                            problem_segment.problem = problem
+                        
+                        problem_segment.start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").date()
+                        if event['state'] == 'uncontrolled':
+                            problem_segment.is_active = True
+                            problem_segment.is_controlled = False
+                        if event['state'] == 'controlled':
+                            problem_segment.is_active = True
+                            problem_segment.is_controlled = True
+                        if event['state'] == 'inactive':
+                            problem_segment.is_active = False
+                            problem_segment.is_controlled = False
+                        problem_segment.save()
+                    except ValueError:
+                        event_id = None
+
+            resp['success'] = True
+
+    return ajax_response(resp)
