@@ -28,16 +28,33 @@
 
 			
 
-			function convertDateTime(dateTime){
+			function convertDateTime(problem){
+				if(problem.start_date) {
+					var dateTime = problem.start_date;
+					var date = dateTime.split("-");
+				    var yyyy = date[0];
+				    var mm = date[1];
+				    var dd = date[2];
+
+				    if (problem.start_time) {
+				    	return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
+				    }
+
+				    return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
+				}
+			    return '30/11/1970 00:00:00';
+			}
+
+			function convertDateTimeBirthday(dateTime){
 				if(dateTime) {
 					var date = dateTime.split("-");
 				    var yyyy = date[0];
 				    var mm = date[1];
 				    var dd = date[2];
 
-				    return dd + '/' + mm + '/' + yyyy + ' 12:00:00';
+				    return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
 				}
-			    return '30/11/1970 12:00:00';
+			    return '30/11/1970 00:00:00';
 			}
 
 			function convertDateTimeBack(dateTime){
@@ -71,7 +88,7 @@
 						events: [
 							{ 
 								event_id: new Date().getTime(), 
-								startTime: convertDateTime(problem.start_date), 
+								startTime: convertDateTime(problem), 
 								state: state 
 							},
 						]
@@ -88,12 +105,12 @@
 				angular.forEach(problem.problem_segment, function(value) {
 					event = {};
 					event['event_id'] = value.event_id;
-					event['startTime'] = convertDateTime(value.start_date);
+					event['startTime'] = convertDateTime(value);
 					event['state'] = getTimelineWidgetState(value);
 					events.push(event);
 				});
 
-				events.push({event_id: new Date().getTime(), startTime: convertDateTime(problem.start_date), state: getTimelineWidgetState(problem)});
+				events.push({event_id: new Date().getTime(), startTime: convertDateTime(problem), state: getTimelineWidgetState(problem)});
 
 				var timeline_problems = [
 					{
@@ -141,7 +158,7 @@
 					$scope.$watch('active_user', function(nV, oV){
 						$scope.timeline = {
 							Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'], 
-							birthday: convertDateTime($scope.active_user['date_of_birth']), 
+							birthday: convertDateTimeBirthday($scope.active_user['date_of_birth']), 
 							problems: timeline_problems
 						};
 

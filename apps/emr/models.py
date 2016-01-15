@@ -146,6 +146,7 @@ class Problem(MPTTModel):
     is_active = models.BooleanField(default=True)
     authenticated = models.BooleanField(default=False)
     start_date = models.DateField(auto_now_add=True)
+    start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
         return '%s %s' % (self.patient, self.problem_name)
@@ -158,9 +159,10 @@ class ProblemSegment(models.Model):
     authenticated = models.BooleanField(default=False)
     event_id = models.BigIntegerField(null=True, blank=True)
     start_date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ('start_date',)
+        ordering = ('start_date', 'start_time', )
 
     def __unicode__(self):
         return '%s segment %s' % (self.problem.problem_name, self.start_date)

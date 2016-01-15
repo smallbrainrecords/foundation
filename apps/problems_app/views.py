@@ -739,6 +739,7 @@ def update_by_ptw(request):
 
             start_date = problem_json['events'][-1]['startTime']
             problem.start_date = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").date()
+            problem.start_time = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").time()
 
             role = actor_profile.role
 
@@ -767,6 +768,7 @@ def update_by_ptw(request):
                             problem_segment.problem = problem
                         
                         problem_segment.start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").date()
+                        problem_segment.start_time = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").time()
                         if event['state'] == 'uncontrolled':
                             problem_segment.is_active = True
                             problem_segment.is_controlled = False
@@ -813,6 +815,7 @@ def update_state_to_ptw(request):
 
             start_date = problem_json['events'][-1]['startTime']
             problem.start_date = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").date()
+            problem.start_time = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").time()
             problem.save()
 
             if len(problem_json['events']) > 1:
@@ -832,6 +835,7 @@ def update_state_to_ptw(request):
                             problem_segment.problem = problem
                         
                         problem_segment.start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").date()
+                        problem_segment.start_time = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").time()
                         if event['state'] == 'uncontrolled':
                             problem_segment.is_active = True
                             problem_segment.is_controlled = False

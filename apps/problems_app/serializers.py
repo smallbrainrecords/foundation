@@ -19,6 +19,7 @@ class ProblemSegmentSerializer(serializers.ModelSerializer):
             'is_active',
             'authenticated',
             'event_id',
+            'start_time',
             'start_date',)
 
 
@@ -38,6 +39,7 @@ class ProblemSerializer(serializers.ModelSerializer):
             'is_controlled',
             'is_active',
             'authenticated',
+            'start_time',
             'start_date',)
 
 
