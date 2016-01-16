@@ -70,9 +70,10 @@
 			}
 
 			function getTimelineWidgetState(problem) {
-				if (problem.is_controlled) {
-					return 'controlled';
-				} else if (problem.is_active) {
+				if (problem.is_active) {
+					if (problem.is_controlled) {
+						return 'controlled';
+					}
 					return 'uncontrolled';
 				}
 				return 'inactive';
