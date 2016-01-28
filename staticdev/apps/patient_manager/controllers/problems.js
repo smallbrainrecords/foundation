@@ -172,6 +172,16 @@
                     $scope.problem_goals = data['problem_goals'];
                     $scope.problem_todos = data['problem_todos'];
 
+                    $scope.models = {
+						selected: null,
+						list: []
+					};
+
+					// Generate initial model
+					angular.forEach($scope.problem_todos, function(todo) {
+						$scope.models.list.push({todo: todo});
+					});
+
                     $scope.problem_images = data['problem_images'];
 
                     $scope.effecting_problems = data['effecting_problems'];
