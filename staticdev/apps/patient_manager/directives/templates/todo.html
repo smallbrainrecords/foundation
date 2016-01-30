@@ -1,0 +1,11 @@
+<div class="col-md-12 todos-container" ng-show='problem_todos.length'>
+    <div class="panel panel-info">
+        <div class="panel-body">
+		    <ul ui-sortable="sortableOptions" ng-model="problem_todos">
+				<li ng-repeat="item in problem_todos" class="list-group-item" ng-show="item.accomplished==accomplished" ng-click="open_todo(item)">
+					<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
+				</li>
+		    </ul>
+		</div>
+	</div>
+</div>

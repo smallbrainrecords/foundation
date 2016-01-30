@@ -307,17 +307,8 @@
 		<ul class='list-group'>
 			<li ng-show='!problem_todos.length'> No Todos </li>
 		</ul>
-		<div class="col-md-12" ng-show='problem_todos.length'>
-		    <div class="panel panel-info">
-		        <div class="panel-body">
-				    <ul ui-sortable="sortableOptions" ng-model="problem_todos">
-						<li ng-repeat="item in problem_todos" class="list-group-item" ng-show="item.accomplished==false" ng-click="test()">
-							<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
-						</li>
-				    </ul>
-				</div>
-			</div>
-		</div>
+		<todo ng-model="problem_todos" accomplished="false"></todo>
+		
 		<hr>
 		<a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'> 
 			<span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
@@ -328,17 +319,7 @@
 			<ul class='list-group' >
 				<li ng-show='!problem_todos.length'> No Todos </li>
 			</ul>
-			<div class="col-md-12" ng-show='problem_todos.length'>
-			    <div class="panel panel-info">
-			        <div class="panel-body">
-						<ul ui-sortable="sortableOptions" ng-model="problem_todos">
-						<li ng-repeat="item in problem_todos" class="list-group-item" ng-show="item.accomplished==true">
-							<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
-						</li>
-				    </ul>
-					</div>
-				</div>
-			</div>
+			<todo ng-model="problem_todos" accomplished="true"></todo>
 		</div>
 	</div>
 

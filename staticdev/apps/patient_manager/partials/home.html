@@ -313,24 +313,7 @@
 			</div>	
 		</div>
 
-		<div class="col-md-12" ng-show='pending_todos.length'>
-		    <div class="panel panel-info">
-		        <div class="panel-body">
-				    <ul ui-sortable="sortableOptions_pending" ng-model="pending_todos">
-						<li ng-repeat="item in pending_todos" class="list-group-item" ng-show="item.accomplished==false" ng-click="test()">
-							<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} <span ng-show="item.problem">- {{item.problem.problem_name }}</span>
-
-							<!-- <a href="#" class=""><i class="fa fa-pencil"></i></a>
-							<div class="quick-card-editor-card" ng-show='item.accomplished==false'>
-								<div class="quick-card-editor-buttons">
-									<a href="#"><i class="fa fa-clock-o"></i>Change Due Date</a>
-								</div>
-							</div> -->
-						</li>
-				    </ul>
-				</div>
-			</div>
-		</div>
+		<todo ng-model="problem_todos" accomplished="false"></todo>
 <hr>
 		<a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'> 
 			<span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
@@ -338,22 +321,7 @@
 		</a>
 <hr>
 		<div class="col-md-12" ng-show='show_accomplished_todos==true'>
-		    <div class="panel panel-info">
-		        <div class="panel-body">
-				    <ul ui-sortable="sortableOptions_accomplished" ng-model="accomplished_todos">
-						<li ng-repeat="item in accomplished_todos" class="list-group-item" ng-show="item.accomplished==true" ng-click="test()">
-							<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} <span ng-show="item.problem">- {{item.problem.problem_name }}</span>
-
-							<!-- <a href="#" class=""><i class="fa fa-pencil"></i></a>
-							<div class="quick-card-editor-card" ng-show='item.accomplished==false'>
-								<div class="quick-card-editor-buttons">
-									<a href="#"><i class="fa fa-clock-o"></i>Change Due Date</a>
-								</div>
-							</div> -->
-						</li>
-				    </ul>
-				</div>
-			</div>
+		    <todo ng-model="problem_todos" accomplished="true"></todo>
 		</div>
 
 	</div>

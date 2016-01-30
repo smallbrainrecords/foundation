@@ -268,7 +268,6 @@ function timelineDirective($location) {
             timeline.drqq = function (d) {
                 var dd = d.split('/'); d = dd[1] + '/' + dd[0] + '/' + dd[2];
                 var x = ((new Date(d).getTime() - timeline.szoom.start) / (timeline.szoom.viewMS / timeline.renderXw)) + timeline.renderXst;
-                console.log(d+'  '+x);
                 if (x < timeline.renderXst) { return 'G4'; }
                 if (x > timeline.renderXst + timeline.renderXw) { return 'G5'; }
                 return '';

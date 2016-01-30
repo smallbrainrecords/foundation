@@ -3,7 +3,9 @@
 	'use strict';
 
 
-	var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 'dndLists', 'ui.sortable']);
+	var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 
+        'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 
+        'dndLists', 'ui.sortable', 'todos']);
 
 
     ManagerApp.config(function($routeProvider) {
@@ -37,7 +39,10 @@
                 controller: 'EncountersCtrl'
 
             })
-
+            .when("/todo/:todo_id", {
+                templateUrl: '/static/apps/patient_manager/partials/todo.html',
+                controller: 'TodoCtrl'
+            });
 
     });
 

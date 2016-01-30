@@ -288,3 +288,13 @@ class EncounterProblemRecord(models.Model):
 
     def __unicode__(self):
         return "%s %s" % (unicode(self.encounter), unicode(self.problem))
+
+
+class ToDoComment(models.Model):
+    todo = models.ForeignKey(ToDo)
+    user = models.ForeignKey(User)
+    comment = models.TextField(null=True, blank=True)
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.todo.todo))

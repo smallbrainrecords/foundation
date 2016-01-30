@@ -261,6 +261,15 @@ def get_patient_info(request, patient_id):
         todo_dict = TodoSerializer(todo).data
         accomplished_todo_list.append(todo_dict)
 
+
+    # Todos
+    problem_todos = ToDo.objects.filter(
+        patient=patient_user).order_by('order')
+    problem_todos_list = []
+    for todo in problem_todos:
+        todo_dict = TodoSerializer(todo).data
+        problem_todos_list.append(todo_dict)
+
     encounters = Encounter.objects.filter(
         patient=patient_user).order_by('-starttime')
 
@@ -277,6 +286,7 @@ def get_patient_info(request, patient_id):
     resp['goals'] = goal_list
     resp['pending_todos'] = pending_todo_list
     resp['accomplished_todos'] = accomplished_todo_list
+    resp['problem_todos'] = problem_todos_list
     resp['inactive_problems'] = inactive_problems_list
     resp['timeline_problems'] = timeline_problems_list
     resp['completed_goals'] = completed_goals_list

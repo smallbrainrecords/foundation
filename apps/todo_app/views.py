@@ -2,10 +2,10 @@ from datetime import datetime
 from django.db.models import Max
 from common.views import *
 
-from emr.models import UserProfile, ToDo
+from emr.models import UserProfile, ToDo, ToDoComment
 from emr.operations import op_add_event
 
-from .serializers import TodoSerializer
+from .serializers import TodoSerializer, ToDoCommentSerializer
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
@@ -53,8 +53,8 @@ def add_patient_todo(request, patient_id):
         else:
             problem_name = ''
         summary = '''
-            Added <u>todo</u> <b>%s</b> for <u>problem</u> <b>%s</b>
-            ''' % (todo_name, problem_name)
+            Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>
+            ''' % (new_todo.id, todo_name, problem_name)
 
         op_add_event(physician, patient, summary)
 
@@ -94,9 +94,9 @@ def update_todo_status(request, todo_id):
             accomplished_label = 'not accomplished'
 
         summary = """
-            Updated status of <u>todo</u> : <b>%s</b> ,
+            Updated status of <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> ,
             <u>problem</u> <b>%s</b> to <b>%s</b>
-            """ % (todo.todo, problem_name, accomplished_label)
+            """ % (todo.id, todo.todo, problem_name, accomplished_label)
 
         op_add_event(physician, patient, summary, todo.problem)
 
@@ -157,4 +157,46 @@ def update_order(request):
             key = key + 1
 
         resp['success'] = True
+    return ajax_response(resp)
+
+@login_required
+def get_todo_info(request, todo_id):
+    todo_info = ToDo.objects.get(id=todo_id)
+    todo_dict = TodoSerializer(todo_info).data
+
+    comments = ToDoComment.objects.filter(todo=todo_info)
+    comment_todos_holder = []
+    for comment in comments:
+        comment_dict = ToDoCommentSerializer(comment).data
+        comment_todos_holder.append(comment_dict)
+
+    resp = {}
+    resp['success'] = True
+    resp['info'] = todo_dict
+    resp['comments'] = comment_todos_holder
+
+    return ajax_response(resp)
+
+@login_required
+def add_todo_comment(request, todo_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        comment = request.POST.get('comment')
+
+        todo = ToDo.objects.get(id=todo_id)
+        user = request.user
+
+        todo_comment = ToDoComment(todo=todo, user=user, comment=comment)
+        todo_comment.save()
+
+        todo_comment_dict = ToDoCommentSerializer(todo_comment).data
+        resp['comment'] = todo_comment_dict
+        resp['success'] = True
+
     return ajax_response(resp)

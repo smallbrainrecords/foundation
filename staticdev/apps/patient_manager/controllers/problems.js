@@ -171,39 +171,7 @@
 
                     $scope.problem_goals = data['problem_goals'];
                     $scope.problem_todos = data['problem_todos'];
-
-					var tmpList = $scope.problem_todos;
-					  
-					$scope.sortingLog = [];
-					$scope.sorted = false;
-					$scope.dragged = false;
-					  
-					$scope.sortableOptions = {
-					    update: function(e, ui) {
-							$scope.sorted = true;
-					    },
-					    start: function() {
-					        $scope.dragged = true;
-					    },
-					    stop: function(e, ui) {
-							// this callback has the changed model
-							if ($scope.sorted) {
-								$scope.sortingLog = [];
-								tmpList.map(function(i){
-									$scope.sortingLog.push(i.id);
-								});
-								var form = {};
-
-								form.todos = $scope.sortingLog;
-
-								patientService.updateTodoOrder(form).then(function(data){
-									toaster.pop('success', 'Done', 'Updated Problem');
-									$scope.dragged = false;
-								});
-							}
-							$scope.sorted = false;
-					    }
-				    }
+                    $scope.todos_ready = true;
 
                     $scope.problem_images = data['problem_images'];
 
@@ -255,12 +223,6 @@
 
                     $scope.loading = false;
             });
-
-			$scope.test = function() {
-				if (!$scope.dragged) {
-					
-				}
-			}
 
 			/* Track Status */
 

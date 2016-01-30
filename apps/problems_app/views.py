@@ -567,8 +567,8 @@ def add_problem_todo(request, problem_id):
         physician = request.user
 
         summary = '''
-            Added <u>todo</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>
-        ''' % (todo, problem.problem_name)
+            Added <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> to <u>problem</u> : <b>%s</b>
+        ''' % (new_todo.id, todo, problem.problem_name)
         op_add_event(physician, patient, summary, problem)
 
         activity = summary

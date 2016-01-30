@@ -7,5 +7,6 @@ urlpatterns = patterns('todo_app.views',
 
     url(r'^todo/(?P<todo_id>\d+)/update/$', 'update_todo_status'),
     url(r'^todo/updateOrder/$', 'update_order'),
-
-	)
+    url(r'^todo/(?P<todo_id>\d+)/info/$', 'get_todo_info'),
+    url(r'^todo/(?P<todo_id>\d+)/comment$', 'add_todo_comment'),
+)
