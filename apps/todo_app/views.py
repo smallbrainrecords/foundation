@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.db.models import Max
 from common.views import *
 
 from emr.models import UserProfile, ToDo
@@ -39,6 +40,12 @@ def add_patient_todo(request, patient_id):
         physician = request.user
 
         new_todo = ToDo(patient=patient, todo=todo_name, due_date=due_date)
+        order =  ToDo.objects.all().aggregate(Max('order'))
+        if not order['order__max']:
+            order = 1
+        else:
+            order = order['order__max'] + 1
+        new_todo.order = order
         new_todo.save()
 
         if new_todo.problem:
@@ -115,4 +122,39 @@ def update_todo_status(request, todo_id):
             pending_todo_list.append(todo_dict)
         resp['pending_todos'] = pending_todo_list
 
+    return ajax_response(resp)
+
+@login_required
+def update_order(request):
+    resp = {}
+
+    resp['success'] = False
+
+    permissions = ['modify_problem']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        id_todos = json.loads(request.body)['todos']
+        todos = ToDo.objects.filter(id__in=id_todos).order_by('order')
+        todos_order = []
+        for todo in todos:
+            todos_order.append(todo.order)
+
+        key = 0
+        for id in id_todos:
+            todo = ToDo.objects.get(id=int(id))
+            if not todos_order[key]:
+                order =  ToDo.objects.all().aggregate(Max('order'))
+                if not order['order__max']:
+                    order = 1
+                else:
+                    order = order['order__max'] + 1
+                todo.order = order
+            else:
+                todo.order = todos_order[key]
+            todo.save()
+            key = key + 1
+
+        resp['success'] = True
     return ajax_response(resp)

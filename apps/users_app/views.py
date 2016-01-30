@@ -247,7 +247,7 @@ def get_patient_info(request, patient_id):
 
     # Not accomplished Todos
     pending_todos = ToDo.objects.filter(
-        patient=patient_user, accomplished=False)
+        patient=patient_user, accomplished=False).order_by('order')
     pending_todo_list = []
     for todo in pending_todos:
         todo_dict = TodoSerializer(todo).data
@@ -255,7 +255,7 @@ def get_patient_info(request, patient_id):
 
     # Accomplished Todos
     accomplished_todos = ToDo.objects.filter(
-        patient=patient_user, accomplished=True)
+        patient=patient_user, accomplished=True).order_by('order')
     accomplished_todo_list = []
     for todo in accomplished_todos:
         todo_dict = TodoSerializer(todo).data

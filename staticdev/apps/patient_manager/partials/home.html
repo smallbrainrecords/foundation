@@ -295,14 +295,14 @@
 					<label> Todo Name </label>
 					<input type='text' ng-model='new_todo.name' id='todoNameInput'>
 				</div>
-				<div class='form-group'>
+				<!-- <div class='form-group'>
 					<label> Problem (optional) </label>
 					<input type='text' ng-model='new_todo.problem'>
 				</div>
 				<div class='form-group'>
 					<label> Due Date </label>
 					<input type='text' ng-model='new_todo.due_date' id='due_date'>
-				</div>
+				</div> -->
 
 				<button type='submit' class='btn btn-default'> Add Todo </button>
 
@@ -313,65 +313,48 @@
 			</div>	
 		</div>
 
-<div style='max-height:375px; overflow-y:auto;'>
-		<table class='table'>
-			<thead>
-				<th> Accomplished </th>
-				<th> Item </th>
-				<th> For Problem </th>
-				<th> Due Date </th>
-				<th></th>
-			</thead>
+		<div class="col-md-12" ng-show='pending_todos.length'>
+		    <div class="panel panel-info">
+		        <div class="panel-body">
+				    <ul ui-sortable="sortableOptions_pending" ng-model="pending_todos">
+						<li ng-repeat="item in pending_todos" class="list-group-item" ng-show="item.accomplished==false" ng-click="test()">
+							<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} <span ng-show="item.problem">- {{item.problem.problem_name }}</span>
 
-			<tbody>
-
-				<tr ng-repeat='todo in pending_todos' ng-show='todo.accomplished==false' class="todo">
-					<td> <input type='checkbox' ng-model='todo.accomplished'  ng-change='update_todo_status(todo)'> </td>
-					<td> {{todo.todo}}</td>
-
-					<td>{{todo.problem.problem_name }} </td>
-					<td>{{todo.due_date }} </td>
-					<td>
-						<a href="#" class="btn-custom"><i class="fa fa-pencil"></i></a>
-						<!-- <div class="quick-card-editor-card" ng-show='todo.accomplished==false'>
-							<div class="quick-card-editor-buttons">
-								<a href="#"><i class="fa fa-clock-o"></i>Change Due Date</a>
-							</div>
-						</div> -->
-					</td>
-				</tr>
-			</tbody>
-
-		</table>
-</div>
+							<!-- <a href="#" class=""><i class="fa fa-pencil"></i></a>
+							<div class="quick-card-editor-card" ng-show='item.accomplished==false'>
+								<div class="quick-card-editor-buttons">
+									<a href="#"><i class="fa fa-clock-o"></i>Change Due Date</a>
+								</div>
+							</div> -->
+						</li>
+				    </ul>
+				</div>
+			</div>
+		</div>
 <hr>
 		<a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'> 
 			<span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
 			<span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
 		</a>
 <hr>
-<div style='max-height:375px; overflow-y:auto;'>
-		<table class='table' ng-if='show_accomplished_todos==true'>
-			<thead>
-				<th> Accomplished </th>
-				<th> Item </th>
-				<th> For Problem </th>
-				<th> Due Date </th>
-			</thead>
+		<div class="col-md-12" ng-show='show_accomplished_todos==true'>
+		    <div class="panel panel-info">
+		        <div class="panel-body">
+				    <ul ui-sortable="sortableOptions_accomplished" ng-model="accomplished_todos">
+						<li ng-repeat="item in accomplished_todos" class="list-group-item" ng-show="item.accomplished==true" ng-click="test()">
+							<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} <span ng-show="item.problem">- {{item.problem.problem_name }}</span>
 
-			<tbody>
-
-				<tr ng-repeat='todo in accomplished_todos'>
-					<td> <input type='checkbox' ng-model='todo.accomplished' ng-change='update_todo_status(todo)'> </td>
-					<td> <span class='text-success'> {{todo.todo}} </span> </td>
-
-					<td>{{todo.problem.problem_name }} </td>
-					<td>{{todo.due_date }} </td>
-				</tr>
-			</tbody>
-
-		</table>
-</div>
+							<!-- <a href="#" class=""><i class="fa fa-pencil"></i></a>
+							<div class="quick-card-editor-card" ng-show='item.accomplished==false'>
+								<div class="quick-card-editor-buttons">
+									<a href="#"><i class="fa fa-clock-o"></i>Change Due Date</a>
+								</div>
+							</div> -->
+						</li>
+				    </ul>
+				</div>
+			</div>
+		</div>
 
 	</div>
 </div>

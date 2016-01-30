@@ -209,6 +209,7 @@ class ToDo(models.Model):
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
     due_date = models.DateField(blank=True, null=True)
+    order = models.BigIntegerField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.patient))

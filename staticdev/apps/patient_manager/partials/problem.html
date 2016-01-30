@@ -23,70 +23,6 @@
 	background-color: red;
 	color: white;
 }
-
-/**
- * For the correct positioning of the placeholder element, the dnd-list and
- * it's children must have position: relative
- */
-ul[dnd-list],
-ul[dnd-list] > li {
-	position: relative;
-}
-
-/**
- * The dnd-list should always have a min-height,
- * otherwise you can't drop to it once it's empty
- */
-ul[dnd-list] {
-    min-height: 42px;
-    padding-left: 0px;
-}
-
-/**
- * The dndDraggingSource class will be applied to
- * the source element of a drag operation. It makes
- * sense to hide it to give the user the feeling
- * that he's actually moving it.
- */
-ul[dnd-list] .dndDraggingSource {
-    display: none;
-}
-
-/**
- * An element with .dndPlaceholder class will be
- * added to the dnd-list while the user is dragging
- * over it.
- */
-ul[dnd-list] .dndPlaceholder {
-    display: block;
-    background-color: #ddd;
-    min-height: 42px;
-}
-
-/**
- * The dnd-lists's child elements currently MUST have
- * position: relative. Otherwise we can not determine
- * whether the mouse pointer is in the upper or lower
- * half of the element we are dragging over. In other
- * browsers we can use event.offsetY for this.
- */
-ul[dnd-list] li {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-top-right-radius: 4px;
-    border-top-left-radius: 4px;
-    display: block;
-    padding: 10px 15px;
-    margin-bottom: -1px;
-}
-
-/**
- * Show selected elements in green
- */
-ul[dnd-list] li.selected {
-    background-color: #dff0d8;
-    color: #3c763d;
-}
 </style>
 
 
@@ -354,10 +290,10 @@ ul[dnd-list] li.selected {
 				<input type='text' class='form-control' ng-model='todo_form.name' id='todoNameInput'>
 			</div>
 
-			<div class='form-group'>
+			<!-- <div class='form-group'>
 				<label> Due Date </label>
 				<input type='text' ng-model='todo_form.due_date' id='due_date'>
-			</div>
+			</div> -->
 
 			<div class='form-group'>
 				<input type='submit' value='Submit' class='btn btn-default'>
@@ -371,20 +307,14 @@ ul[dnd-list] li.selected {
 		<ul class='list-group'>
 			<li ng-show='!problem_todos.length'> No Todos </li>
 		</ul>
-		<div class="col-md-12">
+		<div class="col-md-12" ng-show='problem_todos.length'>
 		    <div class="panel panel-info">
 		        <div class="panel-body">
-					<ul dnd-list="models.list">
-					    <li ng-repeat="item in models.list"
-					        dnd-draggable="item"
-					        dnd-moved="models.list.splice($index, 1)"
-					        dnd-effect-allowed="move"
-					        dnd-selected="models.selected = item"
-					        ng-class="{'selected': models.selected === item}"
-					        class="list-group-item">
-					        <input type='checkbox' ng-model='item.todo.accomplished' ng-change='update_todo_status(item.todo)'> {{item.todo.todo}}
-					    </li>
-					</ul>
+				    <ul ui-sortable="sortableOptions" ng-model="problem_todos">
+						<li ng-repeat="item in problem_todos" class="list-group-item" ng-show="item.accomplished==false" ng-click="test()">
+							<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
+						</li>
+				    </ul>
 				</div>
 			</div>
 		</div>
@@ -394,13 +324,22 @@ ul[dnd-list] li.selected {
 			<span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
 		</a>
 		<hr>
-		<ul class='list-group' ng-if='show_accomplished_todos==true'>
-			<li ng-show='!problem_todos.length'> No Todos </li>
-			<li ng-repeat='todo in problem_todos' class='list-group-item' ng-show='todo.accomplished==true'>
-				 <input type='checkbox' ng-model='todo.accomplished'  ng-change='update_todo_status(todo)'> &nbsp;&nbsp; {{todo.todo}} {{todo.due_date}}
-			</li>
-		</ul>
-
+		<div ng-if='show_accomplished_todos==true'>
+			<ul class='list-group' >
+				<li ng-show='!problem_todos.length'> No Todos </li>
+			</ul>
+			<div class="col-md-12" ng-show='problem_todos.length'>
+			    <div class="panel panel-info">
+			        <div class="panel-body">
+						<ul ui-sortable="sortableOptions" ng-model="problem_todos">
+						<li ng-repeat="item in problem_todos" class="list-group-item" ng-show="item.accomplished==true">
+							<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
+						</li>
+				    </ul>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 
 

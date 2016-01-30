@@ -232,6 +232,11 @@
 			return httpService.post(form, url);
 		};
 
+		this.updateTodoOrder = function(form){
+			var url = '/todo/todo/updateOrder/';
+			return httpService.postJson(form, url);
+		};
+
 	});
 
 })();

@@ -7,6 +7,8 @@ except ImportError:
 
 import json
 from datetime import datetime
+from django.db.models import Max
+
 from common.views import *
 
 from emr.models import UserProfile, Problem
@@ -67,7 +69,7 @@ def get_problem_info(request, problem_id):
     physician_notes = []
 
     problem_goals = Goal.objects.filter(problem=problem_info)
-    problem_todos = ToDo.objects.filter(problem=problem_info)
+    problem_todos = ToDo.objects.filter(problem=problem_info).order_by('order')
 
     problem_images = PatientImage.objects.filter(
         problem=problem_info)
@@ -554,6 +556,12 @@ def add_problem_todo(request, problem_id):
         new_todo = ToDo(
             patient=patient, problem=problem, todo=todo, due_date=due_date)
 
+        order =  ToDo.objects.all().aggregate(Max('order'))
+        if not order['order__max']:
+            order = 1
+        else:
+            order = order['order__max'] + 1
+        new_todo.order = order
         new_todo.save()
 
         physician = request.user

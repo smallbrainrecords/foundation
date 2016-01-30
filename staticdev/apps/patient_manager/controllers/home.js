@@ -140,6 +140,72 @@
 				};
 
 				$scope.timeline_changed = true;
+
+				var tmpList_pending = $scope.pending_todos;
+					  
+				$scope.sortingLog_pending = [];
+				$scope.sorted_pending = false;
+				$scope.dragged_pending = false;
+				  
+				$scope.sortableOptions_pending = {
+				    update: function(e, ui) {
+						$scope.sorted_pending = true;
+				    },
+				    start: function() {
+				        $scope.dragged_pending = true;
+				    },
+				    stop: function(e, ui) {
+						// this callback has the changed model
+						if ($scope.sorted_pending) {
+							$scope.sortingLog_pending = [];
+							tmpList_pending.map(function(i){
+								$scope.sortingLog_pending.push(i.id);
+							});
+							var form = {};
+
+							form.todos = $scope.sortingLog_pending;
+
+							patientService.updateTodoOrder(form).then(function(data){
+								toaster.pop('success', 'Done', 'Updated Todo');
+								$scope.dragged_accomplished = false;
+							});
+						}
+						$scope.sorted_pending = false;
+				    }
+			    }
+
+			    var tmpList_accomplished = $scope.accomplished_todos;
+					  
+				$scope.sortingLog_accomplished = [];
+				$scope.sorted_accomplished = false;
+				$scope.dragged_accomplished = false;
+				  
+				$scope.sortableOptions_accomplished = {
+				    update: function(e, ui) {
+						$scope.sorted_accomplished = true;
+				    },
+				    start: function() {
+				        $scope.dragged_accomplished = true;
+				    },
+				    stop: function(e, ui) {
+						// this callback has the changed model
+						if ($scope.sorted_accomplished) {
+							$scope.sortingLog_accomplished = [];
+							tmpList_accomplished.map(function(i){
+								$scope.sortingLog_accomplished.push(i.id);
+							});
+							var form = {};
+
+							form.todos = $scope.sortingLog_accomplished;
+
+							patientService.updateTodoOrder(form).then(function(data){
+								toaster.pop('success', 'Done', 'Updated Todo');
+								$scope.dragged_accomplished = false;
+							});
+						}
+						$scope.sorted_accomplished = false;
+				    }
+			    }
 			});
 
 
