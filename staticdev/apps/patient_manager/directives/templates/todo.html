@@ -3,7 +3,7 @@
         <div class="panel-body">
 		    <ul ui-sortable="sortableOptions" ng-model="problem_todos">
 				<li ng-repeat="item in problem_todos" class="list-group-item" ng-show="item.accomplished==accomplished" ng-click="open_todo(item)">
-					<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
+					<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} <span ng-if="item.problem && show_problem"> for problem <a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a></span>
 				</li>
 		    </ul>
 		</div>

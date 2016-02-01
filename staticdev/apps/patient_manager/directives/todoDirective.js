@@ -15,6 +15,7 @@ function todoDirective(patientService, toaster, $location) {
                         if(newVal) {
                             if (scope.todos_ready) {
                                 scope.accomplished = scope.$eval(attr.accomplished);
+                                scope.show_problem = scope.$eval(attr.showProblem);
 
                                 scope.problem_todos = scope.$eval(attr.ngModel);
                                 var tmpList = scope.problem_todos;

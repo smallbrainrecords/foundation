@@ -30,6 +30,15 @@
 				});
             }
 
+            // edit comment
+            $scope.toggleEditComment = function(comment) {
+            	comment.edit = true;
+            }
+
+            $scope.toggleSaveComment = function(comment) {
+            	comment.edit = false;
+            }
+
 
 
 		}); /* End of controller */

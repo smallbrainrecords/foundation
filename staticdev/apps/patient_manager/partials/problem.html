@@ -307,7 +307,7 @@
 		<ul class='list-group'>
 			<li ng-show='!problem_todos.length'> No Todos </li>
 		</ul>
-		<todo ng-model="problem_todos" accomplished="false"></todo>
+		<todo ng-model="problem_todos" accomplished="false" show-problem="false"></todo>
 		
 		<hr>
 		<a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'> 
@@ -319,7 +319,7 @@
 			<ul class='list-group' >
 				<li ng-show='!problem_todos.length'> No Todos </li>
 			</ul>
-			<todo ng-model="problem_todos" accomplished="true"></todo>
+			<todo ng-model="problem_todos" accomplished="true" show-problem="false"></todo>
 		</div>
 	</div>
 

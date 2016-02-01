@@ -28,7 +28,17 @@
 			<section class="comments">
 				<h2>Comments:</h2>
 				<div class="row" ng-repeat="comment in comments">
-					<div class="col-xs-12">{{comment.comment}}</div>
+					<div class="col-xs-12">
+						<div class="comment">
+							<h3>{{comment.user.first_name}} {{comment.user.last_name}}</h3>
+							<div class="comment-content" ng-show="!comment.edit">{{comment.comment}}</div>
+							<div class="comment-box" ng-show="comment.edit">
+								<input type='text' ng-model='comment.comment'>
+							</div>
+							<p ng-show="!comment.edit">{{comment.datetime}} - <a href ng-click="toggleEditComment(comment)">Edit</a> - <a href="#">Delete</a></p>
+							<p ng-show="comment.edit"><a href ng-click="toggleSaveComment(comment)">Save</a></p>
+						</div>
+					</div>
 				</div>
 			</section>
 		</div>

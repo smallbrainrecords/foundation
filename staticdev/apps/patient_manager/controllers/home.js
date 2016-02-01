@@ -211,6 +211,7 @@
 					
 					var new_todo = data['todo'];
 					$scope.pending_todos.push(new_todo);
+					$scope.problem_todos.push(new_todo);
 
 					$scope.new_todo = {};
 

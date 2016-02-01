@@ -313,7 +313,7 @@
 			</div>	
 		</div>
 
-		<todo ng-model="problem_todos" accomplished="false"></todo>
+		<todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
 <hr>
 		<a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'> 
 			<span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
@@ -321,7 +321,7 @@
 		</a>
 <hr>
 		<div class="col-md-12" ng-show='show_accomplished_todos==true'>
-		    <todo ng-model="problem_todos" accomplished="true"></todo>
+		    <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
 		</div>
 
 	</div>
