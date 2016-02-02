@@ -19,6 +19,18 @@
 
 				return httpService.post(form, url);
 			};
+
+			this.editComment = function(form) {
+				var url = '/todo/todo/'+form.id+'/edit';
+
+				return httpService.post(form, url);
+			};
+
+			this.deleteComment  = function(form) {
+				var url = '/todo/todo/'+form.id+'/delete';
+
+				return httpService.post(form, url);
+			};
 	});
 
 })();

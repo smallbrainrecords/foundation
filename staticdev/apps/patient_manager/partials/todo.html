@@ -8,7 +8,10 @@
 			<h3>{{todo.todo}}</h3>
 			<p>{{todo.due_date}}</p>
 			<p>{{todo.problem.problem_name}}</p>
-			<p>{{todo.accomplished}}</p>
+			<p>
+				<span ng-if="todo.accomplished == true">Accomplished</span>
+				<span ng-if="todo.accomplished == false">Not Accomplished</span>
+			</p>
 
 			<div class="row">
 				<div class="col-xs-12">
@@ -32,11 +35,14 @@
 						<div class="comment">
 							<h3>{{comment.user.first_name}} {{comment.user.last_name}}</h3>
 							<div class="comment-content" ng-show="!comment.edit">{{comment.comment}}</div>
-							<div class="comment-box" ng-show="comment.edit">
-								<input type='text' ng-model='comment.comment'>
+							<div ng-if="comment.user.id == active_user.user.id">
+								<div class="comment-box" ng-show="comment.edit">
+									<input type='text' ng-model='comment.comment'>
+								</div>
+								
+								<p ng-show="!comment.edit">{{comment.datetime}} - <a href ng-click="toggleEditComment(comment)">Edit</a> - <a href ng-click="delete(comment)">Delete</a></p>
+								<p ng-show="comment.edit"><a href ng-click="toggleSaveComment(comment)">Save</a></p>
 							</div>
-							<p ng-show="!comment.edit">{{comment.datetime}} - <a href ng-click="toggleEditComment(comment)">Edit</a> - <a href="#">Delete</a></p>
-							<p ng-show="comment.edit"><a href ng-click="toggleSaveComment(comment)">Save</a></p>
 						</div>
 					</div>
 				</div>
@@ -47,3 +53,22 @@
 		</div>
 	</div>
 </div>
+
+<div class="modal fade" id="menuModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4>Are you sure?</h4>
+      </div>
+      <div class="modal-body">
+		<div class="row">
+			<div class="col-sm-12">
+				Deleting a comment is forever. There is no undo.
+				<a href ng-click="confirmDelete(currentComment)" class="btn btn-default">Delete</a>
+			</div>
+		</div>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

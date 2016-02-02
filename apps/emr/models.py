@@ -294,7 +294,7 @@ class ToDoComment(models.Model):
     todo = models.ForeignKey(ToDo)
     user = models.ForeignKey(User)
     comment = models.TextField(null=True, blank=True)
-    datetime = models.DateTimeField(auto_now_add=True)
+    datetime = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo.todo))

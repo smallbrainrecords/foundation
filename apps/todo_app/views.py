@@ -200,3 +200,41 @@ def add_todo_comment(request, todo_id):
         resp['success'] = True
 
     return ajax_response(resp)
+
+@login_required
+def edit_todo_comment(request, comment_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        comment = request.POST.get('comment')
+
+        todo_comment = ToDoComment.objects.get(id=comment_id)
+        todo_comment.comment = comment
+        todo_comment.save()
+
+        todo_comment_dict = ToDoCommentSerializer(todo_comment).data
+        resp['comment'] = todo_comment_dict
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def delete_todo_comment(request, comment_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        todo_comment = ToDoComment.objects.get(id=comment_id)
+        todo_comment.delete()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
