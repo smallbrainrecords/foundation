@@ -2,7 +2,7 @@ from datetime import datetime
 from django.db.models import Max
 from common.views import *
 
-from emr.models import UserProfile, ToDo, ToDoComment
+from emr.models import UserProfile, ToDo, ToDoComment, ToDoLabel
 from emr.operations import op_add_event
 
 from .serializers import TodoSerializer, ToDoCommentSerializer
@@ -234,6 +234,91 @@ def delete_todo_comment(request, comment_id):
 
         todo_comment = ToDoComment.objects.get(id=comment_id)
         todo_comment.delete()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def change_todo_text(request, todo_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        todo_text = request.POST.get('todo')
+
+        todo = ToDo.objects.get(id=todo_id)
+        todo.todo = todo_text
+        todo.save()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def change_todo_due_date(request, todo_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        due_date = request.POST.get('due_date')
+        if due_date:
+            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+
+        todo = ToDo.objects.get(id=todo_id)
+        todo.due_date = due_date
+        todo.save()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def add_todo_label(request, todo_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        label_name = request.POST.get('label_name')
+        label_css_class = request.POST.get('label_css_class')
+
+        todo = ToDo.objects.get(id=todo_id)
+        
+        label = ToDoLabel()
+        label.todo = todo
+        label.name = label_name
+        label.css_class = label_css_class
+        label.save()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def remove_todo_label(request, label_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        label = ToDoLabel.objects.get(id=label_id)
+        label.delete()
 
         resp['success'] = True
 

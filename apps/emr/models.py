@@ -212,7 +212,7 @@ class ToDo(models.Model):
     order = models.BigIntegerField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.patient))
+        return '%s' % (unicode(self.todo))
 
 
 class Guideline(models.Model):
@@ -298,3 +298,11 @@ class ToDoComment(models.Model):
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo.todo))
+
+class ToDoLabel(models.Model):
+    todo = models.ForeignKey(ToDo, related_name="labels")
+    name = models.TextField(null=True, blank=True)
+    css_class = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))

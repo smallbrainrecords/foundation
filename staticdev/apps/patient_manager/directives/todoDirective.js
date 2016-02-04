@@ -1,8 +1,8 @@
 var todos = angular.module('todos', []);
 
-todos.directive('todo', ['patientService', 'toaster', '$location', todoDirective]);
+todos.directive('todo', ['todoService', 'patientService', 'toaster', '$location', todoDirective]);
 
-function todoDirective(patientService, toaster, $location) {
+function todoDirective(todoService, patientService, toaster, $location) {
 
     var todoObj = {}; 
 
@@ -14,14 +14,27 @@ function todoDirective(patientService, toaster, $location) {
                     scope.$watch('todos_ready', function(newVal, oldVal) {
                         if(newVal) {
                             if (scope.todos_ready) {
+                                var currentTodo;
                                 scope.accomplished = scope.$eval(attr.accomplished);
                                 scope.show_problem = scope.$eval(attr.showProblem);
 
                                 scope.problem_todos = scope.$eval(attr.ngModel);
                                 var tmpList = scope.problem_todos;
+
                                 scope.sortingLog = [];
                                 scope.sorted = false;
                                 scope.dragged = false;
+
+                                // label
+                                scope.labels = [
+                                    {name: 'green', css_class: 'todo-label-green'},
+                                    {name: 'yellow', css_class: 'todo-label-yellow'},
+                                    {name: 'orange', css_class: 'todo-label-orange'},
+                                    {name: 'red', css_class: 'todo-label-red'},
+                                    {name: 'purple', css_class: 'todo-label-purple'},
+                                    {name: 'blue', css_class: 'todo-label-blue'},
+                                    {name: 'sky', css_class: 'todo-label-sky'},
+                                ];
                                   
                                 scope.sortableOptions = {
                                     update: function(e, ui) {
@@ -68,9 +81,86 @@ function todoDirective(patientService, toaster, $location) {
                             }
 
                             scope.open_todo = function(todo) {
-                                if (!scope.dragged) {
+                                if (!scope.dragged && !scope.todo_changed) {
                                     $location.url('/todo/' + todo.id);
                                 }
+                            }
+
+                            scope.todoChange = function(todo) {
+                                currentTodo = todo.todo;
+                                todo.changed = true;
+                                scope.todo_changed = true;
+                            }
+
+                            scope.closeThisTodo = function(todo) {
+                                if (currentTodo != undefined)
+                                    todo.todo = currentTodo;
+                                todo.changed = false;
+                                scope.todo_changed = false;
+                                todo.change_due_date = false;
+                                todo.change_label = false;
+                            }
+
+                            scope.saveTodoText = function(todo) {
+                                todoService.changeTodoText(todo).then(function(data){
+                                    if(data['success']==true){
+                                        toaster.pop('success', "Done", "Updated Todo text!");
+                                        todo.changed = false;
+                                        scope.todo_changed = false;
+                                    }else{
+                                        alert("Something went wrong!");
+                                    }
+                                    
+                                });
+                            }
+
+                            scope.changeDueDate = function(todo) {
+                                todo.change_due_date = (todo.change_due_date != true) ? true : false;
+                            }
+
+                            scope.saveTodoDueDate = function(todo) {
+                                todoService.changeTodoDueDate(todo).then(function(data){});
+                            }
+
+                            scope.changeLabel = function(todo) {
+                                todo.change_label = (todo.change_label != true) ? true : false;
+                            }
+
+                            scope.changeTodoLabel = function(todo, label) {
+
+                                var is_existed = false;
+                                var existed_key;
+                                var existed_id;
+
+                                angular.forEach(todo.labels, function(value, key) {
+                                    if (value.name==label.name) {
+                                        is_existed = true;
+                                        existed_key = key;
+                                        existed_id = value.id;
+                                    }
+                                });
+                                if (!is_existed) {
+                                    todo.labels.push(label);
+                                    todo.label_name = label.name;
+                                    todo.label_css_class = label.css_class;
+                                    todoService.addTodoLabel(todo).then(function(data){
+                                        if(data['success']==true){
+                                            toaster.pop('success', "Done", "Added Todo label!");
+                                        }else{
+                                            alert("Something went wrong!");
+                                        }
+                                    });
+                                } else {
+                                    todo.labels.splice(existed_key, 1);
+                                    todoService.removeTodoLabel(existed_id).then(function(data){
+                                        if(data['success']==true){
+                                            toaster.pop('success', "Done", "Removed Todo label!");
+                                        }else{
+                                            alert("Something went wrong!");
+                                        }
+                                    });
+                                }
+                                
                             }
                         }
                     }, true);

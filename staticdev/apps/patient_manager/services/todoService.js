@@ -31,6 +31,31 @@
 
 				return httpService.post(form, url);
 			};
+
+			this.changeTodoText = function(form) {
+				var url = '/todo/todo/'+form.id+'/changeText';
+
+				return httpService.post(form, url);
+			};
+
+			this.changeTodoDueDate = function(form) {
+				var url = '/todo/todo/'+form.id+'/changeDueDate';
+
+				return httpService.post(form, url);
+			};
+
+			this.addTodoLabel = function(form) {
+				var url = '/todo/todo/'+form.id+'/addLabel';
+
+				return httpService.post(form, url);
+			};
+
+			this.removeTodoLabel = function(id) {
+				var form = {};
+				var url = '/todo/todo/removeLabel/'+id;
+
+				return httpService.post(form, url);
+			};
 	});
 
 })();
