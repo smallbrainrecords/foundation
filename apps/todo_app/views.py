@@ -323,3 +323,19 @@ def remove_todo_label(request, label_id):
         resp['success'] = True
 
     return ajax_response(resp)
+
+@login_required
+def todo_access_encounter(request, todo_id):
+    resp = {}
+    todo = ToDo.objects.get(id=todo_id)
+    physician = request.user
+    patient = todo.patient
+
+    summary = '''
+        <a href="#/todo/%s"><b>%s</b></a> was accessed.
+        ''' % (todo.id, todo.todo)
+
+    print summary
+    op_add_event(physician, patient, summary)
+
+    return ajax_response(resp)

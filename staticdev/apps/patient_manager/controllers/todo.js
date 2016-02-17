@@ -22,6 +22,8 @@
 				console.log($scope.active_user);
 			});
 
+			todoService.addTodoAccessEncounter(todo_id).then(function() {});
+
             // add comment
             $scope.add_comment = function(form) {
             	form.todo_id = $scope.todo_id;

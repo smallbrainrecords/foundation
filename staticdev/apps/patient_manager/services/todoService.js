@@ -56,6 +56,13 @@
 
 				return httpService.post(form, url);
 			};
+
+			this.addTodoAccessEncounter = function(id) {
+				var form = {};
+				var url = '/todo/todo/accessEncounter/'+id;
+
+				return httpService.post(form, url);
+			};
 	});
 
 })();

@@ -15,4 +15,5 @@ urlpatterns = patterns('todo_app.views',
     url(r'^todo/(?P<todo_id>\d+)/changeDueDate$', 'change_todo_due_date'),
     url(r'^todo/(?P<todo_id>\d+)/addLabel$', 'add_todo_label'),
     url(r'^todo/removeLabel/(?P<label_id>\d+)$', 'remove_todo_label'),
+    url(r'^todo/accessEncounter/(?P<todo_id>\d+)$', 'todo_access_encounter'),
 )
