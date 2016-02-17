@@ -441,25 +441,6 @@
 			};
 
 
-
-
-			$scope.update_todo_status = function(todo){
-
-				patientService.updateTodoStatus(todo).then(function(data){
-
-					if(data['success']==true){
-
-						toaster.pop('success', "Done", "Updated Todo status !");
-						$scope.set_authentication_false();
-					}else{
-						alert("Something went wrong!");
-					}
-					
-				});				
-
-			}
-
-
 			$scope.id_exists = function(id, item_list){
 
 				var found = false;

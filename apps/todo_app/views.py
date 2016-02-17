@@ -18,6 +18,22 @@ def is_patient(user):
     except UserProfile.DoesNotExist:
         return False
 
+# set problem authentication to false if not physician, admin
+def set_problem_authentication_false(request, todo):
+    if todo.problem:
+        problem = todo.problem
+        
+        actor_profile = UserProfile.objects.get(user=request.user)
+
+        role = actor_profile.role
+
+        if role in ['physician', 'admin']:
+            authenticated = True
+        else:
+            authenticated = False
+
+        problem.authenticated = authenticated
+        problem.save()
 
 # Todos
 @login_required
@@ -122,6 +138,9 @@ def update_todo_status(request, todo_id):
             pending_todo_list.append(todo_dict)
         resp['pending_todos'] = pending_todo_list
 
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
+
     return ajax_response(resp)
 
 @login_required
@@ -155,6 +174,10 @@ def update_order(request):
                 todo.order = todos_order[key]
             todo.save()
             key = key + 1
+
+
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
 
         resp['success'] = True
     return ajax_response(resp)
@@ -255,6 +278,9 @@ def change_todo_text(request, todo_id):
         todo.todo = todo_text
         todo.save()
 
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
+
         resp['success'] = True
 
     return ajax_response(resp)
@@ -276,6 +302,9 @@ def change_todo_due_date(request, todo_id):
         todo = ToDo.objects.get(id=todo_id)
         todo.due_date = due_date
         todo.save()
+
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
 
         resp['success'] = True
 
@@ -302,6 +331,9 @@ def add_todo_label(request, todo_id):
         label.css_class = label_css_class
         label.save()
 
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
+
         resp['success'] = True
 
     return ajax_response(resp)
@@ -316,8 +348,9 @@ def remove_todo_label(request, label_id):
     actor_profile, permitted = check_permissions(permissions, request.user)
 
     if permitted:
-
         label = ToDoLabel.objects.get(id=label_id)
+        # set problem authentication
+        set_problem_authentication_false(request, label.todo)
         label.delete()
 
         resp['success'] = True
@@ -335,7 +368,6 @@ def todo_access_encounter(request, todo_id):
         <a href="#/todo/%s"><b>%s</b></a> was accessed.
         ''' % (todo.id, todo.todo)
 
-    print summary
     op_add_event(physician, patient, summary)
 
     return ajax_response(resp)

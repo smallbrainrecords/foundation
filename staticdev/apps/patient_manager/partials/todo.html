@@ -35,12 +35,12 @@
 						<div class="comment">
 							<h3>{{comment.user.first_name}} {{comment.user.last_name}}</h3>
 							<div class="comment-content" ng-show="!comment.edit">{{comment.comment}}</div>
-							<div ng-if="comment.user.id == active_user.user.id">
+							<div ng-if="comment.user.id == active_user.user.id || active_user.role == 'physician' || active_user.role == 'admin'">
 								<div class="comment-box" ng-show="comment.edit">
 									<input type='text' ng-model='comment.comment'>
 								</div>
 								
-								<p ng-show="!comment.edit">{{comment.datetime}} - <a href ng-click="toggleEditComment(comment)">Edit</a> - <a href ng-click="delete(comment)">Delete</a></p>
+								<p ng-show="!comment.edit">{{comment.datetime}} - <a href ng-click="toggleEditComment(comment)">Edit</a> <span ng-if='active_user.role == "physician" || active_user.role == "admin"'>- <a href ng-click="delete(comment)">Delete</a></span></p>
 								<p ng-show="comment.edit"><a href ng-click="toggleSaveComment(comment)">Save</a></p>
 							</div>
 						</div>

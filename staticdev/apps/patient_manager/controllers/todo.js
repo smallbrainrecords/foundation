@@ -19,10 +19,10 @@
 
             patientService.fetchActiveUser().then(function(data){
 				$scope.active_user = data['user_profile'];
-				console.log($scope.active_user);
 			});
 
 			todoService.addTodoAccessEncounter(todo_id).then(function() {});
+
 
             // add comment
             $scope.add_comment = function(form) {

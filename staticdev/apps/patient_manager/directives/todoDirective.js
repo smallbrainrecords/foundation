@@ -13,6 +13,13 @@ function todoDirective(todoService, patientService, toaster, $location) {
                 link: function (scope, element, attr, model) {
                     scope.$watch('todos_ready', function(newVal, oldVal) {
                         if(newVal) {
+                            scope.set_authentication_false = function() {
+                                if (scope.problem) {
+                                    if(scope.active_user.role != "physician" && scope.active_user.role != "admin")
+                                        scope.problem.authenticated = false;
+                                }
+                            }
+
                             if (scope.todos_ready) {
                                 var currentTodo;
                                 scope.accomplished = scope.$eval(attr.accomplished);
@@ -57,6 +64,7 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                             patientService.updateTodoOrder(form).then(function(data){
                                                 toaster.pop('success', 'Done', 'Updated Problem');
                                                 scope.dragged = false;
+                                                scope.set_authentication_false();
                                             });
                                         }
                                         scope.sorted = false;
@@ -72,6 +80,7 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                 patientService.updateTodoStatus(todo).then(function(data){
                                     if(data['success']==true){
                                         toaster.pop('success', "Done", "Updated Todo status !");
+                                        scope.set_authentication_false();
                                     }else{
                                         alert("Something went wrong!");
                                     }
@@ -107,6 +116,7 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                         toaster.pop('success', "Done", "Updated Todo text!");
                                         todo.changed = false;
                                         scope.todo_changed = false;
+                                        scope.set_authentication_false();
                                     }else{
                                         alert("Something went wrong!");
                                     }
@@ -119,7 +129,9 @@ function todoDirective(todoService, patientService, toaster, $location) {
                             }
 
                             scope.saveTodoDueDate = function(todo) {
-                                todoService.changeTodoDueDate(todo).then(function(data){});
+                                todoService.changeTodoDueDate(todo).then(function(data){
+                                    scope.set_authentication_false();
+                                });
                             }
 
                             scope.changeLabel = function(todo) {
@@ -146,6 +158,7 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                     todoService.addTodoLabel(todo).then(function(data){
                                         if(data['success']==true){
                                             toaster.pop('success', "Done", "Added Todo label!");
+                                            scope.set_authentication_false();
                                         }else{
                                             alert("Something went wrong!");
                                         }
@@ -155,6 +168,7 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                     todoService.removeTodoLabel(existed_id).then(function(data){
                                         if(data['success']==true){
                                             toaster.pop('success', "Done", "Removed Todo label!");
+                                            scope.set_authentication_false();
                                         }else{
                                             alert("Something went wrong!");
                                         }

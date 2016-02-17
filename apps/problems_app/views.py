@@ -546,6 +546,20 @@ def add_problem_todo(request, problem_id):
     if permitted:
 
         problem = Problem.objects.get(id=problem_id)
+
+        # set problem authentication to false if not physician, admin
+        actor_profile = UserProfile.objects.get(user=request.user)
+
+        role = actor_profile.role
+
+        if role in ['physician', 'admin']:
+            authenticated = True
+        else:
+            authenticated = False
+
+        problem.authenticated = authenticated
+        problem.save()
+
         patient = problem.patient
 
         todo = request.POST.get('name')
