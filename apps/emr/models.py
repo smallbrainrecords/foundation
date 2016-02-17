@@ -291,7 +291,7 @@ class EncounterProblemRecord(models.Model):
 
 
 class ToDoComment(models.Model):
-    todo = models.ForeignKey(ToDo)
+    todo = models.ForeignKey(ToDo, related_name="comments")
     user = models.ForeignKey(User)
     comment = models.TextField(null=True, blank=True)
     datetime = models.DateTimeField(auto_now=True)

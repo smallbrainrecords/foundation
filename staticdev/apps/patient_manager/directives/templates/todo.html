@@ -9,6 +9,8 @@
 						</div>
 						<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} <span ng-if="item.problem && show_problem"> for problem <a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a></span>
 
+						<p ng-show="item.comments.length > 0"><i class="fa fa-comment-o"></i> {{item.comments.length}}</p>
+
 						<a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>
 					</div>
 					<div class="quick-card-editor" id="main-menu" ng-show='item.changed' click-outside="closeThisTodo(item)">

@@ -16,9 +16,26 @@ class ToDoLabelSerializer(serializers.ModelSerializer):
 			'css_class',
 			)
 
+
+class CommentToDoSerializer(serializers.ModelSerializer):
+
+	user = SafeUserSerializer()
+
+	class Meta:
+		model = ToDoComment
+
+		fields = (
+			'id',
+			'user',
+			'comment',
+			'datetime',
+			)
+
+
 class TodoSerializer(serializers.ModelSerializer):
 
 	labels = ToDoLabelSerializer(many=True)
+	comments = CommentToDoSerializer(many=True)
 	problem = ProblemSerializer()
 
 	class Meta:
@@ -32,6 +49,7 @@ class TodoSerializer(serializers.ModelSerializer):
 			'accomplished',
 			'due_date',
 			'labels',
+			'comments',
 			)
 
 
