@@ -67,6 +67,83 @@
 				});
             }
 
+            // change todo text
+            $scope.changeText = function(todo) {
+                todo.change_text = (todo.change_text != true) ? true : false;
+            }
+
+            $scope.saveTodoText = function(todo) {
+                todoService.changeTodoText(todo).then(function(data){
+                    if(data['success']==true){
+                        toaster.pop('success', "Done", "Updated Todo text!");
+                    }else{
+                        alert("Something went wrong!");
+                    }
+                });
+            }
+
+            // change label
+            // label
+            $scope.labels = [
+                {name: 'green', css_class: 'todo-label-green'},
+                {name: 'yellow', css_class: 'todo-label-yellow'},
+                {name: 'orange', css_class: 'todo-label-orange'},
+                {name: 'red', css_class: 'todo-label-red'},
+                {name: 'purple', css_class: 'todo-label-purple'},
+                {name: 'blue', css_class: 'todo-label-blue'},
+                {name: 'sky', css_class: 'todo-label-sky'},
+            ];
+            $scope.changeLabel = function(todo) {
+                todo.change_label = (todo.change_label != true) ? true : false;
+            }
+
+            $scope.changeTodoLabel = function(todo, label) {
+
+                var is_existed = false;
+                var existed_key;
+                var existed_id;
+
+                angular.forEach(todo.labels, function(value, key) {
+                    if (value.name==label.name) {
+                        is_existed = true;
+                        existed_key = key;
+                        existed_id = value.id;
+                    }
+                });
+                if (!is_existed) {
+                    todo.labels.push(label);
+                    todo.label_name = label.name;
+                    todo.label_css_class = label.css_class;
+                    todoService.addTodoLabel(todo).then(function(data){
+                        if(data['success']==true){
+                            toaster.pop('success', "Done", "Added Todo label!");
+                        }else{
+                            alert("Something went wrong!");
+                        }
+                    });
+                } else {
+                    todo.labels.splice(existed_key, 1);
+                    todoService.removeTodoLabel(existed_id).then(function(data){
+                        if(data['success']==true){
+                            toaster.pop('success', "Done", "Removed Todo label!");
+                        }else{
+                            alert("Something went wrong!");
+                        }
+                    });
+                }
+                
+            }
+
+            // change due date
+            $scope.changeDueDate = function(todo) {
+                todo.change_due_date = (todo.change_due_date != true) ? true : false;
+            }
+
+            $scope.saveTodoDueDate = function(todo) {
+                todoService.changeTodoDueDate(todo).then(function(data){
+                });
+            }
+
 		}); /* End of controller */
 
 

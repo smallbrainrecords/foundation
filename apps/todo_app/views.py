@@ -296,8 +296,10 @@ def change_todo_due_date(request, todo_id):
     if permitted:
 
         due_date = request.POST.get('due_date')
-        if due_date:
+        if due_date and due_date != '':
             due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+        else:
+            due_date = None
 
         todo = ToDo.objects.get(id=todo_id)
         todo.due_date = due_date

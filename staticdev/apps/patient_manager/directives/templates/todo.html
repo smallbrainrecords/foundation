@@ -13,7 +13,8 @@
 
 						<a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>
 					</div>
-					<div class="quick-card-editor" id="main-menu" ng-show='item.changed' click-outside="closeThisTodo(item)">
+					<div class="quick-card-editor" id="main-menu" ng-show='item.changed' >
+
 						<div class="quick-card-editor-text">
 							<div class="quick-card-editor-label">
 								<a ng-repeat="label in item.labels" href class="todo-label" ng-class="label.css_class"></a>
@@ -23,17 +24,30 @@
 						</div>
 						
 						<div class="quick-card-editor-card" >
+							
 							<div class="quick-card-editor-buttons">
-								<p ng-if="item.change_label">
-									<a ng-repeat="label in labels" href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(item, label)">
-										<i class="fa fa-check" ng-repeat="l in item.labels" ng-if="l.name==label.name"></i>
-									</a>
-								</p>
+								<a href ng-click="closeThisTodo(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 								<a href ng-click="changeLabel(item)"><i class="fa fa-tags"></i>Edit label</a>
+								
+								<a href ng-click="changeDueDate(item)"><i class="fa fa-clock-o"></i>Change Due Date</a>
+							</div>
+
+							<div ng-if="item.change_label" class="quick-card-editor-lv2">
+								<div class="quick-card-editor-lv2-header">
+									<a href ng-click="changeLabel(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+								</div>
+								<a ng-repeat="label in labels" href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(item, label)">
+									<i class="fa fa-check" ng-repeat="l in item.labels" ng-if="l.name==label.name"></i>
+								</a>
+							</div>
+
+							<div ng-if="item.change_due_date" class="quick-card-editor-lv2">
+								<div class="quick-card-editor-lv2-header">
+									<a href ng-click="changeDueDate(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+								</div>
 								<p ng-if="item.change_due_date">
 									<input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)">
 								</p>
-								<a href ng-click="changeDueDate(item)"><i class="fa fa-clock-o"></i>Change Due Date</a>
 							</div>
 						</div>
 					</div>

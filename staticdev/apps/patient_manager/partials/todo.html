@@ -5,8 +5,23 @@
 <div class="container-fluid">
 	<div class="row">
 		<div class="col-xs-8">
-			<h3>{{todo.todo}}</h3>
-			<p>{{todo.due_date}}</p>
+			<h3 ng-click="changeText(todo)" ng-if="!todo.change_text">{{todo.todo}}</h3>
+			<div class="quick-card-editor-text" ng-if="todo.change_text">
+				<input type="text" ng-model="todo.todo">
+				<button class="btn btn-default" ng-click="saveTodoText(todo)">Save</button>
+				<a href ng-click="changeText(todo)"><i class="fa fa-close"></i></a>
+			</div>
+
+			<div class="todo-component" ng-if="todo.labels.length > 0">
+				<p>Labels:</p>
+				<div class="quick-card-editor-label">
+					<a ng-repeat="label in todo.labels" href class="todo-label" ng-class="label.css_class"></a>
+				</div>
+			</div>
+			<div class="todo-component" ng-if="todo.due_date">
+				<p>Due Date:</p>
+				<p>{{todo.due_date}}</p>
+			</div>
 			<p>{{todo.problem.problem_name}}</p>
 			<p>
 				<span ng-if="todo.accomplished == true">Accomplished</span>
@@ -40,7 +55,10 @@
 									<input type='text' ng-model='comment.comment'>
 								</div>
 								
-								<p ng-show="!comment.edit">{{comment.datetime}} - <a href ng-click="toggleEditComment(comment)">Edit</a> <span ng-if='active_user.role == "physician" || active_user.role == "admin"'>- <a href ng-click="delete(comment)">Delete</a></span></p>
+								<p ng-show="!comment.edit">{{comment.datetime}} 
+									<span ng-if="comment.user.id == active_user.user.id">- <a href ng-click="toggleEditComment(comment)">Edit</a> </span>
+									<span ng-if='active_user.role == "physician" || active_user.role == "admin"'>- <a href ng-click="delete(comment)">Delete</a></span>
+								</p>
 								<p ng-show="comment.edit"><a href ng-click="toggleSaveComment(comment)">Save</a></p>
 							</div>
 						</div>
@@ -49,7 +67,33 @@
 			</section>
 		</div>
 		<div class="col-xs-4">
+			<div class="quick-card-editor" id="main-menu">
+				<div class="quick-card-editor-card" >
+					<div class="quick-card-editor-buttons">
+						<a href ng-click="changeLabel(todo)"><i class="fa fa-tags"></i>Edit label</a>
 
+						<a href ng-click="changeDueDate(todo)"><i class="fa fa-clock-o"></i>Change Due Date</a>
+					</div>
+
+					<div ng-if="todo.change_label" class="quick-card-editor-lv2">
+						<div class="quick-card-editor-lv2-header">
+							<a href ng-click="changeLabel(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+						</div>
+						<a ng-repeat="label in labels" href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(todo, label)">
+							<i class="fa fa-check" ng-repeat="l in todo.labels" ng-if="l.name==label.name"></i>
+						</a>
+					</div>
+
+					<div ng-if="todo.change_due_date" class="quick-card-editor-lv2">
+						<div class="quick-card-editor-lv2-header">
+							<a href ng-click="changeDueDate(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+						</div>
+						<p>
+							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)">
+						</p>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
