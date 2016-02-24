@@ -1,3 +1,4 @@
+import os
 from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
@@ -299,6 +300,7 @@ class ToDoComment(models.Model):
     def __unicode__(self):
         return '%s' % (unicode(self.todo.todo))
 
+
 class ToDoLabel(models.Model):
     todo = models.ForeignKey(ToDo, related_name="labels")
     name = models.TextField(null=True, blank=True)
@@ -306,3 +308,26 @@ class ToDoLabel(models.Model):
 
     def __unicode__(self):
         return '%s' % (unicode(self.name))
+
+
+class ToDoAttachment(models.Model):
+    todo = models.ForeignKey(ToDo, related_name="attachments")
+    attachment = models.FileField(upload_to='attachments/', blank=True)
+    datetime = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.attachment.path))
+
+    def filename(self):
+        return os.path.basename(self.attachment.name)
+
+    def file_extension(self):
+        name, extension = os.path.splitext(self.attachment.name)
+        extension = extension.replace('.', '')
+        return extension.upper()
+
+    def file_extension_lower(self):
+        name, extension = os.path.splitext(self.attachment.name)
+        extension = extension.replace('.', '')
+        return extension

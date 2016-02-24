@@ -3,7 +3,7 @@ from django.contrib import admin
 from .models import UserProfile, AccessLog, Encounter, \
     EncounterEvent, TextNote, Problem, Goal, ToDo, Guideline,\
     GuidelineForm, PatientImage, Sharing, ProblemRelationship, \
-    ProblemSegment, ToDoLabel
+    ProblemSegment, ToDoLabel, ToDoAttachment, ToDoComment
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -130,3 +130,5 @@ admin.site.register(PatientController, PatientControllerAdmin)
 admin.site.register(PhysicianTeam)
 admin.site.register(ProblemNote)
 admin.site.register(ToDoLabel)
+admin.site.register(ToDoAttachment)
+admin.site.register(ToDoComment)

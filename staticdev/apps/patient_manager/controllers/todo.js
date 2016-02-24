@@ -15,6 +15,7 @@
 			todoService.fetchTodoInfo(todo_id).then(function(data){
                 $scope.todo = data['info'];
                 $scope.comments = data['comments'];
+                $scope.attachments = data['attachments'];
             });
 
             patientService.fetchActiveUser().then(function(data){
@@ -55,14 +56,14 @@
             // delete comment
             $scope.delete = function(comment) {
             	$scope.currentComment = comment;
-            	angular.element('#menuModal').modal();
+            	angular.element('#deleteCommentModal').modal();
             }
 
             $scope.confirmDelete = function(currentComment) {
             	todoService.deleteComment(currentComment).then(function(data){
 					var index = $scope.comments.indexOf(currentComment);
 					$scope.comments.splice(index, 1);
-					angular.element('#menuModal').modal('hide');
+					angular.element('#deleteCommentModal').modal('hide');
 					toaster.pop('success', 'Done', 'Deleted comment successfully');
 				});
             }
@@ -77,7 +78,7 @@
                     if(data['success']==true){
                         toaster.pop('success', "Done", "Updated Todo text!");
                     }else{
-                        alert("Something went wrong!");
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
                 });
             }
@@ -95,6 +96,10 @@
             ];
             $scope.changeLabel = function(todo) {
                 todo.change_label = (todo.change_label != true) ? true : false;
+            }
+
+            $scope.changeLabel2 = function(todo) {
+                todo.change_label2 = (todo.change_label2 != true) ? true : false;
             }
 
             $scope.changeTodoLabel = function(todo, label) {
@@ -118,7 +123,7 @@
                         if(data['success']==true){
                             toaster.pop('success', "Done", "Added Todo label!");
                         }else{
-                            alert("Something went wrong!");
+                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                         }
                     });
                 } else {
@@ -127,7 +132,7 @@
                         if(data['success']==true){
                             toaster.pop('success', "Done", "Removed Todo label!");
                         }else{
-                            alert("Something went wrong!");
+                        	toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                         }
                     });
                 }
@@ -139,8 +144,52 @@
                 todo.change_due_date = (todo.change_due_date != true) ? true : false;
             }
 
+            $scope.changeDueDate2 = function(todo) {
+                todo.change_due_date2 = (todo.change_due_date2 != true) ? true : false;
+            }
+
             $scope.saveTodoDueDate = function(todo) {
                 todoService.changeTodoDueDate(todo).then(function(data){
+                    toaster.pop('success', "Done", "Due date Updated!");
+                });
+            }
+
+            // Attachment
+            $scope.changeAttachment = function(todo) {
+                todo.change_attachment = (todo.change_attachment != true) ? true : false;
+            }
+
+            $scope.addAttachment = function(todo, attachment) {
+            	var form = {};
+				form.todo_id = $scope.todo_id;
+
+				todoService.addAttachment(form, attachment).then(function(data){
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Attachment uploaded!');
+						var attachment = data['attachment'];
+						console.log($scope.attachments);
+						$scope.attachments.push(attachment);
+					}else if(data['success']==false){
+						toaster.pop('error', 'Error', 'Please fill valid data');
+					}else{
+						toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+					}
+					todo.change_attachment = false
+				});
+            }
+
+            // delete Attachment
+            $scope.deleteAttachment = function(attachment) {
+                $scope.currentAttachment = attachment;
+                angular.element('#deleteAttachmentModal').modal();
+            }
+
+            $scope.confirmDeleteAttachment = function(currentAttachment) {
+                todoService.deleteAttachment(currentAttachment).then(function(data){
+                    var index = $scope.attachments.indexOf(currentAttachment);
+                    $scope.attachments.splice(index, 1);
+                    angular.element('#deleteAttachmentModal').modal('hide');
+                    toaster.pop('success', 'Done', 'Deleted attachment successfully');
                 });
             }
 

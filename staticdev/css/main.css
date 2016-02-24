@@ -109,6 +109,10 @@ ce-entity ce-flag{
 	max-width: 50%;
 }
 
+.cursor-pointer {
+	cursor: pointer !important;
+}
+
 /*    TO DO     */
 
 .todo {
@@ -156,8 +160,8 @@ ce-entity ce-flag{
  z-index: 99;
 }
 
-.quick-card-editor a,
-.quick-card-editor-label a {
+.quick-card-editor a
+{
 	background: rgba(0,0,0,.6);
     border-radius: 3px;
     clear: both;
@@ -172,8 +176,7 @@ ce-entity ce-flag{
 }
 
 
-.quick-card-editor a:hover,
-.quick-card-editor-label a:hover {
+.quick-card-editor a:hover{
     background: rgba(0,0,0,.8);
     color: #fff;
     -webkit-transform: translateX(5px);
@@ -186,11 +189,14 @@ ce-entity ce-flag{
 
 .quick-card-editor a.todo-label,
 .quick-card-editor-label a.todo-label {
-	clear: none;
+	float: left;
 	width: 20px;
 	height: 20px;
 	text-align: center;
 	padding: 0;
+	display: block;
+	margin: 0 2px;
+	clear: none;
 }
 
 .quick-card-editor a.todo-label i {
@@ -257,6 +263,7 @@ ce-entity ce-flag{
 	display: block;
 	float: none;
 	margin-left: 0;
+	margin-bottom: 2px;
 }
 
 .quick-card-editor-label {
@@ -275,4 +282,43 @@ ce-entity ce-flag{
 
 .todo-component {
 	margin-bottom: 20px;
+}
+
+.attachment {
+	margin-bottom: 10px;
+}
+
+.attachment p {
+	margin: 0;
+}
+
+.datepicker.dropdown-menu {
+  width: 250px;
+  height: 250px;
+  button {
+    outline: none;
+    border: 0px;
+  }
+  tbody {
+    height: 180px;
+  }
+  tbody button {
+    padding: 6px;
+  }
+  &.datepicker-mode-1, &.datepicker-mode-2 {
+    tbody button {
+      height: 65px;
+    }
+  }
+}
+
+.timepicker.dropdown-menu {
+  padding: 0 4px;
+  button {
+    outline: none;
+    border: 0px;
+  }
+  tbody button {
+    padding: 6px;
+  }
 }

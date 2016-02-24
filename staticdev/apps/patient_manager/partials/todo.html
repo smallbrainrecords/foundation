@@ -12,21 +12,62 @@
 				<a href ng-click="changeText(todo)"><i class="fa fa-close"></i></a>
 			</div>
 
-			<div class="todo-component" ng-if="todo.labels.length > 0">
-				<p>Labels:</p>
-				<div class="quick-card-editor-label">
-					<a ng-repeat="label in todo.labels" href class="todo-label" ng-class="label.css_class"></a>
-				</div>
-			</div>
-			<div class="todo-component" ng-if="todo.due_date">
-				<p>Due Date:</p>
-				<p>{{todo.due_date}}</p>
-			</div>
 			<p>{{todo.problem.problem_name}}</p>
 			<p>
 				<span ng-if="todo.accomplished == true">Accomplished</span>
 				<span ng-if="todo.accomplished == false">Not Accomplished</span>
 			</p>
+
+			<div class="todo-component" ng-if="todo.labels.length > 0">
+				<p>Labels:</p>
+				<div class="quick-card-editor-label">
+					<a ng-repeat="label in todo.labels" href class="todo-label" ng-class="label.css_class" ng-click="changeLabel2(todo)"></a>
+					<a href ng-click="changeLabel2(todo)"><i class="fa fa-plus"></i></a>
+				</div>
+
+				<div class="quick-card-editor">
+					<div ng-if="todo.change_label2" class="quick-card-editor-lv2">
+						<div class="quick-card-editor-lv2-header">
+							<a href ng-click="changeLabel2(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+						</div>
+						<a ng-repeat="label in labels" href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(todo, label)">
+							<i class="fa fa-check" ng-repeat="l in todo.labels" ng-if="l.name==label.name"></i>
+						</a>
+					</div>
+				</div>
+			</div>
+			<div class="todo-component" ng-if="todo.due_date">
+				<p>Due Date:</p>
+				<p><span class="cursor-pointer" ng-click="changeDueDate2(todo)">{{todo.due_date}}</span></p>
+				<div class="quick-card-editor">
+					<div ng-if="todo.change_due_date2" class="quick-card-editor-lv2">
+						<div class="quick-card-editor-lv2-header">
+							<a href ng-click="changeDueDate2(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+						</div>
+						<p>
+							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" bs-datepicker data-date-format="yyyy-MM-dd" modelDateFormat="yyyy-MM-dd" date-type="string">
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="todo-component" ng-if="attachments.length > 0">
+				<p>Attachments:</p>
+
+				<div ng-repeat="attachment in attachments" class="attachment">
+					<p>{{attachment.attachment}}</p>
+					<p>Added {{attachment.datetime}}</p>
+					<p>
+						<a href="/todo/attachment/{{attachment.id}}/downloadAttachment">
+							<i class="fa fa-download"></i>
+							Download
+						</a>
+						<a href ng-click="deleteAttachment(attachment)">
+							<i class="fa fa-remove"></i>
+							Delete
+						</a>
+					</p>
+				</div>
+			</div>
 
 			<div class="row">
 				<div class="col-xs-12">
@@ -41,7 +82,6 @@
 					</form>
 				</div>
 			</div>
-
 
 			<section class="comments">
 				<h2>Comments:</h2>
@@ -73,6 +113,8 @@
 						<a href ng-click="changeLabel(todo)"><i class="fa fa-tags"></i>Edit label</a>
 
 						<a href ng-click="changeDueDate(todo)"><i class="fa fa-clock-o"></i>Change Due Date</a>
+
+						<a href ng-click="changeAttachment(todo)"><i class="fa fa-link"></i>Attachment</a>
 					</div>
 
 					<div ng-if="todo.change_label" class="quick-card-editor-lv2">
@@ -89,7 +131,17 @@
 							<a href ng-click="changeDueDate(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 						</div>
 						<p>
-							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)">
+							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" bs-datepicker data-date-format="yyyy-MM-dd" modelDateFormat="yyyy-MM-dd" date-type="string">
+						</p>
+					</div>
+
+					<div ng-if="todo.change_attachment" class="quick-card-editor-lv2">
+						<div class="quick-card-editor-lv2-header">
+							<a href ng-click="changeAttachment(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+						</div>
+						<p>
+							<input type='file' file-model="attachment">
+							<button class="btn btn-default" ng-click="addAttachment(todo, attachment)">Save</button>
 						</p>
 					</div>
 				</div>
@@ -98,7 +150,8 @@
 	</div>
 </div>
 
-<div class="modal fade" id="menuModal">
+<!-- delete comment -->
+<div class="modal fade" id="deleteCommentModal">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -110,6 +163,26 @@
 			<div class="col-sm-12">
 				Deleting a comment is forever. There is no undo.
 				<a href ng-click="confirmDelete(currentComment)" class="btn btn-default">Delete</a>
+			</div>
+		</div>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- delete attachment modal -->
+<div class="modal fade" id="deleteAttachmentModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4>Are you sure?</h4>
+      </div>
+      <div class="modal-body">
+		<div class="row">
+			<div class="col-sm-12">
+				Deleting a attachment is forever. There is no undo.
+				<a href ng-click="confirmDeleteAttachment(currentAttachment)" class="btn btn-default">Delete</a>
 			</div>
 		</div>
       </div>

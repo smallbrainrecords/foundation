@@ -1,11 +1,13 @@
 from datetime import datetime
 from django.db.models import Max
+from django.core.servers.basehttp import FileWrapper
+from django.http import Http404, HttpResponse
 from common.views import *
 
-from emr.models import UserProfile, ToDo, ToDoComment, ToDoLabel
+from emr.models import UserProfile, ToDo, ToDoComment, ToDoLabel, ToDoAttachment
 from emr.operations import op_add_event
 
-from .serializers import TodoSerializer, ToDoCommentSerializer
+from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
@@ -193,10 +195,23 @@ def get_todo_info(request, todo_id):
         comment_dict = ToDoCommentSerializer(comment).data
         comment_todos_holder.append(comment_dict)
 
+    attachments = ToDoAttachment.objects.filter(todo=todo_info)
+    attachment_todos_holder = []
+    for attachment in attachments:
+        attachment_dict = {
+            'attachment': attachment.filename(),
+            'datetime': datetime.strftime(attachment.datetime, '%Y-%m-%d'),
+            'id': attachment.id,
+            'user': SafeUserSerializer(attachment.user).data,
+            'todo': TodoSerializer(attachment.todo).data,
+        }
+        attachment_todos_holder.append(attachment_dict)
+
     resp = {}
     resp['success'] = True
     resp['info'] = todo_dict
     resp['comments'] = comment_todos_holder
+    resp['attachments'] = attachment_todos_holder
 
     return ajax_response(resp)
 
@@ -371,5 +386,52 @@ def todo_access_encounter(request, todo_id):
         ''' % (todo.id, todo.todo)
 
     op_add_event(physician, patient, summary)
+
+    return ajax_response(resp)
+
+@login_required
+def add_todo_attachment(request, todo_id):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        todo = ToDo.objects.get(id=todo_id)
+
+        attachment = ToDoAttachment(todo=todo, user=request.user, attachment=request.FILES['0'])
+        attachment.save()
+
+        resp['success'] = True
+
+        attachment_dict = {
+            'attachment': attachment.filename(),
+            'datetime': datetime.strftime(attachment.datetime, '%Y-%m-%d'),
+            'id': attachment.id,
+            'user': SafeUserSerializer(attachment.user).data,
+            'todo': TodoSerializer(attachment.todo).data,
+        }
+        resp['attachment'] = attachment_dict
+
+    return ajax_response(resp)
+
+def download_attachment(request, attachment_id):
+    """
+    Create a file to download.
+    """
+    attachment = ToDoAttachment.objects.get(id=attachment_id)
+    wrapper = FileWrapper(attachment.attachment)
+    response = HttpResponse(wrapper, content_type='application/%s' % attachment.file_extension_lower())
+
+    filename = '{}.{}'.format(attachment.filename(), attachment.file_extension_lower())
+    response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+    return response
+
+@login_required
+def delete_attachment(request, attachment_id):
+    resp = {}
+    
+    attachment = ToDoAttachment.objects.get(id=attachment_id)
+    attachment.delete()
+
+    resp['success'] = True
 
     return ajax_response(resp)
