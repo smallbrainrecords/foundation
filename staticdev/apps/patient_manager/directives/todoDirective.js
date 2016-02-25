@@ -82,7 +82,7 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                         toaster.pop('success', "Done", "Updated Todo status !");
                                         scope.set_authentication_false();
                                     }else{
-                                        alert("Something went wrong!");
+                                        toaster.pop('error', 'Warning', 'Something went wrong!');
                                     }
                                     scope.dragged = false;
                                 });             
@@ -118,7 +118,7 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                         scope.todo_changed = false;
                                         scope.set_authentication_false();
                                     }else{
-                                        alert("Something went wrong!");
+                                        toaster.pop('error', 'Warning', 'Something went wrong!');
                                     }
                                     
                                 });
@@ -160,7 +160,7 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                             toaster.pop('success', "Done", "Added Todo label!");
                                             scope.set_authentication_false();
                                         }else{
-                                            alert("Something went wrong!");
+                                            toaster.pop('error', 'Warning', 'Something went wrong!');
                                         }
                                     });
                                 } else {
@@ -170,7 +170,48 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                             toaster.pop('success', "Done", "Removed Todo label!");
                                             scope.set_authentication_false();
                                         }else{
-                                            alert("Something went wrong!");
+                                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                                        }
+                                    });
+                                }
+                                
+                            }
+
+                            scope.changeMember = function(todo) {
+                                todo.change_member = (todo.change_member != true) ? true : false;
+                            }
+
+                            scope.changeTodoMember = function(todo, member) {
+
+                                var is_existed = false;
+                                var existed_key;
+                                var existed_id;
+
+                                angular.forEach(todo.members, function(value, key) {
+                                    if (value.id==member.id) {
+                                        is_existed = true;
+                                        existed_key = key;
+                                        existed_id = value.id;
+                                    }
+                                });
+                                if (!is_existed) {
+                                    todo.members.push(member);
+                                    todoService.addTodoMember(todo, member).then(function(data){
+                                        if(data['success']==true){
+                                            toaster.pop('success', "Done", "Added member!");
+                                            scope.set_authentication_false();
+                                        }else{
+                                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                                        }
+                                    });
+                                } else {
+                                    todo.members.splice(existed_key, 1);
+                                    todoService.removeTodoMember(todo, member).then(function(data){
+                                        if(data['success']==true){
+                                            toaster.pop('success', "Done", "Removed member!");
+                                            scope.set_authentication_false();
+                                        }else{
+                                            toaster.pop('error', 'Warning', 'Something went wrong!');
                                         }
                                     });
                                 }

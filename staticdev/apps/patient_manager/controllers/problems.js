@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster){
+		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService){
 
 
 			var patient_id = $('#patient_id').val();
@@ -25,6 +25,10 @@
 				$scope.active_user = data['user_profile'];
 
 			});
+
+			todoService.fetchTodoMembers($scope.patient_id).then(function(data){
+                $scope.members = data['members'];
+            });
 
 			
 

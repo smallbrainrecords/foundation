@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, ngDialog, toaster, $location){
+		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, ngDialog, toaster, $location, todoService){
 
 			
 
@@ -18,6 +18,10 @@
 			$scope.show_accomplished_todos = false;
 			$scope.problem_terms = [];
 			$scope.new_problem = {set:false};
+
+			todoService.fetchTodoMembers($scope.patient_id).then(function(data){
+                $scope.members = data['members'];
+            });
 
 	  		function convertDateTime(problem){
 				if(problem.start_date) {
@@ -149,7 +153,6 @@
 			patientService.fetchPainAvatars(patient_id).then(function(data){
 				$scope.pain_avatars = data['pain_avatars'];
 			});
-
 
 			$scope.update_patient_summary = function(){
 

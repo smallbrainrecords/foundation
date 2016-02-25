@@ -26,6 +26,10 @@
 
 			todoService.addTodoAccessEncounter(todo_id).then(function() {});
 
+            todoService.fetchTodoMembers($scope.patient_id).then(function(data){
+                $scope.members = data['members'];
+            });
+
 
             // add comment
             $scope.add_comment = function(form) {

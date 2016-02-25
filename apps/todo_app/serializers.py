@@ -55,6 +55,7 @@ class TodoSerializer(serializers.ModelSerializer):
 	comments = CommentToDoSerializer(many=True)
 	attachments = AttachmentToDoSerializer(many=True)
 	problem = ProblemSerializer()
+	members = UserProfileSerializer(many=True)
 
 	class Meta:
 		model = ToDo
@@ -69,6 +70,7 @@ class TodoSerializer(serializers.ModelSerializer):
 			'labels',
 			'comments',
 			'attachments',
+			'members',
 			)
 
 

@@ -20,4 +20,6 @@ urlpatterns = patterns('todo_app.views',
     url(r'^attachment/(?P<attachment_id>\d+)/downloadAttachment$', 'download_attachment'),
     url(r'^attachment/(?P<attachment_id>\d+)/delete$', 'delete_attachment'),
     url(r'^todo/(?P<todo_id>\d+)/activity/$','get_todo_activity'),
+    url(r'^todo/(?P<todo_id>\d+)/addMember$', 'add_todo_member'),
+    url(r'^todo/(?P<todo_id>\d+)/removeMember$', 'remove_todo_member'),
 )

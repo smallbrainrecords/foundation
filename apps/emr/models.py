@@ -211,6 +211,7 @@ class ToDo(models.Model):
     notes = models.ManyToManyField(TextNote, blank=True)
     due_date = models.DateField(blank=True, null=True)
     order = models.BigIntegerField(null=True, blank=True)
+    members = models.ManyToManyField(UserProfile, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo))

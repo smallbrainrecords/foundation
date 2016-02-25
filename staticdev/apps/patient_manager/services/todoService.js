@@ -107,6 +107,24 @@
 				var url ='/todo/todo/'+todo_id+'/activity/';
 				return httpService.get(params, url);
 			};
+
+			this.fetchTodoMembers = function(user_id){
+				var params = {};
+				var url ='/u/members/'+user_id+'/getlist/';
+				return httpService.get(params, url);
+			};
+
+			this.addTodoMember = function(form, member) {
+				var url = '/todo/todo/'+form.id+'/addMember';
+
+				return httpService.post(member, url);
+			};
+
+			this.removeTodoMember = function(form, member) {
+				var url = '/todo/todo/'+form.id+'/removeMember';
+
+				return httpService.post(member, url);
+			};
 	});
 
 })();

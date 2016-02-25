@@ -183,7 +183,7 @@ def update_order(request):
 
     resp['success'] = False
 
-    permissions = ['modify_problem']
+    permissions = ['set_todo_order']
 
     actor_profile, permitted = check_permissions(permissions, request.user)
 
@@ -272,7 +272,7 @@ def add_todo_comment(request, todo_id):
     resp = {}
     resp['success'] = False
 
-    permissions = ['add_todo']
+    permissions = ['add_todo_comment']
     actor_profile, permitted = check_permissions(permissions, request.user)
 
     if permitted:
@@ -296,7 +296,7 @@ def edit_todo_comment(request, comment_id):
     resp = {}
     resp['success'] = False
 
-    permissions = ['add_todo']
+    permissions = ['add_todo_comment']
     actor_profile, permitted = check_permissions(permissions, request.user)
 
     if permitted:
@@ -317,7 +317,7 @@ def delete_todo_comment(request, comment_id):
     resp = {}
     resp['success'] = False
 
-    permissions = ['add_todo']
+    permissions = ['delete_todo_comment']
     actor_profile, permitted = check_permissions(permissions, request.user)
 
     if permitted:
@@ -515,6 +515,47 @@ def delete_attachment(request, attachment_id):
         add_todo_activity(attachment.todo, actor_profile, activity)
 
         attachment.delete()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def add_todo_member(request, todo_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        member_id = request.POST.get('id')
+        todo = ToDo.objects.get(id=todo_id)
+        member = UserProfile.objects.get(id=int(member_id))
+        todo.members.add(member)
+
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def remove_todo_member(request, todo_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        member_id = request.POST.get('id')
+        todo = ToDo.objects.get(id=todo_id)
+        member = UserProfile.objects.get(id=int(member_id))
+        todo.members.remove(member)
 
         resp['success'] = True
 

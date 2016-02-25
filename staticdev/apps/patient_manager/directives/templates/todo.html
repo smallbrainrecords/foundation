@@ -9,7 +9,14 @@
 						</div>
 						<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} <span ng-if="item.problem && show_problem"> for problem <a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a></span>
 
-						<p ng-show="item.comments.length > 0"><i class="fa fa-comment-o"></i> {{item.comments.length}}</p>
+						<p>
+							<span ng-show="item.comments.length > 0"><i class="fa fa-comment-o"></i> {{item.comments.length}}</span>
+							<span ng-show="item.attachments.length > 0"><i class="fa fa-file-o"></i> {{item.attachments.length}}</span>
+						</p>
+
+						<p>
+							<span ng-repeat="member in item.members" class="todo-member">{{member.user.username}}</span>
+						</p>
 
 						<a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>
 					</div>
@@ -30,6 +37,7 @@
 								<a href ng-click="changeLabel(item)"><i class="fa fa-tags"></i>Edit label</a>
 								
 								<a href ng-click="changeDueDate(item)"><i class="fa fa-clock-o"></i>Change Due Date</a>
+								<a href ng-click="changeMember(item)"><i class="fa fa-user"></i>Members</a>
 							</div>
 
 							<div ng-if="item.change_label" class="quick-card-editor-lv2">
@@ -48,6 +56,16 @@
 								<p ng-if="item.change_due_date">
 									<input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)" bs-datepicker data-date-format="yyyy-MM-dd" modelDateFormat="yyyy-MM-dd" date-type="string">
 								</p>
+							</div>
+
+							<div ng-if="item.change_member" class="quick-card-editor-lv2">
+								<div class="quick-card-editor-lv2-header">
+									<a href ng-click="changeMember(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+								</div>
+								<a ng-repeat="member in members" href ng-click="changeTodoMember(item, member)">
+									{{member.user.first_name}} {{member.user.last_name}}
+									<i class="fa fa-check" ng-repeat="m in item.members" ng-if="m.id==member.id"></i>
+								</a>
 							</div>
 						</div>
 					</div>

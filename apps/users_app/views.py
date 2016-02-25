@@ -488,3 +488,27 @@ def staff(request):
         request,
         'staff.html',
         content)
+
+@login_required
+def get_patient_members(request, user_id):
+
+    user = User.objects.get(id=user_id)
+    controllers = PatientController.objects.filter(patient=user)
+    physician_ids = [long(x.physician.id)for x in controllers]
+
+    physician_teams = PhysicianTeam.objects.filter(physician__id__in=physician_ids)
+    member_ids = [long(x.member.id)for x in physician_teams]
+
+    ids = physician_ids + member_ids
+
+    users = UserProfile.objects.filter(user__id__in=ids)
+
+    members_todos_holder = []
+    for user in users:
+        user_dict = UserProfileSerializer(user).data
+        members_todos_holder.append(user_dict)
+
+    resp = {}
+    resp['members'] = members_todos_holder
+
+    return ajax_response(resp)

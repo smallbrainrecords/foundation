@@ -27,4 +27,6 @@ urlpatterns = patterns(
         r'^patient/(?P<patient_id>\d+)/update/email$',
         'update_patient_email'),
 
-    url(r'^active/user/$', 'fetch_active_user'),)
+    url(r'^active/user/$', 'fetch_active_user'),
+    url(r'^members/(?P<user_id>\d+)/getlist/$','get_patient_members'),
+    )

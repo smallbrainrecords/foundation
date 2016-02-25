@@ -34,6 +34,9 @@ GLOBAL_PERMISSIONS = [
     # Todo
     'add_todo',
     'set_todo_status',
+    'set_todo_order',
+    'add_todo_comment',
+    'delete_todo_comment',
     # Patient Profile
     'update_patient_profile',
     # Encounter
@@ -63,6 +66,8 @@ ROLE_PERMISSIONS['patient'] = [
     # Todo
     'add_todo',
     'set_todo_status',
+    'set_todo_order',
+    'add_todo_comment',
     # Patient Profile
     'update_patient_profile',
     # Pain
@@ -86,6 +91,9 @@ ROLE_PERMISSIONS['physician'] = [
     # Todo
     'add_todo',
     'set_todo_status',
+    'set_todo_order',
+    'add_todo_comment',
+    'delete_todo_comment',
     # Patient Profile
     'update_patient_profile',
     # Encounter
@@ -110,6 +118,8 @@ ROLE_PERMISSIONS['mid-level'] = [
     # Todo
     'add_todo',
     'set_todo_status',
+    'set_todo_order',
+    'add_todo_comment',
     # Patient Profile
     'update_patient_profile',
     # Encounter
@@ -131,6 +141,8 @@ ROLE_PERMISSIONS['nurse'] = [
     # Todo
     'add_todo',
     'set_todo_status',
+    'set_todo_order',
+    'add_todo_comment',
     # Patient Profile
     'update_patient_profile',
     # Pain
@@ -141,6 +153,8 @@ ROLE_PERMISSIONS['secretary'] = [
     # Todo
     'add_todo',
     'set_todo_status',
+    'set_todo_order',
+    'add_todo_comment',
     # Patient Profile
     'update_patient_profile', ]
 

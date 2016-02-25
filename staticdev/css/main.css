@@ -322,3 +322,9 @@ ce-entity ce-flag{
     padding: 6px;
   }
 }
+
+.todo-member {
+	background: rgba(68, 48, 48, 0.15);
+	padding: 5px;
+	margin-right: 5px;
+}
