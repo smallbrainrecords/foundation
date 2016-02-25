@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from emr.models import ToDo, ToDoComment, ToDoLabel, ToDoAttachment
+from emr.models import ToDo, ToDoComment, ToDoLabel, ToDoAttachment, TodoActivity
 
 from problems_app.serializers import ProblemSerializer
-from users_app.serializers import SafeUserSerializer
+from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
 
 class ToDoLabelSerializer(serializers.ModelSerializer):
@@ -44,6 +44,8 @@ class AttachmentToDoSerializer(serializers.ModelSerializer):
 			'user',
 			'attachment',
 			'datetime',
+			'filename',
+			'is_image',
 			)
 
 
@@ -85,3 +87,21 @@ class ToDoCommentSerializer(serializers.ModelSerializer):
 			'comment',
 			'datetime',
 			)
+
+class TodoActivitySerializer(serializers.ModelSerializer):
+
+	todo = TodoSerializer()
+	author = UserProfileSerializer()
+	comment = CommentToDoSerializer()
+	attachment = AttachmentToDoSerializer()
+
+	class Meta:
+		model = TodoActivity
+
+		fields = (
+			'todo',
+			'author',
+			'activity',
+			'comment',
+			'attachment',
+			'created_on')

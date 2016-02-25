@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('TodoCtrl', function($scope, $routeParams, patientService, ngDialog, todoService, toaster){
+		.controller('TodoCtrl', function($scope, $routeParams, $interval, patientService, ngDialog, todoService, toaster){
 
 			var patient_id = $('#patient_id').val();
 			$scope.patient_id = patient_id;
@@ -16,6 +16,8 @@
                 $scope.todo = data['info'];
                 $scope.comments = data['comments'];
                 $scope.attachments = data['attachments'];
+                $scope.related_encounters = data['related_encounters'];
+                $scope.activities = data['activities'];
             });
 
             patientService.fetchActiveUser().then(function(data){
@@ -192,6 +194,17 @@
                     toaster.pop('success', 'Done', 'Deleted attachment successfully');
                 });
             }
+
+            $scope.refresh_todo_activity=function(){
+                todoService.getTodoActivity($scope.todo_id).then(function(data){
+                    if ($scope.activities.length != data['activities'].length)
+                        $scope.activities = data['activities'];
+                })
+            }
+
+            $interval(function(){
+                $scope.refresh_todo_activity();
+            }, 4000);
 
 		}); /* End of controller */
 

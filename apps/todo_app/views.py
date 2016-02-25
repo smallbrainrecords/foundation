@@ -4,13 +4,15 @@ from django.core.servers.basehttp import FileWrapper
 from django.http import Http404, HttpResponse
 from common.views import *
 
-from emr.models import UserProfile, ToDo, ToDoComment, ToDoLabel, ToDoAttachment
-from emr.operations import op_add_event
+from emr.models import UserProfile, ToDo, ToDoComment, ToDoLabel, ToDoAttachment, EncounterTodoRecord, Encounter, TodoActivity
+from emr.operations import op_add_event, op_add_todo_event
 
-from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer
+from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, TodoActivitySerializer
+from encounters_app.serializers import EncounterSerializer
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
+from .operations import add_todo_activity
 
 
 def is_patient(user):
@@ -36,6 +38,24 @@ def set_problem_authentication_false(request, todo):
 
         problem.authenticated = authenticated
         problem.save()
+
+@login_required
+def get_todo_activity(request, todo_id):
+    resp = {}
+    resp['success'] = False
+
+    try:
+        todo = ToDo.objects.get(id=todo_id)
+    except ToDo.DoesNotExist:
+        raise Http404("ToDo DoesNotExist")
+
+    activites = TodoActivity.objects.filter(todo=todo)
+    activity_holder = TodoActivitySerializer(activites, many=True).data
+    resp['activities'] = activity_holder
+    resp['success'] = True
+
+    return ajax_response(resp)
+
 
 # Todos
 @login_required
@@ -74,7 +94,13 @@ def add_patient_todo(request, patient_id):
             Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>
             ''' % (new_todo.id, todo_name, problem_name)
 
-        op_add_event(physician, patient, summary)
+        op_add_todo_event(physician, patient, summary, new_todo)
+
+        # todo activity
+        activity = '''
+            Added this todo.
+        '''
+        add_todo_activity(new_todo, actor_profile, activity)
 
         new_todo_dict = TodoSerializer(new_todo).data
         resp['todo'] = new_todo_dict
@@ -116,10 +142,16 @@ def update_todo_status(request, todo_id):
             <u>problem</u> <b>%s</b> to <b>%s</b>
             """ % (todo.id, todo.todo, problem_name, accomplished_label)
 
-        op_add_event(physician, patient, summary, todo.problem)
+        op_add_todo_event(physician, patient, summary, todo)
 
         if todo.problem:
             add_problem_activity(todo.problem, actor_profile, summary)
+
+        # todo activity
+        activity = '''
+            Updated status of this todo to <b>%s</b>.
+        ''' % (accomplished_label)
+        add_todo_activity(todo, actor_profile, activity)
 
         resp['success'] = True
          # Accomplished Todos
@@ -181,6 +213,12 @@ def update_order(request):
         # set problem authentication
         set_problem_authentication_false(request, todo)
 
+        # todo activity
+        activity = '''
+            Updated order of this todo.
+        '''
+        add_todo_activity(todo, actor_profile, activity)
+
         resp['success'] = True
     return ajax_response(resp)
 
@@ -207,11 +245,25 @@ def get_todo_info(request, todo_id):
         }
         attachment_todos_holder.append(attachment_dict)
 
+    encounter_records = EncounterTodoRecord.objects.filter(
+        todo=todo_info)
+    encounter_ids = [long(x.encounter.id) for x in encounter_records]
+
+    related_encounters = Encounter.objects.filter(id__in=encounter_ids)
+
+    related_encounter_holder = EncounterSerializer(
+        related_encounters, many=True).data
+
+    activites = TodoActivity.objects.filter(todo=todo_info)
+    activity_holder = TodoActivitySerializer(activites, many=True).data
+
     resp = {}
     resp['success'] = True
     resp['info'] = todo_dict
     resp['comments'] = comment_todos_holder
     resp['attachments'] = attachment_todos_holder
+    resp['related_encounters'] = related_encounter_holder
+    resp['activities'] = activity_holder
 
     return ajax_response(resp)
 
@@ -323,6 +375,17 @@ def change_todo_due_date(request, todo_id):
         # set problem authentication
         set_problem_authentication_false(request, todo)
 
+        # todo activity
+        if due_date:
+            activity = '''
+                Changed due date of this todo to <b>%s</b>.
+            ''' % (request.POST.get('due_date'))
+        else:
+             activity = '''
+                Removed due date of this todo.
+            '''
+        add_todo_activity(todo, actor_profile, activity)
+
         resp['success'] = True
 
     return ajax_response(resp)
@@ -385,7 +448,7 @@ def todo_access_encounter(request, todo_id):
         <a href="#/todo/%s"><b>%s</b></a> was accessed.
         ''' % (todo.id, todo.todo)
 
-    op_add_event(physician, patient, summary)
+    op_add_todo_event(physician, patient, summary, todo)
 
     return ajax_response(resp)
 
@@ -394,22 +457,33 @@ def add_todo_attachment(request, todo_id):
     resp = {}
     resp['success'] = False
 
-    if request.method == 'POST':
-        todo = ToDo.objects.get(id=todo_id)
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
 
-        attachment = ToDoAttachment(todo=todo, user=request.user, attachment=request.FILES['0'])
-        attachment.save()
+    if permitted:
+        if request.method == 'POST':
+            todo = ToDo.objects.get(id=todo_id)
 
-        resp['success'] = True
+            attachment = ToDoAttachment(todo=todo, user=request.user, attachment=request.FILES['0'])
+            attachment.save()
 
-        attachment_dict = {
-            'attachment': attachment.filename(),
-            'datetime': datetime.strftime(attachment.datetime, '%Y-%m-%d'),
-            'id': attachment.id,
-            'user': SafeUserSerializer(attachment.user).data,
-            'todo': TodoSerializer(attachment.todo).data,
-        }
-        resp['attachment'] = attachment_dict
+            resp['success'] = True
+
+            attachment_dict = {
+                'attachment': attachment.filename(),
+                'datetime': datetime.strftime(attachment.datetime, '%Y-%m-%d'),
+                'id': attachment.id,
+                'user': SafeUserSerializer(attachment.user).data,
+                'todo': TodoSerializer(attachment.todo).data,
+            }
+            resp['attachment'] = attachment_dict
+
+            # todo activity
+            activity = '''
+                Attached <b>%s</b> to this todo.
+            ''' % (attachment.filename())
+            add_todo_activity(todo, actor_profile, activity, comment=None, attachment=attachment)
+
 
     return ajax_response(resp)
 
@@ -428,10 +502,20 @@ def download_attachment(request, attachment_id):
 @login_required
 def delete_attachment(request, attachment_id):
     resp = {}
-    
-    attachment = ToDoAttachment.objects.get(id=attachment_id)
-    attachment.delete()
+    resp['success'] = False
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
 
-    resp['success'] = True
+    if permitted:
+        attachment = ToDoAttachment.objects.get(id=attachment_id)
+        # todo activity
+        activity = '''
+            Deleted <b>%s</b> from this todo.
+        ''' % (attachment.filename())
+        add_todo_activity(attachment.todo, actor_profile, activity)
+
+        attachment.delete()
+
+        resp['success'] = True
 
     return ajax_response(resp)

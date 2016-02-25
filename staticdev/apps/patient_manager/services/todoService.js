@@ -101,6 +101,12 @@
 
 				return httpService.post(form, url);
 			};
+
+			this.getTodoActivity = function(todo_id){
+				var params = {};
+				var url ='/todo/todo/'+todo_id+'/activity/';
+				return httpService.get(params, url);
+			};
 	});
 
 })();

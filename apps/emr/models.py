@@ -331,3 +331,31 @@ class ToDoAttachment(models.Model):
         name, extension = os.path.splitext(self.attachment.name)
         extension = extension.replace('.', '')
         return extension
+
+    def is_image(self):
+        extensions = ['jpg', 'npg', 'jpeg']
+        if self.file_extension_lower() in extensions:
+            return True
+        return False
+
+
+class EncounterTodoRecord(models.Model):
+    encounter = models.ForeignKey(
+        Encounter, related_name='encounter_todo_records')
+    todo = models.ForeignKey(
+        ToDo, related_name='todo_encounter_records')
+
+    def __unicode__(self):
+        return "%s %s" % (unicode(self.encounter), unicode(self.todo))
+
+
+class TodoActivity(models.Model):
+    todo = models.ForeignKey(ToDo)
+    activity = models.TextField()
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    comment = models.ForeignKey(ToDoComment, null=True, blank=True)
+    attachment = models.ForeignKey(ToDoAttachment, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_on']

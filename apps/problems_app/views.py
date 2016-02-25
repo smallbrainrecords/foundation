@@ -29,6 +29,7 @@ from encounters_app.serializers import EncounterSerializer
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
+from todo_app.operations import add_todo_activity
 
 
 def is_patient(user):
@@ -587,6 +588,12 @@ def add_problem_todo(request, problem_id):
 
         activity = summary
         add_problem_activity(problem, actor_profile, activity)
+
+        # todo activity
+        activity = '''
+            Added this todo.
+        '''
+        add_todo_activity(new_todo, actor_profile, activity)
 
         new_todo_dict = TodoSerializer(new_todo).data
 
