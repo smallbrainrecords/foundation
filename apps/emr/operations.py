@@ -31,7 +31,7 @@ def op_add_event(physician, patient, event_summary, problem=None):
 
     return True
 
-def op_add_todo_event(physician, patient, event_summary, todo=None):
+def op_add_todo_event(physician, patient, event_summary, todo=None, problem=False):
 
     latest_encounter = Encounter.objects.filter(
         physician=physician,
@@ -46,7 +46,8 @@ def op_add_todo_event(physician, patient, event_summary, todo=None):
             encounter_event = EncounterEvent(
                 encounter=latest_encounter,
                 summary=event_summary)
-            encounter_event.save()
+            if not problem:
+                encounter_event.save()
 
             # Add Todo Record if any
             if todo:

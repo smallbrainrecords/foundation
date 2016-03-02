@@ -17,7 +17,7 @@ from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment
 from emr.models import EncounterProblemRecord, Encounter
 
-from emr.operations import op_add_event
+from emr.operations import op_add_event, op_add_todo_event
 
 
 from .serializers import ProblemSerializer, PatientImageSerializer
@@ -589,6 +589,11 @@ def add_problem_todo(request, problem_id):
         activity = summary
         add_problem_activity(problem, actor_profile, activity)
 
+        summary = '''
+            Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>
+            ''' % (new_todo.id, new_todo.todo, problem.problem_name)
+
+        op_add_todo_event(physician, patient, summary, new_todo, True)
         # todo activity
         activity = '''
             Added this todo.

@@ -87,7 +87,7 @@ def add_patient_todo(request, patient_id):
         new_todo.save()
 
         if new_todo.problem:
-            problem_name = todo.problem.problem_name
+            problem_name = new_todo.problem.problem_name
         else:
             problem_name = ''
         summary = '''
@@ -538,6 +538,12 @@ def add_todo_member(request, todo_id):
         # set problem authentication
         set_problem_authentication_false(request, todo)
 
+        # todo activity
+        activity = '''
+            <b>%s %s - %s</b> joined this todo.
+        ''' % (member.user.first_name, member.user.last_name, member.role)
+        add_todo_activity(todo, actor_profile, activity)
+
         resp['success'] = True
 
     return ajax_response(resp)
@@ -556,6 +562,15 @@ def remove_todo_member(request, todo_id):
         todo = ToDo.objects.get(id=todo_id)
         member = UserProfile.objects.get(id=int(member_id))
         todo.members.remove(member)
+
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
+
+        # todo activity
+        activity = '''
+            <b>%s %s - %s</b> left this todo.
+        ''' % (member.user.first_name, member.user.last_name, member.role)
+        add_todo_activity(todo, actor_profile, activity)
 
         resp['success'] = True
 

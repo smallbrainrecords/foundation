@@ -208,6 +208,50 @@
                 });
             }
 
+            // add member
+            $scope.changeMember = function(todo) {
+                todo.change_member = (todo.change_member != true) ? true : false;
+            }
+
+            $scope.changeMember2 = function(todo) {
+                todo.change_member2 = (todo.change_member2 != true) ? true : false;
+            }
+
+            $scope.changeTodoMember = function(todo, member) {
+
+                var is_existed = false;
+                var existed_key;
+                var existed_id;
+
+                angular.forEach(todo.members, function(value, key) {
+                    if (value.id==member.id) {
+                        is_existed = true;
+                        existed_key = key;
+                        existed_id = value.id;
+                    }
+                });
+                if (!is_existed) {
+                    todo.members.push(member);
+                    todoService.addTodoMember(todo, member).then(function(data){
+                        if(data['success']==true){
+                            toaster.pop('success', "Done", "Added member!");
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                } else {
+                    todo.members.splice(existed_key, 1);
+                    todoService.removeTodoMember(todo, member).then(function(data){
+                        if(data['success']==true){
+                            toaster.pop('success', "Done", "Removed member!");
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                
+            }
+
             $scope.refresh_todo_activity=function(){
                 todoService.getTodoActivity($scope.todo_id).then(function(data){
                     if ($scope.activities.length != data['activities'].length)

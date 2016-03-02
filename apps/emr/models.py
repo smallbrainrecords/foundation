@@ -334,7 +334,7 @@ class ToDoAttachment(models.Model):
         return extension
 
     def is_image(self):
-        extensions = ['jpg', 'npg', 'jpeg']
+        extensions = ['jpg', 'png', 'jpeg']
         if self.file_extension_lower() in extensions:
             return True
         return False

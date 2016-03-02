@@ -1,8 +1,8 @@
 var todos = angular.module('todos', []);
 
-todos.directive('todo', ['todoService', 'patientService', 'toaster', '$location', todoDirective]);
+todos.directive('todo', ['todoService', 'patientService', 'toaster', '$location', '$timeout', todoDirective]);
 
-function todoDirective(todoService, patientService, toaster, $location) {
+function todoDirective(todoService, patientService, toaster, $location, $timeout) {
 
     var todoObj = {}; 
 
@@ -63,11 +63,13 @@ function todoDirective(todoService, patientService, toaster, $location) {
 
                                             patientService.updateTodoOrder(form).then(function(data){
                                                 toaster.pop('success', 'Done', 'Updated Problem');
-                                                scope.dragged = false;
                                                 scope.set_authentication_false();
                                             });
                                         }
                                         scope.sorted = false;
+                                        $timeout(function() {
+                                            scope.dragged = false;
+                                        }, 100);
                                     }
                                 }
                                 scope.todos_ready = false;
