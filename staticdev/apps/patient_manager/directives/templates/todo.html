@@ -7,8 +7,11 @@
 						<div class="quick-card-editor-label">
 							<a ng-repeat="label in item.labels" href class="todo-label" ng-class="label.css_class"></a>
 						</div>
-						<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} <span ng-if="item.problem && show_problem"> for problem <a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a></span>
-
+						<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} 
+							<span ng-if="item.due_date"> due by <span ng-class="isDueDate(item.due_date)">{{item.due_date}}</span></span> 
+							<span ng-if="item.problem && show_problem"> for problem 
+								<a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a>
+							</span>
 						<p>
 							<span ng-show="item.comments.length > 0"><i class="fa fa-comment-o"></i> {{item.comments.length}}</span>
 							<span ng-show="item.attachments.length > 0"><i class="fa fa-file-o"></i> {{item.attachments.length}}</span>

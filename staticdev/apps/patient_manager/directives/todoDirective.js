@@ -73,6 +73,15 @@ function todoDirective(todoService, patientService, toaster, $location) {
                                 scope.todos_ready = false;
                             }
 
+                            scope.isDueDate = function(date) {
+                                var date = new Date(date);
+                                var today = new Date();
+                                if (date < today) {
+                                    return 'due-date';
+                                }
+                                return '';
+                            }
+
 
                             // update status
                             scope.update_todo_status = function(todo){

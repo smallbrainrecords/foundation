@@ -30,6 +30,15 @@
                 $scope.members = data['members'];
             });
 
+            $scope.isDueDate = function(date) {
+                var date = new Date(date);
+                var today = new Date();
+                if (date < today) {
+                    return 'due-date';
+                }
+                return '';
+            }
+
 
             // add comment
             $scope.add_comment = function(form) {

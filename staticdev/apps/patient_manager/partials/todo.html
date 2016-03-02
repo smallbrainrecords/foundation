@@ -38,7 +38,7 @@
 			</div>
 			<div class="todo-component" ng-if="todo.due_date">
 				<p>Due Date:</p>
-				<p><span class="cursor-pointer" ng-click="changeDueDate2(todo)">{{todo.due_date}}</span></p>
+				<p><span class="cursor-pointer" ng-click="changeDueDate2(todo)" ng-class="isDueDate(todo.due_date)">{{todo.due_date}}</span></p>
 				<div class="quick-card-editor">
 					<div ng-if="todo.change_due_date2" class="quick-card-editor-lv2">
 						<div class="quick-card-editor-lv2-header">
