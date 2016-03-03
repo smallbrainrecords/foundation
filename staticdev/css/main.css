@@ -255,15 +255,31 @@ ce-entity ce-flag{
 
 .quick-card-editor .quick-card-editor-lv2 a.todo-label {
 	clear: none;
-	width: 100%;
+	width: 80%;
 	height: 20px;
 	text-align: left;
 	padding: 0;
 	padding-left: 10px;
 	display: block;
-	float: none;
+	float: left;
 	margin-left: 0;
 	margin-bottom: 2px;
+}
+
+.quick-card-editor .quick-card-editor-lv2 a.todo-label-edit {
+	float: right;
+	clear: none;
+	background: none;
+	margin: 0px;
+	padding: 0px;
+	color: black;
+	transition: none;
+	-webkit-transform: none !important;
+    transform: none !important;
+}
+
+.quick-card-editor .quick-card-editor-lv2 a.todo-label-edit:hover {
+	color: #242323;
 }
 
 .quick-card-editor-label {
@@ -331,4 +347,13 @@ ce-entity ce-flag{
 
 .due-date {
 	background: rgba(255, 0, 0, 0.35);
+}
+
+.quick-card-editor-lv3 {
+	z-index: 1000;
+}
+
+.top-left-0 {
+	top: 0;
+	left: 0;
 }

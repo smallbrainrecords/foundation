@@ -203,6 +203,15 @@ class Goal(models.Model):
         return '%s %s' % (unicode(self.patient), unicode(self.problem))
 
 
+class Label(models.Model):
+    patient = models.ForeignKey(User, null=True, blank=True)
+    name = models.TextField(null=True, blank=True)
+    css_class = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
+
+
 class ToDo(models.Model):
     patient = models.ForeignKey(User)
     problem = models.ForeignKey(Problem, null=True, blank=True)
@@ -212,6 +221,7 @@ class ToDo(models.Model):
     due_date = models.DateField(blank=True, null=True)
     order = models.BigIntegerField(null=True, blank=True)
     members = models.ManyToManyField(UserProfile, blank=True)
+    labels = models.ManyToManyField(Label, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo))
@@ -300,15 +310,6 @@ class ToDoComment(models.Model):
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo.todo))
-
-
-class ToDoLabel(models.Model):
-    todo = models.ForeignKey(ToDo, related_name="labels")
-    name = models.TextField(null=True, blank=True)
-    css_class = models.TextField(null=True, blank=True)
-
-    def __unicode__(self):
-        return '%s' % (unicode(self.name))
 
 
 class ToDoAttachment(models.Model):

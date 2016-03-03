@@ -30,6 +30,10 @@
                 $scope.members = data['members'];
             });
 
+            todoService.fetchLabels($scope.patient_id).then(function(data){
+                $scope.labels = data['labels'];
+            });
+
             $scope.isDueDate = function(date) {
                 var date = new Date(date);
                 var today = new Date();
@@ -100,7 +104,7 @@
 
             // change label
             // label
-            $scope.labels = [
+            $scope.labels_component = [
                 {name: 'green', css_class: 'todo-label-green'},
                 {name: 'yellow', css_class: 'todo-label-yellow'},
                 {name: 'orange', css_class: 'todo-label-orange'},
@@ -109,6 +113,91 @@
                 {name: 'blue', css_class: 'todo-label-blue'},
                 {name: 'sky', css_class: 'todo-label-sky'},
             ];
+            $scope.label_component = {};
+
+            $scope.createLabel = function(todo) {
+                todo.create_label = (todo.create_label != true) ? true : false;
+            }
+
+            $scope.createLabel2 = function(todo) {
+                todo.create_label2 = (todo.create_label2 != true) ? true : false;
+            }
+
+            $scope.selectLabelComponent = function(component) {
+                $scope.label_component.css_class = component.css_class;
+            }
+
+            $scope.saveCreateLabel = function(todo) {
+                if ($scope.label_component.css_class != null) {
+                    todoService.saveCreateLabel(todo.id, $scope.label_component).then(function(data){
+                        if(data['success']==true){
+                            if(data['new_status']==true){
+                                $scope.labels.push(data['new_label']);
+                            }
+                            if(data['status']==true){
+                                todo.labels.push(data['label']);
+                                toaster.pop('success', "Done", "Added Todo label!");
+                            }
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                todo.create_label = false;
+                todo.create_label2 = false;
+            }
+
+            $scope.editLabel = function(label) {
+                label.edit_label = (label.edit_label != true) ? true : false;
+            }
+
+            $scope.selectEditLabelComponent = function(label, component) {
+                label.css_class = component.css_class;
+            }
+
+            $scope.saveEditLabel = function(label) {
+                if (label.css_class != null) {
+                    todoService.saveEditLabel(label).then(function(data){
+                        if(data['success']==true){
+                            label.css_class = data['label']['css_class'];
+                            if(data['status']==true){
+                                angular.forEach($scope.todo.labels, function(value, key2) {
+                                    if (value.id == label.id) {
+                                        value.css_class = label.css_class;
+                                    }
+                                });
+                                toaster.pop('success', "Done", "Changed label!");
+                            }
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                label.edit_label = false;
+            }
+
+            $scope.deleteEditLabel = function(label) {
+                $scope.currentLabel = label;
+                angular.element('#deleteLabelModal').modal();
+            }
+
+            $scope.confirmDeleteLabel = function(currentLabel) {
+                todoService.deleteLabel(currentLabel).then(function(data){
+                    var index = $scope.labels.indexOf(currentLabel);
+                    $scope.labels.splice(index, 1);
+                    var index2;
+                    angular.forEach($scope.todo.labels, function(value, key) {
+                        if (value.id == currentLabel.id) {
+                            index2 = key;
+                        }
+                    });
+                    if (index2 != undefined)
+                        $scope.todo.labels.splice(index2, 1);
+                    angular.element('#deleteLabelModal').modal('hide');
+                    toaster.pop('success', 'Done', 'Deleted label successfully');
+                });
+            }
+
             $scope.changeLabel = function(todo) {
                 todo.change_label = (todo.change_label != true) ? true : false;
             }
@@ -124,7 +213,7 @@
                 var existed_id;
 
                 angular.forEach(todo.labels, function(value, key) {
-                    if (value.name==label.name) {
+                    if (value.id==label.id) {
                         is_existed = true;
                         existed_key = key;
                         existed_id = value.id;
@@ -132,9 +221,7 @@
                 });
                 if (!is_existed) {
                     todo.labels.push(label);
-                    todo.label_name = label.name;
-                    todo.label_css_class = label.css_class;
-                    todoService.addTodoLabel(todo).then(function(data){
+                    todoService.addTodoLabel(label.id, todo.id).then(function(data){
                         if(data['success']==true){
                             toaster.pop('success', "Done", "Added Todo label!");
                         }else{
@@ -143,7 +230,7 @@
                     });
                 } else {
                     todo.labels.splice(existed_key, 1);
-                    todoService.removeTodoLabel(existed_id).then(function(data){
+                    todoService.removeTodoLabel(existed_id, todo.id).then(function(data){
                         if(data['success']==true){
                             toaster.pop('success', "Done", "Removed Todo label!");
                         }else{

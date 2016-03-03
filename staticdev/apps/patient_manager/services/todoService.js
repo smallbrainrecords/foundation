@@ -49,15 +49,34 @@
 				return httpService.post(form, url);
 			};
 
-			this.addTodoLabel = function(form) {
-				var url = '/todo/todo/'+form.id+'/addLabel';
+			this.addTodoLabel = function(id, todo_id) {
+				var form = {};
+				var url = '/todo/todo/'+id+'/'+todo_id+'/addLabel';
 
 				return httpService.post(form, url);
 			};
 
-			this.removeTodoLabel = function(id) {
+			this.removeTodoLabel = function(id, todo_id) {
 				var form = {};
-				var url = '/todo/todo/removeLabel/'+id;
+				var url = '/todo/todo/removeLabel/'+id+'/'+todo_id;
+
+				return httpService.post(form, url);
+			};
+
+			this.saveCreateLabel = function(todo_id, form) {
+				var url = '/todo/todo/newLabel/'+todo_id;
+
+				return httpService.post(form, url);
+			};
+
+			this.saveEditLabel = function(form) {
+				var url = '/todo/todo/saveEditLabel/'+form.id;
+
+				return httpService.post(form, url);
+			};
+
+			this.deleteLabel  = function(form) {
+				var url = '/todo/todo/deleteLabel/'+form.id;
 
 				return httpService.post(form, url);
 			};
@@ -124,6 +143,12 @@
 				var url = '/todo/todo/'+form.id+'/removeMember';
 
 				return httpService.post(member, url);
+			};
+
+			this.fetchLabels = function(user_id){
+				var params = {};
+				var url ='/todo/todo/'+user_id+'/getlabels';
+				return httpService.get(params, url);
 			};
 	});
 

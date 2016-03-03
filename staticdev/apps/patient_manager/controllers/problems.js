@@ -30,7 +30,9 @@
                 $scope.members = data['members'];
             });
 
-			
+			todoService.fetchLabels($scope.patient_id).then(function(data){
+                $scope.labels = data['labels'];
+            });
 
 			function convertDateTime(problem){
 				if(problem.start_date) {

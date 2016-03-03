@@ -4,10 +4,10 @@ from django.core.servers.basehttp import FileWrapper
 from django.http import Http404, HttpResponse
 from common.views import *
 
-from emr.models import UserProfile, ToDo, ToDoComment, ToDoLabel, ToDoAttachment, EncounterTodoRecord, Encounter, TodoActivity
+from emr.models import UserProfile, ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRecord, Encounter, TodoActivity
 from emr.operations import op_add_event, op_add_todo_event
 
-from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, TodoActivitySerializer
+from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, TodoActivitySerializer, LabelSerializer
 from encounters_app.serializers import EncounterSerializer
 
 from emr.manage_patient_permissions import check_permissions
@@ -391,7 +391,7 @@ def change_todo_due_date(request, todo_id):
     return ajax_response(resp)
 
 @login_required
-def add_todo_label(request, todo_id):
+def add_todo_label(request, label_id, todo_id):
     resp = {}
     resp['success'] = False
 
@@ -400,16 +400,10 @@ def add_todo_label(request, todo_id):
 
     if permitted:
 
-        label_name = request.POST.get('label_name')
-        label_css_class = request.POST.get('label_css_class')
-
         todo = ToDo.objects.get(id=todo_id)
         
-        label = ToDoLabel()
-        label.todo = todo
-        label.name = label_name
-        label.css_class = label_css_class
-        label.save()
+        label = Label.objects.get(id=label_id)
+        todo.labels.add(label)
 
         # set problem authentication
         set_problem_authentication_false(request, todo)
@@ -420,7 +414,7 @@ def add_todo_label(request, todo_id):
 
 
 @login_required
-def remove_todo_label(request, label_id):
+def remove_todo_label(request, label_id, todo_id):
     resp = {}
     resp['success'] = False
 
@@ -428,9 +422,90 @@ def remove_todo_label(request, label_id):
     actor_profile, permitted = check_permissions(permissions, request.user)
 
     if permitted:
-        label = ToDoLabel.objects.get(id=label_id)
+        label = Label.objects.get(id=label_id)
+        todo = ToDo.objects.get(id=todo_id)
+        todo.labels.remove(label)
         # set problem authentication
-        set_problem_authentication_false(request, label.todo)
+        set_problem_authentication_false(request, todo)
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def new_todo_label(request, todo_id):
+    resp = {}
+    resp['success'] = False
+    resp['status'] = False
+    resp['new_status'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        name = request.POST.get('name')
+        css_class = request.POST.get('css_class')
+
+        todo = ToDo.objects.get(id=todo_id)
+        label = Label.objects.filter(patient=todo.patient, name=name, css_class=css_class)
+        if not label:
+            label = Label(patient=todo.patient, name=name, css_class=css_class)
+            label.save()
+            resp['new_status'] = True
+            resp['new_label'] = LabelSerializer(label).data
+        else:
+            label = label[0]
+
+        if not label in todo.labels.all():
+            todo.labels.add(label)
+            resp['status'] = True
+            resp['label'] = LabelSerializer(label).data
+
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def save_edit_label(request, label_id):
+    resp = {}
+    resp['success'] = False
+    resp['status'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        name = request.POST.get('name')
+        css_class = request.POST.get('css_class')
+
+        label = Label.objects.get(id=label_id)
+
+        if not Label.objects.filter(patient=label.patient, name=name, css_class=css_class):
+            label.name = name
+            label.css_class = css_class
+            label.save()
+            resp['status'] = True
+
+        resp['label'] = LabelSerializer(label).data
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def delete_label(request, label_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        label = Label.objects.get(id=label_id)
         label.delete()
 
         resp['success'] = True
@@ -573,5 +648,21 @@ def remove_todo_member(request, todo_id):
         add_todo_activity(todo, actor_profile, activity)
 
         resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def get_labels(request, user_id):
+
+    user = User.objects.get(id=user_id)
+    labels = Label.objects.filter(patient=user)
+
+    labels_holder = []
+    for label in labels:
+        label_dict = LabelSerializer(label).data
+        labels_holder.append(label_dict)
+
+    resp = {}
+    resp['labels'] = labels_holder
 
     return ajax_response(resp)

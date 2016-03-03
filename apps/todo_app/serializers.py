@@ -1,15 +1,15 @@
 from rest_framework import serializers
 
-from emr.models import ToDo, ToDoComment, ToDoLabel, ToDoAttachment, TodoActivity
+from emr.models import ToDo, ToDoComment, Label, ToDoAttachment, TodoActivity
 
 from problems_app.serializers import ProblemSerializer
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
 
-class ToDoLabelSerializer(serializers.ModelSerializer):
+class LabelSerializer(serializers.ModelSerializer):
 
 	class Meta:
-		model = ToDoLabel
+		model = Label
 		fields = (
 			'id',
 			'name',
@@ -51,7 +51,7 @@ class AttachmentToDoSerializer(serializers.ModelSerializer):
 
 class TodoSerializer(serializers.ModelSerializer):
 
-	labels = ToDoLabelSerializer(many=True)
+	labels = LabelSerializer(many=True)
 	comments = CommentToDoSerializer(many=True)
 	attachments = AttachmentToDoSerializer(many=True)
 	problem = ProblemSerializer()
