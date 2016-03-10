@@ -102,6 +102,18 @@
                 });
             }
 
+            // update status
+            $scope.update_todo_status = function(todo){
+                patientService.updateTodoStatus(todo).then(function(data){
+                    if(data['success']==true){
+                        toaster.pop('success', "Done", "Updated Todo status !");
+                    }else{
+                        toaster.pop('error', 'Warning', 'Something went wrong!');
+                    }
+                });             
+
+            }
+
             // change label
             // label
             $scope.labels_component = [

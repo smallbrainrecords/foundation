@@ -98,9 +98,10 @@
 								<div class="quick-card-editor-lv2-header">
 									<a href ng-click="changeDueDate(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 								</div>
-								<p ng-if="item.change_due_date">
-									<input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)" bs-datepicker data-date-format="yyyy-MM-dd" modelDateFormat="yyyy-MM-dd" date-type="string">
+								<p>
+									<input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)">
 								</p>
+								<div ng-model="item.due_date" ng-change="saveTodoDueDate(item)" pickadate format="yyyy-MM-dd"></div>
 							</div>
 							<!-- end change due date -->
 							<!-- begin change member -->

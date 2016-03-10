@@ -33,8 +33,41 @@
 
 
 <div class='col-md-9'>
+  <div class='panel panel-default' ng-init="show_all=false">
 
-        <div class='panel panel-default'>
+    <div class='panel-heading'>Top Patients List</div>
+
+    <div class='panel-body'>
+
+      <table class='table'>
+            <thead>
+                <th> Name </th>
+                <th> Active uncontrolled problems </th>
+                <th> Active todo </th>
+                <th> Multiply</th>
+            </thead>
+            <tbody>
+                <tr ng-repeat='patient in patients_list' ng-show="$index < 10 || show_all">
+                    <td> <a href='/u/patient/manage/{{patient.user.id}}/'>
+                            {{patient.user.first_name}} {{patient.user.last_name}}
+                         </a>  
+                     </td>
+                    <td> {{patient.problem }} </td>
+                    <td> {{patient.todo}} </td>
+                    <td> {{patient.multiply}} </td>
+                </tr>
+            </tbody>
+     </table>
+     <a href class="btn btn-default" ng-click="show_all=!show_all">
+      <span ng-if='show_all==false'>Show all </span>
+      <span ng-if='show_all==true'>Not show all </span>
+     </a>
+
+    </div>
+
+  </div>
+
+  <div class='panel panel-default'>
 
 
 

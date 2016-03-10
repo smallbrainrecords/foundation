@@ -18,6 +18,7 @@
 			
 			<p>{{todo.problem.problem_name}}</p>
 			<p>
+				<input type='checkbox' ng-model='todo.accomplished' ng-change='update_todo_status(todo)'>
 				<span ng-if="todo.accomplished == true">Accomplished</span>
 				<span ng-if="todo.accomplished == false">Not Accomplished</span>
 			</p>
@@ -85,9 +86,13 @@
 						<div class="quick-card-editor-lv2-header">
 							<a href ng-click="changeDueDate2(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 						</div>
-						<p>
+						<!-- <p>
 							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" bs-datepicker data-date-format="yyyy-MM-dd" modelDateFormat="yyyy-MM-dd" date-type="string">
+						</p> -->
+						<p>
+							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)">
 						</p>
+						<div ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" pickadate format="yyyy-MM-dd"></div>
 					</div>
 				</div>
 			</div>
@@ -270,8 +275,9 @@
 							<a href ng-click="changeDueDate(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 						</div>
 						<p>
-							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" bs-datepicker data-date-format="yyyy-MM-dd" modelDateFormat="yyyy-MM-dd" date-type="string">
+							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)">
 						</p>
+						<div ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" pickadate format="yyyy-MM-dd"></div>
 					</div>
 					<!-- end change due date -->
 					<!-- begin change attachment -->

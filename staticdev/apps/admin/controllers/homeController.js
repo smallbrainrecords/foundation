@@ -53,6 +53,10 @@
 
 				});
 
+				adminService.getPatientsList().then(function(data){
+					$scope.patients_list = data['patients_list'];
+				});
+
 			};
 
 

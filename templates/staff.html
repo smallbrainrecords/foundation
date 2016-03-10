@@ -2,6 +2,11 @@
 
 {% block content %}
 
+<script src="/static/apps/common/httpModule.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/app.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/directives/directives.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/controllers/homeController.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/services/staffService.js" type="text/javascript" charset="utf-8"></script>
 
 <div class='row'>
 
@@ -24,6 +29,14 @@
 	</div>
 
 	<div class='col-md-9'>
+
+		<div id='ng-app' ng-app='StaffApp' class='no-js' lang-'en'>
+
+			<div ng-view>
+				Loading...
+			</div>
+
+		</div>
 
 
 		<div class='panel panel-default'>

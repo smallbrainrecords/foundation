@@ -146,6 +146,8 @@ def update_todo_status(request, todo_id):
 
         if todo.problem:
             add_problem_activity(todo.problem, actor_profile, summary)
+            if accomplished:
+                op_add_event(physician, patient, summary, todo.problem, True)
 
         # todo activity
         activity = '''
@@ -524,6 +526,8 @@ def todo_access_encounter(request, todo_id):
         ''' % (todo.id, todo.todo)
 
     op_add_todo_event(physician, patient, summary, todo)
+    if todo.problem:
+        op_add_event(physician, patient, summary, todo.problem, True)
 
     return ajax_response(resp)
 

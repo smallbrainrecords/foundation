@@ -3,7 +3,7 @@ from .models import Encounter, EncounterEvent, EncounterTodoRecord
 from .models import EncounterProblemRecord
 
 
-def op_add_event(physician, patient, event_summary, problem=None):
+def op_add_event(physician, patient, event_summary, problem=None, todo=False):
 
     latest_encounter = Encounter.objects.filter(
         physician=physician,
@@ -18,7 +18,8 @@ def op_add_event(physician, patient, event_summary, problem=None):
             encounter_event = EncounterEvent(
                 encounter=latest_encounter,
                 summary=event_summary)
-            encounter_event.save()
+            if not todo:
+                encounter_event.save()
 
             # Add Problem Record if any
             if problem:

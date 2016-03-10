@@ -4,6 +4,7 @@ try:
 except ImportError:
     import Image
     import ImageOps
+import operator
 
 from common.views import *
 
@@ -510,5 +511,49 @@ def get_patient_members(request, user_id):
 
     resp = {}
     resp['members'] = members_todos_holder
+
+    return ajax_response(resp)
+
+@login_required
+def get_patients_list(request):
+    user_profile = UserProfile.objects.get(user=request.user)
+    patients_list = []
+    if user_profile.role == 'admin':
+        patients = UserProfile.objects.filter(role='patient')
+        for user in patients:
+            user_dict = UserProfileSerializer(user).data
+            patients_list.append(user_dict)
+
+    if user_profile.role == 'physician':
+        patient_controllers = PatientController.objects.filter(physician=request.user)
+        patient_ids = [long(x.patient.id) for x in patient_controllers]
+        patients = UserProfile.objects.filter(user__id__in=patient_ids)
+        for user in patients:
+            user_dict = UserProfileSerializer(user).data
+            patients_list.append(user_dict)
+
+    if user_profile.role == 'secretary' or user_profile.role == 'mid-level' or user_profile.role == 'nurse':
+        team_members = PhysicianTeam.objects.filter(member=request.user)
+        physician_ids = [long(x.physician.id) for x in team_members]
+        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_ids = [long(x.patient.id) for x in patient_controllers]
+        patients = UserProfile.objects.filter(user__id__in=patient_ids)
+        for user in patients:
+            user_dict = UserProfileSerializer(user).data
+            patients_list.append(user_dict)
+
+
+    for patient in patients_list:
+        patient['todo'] = ToDo.objects.filter(patient__id=patient['user']['id']).count()
+        patient['problem'] = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True, is_controlled=False).count()
+        if patient['todo'] == 0 and patient['problem'] == 0:
+            patient['multiply'] = 0
+        elif patient['todo'] == 0 or patient['problem'] == 0:
+            patient['multiply'] = 1
+        else:
+            patient['multiply'] = patient['todo'] * patient['problem']
+
+    resp = {}
+    resp['patients_list'] = sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)
 
     return ajax_response(resp)
