@@ -1,6 +1,6 @@
 <toaster-container></toaster-container>
 
-<a href='#/'><b> Manage Patient </b></a>
+<a href='#/'><b> Home page </b></a>
 
 <div class="container-fluid">
 	<div class="row">
@@ -16,7 +16,7 @@
 			<!-- end todo name -->
 
 			
-			<p><a href="#/problem/{{todo.problem.id}}">{{todo.problem.problem_name}}</a></p>
+			<p>{{todo.problem.problem_name}}</p>
 			<p>
 				<input type='checkbox' ng-model='todo.accomplished' ng-change='update_todo_status(todo)'>
 				<span ng-if="todo.accomplished == true">Accomplished</span>
@@ -45,7 +45,7 @@
 							</a>
 
 							<!-- begin edit label -->
-							<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin')"><i class="fa fa-pencil"></i></a>
+							<a href class="todo-label-edit" ng-click="editLabel(label)"><i class="fa fa-pencil" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin')"></i></a>
 
 							<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
 								<div class="quick-card-editor-lv2-header">
@@ -225,7 +225,7 @@
 
 						<a href ng-click="changeAttachment(todo)"><i class="fa fa-link"></i>Attachment</a>
 
-						<a href ng-click="changeMember(todo)"><i class="fa fa-user"></i>Members</a>
+						<!-- <a href ng-click="changeMember(todo)"><i class="fa fa-user"></i>Members</a> -->
 					</div>
 					<!-- end buttons -->
 
@@ -241,7 +241,7 @@
 							</a>
 
 							<!-- begin edit label -->
-							<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin')"><i class="fa fa-pencil"></i></a>
+							<a href class="todo-label-edit" ng-click="editLabel(label)"><i class="fa fa-pencil" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin')"></i></a>
 
 							<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
 								<div class="quick-card-editor-lv2-header">

@@ -15,6 +15,8 @@
 
 			var patient_id = $('#patient_id').val();
 			$scope.patient_id = patient_id;
+			var user_id = $('#user_id').val();
+            $scope.user_id = user_id;
 			$scope.show_accomplished_todos = false;
 			$scope.problem_terms = [];
 			$scope.new_problem = {set:false};

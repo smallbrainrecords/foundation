@@ -3,7 +3,7 @@ from django.contrib import admin
 from .models import UserProfile, AccessLog, Encounter, \
     EncounterEvent, TextNote, Problem, Goal, ToDo, Guideline,\
     GuidelineForm, PatientImage, Sharing, ProblemRelationship, \
-    ProblemSegment, Label, ToDoAttachment, ToDoComment
+    ProblemSegment, Label, ToDoAttachment, ToDoComment, LabeledToDoList
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -35,13 +35,8 @@ class GoalInline(admin.StackedInline):
     extra = 0
 
 
-class ToDoInline(admin.StackedInline):
-    model = ToDo
-    extra = 0
-
-
 class UserAdmin(AuthUserAdmin):
-    inlines = [UserProfileInline, ProblemInline, GoalInline, ToDoInline]
+    inlines = [UserProfileInline, ProblemInline, GoalInline]
 
 # unregister old user admin
 admin.site.unregister(User)
@@ -132,3 +127,4 @@ admin.site.register(ProblemNote)
 admin.site.register(Label)
 admin.site.register(ToDoAttachment)
 admin.site.register(ToDoComment)
+admin.site.register(LabeledToDoList)

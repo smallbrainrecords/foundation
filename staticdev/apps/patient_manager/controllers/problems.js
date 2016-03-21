@@ -9,6 +9,8 @@
 
 			var patient_id = $('#patient_id').val();
 			$scope.patient_id = patient_id;
+			var user_id = $('#user_id').val();
+            $scope.user_id = user_id;
 			var problem_id = $routeParams.problem_id;
 
 			$scope.problem_id = problem_id;

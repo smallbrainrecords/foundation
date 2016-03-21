@@ -13,8 +13,8 @@
 						<!-- end label -->
 						<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}} 
 							<span ng-if="item.due_date"> due by <span ng-class="isDueDate(item.due_date)">{{item.due_date}}</span></span> 
-							<span ng-if="item.problem && show_problem"> for problem 
-								<a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a>
+							<span ng-if="item.patient"> for patient 
+								<a href="/u/patient/manage/{{item.patient.id}}/">{{item.patient.first_name}} {{item.patient.last_name}}</a>
 							</span>
 						<p>
 							<span ng-show="item.comments.length > 0"><i class="fa fa-comment-o"></i> {{item.comments.length}}</span>
@@ -49,7 +49,7 @@
 								<a href ng-click="changeLabel(item)"><i class="fa fa-tags"></i>Edit label</a>
 								
 								<a href ng-click="changeDueDate(item)"><i class="fa fa-clock-o"></i>Change Due Date</a>
-								<a href ng-click="changeMember(item)"><i class="fa fa-user"></i>Members</a>
+								<!-- <a href ng-click="changeMember(item)"><i class="fa fa-user"></i>Members</a> -->
 							</div>
 							<!-- end buttons -->
 							<!-- begin change label -->
@@ -57,7 +57,29 @@
 								<div class="quick-card-editor-lv2-header">
 									<a href ng-click="changeLabel(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 								</div>
-								<div ng-repeat="label in labels" ng-if="label.author.id==user_id || label.is_all">
+								<div ng-repeat="label in item.patient_labels" ng-if="(is_tagged || is_list) && (label.author.id==user_id || label.is_all)">
+									<a href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(item, label)">
+										{{label.name}}
+										<i class="fa fa-check" ng-repeat="l in item.labels" ng-if="l.id==label.id"></i>
+									</a>
+									<!-- begin edit label -->
+									<a href class="todo-label-edit" ng-click="editLabel(label)"><i class="fa fa-pencil" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin')"></i></a>
+
+									<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
+										<div class="quick-card-editor-lv2-header">
+											<a href ng-click="editLabel(label); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+										</div>
+										<input type="text" ng-model="label.name">
+										<a ng-repeat="component in labels_component" href class="todo-label" ng-class="component.css_class" ng-click="selectEditLabelComponent(label, component)">
+											<i class="fa fa-check" ng-if="component.css_class==label.css_class"></i>
+										</a>
+										<a href ng-click="saveEditLabel(label)">Save</a>
+										<a href class="btn btn-danger" ng-click="deleteEditLabel(label)">Delete</a>
+									</div>
+									<!-- end edit label -->
+
+								</div>
+								<div ng-repeat="label in labels" ng-if="!is_tagged && (label.author.id==user_id || label.is_all)">
 									<a href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(item, label)">
 										{{label.name}}
 										<i class="fa fa-check" ng-repeat="l in item.labels" ng-if="l.id==label.id"></i>

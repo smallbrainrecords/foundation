@@ -3,13 +3,11 @@
 	'use strict';
 
 
-	angular.module('ManagerApp')
-		.controller('TodoCtrl', function($scope, $routeParams, $interval, patientService, ngDialog, todoService, toaster){
+	angular.module('StaffApp')
+		.controller('TodoCtrl', function($scope, $routeParams, $interval, staffService, ngDialog, todoService, toaster){
 
-			var patient_id = $('#patient_id').val();
-			$scope.patient_id = patient_id;
-            var user_id = $('#user_id').val();
-            $scope.user_id = user_id;
+			var user_id = $('#user_id').val();
+			$scope.user_id = user_id;
 			var todo_id = $routeParams.todo_id;
 
 			$scope.todo_id = todo_id;
@@ -22,17 +20,17 @@
                 $scope.activities = data['activities'];
             });
 
-            patientService.fetchActiveUser().then(function(data){
+            staffService.fetchActiveUser().then(function(data){
 				$scope.active_user = data['user_profile'];
 			});
 
 			todoService.addTodoAccessEncounter(todo_id).then(function() {});
 
-            todoService.fetchTodoMembers($scope.patient_id).then(function(data){
+            todoService.fetchTodoMembers($scope.user_id).then(function(data){
                 $scope.members = data['members'];
             });
 
-            todoService.fetchLabels($scope.patient_id).then(function(data){
+            todoService.fetchLabels($scope.user_id).then(function(data){
                 $scope.labels = data['labels'];
             });
 
@@ -106,7 +104,7 @@
 
             // update status
             $scope.update_todo_status = function(todo){
-                patientService.updateTodoStatus(todo).then(function(data){
+                todoService.updateTodoStatus(todo).then(function(data){
                     if(data['success']==true){
                         toaster.pop('success', "Done", "Updated Todo status !");
                     }else{

@@ -143,12 +143,6 @@
 			return httpService.post(form, url);
 		};
 
-		this.getPatientsList = function(){
-			var form = {};
-			var url = '/u/patients/';
-			return httpService.post(form, url);
-		};
-
 	});
 
 })();

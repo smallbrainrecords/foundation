@@ -1,4 +1,5 @@
 import os
+import ast
 from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
@@ -38,8 +39,35 @@ def get_path(instance, filename):
         return '%s/%s' % (instance.patient.id, filename)
 
 
+class ListField(models.TextField):
+    __metaclass__ = models.SubfieldBase
+    description = "Stores a python list"
+
+    def __init__(self, *args, **kwargs):
+        super(ListField, self).__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        if not value:
+            value = []
+
+        if isinstance(value, list):
+            return value
+
+        return ast.literal_eval(value)
+
+    def get_prep_value(self, value):
+        if value is None:
+            return value
+
+        return unicode(value)
+
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj)
+        return self.get_db_prep_value(value)
+
+
 class UserProfile(models.Model):
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, related_name="profile")
     role = models.CharField(
         max_length=10, choices=ROLE_CHOICES, default='patient')
     data = models.TextField(blank=True)
@@ -204,16 +232,19 @@ class Goal(models.Model):
 
 
 class Label(models.Model):
-    patient = models.ForeignKey(User, null=True, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True, related_name="label_user")
     name = models.TextField(null=True, blank=True)
     css_class = models.TextField(null=True, blank=True)
+    author = models.ForeignKey(User, null=True, blank=True, related_name="label_author")
+    is_all = models.BooleanField(default=False)
 
     def __unicode__(self):
         return '%s' % (unicode(self.name))
 
 
 class ToDo(models.Model):
-    patient = models.ForeignKey(User)
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient")
+    user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")
     problem = models.ForeignKey(Problem, null=True, blank=True)
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
@@ -225,6 +256,25 @@ class ToDo(models.Model):
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo))
+
+
+class TaggedToDoOrder(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True)
+    todo = models.ForeignKey(ToDo, null=True, blank=True)
+    order = models.BigIntegerField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.todo.todo))
+
+
+class LabeledToDoList(models.Model):
+    user = models.ForeignKey(User)
+    labels = models.ManyToManyField(Label, blank=True)
+    name = models.TextField()
+    todo_list = ListField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
 
 
 class Guideline(models.Model):

@@ -149,13 +149,13 @@ def home(request):
         if user_profile is not None:
             role = user_profile.role
 
-            if role in ['admin', 'physician']:
+            if role in ['admin']:
                 # Manage Users
                 return HttpResponseRedirect('/project/admin')
             if role == 'patient':
                 # Manage Patient
                 return HttpResponseRedirect('/u/patient/manage/%s/' % user.id)
-            if role in ['secretary', 'nurse', 'mid-level']:
+            if role in ['secretary', 'nurse', 'mid-level', 'physician']:
                 return HttpResponseRedirect('/u/staff/')
 
             return HttpResponse('Something went wrong !')

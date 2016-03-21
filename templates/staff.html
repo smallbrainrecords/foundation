@@ -6,7 +6,13 @@
 <script src="/static/apps/staff/app.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/admin/directives/directives.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/homeController.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/controllers/todo.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/staffService.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/services/physicianService.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/services/todoService.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/directives/todoDirective.js" type="text/javascript" charset="utf-8"></script>
+
+<input type='hidden' id='user_id' value='{{user.id}}'>
 
 <div class='row'>
 
@@ -22,7 +28,10 @@
 				<b> Role </b>:  {{user_profile.get_role_display}}
 				<br>
 				<b> Username </b>:  {{user.username}}
-
+				<br>
+				{% if user_profile.role == 'physician' %}
+					<a class='btn btn-default' href='/project/admin/#/add/user'>Add User</a>
+				{% endif %}
 			</div>
 
 		</div>
@@ -38,7 +47,7 @@
 
 		</div>
 
-
+		{% if user_profile.role == 'mid-level' or user_profile.role == 'nurse' or user_profile.role == 'secretary' %}
 		<div class='panel panel-default'>
 
 			<div class='panel-heading'>
@@ -90,7 +99,7 @@
 
 
 		</div>
-
+		{% endif %}
 
 	</div>
 

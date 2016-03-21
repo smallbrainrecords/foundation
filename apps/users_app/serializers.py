@@ -5,8 +5,20 @@ from emr.models import UserProfile
 from django.contrib.auth.models import User
 
 
+class SafeUserProfileSerializer(serializers.ModelSerializer):
+
+	class Meta:
+		model = UserProfile
+
+		fields = (
+				'id',
+				'user',
+				'role',
+			)
+
 
 class SafeUserSerializer(serializers.ModelSerializer):
+	profile = SafeUserProfileSerializer(many=False)
 
 	class Meta:
 		model = User
@@ -17,6 +29,7 @@ class SafeUserSerializer(serializers.ModelSerializer):
 				'last_name',
 				'username',
 				'email',
+				'profile',
 			)
 
 

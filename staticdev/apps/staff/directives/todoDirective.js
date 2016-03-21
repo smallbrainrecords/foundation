@@ -1,29 +1,25 @@
 var todos = angular.module('todos', []);
 
-todos.directive('todo', ['todoService', 'patientService', 'toaster', '$location', '$timeout', todoDirective]);
+todos.directive('todo', ['todoService', 'staffService', 'toaster', '$location', '$timeout', todoDirective]);
 
-function todoDirective(todoService, patientService, toaster, $location, $timeout) {
+function todoDirective(todoService, staffService, toaster, $location, $timeout) {
 
     var todoObj = {}; 
 
             return {
                 restrict: 'E',
-                templateUrl: '/static/apps/patient_manager/directives/templates/todo.html',
+                templateUrl: '/static/apps/staff/directives/templates/todo.html',
                 scope: true,
                 link: function (scope, element, attr, model) {
                     scope.$watch('todos_ready', function(newVal, oldVal) {
                         if(newVal) {
-                            scope.set_authentication_false = function() {
-                                if (scope.problem) {
-                                    if(scope.active_user.role != "physician" && scope.active_user.role != "admin")
-                                        scope.problem.authenticated = false;
-                                }
-                            }
 
                             if (scope.todos_ready) {
                                 var currentTodo;
                                 scope.accomplished = scope.$eval(attr.accomplished);
                                 scope.show_problem = scope.$eval(attr.showProblem);
+                                scope.is_tagged = scope.$eval(attr.isTagged);
+                                scope.is_list = scope.$eval(attr.isList);
 
                                 scope.problem_todos = scope.$eval(attr.ngModel);
                                 var tmpList = scope.problem_todos;
@@ -61,11 +57,18 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                             var form = {};
 
                                             form.todos = scope.sortingLog;
-                                            form.patient_id = scope.patient_id;
+                                            if (scope.is_list) {
+                                                form.list_id = scope.is_list;
+                                            } else {
+                                                if (scope.is_tagged)
+                                                    form.tagged_user_id = scope.user_id;
+                                                else {
+                                                    form.staff_id = scope.user_id;
+                                                }
+                                            }
 
-                                            patientService.updateTodoOrder(form).then(function(data){
-                                                toaster.pop('success', 'Done', 'Updated Problem');
-                                                scope.set_authentication_false();
+                                            todoService.updateTodoOrder(form).then(function(data){
+                                                toaster.pop('success', 'Done', 'Updated Todo');
                                             });
                                         }
                                         scope.sorted = false;
@@ -90,10 +93,9 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                             // update status
                             scope.update_todo_status = function(todo){
                                 scope.dragged = true;
-                                patientService.updateTodoStatus(todo).then(function(data){
+                                todoService.updateTodoStatus(todo).then(function(data){
                                     if(data['success']==true){
                                         toaster.pop('success', "Done", "Updated Todo status !");
-                                        scope.set_authentication_false();
                                     }else{
                                         toaster.pop('error', 'Warning', 'Something went wrong!');
                                     }
@@ -104,7 +106,10 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
 
                             scope.open_todo = function(todo) {
                                 if (!scope.dragged && !scope.todo_changed) {
-                                    $location.url('/todo/' + todo.id);
+                                    if (!todo.patient)
+                                        $location.url('/todo/' + todo.id);
+                                    else
+                                        location.href = '/u/patient/manage/' + todo.patient.id + '/#/todo/' + todo.id;
                                 }
                             }
 
@@ -129,7 +134,6 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                         toaster.pop('success', "Done", "Updated Todo text!");
                                         todo.changed = false;
                                         scope.todo_changed = false;
-                                        scope.set_authentication_false();
                                     }else{
                                         toaster.pop('error', 'Warning', 'Something went wrong!');
                                     }
@@ -143,7 +147,6 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
 
                             scope.saveTodoDueDate = function(todo) {
                                 todoService.changeTodoDueDate(todo).then(function(data){
-                                    scope.set_authentication_false();
                                 });
                             }
 
@@ -161,13 +164,15 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                     todoService.saveCreateLabel(todo.id, scope.label_component).then(function(data){
                                         if(data['success']==true){
                                             if(data['new_status']==true){
-                                                scope.labels.push(data['new_label']);
+                                                if(scope.is_tagged)
+                                                    todo.patient_labels.push(data['new_label']);
+                                                else
+                                                    scope.labels.push(data['new_label']);
                                             }
                                             if(data['status']==true){
                                                 todo.labels.push(data['label']);
                                                 toaster.pop('success', "Done", "Added Todo label!");
                                             }
-                                            scope.set_authentication_false();
                                         }else{
                                             toaster.pop('error', 'Warning', 'Something went wrong!');
                                         }
@@ -182,13 +187,15 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                     todoService.saveCreateLabel(todo.id, scope.label_component).then(function(data){
                                         if(data['success']==true){
                                             if(data['new_status']==true){
-                                                scope.labels.push(data['new_label']);
+                                                if(scope.is_tagged)
+                                                    todo.patient_labels.push(data['new_label']);
+                                                else
+                                                    scope.labels.push(data['new_label']);
                                             }
                                             if(data['status']==true){
                                                 todo.labels.push(data['label']);
                                                 toaster.pop('success', "Done", "Added Todo label!");
                                             }
-                                            scope.set_authentication_false();
                                         }else{
                                             toaster.pop('error', 'Warning', 'Something went wrong!');
                                         }
@@ -250,7 +257,6 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                     todoService.addTodoLabel(label.id, todo.id).then(function(data){
                                         if(data['success']==true){
                                             toaster.pop('success', "Done", "Added Todo label!");
-                                            scope.set_authentication_false();
                                         }else{
                                             toaster.pop('error', 'Warning', 'Something went wrong!');
                                         }
@@ -260,7 +266,6 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                     todoService.removeTodoLabel(existed_id, todo.id).then(function(data){
                                         if(data['success']==true){
                                             toaster.pop('success', "Done", "Removed Todo label!");
-                                            scope.set_authentication_false();
                                         }else{
                                             toaster.pop('error', 'Warning', 'Something went wrong!');
                                         }
@@ -270,14 +275,38 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                             }
 
                             scope.deleteEditLabel = function(label) {
-                                scope.currentLabel = label;
-                                angular.element('#deleteLabelModal').modal();
+                                var currentLabel = label;
+                                // angular.element('#deleteLabelModal').modal();
+                                todoService.deleteLabel(label).then(function(data){
+                                    var index = scope.labels.indexOf(currentLabel);
+                                    if(scope.is_tagged)
+                                        todo.patient_labels.splice(index, 1);
+                                    else
+                                        scope.labels.splice(index, 1);
+                                    
+                                    angular.forEach(scope.problem_todos, function(todo, key) {
+                                        var index2;
+                                        angular.forEach(todo.labels, function(value, key2) {
+                                            if (value.id == currentLabel.id) {
+                                                index2 = key2;
+                                            }
+                                        });
+                                        if (index2 != undefined)
+                                            todo.labels.splice(index2, 1);
+                                    });
+
+                                    // angular.element('#deleteLabelModal').modal('hide');
+                                    toaster.pop('success', 'Done', 'Deleted label successfully');
+                                });
                             }
 
                             scope.confirmDeleteLabel = function(currentLabel) {
                                 todoService.deleteLabel(currentLabel).then(function(data){
                                     var index = scope.labels.indexOf(currentLabel);
-                                    scope.labels.splice(index, 1);
+                                    if(scope.is_tagged)
+                                        todo.patient_labels.splice(index, 1);
+                                    else
+                                        scope.labels.splice(index, 1);
                                     
                                     angular.forEach(scope.problem_todos, function(todo, key) {
                                         var index2;
@@ -317,7 +346,6 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                     todoService.addTodoMember(todo, member).then(function(data){
                                         if(data['success']==true){
                                             toaster.pop('success', "Done", "Added member!");
-                                            scope.set_authentication_false();
                                         }else{
                                             toaster.pop('error', 'Warning', 'Something went wrong!');
                                         }
@@ -327,7 +355,6 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                     todoService.removeTodoMember(todo, member).then(function(data){
                                         if(data['success']==true){
                                             toaster.pop('success', "Done", "Removed member!");
-                                            scope.set_authentication_false();
                                         }else{
                                             toaster.pop('error', 'Warning', 'Something went wrong!');
                                         }

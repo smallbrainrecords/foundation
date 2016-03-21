@@ -357,3 +357,11 @@ ce-entity ce-flag{
 	top: 0;
 	left: 0;
 }
+
+.labeled-list a.todo-label {
+	width: auto;
+	height: auto;
+	color: white;
+	padding: 2px 5px;
+	text-decoration: none;
+}
