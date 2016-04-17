@@ -5,7 +5,8 @@
 
 	var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 
-        'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate']);
+        'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate', 
+        'observations']);
 
 
     ManagerApp.config(function($routeProvider) {
@@ -42,6 +43,14 @@
             .when("/todo/:todo_id", {
                 templateUrl: '/static/apps/patient_manager/partials/todo.html',
                 controller: 'TodoCtrl'
+            })
+            .when("/observation/:observation_id/add_different_order", {
+                templateUrl: '/static/apps/patient_manager/partials/observation/add_different_order.html',
+                controller: 'AddDifferentOrderCtrl'
+            })
+            .when("/observation/:observation_id/enter_new_value", {
+                templateUrl: '/static/apps/patient_manager/partials/observation/enter_new_value.html',
+                controller: 'EnterNewValueCtrl'
             });
 
     });

@@ -39,12 +39,6 @@
 			return httpService.postJson(form, url);
 		};
 
-		this.fetchLabeledList = function(user_id){
-			var params = {};
-			var url ='/todo/todo/'+user_id+'/getlabeledlist';
-			return httpService.get(params, url);
-		};
-
 		this.fetchLabeledTodoList = function(user_id){
 			var params = {};
 			var url ='/todo/todo/'+user_id+'/getLabeledTodoList';

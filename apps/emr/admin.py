@@ -3,7 +3,9 @@ from django.contrib import admin
 from .models import UserProfile, AccessLog, Encounter, \
     EncounterEvent, TextNote, Problem, Goal, ToDo, Guideline,\
     GuidelineForm, PatientImage, Sharing, ProblemRelationship, \
-    ProblemSegment, Label, ToDoAttachment, ToDoComment, LabeledToDoList
+    ProblemSegment, Label, ToDoAttachment, ToDoComment, LabeledToDoList, \
+    Country, State, City, TelecomSystem, Telecom, AddressType, AddressUse, Observation, \
+    ObservationTextNote, ObservationComponent
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -128,3 +130,13 @@ admin.site.register(Label)
 admin.site.register(ToDoAttachment)
 admin.site.register(ToDoComment)
 admin.site.register(LabeledToDoList)
+admin.site.register(Country)
+admin.site.register(State)
+admin.site.register(City)
+admin.site.register(TelecomSystem)
+admin.site.register(Telecom)
+admin.site.register(AddressType)
+admin.site.register(AddressUse)
+admin.site.register(Observation)
+admin.site.register(ObservationTextNote)
+admin.site.register(ObservationComponent)

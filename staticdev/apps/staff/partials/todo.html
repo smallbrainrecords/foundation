@@ -28,7 +28,7 @@
 			<div class="todo-component" ng-if="todo.labels.length > 0">
 				<p>Labels:</p>
 				<div class="quick-card-editor-label">
-					<a ng-repeat="label in todo.labels" href class="todo-label" ng-class="label.css_class" ng-click="changeLabel2(todo)" ng-if="label.author.id==user_id || label.is_all"></a>
+					<a ng-repeat="label in todo.labels" href class="todo-label todo-label-name" ng-class="label.css_class" ng-click="changeLabel2(todo)" ng-if="label.author.id==user_id || label.is_all">{{label.name}}</a>
 					<a href ng-click="changeLabel2(todo)"><i class="fa fa-plus"></i></a>
 				</div>
 
@@ -38,7 +38,7 @@
 						<div class="quick-card-editor-lv2-header">
 							<a href ng-click="changeLabel2(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 						</div>
-						<div ng-repeat="label in labels" ng-if="label.author.id==user_id || label.is_all">
+						<div ng-repeat="label in labels">
 							<a href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(todo, label)">
 								{{label.name}}
 								<i class="fa fa-check" ng-repeat="l in todo.labels" ng-if="l.id==label.id"></i>
@@ -234,7 +234,7 @@
 						<div class="quick-card-editor-lv2-header">
 							<a href ng-click="changeLabel(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 						</div>
-						<div ng-repeat="label in labels" ng-if="label.author.id==user_id || label.is_all">
+						<div ng-repeat="label in labels">
 							<a href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(todo, label)">
 								{{label.name}}
 								<i class="fa fa-check" ng-repeat="l in todo.labels" ng-if="l.id==label.id"></i>

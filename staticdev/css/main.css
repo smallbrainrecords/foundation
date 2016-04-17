@@ -199,6 +199,13 @@ ce-entity ce-flag{
 	clear: none;
 }
 
+.quick-card-editor-label a.todo-label-name {
+	color: #fff;
+	width: auto;
+	padding: 0 10px;
+	text-decoration: none;
+}
+
 .quick-card-editor a.todo-label i {
 	font-size: 10px;
 	text-shadow: 0 0 5px rgba(0,0,0,.2),0 0 2px #000;
@@ -256,7 +263,8 @@ ce-entity ce-flag{
 .quick-card-editor .quick-card-editor-lv2 a.todo-label {
 	clear: none;
 	width: 80%;
-	height: 20px;
+	min-height: 20px;
+	height: auto;
 	text-align: left;
 	padding: 0;
 	padding-left: 10px;
@@ -364,4 +372,5 @@ ce-entity ce-flag{
 	color: white;
 	padding: 2px 5px;
 	text-decoration: none;
+	margin-bottom: 2px;
 }

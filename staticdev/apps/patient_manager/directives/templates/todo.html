@@ -57,7 +57,7 @@
 								<div class="quick-card-editor-lv2-header">
 									<a href ng-click="changeLabel(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 								</div>
-								<div ng-repeat="label in labels" ng-if="label.author.id==user_id || label.is_all">
+								<div ng-repeat="label in labels">
 									<a href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(item, label)">
 										{{label.name}}
 										<i class="fa fa-check" ng-repeat="l in item.labels" ng-if="l.id==label.id"></i>

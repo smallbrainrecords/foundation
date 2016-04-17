@@ -519,15 +519,15 @@ def new_todo_label(request, todo_id):
         name = request.POST.get('name')
         css_class = request.POST.get('css_class')
         is_all = request.POST.get('is_all', False)
+        if is_all:
+            is_all = True
+        else:
+            is_all = False
 
         todo = ToDo.objects.get(id=todo_id)
-        if todo.patient:
-            user = todo.patient
-        elif todo.user:
-            user = todo.user
-        label = Label.objects.filter(user=user, name=name, css_class=css_class)
+        label = Label.objects.filter(name=name, css_class=css_class)
         if not label:
-            label = Label(user=user, name=name, css_class=css_class)
+            label = Label(name=name, css_class=css_class)
             label.author = request.user
             label.is_all = is_all
             label.save()
@@ -536,10 +536,11 @@ def new_todo_label(request, todo_id):
         else:
             label = label[0]
 
-        if not label in todo.labels.all():
-            todo.labels.add(label)
-            resp['status'] = True
-            resp['label'] = LabelSerializer(label).data
+        if (label.is_all == True) or ((label.is_all == False) and (label.author == request.user)):
+            if not label in todo.labels.all():
+                todo.labels.add(label)
+                resp['status'] = True
+                resp['label'] = LabelSerializer(label).data
 
         # set problem authentication
         set_problem_authentication_false(request, todo)
@@ -563,7 +564,7 @@ def save_edit_label(request, label_id):
 
         label = Label.objects.get(id=label_id)
 
-        if not Label.objects.filter(user=label.user, name=name, css_class=css_class):
+        if not Label.objects.filter(name=name, css_class=css_class):
             label.name = name
             label.css_class = css_class
             label.save()
@@ -744,7 +745,7 @@ def remove_todo_member(request, todo_id):
 def get_labels(request, user_id):
 
     user = User.objects.get(id=user_id)
-    labels = Label.objects.filter(user=user)
+    labels = Label.objects.filter(Q(is_all=True) | Q(Q(is_all=False) & Q(author=user)))
 
     labels_holder = []
     for label in labels:
@@ -764,14 +765,6 @@ def get_user_todos(request, user_id):
     todos_holder = []
     for todo in todos:
         todo_dict = TodoSerializer(todo.todo).data
-
-        labels = Label.objects.filter(user=todo.todo.patient)
-        labels_holder = []
-        for label in labels:
-            label_dict = LabelSerializer(label).data
-            labels_holder.append(label_dict)
-
-        todo_dict['patient_labels'] = labels_holder
         todos_holder.append(todo_dict)
 
     resp = {}
@@ -821,22 +814,6 @@ def add_staff_todo(request, user_id):
         new_todo_dict = TodoSerializer(new_todo).data
         resp['todo'] = new_todo_dict
         resp['success'] = True
-
-    return ajax_response(resp)
-
-@login_required
-def get_user_todo_labels(request, user_id):
-    resp = {}
-    user = User.objects.get(id=user_id)
-    todos = ToDo.objects.filter(Q(members=user.profile))
-    labels_holder = []
-    for todo in todos:
-        for label in todo.labels.all():
-            label_dict = LabelSerializer(label).data
-            if not label_dict in labels_holder:
-                labels_holder.append(label_dict)
-        
-    resp['labeled_list'] = labels_holder
 
     return ajax_response(resp)
 
@@ -907,14 +884,6 @@ def get_user_label_lists(request, user_id):
         todos_holder = []
         for todo in todos:
             todo_dict = TodoSerializer(todo).data
-
-            labels = Label.objects.filter(user=todo.patient)
-            labels_holder = []
-            for label in labels:
-                label_dict = LabelSerializer(label).data
-                labels_holder.append(label_dict)
-
-            todo_dict['patient_labels'] = labels_holder
             todos_holder.append(todo_dict)
 
         list_dict['todos'] = todos_holder

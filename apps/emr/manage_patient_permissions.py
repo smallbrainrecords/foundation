@@ -42,6 +42,11 @@ GLOBAL_PERMISSIONS = [
     # Encounter
     'add_encounter',
     'add_encounter_event',
+    # observation
+    'add_observation',
+    'add_observation_note',
+    'edit_observation_note',
+    'delete_observation_note',
     # Pain
     'update_pain', ]
 
@@ -70,6 +75,9 @@ ROLE_PERMISSIONS['patient'] = [
     'add_todo_comment',
     # Patient Profile
     'update_patient_profile',
+    # observation
+    'add_observation',
+    'add_observation_note',
     # Pain
     'update_pain', ]
 
@@ -99,6 +107,11 @@ ROLE_PERMISSIONS['physician'] = [
     # Encounter
     'add_encounter',
     'add_encounter_event',
+    # observation
+    'add_observation',
+    'add_observation_note',
+    'edit_observation_note',
+    'delete_observation_note',
     # Pain
     'update_pain', ]
 
@@ -125,6 +138,9 @@ ROLE_PERMISSIONS['mid-level'] = [
     # Encounter
     'add_encounter',
     'add_encounter_event',
+    # observation
+    'add_observation',
+    'add_observation_note',
     # Pain
     'update_pain', ]
 
@@ -145,6 +161,9 @@ ROLE_PERMISSIONS['nurse'] = [
     'add_todo_comment',
     # Patient Profile
     'update_patient_profile',
+    # observation
+    'add_observation',
+    'add_observation_note',
     # Pain
     'update_pain', ]
 
@@ -155,6 +174,9 @@ ROLE_PERMISSIONS['secretary'] = [
     'set_todo_status',
     'set_todo_order',
     'add_todo_comment',
+    # observation
+    'add_observation',
+    'add_observation_note',
     # Patient Profile
     'update_patient_profile', ]
 

@@ -196,6 +196,7 @@
                     $scope.related_encounters = data['related_encounters'];
 
                     $scope.activities = data['activities'];
+                    $scope.observations = data['observations'];
 
                     if($scope.history_note!=null){
 

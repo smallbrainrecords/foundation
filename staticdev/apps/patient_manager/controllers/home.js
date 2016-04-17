@@ -318,11 +318,16 @@
 			}
 
 			$scope.add_new_problem = function(problem_term) {
+				if(problem_term == '' || problem_term == undefined) {
+					return false;
+				}
+				
 				var c = confirm("Are you sure?");
 
 				if(c==false){
 					return false;
 				}
+
 
 				var form = {};
 				form.patient_id = $scope.patient_id;

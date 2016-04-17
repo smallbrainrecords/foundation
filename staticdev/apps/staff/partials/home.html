@@ -45,7 +45,7 @@
         <input type='text' ng-model='new_list.name'>
         <br>
         <div class="quick-card-editor-label labeled-list">
-          <div ng-repeat="label in labeled_list" ng-if="label.author.id==user_id || label.is_all">
+          <div ng-repeat="label in labels">
             <a href class="todo-label" ng-class="label.css_class" ng-click="add_new_list_label(new_list, label)">
               {{label.name}}
               <i class="fa fa-check" ng-repeat="l in new_list.labels" ng-if="l.id==label.id"></i>

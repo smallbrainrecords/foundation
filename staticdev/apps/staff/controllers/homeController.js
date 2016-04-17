@@ -63,10 +63,6 @@
 	                $scope.labels = data['labels'];
 	            });
 
-	            staffService.fetchLabeledList($scope.user_id).then(function(data){
-	                $scope.labeled_list = data['labeled_list'];
-	            });
-
 	            staffService.fetchLabeledTodoList($scope.user_id).then(function(data){
 	                $scope.todo_lists = data['todo_lists'];
 	            });

@@ -164,10 +164,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                                     todoService.saveCreateLabel(todo.id, scope.label_component).then(function(data){
                                         if(data['success']==true){
                                             if(data['new_status']==true){
-                                                if(scope.is_tagged)
-                                                    todo.patient_labels.push(data['new_label']);
-                                                else
-                                                    scope.labels.push(data['new_label']);
+                                                scope.labels.push(data['new_label']);
                                             }
                                             if(data['status']==true){
                                                 todo.labels.push(data['label']);
@@ -187,10 +184,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                                     todoService.saveCreateLabel(todo.id, scope.label_component).then(function(data){
                                         if(data['success']==true){
                                             if(data['new_status']==true){
-                                                if(scope.is_tagged)
-                                                    todo.patient_labels.push(data['new_label']);
-                                                else
-                                                    scope.labels.push(data['new_label']);
+                                                scope.labels.push(data['new_label']);
                                             }
                                             if(data['status']==true){
                                                 todo.labels.push(data['label']);
@@ -279,10 +273,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                                 // angular.element('#deleteLabelModal').modal();
                                 todoService.deleteLabel(label).then(function(data){
                                     var index = scope.labels.indexOf(currentLabel);
-                                    if(scope.is_tagged)
-                                        todo.patient_labels.splice(index, 1);
-                                    else
-                                        scope.labels.splice(index, 1);
+                                    scope.labels.splice(index, 1);
                                     
                                     angular.forEach(scope.problem_todos, function(todo, key) {
                                         var index2;
@@ -303,10 +294,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                             scope.confirmDeleteLabel = function(currentLabel) {
                                 todoService.deleteLabel(currentLabel).then(function(data){
                                     var index = scope.labels.indexOf(currentLabel);
-                                    if(scope.is_tagged)
-                                        todo.patient_labels.splice(index, 1);
-                                    else
-                                        scope.labels.splice(index, 1);
+                                    scope.labels.splice(index, 1);
                                     
                                     angular.forEach(scope.problem_todos, function(todo, key) {
                                         var index2;

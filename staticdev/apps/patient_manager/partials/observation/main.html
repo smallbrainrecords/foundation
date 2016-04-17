@@ -1,0 +1,56 @@
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				A1C: {{observation.value_quantity}}% on {{observation.effective_datetime|date:'M/d/yyyy'}}
+			</div>
+		</div>
+		<br>
+		<div class='row'>
+			<div class='col-md-6'>
+				<div class="row">
+					<div class='col-md-12'>
+						<button class='btn btn-default'>Enter new value</button>
+					</div>
+				</div>
+				<br>
+				<div class="row">
+					<div class='col-md-12'>
+						<button class='btn btn-default'>Edit value</button>
+					</div>
+				</div>
+				<br>
+				<div class="row">
+					<div class='col-md-12'>
+						<button class='btn btn-default'>See past values</button>
+					</div>
+				</div>
+				<br>
+				<div class="row">
+					<div class='col-md-12'>
+						<button class='btn btn-default'>Add note</button>
+					</div>
+				</div>
+			</div>
+			<div class='col-md-6'>
+				<div class="row">
+					<div class='col-md-12'>
+						<p>Pending order:</p>
+						<p>A1C due {{observation.effective_datetime|date:'M/d/yyyy'}}</p>
+						<a href="#" class='btn btn-default'>Add a different task</a>
+					</div>
+				</div>
+				<br>
+				<div class="row">
+					<div class='col-md-12'>
+						<button class='btn btn-default'>Repeat in 3 months</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div><!-- End of Panel Body -->
+</div>

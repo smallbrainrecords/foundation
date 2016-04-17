@@ -65,6 +65,11 @@ class ListField(models.TextField):
         value = self._get_val_from_obj(obj)
         return self.get_db_prep_value(value)
 
+class MaritalStatus(models.Model):
+    code = models.CharField(max_length=1, null=True, blank=True)
+    display = models.CharField(max_length=20, null=True, blank=True)
+    definition = models.CharField(max_length=64, null=True, blank=True)
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile")
@@ -76,6 +81,8 @@ class UserProfile(models.Model):
     summary = models.TextField(blank=True)
     sex = models.CharField(max_length=6, choices=SEX_CHOICES, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
+    deceased_date = models.DateTimeField(null=True, blank=True)
+    marital_status = models.ForeignKey(MaritalStatus, null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
 
     def __unicode__(self):
@@ -232,7 +239,6 @@ class Goal(models.Model):
 
 
 class Label(models.Model):
-    user = models.ForeignKey(User, null=True, blank=True, related_name="label_user")
     name = models.TextField(null=True, blank=True)
     css_class = models.TextField(null=True, blank=True)
     author = models.ForeignKey(User, null=True, blank=True, related_name="label_author")
@@ -246,6 +252,7 @@ class ToDo(models.Model):
     patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient")
     user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")
     problem = models.ForeignKey(Problem, null=True, blank=True)
+    observation = models.ForeignKey("Observation", null=True, blank=True, related_name="observation_todos")
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
@@ -411,3 +418,137 @@ class TodoActivity(models.Model):
 
     class Meta:
         ordering = ['-created_on']
+
+
+class Observation(models.Model):
+    status = models.CharField(max_length=16)
+    category = models.CharField(max_length=45, null=True, blank=True)
+    code = models.CharField(max_length=10)
+    subject = models.ForeignKey(UserProfile, related_name='observation_subjects')
+    encounter = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_encounters')
+    performer = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_performers')
+    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_authors')
+    effective_datetime = models.DateTimeField(null=True, blank=True)
+    value_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    value_codeableconcept = models.CharField(max_length=40, null=True, blank=True)
+    value_string = models.TextField(null=True, blank=True)
+    value_unit = models.CharField(max_length=45, null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    problem = models.ForeignKey(Problem, related_name='problem_observations')
+
+    class Meta:
+        ordering = ['-created_on']
+
+
+class ObservationComponent(models.Model):
+    status = models.CharField(max_length=16)
+    observation = models.ForeignKey(Observation, related_name='observation_components')
+    component_code = models.CharField(max_length=10)
+    value_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    value_codeableconcept = models.CharField(max_length=40, null=True, blank=True)
+    value_string = models.TextField(null=True, blank=True)
+    value_unit = models.CharField(max_length=45, null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
+    effective_datetime = models.DateTimeField(null=True, blank=True)
+    patient_refused_A1C = models.BooleanField(default=False)
+
+
+class Country(models.Model):
+    iso3 = models.CharField(max_length=3)
+    iso_num = models.CharField(max_length=3)
+    name = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
+
+
+class State(models.Model):
+    country = models.ForeignKey(Country, related_name='country_states')
+    code = models.CharField(max_length=2)
+    name = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
+
+
+class City(models.Model):
+    state = models.ForeignKey(State, related_name='state_cities')
+    name = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
+
+
+class Address(models.Model):
+    line1 = models.CharField(max_length=50)
+    line2 = models.CharField(max_length=50)
+    city = models.ForeignKey(City, related_name='city_addresses')
+    zip = models.CharField(max_length=6)
+    zip4 = models.CharField(max_length=4, null=True, blank=True)
+    lat = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    lon = models.DecimalField(max_digits=11, decimal_places=4, null=True, blank=True)
+    county = models.CharField(max_length=30, null=True, blank=True)
+
+
+class TelecomSystem(models.Model):
+    code = models.CharField(max_length=5, primary_key=True)
+    display = models.CharField(max_length=50)
+    definition = models.TextField()
+
+    def __unicode__(self):
+        return "%s" % (self.code)
+
+
+class Telecom(models.Model):
+    system_code = models.CharField(max_length=5)
+    value = models.TextField()
+
+    def __unicode__(self):
+        return "%s" % (self.system_code)
+
+
+class AddressType(models.Model):
+    code = models.CharField(max_length=8, primary_key=True)
+    display = models.CharField(max_length=17)
+    definition = models.CharField(max_length=51)
+
+    def __unicode__(self):
+        return "%s" % (self.code)
+
+
+class AddressUse(models.Model):
+    code = models.CharField(max_length=4, primary_key=True)
+    display = models.CharField(max_length=15)
+    definition = models.CharField(max_length=90)
+
+    def __unicode__(self):
+        return "%s" % (self.code)
+
+
+class UserTelecom(models.Model):
+    user = models.ForeignKey(User, related_name='user_telecoms')
+    telecom = models.ForeignKey(Telecom, related_name='telecom_users')
+    use_code = models.CharField(max_length=6)
+    rank = models.PositiveIntegerField(null=True, blank=True)
+    start = models.DateField(null=True, blank=True)
+    end = models.DateField(null=True, blank=True)
+
+
+class UserAddress(models.Model):
+    user = models.ForeignKey(User, related_name='user_addresses')
+    address = models.ForeignKey(Address, related_name='address_users')
+    type_code = models.ForeignKey(AddressType, related_name='type_code_user_address')
+    use_code = models.ForeignKey(AddressUse, related_name='use_code_user_address')
+    start = models.DateField(null=True, blank=True)
+    end = models.DateField(null=True, blank=True)
+
+
+class ObservationTextNote(models.Model):
+    observation = models.ForeignKey(Observation, related_name='observation_notes')
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    note = models.TextField()
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "%s" % (self.note)

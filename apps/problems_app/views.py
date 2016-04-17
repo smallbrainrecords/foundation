@@ -16,6 +16,7 @@ from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment
 from emr.models import EncounterProblemRecord, Encounter
+from emr.models import Observation
 
 from emr.operations import op_add_event, op_add_todo_event
 
@@ -30,6 +31,7 @@ from encounters_app.serializers import EncounterSerializer
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
 from todo_app.operations import add_todo_activity
+from observations_app.serializers import ObservationSerializer
 
 
 def is_patient(user):
@@ -160,6 +162,12 @@ def get_problem_info(request, problem_id):
     related_encounter_holder = EncounterSerializer(
         related_encounters, many=True).data
 
+    observations = Observation.objects.filter(problem=problem_info)
+    observations_holder = []
+    for observation in observations:
+        observation_dict = ObservationSerializer(observation).data
+        observations_holder.append(observation_dict)
+
     resp = {}
     resp['success'] = True
     resp['info'] = problem_dict
@@ -177,6 +185,7 @@ def get_problem_info(request, problem_id):
     resp['activities'] = activity_holder
 
     resp['related_encounters'] = related_encounter_holder
+    resp['observations'] = observations_holder
 
     return ajax_response(resp)
 
@@ -241,6 +250,12 @@ def add_patient_problem(request, patient_id):
 
             resp['success'] = True
             resp['problem'] = new_problem_dict
+
+            # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
+            if concept_id in ['73211009', '46635009', '44054006']:
+                observation = Observation()
+                observation.problem = new_problem
+                observation.save()
 
         else:
             resp['msg'] = 'Problem already added'
@@ -374,6 +389,10 @@ def add_history_note(request, problem_id):
             activity = 'Added History Note  <b>%s</b>' % note
             add_problem_activity(problem, actor_profile, activity)
 
+            physician = request.user
+            patient = problem.patient
+            op_add_event(physician, patient, activity, problem)
+
             new_note_dict = ProblemNoteSerializer(new_note).data
             resp['note'] = new_note_dict
 
@@ -414,6 +433,10 @@ def add_wiki_note(request, problem_id):
 
             activity = 'Added wiki note: <b>%s</b>' % note
             add_problem_activity(problem, actor_profile, activity)
+
+            physician = request.user
+            patient = problem.patient
+            op_add_event(physician, patient, activity, problem)
 
             new_note_dict = ProblemNoteSerializer(new_note).data
             resp['note'] = new_note_dict
@@ -570,6 +593,11 @@ def add_problem_todo(request, problem_id):
 
         new_todo = ToDo(
             patient=patient, problem=problem, todo=todo, due_date=due_date)
+
+        observation_id = request.POST.get('observation_id', None)
+        if observation_id:
+            observation = Observation.objects.get(id=int(observation_id))
+            new_todo.observation = observation
 
         order =  ToDo.objects.all().aggregate(Max('order'))
         if not order['order__max']:
