@@ -191,7 +191,7 @@ def get_problem_info(request, problem_id):
 
 
 @login_required
-def get_problem_activity(request, problem_id):
+def get_problem_activity(request, problem_id, last_id):
     resp = {}
     resp['success'] = False
 
@@ -200,7 +200,7 @@ def get_problem_activity(request, problem_id):
     except Problem.DoesNotExist:
         raise Http404("Problem DoesNotExist")
 
-    activites = ProblemActivity.objects.filter(problem=problem)
+    activites = ProblemActivity.objects.filter(problem=problem).filter(id__gt=last_id)
     activity_holder = ProblemActivitySerializer(activites, many=True).data
     resp['activities'] = activity_holder
     resp['success'] = True

@@ -106,6 +106,7 @@ class TodoActivitySerializer(serializers.ModelSerializer):
 		model = TodoActivity
 
 		fields = (
+			'id',
 			'todo',
 			'author',
 			'activity',

@@ -43,7 +43,7 @@ def set_problem_authentication_false(request, todo):
         problem.save()
 
 @login_required
-def get_todo_activity(request, todo_id):
+def get_todo_activity(request, todo_id, last_id):
     resp = {}
     resp['success'] = False
 
@@ -52,7 +52,7 @@ def get_todo_activity(request, todo_id):
     except ToDo.DoesNotExist:
         raise Http404("ToDo DoesNotExist")
 
-    activites = TodoActivity.objects.filter(todo=todo)
+    activites = TodoActivity.objects.filter(todo=todo).filter(id__gt=last_id)
     activity_holder = TodoActivitySerializer(activites, many=True).data
     resp['activities'] = activity_holder
     resp['success'] = True

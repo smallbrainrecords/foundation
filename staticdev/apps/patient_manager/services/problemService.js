@@ -77,9 +77,9 @@
 
 		};
 
-		this.getProblemActivity = function(problem_id){
+		this.getProblemActivity = function(problem_id, last_id){
 			var params = {};
-			var url ='/p/problem/'+problem_id+'/activity/';
+			var url ='/p/problem/' + problem_id + '/' + last_id+ '/activity/';
 			return httpService.get(params, url);
 		};
 

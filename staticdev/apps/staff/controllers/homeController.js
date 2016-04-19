@@ -4,7 +4,7 @@
 
 
 	angular.module('StaffApp')
-		.controller('HomeCtrl', function($scope, $routeParams, ngDialog, staffService, physicianService, toaster, todoService){
+		.controller('HomeCtrl', function($scope, $routeParams, ngDialog, staffService, physicianService, toaster, todoService, prompt){
 
 
 
@@ -107,12 +107,18 @@
 			};
 
 			$scope.delete_list = function(list) {
-				console.log(list);
-				staffService.deleteToDoList(list).then(function(data){
-					var index = $scope.todo_lists.indexOf(list);
-					$scope.todo_lists.splice(index, 1);
-					toaster.pop('success', 'Done', 'Todo List removed successfully');
-				});
+				prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a todo list is forever. There is no undo."
+                }).then(function(result){
+                    staffService.deleteToDoList(list).then(function(data){
+						var index = $scope.todo_lists.indexOf(list);
+						$scope.todo_lists.splice(index, 1);
+						toaster.pop('success', 'Done', 'Todo List removed successfully');
+					});
+                },function(){
+                    return false;
+                });
 			}
 
 

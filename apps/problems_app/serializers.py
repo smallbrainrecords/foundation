@@ -91,6 +91,7 @@ class ProblemActivitySerializer(serializers.ModelSerializer):
         model = ProblemActivity
 
         fields = (
+            'id',
             'author',
             'activity',
             'problem',

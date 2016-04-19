@@ -6,7 +6,7 @@ urlpatterns = patterns(
 
     url(r'^problem/(?P<problem_id>\d+)/info$',
         'get_problem_info'),
-    url(r'^problem/(?P<problem_id>\d+)/activity/$',
+    url(r'^problem/(?P<problem_id>\d+)/(?P<last_id>\d+)/activity/$',
         'get_problem_activity'),
     url(r'^problem/(?P<problem_id>\d+)/track/click/$',
         'track_problem_click'),

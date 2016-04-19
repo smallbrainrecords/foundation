@@ -553,3 +553,13 @@ class ObservationTextNote(models.Model):
 
     def __unicode__(self):
         return "%s" % (self.note)
+
+
+class ObservationComponentTextNote(models.Model):
+    observation_component = models.ForeignKey(ObservationComponent, related_name='observation_component_notes')
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    note = models.TextField()
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "%s" % (self.note)

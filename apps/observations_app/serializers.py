@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from emr.models import Observation, ObservationTextNote, ObservationComponent
+from emr.models import Observation, ObservationTextNote, ObservationComponent, ObservationComponentTextNote
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 from todo_app.serializers import TodoSerializer
@@ -19,7 +19,22 @@ class ObservationTextNoteSerializer(serializers.ModelSerializer):
             'datetime',
             )
 
+
+class ObservationComponentTextNoteSerializer(serializers.ModelSerializer):
+    author = UserProfileSerializer()
+
+    class Meta:
+        model = ObservationComponentTextNote
+        fields = (
+            'id',
+            'author',
+            'note',
+            'datetime',
+            )
+
+
 class ObservationComponentSerializer(serializers.ModelSerializer):
+    observation_component_notes = ObservationComponentTextNoteSerializer(many=True, read_only=True)
 
     class Meta:
         model = ObservationComponent
@@ -28,6 +43,7 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
             'value_quantity',
             'effective_datetime',
             'patient_refused_A1C',
+            'observation_component_notes',
             )
 
 class ObservationSerializer(serializers.ModelSerializer):

@@ -47,6 +47,8 @@ GLOBAL_PERMISSIONS = [
     'add_observation_note',
     'edit_observation_note',
     'delete_observation_note',
+    'delete_observation_component',
+    'edit_observation_component',
     # Pain
     'update_pain', ]
 
@@ -112,6 +114,8 @@ ROLE_PERMISSIONS['physician'] = [
     'add_observation_note',
     'edit_observation_note',
     'delete_observation_note',
+    'delete_observation_component',
+    'edit_observation_component',
     # Pain
     'update_pain', ]
 

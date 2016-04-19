@@ -1,8 +1,8 @@
 var todos = angular.module('todos', []);
 
-todos.directive('todo', ['todoService', 'staffService', 'toaster', '$location', '$timeout', todoDirective]);
+todos.directive('todo', ['todoService', 'staffService', 'toaster', '$location', '$timeout', 'prompt', todoDirective]);
 
-function todoDirective(todoService, staffService, toaster, $location, $timeout) {
+function todoDirective(todoService, staffService, toaster, $location, $timeout, prompt) {
 
     var todoObj = {}; 
 
@@ -269,46 +269,30 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                             }
 
                             scope.deleteEditLabel = function(label) {
-                                var currentLabel = label;
-                                // angular.element('#deleteLabelModal').modal();
-                                todoService.deleteLabel(label).then(function(data){
-                                    var index = scope.labels.indexOf(currentLabel);
-                                    scope.labels.splice(index, 1);
-                                    
-                                    angular.forEach(scope.problem_todos, function(todo, key) {
-                                        var index2;
-                                        angular.forEach(todo.labels, function(value, key2) {
-                                            if (value.id == currentLabel.id) {
-                                                index2 = key2;
-                                            }
+                                prompt({
+                                    "title": "Are you sure?",
+                                    "message": "Deleting a label is forever. There is no undo."
+                                }).then(function(result){
+                                    var currentLabel = label;
+                                    todoService.deleteLabel(label).then(function(data){
+                                        var index = scope.labels.indexOf(currentLabel);
+                                        scope.labels.splice(index, 1);
+                                        
+                                        angular.forEach(scope.problem_todos, function(todo, key) {
+                                            var index2;
+                                            angular.forEach(todo.labels, function(value, key2) {
+                                                if (value.id == currentLabel.id) {
+                                                    index2 = key2;
+                                                }
+                                            });
+                                            if (index2 != undefined)
+                                                todo.labels.splice(index2, 1);
                                         });
-                                        if (index2 != undefined)
-                                            todo.labels.splice(index2, 1);
+
+                                        toaster.pop('success', 'Done', 'Deleted label successfully');
                                     });
-
-                                    // angular.element('#deleteLabelModal').modal('hide');
-                                    toaster.pop('success', 'Done', 'Deleted label successfully');
-                                });
-                            }
-
-                            scope.confirmDeleteLabel = function(currentLabel) {
-                                todoService.deleteLabel(currentLabel).then(function(data){
-                                    var index = scope.labels.indexOf(currentLabel);
-                                    scope.labels.splice(index, 1);
-                                    
-                                    angular.forEach(scope.problem_todos, function(todo, key) {
-                                        var index2;
-                                        angular.forEach(todo.labels, function(value, key2) {
-                                            if (value.id == currentLabel.id) {
-                                                index2 = key2;
-                                            }
-                                        });
-                                        if (index2 != undefined)
-                                            todo.labels.splice(index2, 1);
-                                    });
-
-                                    angular.element('#deleteLabelModal').modal('hide');
-                                    toaster.pop('success', 'Done', 'Deleted label successfully');
+                                },function(){
+                                    return false;
                                 });
                             }
 

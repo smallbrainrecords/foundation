@@ -1,8 +1,8 @@
 var observations = angular.module('observations', []);
 
-observations.directive('observation', ['observationService', 'toaster', '$location', '$timeout', 'problemService', observationDirective]);
+observations.directive('observation', ['observationService', 'toaster', '$location', '$timeout', 'problemService', 'prompt', observationDirective]);
 
-function observationDirective(observationService, toaster, $location, $timeout, problemService) {
+function observationDirective(observationService, toaster, $location, $timeout, problemService, prompt) {
 
     var observationObj = {}; 
 
@@ -82,10 +82,17 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                             }
 
                             scope.deleteNote = function(note) {
-                                observationService.deleteNote(note).then(function(data){
-                                    var index = scope.observation.observation_notes.indexOf(note);
-                                    scope.observation.observation_notes.splice(index, 1);
-                                    toaster.pop('success', 'Done', 'Deleted note successfully');
+                                prompt({
+                                    "title": "Are you sure?",
+                                    "message": "Deleting a note is forever. There is no undo."
+                                }).then(function(result){
+                                    observationService.deleteNote(note).then(function(data){
+                                        var index = scope.observation.observation_notes.indexOf(note);
+                                        scope.observation.observation_notes.splice(index, 1);
+                                        toaster.pop('success', 'Done', 'Deleted note successfully');
+                                    });
+                                },function(){
+                                    return false;
                                 });
                             }
                         }
