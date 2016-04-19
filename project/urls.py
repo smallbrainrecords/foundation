@@ -71,6 +71,9 @@ urlpatterns = patterns('',
     # Todos
     url(r'^todo/', include('todo_app.urls')),
 
+    # Observations
+    url(r'^observation/', include('observations_app.urls')),
+
     # Pain Avatars
     url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars'),
     url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', 'pain.views.add_pain_avatar'),

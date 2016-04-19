@@ -59,6 +59,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             'value_unit',
             'comments',
             'created_on',
+            'todo_past_six_months',
             'observation_todos',
             'observation_notes',
             'observation_components',

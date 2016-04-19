@@ -30,6 +30,9 @@
 					</div>
 					</br>
 					<div class="row" ng-show="see_past_values">
+						<div class='col-md-12'>
+							<h2>Past values:</h2>
+						</div>
 						<div class='col-md-12' ng-repeat="component in observation.observation_components" ng-if="!$last">
 							A1C: 
 								<span ng-if="component.patient_refused_A1C">refused </span>

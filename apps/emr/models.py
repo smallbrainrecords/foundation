@@ -436,6 +436,7 @@ class Observation(models.Model):
     comments = models.TextField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     problem = models.ForeignKey(Problem, related_name='problem_observations')
+    todo_past_six_months = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_on']
