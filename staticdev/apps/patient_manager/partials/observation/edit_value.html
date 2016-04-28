@@ -27,7 +27,7 @@
 
 				<p>A1C: 
 					<span ng-if="component.patient_refused_A1C">refused </span>
-					{{component.value_quantity}}% on {{component.effective_datetime|date:'M/d/yyyy'}}
+					{{component.value_quantity| number:1}}% on {{component.effective_datetime|date:'M/d/yyyy'}}
 					<span ng-if="a1c_date <= today">past due</span>
 				</p>
 

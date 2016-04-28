@@ -437,6 +437,7 @@ class Observation(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     problem = models.ForeignKey(Problem, related_name='problem_observations')
     todo_past_six_months = models.BooleanField(default=False)
+    patient_refused_A1C = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_on']
@@ -452,7 +453,10 @@ class ObservationComponent(models.Model):
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
-    patient_refused_A1C = models.BooleanField(default=False)
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ['created_on']
 
 
 class Country(models.Model):

@@ -2,7 +2,7 @@ var observations = angular.module('observations', []);
 
 observations.directive('observation', ['observationService', 'toaster', '$location', '$timeout', 'problemService', 'prompt', observationDirective]);
 
-function observationDirective(observationService, toaster, $location, $timeout, problemService, prompt) {
+function observationDirective(observationService, toaster, $location, $timeout, problemService, prompt, todoService) {
 
     var observationObj = {}; 
 
@@ -15,12 +15,12 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                         if(newVal) {
                             scope.observation = scope.$eval(attr.ngModel);
                             scope.today = moment();
-                            if (scope.observation.observation_components.length)
-                                scope.a1c_date = moment(scope.observation.observation_components[scope.observation.observation_components.length -1].effective_datetime);
+                            if (scope.observation.observation_todos.length)
+                                scope.a1c_date = moment(scope.observation.observation_todos[scope.observation.observation_todos.length -1].due_date);
 
                             if(scope.observation.observation_components.length && scope.observation.todo_past_six_months==false) {
                                 scope.last_measurement = scope.observation.observation_components[scope.observation.observation_components.length -1];
-                                if (moment() > moment(scope.last_measurement.effective_datetime).add(6, "months")) {
+                                if (moment() > moment(scope.last_measurement.created_on).add(6, "months")) {
                                     scope.observation.todo_past_six_months = true;
                                     form = {};
                                     form.name = 'A1C order was automatically generated';
@@ -28,7 +28,7 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                                     form.patient_id = scope.patient_id;
                                     form.problem_id = scope.observation.problem.id;
                                     form.observation_id = scope.observation.id;
-                                    form.due_date = moment(scope.last_measurement.effective_datetime).add(6, "months").format("YYYY-MM-DD");
+                                    form.due_date = moment(scope.last_measurement.created_on).add(6, "months").format("YYYY-MM-DD");
                                     problemService.addTodo(form).then(function(data){
                                         scope.problem_todos.push(data['todo']);
                                         scope.observation.observation_todos.push(data['todo']);

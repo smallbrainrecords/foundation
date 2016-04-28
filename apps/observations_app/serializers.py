@@ -42,7 +42,7 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
             'id',
             'value_quantity',
             'effective_datetime',
-            'patient_refused_A1C',
+            'created_on',
             'observation_component_notes',
             )
 
@@ -79,4 +79,5 @@ class ObservationSerializer(serializers.ModelSerializer):
             'observation_todos',
             'observation_notes',
             'observation_components',
+            'patient_refused_A1C',
             )

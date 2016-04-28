@@ -13,21 +13,19 @@ from problems_app.operations import add_problem_activity
 
 
 # set problem authentication to false if not physician, admin
-def set_problem_authentication_false(request, component):
-    if component.observation.problem:
-        problem = component.observation.problem
+def set_problem_authentication_false(request, problem):
         
-        actor_profile = UserProfile.objects.get(user=request.user)
+    actor_profile = UserProfile.objects.get(user=request.user)
 
-        role = actor_profile.role
+    role = actor_profile.role
 
-        if role in ['physician', 'admin']:
-            authenticated = True
-        else:
-            authenticated = False
+    if role in ['physician', 'admin']:
+        authenticated = True
+    else:
+        authenticated = False
 
-        problem.authenticated = authenticated
-        problem.save()
+    problem.authenticated = authenticated
+    problem.save()
 
 @login_required
 def get_observation_info(request, observation_id):
@@ -101,6 +99,39 @@ def delete_note(request, note_id):
 
     return ajax_response(resp)
 
+@login_required
+def patient_refused(request, observation_id):
+
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_observation']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        observation = Observation.objects.get(id=observation_id)
+        observation.effective_datetime = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
+        if request.POST.get('patient_refused_A1C', None):
+            observation.patient_refused_A1C = True
+
+        observation.save()
+
+        new_observation_dict = ObservationSerializer(observation).data
+        resp['observation'] = new_observation_dict
+        resp['success'] = True
+
+        # set problem authentication
+        set_problem_authentication_false(request, observation.problem)
+
+        summary = """
+            Patient refused a1c ,
+            <u>problem</u> <b>%s</b>
+            """ % (observation.problem.problem_name)
+
+        add_problem_activity(observation.problem, actor_profile, summary)
+
+    return ajax_response(resp)
+
 
 # Value
 @login_required
@@ -116,13 +147,12 @@ def add_value(request, observation_id):
         observation = Observation.objects.get(id=observation_id)
         component = ObservationComponent()
         component.observation = observation
-        component.value_quantity = request.POST.get('value')
+        component.value_quantity = request.POST.get('value', None)
         component.effective_datetime = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
-        if request.POST.get('patient_refused_A1C', None):
-            component.patient_refused_A1C = True
 
         component.save()
 
+        observation.patient_refused_A1C = False
         observation.todo_past_six_months = False
         observation.save()
 
@@ -131,7 +161,7 @@ def add_value(request, observation_id):
         resp['success'] = True
 
         # set problem authentication
-        set_problem_authentication_false(request, component)
+        set_problem_authentication_false(request, component.observation.problem)
 
         summary = """
             Added new a1c value <u>A1C</u> : <b>%s</b> ,

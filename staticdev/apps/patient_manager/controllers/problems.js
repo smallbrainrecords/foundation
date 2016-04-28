@@ -452,7 +452,7 @@
 					var image_index = $scope.problem_images.indexOf(image);
 
 					$scope.problem_images.splice(image_index, 1);
-					toaster.pop('success', 'Done', 'Added Todo!');
+					toaster.pop('success', 'Done', 'Deleted image!');
 					$scope.set_authentication_false();
 				});
 			};

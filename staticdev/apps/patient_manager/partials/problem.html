@@ -105,7 +105,13 @@
 
 </div>
 
+<div class='row' ng-if="observations.length > 0">
 
+	<div ng-repeat="observation in observations">
+		<observation ng-model="observation"></observation>
+		<br>
+	</div>
+</div>
 
 <div class='panel panel-default'>
 
@@ -493,15 +499,6 @@ ng-disabled='!permitted(["relate_problem"])'>
 				</div>
 			</div>
 		</div>
-	</div>
-</div>
-
-
-<div class='row' ng-if="observations.length > 0">
-
-	<div ng-repeat="observation in observations">
-		<observation ng-model="observation"></observation>
-		<br>
 	</div>
 </div>
 

@@ -24,11 +24,16 @@
 					return false;
 				}
 
+                if (form.month != '') {
+                    form.due_date = moment().add(form.month, "months").format("YYYY-MM-DD");
+                }
+
 				form.patient_id = $scope.patient_id;
 				form.problem_id = $scope.observation.problem.id;
 				form.observation_id = $scope.observation.id;
 				problemService.addTodo(form).then(function(data){
-					form.name = '';
+                    form.name = '';
+					form.month = '';
 					toaster.pop('success', 'Done', 'Added Todo!');
 				});
             }
@@ -36,7 +41,7 @@
 
 
 		})
-		.controller('EnterNewValueCtrl', function($scope, $routeParams, observationService, ngDialog, problemService, toaster, patientService){
+		.controller('EnterNewValueCtrl', function($scope, $routeParams, observationService, ngDialog, problemService, toaster, patientService, $location){
 
 
 			var patient_id = $('#patient_id').val();
@@ -69,26 +74,20 @@
             	value.observation_id = $scope.observation_id;
             	observationService.addNewValue(value).then(function(data){
 	                toaster.pop('success', 'Done', 'Added New value!');
+                    $location.url('/problem/' + $scope.observation.problem.id);
 	            });
             };
 
             $scope.addValueRefused = function(value) {
-            	if(value==undefined) {
-            		toaster.pop('error', 'Error', 'Please enter float value!');
-            		return false;
-            	}
-            	if(isNaN(parseFloat(value.value))) {
-            		toaster.pop('error', 'Error', 'Please enter float value!');
-            		return false;
-            	}
-
+                value = {};
             	if(value.date==undefined) {
             		value.date = moment().format("YYYY-MM-DD");
             	}
             	value.patient_refused_A1C = true;
             	value.observation_id = $scope.observation_id;
-            	observationService.addNewValue(value).then(function(data){
-	                toaster.pop('success', 'Done', 'Added New value!');
+            	observationService.addValueRefused(value).then(function(data){
+	                toaster.pop('success', 'Done', 'Patient refused!');
+                    $location.url('/problem/' + $scope.observation.problem.id);
 	            });
             };
 

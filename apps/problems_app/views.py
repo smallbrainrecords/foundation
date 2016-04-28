@@ -65,6 +65,14 @@ def track_problem_click(request, problem_id):
 @login_required
 def get_problem_info(request, problem_id):
     problem_info = Problem.objects.get(id=problem_id)
+    # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
+    if problem_info.concept_id in ['73211009', '46635009', '44054006']:
+        if not Observation.objects.filter(problem=problem_info):
+            observation = Observation()
+            observation.problem = problem_info
+            observation.subject = problem_info.patient.profile
+            observation.save()
+
     patient = problem_info.patient
 
     # Notes - Todo
@@ -255,6 +263,7 @@ def add_patient_problem(request, patient_id):
             if concept_id in ['73211009', '46635009', '44054006']:
                 observation = Observation()
                 observation.problem = new_problem
+                observation.subject = new_problem.patient.profile
                 observation.save()
 
         else:

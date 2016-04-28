@@ -77,6 +77,11 @@
 
 				return httpService.post(form, url);
 			};
+
+			this.addValueRefused = function(form) {
+				var url = '/observation/'+form.observation_id+'/patient_refused';
+				return httpService.post(form, url);
+			};
 	});
 
 })();
