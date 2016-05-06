@@ -12,7 +12,7 @@ from emr.models import UserProfile, Problem
 from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing
 
-from emr.models import PhysicianTeam, PatientController
+from emr.models import PhysicianTeam, PatientController, ProblemOrder
 
 from problems_app.serializers import ProblemSerializer
 from goals_app.serializers import GoalSerializer
@@ -216,12 +216,31 @@ def get_patient_info(request, patient_id):
         problem_dict = ProblemSerializer(problem).data
         timeline_problems_list.append(problem_dict)
 
-    # Active Problems
-    problems = Problem.objects.filter(patient=patient_user, is_active=True)
+    # Active Problems 
+    if request.user.profile.role == 'nurse' or request.user.profile.role == 'secretary':
+        team_members = PhysicianTeam.objects.filter(member=request.user)
+        if team_members:
+            user = team_members[0].physician
+    else:
+        user = request.user
+    try:
+        problem_order = ProblemOrder.objects.get(user=user, patient=patient_user)
+    except ProblemOrder.DoesNotExist:
+        problem_order = ProblemOrder(user=user, patient=patient_user)
+        problem_order.save()
+
     problem_list = []
+    problems = Problem.objects.filter(patient=patient_user)
+    for key in problem_order.order:
+        if problems.filter(id=key):
+            problem = problems.get(id=key)
+            problem_dict = ProblemSerializer(problem).data
+            problem_list.append(problem_dict)
+
     for problem in problems:
-        problem_dict = ProblemSerializer(problem).data
-        problem_list.append(problem_dict)
+        if not problem.id in problem_order.order:
+            problem_dict = ProblemSerializer(problem).data
+            problem_list.append(problem_dict)
 
     # Inactive Problems
     inactive_problems = Problem.objects.filter(
@@ -544,7 +563,7 @@ def get_patients_list(request):
 
 
     for patient in patients_list:
-        patient['todo'] = ToDo.objects.filter(patient__id=patient['user']['id']).count()
+        patient['todo'] = ToDo.objects.filter(patient__id=patient['user']['id'], accomplished=False).count()
         patient['problem'] = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True, is_controlled=False).count()
         if patient['todo'] == 0 and patient['problem'] == 0:
             patient['multiply'] = 0

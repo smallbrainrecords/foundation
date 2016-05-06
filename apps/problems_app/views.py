@@ -8,10 +8,11 @@ except ImportError:
 import json
 from datetime import datetime
 from django.db.models import Max
+from django.contrib.auth.models import User
 
 from common.views import *
 
-from emr.models import UserProfile, Problem
+from emr.models import UserProfile, Problem, ProblemOrder
 from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment
@@ -271,6 +272,69 @@ def add_patient_problem(request, patient_id):
 
     return ajax_response(resp)
 
+
+@login_required
+def change_name(request, problem_id):
+
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['change_problem_name']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == 'POST' and permitted:
+
+        term = request.POST.get('term')
+        concept_id = request.POST.get('code', None)
+
+        problem = Problem.objects.get(id=problem_id)
+        old_problem_name = problem.problem_name
+        old_problem_concept_id = problem.concept_id
+        problem_exists = Problem.objects.filter(
+            problem_name=term, patient=problem.patient).exists()
+
+        if problem_exists is not True:
+
+            problem.problem_name = term
+            if concept_id:
+                problem.concept_id = concept_id
+            else:
+                problem.concept_id = None
+
+            problem.save()
+
+            physician = request.user
+
+            if old_problem_concept_id and problem.concept_id:
+                summary = '<b>%s (%s)</b> was changed to <b>%s (%s)</b>' % (old_problem_name, old_problem_concept_id, problem.problem_name, problem.concept_id)
+            elif old_problem_concept_id:
+                summary = '<b>%s (%s)</b> was changed to <b>%s</b>' % (old_problem_name, old_problem_concept_id, problem.problem_name)
+            elif problem.concept_id:
+                summary = '<b>%s</b> was changed to <b>%s (%s)</b>' % (old_problem_name, problem.problem_name, problem.concept_id)
+            else:
+                summary = '<b>%s</b> was changed to <b>%s</b>' % (old_problem_name, problem.problem_name)
+
+            op_add_event(physician, problem.patient, summary, problem)
+
+            add_problem_activity(problem, actor_profile, summary)
+
+            new_problem_dict = ProblemSerializer(problem).data
+
+            resp['success'] = True
+            resp['problem'] = new_problem_dict
+
+            # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
+            # if concept_id in ['73211009', '46635009', '44054006']:
+            #     observation = Observation()
+            #     observation.problem = problem
+            #     observation.subject = problem.patient.profile
+            #     observation.save()
+
+        else:
+            resp['msg'] = 'Problem already added'
+
+    return ajax_response(resp)
 
 # Problems
 @login_required
@@ -927,4 +991,32 @@ def update_state_to_ptw(request):
 
             resp['success'] = True
 
+    return ajax_response(resp)
+
+@login_required
+def update_order(request):
+    resp = {}
+
+    resp['success'] = False
+
+    permissions = ['set_problem_order']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        datas = json.loads(request.body)
+        id_problems = datas['problems']
+        patient_id = datas['patient_id']
+        patient = User.objects.get(id=int(patient_id))
+
+        try:
+            problem = ProblemOrder.objects.get(user=request.user, patient=patient)
+        except ProblemOrder.DoesNotExist:
+            problem = ProblemOrder(user=request.user, patient=patient)
+            problem.save()
+
+        problem.order = id_problems
+        problem.save()
+
+        resp['success'] = True
     return ajax_response(resp)

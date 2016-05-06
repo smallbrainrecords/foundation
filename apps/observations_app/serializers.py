@@ -35,6 +35,7 @@ class ObservationComponentTextNoteSerializer(serializers.ModelSerializer):
 
 class ObservationComponentSerializer(serializers.ModelSerializer):
     observation_component_notes = ObservationComponentTextNoteSerializer(many=True, read_only=True)
+    author = UserProfileSerializer()
 
     class Meta:
         model = ObservationComponent
@@ -44,6 +45,7 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
             'effective_datetime',
             'created_on',
             'observation_component_notes',
+            'author',
             )
 
 class ObservationSerializer(serializers.ModelSerializer):

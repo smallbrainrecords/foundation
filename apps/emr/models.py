@@ -188,6 +188,15 @@ class Problem(MPTTModel):
         return '%s %s' % (self.patient, self.problem_name)
 
 
+class ProblemOrder(models.Model):
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="patient_problem_order")
+    user = models.ForeignKey(User, null=True, blank=True, related_name="user_problem_order")
+    order = ListField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.user.username))
+
+
 class ProblemSegment(models.Model):
     problem = models.ForeignKey(Problem, related_name='problem_segment')
     is_controlled = models.BooleanField(default=False)
@@ -454,6 +463,7 @@ class ObservationComponent(models.Model):
     comments = models.TextField(null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_component_authors')
 
     class Meta:
         ordering = ['created_on']

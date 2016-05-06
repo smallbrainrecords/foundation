@@ -237,6 +237,11 @@
 			return httpService.postJson(form, url);
 		};
 
+		this.updateProblemOrder= function(form){
+			var url = '/p/problem/updateOrder/';
+			return httpService.postJson(form, url);
+		};
+
 	});
 
 })();

@@ -22,6 +22,8 @@
 			$scope.history_note_form = {};
 			$scope.wiki_note_form = {};
 			$scope.current_activity = 0;
+			$scope.problem_terms = [];
+			$scope.new_problem = {set:false};
 
 			patientService.fetchActiveUser().then(function(data){
 
@@ -240,6 +242,117 @@
 
                 $scope.loading = false;
             });
+
+			// change problem name
+			$scope.$watch('problem_term', function(newVal, oldVal){
+
+				if (newVal==undefined){
+					return false;
+				}
+
+				$scope.unset_new_problem();
+
+				if(newVal.length>2){
+
+					patientService.listTerms(newVal).then(function(data){
+
+						$scope.problem_terms = data;
+
+					});
+				}else{
+
+					$scope.problem_terms = [];
+
+				}
+
+			});
+
+			$scope.set_new_problem = function(problem){
+
+					$scope.new_problem.set = true;
+					$scope.new_problem.active = problem.active;
+					$scope.new_problem.term = problem.term;
+					$scope.new_problem.code = problem.code;
+
+
+			};
+
+
+			$scope.unset_new_problem = function(){
+
+				$scope.new_problem.set = false;
+
+			};
+
+			$scope.change_problem_name = function(){
+
+				var c = confirm("Are you sure?");
+
+				if(c==false){
+					return false;
+				}
+
+				var form = {};
+				form.term = $scope.new_problem.term;
+				form.code = $scope.new_problem.code;
+				form.problem_id = $scope.problem_id;
+
+				problemService.changeProblemName(form).then(function(data){
+
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Problem name changed successfully');
+						$scope.problem = data['problem'];
+						$scope.problem_term = '';
+						$scope.unset_new_problem();
+						/* Not-angular-way */
+						$('#problemTermInput').focus();
+						$scope.set_authentication_false();
+
+					}else if(data['success']==false){
+						alert(data['msg']);
+					}else{
+						alert("Something went wrong");
+					}
+
+
+				});
+
+
+			}
+
+			$scope.change_new_problem_name = function(problem_term) {
+				if(problem_term == '' || problem_term == undefined) {
+					return false;
+				}
+				
+				var c = confirm("Are you sure?");
+
+				if(c==false){
+					return false;
+				}
+
+
+				var form = {};
+				form.term = problem_term;
+				form.problem_id = $scope.problem_id;
+
+				problemService.changeProblemName(form).then(function(data){
+
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Problem name changed successfully');
+						$scope.problem = data['problem'];
+						$scope.problem_term = '';
+						$scope.unset_new_problem();
+						/* Not-angular-way */
+						$('#problemTermInput').focus();
+						$scope.set_authentication_false();
+					}else if(data['success']==false){
+						toaster.pop('error', 'Error', data['msg']);
+					}else{
+						toaster.pop('error', 'Error', 'Something went wrong');
+					}
+				});
+			}
 
 			/* Track Status */
 

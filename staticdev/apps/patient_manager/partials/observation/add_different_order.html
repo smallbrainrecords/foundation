@@ -20,8 +20,20 @@
 		<div class='row'>
 
 			<div class='col-md-12'>
-				<b> New Order </b>
+				<b> Add a different order </b>
 				<hr>  
+
+				<form class='form-inline' ng-submit='add_todo(todo_form)' >
+					<div class='form-group'>
+						<label> Repeat in </label>
+						<input type='number' class='form-control' ng-model='todo_form.month'>
+						<label> Months </label>
+					</div>
+					<div class='form-group'>
+						<input type='submit' value='Enter' class='btn btn-default'>
+					</div>
+				</form>
+				<br>
 
 				<form class='form-inline' ng-submit='add_todo(todo_form)' >
 					<div class='form-group'>
@@ -29,11 +41,7 @@
 						<input type='text' class='form-control' ng-model='todo_form.name'>
 					</div>
 					<div class='form-group'>
-						<label> Months </label>
-						<input type='number' class='form-control' ng-model='todo_form.month'>
-					</div>
-					<div class='form-group'>
-						<input type='submit' value='Submit' class='btn btn-default'>
+						<input type='submit' value='Enter' class='btn btn-default'>
 					</div>
 				</form>
 			</div>

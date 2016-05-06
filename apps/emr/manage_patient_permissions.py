@@ -24,6 +24,8 @@ GLOBAL_PERMISSIONS = [
     'set_problem_controlled',
     'set_problem_active',
     'relate_problem',
+    'set_problem_order',
+    'change_problem_name',
     # Problem Notes
     'add_patient_problem_note',
     'add_physician_problem_note',
@@ -67,6 +69,8 @@ ROLE_PERMISSIONS['patient'] = [
     'set_problem_controlled',
     'set_problem_active',
     'relate_problem',
+    'set_problem_order',
+    'change_problem_name',
     # Goal
     'add_goal',
     'modify_goal',
@@ -95,6 +99,8 @@ ROLE_PERMISSIONS['physician'] = [
     'set_problem_active',
     'add_physician_problem_note',
     'relate_problem',
+    'set_problem_order',
+    'change_problem_name',
     # Goal
     'add_goal',
     'modify_goal',
@@ -129,6 +135,8 @@ ROLE_PERMISSIONS['mid-level'] = [
     'set_problem_active',
     'add_physician_problem_note',
     'relate_problem',
+    'set_problem_order',
+    'change_problem_name',
     # Goal
     'add_goal',
     'modify_goal',
@@ -155,6 +163,7 @@ ROLE_PERMISSIONS['nurse'] = [
     'modify_problem',
     'add_problem_image',
     'add_nurse_problem_note',
+    'change_problem_name',
     # Goal
     'add_goal',
     'modify_goal',

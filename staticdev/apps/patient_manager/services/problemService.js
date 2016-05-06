@@ -96,6 +96,15 @@
 			return httpService.postJson(form, url);
 
 		};
+
+		this.changeProblemName = function(form){
+
+			var url = '/p/problem/'+form.problem_id+'/change_name';
+
+			return httpService.post(form, url);
+
+
+		};
 });
 
 

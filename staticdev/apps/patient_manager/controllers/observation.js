@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('AddDifferentOrderCtrl', function($scope, $routeParams, observationService, ngDialog, problemService, toaster){
+		.controller('AddDifferentOrderCtrl', function($scope, $routeParams, observationService, ngDialog, problemService, toaster, $location){
 
 
 			var patient_id = $('#patient_id').val();
@@ -20,13 +20,14 @@
 					return false;
 				}
 
+                if (form.month != '' && form.month != undefined) {
+                    form.due_date = moment().add(form.month, "months").format("YYYY-MM-DD");
+                    form.name = 'a1c repeats in ' + form.month + ' months';
+                }
+
 				if(form.name.trim().length<1){
 					return false;
 				}
-
-                if (form.month != '') {
-                    form.due_date = moment().add(form.month, "months").format("YYYY-MM-DD");
-                }
 
 				form.patient_id = $scope.patient_id;
 				form.problem_id = $scope.observation.problem.id;
@@ -35,6 +36,7 @@
                     form.name = '';
 					form.month = '';
 					toaster.pop('success', 'Done', 'Added Todo!');
+                    $location.url('/problem/' + $scope.observation.problem.id);
 				});
             }
 

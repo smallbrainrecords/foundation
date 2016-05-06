@@ -149,6 +149,7 @@ def add_value(request, observation_id):
         component.observation = observation
         component.value_quantity = request.POST.get('value', None)
         component.effective_datetime = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
+        component.author = actor_profile
 
         component.save()
 

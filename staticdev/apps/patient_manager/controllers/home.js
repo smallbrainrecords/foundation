@@ -153,6 +153,34 @@
 				$scope.timeline_changed = true;
 
 				$scope.todos_ready = true;
+
+				var tmpListProblem = $scope.problems;
+
+                $scope.sortingLogProblem = [];
+                $scope.sortedProblem = false;
+				$scope.sortableOptionsProblem = {
+                    update: function(e, ui) {
+                        $scope.sortedProblem = true;
+                    },
+                    stop: function(e, ui) {
+                        // this callback has the changed model
+                        if ($scope.sortedProblem) {
+                            $scope.sortingLogProblem = [];
+                            tmpListProblem.map(function(i){
+                                $scope.sortingLogProblem.push(i.id);
+                            });
+                            var form = {};
+
+                            form.problems = $scope.sortingLogProblem;
+                            form.patient_id = $scope.patient_id;
+
+                            patientService.updateProblemOrder(form).then(function(data){
+                                toaster.pop('success', 'Done', 'Updated Problem Order');
+                            });
+                        }
+                        $scope.sortedProblem = false;
+                    }
+                }
 			});
 
 
