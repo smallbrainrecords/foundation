@@ -24,7 +24,7 @@ $(function () {
                      { 'name': 'Right upper arm structure', 'coordinates': [[20, 125], [40, 125], [40, 178], [20, 178]], 'snomed_id': '368209003', 'status': 'gray', 'shape_type': 'polygon' },
                      { 'name': 'Right elbow region structure', 'center': [30, 190], 'radius': 8, 'snomed_id': '368149001', 'status': 'gray', 'shape_type': 'circle' },
                      { 'name': 'Structure of right forearm', 'coordinates': [[20, 200], [40, 200], [40, 240], [20, 240]], 'snomed_id': '64262003', 'status': 'gray', 'shape_type': 'polygon' },
-                     { 'name': 'Structure of right wrist ', 'center': [30, 252], 'radius': 8, 'snomed_id': '368149001', 'status': 'gray', 'shape_type': 'circle' },
+                     { 'name': 'Structure of right wrist ', 'center': [30, 252], 'radius': 8, 'snomed_id': '9736006', 'status': 'gray', 'shape_type': 'circle' },
                      { 'name': 'Structure of right hand', 'coordinates': [[20, 265], [40, 265], [40, 275], [20, 275]], 'snomed_id': '78791008', 'status': 'gray', 'shape_type': 'polygon' },
 
                      // R LOWER EXTREMITY
