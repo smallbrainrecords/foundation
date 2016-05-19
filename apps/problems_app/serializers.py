@@ -1,10 +1,25 @@
 from rest_framework import serializers
 
 
-from emr.models import Problem, PatientImage, ProblemRelationship
+from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel, LabeledProblemList
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment
 
-from users_app.serializers import UserProfileSerializer
+from users_app.serializers import UserProfileSerializer, SafeUserSerializer
+
+
+class ProblemLabelSerializer(serializers.ModelSerializer):
+    author = SafeUserSerializer()
+    patient = SafeUserSerializer()
+
+    class Meta:
+        model = ProblemLabel
+        fields = (
+            'id',
+            'name',
+            'css_class',
+            'author',
+            'patient',
+            )
 
 
 class ProblemSegmentSerializer(serializers.ModelSerializer):
@@ -25,6 +40,7 @@ class ProblemSegmentSerializer(serializers.ModelSerializer):
 
 class ProblemSerializer(serializers.ModelSerializer):
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
+    labels = ProblemLabelSerializer(many=True)
 
     class Meta:
         model = Problem
@@ -34,6 +50,7 @@ class ProblemSerializer(serializers.ModelSerializer):
             'problem_segment',
             'patient',
             'parent',
+            'labels',
             'problem_name',
             'concept_id',
             'is_controlled',
@@ -96,3 +113,20 @@ class ProblemActivitySerializer(serializers.ModelSerializer):
             'activity',
             'problem',
             'created_on')
+
+
+class LabeledProblemListSerializer(serializers.ModelSerializer):
+
+    user = SafeUserSerializer()
+    patient = SafeUserSerializer()
+    labels = ProblemLabelSerializer(many=True)
+
+    class Meta:
+        model = LabeledProblemList
+
+        fields = (
+            'id',
+            'user',
+            'patient',
+            'labels',
+            'name')

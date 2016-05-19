@@ -844,7 +844,7 @@ def add_staff_todo_list(request, user_id):
 
         new_list_dict = LabeledToDoListSerializer(new_list).data
 
-        todos = ToDo.objects.filter(labels__id__in=label_ids).order_by('due_date')
+        todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
         todos_holder = []
         for todo in todos:
             todo_dict = TodoSerializer(todo).data
@@ -870,7 +870,7 @@ def get_user_label_lists(request, user_id):
             label_ids.append(label.id)
 
         if label_list.todo_list:
-            todos_qs = ToDo.objects.filter(labels__id__in=label_ids)
+            todos_qs = ToDo.objects.filter(labels__id__in=label_ids).distinct()
             todos = []
             for id in label_list.todo_list:
                 if todos_qs.filter(id=id):
@@ -880,7 +880,7 @@ def get_user_label_lists(request, user_id):
                     todos.append(todo)
 
         else:
-            todos = ToDo.objects.filter(labels__id__in=label_ids).order_by('due_date')
+            todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
         todos_holder = []
         for todo in todos:
             todo_dict = TodoSerializer(todo).data

@@ -1,7 +1,7 @@
 '''
     PERMISSIONS for managing patient
 '''
-from .models import UserProfile
+from .models import UserProfile, SharingPatient
 from .models import PatientController, PhysicianTeam
 import logging
 
@@ -26,6 +26,7 @@ GLOBAL_PERMISSIONS = [
     'relate_problem',
     'set_problem_order',
     'change_problem_name',
+    'add_problem_label',
     # Problem Notes
     'add_patient_problem_note',
     'add_physician_problem_note',
@@ -71,6 +72,7 @@ ROLE_PERMISSIONS['patient'] = [
     'relate_problem',
     'set_problem_order',
     'change_problem_name',
+    'add_problem_label',
     # Goal
     'add_goal',
     'modify_goal',
@@ -101,6 +103,7 @@ ROLE_PERMISSIONS['physician'] = [
     'relate_problem',
     'set_problem_order',
     'change_problem_name',
+    'add_problem_label',
     # Goal
     'add_goal',
     'modify_goal',
@@ -137,6 +140,7 @@ ROLE_PERMISSIONS['mid-level'] = [
     'relate_problem',
     'set_problem_order',
     'change_problem_name',
+    'add_problem_label',
     # Goal
     'add_goal',
     'modify_goal',
@@ -164,6 +168,7 @@ ROLE_PERMISSIONS['nurse'] = [
     'add_problem_image',
     'add_nurse_problem_note',
     'change_problem_name',
+    'add_problem_label',
     # Goal
     'add_goal',
     'modify_goal',
@@ -182,6 +187,8 @@ ROLE_PERMISSIONS['nurse'] = [
 
 
 ROLE_PERMISSIONS['secretary'] = [
+    # Problem
+    'add_problem_label',
     # Todo
     'add_todo',
     'set_todo_status',
@@ -235,6 +242,9 @@ def check_access(patient, actor_profile):
     elif actor_profile.role == 'patient':
         if patient.id == actor_profile.user.id:
             allowed = True
+        else:
+            is_sharing = SharingPatient.objects.filter(sharing=actor_profile.user, shared=patient).exists()
+            allowed = is_sharing
     elif actor_profile.role == 'admin':
         allowed = True
     else:

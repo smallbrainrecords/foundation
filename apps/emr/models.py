@@ -84,9 +84,15 @@ class UserProfile(models.Model):
     deceased_date = models.DateTimeField(null=True, blank=True)
     marital_status = models.ForeignKey(MaritalStatus, null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
+    note = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
+
+
+class SharingPatient(models.Model):
+    sharing = models.ForeignKey(User, related_name='patient_sharing')
+    shared = models.ForeignKey(User, related_name='patient_shared')
 
 
 # Many To Many Relation
@@ -172,6 +178,16 @@ class TextNote(models.Model):
         return "%s %s" % (self.by, self.note)
 
 
+class ProblemLabel(models.Model):
+    name = models.TextField(null=True, blank=True)
+    css_class = models.TextField(null=True, blank=True)
+    author = models.ForeignKey(User, null=True, blank=True, related_name="problem_label_author")
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="problem_label_patient")
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
+
+
 class Problem(MPTTModel):
     patient = models.ForeignKey(User)
     parent = TreeForeignKey(
@@ -183,6 +199,7 @@ class Problem(MPTTModel):
     authenticated = models.BooleanField(default=False)
     start_date = models.DateField(auto_now_add=True)
     start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
+    labels = models.ManyToManyField(ProblemLabel, blank=True)
 
     def __unicode__(self):
         return '%s %s' % (self.patient, self.problem_name)
@@ -232,6 +249,17 @@ class ProblemNote(models.Model):
 
     def __unicode__(self):
         return "%s %s" % (self.author, self.note)
+
+
+class LabeledProblemList(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, related_name="label_problem_list_user")
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="label_problem_list_patient")
+    labels = models.ManyToManyField(ProblemLabel, blank=True)
+    name = models.TextField()
+    problem_list = ListField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
 
 
 class Goal(models.Model):

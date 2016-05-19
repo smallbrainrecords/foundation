@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, ngDialog, toaster, $location, todoService){
+		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, ngDialog, toaster, $location, todoService, prompt, $timeout){
 
 			
 
@@ -20,6 +20,9 @@
 			$scope.show_accomplished_todos = false;
 			$scope.problem_terms = [];
 			$scope.new_problem = {set:false};
+			$scope.new_list = {};
+			$scope.new_list.labels = [];
+			$scope.problem_lists = [];
 
 			todoService.fetchTodoMembers($scope.patient_id).then(function(data){
                 $scope.members = data['members'];
@@ -27,6 +30,15 @@
 
             todoService.fetchLabels($scope.patient_id).then(function(data){
                 $scope.labels = data['labels'];
+            });
+
+            problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function(data){
+                $scope.problem_labels = data['labels'];
+            });
+
+            problemService.fetchLabeledProblemList($scope.patient_id, $scope.user_id).then(function(data){
+                $scope.problem_lists = data['problem_lists'];
+                $scope.problems_ready = true;
             });
 
 	  		function convertDateTime(problem){
@@ -131,6 +143,7 @@
 				$scope.accomplished_todos = data['accomplished_todos'];
 				$scope.problem_todos = data['problem_todos'];
 				$scope.encounters = data['encounters'];
+				$scope.shared_patients = data['shared_patients'];
 
 				// problem timeline
 				var timeline_problems = [];
@@ -158,9 +171,13 @@
 
                 $scope.sortingLogProblem = [];
                 $scope.sortedProblem = false;
+                $scope.draggedProblem = false;
 				$scope.sortableOptionsProblem = {
                     update: function(e, ui) {
                         $scope.sortedProblem = true;
+                    },
+                    start: function() {
+                        $scope.draggedProblem = true;
                     },
                     stop: function(e, ui) {
                         // this callback has the changed model
@@ -179,6 +196,9 @@
                             });
                         }
                         $scope.sortedProblem = false;
+                        $timeout(function() {
+                            $scope.draggedProblem = false;
+                        }, 100);
                     }
                 }
 			});
@@ -395,16 +415,16 @@
 			}
 
 			$scope.open_problem = function(problem){
-
-				var form = {};
-				form.problem_id = problem.id;
-				problemService.trackProblemClickEvent(form).then(function(data){
-
-					$location.path('/problem/'+problem.id);
-
-				});
 				
+				if (!$scope.draggedProblem) {
+                   var form = {};
+					form.problem_id = problem.id;
+					problemService.trackProblemClickEvent(form).then(function(data){
 
+						$location.path('/problem/'+problem.id);
+
+					});
+                }
 			};
 
 
@@ -424,6 +444,79 @@
 				}
 
 				return true;
+
+			};
+
+
+			// label problem list
+			$scope.add_new_list_label = function(new_list, label) {
+				var index = new_list.labels.indexOf(label);
+				if (index > -1)
+					new_list.labels.splice(index, 1);
+				else
+					new_list.labels.push(label);
+			};
+
+			$scope.add_problem_list = function(form){
+
+				form.user_id = $scope.user_id;
+				form.patient_id = $scope.patient_id;
+				if (form.name && form.labels.length > 0)
+				{
+					problemService.addProblemList(form).then(function(data){
+						var new_list = data['new_list'];
+						$scope.problem_lists.push(new_list);
+						$scope.new_list = {};
+						$scope.new_list.labels = [];
+						toaster.pop('success', 'Done', 'New Problem List added successfully');
+					});
+				} else {
+					toaster.pop('error', 'Error', 'Please select name and labels');
+				}
+			};
+
+			$scope.set_collapse = function(list) {
+				if (list.rename==false)
+					list.collapse = !list.collapse;
+			};
+
+			$scope.delete_list = function(list) {
+				prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a problem list is forever. There is no undo."
+                }).then(function(result){
+                    problemService.deleteProblemList(list).then(function(data){
+						var index = $scope.problem_lists.indexOf(list);
+						$scope.problem_lists.splice(index, 1);
+						toaster.pop('success', 'Done', 'Problem List removed successfully');
+					});
+                },function(){
+                    return false;
+                });
+			};
+
+			$scope.rename_list = function(list) {
+				if(list.name) {
+					problemService.renameProblemList(list).then(function(data){
+						list.rename = false;
+						toaster.pop('success', 'Done', 'Problem List renamed successfully');
+					});
+				} else {
+					toaster.pop('error', 'Error', 'Please input name!');
+				}
+                
+			};
+
+			$scope.update_patient_note = function(){
+
+				var form = {
+					'patient_id': $scope.patient_id,
+					'note' : $scope.patient_info.note
+				};
+
+				patientService.updatePatientNote(form).then(function(data){
+					toaster.pop('success', 'Done', 'Patient note updated!');
+				});
 
 			};
 

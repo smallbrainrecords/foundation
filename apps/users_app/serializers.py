@@ -52,4 +52,5 @@ class UserProfileSerializer(serializers.ModelSerializer):
 				'sex',
 				'date_of_birth',
 				'phone_number',
+				'note',
 			)

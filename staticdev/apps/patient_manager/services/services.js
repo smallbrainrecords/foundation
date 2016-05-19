@@ -242,6 +242,14 @@
 			return httpService.postJson(form, url);
 		};
 
+		this.updatePatientNote = function(form){
+
+			var url = '/u/patient/'+form.patient_id+'/profile/update_note';
+
+			return httpService.post(form, url);
+
+		};
+
 	});
 
 })();

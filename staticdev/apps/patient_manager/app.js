@@ -6,7 +6,7 @@
 	var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate', 
-        'observations', 'cgPrompt']);
+        'observations', 'cgPrompt', 'problems']);
 
 
     ManagerApp.config(function($routeProvider) {

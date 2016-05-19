@@ -44,4 +44,15 @@ urlpatterns = patterns(
     url(r'^problem/relate/$', 'relate_problem'), 
     url(r'^problem/updateOrder/$', 'update_order'), 
     url(r'^problem/update_by_ptw/$', 'update_by_ptw'),
-    url(r'^problem/update_state_to_ptw/$', 'update_state_to_ptw'), )
+    url(r'^problem/update_state_to_ptw/$', 'update_state_to_ptw'),
+    url(r'^problem/newLabel/(?P<problem_id>\d+)$', 'new_problem_label'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<user_id>\d+)/getlabels$', 'get_problem_labels'),
+    url(r'^problem/saveEditLabel/(?P<label_id>\d+)/(?P<patient_id>\d+)/(?P<user_id>\d+)$', 'save_edit_problem_label'),
+    url(r'^problem/(?P<label_id>\d+)/(?P<problem_id>\d+)/addLabel$', 'add_problem_label'),
+    url(r'^problem/removeLabel/(?P<label_id>\d+)/(?P<problem_id>\d+)$', 'remove_problem_label'),
+    url(r'^problem/deleteLabel/(?P<label_id>\d+)$', 'delete_problem_label'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<user_id>\d+)/new_list$', 'add_problem_list'),
+    url(r'^problem/(?P<list_id>\d+)/deleteProblemList$', 'delete_problem_list'),
+    url(r'^problem/(?P<list_id>\d+)/renameProblemList$', 'rename_problem_list'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<user_id>\d+)/getLabeledProblemLists$', 'get_label_problem_lists'),
+    )

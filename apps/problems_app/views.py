@@ -6,13 +6,14 @@ except ImportError:
     import ImageOps
 
 import json
-from datetime import datetime
+import operator
+from datetime import datetime, timedelta
 from django.db.models import Max
 from django.contrib.auth.models import User
 
 from common.views import *
 
-from emr.models import UserProfile, Problem, ProblemOrder
+from emr.models import UserProfile, Problem, ProblemOrder, ProblemLabel, LabeledProblemList
 from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment
@@ -22,7 +23,7 @@ from emr.models import Observation
 from emr.operations import op_add_event, op_add_todo_event
 
 
-from .serializers import ProblemSerializer, PatientImageSerializer
+from .serializers import ProblemSerializer, PatientImageSerializer, ProblemLabelSerializer, LabeledProblemListSerializer
 from .serializers import ProblemNoteSerializer, ProblemActivitySerializer
 from emr.serializers import TextNoteSerializer
 from todo_app.serializers import TodoSerializer
@@ -1005,18 +1006,297 @@ def update_order(request):
 
     if permitted:
         datas = json.loads(request.body)
-        id_problems = datas['problems']
-        patient_id = datas['patient_id']
-        patient = User.objects.get(id=int(patient_id))
+        if datas.has_key('patient_id'):
+            id_problems = datas['problems']
+            patient_id = datas['patient_id']
+            patient = User.objects.get(id=int(patient_id))
 
-        try:
-            problem = ProblemOrder.objects.get(user=request.user, patient=patient)
-        except ProblemOrder.DoesNotExist:
-            problem = ProblemOrder(user=request.user, patient=patient)
+            try:
+                problem = ProblemOrder.objects.get(user=request.user, patient=patient)
+            except ProblemOrder.DoesNotExist:
+                problem = ProblemOrder(user=request.user, patient=patient)
+                problem.save()
+
+            problem.order = id_problems
             problem.save()
 
-        problem.order = id_problems
-        problem.save()
+        # list todo
+        if datas.has_key('list_id'):
+            list_id = datas['list_id']
+            labeled_list = LabeledProblemList.objects.get(id=int(list_id))
+            labeled_list.problem_list = datas['problems']
+            labeled_list.save()
 
         resp['success'] = True
+    return ajax_response(resp)
+
+@login_required
+def new_problem_label(request, problem_id):
+    resp = {}
+    resp['success'] = False
+    resp['status'] = False
+    resp['new_status'] = False
+
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        name = request.POST.get('name')
+        css_class = request.POST.get('css_class')
+
+        problem = Problem.objects.get(id=problem_id)
+        label = ProblemLabel.objects.filter(name=name, css_class=css_class, author=request.user, patient=problem.patient)
+        if not label:
+            label = ProblemLabel(name=name, css_class=css_class, author=request.user, patient=problem.patient)
+            label.save()
+            resp['new_status'] = True
+            resp['new_label'] = ProblemLabelSerializer(label).data
+        else:
+            label = label[0]
+
+        if not label in problem.labels.all():
+            problem.labels.add(label)
+            resp['status'] = True
+            resp['label'] = ProblemLabelSerializer(label).data
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def get_problem_labels(request, patient_id, user_id):
+
+    user = User.objects.get(id=user_id)
+    patient = User.objects.get(id=patient_id)
+    labels = ProblemLabel.objects.filter(patient=patient, author=user)
+
+    labels_holder = []
+    for label in labels:
+        label_dict = ProblemLabelSerializer(label).data
+        labels_holder.append(label_dict)
+
+    resp = {}
+    resp['labels'] = labels_holder
+
+    return ajax_response(resp)
+
+@login_required
+def save_edit_problem_label(request, label_id, patient_id, user_id):
+    resp = {}
+    resp['success'] = False
+    resp['status'] = False
+
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        name = request.POST.get('name')
+        css_class = request.POST.get('css_class')
+
+        label = ProblemLabel.objects.get(id=label_id)
+        user = User.objects.get(id=user_id)
+        patient = User.objects.get(id=patient_id)
+
+        if not ProblemLabel.objects.filter(name=name, css_class=css_class, patient=patient, author=user):
+            label.name = name
+            label.css_class = css_class
+            label.save()
+            resp['status'] = True
+
+        resp['label'] = ProblemLabelSerializer(label).data
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def add_problem_label(request, label_id, problem_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        problem = Problem.objects.get(id=problem_id)
+        
+        label = ProblemLabel.objects.get(id=label_id)
+        problem.labels.add(label)
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def remove_problem_label(request, label_id, problem_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        problem = Problem.objects.get(id=problem_id)
+        label = ProblemLabel.objects.get(id=label_id)
+        problem.labels.remove(label)
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def delete_problem_label(request, label_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        label = ProblemLabel.objects.get(id=label_id)
+        label.delete()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def add_problem_list(request, patient_id, user_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        datas = json.loads(request.body)
+        list_name = datas['name']
+        labels = datas['labels']
+        user = User.objects.get(id=user_id)
+        patient = User.objects.get(id=patient_id)
+
+        new_list = LabeledProblemList(user=user, name=list_name, patient=patient)
+        new_list.save()
+
+        label_ids = []
+        for label in labels:
+            l = ProblemLabel.objects.get(id=label['id'])
+            new_list.labels.add(l)
+            label_ids.append(l.id)
+
+
+        new_list_dict = LabeledProblemListSerializer(new_list).data
+
+        problems = Problem.objects.filter(labels__id__in=label_ids).distinct().order_by('start_date')
+        problems_holder = []
+        for problem in problems:
+            problem_dict = ProblemSerializer(problem).data
+            problems_holder.append(problem_dict)
+
+        for problem in problems_holder:
+            todo = ToDo.objects.filter(problem__id=problem['id'], accomplished=False).count()
+            event = ProblemActivity.objects.filter(problem__id=problem['id'], created_on__gte=datetime.now()-timedelta(days=30)).count()
+            if todo == 0 and event == 0:
+                problem['multiply'] = 0
+            elif todo == 0 or event == 0:
+                problem['multiply'] = 1
+            else:
+                problem['multiply'] = todo * event
+
+        problems_holder = sorted(problems_holder, key=operator.itemgetter('multiply'), reverse=True)
+
+
+        new_list_dict['problems'] = problems_holder
+
+        resp['new_list'] = new_list_dict
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def get_label_problem_lists(request, patient_id, user_id):
+    resp = {}
+    patient = User.objects.get(id=patient_id)
+    user = User.objects.get(id=user_id)
+    lists = LabeledProblemList.objects.filter(user=user, patient=patient)
+    lists_holder = []
+    for label_list in lists:
+        list_dict = LabeledProblemListSerializer(label_list).data
+        label_ids = []
+        for label in label_list.labels.all():
+            label_ids.append(label.id)
+
+        if label_list.problem_list:
+            problems_qs = Problem.objects.filter(labels__id__in=label_ids).distinct()
+            problems = []
+            for id in label_list.problem_list:
+                if problems_qs.filter(id=id):
+                    problems.append(problems_qs.get(id=id))
+            for problem in problems_qs:
+                if not problem in problems:
+                    problems.append(problem)
+
+        else:
+            problems = Problem.objects.filter(labels__id__in=label_ids).distinct().order_by('start_date')
+        problems_holder = []
+        for problem in problems:
+            problem_dict = ProblemSerializer(problem).data
+            problems_holder.append(problem_dict)
+
+        if not label_list.problem_list:
+            for problem in problems_holder:
+                todo = ToDo.objects.filter(problem__id=problem['id'], accomplished=False).count()
+                event = ProblemActivity.objects.filter(problem__id=problem['id'], created_on__gte=datetime.now()-timedelta(days=30)).count()
+                if todo == 0 and event == 0:
+                    problem['multiply'] = 0
+                elif todo == 0 or event == 0:
+                    problem['multiply'] = 1
+                else:
+                    problem['multiply'] = todo * event
+
+            problems_holder = sorted(problems_holder, key=operator.itemgetter('multiply'), reverse=True)
+
+            for problem in problems_holder:
+                print problem['multiply']
+        list_dict['problems'] = problems_holder
+        lists_holder.append(list_dict)
+        
+    resp['problem_lists'] = lists_holder
+
+    return ajax_response(resp)
+
+@login_required
+def delete_problem_list(request, list_id):
+    resp = {}
+    resp['success'] = False
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        problem_list = LabeledProblemList.objects.get(id=list_id)
+
+        problem_list.delete()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def rename_problem_list(request, list_id):
+    resp = {}
+    resp['success'] = False
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        problem_list = LabeledProblemList.objects.get(id=list_id)
+        problem_list.name = request.POST.get('name')
+        problem_list.save()
+
+        resp['success'] = True
+
     return ajax_response(resp)

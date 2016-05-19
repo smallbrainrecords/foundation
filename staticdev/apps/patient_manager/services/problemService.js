@@ -102,8 +102,65 @@
 			var url = '/p/problem/'+form.problem_id+'/change_name';
 
 			return httpService.post(form, url);
+		};
 
+		this.saveCreateLabel = function(problem_id, form) {
+			var url = '/p/problem/newLabel/'+problem_id;
 
+			return httpService.post(form, url);
+		};
+
+		this.fetchLabels = function(patient_id, user_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + user_id + '/getlabels';
+			return httpService.get(params, url);
+		};
+
+		this.saveEditLabel = function(form, patient_id, user_id) {
+			var url = '/p/problem/saveEditLabel/' + form.id + '/' + patient_id + '/' + user_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.addProblemLabel = function(id, problem_id) {
+			var form = {};
+			var url = '/p/problem/'+id+'/'+problem_id+'/addLabel';
+
+			return httpService.post(form, url);
+		};
+
+		this.removeProblemLabel = function(id, problem_id) {
+			var form = {};
+			var url = '/p/problem/removeLabel/'+id+'/'+problem_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.deleteLabel  = function(form) {
+			var url = '/p/problem/deleteLabel/'+form.id;
+
+			return httpService.post(form, url);
+		};
+
+		this.addProblemList = function(form){
+			var url = '/p/problem/'+form.patient_id+ '/' +form.user_id+'/new_list';
+			return httpService.postJson(form, url);
+		};
+
+		this.fetchLabeledProblemList = function(patient_id, user_id){
+			var params = {};
+			var url ='/p/problem/'+patient_id+ '/' +user_id+'/getLabeledProblemLists';
+			return httpService.get(params, url);
+		};
+
+		this.deleteProblemList = function(form){
+			var url = '/p/problem/'+form.id+'/deleteProblemList';
+			return httpService.post(form, url);
+		};
+
+		this.renameProblemList = function(form){
+			var url = '/p/problem/'+form.id+'/renameProblemList';
+			return httpService.post(form, url);
 		};
 });
 

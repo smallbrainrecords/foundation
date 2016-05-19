@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService){
+		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService, prompt){
 
 
 			var patient_id = $('#patient_id').val();
@@ -37,6 +37,10 @@
 
 			todoService.fetchLabels($scope.patient_id).then(function(data){
                 $scope.labels = data['labels'];
+            });
+
+            problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function(data){
+                $scope.problem_labels = data['labels'];
             });
 
 			function convertDateTime(problem){
@@ -353,6 +357,146 @@
 					}
 				});
 			}
+
+			// change problem label
+			$scope.change_problem_label = false;
+			$scope.open_change_problem_label = function() {
+				$scope.change_problem_label = true;
+			}
+			$scope.close_change_problem_label = function() {
+				$scope.change_problem_label = false;
+			}
+
+			$scope.create_problem_label = false;
+			$scope.open_create_problem_label = function() {
+				$scope.create_problem_label = true;
+			}
+			$scope.close_create_problem_label = function() {
+				$scope.create_problem_label = false;
+			}
+
+			$scope.problem_labels_component = [
+                {name: 'green', css_class: 'todo-label-green'},
+                {name: 'yellow', css_class: 'todo-label-yellow'},
+                {name: 'orange', css_class: 'todo-label-orange'},
+                {name: 'red', css_class: 'todo-label-red'},
+                {name: 'purple', css_class: 'todo-label-purple'},
+                {name: 'blue', css_class: 'todo-label-blue'},
+                {name: 'sky', css_class: 'todo-label-sky'},
+            ];
+            $scope.problem_label_component = {};
+
+            $scope.selectProblemLabelComponent = function(component) {
+                $scope.problem_label_component.css_class = component.css_class;
+            }
+
+            $scope.saveCreateProblemLabel = function(problem) {
+                if ($scope.problem_label_component.css_class != null) {
+                    problemService.saveCreateLabel($scope.problem_id, $scope.problem_label_component).then(function(data){
+                        if(data['success']==true){
+                            if(data['new_status']==true){
+                                $scope.problem_labels.push(data['new_label']);
+                            }
+                            if(data['status']==true){
+                                problem.labels.push(data['label']);
+                                toaster.pop('success', "Done", "Added Problem label!");
+                            }
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                $scope.create_problem_label = false;
+            }
+
+            $scope.editProblemLabel = function(label) {
+                label.edit_label = (label.edit_label != true) ? true : false;
+            }
+
+            $scope.selectEditProblemLabelComponent = function(label, component) {
+                label.css_class = component.css_class;
+            }
+
+            $scope.saveEditProblemLabel = function(label) {
+                if (label.css_class != null) {
+                    problemService.saveEditLabel(label, $scope.patient_id, $scope.user_id).then(function(data){
+                        if(data['success']==true){
+                            label.css_class = data['label']['css_class'];
+                            if(data['status']==true){
+                                angular.forEach($scope.problem.labels, function(value, key) {
+                                    if (value.id == label.id) {
+                                        value.css_class = label.css_class;
+                                    }
+                                });
+                                toaster.pop('success', "Done", "Changed label!");
+                            }
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                label.edit_label = false;
+            }
+
+            $scope.changeProblemLabel = function(problem, label) {
+
+                var is_existed = false;
+                var existed_key;
+                var existed_id;
+
+                angular.forEach(problem.labels, function(value, key) {
+                    if (value.name==label.name) {
+                        is_existed = true;
+                        existed_key = key;
+                        existed_id = value.id;
+                    }
+                });
+                if (!is_existed) {
+                    problem.labels.push(label);
+                    problemService.addProblemLabel(label.id, problem.id).then(function(data){
+                        if(data['success']==true){
+                            toaster.pop('success', "Done", "Added Problem label!");
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                } else {
+                    problem.labels.splice(existed_key, 1);
+                    problemService.removeProblemLabel(existed_id, problem.id).then(function(data){
+                        if(data['success']==true){
+                            toaster.pop('success', "Done", "Removed Problem label!");
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                
+            }
+
+            $scope.deleteEditProblemLabel = function(label) {
+                prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a label is forever. There is no undo."
+                }).then(function(result){
+                    problemService.deleteLabel(label).then(function(data){
+	                    var index = $scope.problem_labels.indexOf(label);
+	                    $scope.problem_labels.splice(index, 1);
+
+	                    var index2;
+	                    angular.forEach($scope.problem.labels, function(value, key) {
+                            if (value.id == label.id) {
+                                index2 = key;
+                            }
+                        });
+	                    if (index2 != undefined)
+                            $scope.problem.labels.splice(index2, 1);
+
+	                    toaster.pop('success', 'Done', 'Deleted label successfully');
+	                });
+                },function(){
+                    return false;
+                });
+            }
 
 			/* Track Status */
 

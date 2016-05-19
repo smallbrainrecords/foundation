@@ -13,6 +13,7 @@ from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing
 
 from emr.models import PhysicianTeam, PatientController, ProblemOrder
+from emr.models import SharingPatient
 
 from problems_app.serializers import ProblemSerializer
 from goals_app.serializers import GoalSerializer
@@ -209,6 +210,14 @@ def get_patient_info(request, patient_id):
     patient_user = User.objects.get(id=patient_id)
     patient_profile = UserProfile.objects.get(user=patient_user)
 
+    # add Fit and Well: 102499006 by default
+    if not Problem.objects.filter(patient=patient_user, concept_id='102499006'):
+        problem = Problem()
+        problem.concept_id = '102499006'
+        problem.problem_name = 'Fit and well (finding)'
+        problem.patient = patient_user
+        problem.save()
+
     # Timeline Problems
     timeline_problems = Problem.objects.filter(patient=patient_user)
     timeline_problems_list = []
@@ -300,6 +309,14 @@ def get_patient_info(request, patient_id):
 
     patient_profile_dict = UserProfileSerializer(patient_profile).data
 
+    # sharing system
+    shared_patients = SharingPatient.objects.filter(sharing=patient_user)
+
+    patients_list = []
+    for shared_patient in shared_patients:
+        user_dict = UserProfileSerializer(shared_patient.shared.profile).data
+        patients_list.append(user_dict)
+
     resp = {}
     resp['info'] = patient_profile_dict
     resp['problems'] = problem_list
@@ -312,6 +329,7 @@ def get_patient_info(request, patient_id):
     resp['completed_goals'] = completed_goals_list
 
     resp['encounters'] = encounter_list
+    resp['shared_patients'] = patients_list
     return ajax_response(resp)
 
 
@@ -332,6 +350,27 @@ def update_patient_summary(request, patient_id):
         patient = User.objects.get(id=patient_id)
         patient_profile = UserProfile.objects.get(user=patient, role='patient')
         patient_profile.summary = new_summary
+        patient_profile.save()
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def update_patient_note(request, patient_id):
+
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['update_patient_profile']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        new_note = request.POST.get('note')
+        patient = User.objects.get(id=patient_id)
+        patient_profile = UserProfile.objects.get(user=patient, role='patient')
+        patient_profile.note = new_note
         patient_profile.save()
         resp['success'] = True
 
@@ -574,5 +613,54 @@ def get_patients_list(request):
 
     resp = {}
     resp['patients_list'] = sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)
+
+    return ajax_response(resp)
+
+@login_required
+def add_sharing_patient(request, patient_id, sharing_patient_id):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        patient = User.objects.get(id=patient_id)
+        to_sharing_patient = User.objects.get(id=sharing_patient_id)
+
+        sharing_patient = SharingPatient()
+        sharing_patient.sharing = to_sharing_patient
+        sharing_patient.shared = patient
+        sharing_patient.save()
+
+        resp['success'] = True
+        resp['sharing_patient'] = UserProfileSerializer(to_sharing_patient.profile).data
+
+    return ajax_response(resp)
+
+@login_required
+def remove_sharing_patient(request, patient_id, sharing_patient_id):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        patient = User.objects.get(id=patient_id)
+        to_sharing_patient = User.objects.get(id=sharing_patient_id)
+
+        sharing_patient = SharingPatient.objects.get(sharing=to_sharing_patient, shared=patient)
+        sharing_patient.delete()
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def get_sharing_patients(request, patient_id):
+    resp = {}
+    patient = User.objects.get(id=patient_id)
+    sharing_patients = SharingPatient.objects.filter(shared=patient)
+
+    patients_list = []
+    for sharing_patient in sharing_patients:
+        user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
+        patients_list.append(user_dict)
+
+    resp['sharing_patients'] = patients_list
 
     return ajax_response(resp)

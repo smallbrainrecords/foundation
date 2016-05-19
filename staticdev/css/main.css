@@ -16,6 +16,7 @@
 	min-height: 50px;
 	padding: 12px;
 	border: 1px solid #ccc;
+	cursor: pointer;
 }
 
 .green-box{
