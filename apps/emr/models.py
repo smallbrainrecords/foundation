@@ -200,6 +200,7 @@ class Problem(MPTTModel):
     start_date = models.DateField(auto_now_add=True)
     start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
     labels = models.ManyToManyField(ProblemLabel, blank=True)
+    old_problem_name = models.CharField(max_length=200, blank=True, null=True)
 
     def __unicode__(self):
         return '%s %s' % (self.patient, self.problem_name)

@@ -91,7 +91,7 @@
 									<i class="fa fa-check" ng-if="component.css_class==label_component.css_class"></i>
 								</a>
 								<a href ng-click="saveCreateLabel(item)">Save just for me</a>
-								<a href ng-click="saveCreateLabelAll(item)">Save for all users</a>
+								<a href ng-click="saveCreateLabelAll(item)" ng-if="active_user.role != 'patient'">Save for all users</a>
 							</div>
 							<!-- end change label -->
 							<!-- begin change due date -->

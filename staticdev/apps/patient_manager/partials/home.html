@@ -137,6 +137,8 @@
 <div class='panel panel-default' ng-repeat="list in problem_lists" ng-init="list.collapse=false;list.rename=false;">
 
   <div class='panel-heading' ng-click="set_collapse(list);"> 
+  	<i class="fa fa-caret-down" aria-hidden="true" ng-if="list.collapse"></i>
+  	<i class="fa fa-caret-right" aria-hidden="true" ng-if="!list.collapse"></i>
   	<span ng-show="!list.rename"> {{list.name}} </span>
   	<span ng-show="list.rename"> 
   		<input type="text" ng-model="list.name"> 
@@ -351,7 +353,7 @@
 					View
 				</a>
 
-				{{goal.goal}}
+				{{goal.goal}} <span ng-if="goal.problem">for problem <a href="#/problem/{{goal.problem.id}}">{{goal.problem.problem_name}}</a></span>
 			</div>
 		</li>
 		</ul>
@@ -369,7 +371,7 @@
 					View
 				</a>
 
-				{{goal.goal}}
+				{{goal.goal}} <span ng-if="goal.problem">for problem <a href="#/problem/{{goal.problem.id}}">{{goal.problem.problem_name}}</a></span>
 			</div>
 		</li>
 		</ul>

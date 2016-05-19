@@ -3,6 +3,7 @@
 		<div class="panel panel-default">
 			<div class="panel-heading" role="tab" id="headingOne" ng-click="show_collapse=!show_collapse">
 				<div ng-show="!show_collapse">
+  					<i class="fa fa-caret-right" aria-hidden="true"></i>
 					A1C: 
 					<span ng-if="observation.patient_refused_A1C">Refused on {{observation.effective_datetime|date:'M/d/yyyy'}}</span>
 					<span ng-if="observation.observation_components.length && !observation.patient_refused_A1C">
@@ -10,7 +11,7 @@
 						<span ng-if="a1c_date <= today">past due</span>
 					</span>
 				</div>
-				<div ng-show="show_collapse">Hide</div>
+				<div ng-show="show_collapse"><i class="fa fa-caret-down" aria-hidden="true"></i> Hide</div>
 			</div>
 			<div ng-show="show_collapse">
 				<div class="panel-body">

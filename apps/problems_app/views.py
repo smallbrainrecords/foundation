@@ -303,6 +303,9 @@ def change_name(request, problem_id):
             else:
                 problem.concept_id = None
 
+            if datetime.now() > datetime.strptime(problem.start_date.strftime('%d/%m/%Y') + ' ' + problem.start_time.strftime('%H:%M:%S'), "%d/%m/%Y %H:%M:%S") + timedelta(hours=24):
+                problem.old_problem_name = old_problem_name
+
             problem.save()
 
             physician = request.user
@@ -1260,8 +1263,6 @@ def get_label_problem_lists(request, patient_id, user_id):
 
             problems_holder = sorted(problems_holder, key=operator.itemgetter('multiply'), reverse=True)
 
-            for problem in problems_holder:
-                print problem['multiply']
         list_dict['problems'] = problems_holder
         lists_holder.append(list_dict)
         

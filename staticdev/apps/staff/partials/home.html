@@ -61,11 +61,15 @@
   </div>
 </div>
 
-<div class='panel panel-default' ng-repeat="list in todo_lists" ng-init="list.show_accomplished=false">
+<div class='panel panel-default' ng-repeat="list in todo_lists" ng-init="list.show_accomplished=false;list.collapse=false;">
 
-  <div class='panel-heading'> {{list.name}} <a href class="btn btn-danger" ng-click="delete_list(list)">Delete</a></div>
+  <div class='panel-heading' ng-click="list.collapse=!list.collapse">
+    <i class="fa fa-caret-down" aria-hidden="true" ng-if="list.collapse"></i>
+    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!list.collapse"></i>
+    {{list.name}} 
+    <a href class="btn btn-danger" ng-click="delete_list(list)" ng-if="list.collapse">Delete</a></div>
 
-  <div class='panel-body'>
+  <div class='panel-body' ng-if="list.collapse">
     <todo ng-model="list.todos" accomplished="false" show-problem="true" is-list="list.id"></todo>
     <hr>
     <a class='btn btn-default btn-md' ng-click='list.show_accomplished=!list.show_accomplished'> 

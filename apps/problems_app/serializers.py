@@ -52,6 +52,7 @@ class ProblemSerializer(serializers.ModelSerializer):
             'parent',
             'labels',
             'problem_name',
+            'old_problem_name',
             'concept_id',
             'is_controlled',
             'is_active',
