@@ -592,12 +592,14 @@ ng-disabled='!permitted(["relate_problem"])'>
 	</div>
 </div>
 
-
-<div class='row'>
+<div class='row' ng-init="encounter_collapse=false;">
 	<div class='col-md-12'>
 		<div class='panel panel-default'>
-			<div class='panel-heading'> Related Encounters </div>
-			<div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'>
+			<div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;"> 
+				<i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+  				<i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+				Related Encounters </div>
+			<div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;' ng-show="encounter_collapse">
 				<div ng-repeat='encounter in related_encounters' class='row' style='margin-bottom:4px; border-top:1px solid #ccc;'>
 					<div class='col-md-12'>
 						<a href='#/encounter/{{encounter.id}}'> 

@@ -20,6 +20,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                                 scope.show_problem = scope.$eval(attr.showProblem);
                                 scope.is_tagged = scope.$eval(attr.isTagged);
                                 scope.is_list = scope.$eval(attr.isList);
+                                scope.current_todo == null;
 
                                 scope.problem_todos = scope.$eval(attr.ngModel);
                                 var tmpList = scope.problem_todos;
@@ -114,6 +115,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                             }
 
                             scope.todoChange = function(todo) {
+                                scope.current_todo = todo;
                                 scope.todo_changed = true;
                                 currentTodo = todo.todo;
                                 todoService.addTodoAccessEncounter(todo.id).then(function() {
@@ -347,6 +349,18 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                                     });
                                 }
                                 
+                            }
+
+                            scope.clickOutSide = function() {
+                                if (scope.current_todo != null) {
+                                    scope.current_todo.changed = false;
+                                    scope.todo_changed = false;
+                                    scope.current_todo.change_due_date = false;
+                                    scope.current_todo.change_label = false;
+                                    scope.current_todo.change_member = false;
+                                    scope.current_todo.create_label = false;
+                                    scope.current_todo == null;
+                                }
                             }
                         }
                     }, true);

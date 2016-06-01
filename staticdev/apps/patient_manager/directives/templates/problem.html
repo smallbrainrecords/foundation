@@ -8,7 +8,7 @@
 		</li>
 	</ul>
 
-	<ul class='ul-clean' ng-if="active_user.role=='nurse' || active_user.role=='secretary'">
+	<ul class='ul-clean' ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
 		<li  ng-repeat='problem in problems' ng-click='open_problem(problem)'>
 			
 			<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>

@@ -12,7 +12,7 @@ from emr.models import UserProfile, Problem
 from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing
 
-from emr.models import PhysicianTeam, PatientController, ProblemOrder
+from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
 from emr.models import SharingPatient
 
 from problems_app.serializers import ProblemSerializer
@@ -246,10 +246,27 @@ def get_patient_info(request, patient_id):
             problem_dict = ProblemSerializer(problem).data
             problem_list.append(problem_dict)
 
-    for problem in problems:
-        if not problem.id in problem_order.order:
+    if request.user.profile.role == 'admin':
+        for problem in problems:
             problem_dict = ProblemSerializer(problem).data
             problem_list.append(problem_dict)
+
+        for problem in problem_list:
+            todo = ToDo.objects.filter(problem__id=problem['id'], accomplished=False).count()
+            event = ProblemActivity.objects.filter(problem__id=problem['id'], created_on__gte=datetime.datetime.now()-datetime.timedelta(days=30)).count()
+            if todo == 0 and event == 0:
+                problem['multiply'] = 0
+            elif todo == 0 or event == 0:
+                problem['multiply'] = 1
+            else:
+                problem['multiply'] = todo * event
+
+        problem_list = sorted(problem_list, key=operator.itemgetter('multiply'), reverse=True)
+    else:
+        for problem in problems:
+            if not problem.id in problem_order.order:
+                problem_dict = ProblemSerializer(problem).data
+                problem_list.append(problem_dict)
 
     # Inactive Problems
     inactive_problems = Problem.objects.filter(
