@@ -155,8 +155,8 @@
 
 <div class='row'>
 	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'> 
-		Is controlled
+		<label><input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'> 
+		Is controlled</label>
 	</div>
 	<div class='col-md-4'>
 		<input type='checkbox' ng-model='problem.authenticated' ng-disabled='!permitted(["set_problem_authenticated"])'>
