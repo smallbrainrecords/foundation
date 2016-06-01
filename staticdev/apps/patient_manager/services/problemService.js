@@ -16,9 +16,9 @@
 		};
 
 
-		this.trackProblemClickEvent = function(form){
-
-			var url = '/p/problem/'+form.problem_id+'/track/click/';
+		this.trackProblemClickEvent = function(problem_id){
+			var form = {};
+			var url = '/p/problem/'+problem_id+'/track/click/';
 			return httpService.post(form, url);
 
 		};

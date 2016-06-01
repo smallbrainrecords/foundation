@@ -7,5 +7,6 @@ urlpatterns = patterns('goals_app.views',
     url(r'^patient/(?P<patient_id>\d+)/goals/add/new_goal$', 'add_patient_goal'),
     url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/add_note$', 'add_goal_note'),
     url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/update_status$', 'update_goal_status'),
+    url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/change_name$', 'change_name'),
 
 	)

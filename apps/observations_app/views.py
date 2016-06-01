@@ -7,6 +7,7 @@ from common.views import *
 
 from emr.models import Observation, ObservationTextNote, ObservationComponent, UserProfile, ObservationComponentTextNote
 from .serializers import ObservationSerializer, ObservationTextNoteSerializer, ObservationComponentSerializer, ObservationComponentTextNoteSerializer
+from emr.operations import op_add_event
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
@@ -26,6 +27,20 @@ def set_problem_authentication_false(request, problem):
 
     problem.authenticated = authenticated
     problem.save()
+
+@login_required
+def track_observation_click(request, observation_id):
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+
+    observation_info = Observation.objects.get(id=observation_id)
+    patient = observation_info.problem.patient
+
+    summary = "<b>%s</b> visited <u>a1c</u> module" % (actor.username)
+    op_add_event(actor, patient, summary, observation_info.problem)
+
+    resp = {}
+    return ajax_response(resp)
 
 @login_required
 def get_observation_info(request, observation_id):

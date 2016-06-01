@@ -60,6 +60,7 @@ class TodoSerializer(serializers.ModelSerializer):
 	problem = ProblemSerializer()
 	patient = SafeUserSerializer()
 	members = UserProfileSerializer(many=True)
+	due_date = serializers.DateField(format='%m/%d/%Y')
 
 	class Meta:
 		model = ToDo

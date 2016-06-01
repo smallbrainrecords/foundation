@@ -75,7 +75,7 @@ def add_patient_todo(request, patient_id):
         todo_name = request.POST.get('name')
         due_date = request.POST.get('due_date', None)
         if due_date:
-            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+            due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
         patient = User.objects.get(id=patient_id)
         physician = request.user
@@ -437,7 +437,14 @@ def change_todo_due_date(request, todo_id):
 
         due_date = request.POST.get('due_date')
         if due_date and due_date != '':
-            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+            try:
+                due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
+            except:
+                resp['success'] = False
+                todo = ToDo.objects.get(id=todo_id)
+                todo_dict = TodoSerializer(todo).data
+                resp['todo'] = todo_dict
+                return ajax_response(resp)
         else:
             due_date = None
 
@@ -600,9 +607,14 @@ def todo_access_encounter(request, todo_id):
     physician = request.user
     patient = todo.patient
 
-    summary = '''
-        <a href="#/todo/%s"><b>%s</b></a> was accessed.
-        ''' % (todo.id, todo.todo)
+    if todo.problem:
+        summary = '''
+            <a href="#/todo/%s"><b>%s</b></a> for <b>%s</b> was visited.
+            ''' % (todo.id, todo.todo, todo.problem.problem_name)
+    else:
+        summary = '''
+            <a href="#/todo/%s"><b>%s</b></a> was visited.
+            ''' % (todo.id, todo.todo)
 
     op_add_todo_event(physician, patient, summary, todo)
     if todo.problem:
@@ -792,7 +804,7 @@ def add_staff_todo(request, user_id):
         todo_name = request.POST.get('name')
         due_date = request.POST.get('due_date', None)
         if due_date:
-            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+            due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
         user = User.objects.get(id=user_id)
 

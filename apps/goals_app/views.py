@@ -179,3 +179,40 @@ def add_goal_note(request, patient_id, goal_id):
         resp['note'] = new_note_dict
 
     return ajax_response(resp)
+
+@login_required
+def change_name(request, patient_id, goal_id):
+
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['modify_goal']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        patient = User.objects.get(id=patient_id)
+        goal = Goal.objects.get(id=goal_id, patient=patient)
+
+        status_labels = {}
+        status_labels['goal'] = goal.goal
+        status_labels['new_goal'] = request.POST.get('goal')
+
+        goal.goal = request.POST.get('goal')
+        goal.save()
+
+        physician = request.user
+        summary = "Change <u>goal</u>: <b>%(goal)s</b> <u>name</u>"
+        summary += " to <b>%(new_goal)s</b>"
+        summary = summary % status_labels
+
+        op_add_event(physician, patient, summary, goal.problem)
+
+        if goal.problem:
+            add_problem_activity(goal.problem, actor_profile, summary)
+
+        goal_dict = GoalSerializer(goal).data
+
+        resp['goal'] = goal_dict
+        resp['success'] = True
+
+    return ajax_response(resp)

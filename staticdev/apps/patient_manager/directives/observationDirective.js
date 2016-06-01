@@ -15,6 +15,7 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                         if(newVal) {
                             scope.observation = scope.$eval(attr.ngModel);
                             scope.today = moment();
+                            scope.show_collapse = false;
                             if (scope.observation.observation_todos.length)
                                 scope.a1c_date = moment(scope.observation.observation_todos[scope.observation.observation_todos.length -1].due_date);
 
@@ -28,7 +29,7 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                                     form.patient_id = scope.patient_id;
                                     form.problem_id = scope.observation.problem.id;
                                     form.observation_id = scope.observation.id;
-                                    form.due_date = moment(scope.last_measurement.created_on).add(6, "months").format("YYYY-MM-DD");
+                                    form.due_date = moment(scope.last_measurement.created_on).add(6, "months").format("MM/DD/YYYY");
                                     problemService.addTodo(form).then(function(data){
                                         scope.problem_todos.push(data['todo']);
                                         scope.observation.observation_todos.push(data['todo']);
@@ -45,13 +46,25 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                                 }
                             }
 
+                            scope.open_a1c = function(){
+                                if (!scope.show_collapse) {
+                                    var form = {};
+                                    form.observation_id = scope.observation.id;
+                                    observationService.trackObservationClickEvent(form).then(function(data){
+                                        scope.show_collapse = true;
+                                    });
+                                } else {
+                                    scope.show_collapse = false;
+                                }
+                            };
+
                             scope.repeatThreeMonths = function() {
                                 var form = {};
                                 form.name = "a1c " + scope.observation.id + " repeats in 3 months";
                                 form.patient_id = scope.patient_id;
                                 form.problem_id = scope.observation.problem.id;
                                 form.observation_id = scope.observation.id;
-                                form.due_date = moment().add(3, "months").format("YYYY-MM-DD");
+                                form.due_date = moment().add(3, "months").format("MM/DD/YYYY");
                                 problemService.addTodo(form).then(function(data){
                                     scope.problem_todos.push(data['todo']);
                                     scope.observation.observation_todos.push(data['todo']);

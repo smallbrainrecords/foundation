@@ -62,11 +62,7 @@ function problemDirective(problemService, patientService, toaster, $location, $t
 
                             scope.open_problem = function(problem){
                                 if (!scope.draggedProblemList) {
-                                    var form = {};
-                                    form.problem_id = problem.id;
-                                    problemService.trackProblemClickEvent(form).then(function(data){
-                                        $location.path('/problem/'+problem.id);
-                                    });
+                                    $location.path('/problem/'+problem.id);
                                 }
                             };
                         }

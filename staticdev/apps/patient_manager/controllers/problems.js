@@ -43,6 +43,8 @@
                 $scope.problem_labels = data['labels'];
             });
 
+			problemService.trackProblemClickEvent(problem_id).then(function(data){});
+
 			function convertDateTime(problem){
 				if(problem.start_date) {
 					var dateTime = problem.start_date;

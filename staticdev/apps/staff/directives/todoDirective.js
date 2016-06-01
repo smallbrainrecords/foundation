@@ -114,9 +114,11 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                             }
 
                             scope.todoChange = function(todo) {
-                                currentTodo = todo.todo;
-                                todo.changed = true;
                                 scope.todo_changed = true;
+                                currentTodo = todo.todo;
+                                todoService.addTodoAccessEncounter(todo.id).then(function() {
+                                    todo.changed = true;
+                                });
                             }
 
                             scope.closeThisTodo = function(todo) {
@@ -145,8 +147,20 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                                 todo.change_due_date = (todo.change_due_date != true) ? true : false;
                             }
 
+                            scope.allowDueDateNotification = true;
                             scope.saveTodoDueDate = function(todo) {
                                 todoService.changeTodoDueDate(todo).then(function(data){
+                                    if(data['success']==true){
+                                        if (scope.allowDueDateNotification)
+                                            toaster.pop('success', "Done", "Due date Updated!");
+                                        scope.allowDueDateNotification = true;
+                                    }else if(data['success']==false){
+                                        todo.due_date = data['todo']['due_date'];
+                                        toaster.pop('error', 'Error', 'Invalid date format');
+                                        scope.allowDueDateNotification = false;
+                                    }else{
+                                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                                    }
                                 });
                             }
 

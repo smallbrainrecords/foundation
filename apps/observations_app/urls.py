@@ -15,4 +15,6 @@ urlpatterns = patterns('observations_app.views',
     url(r'^component/(?P<component_id>\d+)/add_note$', 'add_component_note'),
     url(r'^component/note/(?P<note_id>\d+)/edit$', 'edit_component_note'),
     url(r'^component/note/(?P<note_id>\d+)/delete$', 'delete_component_note'),
+    url(r'^(?P<observation_id>\d+)/track/click/$',
+        'track_observation_click'),
 )

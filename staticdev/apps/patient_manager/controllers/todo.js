@@ -293,9 +293,20 @@
                 todo.change_due_date2 = (todo.change_due_date2 != true) ? true : false;
             }
 
+            $scope.allowDueDateNotification = true;
             $scope.saveTodoDueDate = function(todo) {
                 todoService.changeTodoDueDate(todo).then(function(data){
-                    toaster.pop('success', "Done", "Due date Updated!");
+                    if(data['success']==true){
+                        if ($scope.allowDueDateNotification)
+                            toaster.pop('success', "Done", "Due date Updated!");
+                        $scope.allowDueDateNotification = true;
+                    }else if(data['success']==false){
+                        todo.due_date = data['todo']['due_date'];
+                        toaster.pop('error', 'Error', 'Invalid date format');
+                        $scope.allowDueDateNotification = false;
+                    }else{
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
                 });
             }
 

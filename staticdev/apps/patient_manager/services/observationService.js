@@ -82,6 +82,11 @@
 				var url = '/observation/'+form.observation_id+'/patient_refused';
 				return httpService.post(form, url);
 			};
+
+			this.trackObservationClickEvent = function(form){
+				var url = '/observation/'+form.observation_id+'/track/click/';
+				return httpService.post(form, url);
+			};
 	});
 
 })();

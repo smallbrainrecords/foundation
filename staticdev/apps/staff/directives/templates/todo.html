@@ -63,7 +63,7 @@
 										<i class="fa fa-check" ng-repeat="l in item.labels" ng-if="l.id==label.id"></i>
 									</a>
 									<!-- begin edit label -->
-									<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin')"><i class="fa fa-pencil"></i></a>
+									<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin' && active_user.user.id == label.author.id)"><i class="fa fa-pencil"></i></a>
 
 									<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
 										<div class="quick-card-editor-lv2-header">
@@ -100,9 +100,9 @@
 									<a href ng-click="changeDueDate(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 								</div>
 								<p>
-									<input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)">
+									<input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)" ng-model-options="{ updateOn: 'default blur', debounce: { default: 500, blur: 0 } }">
 								</p>
-								<div ng-model="item.due_date" ng-change="saveTodoDueDate(item)" pickadate format="yyyy-MM-dd"></div>
+								<div ng-model="item.due_date" ng-change="saveTodoDueDate(item)" pickadate format="MM/dd/yyyy"></div>
 							</div>
 							<!-- end change due date -->
 							<!-- begin change member -->
