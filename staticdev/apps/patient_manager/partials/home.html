@@ -73,24 +73,45 @@
 <div class='panel panel-default' ng-show="user_id == patient_id">
 
 	<div class='panel-heading'>
-		Shared Patients
+		Sharing care
 	</div>
 
 	<div class='panel-body'>
+		<h4>People I can access:</h4>
 		<table class='table'>
 			<thead>
 				<th> Name </th>
-				<th> Username </th>
 				<th> Actions </th>
 			</thead>
 			<tbody>
 				<tr ng-repeat='p in shared_patients'>
 					<td> {{p.user.first_name}} {{p.user.last_name}}
 					</td>
-					<td> {{p.user.username}}
-					</td>
 					<td> 
 						<a href="/u/patient/manage/{{p.user.id}}" class='btn btn-sm btn-default'>
+                            Access chart
+                        </a>
+                        <a href="/u/patient/manage/{{p.user.id}}" class='btn btn-sm btn-default'>
+                            Manage
+                        </a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<br>
+
+		<h4>People that can access me:</h4>
+		<table class='table'>
+			<thead>
+				<th> Name </th>
+				<th> Actions </th>
+			</thead>
+			<tbody>
+				<tr ng-repeat='p in shared_patients'>
+					<td> {{p.user.first_name}} {{p.user.last_name}}
+					</td>
+					<td>
+                        <a href="/u/patient/manage/{{p.user.id}}" class='btn btn-sm btn-default'>
                             Manage
                         </a>
 					</td>
