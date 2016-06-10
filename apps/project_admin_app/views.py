@@ -17,6 +17,12 @@ from emr.models import PatientController, PhysicianTeam
 @login_required
 def home(request):
 
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+
+    if not actor_profile.role == 'admin':
+        return HttpResponseRedirect('/')
+
     content = {}
 
     return render(

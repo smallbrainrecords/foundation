@@ -10,7 +10,7 @@ from common.views import *
 
 from emr.models import UserProfile, Problem
 from emr.models import Goal, ToDo
-from emr.models import Encounter, Sharing
+from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
 
 from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
 from emr.models import SharingPatient
@@ -19,7 +19,7 @@ from problems_app.serializers import ProblemSerializer
 from goals_app.serializers import GoalSerializer
 from .serializers import UserProfileSerializer
 from todo_app.serializers import TodoSerializer
-from encounters_app.serializers import EncounterSerializer
+from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
 
 from .forms import LoginForm, RegisterForm, UpdateBasicProfileForm, UpdateProfileForm, UpdateEmailForm
 
@@ -316,6 +316,7 @@ def get_patient_info(request, patient_id):
         todo_dict = TodoSerializer(todo).data
         problem_todos_list.append(todo_dict)
 
+    # encounters
     encounters = Encounter.objects.filter(
         patient=patient_user).order_by('-starttime')
 
@@ -323,6 +324,33 @@ def get_patient_info(request, patient_id):
     for encounter in encounters:
         encounter_dict = EncounterSerializer(encounter).data
         encounter_list.append(encounter_dict)
+
+    favorites = EncounterEvent.objects.filter(encounter__patient=patient_user, is_favorite=True).order_by('-datetime')
+
+    favorites_list = []
+    for favorite in favorites:
+        favorite_dict = EncounterEventSerializer(favorite).data
+        favorites_list.append(favorite_dict)
+
+    # handle for hot key ctrl c
+    encounter = Encounter.objects.filter(patient=patient_user).order_by('-starttime')[0]
+
+    most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user, encounter=encounter)
+
+    most_recent_encounter_summarries = []
+    for event in most_recent_encounter_events:
+        if not "Started encounter by" in event.summary and not "Stopped encounter by" in event.summary:
+            most_recent_encounter_summarries.append(event.summary)
+
+    # Related problems
+    related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
+    related_problem_ids = [long(x.problem.id) for x in related_problem_records]
+
+    related_problems = Problem.objects.filter(id__in=related_problem_ids)
+
+    related_problem_holder = ProblemSerializer(
+        related_problems, many=True).data
+
 
     patient_profile_dict = UserProfileSerializer(patient_profile).data
 
@@ -334,6 +362,13 @@ def get_patient_info(request, patient_id):
     for shared_patient in shared_patients:
         user_dict = UserProfileSerializer(shared_patient.shared.profile).data
         patients_list.append(user_dict)
+
+    sharing_patients = SharingPatient.objects.filter(shared=patient_user).order_by('sharing__first_name', 'sharing__last_name')
+
+    sharing_patients_list = []
+    for sharing_patient in sharing_patients:
+        user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
+        sharing_patients_list.append(user_dict)
 
     resp = {}
     resp['info'] = patient_profile_dict
@@ -347,7 +382,11 @@ def get_patient_info(request, patient_id):
     resp['completed_goals'] = completed_goals_list
 
     resp['encounters'] = encounter_list
+    resp['favorites'] = favorites_list
+    resp['most_recent_encounter_summarries'] = most_recent_encounter_summarries
+    resp['most_recent_encounter_related_problems'] = related_problem_holder
     resp['shared_patients'] = patients_list
+    resp['sharing_patients'] = sharing_patients_list
     return ajax_response(resp)
 
 
@@ -600,6 +639,12 @@ def get_patients_list(request):
             user_dict = UserProfileSerializer(user).data
             patients_list.append(user_dict)
 
+    if user_profile.role == 'patient':
+        patients = UserProfile.objects.filter(role='patient').exclude(user=request.user)
+        for user in patients:
+            user_dict = UserProfileSerializer(user).data
+            patients_list.append(user_dict)
+
     if user_profile.role == 'physician':
         patient_controllers = PatientController.objects.filter(physician=request.user)
         patient_ids = [long(x.patient.id) for x in patient_controllers]
@@ -646,7 +691,12 @@ def add_sharing_patient(request, patient_id, sharing_patient_id):
         sharing_patient = SharingPatient()
         sharing_patient.sharing = to_sharing_patient
         sharing_patient.shared = patient
+
         sharing_patient.save()
+
+        problems = Problem.objects.filter(patient=patient)
+        for problem in problems:
+            sharing_patient.problems.add(problem)
 
         resp['success'] = True
         resp['sharing_patient'] = UserProfileSerializer(to_sharing_patient.profile).data
@@ -681,4 +731,40 @@ def get_sharing_patients(request, patient_id):
 
     resp['sharing_patients'] = patients_list
 
+    return ajax_response(resp)
+
+@login_required
+def get_todos_physicians(request, user_id):
+    resp = {}
+    staff = User.objects.get(id=user_id)
+
+    team_members = PhysicianTeam.objects.filter(member=staff)
+    physician_ids = [long(x.physician.id) for x in team_members]
+    patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+    patient_ids = [long(x.patient.id) for x in patient_controllers]
+
+    todos = ToDo.objects.filter(patient__id__in=patient_ids, created_on__gte=datetime.datetime.now()-datetime.timedelta(hours=24)).order_by('created_on')
+    todos_list = TodoSerializer(todos, many=True).data
+
+    resp['new_generated_todos_list'] = todos_list
+
+    physicians_list = []
+    for team in team_members:
+        user_dict = UserProfileSerializer(team.physician.profile).data
+        physicians_list.append(user_dict)
+
+    resp['new_generated_physicians_list'] = physicians_list
+
+    return ajax_response(resp)
+
+@login_required
+def user_info(request, user_id):
+    user = User.objects.get(id=user_id)
+    user_profile = UserProfile.objects.get(user=user)
+
+    user_profile_dict = UserProfileSerializer(user_profile).data
+
+    resp = {}
+    resp['success'] = False
+    resp['user_profile'] = user_profile_dict
     return ajax_response(resp)

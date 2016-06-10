@@ -4,7 +4,7 @@
 
 
 	angular.module('StaffApp')
-		.controller('HomeCtrl', function($scope, $routeParams, ngDialog, staffService, physicianService, toaster, todoService, prompt){
+		.controller('HomeCtrl', function($scope, $routeParams, ngDialog, staffService, physicianService, toaster, todoService, prompt, $interval){
 
 
 
@@ -44,6 +44,19 @@
 							$scope.patients = data['patients'];
 							$scope.team = data['team'];
 							
+						});
+					}
+
+					if ($scope.active_user.role=='secretary') {
+						$scope.refresh_todos_physicians();
+						$interval(function(){
+							$scope.refresh_todos_physicians();
+						}, 10000);
+					}
+
+					if ($scope.active_user.role=='secretary' || $scope.active_user.role=='mid-level' || $scope.active_user.role=='nurse') {
+						staffService.getAllTodos($scope.user_id).then(function(data){
+							$scope.all_todos_list = data['all_todos_list'];
 						});
 					}
 
@@ -120,6 +133,24 @@
                     return false;
                 });
 			}
+
+			$scope.refresh_todos_physicians = function(){
+				staffService.getTodosPhysicians($scope.user_id).then(function(data){
+					$scope.new_generated_todos_list = data['new_generated_todos_list'];
+					$scope.new_generated_physicians_list = data['new_generated_physicians_list'];
+				})
+			}
+
+			$scope.orderByDate = function(item) {
+				if (item.due_date != null) {
+					var parts = item.due_date.split('/');
+			    	var number = parseInt(parts[2] + parts[0] + parts[1]);
+				} else {
+					var number = 0;
+				}
+
+			    return -number;
+			};
 
 
 			$scope.init();

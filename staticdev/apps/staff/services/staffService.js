@@ -50,6 +50,18 @@
 			return httpService.post(form, url);
 		};
 
+		this.getTodosPhysicians = function(user_id){
+			var form = {};
+			var url = '/u/todos_physicians/' + user_id;
+			return httpService.post(form, url);
+		};
+
+		this.getAllTodos = function(user_id){
+			var form = {};
+			var url = '/todo/staff/all_todos/' + user_id;
+			return httpService.post(form, url);
+		};
+
 	});
 
 })();

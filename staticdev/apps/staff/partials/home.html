@@ -34,6 +34,65 @@
 
 </div>
 
+<div class='panel panel-default' ng-init="new_generated_todos_list_collapse=false" ng-if="active_user.role=='secretary'">
+
+  <div class='panel-heading' ng-click="new_generated_todos_list_collapse=!new_generated_todos_list_collapse;">
+    <i class="fa fa-caret-down" aria-hidden="true" ng-if="new_generated_todos_list_collapse"></i>
+    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!new_generated_todos_list_collapse"></i>
+    List of all todos for all patients that have been generated in the past 24 hours: </div>
+
+  <div class='panel-body' ng-show="new_generated_todos_list_collapse">
+    <table class='table'>
+          <thead>
+              <th> Name </th>
+          </thead>
+          <tbody>
+              <tr ng-repeat='todo in new_generated_todos_list'>
+                  <td> {{todo.todo}} </td>
+              </tr>
+          </tbody>
+   </table>
+  </div>
+
+</div>
+
+<div class='panel panel-default' ng-init="all_todos_list_collapse=false" ng-if="active_user.role=='secretary' || active_user.role=='mid-level' || active_user.role=='nurse'">
+
+  <div class='panel-heading' ng-click="all_todos_list_collapse=!all_todos_list_collapse;">
+    <i class="fa fa-caret-down" aria-hidden="true" ng-if="all_todos_list_collapse"></i>
+    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!all_todos_list_collapse"></i>
+    List of all past due todos for all patients associated with the physician: </div>
+
+  <div class='panel-body' ng-show="all_todos_list_collapse">
+    <button ng-click="reverse=!reverse" ng-init="reverse=false;" class="btn btn-default">Reverse</button>
+    <table class='table'>
+          <thead>
+              <th> Name </th>
+              <th> Due Date </th>
+          </thead>
+          <tbody>
+              <tr ng-repeat='todo in all_todos_list | orderBy: orderByDate: reverse'>
+                  <td> {{todo.todo}} </td>
+                  <td> {{todo.due_date}} </td>
+              </tr>
+          </tbody>
+   </table>
+  </div>
+
+</div>
+
+<div class='panel panel-default' ng-if="active_user.role=='secretary'">
+
+  <div class='panel-heading'>List all physicians</div>
+
+  <div class='panel-body'>
+    <p ng-repeat='physician in new_generated_physicians_list'>
+      {{physician.user.first_name}} {{physician.user.last_name}} {{physician.user.username}}
+    </p>
+  </div>
+
+</div>
+
 <div class='panel panel-default'>
 
   <div class='panel-heading'> Labeled Todos Lists </div>

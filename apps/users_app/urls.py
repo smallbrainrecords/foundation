@@ -10,6 +10,7 @@ urlpatterns = patterns(
     url(r'^staff/$', 'staff'),
     url(r'^patient/manage/(?P<user_id>\d+)/$', 'manage_patient'),
     url(r'^patient/(?P<patient_id>\d+)/info$', 'get_patient_info'),
+    url(r'^user_info/(?P<user_id>\d+)/info/$', 'user_info'),
 
     url(
         r'^patient/(?P<patient_id>\d+)/profile/update_summary$',
@@ -36,4 +37,5 @@ urlpatterns = patterns(
     url(
         r'^patient/(?P<patient_id>\d+)/profile/update_note$',
         'update_patient_note'),
+    url(r'^todos_physicians/(?P<user_id>\d+)$', 'get_todos_physicians'),
     )

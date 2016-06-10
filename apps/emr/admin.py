@@ -5,7 +5,7 @@ from .models import UserProfile, AccessLog, Encounter, \
     GuidelineForm, PatientImage, Sharing, ProblemRelationship, \
     ProblemSegment, Label, ToDoAttachment, ToDoComment, LabeledToDoList, \
     Country, State, City, TelecomSystem, Telecom, AddressType, AddressUse, Observation, \
-    ObservationTextNote, ObservationComponent, ProblemLabel
+    ObservationTextNote, ObservationComponent, ProblemLabel, SharingPatient
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -134,3 +134,4 @@ admin.site.register(Observation)
 admin.site.register(ObservationTextNote)
 admin.site.register(ObservationComponent)
 admin.site.register(ProblemLabel)
+admin.site.register(SharingPatient)

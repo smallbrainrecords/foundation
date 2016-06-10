@@ -239,3 +239,68 @@ def upload_encounter_video(request, patient_id, encounter_id):
         encounter.save()
 
     return ajax_response(resp)
+
+# Encounter
+@login_required
+def add_timestamp(request, patient_id, encounter_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_encounter_timestamp']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == "POST" and permitted:
+        timestamp = request.POST.get('timestamp', '') + ' by <b>' + request.user.username + '</b>'
+        encounter = Encounter.objects.get(id=encounter_id)
+
+        encounter_event = EncounterEvent(
+            encounter=encounter,
+            summary=timestamp)
+
+        encounter_event.save()
+
+        # Encounter Events
+        encounter_event_holder = EncounterEventSerializer(encounter_event).data
+
+        resp['success'] = True
+        resp['encounter_event'] = encounter_event_holder
+
+    return ajax_response(resp)
+
+# Encounter
+@login_required
+def mark_favorite(request, encounter_event_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_encounter_timestamp']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == "POST" and permitted:
+        encounter_event = EncounterEvent.objects.get(id=encounter_event_id)
+        encounter_event.is_favorite = True if request.POST.get('is_favorite', False) == "true" else False
+        encounter_event.save()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def name_favorite(request, encounter_event_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_encounter_timestamp']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == "POST" and permitted:
+        encounter_event = EncounterEvent.objects.get(id=encounter_event_id)
+        encounter_event.name_favorite = request.POST.get('name_favorite', '')
+        encounter_event.save()
+
+        resp['success'] = True
+
+    return ajax_response(resp)

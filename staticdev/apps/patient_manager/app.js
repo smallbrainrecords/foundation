@@ -59,6 +59,16 @@
             .when("/observation_component/:component_id/edit_value", {
                 templateUrl: '/static/apps/patient_manager/partials/observation/edit_value.html',
                 controller: 'EditValueCtrl'
+            })
+            .when('/manage/sharing', {
+
+                templateUrl: '/static/apps/patient_manager/partials/manage_sharing_patient.html',
+                controller: 'ManageSharingPatientCtrl'
+            })
+            .when('/manage/sharing/problem/:sharing_patient_id', {
+
+                templateUrl: '/static/apps/patient_manager/partials/manage_sharing_problem.html',
+                controller: 'ManageSharingProblemCtrl'
             });
 
     });

@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, ngDialog, toaster, $location, todoService, prompt, $timeout){
+		.controller('HomeCtrl', function( $scope, $routeParams, patientService, problemService, encounterService, ngDialog, toaster, $location, todoService, prompt, $timeout){
 
 			
 
@@ -23,6 +23,7 @@
 			$scope.new_list = {};
 			$scope.new_list.labels = [];
 			$scope.problem_lists = [];
+			$scope.is_home = true;
 
 			todoService.fetchTodoMembers($scope.patient_id).then(function(data){
                 $scope.members = data['members'];
@@ -143,7 +144,11 @@
 				$scope.accomplished_todos = data['accomplished_todos'];
 				$scope.problem_todos = data['problem_todos'];
 				$scope.encounters = data['encounters'];
+				$scope.favorites = data['favorites'];
+				$scope.most_recent_encounter_summarries = data['most_recent_encounter_summarries'];
+				$scope.most_recent_encounter_related_problems = data['most_recent_encounter_related_problems'];
 				$scope.shared_patients = data['shared_patients'];
+				$scope.sharing_patients = data['sharing_patients'];
 
 				// problem timeline
 				var timeline_problems = [];
@@ -513,6 +518,69 @@
 				});
 
 			};
+
+			// encounter
+
+            $scope.unmarkFavoriteEvent = function(encounter_event){
+                  var form = {};
+                  form.encounter_event_id = encounter_event.id;
+                  form.is_favorite = false;
+                  encounterService.markFavoriteEvent(form).then(function(data){
+                        $scope.favorites.splice($scope.favorites.indexOf(encounter_event), 1);
+                        toaster.pop('success', 'Done', 'Unmarked favorite!');
+                  });
+            };
+
+            $scope.nameFavoriteEvent = function(encounter_event){
+                  var form = {};
+                  form.encounter_event_id = encounter_event.id;
+                  form.name_favorite = encounter_event.name_favorite;
+                  encounterService.nameFavoriteEvent(form).then(function(data){
+                        encounter_event.is_named = false;
+                        toaster.pop('success', 'Done', 'Named favorite!');
+                  });
+            };
+
+            function copyToClipboard(text) {
+				var $temp = $("<textarea/>")
+				$("body").append($temp);
+				$temp.val(text).select();
+				document.execCommand("copy");
+				$temp.remove();
+			}
+
+            $(window).keydown(function(event) {
+			  if(event.ctrlKey && event.keyCode == 67 && $location.path() == '/') { 
+			    var text = '';
+
+			    // encounter copy
+			    if ($scope.most_recent_encounter_summarries.length > 0) {
+			    	text += "All the encounter summaries from the most recent encounter: \r\n";
+			    	angular.forEach($scope.most_recent_encounter_summarries, function(value, key) {
+						text += value + '\r\n';
+					});
+					text += '\r\n';
+			    }
+
+			    if ($scope.most_recent_encounter_related_problems.length > 0) {
+			    	text += "List of related problems : \r\n";
+			    	angular.forEach($scope.most_recent_encounter_related_problems, function(value, key) {
+						text += value.problem_name + '\r\n';
+					});
+					text += '\r\n';
+			    }
+
+			    if ($scope.pending_todos.length > 0) {
+			    	text += "List of all active todos : \r\n";
+			    	angular.forEach($scope.pending_todos, function(value, key) {
+						text += value.todo + '\r\n';
+					});
+			    }
+
+			    copyToClipboard(text)
+			    event.preventDefault();
+			  }
+			});
 
 
 		}); /* End of controller */

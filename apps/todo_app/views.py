@@ -6,7 +6,7 @@ from django.db.models import Q
 from common.views import *
 
 from emr.models import UserProfile, ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRecord, \
-    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList
+    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController
 from emr.operations import op_add_event, op_add_todo_event
 
 from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, \
@@ -93,9 +93,7 @@ def add_patient_todo(request, patient_id):
             problem_name = new_todo.problem.problem_name
         else:
             problem_name = ''
-        summary = '''
-            Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>
-            ''' % (new_todo.id, todo_name, problem_name)
+        summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (new_todo.id, todo_name, problem_name)
 
         op_add_todo_event(physician, patient, summary, new_todo)
 
@@ -140,10 +138,7 @@ def update_todo_status(request, todo_id):
         else:
             accomplished_label = 'not accomplished'
 
-        summary = """
-            Updated status of <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> ,
-            <u>problem</u> <b>%s</b> to <b>%s</b>
-            """ % (todo.id, todo.todo, problem_name, accomplished_label)
+        summary = """Updated status of <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> ,<u>problem</u> <b>%s</b> to <b>%s</b>""" % (todo.id, todo.todo, problem_name, accomplished_label)
 
         op_add_todo_event(physician, patient, summary, todo)
 
@@ -608,13 +603,9 @@ def todo_access_encounter(request, todo_id):
     patient = todo.patient
 
     if todo.problem:
-        summary = '''
-            <a href="#/todo/%s"><b>%s</b></a> for <b>%s</b> was visited.
-            ''' % (todo.id, todo.todo, todo.problem.problem_name)
+        summary = '''<a href="#/todo/%s"><b>%s</b></a> for <b>%s</b> was visited.''' % (todo.id, todo.todo, todo.problem.problem_name)
     else:
-        summary = '''
-            <a href="#/todo/%s"><b>%s</b></a> was visited.
-            ''' % (todo.id, todo.todo)
+        summary = '''<a href="#/todo/%s"><b>%s</b></a> was visited.''' % (todo.id, todo.todo)
 
     op_add_todo_event(physician, patient, summary, todo)
     if todo.problem:
@@ -918,5 +909,22 @@ def delete_todo_list(request, list_id):
         todo_list.delete()
 
         resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def staff_all_todos(request, user_id):
+    resp = {}
+    staff = User.objects.get(id=user_id)
+
+    team_members = PhysicianTeam.objects.filter(member=staff)
+    physician_ids = [long(x.physician.id) for x in team_members]
+    patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+    patient_ids = [long(x.patient.id) for x in patient_controllers]
+
+    todos = ToDo.objects.filter(patient__id__in=patient_ids, due_date__lte=datetime.now()).order_by('-due_date')
+    todos_list = TodoSerializer(todos, many=True).data
+
+    resp['all_todos_list'] = todos_list
 
     return ajax_response(resp)

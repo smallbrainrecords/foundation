@@ -18,7 +18,7 @@ from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment
 from emr.models import EncounterProblemRecord, Encounter
-from emr.models import Observation
+from emr.models import Observation, SharingPatient
 
 from emr.operations import op_add_event, op_add_todo_event
 
@@ -425,10 +425,7 @@ def update_start_date(request, problem_id):
 
         physician = request.user
 
-        summary = '''
-            Changed <u>problem</u> :
-            <b>%s</b> start date to <b>%s</b>
-        ''' % (problem.problem_name, problem.start_date)
+        summary = '''Changed <u>problem</u> : <b>%s</b> start date to <b>%s</b>''' % (problem.problem_name, problem.start_date)
         op_add_event(physician, patient, summary, problem)
 
         activity = summary
@@ -581,10 +578,7 @@ def add_physician_note(request, problem_id):
 
     problem.notes.add(new_note)
 
-    summary = '''
-        Added <u>note</u> : <b>%s</b> to
-        <u>problem</u> : <b>%s</b>
-    ''' % (note, problem.problem_name)
+    summary = '''Added <u>note</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>''' % (note, problem.problem_name)
     op_add_event(physician, patient, summary, problem)
 
     activity = summary
@@ -621,9 +615,7 @@ def add_problem_goal(request, problem_id):
 
         physician = request.user
 
-        summary = '''
-            Added <u> goal </u> : <b>%s</b> to <u>problem</u> : <b>%s</b>
-        ''' % (goal, problem.problem_name)
+        summary = '''Added <u> goal </u> : <b>%s</b> to <u>problem</u> : <b>%s</b>''' % (goal, problem.problem_name)
         op_add_event(physician, patient, summary, problem)
 
         activity = summary
@@ -691,17 +683,13 @@ def add_problem_todo(request, problem_id):
 
         physician = request.user
 
-        summary = '''
-            Added <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> to <u>problem</u> : <b>%s</b>
-        ''' % (new_todo.id, todo, problem.problem_name)
+        summary = '''Added <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> to <u>problem</u> : <b>%s</b>''' % (new_todo.id, todo, problem.problem_name)
         op_add_event(physician, patient, summary, problem)
 
         activity = summary
         add_problem_activity(problem, actor_profile, activity)
 
-        summary = '''
-            Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>
-            ''' % (new_todo.id, new_todo.todo, problem.problem_name)
+        summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (new_todo.id, new_todo.todo, problem.problem_name)
 
         op_add_todo_event(physician, patient, summary, new_todo, True)
         # todo activity
@@ -764,13 +752,7 @@ def upload_problem_image(request, problem_id):
             img.thumbnail((160,160), Image.ANTIALIAS)
             img.save(filename)
 
-        summary = '''
-            Physician added <u>image</u> to <u>problem</u>
-            <b>%s</b> <br/>
-            <a href="/media/%s">
-            <img src="/media/%s" class="thumbnail thumbnail-custom" />
-            </a>
-        ''' % (problem.problem_name, patient_image.image, patient_image.image)
+        summary = '''Physician added <u>image</u> to <u>problem</u> <b>%s</b> <br/><a href="/media/%s"><img src="/media/%s" class="thumbnail thumbnail-custom" /></a>''' % (problem.problem_name, patient_image.image, patient_image.image)
 
         op_add_event(actor, patient, summary, problem)
 
@@ -799,9 +781,7 @@ def delete_problem_image(request, problem_id, image_id):
         image.delete()
 
         physician = request.user
-        summary = '''
-            Deleted <u>image</u> from <u>problem</u> : <b>%s</b>
-            ''' % problem.problem_name
+        summary = '''Deleted <u>image</u> from <u>problem</u> : <b>%s</b>''' % problem.problem_name
         op_add_event(physician, patient, summary, problem)
 
         activity = summary
@@ -836,9 +816,7 @@ def relate_problem(request):
             except ProblemRelationship.DoesNotExist:
                 problem_relationship = ProblemRelationship.objects.create(
                     source=source, target=target)
-                activity = '''
-                    Created Problem Relationship: <b>%s</b> effects <b>%s</b>
-                ''' % (source.problem_name, target.problem_name)
+                activity = '''Created Problem Relationship: <b>%s</b> effects <b>%s</b>''' % (source.problem_name, target.problem_name)
 
                 add_problem_activity(source, actor_profile, activity)
                 add_problem_activity(target, actor_profile, activity)
@@ -851,9 +829,7 @@ def relate_problem(request):
 
             problem_relationship.delete()
 
-            activity = '''
-                    Removed Problem Relationship: <b>%s</b> effects <b>%s</b>
-                ''' % (source.problem_name, target.problem_name)
+            activity = '''Removed Problem Relationship: <b>%s</b> effects <b>%s</b>''' % (source.problem_name, target.problem_name)
 
             add_problem_activity(source, actor_profile, activity)
             add_problem_activity(target, actor_profile, activity)
@@ -928,10 +904,7 @@ def update_by_ptw(request):
 
             physician = request.user
 
-            summary = '''
-                Changed <u>problem</u> :
-                <b>%s</b> start date to <b>%s</b>
-            ''' % (problem.problem_name, problem.start_date)
+            summary = '''Changed <u>problem</u> :<b>%s</b> start date to <b>%s</b>''' % (problem.problem_name, problem.start_date)
             op_add_event(physician, patient, summary, problem)
 
             activity = summary
@@ -1299,5 +1272,74 @@ def rename_problem_list(request, list_id):
         problem_list.save()
 
         resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def get_problems(request, patient_id):
+    patient = User.objects.get(id=patient_id)
+    problems = Problem.objects.filter(patient=patient)
+
+    problems_holder = ProblemSerializer(problems, many=True).data
+
+    resp = {}
+    resp['problems'] = problems_holder
+
+    return ajax_response(resp)
+
+@login_required
+def get_sharing_problems(request, patient_id, sharing_patient_id):
+    patient = User.objects.get(id=patient_id)
+    sharing_patient = User.objects.get(id=sharing_patient_id)
+
+    sharing = SharingPatient.objects.get(shared=patient, sharing=sharing_patient)
+
+    problems_holder = ProblemSerializer(sharing.problems.all(), many=True).data
+
+    resp = {}
+    resp['sharing_problems'] = problems_holder
+
+    return ajax_response(resp)
+
+@login_required
+def remove_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
+    patient = User.objects.get(id=patient_id)
+    sharing_patient = User.objects.get(id=sharing_patient_id)
+
+    sharing = SharingPatient.objects.get(shared=patient, sharing=sharing_patient)
+
+    problem = Problem.objects.get(id=problem_id)
+
+    sharing.problems.remove(problem)
+
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+
+    activity = "Removed access for patient <b>%s</b> " % sharing_patient.username
+    add_problem_activity(problem, actor_profile, activity)
+
+    resp = {}
+    resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def add_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
+    patient = User.objects.get(id=patient_id)
+    sharing_patient = User.objects.get(id=sharing_patient_id)
+
+    sharing = SharingPatient.objects.get(shared=patient, sharing=sharing_patient)
+
+    problem = Problem.objects.get(id=problem_id)
+
+    sharing.problems.add(problem)
+
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+    activity = "Added access for patient <b>%s</b> " % sharing_patient.username
+    add_problem_activity(problem, actor_profile, activity)
+
+    resp = {}
+    resp['success'] = True
 
     return ajax_response(resp)

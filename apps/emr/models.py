@@ -90,11 +90,6 @@ class UserProfile(models.Model):
         return '%s' % (self.user.get_full_name())
 
 
-class SharingPatient(models.Model):
-    sharing = models.ForeignKey(User, related_name='patient_sharing')
-    shared = models.ForeignKey(User, related_name='patient_shared')
-
-
 # Many To Many Relation
 class PatientController(models.Model):
     patient = models.ForeignKey(User, related_name='patient_physicians')
@@ -150,6 +145,9 @@ class EncounterEvent(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     summary = models.TextField(default='')
 
+    is_favorite = models.BooleanField(default=False)
+    name_favorite = models.TextField(null=True, blank=True)
+
     def __unicode__(self):
         return unicode(self.summary)
 
@@ -204,6 +202,12 @@ class Problem(MPTTModel):
 
     def __unicode__(self):
         return '%s %s' % (self.patient, self.problem_name)
+
+
+class SharingPatient(models.Model):
+    sharing = models.ForeignKey(User, related_name='patient_sharing')
+    shared = models.ForeignKey(User, related_name='patient_shared')
+    problems = models.ManyToManyField(Problem, blank=True, related_name="sharing_problems")
 
 
 class ProblemOrder(models.Model):
@@ -298,6 +302,7 @@ class ToDo(models.Model):
     order = models.BigIntegerField(null=True, blank=True)
     members = models.ManyToManyField(UserProfile, blank=True)
     labels = models.ManyToManyField(Label, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo))

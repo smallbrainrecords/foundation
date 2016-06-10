@@ -77,6 +77,10 @@
 	</div>
 
 	<div class='panel-body'>
+		<a href="#/manage/sharing/" class='btn btn-sm btn-default'>
+            Manage
+        </a>
+
 		<h4>People I can access:</h4>
 		<table class='table'>
 			<thead>
@@ -91,9 +95,6 @@
 						<a href="/u/patient/manage/{{p.user.id}}" class='btn btn-sm btn-default'>
                             Access chart
                         </a>
-                        <a href="/u/patient/manage/{{p.user.id}}" class='btn btn-sm btn-default'>
-                            Manage
-                        </a>
 					</td>
 				</tr>
 			</tbody>
@@ -107,11 +108,11 @@
 				<th> Actions </th>
 			</thead>
 			<tbody>
-				<tr ng-repeat='p in shared_patients'>
+				<tr ng-repeat='p in sharing_patients'>
 					<td> {{p.user.first_name}} {{p.user.last_name}}
 					</td>
 					<td>
-                        <a href="/u/patient/manage/{{p.user.id}}" class='btn btn-sm btn-default'>
+                        <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
                             Manage
                         </a>
 					</td>
@@ -483,6 +484,48 @@
 		</li>
 		</ul>
 
+	</div>
+</div>
+
+<div class='panel panel-default' ng-init="favorites_collapse=false;">
+
+	<div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;"> 
+		<i class="fa fa-caret-down" aria-hidden="true" ng-if="favorites_collapse"></i>
+		<i class="fa fa-caret-right" aria-hidden="true" ng-if="!favorites_collapse"></i>
+		Favorites </div>
+
+	<div class='panel-body' style='max-height:325px; overflow:auto' ng-show="favorites_collapse">
+		<table class='table' ng-if='favorites.length>0'>
+			<thead>
+				<th> Time (24 hour) </th>
+				<th> Video Timestamp </th>
+				<th> Summary </th>
+				<th> Favorite </th>
+			</thead>
+			<tbody>
+				<tr ng-repeat='event in favorites' ng-init="event.is_named=false;">
+					<td> {{event.video_seconds }} 
+					</td>
+					<td> {{event.video_timestamp}} 
+					</td>
+					<td ng-bind-html='event.summary'>  </td>
+					<td>
+						<span ng-if="event.is_favorite">
+							<span ng-if="event.is_named">
+								<input type="text" ng-model="event.name_favorite">
+								<button class="btn btn-default" ng-click="nameFavoriteEvent(event)">Save</button>
+								<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Cancel</button>
+							</span>
+							<span ng-if="!event.is_named">
+								{{event.name_favorite}}
+								<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
+								<button class="btn btn-default" ng-click="unmarkFavoriteEvent(event)">Unmark favorite</button>
+							</span>
+						</span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
 </div>
 

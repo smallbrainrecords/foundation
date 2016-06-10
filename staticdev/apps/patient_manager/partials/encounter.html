@@ -1,3 +1,5 @@
+
+<toaster-container></toaster-container>
 <a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
 
 <hr>
@@ -94,6 +96,17 @@
 		</div>
 	</div>
 </div>
+<div class='row'>
+	<div class='col-md-8'>
+		<div class='form-group'>
+			<input class='form-control' ng-model='timestamp' placeholder='Add a timestamp....'/ > 
+		</div>
+
+		<button type='submit' class='btn btn-default' ng-click='add_timestamp()'>
+			Add a timestamp
+		</button>
+	</div>
+</div>
 
 <hr>
 
@@ -110,11 +123,12 @@
 		<th> Time (24 hour) </th>
 		<th> Video Timestamp </th>
 		<th> Summary </th>
+		<th></th>
 	</thead>
 
 	<tbody>
 
-		<tr ng-repeat='event in encounter_events'>
+		<tr ng-repeat='event in encounter_events' ng-init="event.is_named=false;">
 			<td> {{event.video_seconds }} 
 				<button class='btn btn-default' ng-video-player-jump video-seconds='{{event.video_seconds}}'> 
 					<i class='glyphicon glyphicon-play'></i>
@@ -124,6 +138,23 @@
 
 			</td>
 			<td ng-bind-html='event.summary'>  </td>
+			<td>
+				<span ng-if="event.is_favorite">
+					<span ng-if="event.is_named">
+						<input type="text" ng-model="event.name_favorite">
+						<button class="btn btn-default" ng-click="nameFavoriteEvent(event)">Save</button>
+						<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Cancel</button>
+					</span>
+					<span ng-if="!event.is_named">
+						{{event.name_favorite}}
+						<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
+						<button class="btn btn-default" ng-click="unmarkFavoriteEvent(event)">Unmark favorite</button>
+					</span>
+				</span>
+				<span ng-if="!event.is_favorite">
+					<button class="btn btn-default" ng-click="markFavoriteEvent(event)">Mark favorite</button>
+				</span>
+			</td>
 		</tr>
 	</tbody>
 
