@@ -230,6 +230,8 @@ def get_patient_info(request, patient_id):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         if team_members:
             user = team_members[0].physician
+        else:
+            user = request.user
     else:
         user = request.user
     try:

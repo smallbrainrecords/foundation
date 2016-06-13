@@ -186,6 +186,14 @@
 			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/add_sharing_problems';
 			return httpService.post(params, url);
 		};
+
+		this.updateProblemListNote = function(form){
+
+			var url = '/p/problem/'+form.list_id+'/update_problem_list_note';
+
+			return httpService.post(form, url);
+
+		};
 });
 
 

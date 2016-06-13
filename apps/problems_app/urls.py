@@ -54,6 +54,7 @@ urlpatterns = patterns(
     url(r'^problem/(?P<patient_id>\d+)/(?P<user_id>\d+)/new_list$', 'add_problem_list'),
     url(r'^problem/(?P<list_id>\d+)/deleteProblemList$', 'delete_problem_list'),
     url(r'^problem/(?P<list_id>\d+)/renameProblemList$', 'rename_problem_list'),
+    url(r'^problem/(?P<list_id>\d+)/update_problem_list_note$', 'update_problem_list_note'),
     url(r'^problem/(?P<patient_id>\d+)/(?P<user_id>\d+)/getLabeledProblemLists$', 'get_label_problem_lists'),
     url(r'^problem/(?P<patient_id>\d+)/getproblems$', 'get_problems'),
     url(r'^problem/(?P<patient_id>\d+)/(?P<sharing_patient_id>\d+)/get_sharing_problems$', 'get_sharing_problems'),

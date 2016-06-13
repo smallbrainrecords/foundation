@@ -262,6 +262,7 @@ class LabeledProblemList(models.Model):
     labels = models.ManyToManyField(ProblemLabel, blank=True)
     name = models.TextField()
     problem_list = ListField(null=True, blank=True)
+    note = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.name))

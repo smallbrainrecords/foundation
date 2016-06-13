@@ -130,4 +130,5 @@ class LabeledProblemListSerializer(serializers.ModelSerializer):
             'user',
             'patient',
             'labels',
+            'note',
             'name')

@@ -124,7 +124,7 @@
 </div>
 <hr>
 
-<div class='panel panel-default'>
+<div class='panel panel-default' ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
 
   <div class='panel-heading'> Labeled Problems Lists </div>
 
@@ -155,21 +155,38 @@
 <div class='panel panel-default' ng-repeat="list in problem_lists" ng-init="list.collapse=false;list.rename=false;">
 
   <div class='panel-heading' ng-click="set_collapse(list);"> 
-  	<i class="fa fa-caret-down" aria-hidden="true" ng-if="list.collapse"></i>
-  	<i class="fa fa-caret-right" aria-hidden="true" ng-if="!list.collapse"></i>
-  	<span ng-show="!list.rename"> {{list.name}} </span>
+  	<i class="fa fa-caret-down pull-left" aria-hidden="true" ng-if="list.collapse"></i>
+  	<i class="fa fa-caret-right pull-left" aria-hidden="true" ng-if="!list.collapse"></i>
+  	<span ng-show="!list.rename"> 
+  		<span class="quick-card-editor-label" ng-if="check_problem_list_controlled(list)">
+			<a class="todo-label todo-label-red"></a>
+		</span>
+  		{{list.name}} <span>({{list.problems.length}})</span>
+  		<span ng-if="check_problem_list_authenticated(list)">(not-authenticated)</span>
+  	</span>
   	<span ng-show="list.rename"> 
   		<input type="text" ng-model="list.name"> 
   		<button class="btn btn-default" ng-click="rename_list(list); $event.stopPropagation();">Save</button>
   		<button class="btn btn-default" ng-click="list.rename=!list.rename; $event.stopPropagation();">Cancel</button>
   	</span>
-	<span ng-show="list.collapse && !list.rename">
+	<span ng-show="list.collapse && !list.rename" ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
 		<a href class="btn btn-danger" ng-click="delete_list(list); $event.stopPropagation();">Delete</a>
 		<a href class="btn btn-primary" ng-click="list.rename=!list.rename; $event.stopPropagation();">Rename</a>
 	</span>
   </div>
 
   <div class='panel-body' ng-show="list.collapse">
+  	<div class='row'>
+		<div class='col-md-12'>
+			<textarea class='form-control' ng-model='list.note'></textarea>
+			<br>
+			<button class='btn btn-default' ng-click='update_problem_list_note(list)'>
+				Update
+			</button>
+		</div>
+	</div>
+	<br>
+
     <problem ng-model="list.problems" is-list="list.id"></problem>
   </div>
 </div>
@@ -234,7 +251,7 @@
 
     	<div>
     		<ul class='ul-clean' ui-sortable="sortableOptionsProblem" ng-model="problems" ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-				<li ng-repeat="problem in problems" ng-show="problem.is_active==true" ng-click='open_problem(problem)'>
+				<li ng-repeat="problem in problems" ng-show="problem.is_active==true && !inArray(problem_lists, problem)" ng-click='open_problem(problem)'>
 					<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 						{{problem.problem_name}} <span ng-show="problem.authenticated==false">(not authenticated)</span>
 						<!-- begin label -->
@@ -245,27 +262,26 @@
 					</div>
 				</li>
 			</ul>
-		<ul class='ul-clean' ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
-		<li  ng-repeat='problem in problems' ng-show="problem.is_active==true" ng-click='open_problem(problem)'>
-			
-			<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+			<ul class='ul-clean' ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
+				<li  ng-repeat='problem in problems' ng-show="problem.is_active==true && !inArray(problem_lists, problem)" ng-click='open_problem(problem)'>
+					
+					<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 
-				<a class='btn  btn-default btn-sm'  ng-click='open_problem(problem)'>
-					View
-				</a>
+						<a class='btn  btn-default btn-sm'  ng-click='open_problem(problem)'>
+							View
+						</a>
 
-				{{problem.problem_name}} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+						{{problem.problem_name}} <span ng-show="problem.authenticated==false">(not authenticated)</span>
 
-				<!-- begin label -->
-				<div class="quick-card-editor-label">
-					<a ng-repeat="label in problem.labels" class="todo-label" ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-				</div>
-				<!-- end label -->
-			</div>
-		</li>
-		</ul>
-	</div>
-
+						<!-- begin label -->
+						<div class="quick-card-editor-label">
+							<a ng-repeat="label in problem.labels" class="todo-label" ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
+						</div>
+						<!-- end label -->
+					</div>
+				</li>
+			</ul>
+		</div>
 
     </div>
 
@@ -273,7 +289,7 @@
 
     	<div style='max-height:375px; overflow-y:auto;'>
     		<ul class='ul-clean' ui-sortable="sortableOptionsProblem" ng-model="problems" ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-				<li ng-repeat="problem in problems" ng-show="problem.is_active==false" ng-click='open_problem(problem)'>
+				<li ng-repeat="problem in problems" ng-show="problem.is_active==false && !inArray(problem_lists, problem)" ng-click='open_problem(problem)'>
 					<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 						{{problem.problem_name}} <span ng-show="problem.authenticated==false">(not authenticated)</span>
 						<!-- begin label -->
@@ -285,23 +301,21 @@
 				</li>
 			</ul>
 
-		<ul class='ul-clean' ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
-		<li  ng-repeat='problem in problems'  ng-show="problem.is_active==false" ng-click='open_problem(problem)'>
-			
-			<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+			<ul class='ul-clean' ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
+				<li  ng-repeat='problem in problems'  ng-show="problem.is_active==false && !inArray(problem_lists, problem)" ng-click='open_problem(problem)'>
+					
+					<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 
-				{{problem.problem_name}} <span ng-show="problem.authenticated==false">(not authenticated)</span>
-				<!-- begin label -->
-				<div class="quick-card-editor-label">
-					<a ng-repeat="label in problem.labels" class="todo-label" ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-				</div>
-				<!-- end label -->
-			</div>
-		</li>
-		</ul>
-	</div>
-
-
+						{{problem.problem_name}} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+						<!-- begin label -->
+						<div class="quick-card-editor-label">
+							<a ng-repeat="label in problem.labels" class="todo-label" ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
+						</div>
+						<!-- end label -->
+					</div>
+				</li>
+			</ul>
+		</div>
     </div>
 
 

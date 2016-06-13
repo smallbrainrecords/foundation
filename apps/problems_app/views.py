@@ -18,7 +18,7 @@ from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment
 from emr.models import EncounterProblemRecord, Encounter
-from emr.models import Observation, SharingPatient
+from emr.models import Observation, SharingPatient, PhysicianTeam
 
 from emr.operations import op_add_event, op_add_todo_event
 
@@ -386,12 +386,7 @@ def update_problem_status(request, problem_id):
 
     physician = request.user
 
-    summary = """
-        Changed <u>problem</u>: <b>%(problem_name)s</b> status to :
-        <b>%(is_controlled)s</b> ,
-        <b>%(is_active)s</b> ,
-        <b>%(authenticated)s</b>
-    """ % status_labels
+    summary = """Changed <u>problem</u>: <b>%(problem_name)s</b> status to : <b>%(is_controlled)s</b> ,<b>%(is_active)s</b> ,<b>%(authenticated)s</b>""" % status_labels
     op_add_event(physician, patient, summary, problem)
 
     activity = summary
@@ -1198,6 +1193,12 @@ def get_label_problem_lists(request, patient_id, user_id):
     resp = {}
     patient = User.objects.get(id=patient_id)
     user = User.objects.get(id=user_id)
+
+    if user.profile.role == 'nurse' or user.profile.role == 'secretary':
+        team_members = PhysicianTeam.objects.filter(member=user)
+        if team_members:
+            user = team_members[0].physician
+   
     lists = LabeledProblemList.objects.filter(user=user, patient=patient)
     lists_holder = []
     for label_list in lists:
@@ -1341,5 +1342,27 @@ def add_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
 
     resp = {}
     resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def update_problem_list_note(request, list_id):
+    resp = {}
+    resp['success'] = False
+    permissions = ['add_problem_label']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        problem_list = LabeledProblemList.objects.get(id=list_id)
+        problem_list.note = request.POST.get('note')
+        problem_list.save()
+
+        activity = '"%s" was added to the folder "%s"' % (problem_list.note, problem_list.name)
+
+        physician = request.user
+        patient = problem_list.patient
+        op_add_event(physician, patient, activity)
+
+        resp['success'] = True
 
     return ajax_response(resp)

@@ -506,6 +506,52 @@
                 
 			};
 
+			$scope.update_problem_list_note = function(list){
+
+				var form = {
+					'list_id': list.id,
+					'note' : list.note
+				};
+
+				problemService.updateProblemListNote(form).then(function(data){
+					toaster.pop('success', 'Done', 'Problem list note updated!');
+				});
+
+			};
+
+			$scope.check_problem_list_authenticated = function(list) {
+				var is_existed = false;
+	            angular.forEach(list.problems, function(value, key) {
+	                if (!value.authenticated) {
+	                    is_existed = true;
+	                }
+	            });
+	            return is_existed;
+			};
+
+			$scope.check_problem_list_controlled = function(list) {
+				var is_existed = false;
+	            angular.forEach(list.problems, function(value, key) {
+	                if (!value.is_controlled) {
+	                    is_existed = true;
+	                }
+	            });
+	            return is_existed;
+			};
+
+			$scope.inArray = function(array, item) {
+				var is_existed = false;
+	            angular.forEach(array, function(list, key2) {
+	            	angular.forEach(list.problems, function(value, key) {
+		                if (value.id == item.id) {
+		                    is_existed = true;
+		                }
+		            });
+	            });
+	            return is_existed;
+			}
+
+			// note on header of page
 			$scope.update_patient_note = function(){
 
 				var form = {
