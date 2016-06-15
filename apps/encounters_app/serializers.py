@@ -35,5 +35,6 @@ class EncounterEventSerializer(serializers.ModelSerializer):
             'summary',
             'video_seconds',
             'video_timestamp',
+            'timestamp',
             'is_favorite',
             'name_favorite', )

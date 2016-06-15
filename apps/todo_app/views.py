@@ -854,6 +854,7 @@ def add_staff_todo_list(request, user_id):
             todos_holder.append(todo_dict)
 
         new_list_dict['todos'] = todos_holder
+        new_list_dict['expanded'] = new_list.expanded
 
         resp['new_list'] = new_list_dict
         resp['success'] = True
@@ -890,6 +891,7 @@ def get_user_label_lists(request, user_id):
             todos_holder.append(todo_dict)
 
         list_dict['todos'] = todos_holder
+        list_dict['expanded'] = label_list.expanded
         lists_holder.append(list_dict)
         
     resp['todo_lists'] = lists_holder
@@ -922,9 +924,33 @@ def staff_all_todos(request, user_id):
     patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
     patient_ids = [long(x.patient.id) for x in patient_controllers]
 
-    todos = ToDo.objects.filter(patient__id__in=patient_ids, due_date__lte=datetime.now()).order_by('-due_date')
+    todos = ToDo.objects.filter(accomplished=False, patient__id__in=patient_ids, due_date__lte=datetime.now()).order_by('-due_date')
     todos_list = TodoSerializer(todos, many=True).data
 
     resp['all_todos_list'] = todos_list
+
+    return ajax_response(resp)
+
+@login_required
+def open_todo_list(request, list_id):
+    resp = {}
+    resp['success'] = False
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        todo_list = LabeledToDoList.objects.get(id=list_id)
+        expanded = todo_list.expanded
+        datas = json.loads(request.body)
+        todos = datas['todos']
+
+        for todo in todos:
+            if not todo['id'] in expanded:
+                expanded.append(todo['id'])
+
+        todo_list.expanded = expanded
+        todo_list.save()
+
+        resp['success'] = True
 
     return ajax_response(resp)

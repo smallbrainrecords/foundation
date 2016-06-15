@@ -20,7 +20,7 @@ def home(request):
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
 
-    if not actor_profile.role == 'admin':
+    if actor_profile.role == 'patient':
         return HttpResponseRedirect('/')
 
     content = {}

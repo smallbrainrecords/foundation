@@ -62,6 +62,36 @@
 			return httpService.post(form, url);
 		};
 
+		this.getSharingPatients = function(patient_id){
+			var form = {};
+			var url = '/u/sharing_patients/' + patient_id;
+			return httpService.post(form, url);
+		};
+
+		this.addSharingPatient = function(form){
+			var url = '/u/patient/add_sharing_patient/' + form.patient_id + '/' + form.sharing_patient_id;
+			return httpService.post(form, url);
+		};
+
+		this.removeSharingPatient = function(patient_id, sharing_patient_id){
+			var form = {};
+			var url = '/u/patient/remove_sharing_patient/' + patient_id + '/' + sharing_patient_id;
+			return httpService.post(form, url);
+		};
+
+		this.getUserInfo = function(user_id){
+
+			var params = {};
+			var url = '/u/user_info/'+user_id+'/info/';
+			return httpService.get(params, url);
+
+		};
+
+		this.openTodoList = function(form){
+			var url = '/todo/todo/'+form.list_id+'/open_todo_list';
+			return httpService.postJson(form, url);
+		};
+
 	});
 
 })();

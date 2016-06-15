@@ -218,13 +218,6 @@ def get_patient_info(request, patient_id):
         problem.patient = patient_user
         problem.save()
 
-    # Timeline Problems
-    timeline_problems = Problem.objects.filter(patient=patient_user)
-    timeline_problems_list = []
-    for problem in timeline_problems:
-        problem_dict = ProblemSerializer(problem).data
-        timeline_problems_list.append(problem_dict)
-
     # Active Problems 
     if request.user.profile.role == 'nurse' or request.user.profile.role == 'secretary':
         team_members = PhysicianTeam.objects.filter(member=request.user)
@@ -293,31 +286,6 @@ def get_patient_info(request, patient_id):
         goal_dict = GoalSerializer(goal).data
         completed_goals_list.append(goal_dict)
 
-    # Not accomplished Todos
-    pending_todos = ToDo.objects.filter(
-        patient=patient_user, accomplished=False).order_by('order')
-    pending_todo_list = []
-    for todo in pending_todos:
-        todo_dict = TodoSerializer(todo).data
-        pending_todo_list.append(todo_dict)
-
-    # Accomplished Todos
-    accomplished_todos = ToDo.objects.filter(
-        patient=patient_user, accomplished=True).order_by('order')
-    accomplished_todo_list = []
-    for todo in accomplished_todos:
-        todo_dict = TodoSerializer(todo).data
-        accomplished_todo_list.append(todo_dict)
-
-
-    # Todos
-    problem_todos = ToDo.objects.filter(
-        patient=patient_user).order_by('order')
-    problem_todos_list = []
-    for todo in problem_todos:
-        todo_dict = TodoSerializer(todo).data
-        problem_todos_list.append(todo_dict)
-
     # encounters
     encounters = Encounter.objects.filter(
         patient=patient_user).order_by('-starttime')
@@ -376,19 +344,68 @@ def get_patient_info(request, patient_id):
     resp['info'] = patient_profile_dict
     resp['problems'] = problem_list
     resp['goals'] = goal_list
-    resp['pending_todos'] = pending_todo_list
-    resp['accomplished_todos'] = accomplished_todo_list
-    resp['problem_todos'] = problem_todos_list
     resp['inactive_problems'] = inactive_problems_list
-    resp['timeline_problems'] = timeline_problems_list
     resp['completed_goals'] = completed_goals_list
-
     resp['encounters'] = encounter_list
     resp['favorites'] = favorites_list
     resp['most_recent_encounter_summarries'] = most_recent_encounter_summarries
     resp['most_recent_encounter_related_problems'] = related_problem_holder
     resp['shared_patients'] = patients_list
     resp['sharing_patients'] = sharing_patients_list
+    return ajax_response(resp)
+
+@login_required
+def get_timeline_info(request, patient_id):
+
+    patient_user = User.objects.get(id=patient_id)
+    patient_profile = UserProfile.objects.get(user=patient_user)
+
+    # Timeline Problems
+    timeline_problems = Problem.objects.filter(patient=patient_user)
+    timeline_problems_list = []
+    for problem in timeline_problems:
+        problem_dict = ProblemSerializer(problem).data
+        timeline_problems_list.append(problem_dict)
+
+    resp = {}
+    resp['timeline_problems'] = timeline_problems_list
+    return ajax_response(resp)
+
+@login_required
+def get_patient_todos_info(request, patient_id):
+
+    patient_user = User.objects.get(id=patient_id)
+    patient_profile = UserProfile.objects.get(user=patient_user)
+
+    # Not accomplished Todos
+    pending_todos = ToDo.objects.filter(
+        patient=patient_user, accomplished=False).order_by('order')
+    pending_todo_list = []
+    for todo in pending_todos:
+        todo_dict = TodoSerializer(todo).data
+        pending_todo_list.append(todo_dict)
+
+    # Accomplished Todos
+    accomplished_todos = ToDo.objects.filter(
+        patient=patient_user, accomplished=True).order_by('order')
+    accomplished_todo_list = []
+    for todo in accomplished_todos:
+        todo_dict = TodoSerializer(todo).data
+        accomplished_todo_list.append(todo_dict)
+
+
+    # Todos
+    problem_todos = ToDo.objects.filter(
+        patient=patient_user).order_by('order')
+    problem_todos_list = []
+    for todo in problem_todos:
+        todo_dict = TodoSerializer(todo).data
+        problem_todos_list.append(todo_dict)
+
+    resp = {}
+    resp['pending_todos'] = pending_todo_list
+    resp['accomplished_todos'] = accomplished_todo_list
+    resp['problem_todos'] = problem_todos_list
     return ajax_response(resp)
 
 
@@ -745,7 +762,7 @@ def get_todos_physicians(request, user_id):
     patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
     patient_ids = [long(x.patient.id) for x in patient_controllers]
 
-    todos = ToDo.objects.filter(patient__id__in=patient_ids, created_on__gte=datetime.datetime.now()-datetime.timedelta(hours=24)).order_by('created_on')
+    todos = ToDo.objects.filter(accomplished=False, patient__id__in=patient_ids, created_on__gte=datetime.datetime.now()-datetime.timedelta(hours=24)).order_by('created_on')
     todos_list = TodoSerializer(todos, many=True).data
 
     resp['new_generated_todos_list'] = todos_list

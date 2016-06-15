@@ -32,4 +32,5 @@ urlpatterns = patterns('todo_app.views',
     url(r'^todo/saveEditLabel/(?P<label_id>\d+)$', 'save_edit_label'),
     url(r'^todo/user_todos/(?P<user_id>\d+)$', 'get_user_todos'),
     url(r'^todo/(?P<list_id>\d+)/deleteTodoList$', 'delete_todo_list'),
+    url(r'^todo/(?P<list_id>\d+)/open_todo_list$', 'open_todo_list'),
 )

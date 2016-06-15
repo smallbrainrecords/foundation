@@ -69,7 +69,7 @@
 
 		<div ng-show='encounter.audio!=null '>
 			<strong> Encounter Audio </strong>
-			<div ng-audio-player audio-src="/media/29/jalma%20resham%20filili%20by%20dj%20himal.mp3" audio-type="audio/mpeg">
+			<div ng-audio-player audio-src="encounter.audio" audio-type="audio/mpeg">
 			</div>
 
 
@@ -98,13 +98,18 @@
 </div>
 <div class='row'>
 	<div class='col-md-8'>
-		<div class='form-group'>
-			<input class='form-control' ng-model='timestamp' placeholder='Add a timestamp....'/ > 
-		</div>
+		<form name="myForm">
+			<div class='form-group'>
+				<input class="form-control" ng-model="timestamp" placeholder='Add a timestamp....'>
+			</div>
+			<div class='form-group'>
+				<input class='form-control' ng-model='summary' placeholder='Add a summary....'/ > 
+			</div>
 
-		<button type='submit' class='btn btn-default' ng-click='add_timestamp()'>
-			Add a timestamp
-		</button>
+			<button type='submit' class='btn btn-default' ng-click='add_timestamp(timestamp)'>
+				Add a timestamp
+			</button>
+		</form>
 	</div>
 </div>
 
@@ -130,9 +135,16 @@
 
 		<tr ng-repeat='event in encounter_events' ng-init="event.is_named=false;">
 			<td> {{event.video_seconds }} 
-				<button class='btn btn-default' ng-video-player-jump video-seconds='{{event.video_seconds}}'> 
-					<i class='glyphicon glyphicon-play'></i>
-				</button>
+				<span ng-if="encounter.video && !encounter.audio">
+					<button class='btn btn-default' ng-video-player-jump video-seconds='{{event.video_seconds}}'> 
+						<i class='glyphicon glyphicon-play'></i>
+					</button>
+				</span>
+				<span ng-if="encounter.audio">
+					<button class='btn btn-default' ng-audio-player-jump audio-seconds='{{event.video_seconds}}'> 
+						<i class='glyphicon glyphicon-play'></i>
+					</button>
+				</span>
 			</td>
 			<td> {{event.video_timestamp}} 
 

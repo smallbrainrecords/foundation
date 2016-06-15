@@ -42,6 +42,14 @@
                 $scope.problems_ready = true;
             });
 
+            patientService.fetchPatientTodos(patient_id).then(function(data){
+				$scope.pending_todos = data['pending_todos'];
+				$scope.accomplished_todos = data['accomplished_todos'];
+				$scope.problem_todos = data['problem_todos'];
+
+				$scope.todos_ready = true;
+			});
+
 	  		function convertDateTime(problem){
 				if(problem.start_date) {
 					var dateTime = problem.start_date;
@@ -134,15 +142,37 @@
 				});
 			};
 
+			$scope.fetchTimeLineProblem = function(data) {
+
+				patientService.fetchTimeLineProblem(patient_id).then(function(data2){
+					var timeline_problems = [];
+					angular.forEach(data2['timeline_problems'], function(value, key) {
+
+	                    if (value.problem_segment) {
+	                    	var timeline_problem = parseTimelineWithSegment(value);
+	                    } else {
+	                    	var timeline_problem = parseTimelineWithoutSegment(value);
+	                    }
+					  	timeline_problems.push(timeline_problem);
+					});
+
+					$scope.timeline = {
+						Name: data['info']['user']['first_name'] + data['info']['user']['last_name'], 
+						birthday: convertDateTimeBirthday(data['info']['date_of_birth']), 
+						problems: timeline_problems
+					};
+
+					$scope.timeline_changed = true;
+				});
+			}
+
 			patientService.fetchPatientInfo(patient_id).then(function(data){
 				$scope.patient_info = data['info'];
 				$scope.problems = data['problems'];
 				$scope.inactive_problems = data['inactive_problems'];
 				$scope.goals = data['goals'];
 				$scope.completed_goals = data['completed_goals'];
-				$scope.pending_todos = data['pending_todos'];
-				$scope.accomplished_todos = data['accomplished_todos'];
-				$scope.problem_todos = data['problem_todos'];
+				
 				$scope.encounters = data['encounters'];
 				$scope.favorites = data['favorites'];
 				$scope.most_recent_encounter_summarries = data['most_recent_encounter_summarries'];
@@ -151,26 +181,8 @@
 				$scope.sharing_patients = data['sharing_patients'];
 
 				// problem timeline
-				var timeline_problems = [];
-				angular.forEach(data['timeline_problems'], function(value, key) {
-
-                    if (value.problem_segment) {
-                    	var timeline_problem = parseTimelineWithSegment(value);
-                    } else {
-                    	var timeline_problem = parseTimelineWithoutSegment(value);
-                    }
-				  	timeline_problems.push(timeline_problem);
-				});
-
-				$scope.timeline = {
-					Name: data['info']['user']['first_name'] + data['info']['user']['last_name'], 
-					birthday: convertDateTimeBirthday(data['info']['date_of_birth']), 
-					problems: timeline_problems
-				};
-
-				$scope.timeline_changed = true;
-
-				$scope.todos_ready = true;
+				$scope.fetchTimeLineProblem(data);
+				
 
 				var tmpListProblem = $scope.problems;
 
@@ -603,7 +615,10 @@
 			    if ($scope.most_recent_encounter_summarries.length > 0) {
 			    	text += "All the encounter summaries from the most recent encounter: \r\n";
 			    	angular.forEach($scope.most_recent_encounter_summarries, function(value, key) {
-						text += value + '\r\n';
+			    		var container = $("<div/>");
+			    		container.append(value);
+
+						text += container.text() + '\r\n';
 					});
 					text += '\r\n';
 			    }

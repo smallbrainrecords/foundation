@@ -148,11 +148,16 @@ class EncounterEvent(models.Model):
     is_favorite = models.BooleanField(default=False)
     name_favorite = models.TextField(null=True, blank=True)
 
+    timestamp = models.DateTimeField(null=True, blank=True)
+
     def __unicode__(self):
         return unicode(self.summary)
 
     def video_seconds(self):
-        time_diff = self.datetime - self.encounter.starttime
+        if self.timestamp:
+            time_diff = self.timestamp - self.encounter.starttime
+        else:
+            time_diff = self.datetime - self.encounter.starttime
         x = int(time_diff.total_seconds())
         return x
 
@@ -163,7 +168,6 @@ class EncounterEvent(models.Model):
         if s < 10:
             s = '0' + str(s)
         return '%s:%s' % (h, s)
-
 
 class TextNote(models.Model):
 
@@ -323,6 +327,7 @@ class LabeledToDoList(models.Model):
     labels = models.ManyToManyField(Label, blank=True)
     name = models.TextField()
     todo_list = ListField(null=True, blank=True)
+    expanded = ListField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.name))

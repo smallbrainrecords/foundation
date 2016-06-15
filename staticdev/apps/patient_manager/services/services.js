@@ -23,6 +23,25 @@
 
 		};
 
+		this.fetchTimeLineProblem = function(patient_id){
+
+			var params = {};
+			var url = '/u/patient/'+patient_id+'/timelineinfo';
+
+			return httpService.get(params, url);
+
+		};
+
+		this.fetchPatientTodos = function(patient_id){
+
+			var params = {};
+			var url = '/u/patient/'+patient_id+'/patient_todos_info';
+
+			return httpService.get(params, url);
+
+		};
+
+
 
 		this.fetchProblemInfo = function(problem_id){
 

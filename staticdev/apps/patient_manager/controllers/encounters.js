@@ -72,15 +72,20 @@
                  	});
 		};
 
-            $scope.add_timestamp = function(){
+            $scope.add_timestamp = function(timestamp){
 
                   var form = {};
                   form.encounter_id = $scope.encounter_id;
                   form.patient_id = $scope.patient_id;
-                  form.timestamp = $scope.timestamp;
+                  form.timestamp = timestamp;
+                  form.summary = $scope.summary;
                   encounterService.addTimestamp(form).then(function(data){
-                        $scope.encounter_events.push(data['encounter_event']);
-                        toaster.pop('success', 'Done', 'Added timestamp!');
+                        if(data['success'] == true){
+                              $scope.encounter_events.push(data['encounter_event']);
+                              toaster.pop('success', 'Done', 'Added timestamp!');
+                        } else {
+                              toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
 
                   });
 

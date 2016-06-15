@@ -152,6 +152,38 @@
 			    return -number;
 			};
 
+			$scope.getNewTodos = function(list) {
+				var number = 0;
+				angular.forEach(list.todos, function(value, key) {
+                    if (list.expanded.indexOf(value.id) == -1) {
+                        number += 1;
+                    }
+                });
+                
+				return number;
+			};
+
+			$scope.openTodoList = function(list) {
+				list.collapse = !list.collapse;
+				if (list.collapse) {
+					var form = {};
+					form.list_id = list.id;
+					form.todos = list.todos;
+
+					var is_existed = false;
+					angular.forEach(list.todos, function(value, key) {
+	                    if (list.expanded.indexOf(value.id) == -1) {
+	                        list.expanded.push(value.id);
+	                        is_existed = true;
+	                    }
+	                });
+
+					if (is_existed) {
+						staffService.openTodoList(form).then(function(data){});
+					}
+				}
+			}
+
 
 			$scope.init();
 

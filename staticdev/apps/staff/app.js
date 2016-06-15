@@ -19,6 +19,16 @@
             .when("/todo/:todo_id", {
                 templateUrl: '/static/apps/staff/partials/todo.html',
                 controller: 'TodoCtrl'
+            })
+            .when('/manage/sharing', {
+
+                templateUrl: '/static/apps/admin/partials/manage_sharing.html',
+                controller: 'ManageSharingCtrl'
+            })
+            .when('/manage/sharing/:patientId', {
+
+                templateUrl: '/static/apps/admin/partials/manage_sharing_patient.html',
+                controller: 'ManageSharingPatientCtrl'
             });
 
 
