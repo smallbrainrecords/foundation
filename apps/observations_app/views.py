@@ -186,6 +186,9 @@ def add_value(request, observation_id):
 
         add_problem_activity(component.observation.problem, actor_profile, summary)
 
+        summary = "An A1C value of <b>%s</b> was entered" % (component.value_quantity)
+        op_add_event(request.user, observation.problem.patient, summary, observation.problem)
+
     return ajax_response(resp)
 
 @login_required

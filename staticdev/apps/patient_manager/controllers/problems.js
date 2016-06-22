@@ -48,10 +48,10 @@
 			function convertDateTime(problem){
 				if(problem.start_date) {
 					var dateTime = problem.start_date;
-					var date = dateTime.split("-");
-				    var yyyy = date[0];
-				    var mm = date[1];
-				    var dd = date[2];
+					var date = dateTime.split("/");
+				    var yyyy = date[2];
+				    var mm = date[0];
+				    var dd = date[1];
 
 				    if (problem.start_time) {
 				    	return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
@@ -81,9 +81,9 @@
 				    var mm = date[1];
 				    var dd = date[0];
 
-				    return yyyy + '-' + mm + '-' + dd;
+				    return mm + '/' + dd + '/' + yyyy;
 				}
-			    return '1970-11-30';
+			    return '11-30-1970';
 			}
 
 			function getTimelineWidgetState(problem) {

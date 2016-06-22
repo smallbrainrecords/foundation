@@ -232,7 +232,6 @@ def create_user(request):
         form = CreateUserForm(request.POST, request.FILES)
 
         if form.is_valid():
-            # logging.error('valid form')
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
             username = form.cleaned_data['username']
@@ -310,6 +309,18 @@ def create_user(request):
                                 physician=actor,
                                 author=True)
                             patient_controller.save()
+
+                        if actor_profile.role == 'mid-level' or actor_profile.role == 'nurse' or actor_profile.role == 'secretary':
+                            teams = PhysicianTeam.objects.filter(member=actor)
+                            physician_ids = [x.physician.id for x in teams]
+
+                            physicians = User.objects.filter(id__in=physician_ids)
+                            for physician in physicians:
+                                patient_controller = PatientController(
+                                    patient=new_user,
+                                    physician=physician,
+                                    author=True)
+                                patient_controller.save()
 
                     success = True
 

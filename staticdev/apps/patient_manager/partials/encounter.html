@@ -10,75 +10,50 @@
 <link href="//vjs.zencdn.net/4.12/video-js.css" rel="stylesheet">
 <script src="//vjs.zencdn.net/4.12/video.js"></script>
 
-
-
-
 <div class='row'>
-
 	<div class='col-md-4'>
-<form class='form' ng-show='permitted(["add_encounter"])'>
-
-	<div class='form-group'>
-		<label> Note </label>
-	</div>
-
-	<div class='form-group'>
-		<textarea style='height:275px;' class='form-control' ng-model='encounter.note' placeholder='Add a note....'></textarea > 
-	</div>
-
-	<button type='submit' class='btn btn-default' ng-click='update_note()'>
-		Update
-	</button>
-
-
-</form>
+		<form class='form' ng-show='permitted(["add_encounter"])'>
+			<div class='form-group'>
+				<label> Note </label>
+			</div>
+			<div class='form-group'>
+				<textarea style='height:275px;' class='form-control' ng-model='encounter.note' placeholder='Add a note....'></textarea > 
+			</div>
+			<button type='submit' class='btn btn-default' ng-click='update_note()'>
+				Update
+			</button>
+		</form>
 	</div>
 
 	<div class='col-md-8'>
-
 		<div ng-show='encounter.video!=null'>
 			<strong> Encounter Video </strong>
-
-
 			<div  video-id='video1' ng-video-player video-src="encounter.video" video-type='video/mp4' >
 
 			</div>
-
-
-
-
 		</div>
 		<div ng-show='encounter.video==null && permitted(["add_encounter"])'>
-
 			<form class='form' ng-submit='upload_video()'>
 
 				<div class='form-group'>
 					<label for="video_file">Video File:</label>
 					<input type="file" file-model='video_file'>
 				</div>
-
 				<div class='form-group'>
 					<button type='submit' class='btn btn-default'>
 						Upload
 					</button>
 				</div>
-
 			</form>
-
 		</div>
 
 		<div ng-show='encounter.audio!=null '>
 			<strong> Encounter Audio </strong>
 			<div ng-audio-player audio-src="encounter.audio" audio-type="audio/mpeg">
 			</div>
-
-
 		</div>
 		<div ng-show='encounter.audio==null  && permitted(["add_encounter"]) '>
-
-
 			<form class='form' ng-submit='upload_audio()'>
-
 				<div class='form-group'>
 					<label for="audio_file">Audio File:</label>
 					<input type="file" file-model='audio_file'>
@@ -89,10 +64,7 @@
 						Upload
 					</button>
 				</div>
-
 			</form>
-
-
 		</div>
 	</div>
 </div>
@@ -122,7 +94,6 @@
 </center>
 
 <table class='table' ng-if='encounter_events.length>0'>
-
 	<thead>
 
 		<th> Time (24 hour) </th>
@@ -132,7 +103,6 @@
 	</thead>
 
 	<tbody>
-
 		<tr ng-repeat='event in encounter_events' ng-init="event.is_named=false;">
 			<td> {{event.video_seconds }} 
 				<span ng-if="encounter.video && !encounter.audio">
@@ -146,8 +116,8 @@
 					</button>
 				</span>
 			</td>
-			<td> {{event.video_timestamp}} 
-
+			<td> 
+				{{event.video_timestamp}}
 			</td>
 			<td ng-bind-html='event.summary'>  </td>
 			<td>
@@ -169,7 +139,6 @@
 			</td>
 		</tr>
 	</tbody>
-
 </table>
 
 

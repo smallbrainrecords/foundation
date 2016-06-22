@@ -30,9 +30,7 @@
 				<br>
 				<b> Username </b>:  {{user.username}}
 				<br>
-				{% if user_profile.role == 'physician' %}
 					<a class='btn btn-default' href='/project/admin/#/add/user'>Add User</a>
-				{% endif %}
 				</br>
 				</br>
 		        <a class='btn btn-default' href='/#/manage/sharing'>
@@ -98,12 +96,7 @@
 						{% endfor %}
 					</tbody>
 				</table>
-
-
 			</div>
-
-
-
 		</div>
 		{% endif %}
 

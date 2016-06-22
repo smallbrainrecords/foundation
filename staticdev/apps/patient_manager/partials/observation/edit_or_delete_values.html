@@ -33,8 +33,8 @@
 							<td> {{component.value_quantity| number:1 }} </td>
 							<td> {{component.effective_datetime|date:'M/d/yyyy'}} </td>
 							<td> 
-								<a href="#/observation_component/{{component.id}}/edit_value">Edit</a>
-								<a href ng-click="deleteValue(component)" ng-if="active_user.role == 'physician' || active_user.role == 'admin'">Delete</a>
+								<a href="#/observation_component/{{component.id}}/edit_value" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == component.author.id)">Edit</a>
+								<a href ng-click="deleteValue(component)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == component.author.id)">Delete</a>
 						 	</td>
 						</tr>
 					</tbody>

@@ -80,24 +80,16 @@ Problem  : <b> {{goal.problem.problem_name}} </b>
 <b> Motivation notes for this goal: </b>
 <hr>
 <div ng-show='permitted(["modify_goal"])'>
-	
-
-
-
 	<textarea class='form-control' ng-model='new_note' placeholder='Add note...'></textarea>
 	<hr>
 	<button class='btn btn-default' ng-click='update_motivation()'>
 		Submit
 	</button>
-
 </div>
-
 
 <p>
 	<ul class='ul-clean'>
-
-		<li ng-repeat='note in goal_notes'>
-			{{note.note}}
-		</li>
-
+	<li ng-repeat='note in goal_notes'>
+		{{note.note}}
+	</li>
 </p>

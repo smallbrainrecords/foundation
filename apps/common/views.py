@@ -47,3 +47,6 @@ def ajax_response(resp):
 
 def get_date(date_string):
 	return datetime.strptime(date_string, "%Y-%m-%d").date()
+
+def get_new_date(date_string):
+	return datetime.strptime(date_string, "%m/%d/%Y").date()

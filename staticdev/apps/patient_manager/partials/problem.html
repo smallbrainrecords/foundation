@@ -35,14 +35,17 @@
 
 <div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"' ng-init="edit_problem=false;create_problem_label=false;">
 	<div class="todo">
-		<h4 ng-show="!edit_problem">  Problem : {{problem.problem_name}} <span ng-if="problem && !problem.authenticated">(not authenticated)</span> 
+		<h4 ng-show="!edit_problem">  
+			Problem : {{problem.problem_name}} 
+			<span ng-if="problem && !problem.authenticated">(not authenticated)</span> 
+			<!-- begin label -->
+			<span class="quick-card-editor-label">
+				<a ng-repeat="label in problem.labels" href class="todo-label" ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
+			</span>
+			<!-- end label -->
 			<a href class="btn-custom" ng-click="edit_problem=!edit_problem"><i class="fa fa-pencil"></i></a>
 		</h4>
-		<!-- begin label -->
-		<div class="quick-card-editor-label">
-			<a ng-repeat="label in problem.labels" href class="todo-label" ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-		</div>
-		<!-- end label -->
+		
 		<!-- begin change item -->
 		<div class="quick-card-editor" id="main-menu" ng-show='edit_problem' >
 
@@ -51,24 +54,23 @@
 				<div class='row' ng-show='permitted(["change_problem_name"])'>
 					<div class='col-md-12'>
 					
-							<input type='text' ng-model='problem_term' class='form-control' id='problemTermInput' placeholder='Search Problem....'>
-							<button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
+						<input type='text' ng-model='problem_term' class='form-control' id='problemTermInput' placeholder='Search Problem....'>
+						<button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
+							Change Problem
+						</button>
+
+						<div ng-show='new_problem.set==true'>
+							<hr>
+							<label> {{new_problem.code}} </label>
+							{{new_problem.term}} <br>
+							<button class='btn btn-sm btn-default' ng-click='change_problem_name()'>
 								Change Problem
 							</button>
-							
-
-							<div ng-show='new_problem.set==true'>
-								<hr>
-								<label> {{new_problem.code}} </label>
-								{{new_problem.term}} <br>
-								<button class='btn btn-sm btn-default' ng-click='change_problem_name()'>
-									Change Problem
-								</button>
-								<button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
-									Cancel
-								</button>
-								<hr>
-							</div>
+							<button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
+								Cancel
+							</button>
+							<hr>
+						</div>
 
 					</div>
 					<div class='col-md-12'  style='max-height:375px; overflow-y:auto;'>
@@ -145,68 +147,53 @@
 
 	<div class='col-md-8'>
 
+		<div class='panel panel-default'>
 
-<div class='panel panel-default'>
+			<div class='panel-heading'>Status</div>
 
-	<div class='panel-heading'>Status</div>
+			<div class='panel-body'>
+				<div class='row'>
+					<div class='col-md-4'>
+						<label><input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'> 
+						Is controlled</label>
+					</div>
+					<div class='col-md-4'>
+						<input type='checkbox' ng-model='problem.authenticated' ng-disabled='!permitted(["set_problem_authenticated"])'>
+						Is authenticated
+					</div>
+					<div class='col-md-4'>
+						<input type='checkbox' ng-model='problem.is_active'  ng-disabled='!permitted(["set_problem_active"])'>
+						Is active
+					</div>
+				</div>
+			</div>
 
-	<div class='panel-body'>
-
-
-<div class='row'>
-	<div class='col-md-4'>
-		<label><input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'> 
-		Is controlled</label>
-	</div>
-	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.authenticated' ng-disabled='!permitted(["set_problem_authenticated"])'>
-		Is authenticated
-	</div>
-	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_active'  ng-disabled='!permitted(["set_problem_active"])'>
-		Is active
-	</div>
-</div>
-
-
-
-	</div>
-
-</div>
-
-
-
+		</div>
 	</div>
 	<div class='col-md-4'>
 
-<div class='panel panel-default'>
+		<div class='panel panel-default'>
 
-	<div class='panel-heading'>Start Date</div>
+			<div class='panel-heading'>Start Date</div>
 
-	<div class='panel-body'>
+			<div class='panel-body'>
 
-		<form class='form form-inline' >
+				<form class='form form-inline' >
 
-			<div class='form-group'>
-				<input type='text' class='form-control' ng-model='problem.start_date'>
+					<div class='form-group'>
+						<input type='text' class='form-control' ng-model='problem.start_date' id="start_date">
+					</div>
+					<div class='form-group'>
+						<button ng-click='update_start_date()' class='btn btn-default' ng-show='permitted(["modify_problem"])'> Update </button>
+					</div>	
+				</form>
 
 			</div>
-			<div class='form-group'>
-				<button ng-click='update_start_date()' class='btn btn-default' ng-show='permitted(["modify_problem"])'> Update </button>
-			</div>	
-		</form>
-
+		</div>
 	</div>
-
-
-	</div>
-
-</div>
-
 </div>
 
 <div class='row' ng-if="observations.length > 0">
-
 	<div ng-repeat="observation in observations">
 		<observation ng-model="observation"></observation>
 		<br>
@@ -214,11 +201,9 @@
 </div>
 
 <div class='panel panel-default' ng-show="problem.old_problem_name">
-
 	<div class='panel-body'>
 		This problem was previously named "{{problem.old_problem_name}}"
 	</div>
-
 </div>
 
 <div class='panel panel-default'>
@@ -407,11 +392,6 @@
 				<input type='text' class='form-control' ng-model='todo_form.name' id='todoNameInput'>
 			</div>
 
-			<!-- <div class='form-group'>
-				<label> Due Date </label>
-				<input type='text' ng-model='todo_form.due_date' id='due_date'>
-			</div> -->
-
 			<div class='form-group'>
 				<input type='submit' value='Submit' class='btn btn-default'>
 			</div>
@@ -493,53 +473,52 @@
 
 	<div class='panel-body' style='padding:20px;'>
 
-<div class='row'>
-	<div class='col-md-4'>
+		<div class='row'>
+			<div class='col-md-4'>
 
-<h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i> </h4>
-<div class='row' ng-repeat='eff_problem in patient_problems' style='padding:7px; border-bottom:1px solid #ccc;'>
+				<h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i> </h4>
+				<div class='row' ng-repeat='eff_problem in patient_problems' style='padding:7px; border-bottom:1px solid #ccc;'>
 
 
-<input type='checkbox'   ng-model='eff_problem.effecting' ng-change='change_effecting_problem(eff_problem, problem)' 
-ng-disabled='!permitted(["relate_problem"])'>
+					<input type='checkbox'   ng-model='eff_problem.effecting' ng-change='change_effecting_problem(eff_problem, problem)' ng-disabled='!permitted(["relate_problem"])'>
 
-	<span ng-if='eff_problem.effecting==true'  style='font-size:14px; font-weight:bold'>
-	 <a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
-	</span>
-	<span ng-if='eff_problem.effecting!=true'>
-		{{eff_problem.problem_name}}
-	</span>
+					<span ng-if='eff_problem.effecting==true'  style='font-size:14px; font-weight:bold'>
+						<a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
+					</span>
+					<span ng-if='eff_problem.effecting!=true'>
+						{{eff_problem.problem_name}}
+					</span>
 
-</div>
+				</div>
+
+			</div>
+
+			<div class='col-md-4'>
+				<h3> {{problem.problem_name}} </h3>
+			</div>
+
+			<div class='col-md-4'>
+
+				<h4> <i class='glyphicon glyphicon-arrow-right'></i>  EffectedProblems </h4>
+				<div class='row' ng-repeat='eff_problem in patient_problems'  style='padding:7px; border-bottom:1px solid #ccc;'>
+
+					<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>  
+
+					<span ng-if='eff_problem.effected==true' style='font-size:14px; font-weight:bold'>
+						<a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
+					</span>
+					<span ng-if='eff_problem.effected!=true'>
+						{{eff_problem.problem_name}}
+					</span>
+
+				</div>
+
+			</div>
+
+
+		</div>
 
 	</div>
-
-	<div class='col-md-4'>
-<h3> {{problem.problem_name}} </h3>
-	</div>
-
-	<div class='col-md-4'>
-
-<h4> <i class='glyphicon glyphicon-arrow-right'></i>  EffectedProblems </h4>
-<div class='row' ng-repeat='eff_problem in patient_problems'  style='padding:7px; border-bottom:1px solid #ccc;'>
-
-<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>  
-
-	<span ng-if='eff_problem.effected==true' style='font-size:14px; font-weight:bold'>
-	 <a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
-	</span>
-	<span ng-if='eff_problem.effected!=true'>
-		{{eff_problem.problem_name}}
-	</span>
-
-</div>
-
-	</div>
-
-
-	</div>
-
-</div>
 </div>
 
 <div class='row'>
@@ -608,14 +587,12 @@ ng-disabled='!permitted(["relate_problem"])'>
 /* To BE REPLACED BY ANGULARJS DIRECTIVE */
 
 
-
 </script>
 
 <script type='text/javascript'>
 	
 	$(document).ready(function(){
-
-		$( "#due_date" ).datepicker({ dateFormat: 'yy-mm-dd' });
+		$( "#start_date" ).datepicker({ dateFormat: 'mm/dd/yy' });
 
 	});
 </script>

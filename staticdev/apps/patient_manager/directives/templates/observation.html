@@ -45,7 +45,7 @@
 								<div class='col-md-12'>
 									<h2>Past values:</h2>
 								</div>
-								<div class='col-md-12' ng-repeat="component in observation.observation_components|orderBy:'effective_datetime':true" ng-if="(!observation.patient_refused_A1C) || (observation.patient_refused_A1C)">
+								<div class='col-md-12' ng-repeat="component in observation.observation_components|orderBy:['effective_datetime','created_on']:true" ng-if="(!observation.patient_refused_A1C) || (observation.patient_refused_A1C)">
 									A1C: 
 										{{component.value_quantity| number:1}}% on {{component.effective_datetime|date:'M/d/yyyy'}}.
 

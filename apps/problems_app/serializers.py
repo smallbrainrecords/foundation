@@ -41,6 +41,7 @@ class ProblemSegmentSerializer(serializers.ModelSerializer):
 class ProblemSerializer(serializers.ModelSerializer):
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
+    start_date = serializers.DateField(format='%m/%d/%Y')
 
     class Meta:
         model = Problem

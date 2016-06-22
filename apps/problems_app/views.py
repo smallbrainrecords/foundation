@@ -414,7 +414,7 @@ def update_start_date(request, problem_id):
         patient = problem.patient
 
         start_date = request.POST.get('start_date')
-        problem.start_date = get_date(start_date)
+        problem.start_date = get_new_date(start_date)
 
         problem.save()
 

@@ -400,3 +400,9 @@ ce-entity ce-flag{
 	text-decoration: none;
 	margin-bottom: 2px;
 }
+
+.problem-tabs .quick-card-editor-label,
+#problem-header .quick-card-editor-label{
+	display: inline-block;
+	top: 5px;
+}

@@ -506,7 +506,7 @@ class ObservationComponent(models.Model):
     author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_component_authors')
 
     class Meta:
-        ordering = ['created_on']
+        ordering = ['effective_datetime', 'created_on']
 
 
 class Country(models.Model):
