@@ -674,6 +674,18 @@
 				return url;
 			}
 
+			$scope.open_image_upload_box = function(){
+			    ngDialog.open({
+                    template:'/static/apps/patient_manager/partials/modals/upload_image.html',
+                    className:'ngdialog-theme-default large-modal',
+                    scope:$scope,
+                    cache:false,
+                    controller: ['$scope',
+                    function($scope){
+                    }]
+                });
+			};
+
 
 			$scope.open_image_box = function(image){
 

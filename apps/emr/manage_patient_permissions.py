@@ -53,6 +53,9 @@ GLOBAL_PERMISSIONS = [
     'delete_observation_note',
     'delete_observation_component',
     'edit_observation_component',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 
@@ -129,6 +132,9 @@ ROLE_PERMISSIONS['physician'] = [
     'delete_observation_note',
     'delete_observation_component',
     'edit_observation_component',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 
@@ -162,6 +168,9 @@ ROLE_PERMISSIONS['mid-level'] = [
     # observation
     'add_observation',
     'add_observation_note',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 
@@ -189,6 +198,9 @@ ROLE_PERMISSIONS['nurse'] = [
     # observation
     'add_observation',
     'add_observation_note',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 
@@ -206,6 +218,9 @@ ROLE_PERMISSIONS['secretary'] = [
     # observation
     'add_observation',
     'add_observation_note',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Patient Profile
     'update_patient_profile', ]
 

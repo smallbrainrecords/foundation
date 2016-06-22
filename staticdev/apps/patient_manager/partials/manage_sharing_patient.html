@@ -13,7 +13,7 @@
 
 <div class='row'>
 	<div class='col-md-12'>
-		<div class='panel panel-default' id='nursesAssignedInfo'>
+		<div class='panel panel-default'>
 
 			<div class='panel-heading'>
 				{{active_user.user.first_name}} {{active_user.user.last_name}} @ {{active_user.user.username}}
@@ -21,7 +21,7 @@
 
 			<div class='panel-body'>
 
-				<form class='form' ng-submit='add_sharing_patient(assign_patient_form)' >
+				<form class='form' ng-submit='add_sharing_patient(assign_patient_form)' ng-if="active_user.role != 'patient'">
 
 					<div class='form-group'>
 						<label> Select user can access this patient </label>
@@ -57,7 +57,7 @@
 								<a class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{p.user.id}}">
 		                            Edit problem based sharing
 		                        </a>
-								<a class='btn btn-sm btn-default' ng-click="remove_sharing_patient(p)">
+								<a class='btn btn-sm btn-default' ng-click="remove_sharing_patient(p)" ng-if="active_user.role != 'patient'">
 		                            Remove
 		                        </a>
 							</td>

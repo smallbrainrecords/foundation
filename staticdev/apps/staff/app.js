@@ -29,8 +29,12 @@
 
                 templateUrl: '/static/apps/admin/partials/manage_sharing_patient.html',
                 controller: 'ManageSharingPatientCtrl'
-            });
+            })
+            .when('/manage/sharing/problem/:patientId/:sharing_patient_id', {
 
+                templateUrl: '/static/apps/admin/partials/manage_sharing_problem.html',
+                controller: 'ManageSharingProblemCtrl'
+            });
 
 
     });

@@ -94,5 +94,67 @@
 
 		}); /* End of controller */
 
+		angular.module('AdminApp')
+		.controller('ManageSharingProblemCtrl', function(
+			$scope, $routeParams, ngDialog, 
+			adminService, $location, $anchorScroll, toaster){
+
+			$scope.patient_id = $routeParams['patientId'];
+
+			var sharing_patient_id = $routeParams.sharing_patient_id;
+			$scope.sharing_patient_id = sharing_patient_id;
+
+			adminService.fetchActiveUser().then(function(data){
+				$scope.active_user = data['user_profile'];
+			});
+
+			adminService.getUserInfo($scope.sharing_patient_id).then(function(data){
+				$scope.sharing_patient = data['user_profile'];
+			});
+
+			adminService.fetchProblems($scope.patient_id).then(function(data){
+				$scope.problems = data['problems'];
+			});
+
+			adminService.fetchSharingProblems($scope.patient_id, $scope.sharing_patient_id).then(function(data){
+				$scope.sharing_problems = data['sharing_problems'];
+			});
+
+			$scope.inArray = function(array, item) {
+				var is_existed = false;
+	            angular.forEach(array, function(value, key2) {
+	                if (value.id == item.id) {
+	                    is_existed = true;
+	                }
+	            });
+	            return is_existed;
+			}
+
+			$scope.changeSharingProblem = function(problem) {
+				var is_existed = false;
+				var index;
+	            angular.forEach($scope.sharing_problems, function(value, key2) {
+	                if (value.id == problem.id) {
+	                    is_existed = true;
+	                    index = key2;
+	                }
+	            });
+
+	            if (is_existed) {
+	            	$scope.sharing_problems.splice(index, 1);
+	            	adminService.removeSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function(data){
+						toaster.pop('success', 'Done', 'Removed problem');
+					});
+	            } else {
+	            	$scope.sharing_problems.push(problem);
+
+	            	adminService.addSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function(data){
+						toaster.pop('success', 'Done', 'Added problem');
+					});
+	            	
+	            }
+			}
+		}); /* End of controller */
+
 
 })();

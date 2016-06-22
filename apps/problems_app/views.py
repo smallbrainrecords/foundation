@@ -730,14 +730,15 @@ def upload_problem_image(request, problem_id):
 
         patient = problem.patient
 
-        patient_image = PatientImage(
-            patient=patient,
-            problem=problem,
-            image=request.FILES['file'])
+        images = request.FILES.getlist('file[]')
+        for image in images:
+            patient_image = PatientImage(
+                patient=patient,
+                problem=problem,
+                image=image)
 
-        patient_image.save()
+            patient_image.save()
 
-        if request.FILES['file']:
             filename = str(patient_image.image.path)
             img = Image.open(filename)
 
@@ -747,14 +748,14 @@ def upload_problem_image(request, problem_id):
             img.thumbnail((160,160), Image.ANTIALIAS)
             img.save(filename)
 
-        summary = '''Physician added <u>image</u> to <u>problem</u> <b>%s</b> <br/><a href="/media/%s"><img src="/media/%s" class="thumbnail thumbnail-custom" /></a>''' % (problem.problem_name, patient_image.image, patient_image.image)
+            summary = '''Physician added <u>image</u> to <u>problem</u> <b>%s</b> <br/><a href="/media/%s"><img src="/media/%s" class="thumbnail thumbnail-custom" /></a>''' % (problem.problem_name, patient_image.image, patient_image.image)
 
-        op_add_event(actor, patient, summary, problem)
+            op_add_event(actor, patient, summary, problem)
 
-        activity = summary
-        add_problem_activity(problem, actor_profile, activity)
+            activity = summary
+            add_problem_activity(problem, actor_profile, activity)
 
-        resp['success'] = True
+            resp['success'] = True
 
     return ajax_response(resp)
 

@@ -166,6 +166,30 @@
 			return httpService.post(form, url);
 		};
 
+		this.fetchProblems = function(patient_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/getproblems';
+			return httpService.get(params, url);
+		};
+
+		this.fetchSharingProblems = function(patient_id, sharing_patient_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/get_sharing_problems';
+			return httpService.get(params, url);
+		};
+
+		this.removeSharingProblems = function(patient_id, sharing_patient_id, problem_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/remove_sharing_problems';
+			return httpService.post(params, url);
+		};
+
+		this.addSharingProblems = function(patient_id, sharing_patient_id, problem_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/add_sharing_problems';
+			return httpService.post(params, url);
+		};
+
 	});
 
 })();

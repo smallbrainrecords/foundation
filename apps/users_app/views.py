@@ -703,22 +703,26 @@ def add_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {}
     resp['success'] = False
 
-    if request.method == 'POST':
-        patient = User.objects.get(id=patient_id)
-        to_sharing_patient = User.objects.get(id=sharing_patient_id)
+    permissions = ['add_sharing_patient']
 
-        sharing_patient = SharingPatient()
-        sharing_patient.sharing = to_sharing_patient
-        sharing_patient.shared = patient
+    actor_profile, permitted = check_permissions(permissions, request.user)
+    if permitted:
+        if request.method == 'POST':
+            patient = User.objects.get(id=patient_id)
+            to_sharing_patient = User.objects.get(id=sharing_patient_id)
 
-        sharing_patient.save()
+            sharing_patient = SharingPatient()
+            sharing_patient.sharing = to_sharing_patient
+            sharing_patient.shared = patient
 
-        problems = Problem.objects.filter(patient=patient)
-        for problem in problems:
-            sharing_patient.problems.add(problem)
+            sharing_patient.save()
 
-        resp['success'] = True
-        resp['sharing_patient'] = UserProfileSerializer(to_sharing_patient.profile).data
+            problems = Problem.objects.filter(patient=patient)
+            for problem in problems:
+                sharing_patient.problems.add(problem)
+
+            resp['success'] = True
+            resp['sharing_patient'] = UserProfileSerializer(to_sharing_patient.profile).data
 
     return ajax_response(resp)
 
@@ -727,13 +731,17 @@ def remove_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {}
     resp['success'] = False
 
-    if request.method == 'POST':
-        patient = User.objects.get(id=patient_id)
-        to_sharing_patient = User.objects.get(id=sharing_patient_id)
+    permissions = ['remove_sharing_patient']
 
-        sharing_patient = SharingPatient.objects.get(sharing=to_sharing_patient, shared=patient)
-        sharing_patient.delete()
-        resp['success'] = True
+    actor_profile, permitted = check_permissions(permissions, request.user)
+    if permitted:
+        if request.method == 'POST':
+            patient = User.objects.get(id=patient_id)
+            to_sharing_patient = User.objects.get(id=sharing_patient_id)
+
+            sharing_patient = SharingPatient.objects.get(sharing=to_sharing_patient, shared=patient)
+            sharing_patient.delete()
+            resp['success'] = True
 
     return ajax_response(resp)
 

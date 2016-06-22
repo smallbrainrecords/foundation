@@ -453,26 +453,14 @@
 
 
 <div class='panel panel-default'>
+	<div class='panel-heading'> 
+		Images 
+		<span ng-show='permitted(["add_problem_image"])'>
+			<button class='btn btn-sm btn-default' ng-click='open_image_upload_box()'> Upload </button>
+		</span>
+	</div>
 
-
-	<div class='panel-heading'> Images </div>
-
-	<div class='panel-body'>
-
-		<div class='row' ng-show='permitted(["add_problem_image"])'>
-			<div class='col-md-12'>
-		<form class='form-inline' action='{{image_upload_url()}}' method='POST' enctype='multipart/form-data' id='uploadProblemImageFrm'>
-			<label for="file">File:</label>
-			<input type="file" name="file" id="file">
-			<input type="submit" name="submit" value="Upload">
-
-		</form>
-
-			<hr>
-
-			</div>
-		</div>
-		
+	<div class='panel-body' ng-show="problem_images.length > 0">
 
 		<div class='row'>
 
@@ -570,11 +558,15 @@ ng-disabled='!permitted(["relate_problem"])'>
 </div>
 <hr>
 
-<div class='row'>
+<div class='row' ng-init="problem_activity_collapse=false;">
 	<div class='col-md-12'>
 		<div class='panel panel-default'>
-			<div class='panel-heading'> Problem activity </div>
-			<div class='panel-body' style='max-height:375px; overflow:auto;'>
+			<div class='panel-heading' ng-click="problem_activity_collapse=!problem_activity_collapse;"> 
+				<i class="fa fa-caret-down" aria-hidden="true" ng-if="problem_activity_collapse"></i>
+  				<i class="fa fa-caret-right" aria-hidden="true" ng-if="!problem_activity_collapse"></i>
+				Problem activity 
+			</div>
+			<div class='panel-body' style='max-height:375px; overflow:auto;' ng-show="problem_activity_collapse">
 				<div ng-repeat='activity in activities' class='row activity-item' style='margin-bottom:4px; border-top:1px solid #ccc;'>
 					<div class='col-md-3'>
 					<b>{{activity.author.user.first_name}} {{activity.author.user.last_name}} - {{activity.author.role}} </b>
@@ -615,18 +607,7 @@ ng-disabled='!permitted(["relate_problem"])'>
 <script type='text/javascript'>
 /* To BE REPLACED BY ANGULARJS DIRECTIVE */
 
-var options = {
-	success: function(data){
-		if(data['success']==true){
-			alert("Uploaded Image!");
-			location.reload();
-		}else{
-			alert("Something went wrong!");
-		}
-	}
-};
 
-$('#uploadProblemImageFrm').ajaxForm(options);
 
 </script>
 
@@ -638,11 +619,3 @@ $('#uploadProblemImageFrm').ajaxForm(options);
 
 	});
 </script>
-
-
-
-
-
-
-
-

@@ -54,6 +54,9 @@
 							<td> {{p.user.username}}
 							</td>
 							<td> 
+								<a class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{patient.user.id}}/{{p.user.id}}">
+		                            Edit problem based sharing
+		                        </a>
 								<a class='btn btn-sm btn-default' ng-click="remove_sharing_patient(p)">
 		                            Remove
 		                        </a>
