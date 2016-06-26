@@ -449,8 +449,10 @@
 				<center>
 					<img ng-src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
 					<br>
+
+					<a href="{{image.image}}" target="_blank" class='btn btn-sm btn-default'>View</a>
 					
-					<button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button>
+					<!-- <button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button> -->
 					<button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)' ng-show='permitted(["delete_problem_image"])'>
 						Delete 
 					</button>

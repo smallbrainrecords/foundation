@@ -83,7 +83,7 @@
 
 				    return mm + '/' + dd + '/' + yyyy;
 				}
-			    return '11-30-1970';
+			    return '11/30/1970';
 			}
 
 			function getTimelineWidgetState(problem) {

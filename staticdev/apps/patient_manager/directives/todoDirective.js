@@ -65,7 +65,7 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                                             form.patient_id = scope.patient_id;
 
                                             patientService.updateTodoOrder(form).then(function(data){
-                                                toaster.pop('success', 'Done', 'Updated Problem');
+                                                toaster.pop('success', 'Done', 'Updated Todo Order');
                                                 scope.set_authentication_false();
                                             });
                                         }

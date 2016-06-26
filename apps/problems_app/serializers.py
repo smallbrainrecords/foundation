@@ -23,6 +23,7 @@ class ProblemLabelSerializer(serializers.ModelSerializer):
 
 
 class ProblemSegmentSerializer(serializers.ModelSerializer):
+    start_date = serializers.DateField(format='%m/%d/%Y')
 
     class Meta:
         model = ProblemSegment

@@ -322,6 +322,11 @@ ce-entity ce-flag{
 	z-index: 9;
 }
 
+.todo .quick-card-editor-label {
+	display: inline-block;
+	margin-bottom: -6px;
+}
+
 .quick-card-editor-lv2-header {
 	margin-bottom: 40px;
 }
@@ -405,4 +410,9 @@ ce-entity ce-flag{
 #problem-header .quick-card-editor-label{
 	display: inline-block;
 	top: 5px;
+}
+
+.tiny-img {
+	width: 20px;
+	height: 20px;
 }

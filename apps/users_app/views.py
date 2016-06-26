@@ -303,23 +303,25 @@ def get_patient_info(request, patient_id):
         favorites_list.append(favorite_dict)
 
     # handle for hot key ctrl c
-    encounter = Encounter.objects.filter(patient=patient_user).order_by('-starttime')[0]
-
-    most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user, encounter=encounter)
-
     most_recent_encounter_summarries = []
-    for event in most_recent_encounter_events:
-        if not "Started encounter by" in event.summary and not "Stopped encounter by" in event.summary:
-            most_recent_encounter_summarries.append(event.summary)
+    related_problem_holder = []
+    if Encounter.objects.filter(patient=patient_user):
+        encounter = Encounter.objects.filter(patient=patient_user).order_by('-starttime')[0]
 
-    # Related problems
-    related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
-    related_problem_ids = [long(x.problem.id) for x in related_problem_records]
+        most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user, encounter=encounter)
 
-    related_problems = Problem.objects.filter(id__in=related_problem_ids)
+        for event in most_recent_encounter_events:
+            if not "Started encounter by" in event.summary and not "Stopped encounter by" in event.summary:
+                most_recent_encounter_summarries.append(event.summary)
 
-    related_problem_holder = ProblemSerializer(
-        related_problems, many=True).data
+        # Related problems
+        related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
+        related_problem_ids = [long(x.problem.id) for x in related_problem_records]
+
+        related_problems = Problem.objects.filter(id__in=related_problem_ids)
+
+        related_problem_holder = ProblemSerializer(
+            related_problems, many=True).data
 
 
     patient_profile_dict = UserProfileSerializer(patient_profile).data
@@ -338,6 +340,7 @@ def get_patient_info(request, patient_id):
     sharing_patients_list = []
     for sharing_patient in sharing_patients:
         user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
+        user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
         sharing_patients_list.append(user_dict)
 
     resp = {}

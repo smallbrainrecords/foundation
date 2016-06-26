@@ -108,6 +108,10 @@
 				$scope.active_user = data['user_profile'];
 			});
 
+			staffService.getUserInfo($scope.patient_id).then(function(data){
+				$scope.shared_patient = data['user_profile'];
+			});
+
 			staffService.getUserInfo($scope.sharing_patient_id).then(function(data){
 				$scope.sharing_patient = data['user_profile'];
 			});
