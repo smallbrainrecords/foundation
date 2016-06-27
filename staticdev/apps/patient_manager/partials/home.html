@@ -199,7 +199,7 @@
 					<div role="tabpanel" class="tab-pane active tab-active-problem" >
 						<div>
 							<ul class='ul-clean' ui-sortable="sortableOptionsProblem" ng-model="problems" ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-								<li ng-repeat="problem in problems" ng-show="problem.is_active==true && !inArray(problem_lists, problem)" ng-click='open_problem(problem)'>
+								<li ng-repeat="problem in problems" ng-show="problem.is_active==true && !inArray(problem_lists, problem)" ng-click='open_problem(problem)' ng-if="checkSharedProblem(problem, sharing_patients)">
 									<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 										{{problem.problem_name}} <span ng-show="problem.authenticated==false">(not authenticated)</span>
 										<!-- begin label -->
@@ -240,7 +240,7 @@
 					<div role="tabpanel" class="tab-pane tab-inactive-problem" >
 						<div style='max-height:375px; overflow-y:auto;'>
 							<ul class='ul-clean' ui-sortable="sortableOptionsProblem" ng-model="problems" ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-								<li ng-repeat="problem in problems" ng-show="problem.is_active==false && !inArray(problem_lists, problem)" ng-click='open_problem(problem)'>
+								<li ng-repeat="problem in problems" ng-show="problem.is_active==false && !inArray(problem_lists, problem)" ng-click='open_problem(problem)' ng-if="checkSharedProblem(problem, sharing_patients)">
 									<div class='item-box' ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 										{{problem.problem_name}} <span ng-show="problem.authenticated==false">(not authenticated)</span>
 										<!-- begin label -->
