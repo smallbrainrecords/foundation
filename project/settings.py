@@ -1,7 +1,7 @@
 # Django settings for emr project.
 
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
+DEBUG = False
+TEMPLATE_DEBUG = True
 
 # toggle experimental features
 VOICE_CONTROL = False
@@ -67,7 +67,7 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = '/var/www/foundation/media/'
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -137,7 +137,7 @@ ROOT_URLCONF = 'project.urls'
 WSGI_APPLICATION = 'project.wsgi.application'
 
 TEMPLATE_DIRS = (
-    os.path.join(BASE_DIR, 'templates'),
+    '/var/www/foundation/templates',
 )
 
 INSTALLED_APPS = (
@@ -209,7 +209,9 @@ LOGGING = {
 
 
 PROBLEMS_PATH = '/root/core/static/js/problems/'
-
+ALLOWED_HOSTS = [
+    '192.210.207.188', # Allow domain and subdomains
+]
 
 try:
     from local_settings import *

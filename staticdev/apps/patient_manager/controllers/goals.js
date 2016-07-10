@@ -16,6 +16,9 @@
 
 			$scope.loading = true;
 
+			$scope.edit_goal = false;
+			$scope.new_goal_name = null;
+
 
 			patientService.fetchActiveUser().then(function(data){
 
@@ -79,6 +82,38 @@
 				})
 
 
+			};
+
+			$scope.edit_goal_name = function() {
+				$scope.edit_goal = true;
+				$scope.new_goal_name = $scope.goal.goal;
+			};
+
+			$scope.cancel_goal_name = function() {
+				$scope.edit_goal = false;
+			};
+
+			$scope.change_goal_name = function(new_goal_name) {
+				if(new_goal_name == '' || new_goal_name == undefined) {
+					return false;
+				}
+				
+				var form = {};
+				form.goal = new_goal_name;
+				form.patient_id = $scope.patient_id;
+				form.goal_id = $scope.goal_id;
+
+				goalService.changeGoalName(form).then(function(data){
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Goal name changed successfully');
+						$scope.goal = data['goal'];
+						$scope.edit_goal = false;
+					}else if(data['success']==false){
+						toaster.pop('error', 'Error', data['msg']);
+					}else{
+						toaster.pop('error', 'Error', 'Something went wrong');
+					}
+				});
 			};
 
 

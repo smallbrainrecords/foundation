@@ -7,6 +7,7 @@
 <script src="/static/apps/admin/directives/directives.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/homeController.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/todo.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/controllers/manageSharingController.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/staffService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/physicianService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/todoService.js" type="text/javascript" charset="utf-8"></script>
@@ -29,9 +30,12 @@
 				<br>
 				<b> Username </b>:  {{user.username}}
 				<br>
-				{% if user_profile.role == 'physician' %}
 					<a class='btn btn-default' href='/project/admin/#/add/user'>Add User</a>
-				{% endif %}
+				</br>
+				</br>
+		        <a class='btn btn-default' href='/#/manage/sharing'>
+		          Manage sharing between patients
+		        </a>
 			</div>
 
 		</div>
@@ -92,12 +96,7 @@
 						{% endfor %}
 					</tbody>
 				</table>
-
-
 			</div>
-
-
-
 		</div>
 		{% endif %}
 

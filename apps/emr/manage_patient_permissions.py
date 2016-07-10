@@ -1,7 +1,7 @@
 '''
     PERMISSIONS for managing patient
 '''
-from .models import UserProfile
+from .models import UserProfile, SharingPatient
 from .models import PatientController, PhysicianTeam
 import logging
 
@@ -24,6 +24,9 @@ GLOBAL_PERMISSIONS = [
     'set_problem_controlled',
     'set_problem_active',
     'relate_problem',
+    'set_problem_order',
+    'change_problem_name',
+    'add_problem_label',
     # Problem Notes
     'add_patient_problem_note',
     'add_physician_problem_note',
@@ -42,11 +45,17 @@ GLOBAL_PERMISSIONS = [
     # Encounter
     'add_encounter',
     'add_encounter_event',
+    'add_encounter_timestamp',
     # observation
     'add_observation',
     'add_observation_note',
     'edit_observation_note',
     'delete_observation_note',
+    'delete_observation_component',
+    'edit_observation_component',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 
@@ -65,6 +74,9 @@ ROLE_PERMISSIONS['patient'] = [
     'set_problem_controlled',
     'set_problem_active',
     'relate_problem',
+    'set_problem_order',
+    'change_problem_name',
+    'add_problem_label',
     # Goal
     'add_goal',
     'modify_goal',
@@ -75,6 +87,8 @@ ROLE_PERMISSIONS['patient'] = [
     'add_todo_comment',
     # Patient Profile
     'update_patient_profile',
+    # encounter
+    'add_encounter_timestamp',
     # observation
     'add_observation',
     'add_observation_note',
@@ -93,6 +107,9 @@ ROLE_PERMISSIONS['physician'] = [
     'set_problem_active',
     'add_physician_problem_note',
     'relate_problem',
+    'set_problem_order',
+    'change_problem_name',
+    'add_problem_label',
     # Goal
     'add_goal',
     'modify_goal',
@@ -107,11 +124,17 @@ ROLE_PERMISSIONS['physician'] = [
     # Encounter
     'add_encounter',
     'add_encounter_event',
+    'add_encounter_timestamp',
     # observation
     'add_observation',
     'add_observation_note',
     'edit_observation_note',
     'delete_observation_note',
+    'delete_observation_component',
+    'edit_observation_component',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 
@@ -125,6 +148,9 @@ ROLE_PERMISSIONS['mid-level'] = [
     'set_problem_active',
     'add_physician_problem_note',
     'relate_problem',
+    'set_problem_order',
+    'change_problem_name',
+    'add_problem_label',
     # Goal
     'add_goal',
     'modify_goal',
@@ -138,9 +164,13 @@ ROLE_PERMISSIONS['mid-level'] = [
     # Encounter
     'add_encounter',
     'add_encounter_event',
+    'add_encounter_timestamp',
     # observation
     'add_observation',
     'add_observation_note',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 
@@ -151,6 +181,8 @@ ROLE_PERMISSIONS['nurse'] = [
     'modify_problem',
     'add_problem_image',
     'add_nurse_problem_note',
+    'change_problem_name',
+    'add_problem_label',
     # Goal
     'add_goal',
     'modify_goal',
@@ -161,22 +193,34 @@ ROLE_PERMISSIONS['nurse'] = [
     'add_todo_comment',
     # Patient Profile
     'update_patient_profile',
+    # encounter
+    'add_encounter_timestamp',
     # observation
     'add_observation',
     'add_observation_note',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 
 
 ROLE_PERMISSIONS['secretary'] = [
+    # Problem
+    'add_problem_label',
     # Todo
     'add_todo',
     'set_todo_status',
     'set_todo_order',
     'add_todo_comment',
+    # encounter
+    'add_encounter_timestamp',
     # observation
     'add_observation',
     'add_observation_note',
+    # sharing
+    'add_sharing_patient',
+    'remove_sharing_patient',
     # Patient Profile
     'update_patient_profile', ]
 
@@ -222,6 +266,9 @@ def check_access(patient, actor_profile):
     elif actor_profile.role == 'patient':
         if patient.id == actor_profile.user.id:
             allowed = True
+        else:
+            is_sharing = SharingPatient.objects.filter(sharing=actor_profile.user, shared=patient).exists()
+            allowed = is_sharing
     elif actor_profile.role == 'admin':
         allowed = True
     else:

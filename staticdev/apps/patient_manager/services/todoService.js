@@ -121,9 +121,9 @@
 				return httpService.post(form, url);
 			};
 
-			this.getTodoActivity = function(todo_id){
+			this.getTodoActivity = function(todo_id, last_id){
 				var params = {};
-				var url ='/todo/todo/'+todo_id+'/activity/';
+				var url ='/todo/todo/'+todo_id+ '/' + last_id +'/activity/';
 				return httpService.get(params, url);
 			};
 

@@ -13,6 +13,7 @@
 			var todo_id = $routeParams.todo_id;
 
 			$scope.todo_id = todo_id;
+            $scope.current_activity = 0;
 
 			todoService.fetchTodoInfo(todo_id).then(function(data){
                 $scope.todo = data['info'];
@@ -20,6 +21,12 @@
                 $scope.attachments = data['attachments'];
                 $scope.related_encounters = data['related_encounters'];
                 $scope.activities = data['activities'];
+                if (data['activities'].length) {
+                    $scope.current_activity = data['activities'][0].id;
+                }
+                $interval(function(){
+                    $scope.refresh_todo_activity();
+                }, 10000);
             });
 
             patientService.fetchActiveUser().then(function(data){
@@ -286,9 +293,20 @@
                 todo.change_due_date2 = (todo.change_due_date2 != true) ? true : false;
             }
 
+            $scope.allowDueDateNotification = true;
             $scope.saveTodoDueDate = function(todo) {
                 todoService.changeTodoDueDate(todo).then(function(data){
-                    toaster.pop('success', "Done", "Due date Updated!");
+                    if(data['success']==true){
+                        if ($scope.allowDueDateNotification)
+                            toaster.pop('success', "Done", "Due date Updated!");
+                        $scope.allowDueDateNotification = true;
+                    }else if(data['success']==false){
+                        todo.due_date = data['todo']['due_date'];
+                        toaster.pop('error', 'Error', 'Invalid date format');
+                        $scope.allowDueDateNotification = false;
+                    }else{
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
                 });
             }
 
@@ -376,17 +394,17 @@
             }
 
             $scope.refresh_todo_activity=function(){
-                todoService.getTodoActivity($scope.todo_id).then(function(data){
+                todoService.getTodoActivity($scope.todo_id, $scope.current_activity).then(function(data){
                     if (data != null) {
-                        if ($scope.activities.length != data['activities'].length)
-                            $scope.activities = data['activities'];
+                        if (data['activities'].length) {
+                            for (var i=data['activities'].length-1; i>=0; i--){
+                                $scope.activities.unshift(data['activities'][i]);
+                            }
+                            $scope.current_activity = data['activities'][0].id;
+                        }
                     }
                 })
             }
-
-            $interval(function(){
-                $scope.refresh_todo_activity();
-            }, 4000);
 
 		}); /* End of controller */
 

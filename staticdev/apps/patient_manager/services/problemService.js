@@ -16,9 +16,9 @@
 		};
 
 
-		this.trackProblemClickEvent = function(form){
-
-			var url = '/p/problem/'+form.problem_id+'/track/click/';
+		this.trackProblemClickEvent = function(problem_id){
+			var form = {};
+			var url = '/p/problem/'+problem_id+'/track/click/';
 			return httpService.post(form, url);
 
 		};
@@ -77,9 +77,9 @@
 
 		};
 
-		this.getProblemActivity = function(problem_id){
+		this.getProblemActivity = function(problem_id, last_id){
 			var params = {};
-			var url ='/p/problem/'+problem_id+'/activity/';
+			var url ='/p/problem/' + problem_id + '/' + last_id+ '/activity/';
 			return httpService.get(params, url);
 		};
 
@@ -94,6 +94,104 @@
 
 			var url = '/p/problem/update_state_to_ptw/';
 			return httpService.postJson(form, url);
+
+		};
+
+		this.changeProblemName = function(form){
+
+			var url = '/p/problem/'+form.problem_id+'/change_name';
+
+			return httpService.post(form, url);
+		};
+
+		this.saveCreateLabel = function(problem_id, form) {
+			var url = '/p/problem/newLabel/'+problem_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.fetchLabels = function(patient_id, user_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + user_id + '/getlabels';
+			return httpService.get(params, url);
+		};
+
+		this.saveEditLabel = function(form, patient_id, user_id) {
+			var url = '/p/problem/saveEditLabel/' + form.id + '/' + patient_id + '/' + user_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.addProblemLabel = function(id, problem_id) {
+			var form = {};
+			var url = '/p/problem/'+id+'/'+problem_id+'/addLabel';
+
+			return httpService.post(form, url);
+		};
+
+		this.removeProblemLabel = function(id, problem_id) {
+			var form = {};
+			var url = '/p/problem/removeLabel/'+id+'/'+problem_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.deleteLabel  = function(form) {
+			var url = '/p/problem/deleteLabel/'+form.id;
+
+			return httpService.post(form, url);
+		};
+
+		this.addProblemList = function(form){
+			var url = '/p/problem/'+form.patient_id+ '/' +form.user_id+'/new_list';
+			return httpService.postJson(form, url);
+		};
+
+		this.fetchLabeledProblemList = function(patient_id, user_id){
+			var params = {};
+			var url ='/p/problem/'+patient_id+ '/' +user_id+'/getLabeledProblemLists';
+			return httpService.get(params, url);
+		};
+
+		this.deleteProblemList = function(form){
+			var url = '/p/problem/'+form.id+'/deleteProblemList';
+			return httpService.post(form, url);
+		};
+
+		this.renameProblemList = function(form){
+			var url = '/p/problem/'+form.id+'/renameProblemList';
+			return httpService.post(form, url);
+		};
+
+		this.fetchProblems = function(patient_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/getproblems';
+			return httpService.get(params, url);
+		};
+
+		this.fetchSharingProblems = function(patient_id, sharing_patient_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/get_sharing_problems';
+			return httpService.get(params, url);
+		};
+
+		this.removeSharingProblems = function(patient_id, sharing_patient_id, problem_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/remove_sharing_problems';
+			return httpService.post(params, url);
+		};
+
+		this.addSharingProblems = function(patient_id, sharing_patient_id, problem_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/add_sharing_problems';
+			return httpService.post(params, url);
+		};
+
+		this.updateProblemListNote = function(form){
+
+			var url = '/p/problem/'+form.list_id+'/update_problem_list_note';
+
+			return httpService.post(form, url);
 
 		};
 });

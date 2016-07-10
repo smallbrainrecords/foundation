@@ -4,7 +4,7 @@
 
 
 	angular.module('StaffApp')
-		.controller('HomeCtrl', function($scope, $routeParams, ngDialog, staffService, physicianService, toaster, todoService){
+		.controller('HomeCtrl', function($scope, $routeParams, ngDialog, staffService, physicianService, toaster, todoService, prompt, $interval){
 
 
 
@@ -44,6 +44,19 @@
 							$scope.patients = data['patients'];
 							$scope.team = data['team'];
 							
+						});
+					}
+
+					if ($scope.active_user.role=='secretary') {
+						$scope.refresh_todos_physicians();
+						$interval(function(){
+							$scope.refresh_todos_physicians();
+						}, 10000);
+					}
+
+					if ($scope.active_user.role=='secretary' || $scope.active_user.role=='mid-level' || $scope.active_user.role=='nurse') {
+						staffService.getAllTodos($scope.user_id).then(function(data){
+							$scope.all_todos_list = data['all_todos_list'];
 						});
 					}
 
@@ -107,12 +120,68 @@
 			};
 
 			$scope.delete_list = function(list) {
-				console.log(list);
-				staffService.deleteToDoList(list).then(function(data){
-					var index = $scope.todo_lists.indexOf(list);
-					$scope.todo_lists.splice(index, 1);
-					toaster.pop('success', 'Done', 'Todo List removed successfully');
-				});
+				prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a todo list is forever. There is no undo."
+                }).then(function(result){
+                    staffService.deleteToDoList(list).then(function(data){
+						var index = $scope.todo_lists.indexOf(list);
+						$scope.todo_lists.splice(index, 1);
+						toaster.pop('success', 'Done', 'Todo List removed successfully');
+					});
+                },function(){
+                    return false;
+                });
+			}
+
+			$scope.refresh_todos_physicians = function(){
+				staffService.getTodosPhysicians($scope.user_id).then(function(data){
+					$scope.new_generated_todos_list = data['new_generated_todos_list'];
+					$scope.new_generated_physicians_list = data['new_generated_physicians_list'];
+				})
+			}
+
+			$scope.orderByDate = function(item) {
+				if (item.due_date != null) {
+					var parts = item.due_date.split('/');
+			    	var number = parseInt(parts[2] + parts[0] + parts[1]);
+				} else {
+					var number = 0;
+				}
+
+			    return -number;
+			};
+
+			$scope.getNewTodos = function(list) {
+				var number = 0;
+				angular.forEach(list.todos, function(value, key) {
+                    if (list.expanded.indexOf(value.id) == -1) {
+                        number += 1;
+                    }
+                });
+                
+				return number;
+			};
+
+			$scope.openTodoList = function(list) {
+				list.collapse = !list.collapse;
+				if (list.collapse) {
+					var form = {};
+					form.list_id = list.id;
+					form.todos = list.todos;
+
+					var is_existed = false;
+					angular.forEach(list.todos, function(value, key) {
+	                    if (list.expanded.indexOf(value.id) == -1) {
+	                        list.expanded.push(value.id);
+	                        is_existed = true;
+	                    }
+	                });
+
+					if (is_existed) {
+						staffService.openTodoList(form).then(function(data){});
+					}
+				}
 			}
 
 

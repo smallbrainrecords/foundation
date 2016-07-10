@@ -6,7 +6,7 @@ from django.db.models import Q
 from common.views import *
 
 from emr.models import UserProfile, ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRecord, \
-    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList
+    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController
 from emr.operations import op_add_event, op_add_todo_event
 
 from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, \
@@ -43,7 +43,7 @@ def set_problem_authentication_false(request, todo):
         problem.save()
 
 @login_required
-def get_todo_activity(request, todo_id):
+def get_todo_activity(request, todo_id, last_id):
     resp = {}
     resp['success'] = False
 
@@ -52,7 +52,7 @@ def get_todo_activity(request, todo_id):
     except ToDo.DoesNotExist:
         raise Http404("ToDo DoesNotExist")
 
-    activites = TodoActivity.objects.filter(todo=todo)
+    activites = TodoActivity.objects.filter(todo=todo).filter(id__gt=last_id)
     activity_holder = TodoActivitySerializer(activites, many=True).data
     resp['activities'] = activity_holder
     resp['success'] = True
@@ -75,7 +75,7 @@ def add_patient_todo(request, patient_id):
         todo_name = request.POST.get('name')
         due_date = request.POST.get('due_date', None)
         if due_date:
-            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+            due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
         patient = User.objects.get(id=patient_id)
         physician = request.user
@@ -93,9 +93,7 @@ def add_patient_todo(request, patient_id):
             problem_name = new_todo.problem.problem_name
         else:
             problem_name = ''
-        summary = '''
-            Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>
-            ''' % (new_todo.id, todo_name, problem_name)
+        summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (new_todo.id, todo_name, problem_name)
 
         op_add_todo_event(physician, patient, summary, new_todo)
 
@@ -140,10 +138,7 @@ def update_todo_status(request, todo_id):
         else:
             accomplished_label = 'not accomplished'
 
-        summary = """
-            Updated status of <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> ,
-            <u>problem</u> <b>%s</b> to <b>%s</b>
-            """ % (todo.id, todo.todo, problem_name, accomplished_label)
+        summary = """Updated status of <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> ,<u>problem</u> <b>%s</b> to <b>%s</b>""" % (todo.id, todo.todo, problem_name, accomplished_label)
 
         op_add_todo_event(physician, patient, summary, todo)
 
@@ -437,7 +432,14 @@ def change_todo_due_date(request, todo_id):
 
         due_date = request.POST.get('due_date')
         if due_date and due_date != '':
-            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+            try:
+                due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
+            except:
+                resp['success'] = False
+                todo = ToDo.objects.get(id=todo_id)
+                todo_dict = TodoSerializer(todo).data
+                resp['todo'] = todo_dict
+                return ajax_response(resp)
         else:
             due_date = None
 
@@ -600,9 +602,10 @@ def todo_access_encounter(request, todo_id):
     physician = request.user
     patient = todo.patient
 
-    summary = '''
-        <a href="#/todo/%s"><b>%s</b></a> was accessed.
-        ''' % (todo.id, todo.todo)
+    if todo.problem:
+        summary = '''<a href="#/todo/%s"><b>%s</b></a> for <b>%s</b> was visited.''' % (todo.id, todo.todo, todo.problem.problem_name)
+    else:
+        summary = '''<a href="#/todo/%s"><b>%s</b></a> was visited.''' % (todo.id, todo.todo)
 
     op_add_todo_event(physician, patient, summary, todo)
     if todo.problem:
@@ -792,7 +795,7 @@ def add_staff_todo(request, user_id):
         todo_name = request.POST.get('name')
         due_date = request.POST.get('due_date', None)
         if due_date:
-            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+            due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
         user = User.objects.get(id=user_id)
 
@@ -844,13 +847,14 @@ def add_staff_todo_list(request, user_id):
 
         new_list_dict = LabeledToDoListSerializer(new_list).data
 
-        todos = ToDo.objects.filter(labels__id__in=label_ids).order_by('due_date')
+        todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
         todos_holder = []
         for todo in todos:
             todo_dict = TodoSerializer(todo).data
             todos_holder.append(todo_dict)
 
         new_list_dict['todos'] = todos_holder
+        new_list_dict['expanded'] = new_list.expanded
 
         resp['new_list'] = new_list_dict
         resp['success'] = True
@@ -870,7 +874,7 @@ def get_user_label_lists(request, user_id):
             label_ids.append(label.id)
 
         if label_list.todo_list:
-            todos_qs = ToDo.objects.filter(labels__id__in=label_ids)
+            todos_qs = ToDo.objects.filter(labels__id__in=label_ids).distinct()
             todos = []
             for id in label_list.todo_list:
                 if todos_qs.filter(id=id):
@@ -880,13 +884,14 @@ def get_user_label_lists(request, user_id):
                     todos.append(todo)
 
         else:
-            todos = ToDo.objects.filter(labels__id__in=label_ids).order_by('due_date')
+            todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
         todos_holder = []
         for todo in todos:
             todo_dict = TodoSerializer(todo).data
             todos_holder.append(todo_dict)
 
         list_dict['todos'] = todos_holder
+        list_dict['expanded'] = label_list.expanded
         lists_holder.append(list_dict)
         
     resp['todo_lists'] = lists_holder
@@ -904,6 +909,47 @@ def delete_todo_list(request, list_id):
         todo_list = LabeledToDoList.objects.get(id=list_id)
 
         todo_list.delete()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def staff_all_todos(request, user_id):
+    resp = {}
+    staff = User.objects.get(id=user_id)
+
+    team_members = PhysicianTeam.objects.filter(member=staff)
+    physician_ids = [long(x.physician.id) for x in team_members]
+    patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+    patient_ids = [long(x.patient.id) for x in patient_controllers]
+
+    todos = ToDo.objects.filter(accomplished=False, patient__id__in=patient_ids, due_date__lte=datetime.now()).order_by('-due_date')
+    todos_list = TodoSerializer(todos, many=True).data
+
+    resp['all_todos_list'] = todos_list
+
+    return ajax_response(resp)
+
+@login_required
+def open_todo_list(request, list_id):
+    resp = {}
+    resp['success'] = False
+    permissions = ['add_todo']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        todo_list = LabeledToDoList.objects.get(id=list_id)
+        expanded = todo_list.expanded
+        datas = json.loads(request.body)
+        todos = datas['todos']
+
+        for todo in todos:
+            if not todo['id'] in expanded:
+                expanded.append(todo['id'])
+
+        todo_list.expanded = expanded
+        todo_list.save()
 
         resp['success'] = True
 

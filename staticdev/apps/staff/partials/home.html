@@ -34,6 +34,71 @@
 
 </div>
 
+<div class='panel panel-default' ng-if="active_user.role=='secretary'">
+
+  <div class='panel-heading'>
+    List of all todos for all patients that have been generated in the past 24 hours ({{new_generated_todos_list.length}}) </div>
+
+  <div class='panel-body'>
+    <table class='table'>
+          <thead>
+              <th> Name </th>
+          </thead>
+          <tbody>
+              <tr ng-repeat='todo in new_generated_todos_list'>
+                  <td> 
+                    {{todo.todo}} 
+                    <span ng-if="todo.patient"> for patient 
+                      <a href="/u/patient/manage/{{todo.patient.id}}/">{{todo.patient.first_name}} {{todo.patient.last_name}}</a>
+                    </span>
+                  </td>
+              </tr>
+          </tbody>
+   </table>
+  </div>
+
+</div>
+
+<div class='panel panel-default' ng-if="active_user.role=='secretary' || active_user.role=='mid-level' || active_user.role=='nurse'">
+
+  <div class='panel-heading'>
+    List of all past due todos for all patients associated with the physician ({{all_todos_list.length}}) </div>
+
+  <div class='panel-body'>
+    <button ng-click="reverse=!reverse" ng-init="reverse=false;" class="btn btn-default">Reverse</button>
+    <table class='table'>
+          <thead>
+              <th> Name </th>
+              <th> Due Date </th>
+          </thead>
+          <tbody>
+              <tr ng-repeat='todo in all_todos_list | orderBy: orderByDate: reverse'>
+                  <td> 
+                    {{todo.todo}} 
+                    <span ng-if="todo.patient"> for patient 
+                      <a href="/u/patient/manage/{{todo.patient.id}}/">{{todo.patient.first_name}} {{todo.patient.last_name}}</a>
+                    </span>
+                  </td>
+                  <td> {{todo.due_date}} </td>
+              </tr>
+          </tbody>
+   </table>
+  </div>
+
+</div>
+
+<div class='panel panel-default' ng-if="active_user.role=='secretary'">
+
+  <div class='panel-heading'>List all physicians</div>
+
+  <div class='panel-body'>
+    <p ng-repeat='physician in new_generated_physicians_list'>
+      {{physician.user.first_name}} {{physician.user.last_name}} {{physician.user.username}}
+    </p>
+  </div>
+
+</div>
+
 <div class='panel panel-default'>
 
   <div class='panel-heading'> Labeled Todos Lists </div>
@@ -61,11 +126,15 @@
   </div>
 </div>
 
-<div class='panel panel-default' ng-repeat="list in todo_lists" ng-init="list.show_accomplished=false">
+<div class='panel panel-default' ng-repeat="list in todo_lists" ng-init="list.show_accomplished=false;list.collapse=false;">
 
-  <div class='panel-heading'> {{list.name}} <a href class="btn btn-danger" ng-click="delete_list(list)">Delete</a></div>
+  <div class='panel-heading' ng-click="openTodoList(list);">
+    <i class="fa fa-caret-down" aria-hidden="true" ng-if="list.collapse"></i>
+    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!list.collapse"></i>
+    {{list.name}} ({{list.todos.length}} todos, {{getNewTodos(list)}} are new) 
+    <a href class="btn btn-danger" ng-click="delete_list(list)" ng-if="list.collapse">Delete</a></div>
 
-  <div class='panel-body'>
+  <div class='panel-body' ng-if="list.collapse">
     <todo ng-model="list.todos" accomplished="false" show-problem="true" is-list="list.id"></todo>
     <hr>
     <a class='btn btn-default btn-md' ng-click='list.show_accomplished=!list.show_accomplished'> 

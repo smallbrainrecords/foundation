@@ -6,7 +6,7 @@
 	var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate', 
-        'observations']);
+        'observations', 'cgPrompt', 'problems']);
 
 
     ManagerApp.config(function($routeProvider) {
@@ -51,6 +51,24 @@
             .when("/observation/:observation_id/enter_new_value", {
                 templateUrl: '/static/apps/patient_manager/partials/observation/enter_new_value.html',
                 controller: 'EnterNewValueCtrl'
+            })
+            .when("/observation/:observation_id/edit_or_delete_values", {
+                templateUrl: '/static/apps/patient_manager/partials/observation/edit_or_delete_values.html',
+                controller: 'EditOrDeleteValuesCtrl'
+            })
+            .when("/observation_component/:component_id/edit_value", {
+                templateUrl: '/static/apps/patient_manager/partials/observation/edit_value.html',
+                controller: 'EditValueCtrl'
+            })
+            .when('/manage/sharing', {
+
+                templateUrl: '/static/apps/patient_manager/partials/manage_sharing_patient.html',
+                controller: 'ManageSharingPatientCtrl'
+            })
+            .when('/manage/sharing/problem/:sharing_patient_id', {
+
+                templateUrl: '/static/apps/patient_manager/partials/manage_sharing_problem.html',
+                controller: 'ManageSharingProblemCtrl'
             });
 
     });

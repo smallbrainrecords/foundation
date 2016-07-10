@@ -6,13 +6,16 @@ urlpatterns = patterns(
 
     url(r'^problem/(?P<problem_id>\d+)/info$',
         'get_problem_info'),
-    url(r'^problem/(?P<problem_id>\d+)/activity/$',
+    url(r'^problem/(?P<problem_id>\d+)/(?P<last_id>\d+)/activity/$',
         'get_problem_activity'),
     url(r'^problem/(?P<problem_id>\d+)/track/click/$',
         'track_problem_click'),
 
     url(r'^patient/(?P<patient_id>\d+)/problems/add/new_problem$',
         'add_patient_problem'),
+
+    url(r'^problem/(?P<problem_id>\d+)/change_name$',
+        'change_name'),
 
     url(r'^problem/(?P<problem_id>\d+)/update_status$',
         'update_problem_status'),
@@ -39,5 +42,22 @@ urlpatterns = patterns(
         'delete_problem_image'),
 
     url(r'^problem/relate/$', 'relate_problem'), 
+    url(r'^problem/updateOrder/$', 'update_order'), 
     url(r'^problem/update_by_ptw/$', 'update_by_ptw'),
-    url(r'^problem/update_state_to_ptw/$', 'update_state_to_ptw'), )
+    url(r'^problem/update_state_to_ptw/$', 'update_state_to_ptw'),
+    url(r'^problem/newLabel/(?P<problem_id>\d+)$', 'new_problem_label'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<user_id>\d+)/getlabels$', 'get_problem_labels'),
+    url(r'^problem/saveEditLabel/(?P<label_id>\d+)/(?P<patient_id>\d+)/(?P<user_id>\d+)$', 'save_edit_problem_label'),
+    url(r'^problem/(?P<label_id>\d+)/(?P<problem_id>\d+)/addLabel$', 'add_problem_label'),
+    url(r'^problem/removeLabel/(?P<label_id>\d+)/(?P<problem_id>\d+)$', 'remove_problem_label'),
+    url(r'^problem/deleteLabel/(?P<label_id>\d+)$', 'delete_problem_label'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<user_id>\d+)/new_list$', 'add_problem_list'),
+    url(r'^problem/(?P<list_id>\d+)/deleteProblemList$', 'delete_problem_list'),
+    url(r'^problem/(?P<list_id>\d+)/renameProblemList$', 'rename_problem_list'),
+    url(r'^problem/(?P<list_id>\d+)/update_problem_list_note$', 'update_problem_list_note'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<user_id>\d+)/getLabeledProblemLists$', 'get_label_problem_lists'),
+    url(r'^problem/(?P<patient_id>\d+)/getproblems$', 'get_problems'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<sharing_patient_id>\d+)/get_sharing_problems$', 'get_sharing_problems'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<sharing_patient_id>\d+)/(?P<problem_id>\d+)/remove_sharing_problems$', 'remove_sharing_problems'),
+    url(r'^problem/(?P<patient_id>\d+)/(?P<sharing_patient_id>\d+)/(?P<problem_id>\d+)/add_sharing_problems$', 'add_sharing_problems'),
+    )

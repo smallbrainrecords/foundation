@@ -45,7 +45,7 @@
 							</a>
 
 							<!-- begin edit label -->
-							<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin')"><i class="fa fa-pencil"></i></a>
+							<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin' && active_user.user.id == label.author.id)"><i class="fa fa-pencil"></i></a>
 
 							<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
 								<div class="quick-card-editor-lv2-header">
@@ -72,7 +72,7 @@
 							<i class="fa fa-check" ng-if="component.css_class==label_component.css_class"></i>
 						</a>
 						<a href ng-click="saveCreateLabel(todo)">Save just for me</a>
-						<a href ng-click="saveCreateLabelAll(todo)">Save for all users</a>
+						<a href ng-click="saveCreateLabelAll(todo)" ng-if="active_user.role != 'patient'">Save for all users</a>
 					</div>
 				</div>
 				<!-- end change label -->
@@ -87,13 +87,10 @@
 						<div class="quick-card-editor-lv2-header">
 							<a href ng-click="changeDueDate2(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 						</div>
-						<!-- <p>
-							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" bs-datepicker data-date-format="yyyy-MM-dd" modelDateFormat="yyyy-MM-dd" date-type="string">
-						</p> -->
 						<p>
-							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)">
+							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" ng-model-options="{ updateOn: 'default blur', debounce: { default: 500, blur: 0 } }">
 						</p>
-						<div ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" pickadate format="yyyy-MM-dd"></div>
+						<div ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" pickadate format="MM/dd/yyyy"></div>
 					</div>
 				</div>
 			</div>
@@ -140,9 +137,12 @@
 			<!-- begin encounters -->
 			<div class='row todo-component' ng-if="related_encounters.length > 0">
 				<div class='col-md-12'>
-					<div class='panel panel-default'>
-						<div class='panel-heading'> Related Encounters </div>
-						<div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'>
+					<div class='panel panel-default' ng-init="encounter_collapse=false;">
+						<div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;"> 
+							<i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+							<i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+							Related Encounters </div>
+						<div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'  ng-show="encounter_collapse">
 							<div ng-repeat='encounter in related_encounters' class='row' style='margin-bottom:4px; border-top:1px solid #ccc;'>
 								<div class='col-md-12'>
 									<a href='#/encounter/{{encounter.id}}'> 
@@ -241,7 +241,7 @@
 							</a>
 
 							<!-- begin edit label -->
-							<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin')"><i class="fa fa-pencil"></i></a>
+							<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin' && active_user.user.id == label.author.id)"><i class="fa fa-pencil"></i></a>
 
 							<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
 								<div class="quick-card-editor-lv2-header">
@@ -268,7 +268,7 @@
 							<i class="fa fa-check" ng-if="component.css_class==label_component.css_class"></i>
 						</a>
 						<a href ng-click="saveCreateLabel(todo)">Save just for me</a>
-						<a href ng-click="saveCreateLabelAll(todo)">Save for all users</a>
+						<a href ng-click="saveCreateLabelAll(todo)" ng-if="active_user.role != 'patient'">Save for all users</a>
 					</div>
 					<!-- end change label -->
 					<!-- begin change due date -->
@@ -277,9 +277,9 @@
 							<a href ng-click="changeDueDate(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
 						</div>
 						<p>
-							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)">
+							<input type="text" ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" ng-model-options="{ updateOn: 'default blur', debounce: { default: 500, blur: 0 } }">
 						</p>
-						<div ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" pickadate format="yyyy-MM-dd"></div>
+						<div ng-model="todo.due_date" ng-change="saveTodoDueDate(todo)" pickadate format="MM/dd/yyyy"></div>
 					</div>
 					<!-- end change due date -->
 					<!-- begin change attachment -->

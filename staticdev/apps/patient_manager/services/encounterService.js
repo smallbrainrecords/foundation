@@ -15,6 +15,23 @@
 
 		};
 
+		this.addTimestamp = function(form){
+
+			var url  = '/enc/patient/'+form.patient_id+'/encounter/'+form.encounter_id+'/add_timestamp';
+			return httpService.post(form, url);
+
+		};
+
+		this.markFavoriteEvent = function(form){
+			var url  = '/enc/encounter_event/'+form.encounter_event_id+'/mark_favorite';
+			return httpService.post(form, url);
+		};
+
+		this.nameFavoriteEvent = function(form){
+			var url  = '/enc/encounter_event/'+form.encounter_event_id+'/name_favorite';
+			return httpService.post(form, url);
+		};
+
 
 		this.uploadAudio = function(form, file){
 

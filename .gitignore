@@ -1,4 +1,6 @@
-
+media/*
+staticdev_bk/*
+templates_bk/*
 
 *.pyc
 *.idea

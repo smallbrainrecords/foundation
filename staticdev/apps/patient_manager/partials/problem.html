@@ -33,8 +33,110 @@
 <span class='text-muted'><b>  Problem: {{problem.problem_name}} <span ng-if="problem && !problem.authenticated">(not authenticated)</span></b></span>
 <hr>
 
-<div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'>
-<h4>  Problem : {{problem.problem_name}} <span ng-if="problem && !problem.authenticated">(not authenticated)</span> </h4>
+<div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"' ng-init="edit_problem=false;create_problem_label=false;">
+	<div class="todo">
+		<h4 ng-show="!edit_problem">  
+			Problem : {{problem.problem_name}} 
+			<span ng-if="problem && !problem.authenticated">(not authenticated)</span> 
+			<!-- begin label -->
+			<span class="quick-card-editor-label">
+				<a ng-repeat="label in problem.labels" href class="todo-label" ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
+			</span>
+			<!-- end label -->
+			<a href class="btn-custom" ng-click="edit_problem=!edit_problem"><i class="fa fa-pencil"></i></a>
+		</h4>
+		
+		<!-- begin change item -->
+		<div class="quick-card-editor" id="main-menu" ng-show='edit_problem' >
+
+			<!-- show label and text in edit mode -->
+			<div class="quick-card-editor-text">
+				<div class='row' ng-show='permitted(["change_problem_name"])'>
+					<div class='col-md-12'>
+					
+						<input type='text' ng-model='problem_term' class='form-control' id='problemTermInput' placeholder='Search Problem....'>
+						<button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
+							Change Problem
+						</button>
+
+						<div ng-show='new_problem.set==true'>
+							<hr>
+							<label> {{new_problem.code}} </label>
+							{{new_problem.term}} <br>
+							<button class='btn btn-sm btn-default' ng-click='change_problem_name()'>
+								Change Problem
+							</button>
+							<button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
+								Cancel
+							</button>
+							<hr>
+						</div>
+
+					</div>
+					<div class='col-md-12'  style='max-height:375px; overflow-y:auto;'>
+						<div ng-repeat='problem_term in problem_terms' style='margin-top:12px;'>
+							<button class='btn btn-sm btn-default' title='{{problem_term.code}}' ng-click='set_new_problem(problem_term)'>
+								{{problem_term.term}}
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- end show label and text in edit mode -->
+			
+			<div class="quick-card-editor-card">
+				
+				<!-- begin buttons -->
+				<div class="quick-card-editor-buttons">
+					<a href ng-click="edit_problem=!edit_problem; $event.stopPropagation();"><i class="fa fa-close"></i></a>
+					<a href ng-click="open_change_problem_label();"><i class="fa fa-tags"></i>Edit label</a>
+				</div>
+				<!-- end buttons -->
+				<!-- begin change label -->
+				<div ng-if="change_problem_label" class="quick-card-editor-lv2">
+					<div class="quick-card-editor-lv2-header">
+						<a href ng-click="close_change_problem_label(); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+					</div>
+					<div ng-repeat="label in problem_labels">
+						<a href class="todo-label" ng-class="label.css_class" ng-click="changeProblemLabel(problem, label)">
+							{{label.name}}
+							<i class="fa fa-check" ng-repeat="l in problem.labels" ng-if="l.id==label.id"></i>
+						</a>
+						<!-- begin edit label -->
+						<a href class="todo-label-edit" ng-click="editProblemLabel(label)" ng-if="user_id==label.author.id"><i class="fa fa-pencil"></i></a>
+
+						<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
+							<div class="quick-card-editor-lv2-header">
+								<a href ng-click="editProblemLabel(label); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+							</div>
+							<input type="text" ng-model="label.name">
+							<a ng-repeat="component in problem_labels_component" href class="todo-label" ng-class="component.css_class" ng-click="selectEditProblemLabelComponent(label, component)">
+								<i class="fa fa-check" ng-if="component.css_class==label.css_class"></i>
+							</a>
+							<a href ng-click="saveEditProblemLabel(label)">Save</a>
+							<a href class="btn btn-danger" ng-click="deleteEditProblemLabel(label)">Delete</a>
+						</div>
+						<!-- end edit label -->
+
+					</div>
+					<a href ng-click="open_create_problem_label();"><i class="fa fa-tags"></i>Create new label</a>
+				</div>
+
+				<div ng-if="create_problem_label" class="quick-card-editor-lv2 quick-card-editor-lv3">
+					<div class="quick-card-editor-lv2-header">
+						<a href ng-click="close_create_problem_label(); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+					</div>
+					<input type="text" ng-model="problem_label_component.name">
+					<a ng-repeat="component in problem_labels_component" href class="todo-label" ng-class="component.css_class" ng-click="selectProblemLabelComponent(component)">
+						<i class="fa fa-check" ng-if="component.css_class==problem_label_component.css_class"></i>
+					</a>
+					<a href ng-click="saveCreateProblemLabel(problem)">Save</a>
+				</div>
+				<!-- end change label -->
+			</div>
+		</div>
+		<!-- end change item -->
+	</div>
 </div>
 
 <hr>
@@ -45,67 +147,64 @@
 
 	<div class='col-md-8'>
 
+		<div class='panel panel-default'>
 
-<div class='panel panel-default'>
+			<div class='panel-heading'>Status</div>
 
-	<div class='panel-heading'>Status</div>
+			<div class='panel-body'>
+				<div class='row'>
+					<div class='col-md-4'>
+						<label><input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'> 
+						Is controlled</label>
+					</div>
+					<div class='col-md-4'>
+						<input type='checkbox' ng-model='problem.authenticated' ng-disabled='!permitted(["set_problem_authenticated"])'>
+						Is authenticated
+					</div>
+					<div class='col-md-4'>
+						<input type='checkbox' ng-model='problem.is_active'  ng-disabled='!permitted(["set_problem_active"])'>
+						Is active
+					</div>
+				</div>
+			</div>
 
-	<div class='panel-body'>
-
-
-<div class='row'>
-	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'> 
-		Is controlled
-	</div>
-	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.authenticated' ng-disabled='!permitted(["set_problem_authenticated"])'>
-		Is authenticated
-	</div>
-	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_active'  ng-disabled='!permitted(["set_problem_active"])'>
-		Is active
-	</div>
-</div>
-
-
-
-	</div>
-
-</div>
-
-
-
+		</div>
 	</div>
 	<div class='col-md-4'>
 
-<div class='panel panel-default'>
+		<div class='panel panel-default'>
 
-	<div class='panel-heading'>Start Date</div>
+			<div class='panel-heading'>Start Date</div>
 
-	<div class='panel-body'>
+			<div class='panel-body'>
 
-		<form class='form form-inline' >
+				<form class='form form-inline' >
 
-			<div class='form-group'>
-				<input type='text' class='form-control' ng-model='problem.start_date'>
+					<div class='form-group'>
+						<input type='text' class='form-control' ng-model='problem.start_date' id="start_date">
+					</div>
+					<div class='form-group'>
+						<button ng-click='update_start_date()' class='btn btn-default' ng-show='permitted(["modify_problem"])'> Update </button>
+					</div>	
+				</form>
 
 			</div>
-			<div class='form-group'>
-				<button ng-click='update_start_date()' class='btn btn-default' ng-show='permitted(["modify_problem"])'> Update </button>
-			</div>	
-		</form>
-
+		</div>
 	</div>
-
-
-	</div>
-
 </div>
 
+<div class='row' ng-if="observations.length > 0">
+	<div ng-repeat="observation in observations">
+		<observation ng-model="observation"></observation>
+		<br>
+	</div>
 </div>
 
-
+<div class='panel panel-default' ng-show="problem.old_problem_name">
+	<div class='panel-body'>
+		This problem was previously named "{{problem.old_problem_name}}"
+	</div>
+</div>
 
 <div class='panel panel-default'>
 
@@ -293,11 +392,6 @@
 				<input type='text' class='form-control' ng-model='todo_form.name' id='todoNameInput'>
 			</div>
 
-			<!-- <div class='form-group'>
-				<label> Due Date </label>
-				<input type='text' ng-model='todo_form.due_date' id='due_date'>
-			</div> -->
-
 			<div class='form-group'>
 				<input type='submit' value='Submit' class='btn btn-default'>
 			</div>
@@ -339,26 +433,14 @@
 
 
 <div class='panel panel-default'>
+	<div class='panel-heading'> 
+		Images 
+		<span ng-show='permitted(["add_problem_image"])'>
+			<button class='btn btn-sm btn-default' ng-click='open_image_upload_box()'> Upload </button>
+		</span>
+	</div>
 
-
-	<div class='panel-heading'> Images </div>
-
-	<div class='panel-body'>
-
-		<div class='row' ng-show='permitted(["add_problem_image"])'>
-			<div class='col-md-12'>
-		<form class='form-inline' action='{{image_upload_url()}}' method='POST' enctype='multipart/form-data' id='uploadProblemImageFrm'>
-			<label for="file">File:</label>
-			<input type="file" name="file" id="file">
-			<input type="submit" name="submit" value="Upload">
-
-		</form>
-
-			<hr>
-
-			</div>
-		</div>
-		
+	<div class='panel-body' ng-show="problem_images.length > 0">
 
 		<div class='row'>
 
@@ -367,8 +449,10 @@
 				<center>
 					<img ng-src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
 					<br>
+
+					<a href="{{image.image}}" target="_blank" class='btn btn-sm btn-default'>View</a>
 					
-					<button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button>
+					<!-- <button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button> -->
 					<button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)' ng-show='permitted(["delete_problem_image"])'>
 						Delete 
 					</button>
@@ -391,53 +475,52 @@
 
 	<div class='panel-body' style='padding:20px;'>
 
-<div class='row'>
-	<div class='col-md-4'>
+		<div class='row'>
+			<div class='col-md-4'>
 
-<h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i> </h4>
-<div class='row' ng-repeat='eff_problem in patient_problems' style='padding:7px; border-bottom:1px solid #ccc;'>
+				<h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i> </h4>
+				<div class='row' ng-repeat='eff_problem in patient_problems' style='padding:7px; border-bottom:1px solid #ccc;'>
 
 
-<input type='checkbox'   ng-model='eff_problem.effecting' ng-change='change_effecting_problem(eff_problem, problem)' 
-ng-disabled='!permitted(["relate_problem"])'>
+					<input type='checkbox'   ng-model='eff_problem.effecting' ng-change='change_effecting_problem(eff_problem, problem)' ng-disabled='!permitted(["relate_problem"])'>
 
-	<span ng-if='eff_problem.effecting==true'  style='font-size:14px; font-weight:bold'>
-	 <a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
-	</span>
-	<span ng-if='eff_problem.effecting!=true'>
-		{{eff_problem.problem_name}}
-	</span>
+					<span ng-if='eff_problem.effecting==true'  style='font-size:14px; font-weight:bold'>
+						<a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
+					</span>
+					<span ng-if='eff_problem.effecting!=true'>
+						{{eff_problem.problem_name}}
+					</span>
 
-</div>
+				</div>
+
+			</div>
+
+			<div class='col-md-4'>
+				<h3> {{problem.problem_name}} </h3>
+			</div>
+
+			<div class='col-md-4'>
+
+				<h4> <i class='glyphicon glyphicon-arrow-right'></i>  EffectedProblems </h4>
+				<div class='row' ng-repeat='eff_problem in patient_problems'  style='padding:7px; border-bottom:1px solid #ccc;'>
+
+					<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>  
+
+					<span ng-if='eff_problem.effected==true' style='font-size:14px; font-weight:bold'>
+						<a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
+					</span>
+					<span ng-if='eff_problem.effected!=true'>
+						{{eff_problem.problem_name}}
+					</span>
+
+				</div>
+
+			</div>
+
+
+		</div>
 
 	</div>
-
-	<div class='col-md-4'>
-<h3> {{problem.problem_name}} </h3>
-	</div>
-
-	<div class='col-md-4'>
-
-<h4> <i class='glyphicon glyphicon-arrow-right'></i>  EffectedProblems </h4>
-<div class='row' ng-repeat='eff_problem in patient_problems'  style='padding:7px; border-bottom:1px solid #ccc;'>
-
-<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>  
-
-	<span ng-if='eff_problem.effected==true' style='font-size:14px; font-weight:bold'>
-	 <a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
-	</span>
-	<span ng-if='eff_problem.effected!=true'>
-		{{eff_problem.problem_name}}
-	</span>
-
-</div>
-
-	</div>
-
-
-	</div>
-
-</div>
 </div>
 
 <div class='row'>
@@ -456,11 +539,15 @@ ng-disabled='!permitted(["relate_problem"])'>
 </div>
 <hr>
 
-<div class='row'>
+<div class='row' ng-init="problem_activity_collapse=false;">
 	<div class='col-md-12'>
 		<div class='panel panel-default'>
-			<div class='panel-heading'> Problem activity </div>
-			<div class='panel-body' style='max-height:375px; overflow:auto;'>
+			<div class='panel-heading' ng-click="problem_activity_collapse=!problem_activity_collapse;"> 
+				<i class="fa fa-caret-down" aria-hidden="true" ng-if="problem_activity_collapse"></i>
+  				<i class="fa fa-caret-right" aria-hidden="true" ng-if="!problem_activity_collapse"></i>
+				Problem activity 
+			</div>
+			<div class='panel-body' style='max-height:375px; overflow:auto;' ng-show="problem_activity_collapse">
 				<div ng-repeat='activity in activities' class='row activity-item' style='margin-bottom:4px; border-top:1px solid #ccc;'>
 					<div class='col-md-3'>
 					<b>{{activity.author.user.first_name}} {{activity.author.user.last_name}} - {{activity.author.role}} </b>
@@ -478,12 +565,14 @@ ng-disabled='!permitted(["relate_problem"])'>
 	</div>
 </div>
 
-
-<div class='row'>
+<div class='row' ng-init="encounter_collapse=false;">
 	<div class='col-md-12'>
 		<div class='panel panel-default'>
-			<div class='panel-heading'> Related Encounters </div>
-			<div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'>
+			<div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;"> 
+				<i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+  				<i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+				Related Encounters </div>
+			<div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;' ng-show="encounter_collapse">
 				<div ng-repeat='encounter in related_encounters' class='row' style='margin-bottom:4px; border-top:1px solid #ccc;'>
 					<div class='col-md-12'>
 						<a href='#/encounter/{{encounter.id}}'> 
@@ -496,46 +585,16 @@ ng-disabled='!permitted(["relate_problem"])'>
 	</div>
 </div>
 
-
-<div class='row' ng-if="observations.length > 0">
-
-	<div ng-repeat="observation in observations">
-		<observation ng-model="observation"></observation>
-		<br>
-	</div>
-</div>
-
 <script type='text/javascript'>
 /* To BE REPLACED BY ANGULARJS DIRECTIVE */
 
-var options = {
-	success: function(data){
-		if(data['success']==true){
-			alert("Uploaded Image!");
-			location.reload();
-		}else{
-			alert("Something went wrong!");
-		}
-	}
-};
-
-$('#uploadProblemImageFrm').ajaxForm(options);
 
 </script>
 
 <script type='text/javascript'>
 	
 	$(document).ready(function(){
-
-		$( "#due_date" ).datepicker({ dateFormat: 'yy-mm-dd' });
+		$( "#start_date" ).datepicker({ dateFormat: 'mm/dd/yy' });
 
 	});
 </script>
-
-
-
-
-
-
-
-

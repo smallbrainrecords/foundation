@@ -418,7 +418,7 @@ function timelineDirective($location) {
                                 timeline.reset();
                                 timeline.renderXst = 200.5; timeline.renderXw = 750;
                                 timeline.viewClr = '#ffffff'; timeline.editClr = '#ffffff';
-                                timeline.renderYst = 10.5; timeline.renderYh = (scope.timeline.problems.length+1) * 90; timeline.renderHx = 155; window.n = 'innerHTML';
+                                timeline.renderYst = 10.5; timeline.renderYh = (scope.timeline.problems.length+1) * 70; timeline.renderHx = 155; window.n = 'innerHTML';
                                 timeline.renderYf = 130; timeline.renderYhh = timeline.renderYh + 50;
                                 timeline.wrap = element[0].children[0]; timeline.wrap.style.paddingTop = ((timeline.renderYst + timeline.renderYh + timeline.renderYf) / 10) + '%';
                                 timeline.wrapSvg = element[0].children[0].children[0]; timeline.wrapSvg.setAttribute('viewBox', '0 0 1000,' + (timeline.renderYst + timeline.renderYh + timeline.renderYf));

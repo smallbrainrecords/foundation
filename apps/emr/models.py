@@ -84,6 +84,7 @@ class UserProfile(models.Model):
     deceased_date = models.DateTimeField(null=True, blank=True)
     marital_status = models.ForeignKey(MaritalStatus, null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
+    note = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
@@ -144,11 +145,19 @@ class EncounterEvent(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     summary = models.TextField(default='')
 
+    is_favorite = models.BooleanField(default=False)
+    name_favorite = models.TextField(null=True, blank=True)
+
+    timestamp = models.DateTimeField(null=True, blank=True)
+
     def __unicode__(self):
         return unicode(self.summary)
 
     def video_seconds(self):
-        time_diff = self.datetime - self.encounter.starttime
+        if self.timestamp:
+            time_diff = self.timestamp - self.encounter.starttime
+        else:
+            time_diff = self.datetime - self.encounter.starttime
         x = int(time_diff.total_seconds())
         return x
 
@@ -160,7 +169,6 @@ class EncounterEvent(models.Model):
             s = '0' + str(s)
         return '%s:%s' % (h, s)
 
-
 class TextNote(models.Model):
 
     author = models.ForeignKey(UserProfile, null=True, blank=True)
@@ -170,6 +178,16 @@ class TextNote(models.Model):
 
     def __unicode__(self):
         return "%s %s" % (self.by, self.note)
+
+
+class ProblemLabel(models.Model):
+    name = models.TextField(null=True, blank=True)
+    css_class = models.TextField(null=True, blank=True)
+    author = models.ForeignKey(User, null=True, blank=True, related_name="problem_label_author")
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="problem_label_patient")
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
 
 
 class Problem(MPTTModel):
@@ -183,9 +201,26 @@ class Problem(MPTTModel):
     authenticated = models.BooleanField(default=False)
     start_date = models.DateField(auto_now_add=True)
     start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
+    labels = models.ManyToManyField(ProblemLabel, blank=True)
+    old_problem_name = models.CharField(max_length=200, blank=True, null=True)
 
     def __unicode__(self):
         return '%s %s' % (self.patient, self.problem_name)
+
+
+class SharingPatient(models.Model):
+    sharing = models.ForeignKey(User, related_name='patient_sharing')
+    shared = models.ForeignKey(User, related_name='patient_shared')
+    problems = models.ManyToManyField(Problem, blank=True, related_name="sharing_problems")
+
+
+class ProblemOrder(models.Model):
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="patient_problem_order")
+    user = models.ForeignKey(User, null=True, blank=True, related_name="user_problem_order")
+    order = ListField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.user.username))
 
 
 class ProblemSegment(models.Model):
@@ -225,6 +260,18 @@ class ProblemNote(models.Model):
         return "%s %s" % (self.author, self.note)
 
 
+class LabeledProblemList(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, related_name="label_problem_list_user")
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="label_problem_list_patient")
+    labels = models.ManyToManyField(ProblemLabel, blank=True)
+    name = models.TextField()
+    problem_list = ListField(null=True, blank=True)
+    note = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
+
+
 class Goal(models.Model):
     patient = models.ForeignKey(User)
     problem = models.ForeignKey(Problem, null=True, blank=True)
@@ -260,6 +307,7 @@ class ToDo(models.Model):
     order = models.BigIntegerField(null=True, blank=True)
     members = models.ManyToManyField(UserProfile, blank=True)
     labels = models.ManyToManyField(Label, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo))
@@ -279,6 +327,7 @@ class LabeledToDoList(models.Model):
     labels = models.ManyToManyField(Label, blank=True)
     name = models.TextField()
     todo_list = ListField(null=True, blank=True)
+    expanded = ListField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.name))
@@ -437,6 +486,7 @@ class Observation(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     problem = models.ForeignKey(Problem, related_name='problem_observations')
     todo_past_six_months = models.BooleanField(default=False)
+    patient_refused_A1C = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_on']
@@ -452,7 +502,11 @@ class ObservationComponent(models.Model):
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
-    patient_refused_A1C = models.BooleanField(default=False)
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_component_authors')
+
+    class Meta:
+        ordering = ['effective_datetime', 'created_on']
 
 
 class Country(models.Model):
@@ -547,6 +601,16 @@ class UserAddress(models.Model):
 
 class ObservationTextNote(models.Model):
     observation = models.ForeignKey(Observation, related_name='observation_notes')
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    note = models.TextField()
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "%s" % (self.note)
+
+
+class ObservationComponentTextNote(models.Model):
+    observation_component = models.ForeignKey(ObservationComponent, related_name='observation_component_notes')
     author = models.ForeignKey(UserProfile, null=True, blank=True)
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)

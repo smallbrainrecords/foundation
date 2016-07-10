@@ -1,0 +1,46 @@
+<toaster-container></toaster-container>
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<a href='#/problem/{{observation.problem.id}}'><b> Back to problem page </b></a>
+			</div>
+		</div>
+
+	</div><!-- End of Panel Body -->
+</div>
+
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<b> Edit or delete values </b>
+				<hr>  
+				<table class='table'>
+					<thead>
+						<th> Value </th>
+						<th> Datetime </th>
+						<th> Action</th>
+					</thead>
+					<tbody>
+						<tr ng-repeat="component in observation.observation_components|orderBy:'effective_datetime':true">
+							<td> {{component.value_quantity| number:1 }} </td>
+							<td> {{component.effective_datetime|date:'M/d/yyyy'}} </td>
+							<td> 
+								<a href="#/observation_component/{{component.id}}/edit_value" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == component.author.id)">Edit</a>
+								<a href ng-click="deleteValue(component)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == component.author.id)">Delete</a>
+						 	</td>
+						</tr>
+					</tbody>
+				</table>		
+			</div>
+		</div>
+
+	</div><!-- End of Panel Body -->
+</div>

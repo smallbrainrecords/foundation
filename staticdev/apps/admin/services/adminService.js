@@ -143,6 +143,53 @@
 			return httpService.post(form, url);
 		};
 
+		this.getPatientsList = function(){
+			var form = {};
+			var url = '/u/patients/';
+			return httpService.post(form, url);
+		};
+
+		this.getSharingPatients = function(patient_id){
+			var form = {};
+			var url = '/u/sharing_patients/' + patient_id;
+			return httpService.post(form, url);
+		};
+
+		this.addSharingPatient = function(form){
+			var url = '/u/patient/add_sharing_patient/' + form.patient_id + '/' + form.sharing_patient_id;
+			return httpService.post(form, url);
+		};
+
+		this.removeSharingPatient = function(patient_id, sharing_patient_id){
+			var form = {};
+			var url = '/u/patient/remove_sharing_patient/' + patient_id + '/' + sharing_patient_id;
+			return httpService.post(form, url);
+		};
+
+		this.fetchProblems = function(patient_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/getproblems';
+			return httpService.get(params, url);
+		};
+
+		this.fetchSharingProblems = function(patient_id, sharing_patient_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/get_sharing_problems';
+			return httpService.get(params, url);
+		};
+
+		this.removeSharingProblems = function(patient_id, sharing_patient_id, problem_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/remove_sharing_problems';
+			return httpService.post(params, url);
+		};
+
+		this.addSharingProblems = function(patient_id, sharing_patient_id, problem_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/add_sharing_problems';
+			return httpService.post(params, url);
+		};
+
 	});
 
 })();

@@ -22,8 +22,13 @@
 
 		};
 
+		this.changeGoalName = function(form){
+			var url = '/g/patient/'+form.patient_id+'/goal/'+form.goal_id+'/change_name';
+			return httpService.post(form, url);
+		};
 
-		});
+
+	});
 
 
 

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from common.views import *
 
 from emr.models import UserProfile, Encounter, EncounterEvent
@@ -237,5 +238,93 @@ def upload_encounter_video(request, patient_id, encounter_id):
         encounter = Encounter.objects.get(id=encounter_id)
         encounter.video = video_file
         encounter.save()
+
+    return ajax_response(resp)
+
+def RepresentsInt(times):
+    for t in times:
+        try: 
+            int(t)
+        except ValueError:
+            return False
+
+    return True
+
+# Encounter
+@login_required
+def add_timestamp(request, patient_id, encounter_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_encounter_timestamp']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == "POST" and permitted:
+        encounter = Encounter.objects.get(id=encounter_id)
+        timestamp = request.POST.get('timestamp', '')
+        times = timestamp.split(":")
+        if RepresentsInt(times):
+            if len(times) == 3:
+                plustime = timedelta(hours=int(times[0]), minutes=int(times[1]), seconds=int(times[2]))
+            elif len(times) == 2:
+                plustime = timedelta(minutes=int(times[0]), seconds=int(times[1]))
+            elif len(times) == 1:
+                plustime = timedelta(seconds=int(times[0]))
+            else:
+                plustime = timedelta(seconds=0)
+
+            timestamp = encounter.starttime + plustime
+            summary = request.POST.get('summary', '') + ' by <b>' + request.user.username + '</b>'
+
+            encounter_event = EncounterEvent(
+                encounter=encounter,
+                timestamp=timestamp,
+                summary=summary)
+
+            encounter_event.save()
+
+            # Encounter Events
+            encounter_event_holder = EncounterEventSerializer(encounter_event).data
+
+            resp['success'] = True
+            resp['encounter_event'] = encounter_event_holder
+
+    return ajax_response(resp)
+
+# Encounter
+@login_required
+def mark_favorite(request, encounter_event_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_encounter_timestamp']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == "POST" and permitted:
+        encounter_event = EncounterEvent.objects.get(id=encounter_event_id)
+        encounter_event.is_favorite = True if request.POST.get('is_favorite', False) == "true" else False
+        encounter_event.save()
+
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def name_favorite(request, encounter_event_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_encounter_timestamp']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == "POST" and permitted:
+        encounter_event = EncounterEvent.objects.get(id=encounter_event_id)
+        encounter_event.name_favorite = request.POST.get('name_favorite', '')
+        encounter_event.save()
+
+        resp['success'] = True
 
     return ajax_response(resp)

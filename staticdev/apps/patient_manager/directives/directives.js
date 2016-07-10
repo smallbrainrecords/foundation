@@ -570,6 +570,22 @@ myTools.directive('ngVideoPlayer',  function ($compile) {
     
 });
 
+myTools.directive('ngAudioPlayerJump', ['$parse', function ($parse) {
+    return {
+        restrict: 'A',
+        link: function($scope, $element, $attrs) {
+
+            var audio_seconds = $attrs.audioSeconds;
+
+            $element.click(function(){
+                myAudio=document.getElementById('audio1');
+                myAudio.currentTime = audio_seconds;
+                myAudio.play();
+            });
+        }
+    };
+}]);
+
 
 myTools.directive('ngAudioPlayer', ['$parse', function ($parse) {
 
@@ -578,16 +594,15 @@ myTools.directive('ngAudioPlayer', ['$parse', function ($parse) {
     component.restrict = 'A';
     component.link = function($scope, $element, $attrs) {
 
-            $scope.audio_src = $attrs.audioSrc;
-            $scope.audio_type = $attrs.audioType;
-        
-        };
+        $scope.audio_src = $attrs.audioSrc;
+        $scope.audio_type = $attrs.audioType;
+    };
 
     
 
     component.template = function($element, $attrs){
         var template = '';
-        template += '<audio controls>';
+        template += '<audio controls id="audio1">';
         template += '<source src="{{audio_src}}" type="{{audio_type}}" >';
         template += 'Your browser does not support the audio element.';
         template += '</audio>';

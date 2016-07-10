@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService){
+		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService, prompt){
 
 
 			var patient_id = $('#patient_id').val();
@@ -21,6 +21,9 @@
 			$scope.show_other_notes = false;
 			$scope.history_note_form = {};
 			$scope.wiki_note_form = {};
+			$scope.current_activity = 0;
+			$scope.problem_terms = [];
+			$scope.new_problem = {set:false};
 
 			patientService.fetchActiveUser().then(function(data){
 
@@ -36,13 +39,19 @@
                 $scope.labels = data['labels'];
             });
 
+            problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function(data){
+                $scope.problem_labels = data['labels'];
+            });
+
+			problemService.trackProblemClickEvent(problem_id).then(function(data){});
+
 			function convertDateTime(problem){
 				if(problem.start_date) {
 					var dateTime = problem.start_date;
-					var date = dateTime.split("-");
-				    var yyyy = date[0];
-				    var mm = date[1];
-				    var dd = date[2];
+					var date = dateTime.split("/");
+				    var yyyy = date[2];
+				    var mm = date[0];
+				    var dd = date[1];
 
 				    if (problem.start_time) {
 				    	return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
@@ -72,9 +81,9 @@
 				    var mm = date[1];
 				    var dd = date[0];
 
-				    return yyyy + '-' + mm + '-' + dd;
+				    return mm + '/' + dd + '/' + yyyy;
 				}
-			    return '1970-11-30';
+			    return '11/30/1970';
 			}
 
 			function getTimelineWidgetState(problem) {
@@ -155,83 +164,341 @@
 
 			patientService.fetchProblemInfo(problem_id).then(function(data){
 
-                    $scope.problem = data['info'];
+                $scope.problem = data['info'];
 
-                    // problem timeline
-                    if ($scope.problem.problem_segment.length > 0) {
-                    	var timeline_problems = parseTimelineWithSegment($scope.problem);
-                    } else {
-                    	var timeline_problems = parseTimelineWithoutSegment($scope.problem);
-                    }
+                // problem timeline
+                if ($scope.problem.problem_segment.length > 0) {
+                	var timeline_problems = parseTimelineWithSegment($scope.problem);
+                } else {
+                	var timeline_problems = parseTimelineWithoutSegment($scope.problem);
+                }
 
-					$scope.$watch('active_user', function(nV, oV){
-						$scope.timeline = {
-							Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'], 
-							birthday: convertDateTimeBirthday($scope.active_user['date_of_birth']), 
-							problems: timeline_problems
-						};
+				$scope.$watch('active_user', function(nV, oV){
+					$scope.timeline = {
+						Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'], 
+						birthday: convertDateTimeBirthday($scope.active_user['date_of_birth']), 
+						problems: timeline_problems
+					};
 
-						$scope.timeline_changed = true;
-					});
+					$scope.timeline_changed = true;
+				});
 
-                    $scope.patient_notes = data['patient_notes'];
-                    $scope.physician_notes = data['physician_notes'];
+                $scope.patient_notes = data['patient_notes'];
+                $scope.physician_notes = data['physician_notes'];
 
-                    $scope.problem_goals = data['problem_goals'];
-                    $scope.problem_todos = data['problem_todos'];
-                    $scope.todos_ready = true;
+                $scope.problem_goals = data['problem_goals'];
+                $scope.problem_todos = data['problem_todos'];
+                $scope.todos_ready = true;
 
-                    $scope.problem_images = data['problem_images'];
+                $scope.problem_images = data['problem_images'];
 
-                    $scope.effecting_problems = data['effecting_problems'];
-                    $scope.effected_problems = data['effected_problems'];
+                $scope.effecting_problems = data['effecting_problems'];
+                $scope.effected_problems = data['effected_problems'];
 
-                    $scope.history_note = data['history_note'];
-                    
-                    var wiki_notes = data['wiki_notes'];
+                $scope.history_note = data['history_note'];
+                
+                var wiki_notes = data['wiki_notes'];
 
-                    $scope.patient_wiki_notes = wiki_notes['patient'];
-                    $scope.physician_wiki_notes = wiki_notes['physician'];
-                    $scope.other_wiki_notes = wiki_notes['other'];
-                    $scope.related_encounters = data['related_encounters'];
+                $scope.patient_wiki_notes = wiki_notes['patient'];
+                $scope.physician_wiki_notes = wiki_notes['physician'];
+                $scope.other_wiki_notes = wiki_notes['other'];
+                $scope.related_encounters = data['related_encounters'];
 
-                    $scope.activities = data['activities'];
-                    $scope.observations = data['observations'];
+                $scope.activities = data['activities'];
+                if (data['activities'].length) {
+                	$scope.current_activity = data['activities'][0].id;
+                }
+                $interval(function(){
+					$scope.refresh_problem_activity();
+				}, 10000);
 
-                    if($scope.history_note!=null){
+                $scope.observations = data['observations'];
 
-                    	$scope.history_note_form = {
-                    		note: $scope.history_note.note
-                    	};
+                if($scope.history_note!=null){
 
-                    }
-                    
+                	$scope.history_note_form = {
+                		note: $scope.history_note.note
+                	};
 
-
-                    var patient_problems = data['patient_problems'];
-
-                    
-
-
-                    for(var index in patient_problems){
-
-                    	var id = patient_problems[index].id;
-
-                    	if ($scope.id_exists(id, $scope.effecting_problems)==true){
-                    		patient_problems[index].effecting=true
-                    	}
-
-                    	if ($scope.id_exists(id, $scope.effected_problems)==true){
-                    		patient_problems[index].effected=true
-                    	}
+                }
+                
 
 
-                    }
+                var patient_problems = data['patient_problems'];
 
-                    $scope.patient_problems = patient_problems;
+                
 
-                    $scope.loading = false;
+
+                for(var index in patient_problems){
+
+                	var id = patient_problems[index].id;
+
+                	if ($scope.id_exists(id, $scope.effecting_problems)==true){
+                		patient_problems[index].effecting=true
+                	}
+
+                	if ($scope.id_exists(id, $scope.effected_problems)==true){
+                		patient_problems[index].effected=true
+                	}
+
+
+                }
+
+                $scope.patient_problems = patient_problems;
+
+                $scope.loading = false;
             });
+
+			// change problem name
+			$scope.$watch('problem_term', function(newVal, oldVal){
+
+				if (newVal==undefined){
+					return false;
+				}
+
+				$scope.unset_new_problem();
+
+				if(newVal.length>2){
+
+					patientService.listTerms(newVal).then(function(data){
+
+						$scope.problem_terms = data;
+
+					});
+				}else{
+
+					$scope.problem_terms = [];
+
+				}
+
+			});
+
+			$scope.set_new_problem = function(problem){
+
+					$scope.new_problem.set = true;
+					$scope.new_problem.active = problem.active;
+					$scope.new_problem.term = problem.term;
+					$scope.new_problem.code = problem.code;
+
+
+			};
+
+
+			$scope.unset_new_problem = function(){
+
+				$scope.new_problem.set = false;
+
+			};
+
+			$scope.change_problem_name = function(){
+
+				var c = confirm("Are you sure?");
+
+				if(c==false){
+					return false;
+				}
+
+				var form = {};
+				form.term = $scope.new_problem.term;
+				form.code = $scope.new_problem.code;
+				form.problem_id = $scope.problem_id;
+
+				problemService.changeProblemName(form).then(function(data){
+
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Problem name changed successfully');
+						$scope.problem = data['problem'];
+						$scope.problem_term = '';
+						$scope.unset_new_problem();
+						/* Not-angular-way */
+						$('#problemTermInput').focus();
+						$scope.set_authentication_false();
+
+					}else if(data['success']==false){
+						alert(data['msg']);
+					}else{
+						alert("Something went wrong");
+					}
+
+
+				});
+
+
+			}
+
+			$scope.change_new_problem_name = function(problem_term) {
+				if(problem_term == '' || problem_term == undefined) {
+					return false;
+				}
+				
+				var c = confirm("Are you sure?");
+
+				if(c==false){
+					return false;
+				}
+
+
+				var form = {};
+				form.term = problem_term;
+				form.problem_id = $scope.problem_id;
+
+				problemService.changeProblemName(form).then(function(data){
+
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Problem name changed successfully');
+						$scope.problem = data['problem'];
+						$scope.problem_term = '';
+						$scope.unset_new_problem();
+						/* Not-angular-way */
+						$('#problemTermInput').focus();
+						$scope.set_authentication_false();
+					}else if(data['success']==false){
+						toaster.pop('error', 'Error', data['msg']);
+					}else{
+						toaster.pop('error', 'Error', 'Something went wrong');
+					}
+				});
+			}
+
+			// change problem label
+			$scope.change_problem_label = false;
+			$scope.open_change_problem_label = function() {
+				$scope.change_problem_label = true;
+			}
+			$scope.close_change_problem_label = function() {
+				$scope.change_problem_label = false;
+			}
+
+			$scope.create_problem_label = false;
+			$scope.open_create_problem_label = function() {
+				$scope.create_problem_label = true;
+			}
+			$scope.close_create_problem_label = function() {
+				$scope.create_problem_label = false;
+			}
+
+			$scope.problem_labels_component = [
+                {name: 'green', css_class: 'todo-label-green'},
+                {name: 'yellow', css_class: 'todo-label-yellow'},
+                {name: 'orange', css_class: 'todo-label-orange'},
+                {name: 'red', css_class: 'todo-label-red'},
+                {name: 'purple', css_class: 'todo-label-purple'},
+                {name: 'blue', css_class: 'todo-label-blue'},
+                {name: 'sky', css_class: 'todo-label-sky'},
+            ];
+            $scope.problem_label_component = {};
+
+            $scope.selectProblemLabelComponent = function(component) {
+                $scope.problem_label_component.css_class = component.css_class;
+            }
+
+            $scope.saveCreateProblemLabel = function(problem) {
+                if ($scope.problem_label_component.css_class != null) {
+                    problemService.saveCreateLabel($scope.problem_id, $scope.problem_label_component).then(function(data){
+                        if(data['success']==true){
+                            if(data['new_status']==true){
+                                $scope.problem_labels.push(data['new_label']);
+                            }
+                            if(data['status']==true){
+                                problem.labels.push(data['label']);
+                                toaster.pop('success', "Done", "Added Problem label!");
+                            }
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                $scope.create_problem_label = false;
+            }
+
+            $scope.editProblemLabel = function(label) {
+                label.edit_label = (label.edit_label != true) ? true : false;
+            }
+
+            $scope.selectEditProblemLabelComponent = function(label, component) {
+                label.css_class = component.css_class;
+            }
+
+            $scope.saveEditProblemLabel = function(label) {
+                if (label.css_class != null) {
+                    problemService.saveEditLabel(label, $scope.patient_id, $scope.user_id).then(function(data){
+                        if(data['success']==true){
+                            label.css_class = data['label']['css_class'];
+                            if(data['status']==true){
+                                angular.forEach($scope.problem.labels, function(value, key) {
+                                    if (value.id == label.id) {
+                                        value.css_class = label.css_class;
+                                    }
+                                });
+                                toaster.pop('success', "Done", "Changed label!");
+                            }
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                label.edit_label = false;
+            }
+
+            $scope.changeProblemLabel = function(problem, label) {
+
+                var is_existed = false;
+                var existed_key;
+                var existed_id;
+
+                angular.forEach(problem.labels, function(value, key) {
+                    if (value.name==label.name) {
+                        is_existed = true;
+                        existed_key = key;
+                        existed_id = value.id;
+                    }
+                });
+                if (!is_existed) {
+                    problem.labels.push(label);
+                    problemService.addProblemLabel(label.id, problem.id).then(function(data){
+                        if(data['success']==true){
+                            toaster.pop('success', "Done", "Added Problem label!");
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                } else {
+                    problem.labels.splice(existed_key, 1);
+                    problemService.removeProblemLabel(existed_id, problem.id).then(function(data){
+                        if(data['success']==true){
+                            toaster.pop('success', "Done", "Removed Problem label!");
+                        }else{
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
+                
+            }
+
+            $scope.deleteEditProblemLabel = function(label) {
+                prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a label is forever. There is no undo."
+                }).then(function(result){
+                    problemService.deleteLabel(label).then(function(data){
+	                    var index = $scope.problem_labels.indexOf(label);
+	                    $scope.problem_labels.splice(index, 1);
+
+	                    var index2;
+	                    angular.forEach($scope.problem.labels, function(value, key) {
+                            if (value.id == label.id) {
+                                index2 = key;
+                            }
+                        });
+	                    if (index2 != undefined)
+                            $scope.problem.labels.splice(index2, 1);
+
+	                    toaster.pop('success', 'Done', 'Deleted label successfully');
+	                });
+                },function(){
+                    return false;
+                });
+            }
 
 			/* Track Status */
 
@@ -407,6 +674,18 @@
 				return url;
 			}
 
+			$scope.open_image_upload_box = function(){
+			    ngDialog.open({
+                    template:'/static/apps/patient_manager/partials/modals/upload_image.html',
+                    className:'ngdialog-theme-default large-modal',
+                    scope:$scope,
+                    cache:false,
+                    controller: ['$scope',
+                    function($scope){
+                    }]
+                });
+			};
+
 
 			$scope.open_image_box = function(image){
 
@@ -444,7 +723,7 @@
 					var image_index = $scope.problem_images.indexOf(image);
 
 					$scope.problem_images.splice(image_index, 1);
-					toaster.pop('success', 'Done', 'Added Todo!');
+					toaster.pop('success', 'Done', 'Deleted image!');
 					$scope.set_authentication_false();
 				});
 			};
@@ -532,9 +811,13 @@
 
 
 			$scope.refresh_problem_activity=function(){
-				problemService.getProblemActivity($scope.problem_id).then(function(data){
-					if ($scope.activities.length != data['activities'].length)
-						$scope.activities = data['activities'];
+				problemService.getProblemActivity($scope.problem_id, $scope.current_activity).then(function(data){
+					if (data['activities'].length) {
+						for (var i=data['activities'].length-1; i>=0; i--){
+						    $scope.activities.unshift(data['activities'][i]);
+						}
+						$scope.current_activity = data['activities'][0].id;
+					}
 				})
 			}
 
@@ -563,10 +846,6 @@
 
 				$scope.show_accomplished_goals = flag;
 			}
-
-			$interval(function(){
-				$scope.refresh_problem_activity();
-			}, 4000);
 		}); /* End of controller */
 
 

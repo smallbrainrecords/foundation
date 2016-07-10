@@ -1,0 +1,72 @@
+<toaster-container></toaster-container>
+
+<center> 
+	<h3> 
+		<a href='#/'><i class='glyphicon glyphicon-arrow-left'></i> Back </a> 
+	</h3> 
+</center>
+<hr>
+
+<center> <h3> Manage Sharing Patients </h3> </center>
+<hr>
+
+
+<div class='row'>
+	<div class='col-md-12'>
+		<div class='panel panel-default'>
+
+			<div class='panel-heading'>
+				{{active_user.user.first_name}} {{active_user.user.last_name}} @ {{active_user.user.username}}
+			</div>
+
+			<div class='panel-body'>
+
+				<form class='form' ng-submit='add_sharing_patient(assign_patient_form)' ng-if="active_user.role != 'patient'">
+
+					<div class='form-group'>
+						<label> Select user can access this patient </label>
+						<select ng-model='assign_patient_form.sharing_patient_id' class='form-control' required>
+							<option value='' > ---- </option>
+							<option ng-repeat='p in patients_list' value='{{p.user.id}}' ng-if="permitted(p)">
+								{{p.user.first_name}} {{p.user.last_name}} @ {{p.user.username}}
+							</option>
+						</select>
+					</div>
+
+					<div class='form-group'>
+						<input type='submit' value='Assign' class='btn btn-default'>
+					</div>
+
+				</form>
+
+				<hr>
+
+				<table class='table'>
+					<thead>
+						<th> Name </th>
+						<th> Username </th>
+						<th> Actions </th>
+					</thead>
+					<tbody>
+						<tr ng-repeat='p in sharing_patients'>
+							<td> {{p.user.first_name}} {{p.user.last_name}}
+							</td>
+							<td> {{p.user.username}}
+							</td>
+							<td> 
+								<a class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{p.user.id}}">
+		                            Edit problem based sharing
+		                        </a>
+								<a class='btn btn-sm btn-default' ng-click="remove_sharing_patient(p)" ng-if="active_user.role != 'patient'">
+		                            Remove
+		                        </a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+		</div>
+
+	</div>
+</div>

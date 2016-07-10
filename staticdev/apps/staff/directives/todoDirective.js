@@ -1,8 +1,8 @@
 var todos = angular.module('todos', []);
 
-todos.directive('todo', ['todoService', 'staffService', 'toaster', '$location', '$timeout', todoDirective]);
+todos.directive('todo', ['todoService', 'staffService', 'toaster', '$location', '$timeout', 'prompt', todoDirective]);
 
-function todoDirective(todoService, staffService, toaster, $location, $timeout) {
+function todoDirective(todoService, staffService, toaster, $location, $timeout, prompt) {
 
     var todoObj = {}; 
 
@@ -20,6 +20,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                                 scope.show_problem = scope.$eval(attr.showProblem);
                                 scope.is_tagged = scope.$eval(attr.isTagged);
                                 scope.is_list = scope.$eval(attr.isList);
+                                scope.current_todo == null;
 
                                 scope.problem_todos = scope.$eval(attr.ngModel);
                                 var tmpList = scope.problem_todos;
@@ -114,9 +115,12 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                             }
 
                             scope.todoChange = function(todo) {
-                                currentTodo = todo.todo;
-                                todo.changed = true;
+                                scope.current_todo = todo;
                                 scope.todo_changed = true;
+                                currentTodo = todo.todo;
+                                todoService.addTodoAccessEncounter(todo.id).then(function() {
+                                    todo.changed = true;
+                                });
                             }
 
                             scope.closeThisTodo = function(todo) {
@@ -145,8 +149,20 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                                 todo.change_due_date = (todo.change_due_date != true) ? true : false;
                             }
 
+                            scope.allowDueDateNotification = true;
                             scope.saveTodoDueDate = function(todo) {
                                 todoService.changeTodoDueDate(todo).then(function(data){
+                                    if(data['success']==true){
+                                        if (scope.allowDueDateNotification)
+                                            toaster.pop('success', "Done", "Due date Updated!");
+                                        scope.allowDueDateNotification = true;
+                                    }else if(data['success']==false){
+                                        todo.due_date = data['todo']['due_date'];
+                                        toaster.pop('error', 'Error', 'Invalid date format');
+                                        scope.allowDueDateNotification = false;
+                                    }else{
+                                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                                    }
                                 });
                             }
 
@@ -269,46 +285,30 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                             }
 
                             scope.deleteEditLabel = function(label) {
-                                var currentLabel = label;
-                                // angular.element('#deleteLabelModal').modal();
-                                todoService.deleteLabel(label).then(function(data){
-                                    var index = scope.labels.indexOf(currentLabel);
-                                    scope.labels.splice(index, 1);
-                                    
-                                    angular.forEach(scope.problem_todos, function(todo, key) {
-                                        var index2;
-                                        angular.forEach(todo.labels, function(value, key2) {
-                                            if (value.id == currentLabel.id) {
-                                                index2 = key2;
-                                            }
+                                prompt({
+                                    "title": "Are you sure?",
+                                    "message": "Deleting a label is forever. There is no undo."
+                                }).then(function(result){
+                                    var currentLabel = label;
+                                    todoService.deleteLabel(label).then(function(data){
+                                        var index = scope.labels.indexOf(currentLabel);
+                                        scope.labels.splice(index, 1);
+                                        
+                                        angular.forEach(scope.problem_todos, function(todo, key) {
+                                            var index2;
+                                            angular.forEach(todo.labels, function(value, key2) {
+                                                if (value.id == currentLabel.id) {
+                                                    index2 = key2;
+                                                }
+                                            });
+                                            if (index2 != undefined)
+                                                todo.labels.splice(index2, 1);
                                         });
-                                        if (index2 != undefined)
-                                            todo.labels.splice(index2, 1);
+
+                                        toaster.pop('success', 'Done', 'Deleted label successfully');
                                     });
-
-                                    // angular.element('#deleteLabelModal').modal('hide');
-                                    toaster.pop('success', 'Done', 'Deleted label successfully');
-                                });
-                            }
-
-                            scope.confirmDeleteLabel = function(currentLabel) {
-                                todoService.deleteLabel(currentLabel).then(function(data){
-                                    var index = scope.labels.indexOf(currentLabel);
-                                    scope.labels.splice(index, 1);
-                                    
-                                    angular.forEach(scope.problem_todos, function(todo, key) {
-                                        var index2;
-                                        angular.forEach(todo.labels, function(value, key2) {
-                                            if (value.id == currentLabel.id) {
-                                                index2 = key2;
-                                            }
-                                        });
-                                        if (index2 != undefined)
-                                            todo.labels.splice(index2, 1);
-                                    });
-
-                                    angular.element('#deleteLabelModal').modal('hide');
-                                    toaster.pop('success', 'Done', 'Deleted label successfully');
+                                },function(){
+                                    return false;
                                 });
                             }
 
@@ -349,6 +349,18 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout) 
                                     });
                                 }
                                 
+                            }
+
+                            scope.clickOutSide = function() {
+                                if (scope.current_todo != null) {
+                                    scope.current_todo.changed = false;
+                                    scope.todo_changed = false;
+                                    scope.current_todo.change_due_date = false;
+                                    scope.current_todo.change_label = false;
+                                    scope.current_todo.change_member = false;
+                                    scope.current_todo.create_label = false;
+                                    scope.current_todo == null;
+                                }
                             }
                         }
                     }, true);
