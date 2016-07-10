@@ -1,16 +1,18 @@
-
 <toaster-container></toaster-container>
 <a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
 
 <hr>
 
-<h4>  Encounter : <span ng-if="encounter.starttime">{{encounter.starttime | date:'medium'}}</span> <span ng-if="encounter.stoptime">to {{encounter.stoptime | date:'medium'}}</span> </h4>
+<h4> Encounter : <span ng-if="encounter.starttime">{{ encounter.starttime | date:'medium' }}</span> <span
+        ng-if="encounter.stoptime">to {{ encounter.stoptime | date:'medium' }}</span></h4>
 
 
 <link href="//vjs.zencdn.net/4.12/video-js.css" rel="stylesheet">
 <script src="//vjs.zencdn.net/4.12/video.js"></script>
 
 <div class='row'>
+<!--
+<<<<<<< HEAD
 	<div class='col-md-4'>
 		<form class='form' ng-show='permitted(["add_encounter"])'>
 			<div class='form-group'>
@@ -67,6 +69,84 @@
 			</form>
 		</div>
 	</div>
+=======
+-->
+    <div class='col-md-4'>
+        <form class='form' ng-show='permitted(["add_encounter"])'>
+            <div class='form-group'>
+                <label> Note </label>
+            </div>
+            <div class='form-group'>
+                <textarea style='height:275px;' class='form-control' ng-model='encounter.note'
+                          placeholder='Add a note....'></textarea>
+            </div>
+            <button type='submit' class='btn btn-default' ng-click='update_note()'>
+                Update
+            </button>
+        </form>
+    </div>
+
+    <div class='col-md-8'>
+        <div ng-if='encounter.video!=null'>
+            <strong> Encounter Video </strong>
+            <div video-id='video1' ng-video-player video-src="{{ encounter.video }}" video-type='video/mp4'>
+
+            </div>
+        </div>
+        <div ng-show='encounter.video==null && permitted(["add_encounter"])'>
+            <form class='form' ng-submit='upload_video()'>
+
+                <div class='form-group'>
+                    <label for="video_file">Video File:</label>
+                    <input type="file" file-model='video_file'>
+                </div>
+                <div class='form-group'>
+                    <button type='submit' class='btn btn-default'>
+                        Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div ng-if='encounter.audio!=null '>
+            <strong> Encounter Audio </strong>
+            <div ng-audio-player audio-src="{{ encounter.audio }}" audio-type="audio/mp3">
+            </div>
+        </div>
+        <div ng-show='encounter.audio==null  && permitted(["add_encounter"]) '>
+            <form class='form' ng-submit='upload_audio()'>
+                <div class='form-group'>
+                    <label for="audio_file">Audio File:</label>
+                    <input type="file" file-model='audio_file'>
+                </div>
+
+                <div class='form-group'>
+                    <button type='submit' class='btn btn-default'>
+                        Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class='row'>
+    <div class='col-md-8'>
+        <form name="myForm">
+            <div class='form-group'>
+                <input class="form-control" ng-model="timestamp" placeholder='Add a timestamp....'>
+            </div>
+            <div class='form-group'>
+                <input class='form-control' ng-model='summary' placeholder='Add a summary....'/ >
+            </div>
+
+            <button type='submit' class='btn btn-default' ng-click='add_timestamp(timestamp)'>
+                Add a timestamp
+            </button>
+        </form>
+    </div>
+<!--
+>>>>>>> upstream/improvement
+-->
 </div>
 <div class='row'>
 	<div class='col-md-8'>
@@ -88,12 +168,14 @@
 <hr>
 
 <center>
-	<h3 class='text-info' ng-if='!encounter_events.length'>
-		No Events
-	</h3>
+    <h3 class='text-info' ng-if='!encounter_events.length'>
+        No Events
+    </h3>
 </center>
 
 <table class='table' ng-if='encounter_events.length>0'>
+<!--
+<<<<<<< HEAD
 	<thead>
 
 		<th> Time (24 hour) </th>
@@ -107,10 +189,30 @@
 			<td> {{event.video_seconds }} 
 				<span ng-if="encounter.video && !encounter.audio">
 					<button class='btn btn-default' ng-video-player-jump video-seconds='{{event.video_seconds}}'> 
+=======
+-->
+    <thead>
+
+    <th> Time (24 hour)</th>
+    <th> Video Timestamp</th>
+    <th> Summary</th>
+    <th></th>
+    </thead>
+
+    <tbody>
+    <tr ng-repeat='event in encounter_events' ng-init="event.is_named=false;">
+        <td> {{ event.video_seconds }}
+				<span ng-if="encounter.video && !encounter.audio">
+					<button class='btn btn-default' ng-video-player-jump video-seconds='{{ event.video_seconds }}'>
+<!--
+>>>>>>> upstream/improvement
+-->
 						<i class='glyphicon glyphicon-play'></i>
 					</button>
 				</span>
 				<span ng-if="encounter.audio">
+<!--
+<<<<<<< HEAD
 					<button class='btn btn-default' ng-audio-player-jump audio-seconds='{{event.video_seconds}}'> 
 						<i class='glyphicon glyphicon-play'></i>
 					</button>
@@ -121,6 +223,21 @@
 			</td>
 			<td ng-bind-html='event.summary'>  </td>
 			<td>
+=======
+-->
+					<button class='btn btn-default' ng-audio-player-jump audio-seconds='{{ event.video_seconds }}'>
+						<i class='glyphicon glyphicon-play'></i>
+					</button>
+				</span>
+        </td>
+        <td>
+            {{ event.video_timestamp }}
+        </td>
+        <td ng-bind-html='event.summary'></td>
+        <td>
+<!--
+>>>>>>> upstream/improvement
+-->
 				<span ng-if="event.is_favorite">
 					<span ng-if="event.is_named">
 						<input type="text" ng-model="event.name_favorite">
@@ -128,7 +245,7 @@
 						<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Cancel</button>
 					</span>
 					<span ng-if="!event.is_named">
-						{{event.name_favorite}}
+						{{ event.name_favorite }}
 						<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
 						<button class="btn btn-default" ng-click="unmarkFavoriteEvent(event)">Unmark favorite</button>
 					</span>
@@ -136,27 +253,28 @@
 				<span ng-if="!event.is_favorite">
 					<button class="btn btn-default" ng-click="markFavoriteEvent(event)">Mark favorite</button>
 				</span>
-			</td>
-		</tr>
-	</tbody>
+        </td>
+    </tr>
+    </tbody>
 </table>
 
 
 <div class='row'>
-	<div class='col-md-12'>
-		<div class='panel panel-default'>
-			<div class='panel-heading'> Related Problems </div>
-			<div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'>
-				<div ng-repeat='problem in related_problems' class='row' style='margin-bottom:4px; border-top:1px solid #ccc;'>
-					<div class='col-md-12'>
-						<a href='#/problem/{{problem.id}}'> 
-							{{problem.problem_name}}
-						</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+    <div class='col-md-12'>
+        <div class='panel panel-default'>
+            <div class='panel-heading'> Related Problems</div>
+            <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'>
+                <div ng-repeat='problem in related_problems' class='row'
+                     style='margin-bottom:4px; border-top:1px solid #ccc;'>
+                    <div class='col-md-12'>
+                        <a href='#/problem/{{ problem.id }}'>
+                            {{ problem.problem_name }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 

@@ -1,76 +1,76 @@
-(function(){
+(function () {
 
-	'use strict';
-
-
-	angular.module('ManagerApp')
-		.controller('EncountersCtrl', function($scope, $routeParams, patientService, ngDialog, $location, toaster, encounterService){
+    'use strict';
 
 
-		var patient_id = $('#patient_id').val();
-		$scope.patient_id = patient_id;
-		var encounter_id = $routeParams.encounter_id;
-		$scope.encounter_id = encounter_id;
+    angular.module('ManagerApp')
+        .controller('EncountersCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, toaster, encounterService) {
 
-            patientService.fetchActiveUser().then(function(data){
 
-                        $scope.active_user = data['user_profile'];
+            var patient_id = $('#patient_id').val();
+            $scope.patient_id = patient_id;
+            var encounter_id = $routeParams.encounter_id;
+            $scope.encounter_id = encounter_id;
+
+            patientService.fetchActiveUser().then(function (data) {
+
+                $scope.active_user = data['user_profile'];
 
             });
 
-		patientService.fetchEncounterInfo(encounter_id).then(function(data){
+            patientService.fetchEncounterInfo(encounter_id).then(function (data) {
 
-			$scope.encounter = data['encounter'];
-			$scope.encounter_events = data['encounter_events'];
-                  $scope.related_problems = data['related_problems'];
+                $scope.encounter = data['encounter'];
+                $scope.encounter_events = data['encounter_events'];
+                $scope.related_problems = data['related_problems'];
             });
 
 
-            $scope.update_note = function(){
+            $scope.update_note = function () {
 
-            	var form = {};
-            	form.encounter_id = $scope.encounter_id;
-            	form.patient_id = $scope.patient_id;
-            	form.note = $scope.encounter.note;
-            	encounterService.updateNote(form).then(function(data){
+                var form = {};
+                form.encounter_id = $scope.encounter_id;
+                form.patient_id = $scope.patient_id;
+                form.note = $scope.encounter.note;
+                encounterService.updateNote(form).then(function (data) {
 
-            		toaster.pop('success', 'Done', 'Updated note!');
+                    toaster.pop('success', 'Done', 'Updated note!');
 
-            	});
+                });
 
 
             };
 
-            $scope.upload_video = function(){
+            $scope.upload_video = function () {
 
-				var form = {};
-            	form.encounter_id = $scope.encounter_id;
-            	form.patient_id = $scope.patient_id;
-            	var file = $scope.video_file;
+                var form = {};
+                form.encounter_id = $scope.encounter_id;
+                form.patient_id = $scope.patient_id;
+                var file = $scope.video_file;
 
-            	encounterService.uploadVideo(form, file).then(function(data){
+                encounterService.uploadVideo(form, file).then(function (data) {
 
-            		if(data['success'] == true){
+                    if (data['success'] == true) {
 
-            			toaster.pop('success', 'Done', 'Uploaded Video!');
-            		}
-            	});
+                        toaster.pop('success', 'Done', 'Uploaded Video!');
+                    }
+                });
 
-			};
+            };
 
-	     $scope.upload_audio = function(){
+            $scope.upload_audio = function () {
 
-		var form = {};
-            form.encounter_id = $scope.encounter_id;
-            form.patient_id = $scope.patient_id;
-            var file = $scope.audio_file;
+                var form = {};
+                form.encounter_id = $scope.encounter_id;
+                form.patient_id = $scope.patient_id;
+                var file = $scope.audio_file;
 
-			encounterService.uploadAudio(form, file).then(function(data){
-           	      	if(data['success'] == true){
-          			toaster.pop('success', 'Done', 'Uploaded Audio!');
-                 		}
-                 	});
-		};
+                encounterService.uploadAudio(form, file).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'Uploaded Audio!');
+                    }
+                });
+            };
 
             $scope.add_timestamp = function(timestamp){
 
@@ -87,6 +87,20 @@
                               toaster.pop('error', 'Warning', 'Something went wrong!');
                         }
 
+			  if($scope.active_user==undefined){
+				return false;
+			  }
+
+			  var user_permissions = $scope.active_user.permissions;
+
+			  for(var key in permissions){
+
+				if(user_permissions.indexOf(permissions[key])<0){
+				      return false;
+				}
+			  }
+
+			  return true;
                   });
 
 
@@ -123,29 +137,27 @@
             };
 
 
-            $scope.permitted = function(permissions){
+            $scope.permitted = function (permissions) {
 
-                  if($scope.active_user==undefined){
+                if ($scope.active_user == undefined) {
+                    return false;
+                }
+
+                var user_permissions = $scope.active_user.permissions;
+
+                for (var key in permissions) {
+
+                    if (user_permissions.indexOf(permissions[key]) < 0) {
                         return false;
-                  }
+                    }
+                }
 
-                  var user_permissions = $scope.active_user.permissions;
-
-                  for(var key in permissions){
-
-                        if(user_permissions.indexOf(permissions[key])<0){
-                              return false;
-                        }
-                  }
-
-                  return true;
+                return true;
             };
 
 
-
-
-
-		}); /* End of controller */
+        });
+    /* End of controller */
 
 
 })();

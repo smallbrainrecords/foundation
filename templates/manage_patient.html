@@ -1,6 +1,8 @@
 {% extends "base/base.html" %}
 {% block title %}  Manage Patient - {{ patient.get_full_name }}   {% endblock %}
 {% block content %}
+<!--
+<<<<<<< HEAD
 	<script src="/static/apps/common/httpModule.js" type="text/javascript" charset="utf-8"></script>
 	<script src="/static/apps/patient_manager/app.js" type="text/javascript" charset="utf-8"></script>
 	<script src="/static/apps/patient_manager/controllers/home.js" type="text/javascript" charset="utf-8"></script>
@@ -86,6 +88,127 @@
 			</div>
 		{% endverbatim %}
 	</div>
+=======
+-->
+    <script src="/static/apps/common/httpModule.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/app.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/home.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/problems.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/goals.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/encounters.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/encountersMain.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/pain.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/todo.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/editUserController.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/observation.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/controllers/manageSharingController.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/services/services.js" type="text/javascript" charset="utf-8"></script>
+
+    <script src="/static/apps/patient_manager/services/problemService.js" type="text/javascript"
+            charset="utf-8"></script>
+
+    <script src="/static/apps/patient_manager/services/goalService.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/services/encounterService.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/services/todoService.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/services/observationService.js" type="text/javascript"
+            charset="utf-8"></script>
+
+    <script src="/static/apps/patient_manager/directives/directives.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/directives/timeLineDirective.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/directives/todoDirective.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/directives/observationDirective.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/patient_manager/directives/problemDirective.js" type="text/javascript"
+            charset="utf-8"></script>
+    <div id='ng-app' ng-app='ManagerApp' class='no-js' lang='en'>
+
+        <input type='hidden' id='patient_id' value='{{ patient.id }}'>
+        <input type='hidden' id='user_id' value='{{ user.id }}'>
+        <div>
+
+        </div>
+        <div ng-view autoscroll='true'>
+            Loading ....
+        </div>
+
+
+        {% verbatim %}
+
+
+        <div id='encounter-bar' class='bottom-bar' ng-controller='EncountersMainCtrl'>
+            <ng-audio-recorder id='audioInput' audio-model='recordedInput' show-player="false"
+                               on-conversion-complete="convert_is_finished()"
+                               on-record-start="record_start()">
+                <div ng-if="!recorder.isAvailable">
+                    Message for users when recording is not possible.
+                </div>
+            </ng-audio-recorder>
+            <div class='row' id='encounter-box' ng-show='show_encounter_ui==true'>
+
+                <div class='col-md-12' ng-show='encounter_flag==false'>
+                    <button class='btn btn-warning btn-md' ng-click='start_encounter()'>
+                        Start Encounter
+                    </button>
+                </div>
+
+                <div class='col-md-12' ng-show='encounter_flag==true'>
+
+                    <div class='row'>
+
+                        <div class='col-md-6'>
+
+                            <button class='btn btn-warning btn-md' ng-click='stop_encounter()'>
+                                Stop Encounter
+                            </button>
+                            <button class='btn btn-default btn-md' ng-click='view_encounter()'>
+                                View Encounter
+                            </button>
+
+                            <!-- Pause/Resume recorder while encountering-->
+                            <button type="button" class="btn btn-default" aria-label="Left Align"
+                                    ng-if="minorRecorderFlag"
+                                    ng-click='toggle_recorder()'>
+                                <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="btn btn-default" aria-label="Left Align"
+                                    ng-if="!minorRecorderFlag"
+                                    ng-click='toggle_recorder()'>
+                                <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+                            </button>
+
+                            <span>Elapsed: {{ elapsedTime*1000 | duration }}</span>
+                        </div>
+
+                        <div class='col-md-4'>
+
+                            <input type='text'
+                                   placeholder='What are you doing right now ?' class='form-control'
+                                   ng-model='event_summary'>
+                        </div>
+
+                        <div class='col-md-2'>
+                            <button class='btn btn-default btn-block btn-md' ng-click='add_event_summary()'>
+                                Add Event Summary
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        {% endverbatim %}
+    </div>
+<!--
+>>>>>>> upstream/improvement
+-->
 {% endblock %}
 {% block page_js %}
 {% endblock %}

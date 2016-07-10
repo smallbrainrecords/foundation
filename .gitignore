@@ -5,3 +5,5 @@ templates_bk/*
 *.pyc
 *.idea
 *.db
+media
+Icon

@@ -1,15 +1,23 @@
-(function(){
+(function () {
 
-	'use strict';
-
-
-	var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 
-        'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 
-        'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate', 
-        'observations', 'cgPrompt', 'problems']);
+    'use strict';
 
 
-    ManagerApp.config(function($routeProvider) {
+    var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule',
+        'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine',
+        'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate',
+        'observations', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio']);
+
+
+    ManagerApp.config(function ($routeProvider, recorderServiceProvider) {
+        /**
+         * Configuration for recording service
+         */
+        recorderServiceProvider.forceSwf(false)
+        //.setSwfUrl('/lib/recorder.swf')
+            .withMp3Conversion(true, {
+                bitRate: 64
+            });
 
         $routeProvider
             .when('/', {
@@ -22,19 +30,19 @@
                 templateUrl: '/static/apps/patient_manager/partials/edit.html',
                 controller: 'EditUserCtrl'
             })
-            .when('/problem/:problem_id',{
+            .when('/problem/:problem_id', {
 
-            	templateUrl: '/static/apps/patient_manager/partials/problem.html',
+                templateUrl: '/static/apps/patient_manager/partials/problem.html',
                 controller: 'ProblemsCtrl'
 
             })
-            .when('/goal/:goal_id',{
+            .when('/goal/:goal_id', {
 
                 templateUrl: '/static/apps/patient_manager/partials/goal.html',
                 controller: 'GoalsCtrl'
 
             })
-            .when('/encounter/:encounter_id',{
+            .when('/encounter/:encounter_id', {
 
                 templateUrl: '/static/apps/patient_manager/partials/encounter.html',
                 controller: 'EncountersCtrl'
