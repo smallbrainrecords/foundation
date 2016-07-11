@@ -247,6 +247,9 @@
                 $scope.patient_problems = patient_problems;
 
                 $scope.loading = false;
+
+
+                $scope.sharing_patients = data['sharing_patients'];
             });
 
 			// change problem name
@@ -846,6 +849,32 @@
 
 				$scope.show_accomplished_goals = flag;
 			}
+
+			$scope.isInArray = function(array, item) {
+				var is_existed = false;
+	            angular.forEach(array, function(value, key2) {
+	                if (value == item) {
+	                    is_existed = true;
+	                }
+	            });
+	            return is_existed;
+			};
+
+			// check sharing problem
+			$scope.checkSharedProblem = function(problem, sharing_patients) {
+				if ($scope.patient_id == $scope.user_id || $scope.active_user.role=='physician' || $scope.active_user.role=='mid-level') {
+					return true;
+				} else {
+					var is_existed = false;
+		            angular.forEach(sharing_patients, function(p, key) {
+		            	if (!is_existed && p.user.id == $scope.user_id) {
+	                		is_existed = $scope.isInArray(p.problems, problem.id);
+		            	}
+		            });
+
+		            return is_existed;
+				}
+			};
 		}); /* End of controller */
 
 

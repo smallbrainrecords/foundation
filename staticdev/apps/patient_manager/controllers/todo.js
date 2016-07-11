@@ -11,6 +11,7 @@
             var user_id = $('#user_id').val();
             $scope.user_id = user_id;
 			var todo_id = $routeParams.todo_id;
+            $scope.loading = true;
 
 			$scope.todo_id = todo_id;
             $scope.current_activity = 0;
@@ -27,6 +28,9 @@
                 $interval(function(){
                     $scope.refresh_todo_activity();
                 }, 10000);
+
+                $scope.sharing_patients = data['sharing_patients'];
+                $scope.loading = false;
             });
 
             patientService.fetchActiveUser().then(function(data){
@@ -405,6 +409,32 @@
                     }
                 })
             }
+
+            $scope.isInArray = function(array, item) {
+                var is_existed = false;
+                angular.forEach(array, function(value, key2) {
+                    if (value == item) {
+                        is_existed = true;
+                    }
+                });
+                return is_existed;
+            };
+
+            // check sharing problem
+            $scope.checkSharedProblem = function(problem, sharing_patients) {
+                if ($scope.patient_id == $scope.user_id || $scope.active_user.role=='physician' || $scope.active_user.role=='mid-level') {
+                    return true;
+                } else {
+                    var is_existed = false;
+                    angular.forEach(sharing_patients, function(p, key) {
+                        if (!is_existed && p.user.id == $scope.user_id) {
+                            is_existed = $scope.isInArray(p.problems, problem.id);
+                        }
+                    });
+
+                    return is_existed;
+                }
+            };
 
 		}); /* End of controller */
 

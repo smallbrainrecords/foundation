@@ -330,7 +330,6 @@ def get_patient_info(request, patient_id):
     shared_patients = SharingPatient.objects.filter(sharing=patient_user).order_by('shared__first_name', 'shared__last_name')
 
     patients_list = []
-    patients_list.append(patient_profile_dict)
     for shared_patient in shared_patients:
         user_dict = UserProfileSerializer(shared_patient.shared.profile).data
         patients_list.append(user_dict)

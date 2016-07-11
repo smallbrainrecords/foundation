@@ -29,6 +29,7 @@ from emr.serializers import TextNoteSerializer
 from todo_app.serializers import TodoSerializer
 from goals_app.serializers import GoalSerializer
 from encounters_app.serializers import EncounterSerializer
+from users_app.serializers import UserProfileSerializer
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
@@ -178,6 +179,14 @@ def get_problem_info(request, problem_id):
         observation_dict = ObservationSerializer(observation).data
         observations_holder.append(observation_dict)
 
+    sharing_patients = SharingPatient.objects.filter(shared=patient).order_by('sharing__first_name', 'sharing__last_name')
+
+    sharing_patients_list = []
+    for sharing_patient in sharing_patients:
+        user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
+        user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
+        sharing_patients_list.append(user_dict)
+
     resp = {}
     resp['success'] = True
     resp['info'] = problem_dict
@@ -196,6 +205,8 @@ def get_problem_info(request, problem_id):
 
     resp['related_encounters'] = related_encounter_holder
     resp['observations'] = observations_holder
+
+    resp['sharing_patients'] = sharing_patients_list
 
     return ajax_response(resp)
 

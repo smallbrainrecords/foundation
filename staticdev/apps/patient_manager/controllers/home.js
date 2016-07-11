@@ -151,13 +151,15 @@
                     var timeline_problems = [];
                     angular.forEach(data2['timeline_problems'], function (value, key) {
 
-                        if (value.problem_segment) {
-                            var timeline_problem = parseTimelineWithSegment(value);
-                        } else {
-                            var timeline_problem = parseTimelineWithoutSegment(value);
-                        }
-                        timeline_problems.push(timeline_problem);
-                    });
+	                    if (value.problem_segment) {
+	                    	var timeline_problem = parseTimelineWithSegment(value);
+	                    } else {
+	                    	var timeline_problem = parseTimelineWithoutSegment(value);
+	                    }
+
+	                    if ($scope.checkSharedProblem(timeline_problem, $scope.sharing_patients))
+					  		timeline_problems.push(timeline_problem);
+					});
 
                     $scope.timeline = {
                         Name: data['info']['user']['first_name'] + data['info']['user']['last_name'],
@@ -565,16 +567,16 @@
                 return is_existed;
             };
 
-            $scope.checkSharedProblem = function (problem, sharing_patients) {
-                if ($scope.patient_id == $scope.user_id) {
-                    return true;
-                } else {
-                    var is_existed = false;
-                    angular.forEach(sharing_patients, function (p, key) {
-                        if (!is_existed && p.user.id == $scope.user_id) {
-                            is_existed = $scope.isInArray(p.problems, problem.id);
-                        }
-                    });
+			$scope.checkSharedProblem = function(problem, sharing_patients) {
+				if ($scope.patient_id == $scope.user_id || $scope.active_user.role=='physician' || $scope.active_user.role=='mid-level') {
+					return true;
+				} else {
+					var is_existed = false;
+		            angular.forEach(sharing_patients, function(p, key) {
+		            	if (!is_existed && p.user.id == $scope.user_id) {
+	                		is_existed = $scope.isInArray(p.problems, problem.id);
+		            	}
+		            });
 
                     return is_existed;
                 }

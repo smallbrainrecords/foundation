@@ -6,12 +6,13 @@ from django.db.models import Q
 from common.views import *
 
 from emr.models import UserProfile, ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRecord, \
-    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController
+    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController, SharingPatient
 from emr.operations import op_add_event, op_add_todo_event
 
 from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, \
     TodoActivitySerializer, LabelSerializer, LabeledToDoListSerializer
 from encounters_app.serializers import EncounterSerializer
+from users_app.serializers import UserProfileSerializer
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
@@ -325,6 +326,14 @@ def get_todo_info(request, todo_id):
     activites = TodoActivity.objects.filter(todo=todo_info)
     activity_holder = TodoActivitySerializer(activites, many=True).data
 
+    sharing_patients = SharingPatient.objects.filter(shared=todo_info.patient).order_by('sharing__first_name', 'sharing__last_name')
+
+    sharing_patients_list = []
+    for sharing_patient in sharing_patients:
+        user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
+        user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
+        sharing_patients_list.append(user_dict)
+
     resp = {}
     resp['success'] = True
     resp['info'] = todo_dict
@@ -332,6 +341,7 @@ def get_todo_info(request, todo_id):
     resp['attachments'] = attachment_todos_holder
     resp['related_encounters'] = related_encounter_holder
     resp['activities'] = activity_holder
+    resp['sharing_patients'] = sharing_patients_list
 
     return ajax_response(resp)
 
