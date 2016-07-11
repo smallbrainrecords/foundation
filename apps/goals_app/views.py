@@ -121,7 +121,7 @@ def update_goal_status(request, patient_id, goal_id):
         op_add_event(physician, patient, summary, goal.problem)
 
         if goal.problem:
-            add_problem_activity(goal.problem, actor_profile, summary)
+            add_problem_activity(goal.problem, actor_profile, summary, 'output')
 
         resp['success'] = True
 
@@ -171,7 +171,7 @@ def add_goal_note(request, patient_id, goal_id):
         op_add_event(physician, patient, summary, goal.problem)
 
         if goal.problem:
-            add_problem_activity(goal.problem, actor_profile, summary)
+            add_problem_activity(goal.problem, actor_profile, summary, 'output')
 
         new_note_dict = TextNoteSerializer(new_note).data
 
@@ -208,7 +208,7 @@ def change_name(request, patient_id, goal_id):
         op_add_event(physician, patient, summary, goal.problem)
 
         if goal.problem:
-            add_problem_activity(goal.problem, actor_profile, summary)
+            add_problem_activity(goal.problem, actor_profile, summary, 'output')
 
         goal_dict = GoalSerializer(goal).data
 

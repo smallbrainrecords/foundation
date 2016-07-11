@@ -115,6 +115,8 @@ class ProblemActivitySerializer(serializers.ModelSerializer):
             'author',
             'activity',
             'problem',
+            'is_input_type',
+            'is_output_type',
             'created_on')
 
 

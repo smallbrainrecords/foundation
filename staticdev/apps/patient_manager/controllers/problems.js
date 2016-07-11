@@ -26,7 +26,6 @@
 			$scope.new_problem = {set:false};
 
 			patientService.fetchActiveUser().then(function(data){
-
 				$scope.active_user = data['user_profile'];
 
 			});
@@ -862,17 +861,20 @@
 
 			// check sharing problem
 			$scope.checkSharedProblem = function(problem, sharing_patients) {
-				if ($scope.patient_id == $scope.user_id || $scope.active_user.role=='physician' || $scope.active_user.role=='mid-level') {
-					return true;
-				} else {
-					var is_existed = false;
-		            angular.forEach(sharing_patients, function(p, key) {
-		            	if (!is_existed && p.user.id == $scope.user_id) {
-	                		is_existed = $scope.isInArray(p.problems, problem.id);
-		            	}
-		            });
+				if ($scope.active_user) {
 
-		            return is_existed;
+					if ($scope.patient_id == $scope.user_id || $scope.active_user.role=='physician' || $scope.active_user.role=='mid-level') {
+						return true;
+					} else {
+						var is_existed = false;
+			            angular.forEach(sharing_patients, function(p, key) {
+			            	if (!is_existed && p.user.id == $scope.user_id) {
+		                		is_existed = $scope.isInArray(p.problems, problem.id);
+			            	}
+			            });
+
+			            return is_existed;
+					}
 				}
 			};
 		}); /* End of controller */

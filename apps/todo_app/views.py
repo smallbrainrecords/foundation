@@ -144,7 +144,7 @@ def update_todo_status(request, todo_id):
         op_add_todo_event(physician, patient, summary, todo)
 
         if todo.problem:
-            add_problem_activity(todo.problem, actor_profile, summary)
+            add_problem_activity(todo.problem, actor_profile, summary, 'output')
             if accomplished:
                 op_add_event(physician, patient, summary, todo.problem, True)
 

@@ -467,7 +467,7 @@ def add_history_note(request, problem_id):
             new_note.save()
 
             activity = 'Added History Note  <b>%s</b>' % note
-            add_problem_activity(problem, actor_profile, activity)
+            add_problem_activity(problem, actor_profile, activity, 'input')
 
             physician = request.user
             patient = problem.patient
@@ -512,7 +512,7 @@ def add_wiki_note(request, problem_id):
             new_note.save()
 
             activity = 'Added wiki note: <b>%s</b>' % note
-            add_problem_activity(problem, actor_profile, activity)
+            add_problem_activity(problem, actor_profile, activity, 'input')
 
             physician = request.user
             patient = problem.patient
@@ -549,7 +549,7 @@ def add_patient_note(request, problem_id):
         problem.notes.add(new_note)
 
         activity = 'Added patient note'
-        add_problem_activity(problem, patient_profile, activity)
+        add_problem_activity(problem, patient_profile, activity, 'input')
 
         new_note_dict = TextNoteSerializer(new_note).data
         resp['success'] = True
@@ -588,7 +588,7 @@ def add_physician_note(request, problem_id):
     op_add_event(physician, patient, summary, problem)
 
     activity = summary
-    add_problem_activity(problem, physician_profile, activity)
+    add_problem_activity(problem, physician_profile, activity, 'input')
 
     new_note_dict = TextNoteSerializer(new_note).data
     resp['note'] = new_note_dict
@@ -625,7 +625,7 @@ def add_problem_goal(request, problem_id):
         op_add_event(physician, patient, summary, problem)
 
         activity = summary
-        add_problem_activity(problem, actor_profile, activity)
+        add_problem_activity(problem, actor_profile, activity, 'output')
         new_goal_dict = GoalSerializer(new_goal).data
         resp['success'] = True
         resp['goal'] = new_goal_dict
@@ -693,7 +693,7 @@ def add_problem_todo(request, problem_id):
         op_add_event(physician, patient, summary, problem)
 
         activity = summary
-        add_problem_activity(problem, actor_profile, activity)
+        add_problem_activity(problem, actor_profile, activity, 'output')
 
         summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (new_todo.id, new_todo.todo, problem.problem_name)
 
@@ -764,7 +764,7 @@ def upload_problem_image(request, problem_id):
             op_add_event(actor, patient, summary, problem)
 
             activity = summary
-            add_problem_activity(problem, actor_profile, activity)
+            add_problem_activity(problem, actor_profile, activity, 'input')
 
             resp['success'] = True
 
@@ -792,7 +792,7 @@ def delete_problem_image(request, problem_id, image_id):
         op_add_event(physician, patient, summary, problem)
 
         activity = summary
-        add_problem_activity(problem, actor_profile, activity)
+        add_problem_activity(problem, actor_profile, activity, 'input')
 
         resp['success'] = True
 
