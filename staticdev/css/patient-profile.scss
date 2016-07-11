@@ -1,0 +1,47 @@
+.profile-section {
+  position: relative;
+  width: 851px;
+  height: 315px;
+  margin: auto auto 50px;
+  border: none;
+  .panel-body {
+    width: 100%;
+    height: 100%;
+  }
+
+  .cover-image {
+    position: absolute;
+    width: 100%;
+    max-width: 100%;
+    top: 0;
+  }
+  .profile-picture {
+    position: absolute;
+    bottom: -20px;
+    width: 168px;
+    margin: 0 30px;
+    height: 168px;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+  }
+
+  .bottom-info {
+    line-height: 30px;
+    //margin-left: 180px;
+    position: absolute;
+    right:0;
+    bottom: 0;
+    padding: 5px 10px;
+    border: none;
+    width: 75%;
+  }
+}
+
+.float-right {
+  float: right;
+}
+
+.float-left {
+  float: left;
+}
