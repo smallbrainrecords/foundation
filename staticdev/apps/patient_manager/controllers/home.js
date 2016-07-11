@@ -153,7 +153,9 @@
 	                    } else {
 	                    	var timeline_problem = parseTimelineWithoutSegment(value);
 	                    }
-					  	timeline_problems.push(timeline_problem);
+
+	                    if ($scope.checkSharedProblem(timeline_problem, $scope.sharing_patients))
+					  		timeline_problems.push(timeline_problem);
 					});
 
 					$scope.timeline = {
