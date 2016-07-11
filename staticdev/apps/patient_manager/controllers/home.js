@@ -576,7 +576,7 @@
 			};
 
 			$scope.checkSharedProblem = function(problem, sharing_patients) {
-				if ($scope.patient_id == $scope.user_id) {
+				if ($scope.patient_id == $scope.user_id || $scope.active_user.role=='physician' || $scope.active_user.role=='mid-level') {
 					return true;
 				} else {
 					var is_existed = false;
