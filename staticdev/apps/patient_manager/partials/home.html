@@ -22,12 +22,22 @@
 <!-- Facebook like cover & profile image -->
 <div class='panel panel-default profile-section'>
     <div class='panel-body'>
-            <img ng-src='{{ patient_info.cover_image }}' class='cover-image'>
-            <img ng-src='{{ patient_info.portrait_image }}' class='thumbnail thumbnail-custom profile-picture'>
-            <div class="bottom-info">
-                <span class="patient-name float-left"><strong> {{ patient_info.user.first_name }} {{ patient_info.user.last_name }} </strong></span>
-                  <a href='#/edit/' class='btn btn-sm btn-default float-right'>Edit</a>
-            </div>
+        <img ng-src='{{ patient_info.cover_image }}' class='cover-image'>
+        <a class="btn-cover-picture-edit btn-camera" ng-click="updateCoverPhoto()">
+            <span class="glyphicon glyphicon-camera"></span>
+            <span class="btn-text">Update Cover Photo</span>
+        </a>
+        <div class="profile-picture">
+            <img ng-src='{{ patient_info.portrait_image }}'>
+            <a ng-click="updateProfilePicture()" class="btn-camera btn-profile-picture-edit">
+                <span class="glyphicon glyphicon-camera"></span>
+                <span class="btn-text float-right">Update Profile Picture</span>
+            </a>
+        </div>
+        <div class="bottom-info">
+            <span class="patient-name float-left"><strong> {{ patient_info.user.first_name }} {{ patient_info.user.last_name }} </strong></span>
+            <a href='#/edit/' class='btn btn-sm btn-default float-right'>Edit</a>
+        </div>
     </div><!-- End of Panel Body -->
 </div>
 
@@ -575,7 +585,4 @@
 
     });
 </script>
-
-
-
 

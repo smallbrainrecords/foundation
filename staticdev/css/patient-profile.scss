@@ -15,6 +15,14 @@
     max-width: 100%;
     top: 0;
   }
+
+  .btn-cover-picture-edit {
+    left: 20px;
+    &:hover {
+      border: 1px solid #fff;
+    }
+  }
+
   .profile-picture {
     position: absolute;
     bottom: -20px;
@@ -24,18 +32,61 @@
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
     border-radius: 2px;
+    img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn-profile-picture-edit {
+      .glyphicon-camera {
+        vertical-align: middle;
+      }
+      bottom: 0px;
+      width: 100%;
+      .btn-text {
+        width: 80%;
+      }
+    }
   }
 
   .bottom-info {
     line-height: 30px;
     //margin-left: 180px;
     position: absolute;
-    right:0;
+    right: 0;
     bottom: 0;
     padding: 5px 10px;
     border: none;
     width: 75%;
   }
+
+  .btn-camera {
+    color: #c2c1c0;
+    //width: 100%;
+    position: absolute;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 5px;
+    .glyphicon-camera {
+      display: inline-block;
+      font-size: 1.5em;
+    }
+    .btn-text {
+      color: #fff;
+      display: none;
+    }
+    &:hover {
+      background-color: #000;
+      opacity: 0.7;
+      .glyphicon-camera {
+        font-size: 1em;
+      }
+      .btn-text {
+        display: inline-block;
+      }
+    }
+  }
+
 }
 
 .float-right {
@@ -44,4 +95,14 @@
 
 .float-left {
   float: left;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.btn-upload, .btn-take-photo{
+  cursor: pointer;
+  line-height:36px;
+  padding:28px 0;
 }
