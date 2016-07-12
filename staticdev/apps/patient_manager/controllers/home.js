@@ -4,6 +4,7 @@
 
 
     angular.module('ManagerApp')
+
         .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog, toaster, $location, todoService, prompt, $timeout) {
 
 
@@ -151,15 +152,15 @@
                     var timeline_problems = [];
                     angular.forEach(data2['timeline_problems'], function (value, key) {
 
-	                    if (value.problem_segment) {
-	                    	var timeline_problem = parseTimelineWithSegment(value);
-	                    } else {
-	                    	var timeline_problem = parseTimelineWithoutSegment(value);
-	                    }
+                        if (value.problem_segment) {
+                            var timeline_problem = parseTimelineWithSegment(value);
+                        } else {
+                            var timeline_problem = parseTimelineWithoutSegment(value);
+                        }
 
-	                    if ($scope.checkSharedProblem(timeline_problem, $scope.sharing_patients))
-					  		timeline_problems.push(timeline_problem);
-					});
+                        if ($scope.checkSharedProblem(timeline_problem, $scope.sharing_patients))
+                            timeline_problems.push(timeline_problem);
+                    });
 
                     $scope.timeline = {
                         Name: data['info']['user']['first_name'] + data['info']['user']['last_name'],
@@ -567,16 +568,16 @@
                 return is_existed;
             };
 
-			$scope.checkSharedProblem = function(problem, sharing_patients) {
-				if ($scope.patient_id == $scope.user_id || $scope.active_user.role=='physician' || $scope.active_user.role=='mid-level') {
-					return true;
-				} else {
-					var is_existed = false;
-		            angular.forEach(sharing_patients, function(p, key) {
-		            	if (!is_existed && p.user.id == $scope.user_id) {
-	                		is_existed = $scope.isInArray(p.problems, problem.id);
-		            	}
-		            });
+            $scope.checkSharedProblem = function (problem, sharing_patients) {
+                if ($scope.patient_id == $scope.user_id || $scope.active_user.role == 'physician' || $scope.active_user.role == 'mid-level') {
+                    return true;
+                } else {
+                    var is_existed = false;
+                    angular.forEach(sharing_patients, function (p, key) {
+                        if (!is_existed && p.user.id == $scope.user_id) {
+                            is_existed = $scope.isInArray(p.problems, problem.id);
+                        }
+                    });
 
                     return is_existed;
                 }
@@ -663,39 +664,38 @@
             });
 
             /**
+             * Callback when user choosing thee reposition action
+             */
+            $scope.on_cover_picture_reposition = function () {
+                $scope.is_reposition_flag = true;
+                console.log("On cover image starting reposition .....");
+            };
+
+            /**
+             * Callback when user choose new cover image from computer
+             */
+            $scope.on_cover_picture_upload = function (file) {
+                console.log("On cover image uploaded .....");
+            };
+
+            /**
+             * Callback when user click on remove cover image
+             */
+            $scope.on_cover_picture_remove = function () {
+                console.log("On cover image removed");
+            };
+
+            /**
              * Update profile picture handler
              * Open prompt require user choosing upload method
              */
             $scope.updateProfilePicture = function () {
-               ngDialog.open({
-                    template: '/static/apps/patient_manager/partials/modals/update_profile_picture.html',
-                    controller: ['$scope','patientService','$element', function ($scope,patientService,$element) {
-
-                        /**
-                         * Open file chooser when user click on upload
-                          */
-                        $scope.open_file_chooser = function(){
-                            $element.find('#upload').click();
-                        };
-
-                        /**
-                         * Upload selected file to server then replace
-                         */
-                        $scope.submit_form = function () {
-
-                        }
-
-                    }]
+                ngDialog.open({
+                    controller: 'PortraitUpdCtrl',
+                    template: '/static/apps/patient_manager/partials/modals/update_profile_picture.html'
                 });
             };
 
-            /**
-             *
-             */
-            $scope.updateCoverPhoto = function () {
-                //	TODO: Update cover photo function
-                console.log("Cover photo update function");
-            };
         });
     /* End of controller */
 
