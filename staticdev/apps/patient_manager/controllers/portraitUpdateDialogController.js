@@ -151,7 +151,8 @@
 
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Patient updated!');
-                        $scope.closeThisDialog(data['info']);
+                        $scope.$emit('portrait_image_updated',{data:data['info']});
+                        $scope.closeThisDialog();
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Error', 'Please fill valid data');
                     } else {

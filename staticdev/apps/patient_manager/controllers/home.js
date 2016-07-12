@@ -706,9 +706,9 @@
                 alert("Function under-construction we will update asap");
             };
 
-            $scope.portrait_image_updated = function (data) {
-                $scope.patient_info = data;
-            };
+            $scope.$on('portrait_image_updated', function (event, args) {
+                $scope.patient_info = args.data;
+            });
 
             /**
              * Update profile picture handler
@@ -718,8 +718,7 @@
                 ngDialog.open({
                     controller: 'PortraitUpdCtrl',
                     template: '/static/apps/patient_manager/partials/modals/update_profile_picture.html',
-                    scope: $scope,
-                    preCloseCallback: 'portrait_image_updated'
+                    scope: $scope
                 });
             };
 
