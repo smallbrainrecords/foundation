@@ -211,7 +211,11 @@
 					$scope.refresh_problem_activity();
 				}, 10000);
 
-                $scope.observations = data['observations'];
+				// observations
+				$scope.observations = data['observations'];
+                problemService.fetchObservations(problem_id).then(function(data2) {
+                	$scope.observations = data2['observations'];
+                });
 
                 if($scope.history_note!=null){
 
@@ -220,13 +224,8 @@
                 	};
 
                 }
-                
-
 
                 var patient_problems = data['patient_problems'];
-
-                
-
 
                 for(var index in patient_problems){
 

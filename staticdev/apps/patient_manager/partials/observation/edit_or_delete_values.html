@@ -30,7 +30,7 @@
 					</thead>
 					<tbody>
 						<tr ng-repeat="component in observation.observation_components|orderBy:'effective_datetime':true">
-							<td> {{component.value_quantity| number:1 }} </td>
+							<td ng-class="{'text-danger': component.value_quantity > 7.5}"> {{component.value_quantity| number:1 }} </td>
 							<td> {{component.effective_datetime|date:'M/d/yyyy'}} </td>
 							<td> 
 								<a href="#/observation_component/{{component.id}}/edit_value" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == component.author.id)">Edit</a>
