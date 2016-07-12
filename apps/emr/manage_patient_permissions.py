@@ -92,6 +92,7 @@ ROLE_PERMISSIONS['patient'] = [
     # observation
     'add_observation',
     'add_observation_note',
+    'remove_sharing_patient',
     # Pain
     'update_pain', ]
 

@@ -18,7 +18,7 @@ from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment
 from emr.models import EncounterProblemRecord, Encounter
-from emr.models import Observation, SharingPatient, PhysicianTeam
+from emr.models import Observation, SharingPatient, PhysicianTeam, ObservationComponent
 
 from emr.operations import op_add_event, op_add_todo_event
 
@@ -176,7 +176,26 @@ def get_problem_info(request, problem_id):
     observations = Observation.objects.filter(problem=problem_info)
     observations_holder = []
     for observation in observations:
-        observation_dict = ObservationSerializer(observation).data
+        observation_dict = {
+            'id': observation.id,
+            'patient_refused_A1C': observation.patient_refused_A1C,
+            'effective_datetime': observation.effective_datetime.isoformat() if observation.effective_datetime else '',
+            'created_on':  observation.created_on.isoformat() if observation.created_on else '',
+            'observation_components': [],
+        }
+
+        observation_components = ObservationComponent.objects.filter(observation=observation).order_by('-effective_datetime', '-created_on')
+        observation_components_holder = []
+        if observation_components:
+            observation_component = observation_components[0]
+            observation_components_holder.append({
+                'id': observation_component.id,
+                'value_quantity': str(observation_component.value_quantity),
+                'effective_datetime':  observation_component.effective_datetime.isoformat() if observation_component.effective_datetime else '',
+                'created_on':  observation_component.created_on.isoformat() if observation_component.created_on else '',
+            })
+            observation_dict['observation_components'] = observation_components_holder
+
         observations_holder.append(observation_dict)
 
     sharing_patients = SharingPatient.objects.filter(shared=patient).order_by('sharing__first_name', 'sharing__last_name')
@@ -210,6 +229,20 @@ def get_problem_info(request, problem_id):
 
     return ajax_response(resp)
 
+
+@login_required
+def get_observations(request, problem_id):
+    problem_info = Problem.objects.get(id=problem_id)
+    observations = Observation.objects.filter(problem=problem_info)
+    observations_holder = []
+    for observation in observations:
+        observation_dict = ObservationSerializer(observation).data
+        observations_holder.append(observation_dict)
+
+    resp = {}
+    resp['success'] = True
+    resp['observations'] = observations_holder
+    return ajax_response(resp)
 
 @login_required
 def get_problem_activity(request, problem_id, last_id):

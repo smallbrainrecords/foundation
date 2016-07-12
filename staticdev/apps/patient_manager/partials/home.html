@@ -405,11 +405,12 @@
                 <div class='row'>
                     <div class='col-md-6 col-md-offset-4'>
                         <ul class="nav nav-pills" role="tablist">
-                            <li role="presentation" class="active"><a href=".tab-incomplete-goals" aria-controls="goals"
-                                                                      role="tab" data-toggle="tab"> Current/Incomplete
-                                Goals </a></li>
-                            <li role="presentation"><a href=".tab-completed-goals" aria-controls="incomplete_goals"
-                                                       role="tab" data-toggle="tab">Completed Goals</a></li>
+                            <li role="presentation" class="active">
+                            	<a href=".tab-incomplete-goals" aria-controls="goals" role="tab" data-toggle="tab"> Current/Incomplete Goals </a>
+                        	</li>
+                            <li role="presentation">
+                            	<a href=".tab-completed-goals" aria-controls="incomplete_goals" role="tab" data-toggle="tab">Completed Goals</a>
+                        	</li>
                         </ul>
                     </div>
                 </div>
@@ -418,15 +419,14 @@
                     <div role="tabpanel" class="tab-pane active tab-incomplete-goals">
                         <div style='max-height:375px; overflow-y:auto;'>
                             <ul class='ul-clean'>
-                                <li ng-repeat='goal in goals'>
+                                <li ng-repeat='goal in goals' ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
                                     <div class='item-box'
                                          ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
                                         <a class='btn  btn-default btn-sm' href='#/goal/{{ goal.id }}'>
                                             View
                                         </a>
 
-                                        {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                            href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                        {{ goal.goal }} <span ng-if="goal.problem">for problem <a href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
                                     </div>
                                 </li>
                             </ul>
@@ -435,15 +435,14 @@
                     <div role="tabpanel" class="tab-pane tab-completed-goals">
                         <div style='max-height:375px; overflow-y:auto;'>
                             <ul class='ul-clean'>
-                                <li ng-repeat='goal in completed_goals'>
+                                <li ng-repeat='goal in completed_goals' ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
                                     <div class='item-box'
                                          ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
                                         <a class='btn  btn-default btn-sm' href='#/goal/{{ goal.id }}'>
                                             View
                                         </a>
 
-                                        {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                            href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                        {{ goal.goal }} <span ng-if="goal.problem">for problem <a href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
                                     </div>
                                 </li>
                             </ul>

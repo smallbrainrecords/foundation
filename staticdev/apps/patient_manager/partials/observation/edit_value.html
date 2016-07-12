@@ -25,7 +25,7 @@
 			</div>
 			<div class='col-md-12' ng-init="edit=false;">
 
-				<p>A1C: 
+				<p ng-class="{'text-danger': component.value_quantity > 7.5}">A1C: 
 					<span ng-if="component.patient_refused_A1C">refused </span>
 					{{component.value_quantity| number:1}}% on {{component.effective_datetime|date:'M/d/yyyy'}}
 					<span ng-if="a1c_date <= today">past due</span>

@@ -16,8 +16,9 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                             scope.observation = scope.$eval(attr.ngModel);
                             scope.today = moment();
                             scope.show_collapse = false;
-                            if (scope.observation.observation_todos.length)
-                                scope.a1c_date = moment(scope.observation.observation_todos[scope.observation.observation_todos.length -1].due_date);
+                            if (scope.observation.observation_todos)
+                                if (scope.observation.observation_todos.length)
+                                    scope.a1c_date = moment(scope.observation.observation_todos[scope.observation.observation_todos.length -1].due_date);
 
                             if(scope.observation.observation_components.length && scope.observation.todo_past_six_months==false) {
                                 scope.last_measurement = scope.observation.observation_components[scope.observation.observation_components.length -1];
