@@ -274,7 +274,7 @@
 
                 });
 
-            }
+            };
 
 
             $scope.add_todo = function (form) {
@@ -664,6 +664,33 @@
             });
 
             /**
+             * Callback when user choose new cover image from computer
+             */
+            $scope.on_cover_picture_upload = function (file) {
+                var form = {};
+                form.user_id = $scope.patient_info.user.id;
+                form.phone_number = $scope.patient_info.phone_number;
+                form.sex = $scope.patient_info.sex;
+                form.role = $scope.patient_info.role;
+                form.summary = $scope.patient_info.summary;
+                form.date_of_birth = $scope.patient_info.date_of_birth;
+                var files = {cover_image: file[0]};
+
+                patientService.updateProfile(form, files).then(function (data) {
+
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'Patient updated!');
+                        $scope.patient_info = data['info'];
+                    } else if (data['success'] == false) {
+                        toaster.pop('error', 'Error', 'Please fill valid data');
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+
+                });
+            };
+
+            /**
              * Callback when user choosing thee reposition action
              */
             $scope.on_cover_picture_reposition = function () {
@@ -671,18 +698,16 @@
                 console.log("On cover image starting reposition .....");
             };
 
-            /**
-             * Callback when user choose new cover image from computer
-             */
-            $scope.on_cover_picture_upload = function (file) {
-                console.log("On cover image uploaded .....");
-            };
 
             /**
              * Callback when user click on remove cover image
              */
             $scope.on_cover_picture_remove = function () {
-                console.log("On cover image removed");
+                alert("Function under-construction we will update asap");
+            };
+
+            $scope.portrait_image_updated = function (data) {
+                $scope.patient_info = data;
             };
 
             /**
@@ -692,7 +717,9 @@
             $scope.updateProfilePicture = function () {
                 ngDialog.open({
                     controller: 'PortraitUpdCtrl',
-                    template: '/static/apps/patient_manager/partials/modals/update_profile_picture.html'
+                    template: '/static/apps/patient_manager/partials/modals/update_profile_picture.html',
+                    scope: $scope,
+                    preCloseCallback: 'portrait_image_updated'
                 });
             };
 

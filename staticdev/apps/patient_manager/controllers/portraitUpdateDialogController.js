@@ -4,7 +4,7 @@
 
 
     angular.module('ManagerApp')
-        .controller('PortraitUpdCtrl', ['$scope', 'patientService', function ($scope, patientService) {
+        .controller('PortraitUpdCtrl', ['$scope', 'patientService', 'toaster', function ($scope, patientService, toaster) {
             // METHOD 1: User select an image from their computer
             /**
              * Handler when user select file from computer
@@ -16,6 +16,9 @@
                     $scope.preview_image_src = reader.result;
                     $scope.photo_is_taken_flag = false;
                     $scope.get_image_via_camera_flag = false;
+                    $scope.files = {
+                        portrait_image: file[0]
+                    };
                     $scope.$apply();
                 }, false);
 
@@ -81,12 +84,30 @@
                 });
             };
 
+            $scope.dataURItoFile = function (dataURI) {
+                // convert base64/URLEncoded data component to raw binary data held in a string
+                var byteString;
+                if (dataURI.split(',')[0].indexOf('base64') >= 0)
+                    byteString = atob(dataURI.split(',')[1]);
+                else
+                    byteString = unescape(dataURI.split(',')[1]);
+
+                // separate out the mime component
+                var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+                // write the bytes of the string to a typed array
+                var ia = new Uint8Array(byteString.length);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                var blob = new Blob([ia], {type: mimeString});
+                return new File([blob], (new Date()).getTime() + ".png");
+            };
+
             /**
              * Take a snap shot from video
              * Close camera preview
              * Set image preview
-             * TODO: Revoke video access
-             *
              */
             $scope.take_snapshot = function () {
                 if (_video) {
@@ -103,16 +124,41 @@
                     ctxPat.putImageData(idata, 0, 0);
 
                     $scope.preview_image_src = patCanvas.toDataURL();
+                    $scope.files = {
+                        portrait_image: $scope.dataURItoFile(patCanvas.toDataURL())
+                    }
                 }
             };
 
 
             /**
-             * TODO: Wait 4 submit form
+             * Close the form
              * Upload selected file to server then replace
              */
             $scope.submit_form = function () {
-                console.log("Form data will be submitted here");
+                //
+                var form = {};
+                form.user_id = $scope.patient_info.user.id;
+                form.phone_number = $scope.patient_info.phone_number;
+                form.sex = $scope.patient_info.sex;
+                form.role = $scope.patient_info.role;
+                form.summary = $scope.patient_info.summary;
+                form.date_of_birth = $scope.patient_info.date_of_birth;
+
+                var files = $scope.files;
+
+                patientService.updateProfile(form, files).then(function (data) {
+
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'Patient updated!');
+                        $scope.closeThisDialog(data['info']);
+                    } else if (data['success'] == false) {
+                        toaster.pop('error', 'Error', 'Please fill valid data');
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+
+                });
             };
 
         }]);

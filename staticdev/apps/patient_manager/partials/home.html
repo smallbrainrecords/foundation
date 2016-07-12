@@ -25,7 +25,7 @@
         <img ng-src='{{ patient_info.cover_image }}' class='cover-image'>
         <div class="dropdown">
             <input type="file" class="hide" id="cover-image-holder" accept="image/*"
-                   on-file-change="on_cover_picture_upload">
+                   on-file-change="on_cover_picture_upload"  file-model='files.cover_image' name="cover_image">
             <a class="btn-cover-picture-edit btn-camera" data-toggle="dropdown">
                 <span class="glyphicon glyphicon-camera"></span>
                 <span class="btn-text">Update Cover Photo</span>
@@ -35,7 +35,7 @@
                 <li>
                     <a onclick="$('#cover-image-holder').click()"> <i class="glyphicon glyphicon-plus" style="color: #3B5998"></i>
                         Upload photo</a></li>
-                <li ng-if="patient_info.cover_image">
+                <li ng-if="patient_info.cover_image" class="hide">
                     <a ng-click="on_cover_picture_reposition()"><i class="glyphicon glyphicon-fullscreen"></i>
                         Reposition</a>
                 </li>
