@@ -2,7 +2,7 @@
   position: relative;
   width: 851px;
   height: 315px;
-  margin: auto auto 50px;
+  //margin: auto auto 50px;
   border: none;
   .panel-body {
     width: 100%;
@@ -19,6 +19,7 @@
 
   .patient-name {
     color: #fff;
+    font-size: 28px;
   }
 
   .btn-cover-picture-edit {
@@ -115,7 +116,13 @@
 .preview-image {
   margin: auto;
 }
-
+.dropdown{
+  li{
+    a{
+      padding:3px 10px;
+    }
+  }
+}
 .dropdown.open {
   .btn-camera {
     background-color: #000;
@@ -129,7 +136,7 @@
   }
   .fa.fa-sort-asc {
     position: absolute;
-    top: -10px;
+    top: -8px;
     font-size: 2em;
     color: #FFF;
     left: 20px;
@@ -137,6 +144,7 @@
 }
 
 .dropdown-menu.cover-photo-menu {
+  font-size: 12px;
   top: 35px;
   left: 20px;
   a {
