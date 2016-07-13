@@ -2,7 +2,6 @@
   position: relative;
   width: 851px;
   height: 315px;
-  margin: auto auto 50px;
   border: none; }
   .profile-section .panel-body {
     width: 100%;
@@ -11,7 +10,11 @@
     position: absolute;
     width: 100%;
     max-width: 100%;
-    top: 0; }
+    top: 0;
+    height: 100%; }
+  .profile-section .patient-name {
+    color: #fff;
+    font-size: 28px; }
   .profile-section .btn-cover-picture-edit {
     left: 20px; }
     .profile-section .btn-cover-picture-edit:hover {
@@ -76,5 +79,33 @@
   cursor: pointer;
   line-height: 36px;
   padding: 28px 0; }
+
+.preview-image {
+  margin: auto; }
+
+.dropdown li a {
+  padding: 3px 10px; }
+
+.dropdown.open .btn-camera {
+  background-color: #000;
+  opacity: 0.7; }
+  .dropdown.open .btn-camera .glyphicon-camera {
+    font-size: 1em; }
+  .dropdown.open .btn-camera .btn-text {
+    display: inline-block; }
+.dropdown.open .fa.fa-sort-asc {
+  position: absolute;
+  top: -8px;
+  font-size: 2em;
+  color: #FFF;
+  left: 20px; }
+
+.dropdown-menu.cover-photo-menu {
+  font-size: 12px;
+  top: 35px;
+  left: 20px; }
+  .dropdown-menu.cover-photo-menu a {
+    cursor: pointer;
+    text-decoration: none; }
 
 /*# sourceMappingURL=patient-profile.css.map */

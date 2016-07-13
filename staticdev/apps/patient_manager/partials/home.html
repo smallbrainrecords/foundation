@@ -23,10 +23,28 @@
 <div class='panel panel-default profile-section'>
     <div class='panel-body'>
         <img ng-src='{{ patient_info.cover_image }}' class='cover-image'>
-        <a class="btn-cover-picture-edit btn-camera" ng-click="updateCoverPhoto()">
-            <span class="glyphicon glyphicon-camera"></span>
-            <span class="btn-text">Update Cover Photo</span>
-        </a>
+        <div class="dropdown">
+            <input type="file" class="hide" id="cover-image-holder" accept="image/*"
+                   on-file-change="on_cover_picture_upload"  file-model='files.cover_image' name="cover_image">
+            <a class="btn-cover-picture-edit btn-camera" data-toggle="dropdown">
+                <span class="glyphicon glyphicon-camera"></span>
+                <span class="btn-text">Update Cover Photo</span>
+            </a>
+            <ul class="dropdown-menu cover-photo-menu">
+                <i class="fa fa-sort-asc" aria-hidden="true"></i>
+                <li>
+                    <a onclick="$('#cover-image-holder').click()"> <i class="glyphicon glyphicon-plus" style="color: #3B5998"></i>
+                        Upload photo</a></li>
+                <li ng-if="patient_info.cover_image" class="hide">
+                    <a ng-click="on_cover_picture_reposition()"><i class="glyphicon glyphicon-fullscreen"></i>
+                        Reposition</a>
+                </li>
+                <li ng-if="patient_info.cover_image">
+                    <a ng-click="on_cover_picture_remove()"><i class="glyphicon glyphicon-remove"
+                                                               style="color: red"></i> Remove</a>
+                </li>
+            </ul>
+        </div>
         <div class="profile-picture">
             <img ng-src='{{ patient_info.portrait_image }}'>
             <a ng-click="updateProfilePicture()" class="btn-camera btn-profile-picture-edit">
