@@ -501,6 +501,42 @@
                 });
             }
 
+            // labeled problems list
+            $scope.create_label_problems_list = false;
+            $scope.new_list = {};
+            $scope.new_list.labels = [];
+            $scope.open_create_label_problems_list = function() {
+            	$scope.create_label_problems_list = true;
+            };
+
+            $scope.close_create_label_problems_list = function() {
+            	$scope.create_label_problems_list = false;
+            };
+
+            $scope.add_new_list_label = function (new_list, label) {
+                var index = new_list.labels.indexOf(label);
+                if (index > -1)
+                    new_list.labels.splice(index, 1);
+                else
+                    new_list.labels.push(label);
+            };
+
+            $scope.add_problem_list = function (form) {
+
+                form.user_id = $scope.user_id;
+                form.patient_id = $scope.patient_id;
+                if (form.name && form.labels.length > 0) {
+                    problemService.addProblemList(form).then(function (data) {
+                        $scope.new_list = {};
+                        $scope.new_list.labels = [];
+                        toaster.pop('success', 'Done', 'New Problem List added successfully');
+                        $scope.create_label_problems_list = false;
+                    });
+                } else {
+                    toaster.pop('error', 'Error', 'Please select name and labels');
+                }
+            };
+
 			/* Track Status */
 
 			$scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function(nV, oV){

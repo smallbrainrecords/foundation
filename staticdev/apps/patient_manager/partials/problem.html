@@ -36,7 +36,7 @@
 	<span class='text-muted'><b>  Problem: {{problem.problem_name}} <span ng-if="problem && !problem.authenticated">(not authenticated)</span></b></span>
 	<hr>
 
-	<div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"' ng-init="edit_problem=false;create_problem_label=false;">
+	<div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"' ng-init="edit_problem=false;">
 		<div class="todo">
 			<h4 ng-show="!edit_problem">  
 				Problem : {{problem.problem_name}} 
@@ -93,6 +93,7 @@
 					<div class="quick-card-editor-buttons">
 						<a href ng-click="edit_problem=!edit_problem; $event.stopPropagation();"><i class="fa fa-close"></i></a>
 						<a href ng-click="open_change_problem_label();"><i class="fa fa-tags"></i>Edit label</a>
+						<a href ng-click="open_create_label_problems_list();" ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'"><i class="fa fa-tags"></i>Create problems list</a>
 					</div>
 					<!-- end buttons -->
 					<!-- begin change label -->
@@ -136,6 +137,28 @@
 						<a href ng-click="saveCreateProblemLabel(problem)">Save</a>
 					</div>
 					<!-- end change label -->
+					<!-- begin create label problems list -->
+					<div ng-if="create_label_problems_list" class="quick-card-editor-lv2">
+					    <div class="quick-card-editor-lv2-header">
+							<a href ng-click="close_create_label_problems_list(); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+						</div>
+
+					    <form class='form-inline' role='form' ng-submit='add_problem_list(new_list)'>
+				            <div class='form-group'>
+				                <input type='text' ng-model='new_list.name'>
+			                    <div ng-repeat="label in problem_labels">
+			                        <a href class="todo-label" ng-class="label.css_class"
+			                           ng-click="add_new_list_label(new_list, label)">
+			                            {{ label.name }}
+			                            <i class="fa fa-check" ng-repeat="l in new_list.labels" ng-if="l.id==label.id"></i>
+			                        </a>
+			                    </div>
+				            </div>
+				            <br>
+				            <button type='submit' class='btn btn-default'> Add List</button>
+				        </form>
+					</div>
+					<!-- end create label problems list -->
 				</div>
 			</div>
 			<!-- end change item -->

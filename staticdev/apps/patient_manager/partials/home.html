@@ -122,37 +122,6 @@
         </table>
     </div>
 </div>
-<hr>
-
-<div class='panel panel-default'
-     ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-
-    <div class='panel-heading'> Labeled Problems Lists</div>
-
-    <div class='panel-body'>
-        <form class='form-inline' role='form' ng-submit='add_problem_list(new_list)'>
-            <div class='form-group'>
-                <label> Labeled Problems Lists Name </label>
-                <input type='text' ng-model='new_list.name'>
-                <br>
-                <div class="quick-card-editor-label labeled-list">
-                    <div ng-repeat="label in problem_labels">
-                        <a href class="todo-label" ng-class="label.css_class"
-                           ng-click="add_new_list_label(new_list, label)">
-                            {{ label.name }}
-                            <i class="fa fa-check" ng-repeat="l in new_list.labels" ng-if="l.id==label.id"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <br>
-            <br>
-            <button type='submit' class='btn btn-default'> Add List</button>
-            <br>
-        </form>
-    </div>
-</div>
-<hr>
 
 <div class='panel panel-default' ng-repeat="list in problem_lists" ng-init="list.collapse=false;list.rename=false;">
 
@@ -205,13 +174,15 @@
                 <div class='row'>
                     <div class='col-md-6 col-md-offset-4'>
                         <ul class="nav nav-pills" role="tablist">
-                            <li role="presentation" class="active"><a href=".tab-active-problem" aria-controls="home"
-                                                                      role="tab" data-toggle="tab">Active Problems</a>
+                            <li role="presentation" class="active">
+                            	<a href=".tab-active-problem" aria-controls="home" role="tab" data-toggle="tab">Active Problems</a>
                             </li>
-                            <li role="presentation"><a href=".tab-inactive-problem" aria-controls="profile" role="tab"
-                                                       data-toggle="tab">Inactive Problems</a></li>
-                            <li role="presentation"><a href=".tab-add-problem" aria-controls="profile" role="tab"
-                                                       data-toggle="tab">Add Problem</a></li>
+                            <li role="presentation">
+                            	<a href=".tab-inactive-problem" aria-controls="profile" role="tab" data-toggle="tab">Inactive Problems</a>
+                        	</li>
+                            <li role="presentation">
+                            	<a href=".tab-add-problem" aria-controls="profile" role="tab" data-toggle="tab">Add Problem</a>
+                        	</li>
                         </ul>
                     </div>
                 </div>
@@ -229,10 +200,10 @@
                                          ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
                                         {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
                                         <!-- begin label -->
-										<span class="quick-card-editor-label">
+										<!-- <span class="quick-card-editor-label">
 											<a ng-repeat="label in problem.labels" class="todo-label"
                                                ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-										</span>
+										</span> -->
                                         <!-- end label -->
                                         <!-- begin sharing patients -->
 										<span ng-repeat="p in sharing_patients"
@@ -253,13 +224,6 @@
                                          ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 
                                         {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
-
-                                        <!-- begin label -->
-										<span class="quick-card-editor-label">
-											<a ng-repeat="label in problem.labels" class="todo-label"
-                                               ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-										</span>
-                                        <!-- end label -->
                                         <!-- begin sharing patients -->
 										<span ng-repeat="p in sharing_patients"
                                               ng-if="isInArray(p.problems, problem.id)">
@@ -282,12 +246,6 @@
                                     <div class='item-box'
                                          ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
                                         {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
-                                        <!-- begin label -->
-										<span class="quick-card-editor-label">
-											<a ng-repeat="label in problem.labels" class="todo-label"
-                                               ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-										</span>
-                                        <!-- end label -->
                                         <!-- begin sharing patients -->
 										<span ng-repeat="p in sharing_patients"
                                               ng-if="isInArray(p.problems, problem.id)">
@@ -308,12 +266,6 @@
                                          ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 
                                         {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
-                                        <!-- begin label -->
-										<span class="quick-card-editor-label">
-											<a ng-repeat="label in problem.labels" class="todo-label"
-                                               ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-										</span>
-                                        <!-- end label -->
                                         <!-- begin sharing patients -->
 										<span ng-repeat="p in sharing_patients"
                                               ng-if="isInArray(p.problems, problem.id)">
@@ -330,11 +282,28 @@
                     <div role="tabpanel" class="tab-pane tab-add-problem">
                         <div class='row' ng-show='permitted(["add_problem"])'>
                             <div class='col-md-12'>
+                            	<br>
+                            	<div>
+                            		<p>Common problem:</p>
+                            		<select class='form-control'></select>
+                            		<button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
+	                                    Add acute problem
+	                                </button>
+	                            </div>
+                            	<br>
+                            	<div>
+	                                <select class='form-control'></select>
+                            		<button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
+	                                    Add chronic problem
+	                                </button>
+                            	</div>
+								<br>
                                 <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
                                        placeholder='Search Problem....'>
                                 <button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
                                     Add Problem
                                 </button>
+                                <br>
                                 <div ng-show='new_problem.set==true'>
                                     <hr>
                                     <label> {{ new_problem.code }} </label>
