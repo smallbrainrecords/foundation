@@ -8,6 +8,7 @@
 <script src="/static/apps/staff/controllers/homeController.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/todo.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/manageSharingController.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/controllers/manageCommonProblemController.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/staffService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/physicianService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/todoService.js" type="text/javascript" charset="utf-8"></script>
@@ -36,6 +37,13 @@
 		        <a class='btn btn-default' href='/#/manage/sharing'>
 		          Manage sharing between patients
 		        </a>
+		        {% if user_profile.role == 'mid-level' or user_profile.role == 'physician' %}
+		        	</br>
+		        	</br>
+			        <a class='btn btn-default' href='/#/manage/common_problems'>
+			          Adding common problems
+			        </a>
+				{% endif %}
 			</div>
 
 		</div>

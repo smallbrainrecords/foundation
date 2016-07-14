@@ -30,6 +30,11 @@ NOTE_TYPE_CHOICES = (
     ('history', 'History'), )
 
 
+COMMON_PROBLEM_TYPE_CHOICES = (
+    ('acute', 'Acute'),
+    ('chronic', 'Chronic'), )
+
+
 # UTILITIES
 def get_path(instance, filename):
     try:
@@ -619,3 +624,10 @@ class ObservationComponentTextNote(models.Model):
 
     def __unicode__(self):
         return "%s" % (self.note)
+
+
+class CommonProblem(models.Model):
+    author = models.ForeignKey(User, null=True, blank=True, related_name="common_problem_author")
+    problem_name = models.CharField(max_length=200)
+    concept_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    problem_type = models.CharField(max_length=10, choices=COMMON_PROBLEM_TYPE_CHOICES, default='acute')

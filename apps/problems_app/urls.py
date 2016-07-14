@@ -13,6 +13,8 @@ urlpatterns = patterns(
 
     url(r'^patient/(?P<patient_id>\d+)/problems/add/new_problem$',
         'add_patient_problem'),
+    url(r'^patient/(?P<patient_id>\d+)/problems/add/new_common_problem$',
+        'add_patient_common_problem'),
 
     url(r'^problem/(?P<problem_id>\d+)/change_name$',
         'change_name'),
@@ -62,4 +64,7 @@ urlpatterns = patterns(
     url(r'^problem/(?P<patient_id>\d+)/(?P<sharing_patient_id>\d+)/get_sharing_problems$', 'get_sharing_problems'),
     url(r'^problem/(?P<patient_id>\d+)/(?P<sharing_patient_id>\d+)/(?P<problem_id>\d+)/remove_sharing_problems$', 'remove_sharing_problems'),
     url(r'^problem/(?P<patient_id>\d+)/(?P<sharing_patient_id>\d+)/(?P<problem_id>\d+)/add_sharing_problems$', 'add_sharing_problems'),
+    url(r'^problem/staff/(?P<staff_id>\d+)/add_new_common_problem$', 'add_new_common_problem'),
+    url(r'^problem/staff/(?P<staff_id>\d+)/get_common_problems$', 'get_common_problems'),
+    url(r'^problem/remove_common_problem/(?P<problem_id>\d+)$', 'remove_common_problem'),
     )

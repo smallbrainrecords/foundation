@@ -301,21 +301,27 @@
                         <div class='row' ng-show='permitted(["add_problem"])'>
                             <div class='col-md-12'>
                             	<br>
-                            	<div>
-                            		<p>Common problem:</p>
-                            		<select class='form-control'></select>
-                            		<button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
-	                                    Add acute problem
-	                                </button>
-	                            </div>
-                            	<br>
-                            	<div>
-	                                <select class='form-control'></select>
-                            		<button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
-	                                    Add chronic problem
-	                                </button>
-                            	</div>
-								<br>
+                            	<div ng-if="active_user.role=='physician' || active_user.role=='mid-level'">
+	                            	<div>
+	                            		<p>Common problem:</p>
+	                            		<select class='form-control' ng-model="acute_form">
+	                            			<option ng-repeat="acute in acutes" value="{{acute.id}}"> {{acute.problem_name}} </option>
+	                            		</select>
+	                            		<button class='btn btn-sm btn-default' ng-click='add_new_common_problem(acute_form, "acute")'>
+		                                    Add acute problem
+		                                </button>
+		                            </div>
+	                            	<br>
+	                            	<div>
+		                                <select class='form-control' ng-model="chronic_form">
+		                                	<option ng-repeat="chronic in chronics" value="{{chronic.id}}"> {{chronic.problem_name}} </option>
+		                                </select>
+	                            		<button class='btn btn-sm btn-default' ng-click='add_new_common_problem(chronic_form, "chronic")'>
+		                                    Add chronic problem
+		                                </button>
+	                            	</div>
+									<br>
+								</div>
                                 <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
                                        placeholder='Search Problem....'>
                                 <button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>

@@ -16,7 +16,7 @@ from common.views import *
 from emr.models import UserProfile, Problem, ProblemOrder, ProblemLabel, LabeledProblemList
 from emr.models import Goal, ToDo, TextNote, PatientImage
 from emr.models import ProblemRelationship
-from emr.models import ProblemNote, ProblemActivity, ProblemSegment
+from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem
 from emr.models import EncounterProblemRecord, Encounter
 from emr.models import Observation, SharingPatient, PhysicianTeam, ObservationComponent
 
@@ -24,7 +24,7 @@ from emr.operations import op_add_event, op_add_todo_event
 
 
 from .serializers import ProblemSerializer, PatientImageSerializer, ProblemLabelSerializer, LabeledProblemListSerializer
-from .serializers import ProblemNoteSerializer, ProblemActivitySerializer
+from .serializers import ProblemNoteSerializer, ProblemActivitySerializer, CommonProblemSerializer
 from emr.serializers import TextNoteSerializer
 from todo_app.serializers import TodoSerializer
 from goals_app.serializers import GoalSerializer
@@ -307,6 +307,62 @@ def add_patient_problem(request, patient_id):
 
             # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
             if concept_id in ['73211009', '46635009', '44054006']:
+                observation = Observation()
+                observation.problem = new_problem
+                observation.subject = new_problem.patient.profile
+                observation.save()
+
+        else:
+            resp['msg'] = 'Problem already added'
+
+    return ajax_response(resp)
+
+
+@login_required
+def add_patient_common_problem(request, patient_id):
+    resp = {}
+    resp['success'] = False
+
+    permissions = ['add_problem']
+
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if request.method == 'POST' and permitted:
+
+        cproblem = request.POST.get('cproblem')
+        problem_type = request.POST.get('type')
+
+        patient = User.objects.get(id=patient_id)
+
+        problem = CommonProblem.objects.get(id=cproblem)
+
+        problem_exists = Problem.objects.filter(problem_name=problem.problem_name, concept_id=problem.concept_id, 
+            patient=patient).exists()
+
+        if problem_exists is not True:
+
+            new_problem = Problem(
+                patient=patient, problem_name=problem.problem_name, concept_id=problem.concept_id)
+            if actor_profile.role == 'physician' or actor_profile.role == 'admin':
+                new_problem.authenticated = True
+
+            new_problem.save()
+
+            physician = request.user
+
+            summary = 'Added <u>problem</u> <b>%s</b>' % problem.problem_name
+            op_add_event(physician, patient, summary, new_problem)
+
+            activity = "Added <u>problem</u>: <b>%s</b>" % problem.problem_name
+            add_problem_activity(new_problem, actor_profile, activity)
+
+            new_problem_dict = ProblemSerializer(new_problem).data
+
+            resp['success'] = True
+            resp['problem'] = new_problem_dict
+
+            # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
+            if problem.concept_id in ['73211009', '46635009', '44054006']:
                 observation = Observation()
                 observation.problem = new_problem
                 observation.subject = new_problem.patient.profile
@@ -1409,5 +1465,64 @@ def update_problem_list_note(request, list_id):
         op_add_event(physician, patient, activity)
 
         resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def add_new_common_problem(request, staff_id):
+    resp = {}
+    resp['success'] = False
+    permissions = ['add_common_problem_list']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+        problem_name = request.POST.get('problem_name')
+        concept_id = request.POST.get('concept_id', None)
+        problem_type = request.POST.get('problem_type', None)
+
+        problem_exists = CommonProblem.objects.filter(concept_id=concept_id, author=request.user).exists()
+
+        if problem_exists is not True:
+            problem = CommonProblem(problem_name=problem_name, concept_id=concept_id, author=request.user, problem_type=problem_type)
+            problem.save()
+
+            common_problem = CommonProblemSerializer(problem).data
+            resp['common_problem'] = common_problem
+            resp['success'] = True
+
+        else:
+            resp['msg'] = 'Problem already added'
+
+    return ajax_response(resp)
+
+@login_required
+def get_common_problems(request, staff_id):
+    resp = {}
+    resp['success'] = False
+    permissions = ['add_common_problem_list']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        problems = CommonProblem.objects.filter(author=request.user)
+        common_problems = CommonProblemSerializer(problems, many=True).data
+        resp['problems'] = common_problems
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def remove_common_problem(request, problem_id):
+    resp = {}
+    resp['success'] = False
+    permissions = ['add_common_problem_list']
+    actor_profile, permitted = check_permissions(permissions, request.user)
+
+    if permitted:
+
+        problem = CommonProblem.objects.get(id=problem_id)
+        if problem.author == request.user:
+            problem.delete()
+            resp['success'] = True
 
     return ajax_response(resp)

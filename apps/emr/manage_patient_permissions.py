@@ -111,6 +111,7 @@ ROLE_PERMISSIONS['physician'] = [
     'set_problem_order',
     'change_problem_name',
     'add_problem_label',
+    'add_common_problem_list',
     # Goal
     'add_goal',
     'modify_goal',
@@ -152,6 +153,7 @@ ROLE_PERMISSIONS['mid-level'] = [
     'set_problem_order',
     'change_problem_name',
     'add_problem_label',
+    'add_common_problem_list',
     # Goal
     'add_goal',
     'modify_goal',

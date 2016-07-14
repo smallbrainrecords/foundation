@@ -116,6 +116,35 @@
 			return httpService.post(params, url);
 		};
 
+		this.listTerms = function(query){
+
+			var params = {'query':query};
+			var url = "/list_terms/";
+
+			return httpService.get(params, url);
+
+		};
+
+		this.addCommonProblem = function(form){
+			var url = '/p/problem/staff/'+form.staff_id+'/add_new_common_problem';
+
+			return httpService.post(form, url);
+		};
+
+		this.getCommonProblems = function(staff_id){
+			var form = {};
+			var url = '/p/problem/staff/'+staff_id+'/get_common_problems';
+
+			return httpService.post(form, url);
+		};
+
+		this.removeCommonProblem = function(problem_id){
+			var form = {};
+			var url = '/p/problem/remove_common_problem/' + problem_id;
+
+			return httpService.post(form, url);
+		};
+
 	});
 
 })();

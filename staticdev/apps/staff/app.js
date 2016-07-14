@@ -34,6 +34,11 @@
 
                 templateUrl: '/static/apps/admin/partials/manage_sharing_problem.html',
                 controller: 'ManageSharingProblemCtrl'
+            })
+            .when('/manage/common_problems', {
+
+                templateUrl: '/static/apps/staff/partials/manage_common_problems.html',
+                controller: 'ManageCommonProblemCtrl'
             });
 
 

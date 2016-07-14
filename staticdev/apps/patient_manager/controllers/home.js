@@ -185,6 +185,8 @@
                 $scope.most_recent_encounter_related_problems = data['most_recent_encounter_related_problems'];
                 $scope.shared_patients = data['shared_patients'];
                 $scope.sharing_patients = data['sharing_patients'];
+                $scope.acutes = data['acutes_list'];
+                $scope.chronics = data['chronics_list'];
 
                 // problem timeline
                 $scope.fetchTimeLineProblem(data);
@@ -410,6 +412,25 @@
                     }
                 });
             }
+
+            $scope.add_new_common_problem = function(problem, type) {
+            	var form = {};
+                form.patient_id = $scope.patient_id;
+                form.cproblem = problem;
+                form.type = type;
+
+                patientService.addCommonProblem(form).then(function (data) {
+
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'New Problem added successfully');
+                        $scope.problems.push(data['problem']);
+                    } else if (data['success'] == false) {
+                        toaster.pop('error', 'Error', data['msg']);
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong');
+                    }
+                });
+            };
 
             $scope.update_todo_status = function (todo) {
 

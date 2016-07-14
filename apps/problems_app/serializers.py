@@ -2,9 +2,23 @@ from rest_framework import serializers
 
 
 from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel, LabeledProblemList
-from emr.models import ProblemNote, ProblemActivity, ProblemSegment
+from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem
 
 from users_app.serializers import UserProfileSerializer, SafeUserSerializer
+
+
+class CommonProblemSerializer(serializers.ModelSerializer):
+    author = SafeUserSerializer()
+
+    class Meta:
+        model = CommonProblem
+        fields = (
+            'id',
+            'problem_name',
+            'concept_id',
+            'problem_type',
+            'author',
+            )
 
 
 class ProblemLabelSerializer(serializers.ModelSerializer):

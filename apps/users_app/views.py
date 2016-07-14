@@ -13,9 +13,9 @@ from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
 
 from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
-from emr.models import SharingPatient
+from emr.models import SharingPatient, CommonProblem
 
-from problems_app.serializers import ProblemSerializer
+from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
 from .serializers import UserProfileSerializer
 from todo_app.serializers import TodoSerializer
@@ -342,6 +342,14 @@ def get_patient_info(request, patient_id):
         user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
         sharing_patients_list.append(user_dict)
 
+
+    # common problems
+    acutes = CommonProblem.objects.filter(author=request.user, problem_type="acute")
+    acutes_list = CommonProblemSerializer(acutes, many=True).data
+
+    chronics = CommonProblem.objects.filter(author=request.user, problem_type="chronic")
+    chronics_list = CommonProblemSerializer(chronics, many=True).data
+
     resp = {}
     resp['info'] = patient_profile_dict
     resp['problems'] = problem_list
@@ -354,6 +362,8 @@ def get_patient_info(request, patient_id):
     resp['most_recent_encounter_related_problems'] = related_problem_holder
     resp['shared_patients'] = patients_list
     resp['sharing_patients'] = sharing_patients_list
+    resp['acutes_list'] = acutes_list
+    resp['chronics_list'] = chronics_list
     return ajax_response(resp)
 
 @login_required

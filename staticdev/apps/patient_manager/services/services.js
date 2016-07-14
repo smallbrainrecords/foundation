@@ -300,6 +300,16 @@
 
 		};
 
+		this.addCommonProblem = function(form){
+
+			var url = '/p/patient/'+form.patient_id+'/problems/add/new_common_problem';
+
+			return httpService.post(form, url);
+
+
+		};
+
+
 	});
 
 })();
