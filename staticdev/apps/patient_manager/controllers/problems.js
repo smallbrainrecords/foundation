@@ -898,7 +898,7 @@
 			$scope.checkSharedProblem = function(problem, sharing_patients) {
 				if ($scope.active_user) {
 
-					if ($scope.patient_id == $scope.user_id || $scope.active_user.role=='physician' || $scope.active_user.role=='mid-level') {
+					if ($scope.patient_id == $scope.user_id || $scope.active_user.role!='patient') {
 						return true;
 					} else {
 						var is_existed = false;
