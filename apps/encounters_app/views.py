@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from django.utils import timezone
 from common.views import *
 
 from emr.models import UserProfile, Encounter, EncounterEvent
@@ -262,33 +263,34 @@ def add_timestamp(request, patient_id, encounter_id):
 
     if request.method == "POST" and permitted:
         encounter = Encounter.objects.get(id=encounter_id)
-        timestamp = request.POST.get('timestamp', '')
-        times = timestamp.split(":")
-        if RepresentsInt(times):
-            if len(times) == 3:
-                plustime = timedelta(hours=int(times[0]), minutes=int(times[1]), seconds=int(times[2]))
-            elif len(times) == 2:
-                plustime = timedelta(minutes=int(times[0]), seconds=int(times[1]))
-            elif len(times) == 1:
-                plustime = timedelta(seconds=int(times[0]))
-            else:
-                plustime = timedelta(seconds=0)
+        timestamp = timezone.now()
+        # timestamp = request.POST.get('timestamp', '')
+        # times = timestamp.split(":")
+        # if RepresentsInt(times):
+        #     if len(times) == 3:
+        #         plustime = timedelta(hours=int(times[0]), minutes=int(times[1]), seconds=int(times[2]))
+        #     elif len(times) == 2:
+        #         plustime = timedelta(minutes=int(times[0]), seconds=int(times[1]))
+        #     elif len(times) == 1:
+        #         plustime = timedelta(seconds=int(times[0]))
+        #     else:
+        #         plustime = timedelta(seconds=0)
 
-            timestamp = encounter.starttime + plustime
-            summary = request.POST.get('summary', '') + ' by <b>' + request.user.username + '</b>'
+        #     timestamp = encounter.starttime + plustime
+        summary = 'A timestamp added by <b>' + request.user.username + '</b>'
 
-            encounter_event = EncounterEvent(
-                encounter=encounter,
-                timestamp=timestamp,
-                summary=summary)
+        encounter_event = EncounterEvent(
+            encounter=encounter,
+            timestamp=timestamp,
+            summary=summary)
 
-            encounter_event.save()
+        encounter_event.save()
 
-            # Encounter Events
-            encounter_event_holder = EncounterEventSerializer(encounter_event).data
+        # Encounter Events
+        encounter_event_holder = EncounterEventSerializer(encounter_event).data
 
-            resp['success'] = True
-            resp['encounter_event'] = encounter_event_holder
+        resp['success'] = True
+        resp['encounter_event'] = encounter_event_holder
 
     return ajax_response(resp)
 

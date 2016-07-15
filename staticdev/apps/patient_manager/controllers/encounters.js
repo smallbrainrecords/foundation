@@ -72,38 +72,21 @@
                 });
             };
 
-            $scope.add_timestamp = function(timestamp){
+            $scope.add_timestamp = function(){
 
-                  var form = {};
-                  form.encounter_id = $scope.encounter_id;
-                  form.patient_id = $scope.patient_id;
-                  form.timestamp = timestamp;
-                  form.summary = $scope.summary;
-                  encounterService.addTimestamp(form).then(function(data){
-                        if(data['success'] == true){
-                              $scope.encounter_events.push(data['encounter_event']);
-                              toaster.pop('success', 'Done', 'Added timestamp!');
-                        } else {
-                              toaster.pop('error', 'Warning', 'Something went wrong!');
-                        }
-
-			  if($scope.active_user==undefined){
-				return false;
-			  }
-
-			  var user_permissions = $scope.active_user.permissions;
-
-			  for(var key in permissions){
-
-				if(user_permissions.indexOf(permissions[key])<0){
-				      return false;
-				}
-			  }
-
-			  return true;
-                  });
-
-
+                var form = {};
+                form.encounter_id = $scope.encounter_id;
+                form.patient_id = $scope.patient_id;
+                // form.timestamp = timestamp;
+                // form.summary = $scope.summary;
+                encounterService.addTimestamp(form).then(function(data){
+                  if(data['success'] == true){
+                      $scope.encounter_events.push(data['encounter_event']);
+                      toaster.pop('success', 'Done', 'Added timestamp!');
+                  } else {
+                      toaster.pop('error', 'Warning', 'Something went wrong!');
+                  }
+                });
             };
 
             $scope.markFavoriteEvent = function(encounter_event){
