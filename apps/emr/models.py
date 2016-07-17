@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
-from apps.emr.managers import ObservationManager
+from apps.emr.managers import ObservationManager, ProblemManager, ProblemNoteManager
 
 # DATA
 ROLE_CHOICES = (
@@ -210,6 +210,8 @@ class Problem(MPTTModel):
     labels = models.ManyToManyField(ProblemLabel, blank=True)
     old_problem_name = models.CharField(max_length=200, blank=True, null=True)
 
+    objects = ProblemManager()
+
     def __unicode__(self):
         return '%s %s' % (self.patient, self.problem_name)
 
@@ -263,6 +265,8 @@ class ProblemNote(models.Model):
     note = models.TextField()
     note_type = models.CharField(choices=NOTE_TYPE_CHOICES, max_length=50)
     created_on = models.DateTimeField(auto_now_add=True)
+
+    objects = ProblemNoteManager()
 
     def __unicode__(self):
         return "%s %s" % (self.author, self.note)

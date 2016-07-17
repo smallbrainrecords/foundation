@@ -10,6 +10,7 @@ import operator
 from datetime import datetime, timedelta
 from django.db.models import Max
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
 from common.views import *
 
@@ -121,89 +122,50 @@ def get_problem_info(request, problem_id):
 
 @login_required
 def get_observations(request, problem_id):
-    problem_info = Problem.objects.get(id=problem_id)
-    observations = Observation.objects.filter(problem=problem_info)
-    observations_holder = []
-    for observation in observations:
-        observation_dict = ObservationSerializer(observation).data
-        observations_holder.append(observation_dict)
-
+    observations = Observation.objects.filter(problem__id=problem_id)
+    serialized_observations = ObservationSerializer(observations, many=True).data
     resp = {}
     resp['success'] = True
-    resp['observations'] = observations_holder
+    resp['observations'] = serialized_observations
     return ajax_response(resp)
 
 @login_required
 def get_problem_activity(request, problem_id, last_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    activities = ProblemActivity.objects.filter(problem=problem).filter(id__gt=last_id)
+    activity_holder = ProblemActivitySerializer(activities, many=True).data
     resp = {}
-    resp['success'] = False
-
-    try:
-        problem = Problem.objects.get(id=problem_id)
-    except Problem.DoesNotExist:
-        raise Http404("Problem DoesNotExist")
-
-    activites = ProblemActivity.objects.filter(problem=problem).filter(id__gt=last_id)
-    activity_holder = ProblemActivitySerializer(activites, many=True).data
     resp['activities'] = activity_holder
     resp['success'] = True
-
     return ajax_response(resp)
 
 
 # Problem
 @login_required
 def add_patient_problem(request, patient_id):
-
     resp = {}
     resp['success'] = False
 
-    permissions = ['add_problem']
+    actor_profile, permitted = check_permissions(['add_problem'], request.user)
+    if not permitted or request.method == "GET":
+        return ajax_response(resp)
 
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    term = request.POST.get('term')
+    concept_id = request.POST.get('code', None)
+    if Problem.objects.filter(problem_name=term, patient__id=patient_id).exists():
+        resp['msg'] = 'Problem already added'
+        return ajax_response(resp)
 
-    if request.method == 'POST' and permitted:
+    new_problem = Problem.objects.create_new_problem(patient_id, term, concept_id, actor_profile)
+    physician = request.user
 
-        term = request.POST.get('term')
-        concept_id = request.POST.get('code', None)
+    summary = 'Added <u>problem</u> <b>%s</b>' % term
+    op_add_event(physician, new_problem.patient, summary, new_problem)
+    activity = "Added <u>problem</u>: <b>%s</b>" % term
+    add_problem_activity(new_problem, actor_profile, activity)
 
-        patient = User.objects.get(id=patient_id)
-
-        problem_exists = Problem.objects.filter(
-            problem_name=term, patient=patient).exists()
-
-        if problem_exists is not True:
-
-            new_problem = Problem(
-                patient=patient, problem_name=term, concept_id=concept_id)
-            if actor_profile.role == 'physician' or actor_profile.role == 'admin':
-                new_problem.authenticated = True
-
-            new_problem.save()
-
-            physician = request.user
-
-            summary = 'Added <u>problem</u> <b>%s</b>' % term
-            op_add_event(physician, patient, summary, new_problem)
-
-            activity = "Added <u>problem</u>: <b>%s</b>" % term
-            add_problem_activity(new_problem, actor_profile, activity)
-
-            new_problem_dict = ProblemSerializer(new_problem).data
-
-            resp['success'] = True
-            resp['problem'] = new_problem_dict
-
-            # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
-            if concept_id in ['73211009', '46635009', '44054006']:
-                observation = Observation()
-                observation.problem = new_problem
-                observation.subject = new_problem.patient.profile
-                observation.save()
-
-        else:
-            resp['msg'] = 'Problem already added'
-
+    resp['success'] = True
+    resp['problem'] = ProblemSerializer(new_problem).data
     return ajax_response(resp)
 
 
@@ -212,120 +174,81 @@ def add_patient_common_problem(request, patient_id):
     resp = {}
     resp['success'] = False
 
-    permissions = ['add_problem']
+    actor_profile, permitted = check_permissions(['add_problem'], request.user)
+    if not permitted or request.method == "GET":
+        return ajax_response(resp)
 
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    cproblem = request.POST.get('cproblem')
+    problem_type = request.POST.get('type')
 
-    if request.method == 'POST' and permitted:
+    problem = CommonProblem.objects.get(id=cproblem)
 
-        cproblem = request.POST.get('cproblem')
-        problem_type = request.POST.get('type')
+    if Problem.objects.filter(problem_name=problem.problem_name, concept_id=problem.concept_id, patient__id=patient_id).exists():
+        resp['msg'] = 'Problem already added'
+        return ajax_response(resp)
 
-        patient = User.objects.get(id=patient_id)
+    new_problem = Problem.objects.create_new_problem(patient_id, problem.problem_name, problem.concept_id, actor_profile)
+    physician = request.user
 
-        problem = CommonProblem.objects.get(id=cproblem)
+    summary = 'Added <u>problem</u> <b>%s</b>' % problem.problem_name
+    op_add_event(physician, new_problem.patient, summary, new_problem)
+    activity = "Added <u>problem</u>: <b>%s</b>" % problem.problem_name
+    add_problem_activity(new_problem, actor_profile, activity)
 
-        problem_exists = Problem.objects.filter(problem_name=problem.problem_name, concept_id=problem.concept_id,
-            patient=patient).exists()
-
-        if problem_exists is not True:
-
-            new_problem = Problem(
-                patient=patient, problem_name=problem.problem_name, concept_id=problem.concept_id)
-            if actor_profile.role == 'physician' or actor_profile.role == 'admin':
-                new_problem.authenticated = True
-
-            new_problem.save()
-
-            physician = request.user
-
-            summary = 'Added <u>problem</u> <b>%s</b>' % problem.problem_name
-            op_add_event(physician, patient, summary, new_problem)
-
-            activity = "Added <u>problem</u>: <b>%s</b>" % problem.problem_name
-            add_problem_activity(new_problem, actor_profile, activity)
-
-            new_problem_dict = ProblemSerializer(new_problem).data
-
-            resp['success'] = True
-            resp['problem'] = new_problem_dict
-
-            # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
-            if problem.concept_id in ['73211009', '46635009', '44054006']:
-                observation = Observation()
-                observation.problem = new_problem
-                observation.subject = new_problem.patient.profile
-                observation.save()
-
-        else:
-            resp['msg'] = 'Problem already added'
-
+    resp['success'] = True
+    resp['problem'] = ProblemSerializer(new_problem).data
     return ajax_response(resp)
 
 
 @login_required
 def change_name(request, problem_id):
-
     resp = {}
     resp['success'] = False
 
-    permissions = ['change_problem_name']
+    actor_profile, permitted = check_permissions(['change_problem_name'], request.user)
+    if not permitted or request.method == "GET":
+        return ajax_response(resp)
 
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    term = request.POST.get('term')
+    concept_id = request.POST.get('code', None)
 
-    if request.method == 'POST' and permitted:
+    problem = Problem.objects.get(id=problem_id)
+    if Problem.objects.filter(problem_name=term, patient=problem.patient).exists():
+        resp['msg'] = 'Problem already added'
+        return ajax_response(resp)
 
-        term = request.POST.get('term')
-        concept_id = request.POST.get('code', None)
+    old_problem_concept_id = problem.concept_id
+    old_problem_name = problem.problem_name
+    if datetime.now() > datetime.strptime(problem.start_date.strftime('%d/%m/%Y') + ' ' + problem.start_time.strftime('%H:%M:%S'), "%d/%m/%Y %H:%M:%S") + timedelta(hours=24):
+        problem.old_problem_name = old_problem_name
 
-        problem = Problem.objects.get(id=problem_id)
-        old_problem_name = problem.problem_name
-        old_problem_concept_id = problem.concept_id
-        problem_exists = Problem.objects.filter(
-            problem_name=term, patient=problem.patient).exists()
+    problem.problem_name = term
+    problem.concept_id = concept_id
+    problem.save()
 
-        if problem_exists is not True:
+    physician = request.user
 
-            problem.problem_name = term
-            if concept_id:
-                problem.concept_id = concept_id
-            else:
-                problem.concept_id = None
+    if old_problem_concept_id and problem.concept_id:
+        summary = '<b>%s (%s)</b> was changed to <b>%s (%s)</b>' % (old_problem_name, old_problem_concept_id, problem.problem_name, problem.concept_id)
+    elif old_problem_concept_id:
+        summary = '<b>%s (%s)</b> was changed to <b>%s</b>' % (old_problem_name, old_problem_concept_id, problem.problem_name)
+    elif problem.concept_id:
+        summary = '<b>%s</b> was changed to <b>%s (%s)</b>' % (old_problem_name, problem.problem_name, problem.concept_id)
+    else:
+        summary = '<b>%s</b> was changed to <b>%s</b>' % (old_problem_name, problem.problem_name)
 
-            if datetime.now() > datetime.strptime(problem.start_date.strftime('%d/%m/%Y') + ' ' + problem.start_time.strftime('%H:%M:%S'), "%d/%m/%Y %H:%M:%S") + timedelta(hours=24):
-                problem.old_problem_name = old_problem_name
+    op_add_event(physician, problem.patient, summary, problem)
+    add_problem_activity(problem, actor_profile, summary)
 
-            problem.save()
+    resp['success'] = True
+    resp['problem'] = ProblemSerializer(problem).data
 
-            physician = request.user
-
-            if old_problem_concept_id and problem.concept_id:
-                summary = '<b>%s (%s)</b> was changed to <b>%s (%s)</b>' % (old_problem_name, old_problem_concept_id, problem.problem_name, problem.concept_id)
-            elif old_problem_concept_id:
-                summary = '<b>%s (%s)</b> was changed to <b>%s</b>' % (old_problem_name, old_problem_concept_id, problem.problem_name)
-            elif problem.concept_id:
-                summary = '<b>%s</b> was changed to <b>%s (%s)</b>' % (old_problem_name, problem.problem_name, problem.concept_id)
-            else:
-                summary = '<b>%s</b> was changed to <b>%s</b>' % (old_problem_name, problem.problem_name)
-
-            op_add_event(physician, problem.patient, summary, problem)
-
-            add_problem_activity(problem, actor_profile, summary)
-
-            new_problem_dict = ProblemSerializer(problem).data
-
-            resp['success'] = True
-            resp['problem'] = new_problem_dict
-
-            # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
-            # if concept_id in ['73211009', '46635009', '44054006']:
-            #     observation = Observation()
-            #     observation.problem = problem
-            #     observation.subject = problem.patient.profile
-            #     observation.save()
-
-        else:
-            resp['msg'] = 'Problem already added'
+    # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
+    # if concept_id in ['73211009', '46635009', '44054006']:
+    #     observation = Observation()
+    #     observation.problem = problem
+    #     observation.subject = problem.patient.profile
+    #     observation.save()
 
     return ajax_response(resp)
 
@@ -336,87 +259,61 @@ def update_problem_status(request, problem_id):
     # Modify this view
 
     resp = {}
-
     resp['success'] = False
 
-    actor = request.user
-    actor_profile = UserProfile.objects.get(user=actor)
-
-    problem = Problem.objects.get(id=problem_id)
-    patient = problem.patient
+    actor_profile = UserProfile.objects.get(user=request.user)
 
     is_controlled = request.POST.get('is_controlled') == 'true'
     is_active = request.POST.get('is_active') == 'true'
     authenticated = request.POST.get('authenticated') == 'true'
 
+    problem = Problem.objects.select_related("patient").get(id=problem_id)
     problem.is_controlled = is_controlled
     problem.is_active = is_active
     problem.authenticated = authenticated
-
     problem.save()
 
-    status_labels = {}
-    status_labels['problem_name'] = problem.problem_name
-
-    if is_controlled:
-        status_labels['is_controlled'] = 'controlled'
-    else:
-        status_labels['is_controlled'] = 'not controlled'
-
-    if is_active:
-        status_labels['is_active'] = "active"
-    else:
-        status_labels['is_active'] = 'not_active'
-
-    if authenticated:
-        status_labels['authenticated'] = "authenticated"
-    else:
-        status_labels['authenticated'] = 'not_authenticated'
+    status_labels = {
+        'problem_name': problem.problem_name,
+        'is_controlled': "controlled" if is_controlled else "not controlled",
+        "is_active": "active" if is_active else "not_active",
+        "authenticated": "authenticated" if authenticated else "not_authenticated",
+    }
 
     physician = request.user
 
     summary = """Changed <u>problem</u>: <b>%(problem_name)s</b> status to : <b>%(is_controlled)s</b> ,<b>%(is_active)s</b> ,<b>%(authenticated)s</b>""" % status_labels
-    op_add_event(physician, patient, summary, problem)
-
+    op_add_event(physician, problem.patient, summary, problem)
     activity = summary
     add_problem_activity(problem, actor_profile, activity)
 
     resp['success'] = True
-
     return ajax_response(resp)
 
 
 # Problems
 @login_required
 def update_start_date(request, problem_id):
-
     resp = {}
-
     resp['success'] = False
 
-    permissions = ['modify_problem']
+    actor_profile, permitted = check_permissions(['modify_problem'], request.user)
+    if not permitted:
+        return ajax_response(resp)
 
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    start_date = request.POST.get('start_date')
+    problem = Problem.objects.get(id=problem_id)
+    problem.start_date = get_new_date(start_date)
+    problem.save()
 
-    if permitted:
-        problem = Problem.objects.get(id=problem_id)
-        patient = problem.patient
+    physician = request.user
+    patient = problem.patient
+    summary = '''Changed <u>problem</u> : <b>%s</b> start date to <b>%s</b>''' % (problem.problem_name, problem.start_date)
+    op_add_event(physician, patient, summary, problem)
+    activity = summary
+    add_problem_activity(problem, actor_profile, activity)
 
-        start_date = request.POST.get('start_date')
-        problem.start_date = get_new_date(start_date)
-
-        problem.save()
-
-        physician = request.user
-
-        summary = '''Changed <u>problem</u> : <b>%s</b> start date to <b>%s</b>''' % (problem.problem_name, problem.start_date)
-        op_add_event(physician, patient, summary, problem)
-
-        activity = summary
-        add_problem_activity(problem, actor_profile, activity)
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
 
@@ -428,34 +325,26 @@ def add_history_note(request, problem_id):
 
     permissions = ['modify_problem']
     actor_profile, permitted = check_permissions(permissions, request.user)
+    if not permitted or request.method == "GET":
+        return ajax_response(resp)
 
-    if request.method == 'POST' and permitted:
-        note = request.POST.get('note')
-        try:
-            problem = Problem.objects.get(id=problem_id)
-        except Problem.DoesNotExist:
-            problem = None
+    note = request.POST.get('note')
+    try:
+        problem = Problem.objects.get(id=problem_id)
+    except Problem.DoesNotExist:
+        return ajax_response(resp)
 
-        if problem is not None:
+    new_note = ProblemNote.objects.create_history_note(actor_profile, problem, note)
 
-            new_note = ProblemNote(
-                author=actor_profile, problem=problem,
-                note=note, note_type='history')
+    activity = 'Added History Note  <b>%s</b>' % note
+    add_problem_activity(problem, actor_profile, activity, 'input')
 
-            new_note.save()
+    physician = request.user
+    patient = problem.patient
+    op_add_event(physician, patient, activity, problem)
 
-            activity = 'Added History Note  <b>%s</b>' % note
-            add_problem_activity(problem, actor_profile, activity, 'input')
-
-            physician = request.user
-            patient = problem.patient
-            op_add_event(physician, patient, activity, problem)
-
-            new_note_dict = ProblemNoteSerializer(new_note).data
-            resp['note'] = new_note_dict
-
-            resp['success'] = True
-
+    resp['success'] = True
+    resp['note'] = ProblemNoteSerializer(new_note).data
     return ajax_response(resp)
 
 
@@ -472,34 +361,23 @@ def add_wiki_note(request, problem_id):
 
     if request.method == 'POST':
         note = request.POST.get('note')
-
         try:
             problem = Problem.objects.get(id=problem_id)
             author = UserProfile.objects.get(user=request.user)
-        except Problem.DoesNotExist:
-            problem = None
-        except UserProfile.DoesNotExist:
-            author = None
+        except (Problem.DoesNotExist, UserProfile.DoesNotExist) as e:
+            return ajax_response(resp)
 
-        if problem is not None and author is not None:
+        new_note = ProblemNote.objects.create_wiki_note(author, problem, note)
 
-            new_note = ProblemNote(
-                author=author, problem=problem,
-                note=note, note_type='wiki')
+        activity = 'Added wiki note: <b>%s</b>' % note
+        add_problem_activity(problem, actor_profile, activity, 'input')
 
-            new_note.save()
+        physician = request.user
+        patient = problem.patient
+        op_add_event(physician, patient, activity, problem)
 
-            activity = 'Added wiki note: <b>%s</b>' % note
-            add_problem_activity(problem, actor_profile, activity, 'input')
-
-            physician = request.user
-            patient = problem.patient
-            op_add_event(physician, patient, activity, problem)
-
-            new_note_dict = ProblemNoteSerializer(new_note).data
-            resp['note'] = new_note_dict
-
-            resp['success'] = True
+        resp['note'] = ProblemNoteSerializer(new_note).data
+        resp['success'] = True
 
     return ajax_response(resp)
 
