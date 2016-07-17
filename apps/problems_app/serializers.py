@@ -2,13 +2,10 @@ from rest_framework import serializers
 
 
 from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel, LabeledProblemList
-from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem
+from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem, ObservationComponent
 
 from users_app.serializers import UserProfileSerializer, SafeUserSerializer
 from emr.serializers import TextNoteSerializer
-from todo_app.serializers import TodoSerializer
-from goals_app.serializers import GoalSerializer
-from encounters_app.serializers import EncounterSerializer
 
 class CommonProblemSerializer(serializers.ModelSerializer):
     author = SafeUserSerializer()
@@ -155,6 +152,9 @@ class LabeledProblemListSerializer(serializers.ModelSerializer):
             'name')
 
 class ProblemInfoSerializer(serializers.ModelSerializer):
+    from todo_app.serializers import TodoSerializer
+    from goals_app.serializers import GoalSerializer
+    from encounters_app.serializers import EncounterSerializer
     problem_goals = GoalSerializer(many=True, source="goal_set")
     problem_todos = TodoSerializer(many=True, source="todo_set")
     problem_images = PatientImageSerializer(many=True, source="patientimage_set")
@@ -193,10 +193,10 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         }
         return problem_notes
 
-    def get_effecting_problems(self, obj)
+    def get_effecting_problems(self, obj):
         return [relationship.target.id for relationship in obj.target]
 
-    def get_effected_problems(self, obj)
+    def get_effected_problems(self, obj):
         return [relationship.source.id for relationship in obj.source]
 
     def get_patient_other_problems(self, obj):
@@ -210,7 +210,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         return EncounterSerializer(related_encounters, many=True).data
 
     def get_observations(self, obj):
-        obsevations = obj.problem_observations
+        observations = obj.problem_observations
         observations_holder = []
         for observation in observations:
             observation_dict = {

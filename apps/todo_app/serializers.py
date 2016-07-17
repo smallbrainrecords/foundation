@@ -2,131 +2,132 @@ from rest_framework import serializers
 
 from emr.models import ToDo, ToDoComment, Label, ToDoAttachment, TodoActivity, LabeledToDoList
 
-from problems_app.serializers import ProblemSerializer
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
 
 class LabelSerializer(serializers.ModelSerializer):
-	author = SafeUserSerializer()
+    author = SafeUserSerializer()
 
-	class Meta:
-		model = Label
-		fields = (
-			'id',
-			'name',
-			'css_class',
-			'author',
-			'is_all',
-			)
+    class Meta:
+        model = Label
+        fields = (
+            'id',
+            'name',
+            'css_class',
+            'author',
+            'is_all',
+            )
 
 
 class CommentToDoSerializer(serializers.ModelSerializer):
 
-	user = SafeUserSerializer()
+    user = SafeUserSerializer()
 
-	class Meta:
-		model = ToDoComment
+    class Meta:
+        model = ToDoComment
 
-		fields = (
-			'id',
-			'user',
-			'comment',
-			'datetime',
-			)
+        fields = (
+            'id',
+            'user',
+            'comment',
+            'datetime',
+            )
 
 
 class AttachmentToDoSerializer(serializers.ModelSerializer):
 
-	user = SafeUserSerializer()
+    user = SafeUserSerializer()
 
-	class Meta:
-		model = ToDoAttachment
+    class Meta:
+        model = ToDoAttachment
 
-		fields = (
-			'id',
-			'user',
-			'attachment',
-			'datetime',
-			'filename',
-			'is_image',
-			)
+        fields = (
+            'id',
+            'user',
+            'attachment',
+            'datetime',
+            'filename',
+            'is_image',
+            )
 
 
 class TodoSerializer(serializers.ModelSerializer):
+    labels = LabelSerializer(many=True)
+    comments = CommentToDoSerializer(many=True)
+    attachments = AttachmentToDoSerializer(many=True)
+    patient = SafeUserSerializer()
+    members = UserProfileSerializer(many=True)
+    due_date = serializers.DateField(format='%m/%d/%Y')
+    problem = serializers.SerializerMethodField()
 
-	labels = LabelSerializer(many=True)
-	comments = CommentToDoSerializer(many=True)
-	attachments = AttachmentToDoSerializer(many=True)
-	problem = ProblemSerializer()
-	patient = SafeUserSerializer()
-	members = UserProfileSerializer(many=True)
-	due_date = serializers.DateField(format='%m/%d/%Y')
+    class Meta:
+        model = ToDo
 
-	class Meta:
-		model = ToDo
+        fields = (
+            'id',
+            'patient',
+            'user',
+            'problem',
+            'todo',
+            'accomplished',
+            'due_date',
+            'labels',
+            'comments',
+            'attachments',
+            'members',
+            'created_on',
+            )
 
-		fields = (
-			'id',
-			'patient',
-			'user',
-			'problem',
-			'todo',
-			'accomplished',
-			'due_date',
-			'labels',
-			'comments',
-			'attachments',
-			'members',
-			'created_on',
-			)
-
+    def get_problem(self, obj):
+        from problems_app.serializers import ProblemSerializer
+        return ProblemSerializer(obj.problem).data
 
 class ToDoCommentSerializer(serializers.ModelSerializer):
 
-	user = SafeUserSerializer()
-	todo = TodoSerializer()
+    user = SafeUserSerializer()
+    todo = TodoSerializer()
 
-	class Meta:
-		model = ToDoComment
+    class Meta:
+        model = ToDoComment
 
-		fields = (
-			'id',
-			'todo',
-			'user',
-			'comment',
-			'datetime',
-			)
+        fields = (
+            'id',
+            'todo',
+            'user',
+            'comment',
+            'datetime',
+            )
 
 class TodoActivitySerializer(serializers.ModelSerializer):
 
-	todo = TodoSerializer()
-	author = UserProfileSerializer()
-	comment = CommentToDoSerializer()
-	attachment = AttachmentToDoSerializer()
+    todo = TodoSerializer()
+    author = UserProfileSerializer()
+    comment = CommentToDoSerializer()
+    attachment = AttachmentToDoSerializer()
 
-	class Meta:
-		model = TodoActivity
+    class Meta:
+        model = TodoActivity
 
-		fields = (
-			'id',
-			'todo',
-			'author',
-			'activity',
-			'comment',
-			'attachment',
-			'created_on')
+        fields = (
+            'id',
+            'todo',
+            'author',
+            'activity',
+            'comment',
+            'attachment',
+            'created_on')
 
 
 class LabeledToDoListSerializer(serializers.ModelSerializer):
 
-	user = SafeUserSerializer()
-	labels = LabelSerializer(many=True)
+    user = SafeUserSerializer()
+    labels = LabelSerializer(many=True)
 
-	class Meta:
-		model = LabeledToDoList
+    class Meta:
+        model = LabeledToDoList
 
-		fields = (
-			'id',
-			'user',
-			'labels',
-			'name')
+        fields = (
+            'id',
+            'user',
+            'labels',
+            'name')
