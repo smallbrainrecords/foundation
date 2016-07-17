@@ -751,9 +751,6 @@ def add_problem_label(request, label_id, problem_id):
     problem = Problem.objects.get(id=problem_id)
     label = ProblemLabel.objects.get(id=label_id)
     problem.labels.add(label)
-
-    resp = {}
-    resp['success'] = True
     resp = { 'success': True }
     return ajax_response(resp)
 
