@@ -5,12 +5,14 @@ except ImportError:
     import Image
     import ImageOps
 
+import functools
 import json
 import operator
 from datetime import datetime, timedelta
-from django.db.models import Max
+from django.db.models import Max, Prefetch
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view
 
 from common.views import *
 
@@ -38,12 +40,18 @@ from todo_app.operations import add_todo_activity
 from observations_app.serializers import ObservationSerializer
 
 
-def is_patient(user):
-    try:
-        profile = UserProfile.objects.get(user=user)
-        return profile.role == 'patient'
-    except UserProfile.DoesNotExist:
-        return False
+def permissions_required(permissions):
+    def decorator(view_func):
+        @functools.wraps(view_func)
+        def _wrapper(request, *args, **kwargs):
+            actor_profile, permitted = check_permissions(permissions, request.user)
+            if not permitted:
+                resp = {}
+                resp['success'] = False
+                return ajax_response(resp)
+            return view_func(request, *args, **kwargs)
+        return _wrapper
+    return decorator
 
 
 @login_required
@@ -141,20 +149,16 @@ def get_problem_activity(request, problem_id, last_id):
 
 
 # Problem
+@permissions_required(["add_problems"])
 @login_required
+@api_view(["POST"])
 def add_patient_problem(request, patient_id):
-    resp = {}
-    resp['success'] = False
-
-    actor_profile, permitted = check_permissions(['add_problem'], request.user)
-    if not permitted or request.method == "GET":
-        return ajax_response(resp)
-
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
     term = request.POST.get('term')
     concept_id = request.POST.get('code', None)
     if Problem.objects.filter(problem_name=term, patient__id=patient_id).exists():
-        resp['msg'] = 'Problem already added'
-        return ajax_response(resp)
+        return ajax_response({"msg": "Problem already added"})
 
     new_problem = Problem.objects.create_new_problem(patient_id, term, concept_id, actor_profile)
     physician = request.user
@@ -164,28 +168,25 @@ def add_patient_problem(request, patient_id):
     activity = "Added <u>problem</u>: <b>%s</b>" % term
     add_problem_activity(new_problem, actor_profile, activity)
 
+    resp = {}
     resp['success'] = True
     resp['problem'] = ProblemSerializer(new_problem).data
     return ajax_response(resp)
 
 
+@permissions_required(["add_problems"])
 @login_required
+@api_view(["POST"])
 def add_patient_common_problem(request, patient_id):
-    resp = {}
-    resp['success'] = False
-
-    actor_profile, permitted = check_permissions(['add_problem'], request.user)
-    if not permitted or request.method == "GET":
-        return ajax_response(resp)
-
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
     cproblem = request.POST.get('cproblem')
     problem_type = request.POST.get('type')
 
     problem = CommonProblem.objects.get(id=cproblem)
 
     if Problem.objects.filter(problem_name=problem.problem_name, concept_id=problem.concept_id, patient__id=patient_id).exists():
-        resp['msg'] = 'Problem already added'
-        return ajax_response(resp)
+        return ajax_response({"msg": "Problem already added"})
 
     new_problem = Problem.objects.create_new_problem(patient_id, problem.problem_name, problem.concept_id, actor_profile)
     physician = request.user
@@ -195,27 +196,24 @@ def add_patient_common_problem(request, patient_id):
     activity = "Added <u>problem</u>: <b>%s</b>" % problem.problem_name
     add_problem_activity(new_problem, actor_profile, activity)
 
+    resp = {}
     resp['success'] = True
     resp['problem'] = ProblemSerializer(new_problem).data
     return ajax_response(resp)
 
 
+@permissions_required(["change_problem_name"])
 @login_required
+@api_view(["POST"])
 def change_name(request, problem_id):
-    resp = {}
-    resp['success'] = False
-
-    actor_profile, permitted = check_permissions(['change_problem_name'], request.user)
-    if not permitted or request.method == "GET":
-        return ajax_response(resp)
-
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
     term = request.POST.get('term')
     concept_id = request.POST.get('code', None)
 
     problem = Problem.objects.get(id=problem_id)
     if Problem.objects.filter(problem_name=term, patient=problem.patient).exists():
-        resp['msg'] = 'Problem already added'
-        return ajax_response(resp)
+        return ajax_response({"msg": "Problem already added"})
 
     old_problem_concept_id = problem.concept_id
     old_problem_name = problem.problem_name
@@ -240,6 +238,7 @@ def change_name(request, problem_id):
     op_add_event(physician, problem.patient, summary, problem)
     add_problem_activity(problem, actor_profile, summary)
 
+    resp = {}
     resp['success'] = True
     resp['problem'] = ProblemSerializer(problem).data
 
@@ -254,12 +253,10 @@ def change_name(request, problem_id):
 
 # Problems
 @login_required
+@api_view(["POST"])
 def update_problem_status(request, problem_id):
     # Different permissions for different cases
     # Modify this view
-
-    resp = {}
-    resp['success'] = False
 
     actor_profile = UserProfile.objects.get(user=request.user)
 
@@ -287,20 +284,18 @@ def update_problem_status(request, problem_id):
     activity = summary
     add_problem_activity(problem, actor_profile, activity)
 
+    resp = {}
     resp['success'] = True
     return ajax_response(resp)
 
 
 # Problems
+@permissions_required(["modify_problem"])
 @login_required
+@api_view(["POST"])
 def update_start_date(request, problem_id):
-    resp = {}
-    resp['success'] = False
-
-    actor_profile, permitted = check_permissions(['modify_problem'], request.user)
-    if not permitted:
-        return ajax_response(resp)
-
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
     start_date = request.POST.get('start_date')
     problem = Problem.objects.get(id=problem_id)
     problem.start_date = get_new_date(start_date)
@@ -313,27 +308,26 @@ def update_start_date(request, problem_id):
     activity = summary
     add_problem_activity(problem, actor_profile, activity)
 
+    resp = {}
     resp['success'] = True
     return ajax_response(resp)
 
 
 # Add History Note
+@permissions_required(["modify_problem"])
 @login_required
+@api_view(["POST"])
 def add_history_note(request, problem_id):
     resp = {}
     resp['success'] = False
-
-    permissions = ['modify_problem']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-    if not permitted or request.method == "GET":
-        return ajax_response(resp)
-
-    note = request.POST.get('note')
     try:
         problem = Problem.objects.get(id=problem_id)
     except Problem.DoesNotExist:
         return ajax_response(resp)
 
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+    note = request.POST.get('note')
     new_note = ProblemNote.objects.create_history_note(actor_profile, problem, note)
 
     activity = 'Added History Note  <b>%s</b>' % note
@@ -350,6 +344,7 @@ def add_history_note(request, problem_id):
 
 # Add Wiki Note
 @login_required
+@api_view(["POST"])
 def add_wiki_note(request, problem_id):
     resp = {}
     resp['success'] = False
@@ -359,25 +354,24 @@ def add_wiki_note(request, problem_id):
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
 
-    if request.method == 'POST':
-        note = request.POST.get('note')
-        try:
-            problem = Problem.objects.get(id=problem_id)
-            author = UserProfile.objects.get(user=request.user)
-        except (Problem.DoesNotExist, UserProfile.DoesNotExist) as e:
-            return ajax_response(resp)
+    note = request.POST.get('note')
+    try:
+        problem = Problem.objects.get(id=problem_id)
+        author = UserProfile.objects.get(user=request.user)
+    except (Problem.DoesNotExist, UserProfile.DoesNotExist) as e:
+        return ajax_response(resp)
 
-        new_note = ProblemNote.objects.create_wiki_note(author, problem, note)
+    new_note = ProblemNote.objects.create_wiki_note(author, problem, note)
 
-        activity = 'Added wiki note: <b>%s</b>' % note
-        add_problem_activity(problem, actor_profile, activity, 'input')
+    activity = 'Added wiki note: <b>%s</b>' % note
+    add_problem_activity(problem, actor_profile, activity, 'input')
 
-        physician = request.user
-        patient = problem.patient
-        op_add_event(physician, patient, activity, problem)
+    physician = request.user
+    patient = problem.patient
+    op_add_event(physician, patient, activity, problem)
 
-        resp['note'] = ProblemNoteSerializer(new_note).data
-        resp['success'] = True
+    resp['note'] = ProblemNoteSerializer(new_note).data
+    resp['success'] = True
 
     return ajax_response(resp)
 
@@ -453,38 +447,31 @@ def add_physician_note(request, problem_id):
 
 
 # Problems
+@permissions_required(["add_goal"])
 @login_required
 def add_problem_goal(request, problem_id):
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+    problem = Problem.objects.get(id=problem_id)
+    patient = problem.patient
 
+    goal = request.POST.get('name')
+
+    new_goal = Goal(patient=patient, problem=problem, goal=goal)
+
+    new_goal.save()
+
+    physician = request.user
+
+    summary = '''Added <u> goal </u> : <b>%s</b> to <u>problem</u> : <b>%s</b>''' % (goal, problem.problem_name)
+    op_add_event(physician, patient, summary, problem)
+
+    activity = summary
+    add_problem_activity(problem, actor_profile, activity, 'output')
+    new_goal_dict = GoalSerializer(new_goal).data
     resp = {}
-
-    resp['success'] = False
-
-    permissions = ['add_goal']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        problem = Problem.objects.get(id=problem_id)
-        patient = problem.patient
-
-        goal = request.POST.get('name')
-
-        new_goal = Goal(
-            patient=patient, problem=problem, goal=goal)
-
-        new_goal.save()
-
-        physician = request.user
-
-        summary = '''Added <u> goal </u> : <b>%s</b> to <u>problem</u> : <b>%s</b>''' % (goal, problem.problem_name)
-        op_add_event(physician, patient, summary, problem)
-
-        activity = summary
-        add_problem_activity(problem, actor_profile, activity, 'output')
-        new_goal_dict = GoalSerializer(new_goal).data
-        resp['success'] = True
-        resp['goal'] = new_goal_dict
+    resp['success'] = True
+    resp['goal'] = new_goal_dict
     return ajax_response(resp)
 
 
@@ -777,98 +764,88 @@ def update_by_ptw(request):
 
     return ajax_response(resp)
 
+@permissions_required(["modify_problem"])
 @login_required
 def update_state_to_ptw(request):
-
     resp = {}
-
     resp['success'] = False
 
-    permissions = ['modify_problem']
+    timeline_data = json.loads(request.body)['timeline_data']
+    for problem_json in timeline_data['problems']:
+        problem = Problem.objects.get(id=int(problem_json['id']))
 
-    actor_profile, permitted = check_permissions(permissions, request.user)
+        start_date = problem_json['events'][-1]['startTime']
+        problem.start_date = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").date()
+        problem.start_time = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").time()
+        problem.save()
 
-    if permitted:
-        timeline_data = json.loads(request.body)['timeline_data']
-        for problem_json in timeline_data['problems']:
-            problem = Problem.objects.get(id=int(problem_json['id']))
-
-            start_date = problem_json['events'][-1]['startTime']
-            problem.start_date = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").date()
-            problem.start_time = datetime.strptime(start_date, "%d/%m/%Y %H:%M:%S").time()
-            problem.save()
-
-            if len(problem_json['events']) > 1:
-                i = 1
-                for event in problem_json['events']:
-                    # break if the last one, this is current problem
-                    if i == len(problem_json['events']):
-                        break
-                    i = i + 1
+        if len(problem_json['events']) > 1:
+            i = 1
+            for event in problem_json['events']:
+                # break if the last one, this is current problem
+                if i == len(problem_json['events']):
+                    break
+                i = i + 1
+                try:
+                    event_id = int(event['event_id'])
                     try:
-                        event_id = int(event['event_id'])
-                        try:
-                            problem_segment = ProblemSegment.objects.get(event_id=event_id)
-                        except ProblemSegment.DoesNotExist:
-                            problem_segment = ProblemSegment()
-                            problem_segment.event_id = event_id
-                            problem_segment.problem = problem
+                        problem_segment = ProblemSegment.objects.get(event_id=event_id)
+                    except ProblemSegment.DoesNotExist:
+                        problem_segment = ProblemSegment()
+                        problem_segment.event_id = event_id
+                        problem_segment.problem = problem
 
-                        problem_segment.start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").date()
-                        problem_segment.start_time = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").time()
-                        if event['state'] == 'uncontrolled':
-                            problem_segment.is_active = True
-                            problem_segment.is_controlled = False
-                        if event['state'] == 'controlled':
-                            problem_segment.is_active = True
-                            problem_segment.is_controlled = True
-                        if event['state'] == 'inactive':
-                            problem_segment.is_active = False
-                            problem_segment.is_controlled = False
-                        problem_segment.save()
-                    except ValueError:
-                        event_id = None
+                    problem_segment.start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").date()
+                    problem_segment.start_time = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").time()
+                    if event['state'] == 'uncontrolled':
+                        problem_segment.is_active = True
+                        problem_segment.is_controlled = False
+                    if event['state'] == 'controlled':
+                        problem_segment.is_active = True
+                        problem_segment.is_controlled = True
+                    if event['state'] == 'inactive':
+                        problem_segment.is_active = False
+                        problem_segment.is_controlled = False
+                    problem_segment.save()
+                except ValueError:
+                    event_id = None
 
-            resp['success'] = True
+        resp['success'] = True
 
     return ajax_response(resp)
 
+@permissions_required(["set_problem_order"])
 @login_required
 def update_order(request):
     resp = {}
-
     resp['success'] = False
 
-    permissions = ['set_problem_order']
+    datas = json.loads(request.body)
+    if datas.has_key('patient_id'):
+        id_problems = datas['problems']
+        patient_id = datas['patient_id']
+        patient = User.objects.get(id=int(patient_id))
 
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        datas = json.loads(request.body)
-        if datas.has_key('patient_id'):
-            id_problems = datas['problems']
-            patient_id = datas['patient_id']
-            patient = User.objects.get(id=int(patient_id))
-
-            try:
-                problem = ProblemOrder.objects.get(user=request.user, patient=patient)
-            except ProblemOrder.DoesNotExist:
-                problem = ProblemOrder(user=request.user, patient=patient)
-                problem.save()
-
-            problem.order = id_problems
+        try:
+            problem = ProblemOrder.objects.get(user=request.user, patient=patient)
+        except ProblemOrder.DoesNotExist:
+            problem = ProblemOrder(user=request.user, patient=patient)
             problem.save()
 
-        # list todo
-        if datas.has_key('list_id'):
-            list_id = datas['list_id']
-            labeled_list = LabeledProblemList.objects.get(id=int(list_id))
-            labeled_list.problem_list = datas['problems']
-            labeled_list.save()
+        problem.order = id_problems
+        problem.save()
 
-        resp['success'] = True
+    # list todo
+    if datas.has_key('list_id'):
+        list_id = datas['list_id']
+        labeled_list = LabeledProblemList.objects.get(id=int(list_id))
+        labeled_list.problem_list = datas['problems']
+        labeled_list.save()
+
+    resp['success'] = True
     return ajax_response(resp)
 
+@permissions_required(["add_problem_label"])
 @login_required
 def new_problem_label(request, problem_id):
     resp = {}
@@ -876,29 +853,25 @@ def new_problem_label(request, problem_id):
     resp['status'] = False
     resp['new_status'] = False
 
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    name = request.POST.get('name')
+    css_class = request.POST.get('css_class')
 
-    if permitted:
-        name = request.POST.get('name')
-        css_class = request.POST.get('css_class')
+    problem = Problem.objects.get(id=problem_id)
+    label = ProblemLabel.objects.filter(name=name, css_class=css_class, author=request.user, patient=problem.patient)
+    if not label:
+        label = ProblemLabel(name=name, css_class=css_class, author=request.user, patient=problem.patient)
+        label.save()
+        resp['new_status'] = True
+        resp['new_label'] = ProblemLabelSerializer(label).data
+    else:
+        label = label[0]
 
-        problem = Problem.objects.get(id=problem_id)
-        label = ProblemLabel.objects.filter(name=name, css_class=css_class, author=request.user, patient=problem.patient)
-        if not label:
-            label = ProblemLabel(name=name, css_class=css_class, author=request.user, patient=problem.patient)
-            label.save()
-            resp['new_status'] = True
-            resp['new_label'] = ProblemLabelSerializer(label).data
-        else:
-            label = label[0]
+    if not label in problem.labels.all():
+        problem.labels.add(label)
+        resp['status'] = True
+        resp['label'] = ProblemLabelSerializer(label).data
 
-        if not label in problem.labels.all():
-            problem.labels.add(label)
-            resp['status'] = True
-            resp['label'] = ProblemLabelSerializer(label).data
-
-        resp['success'] = True
+    resp['success'] = True
 
     return ajax_response(resp)
 
@@ -919,140 +892,106 @@ def get_problem_labels(request, patient_id, user_id):
 
     return ajax_response(resp)
 
+@permissions_required(["add_problem_label"])
 @login_required
 def save_edit_problem_label(request, label_id, patient_id, user_id):
     resp = {}
     resp['success'] = False
     resp['status'] = False
 
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    name = request.POST.get('name')
+    css_class = request.POST.get('css_class')
 
-    if permitted:
-        name = request.POST.get('name')
-        css_class = request.POST.get('css_class')
+    label = ProblemLabel.objects.get(id=label_id)
+    user = User.objects.get(id=user_id)
+    patient = User.objects.get(id=patient_id)
 
-        label = ProblemLabel.objects.get(id=label_id)
-        user = User.objects.get(id=user_id)
-        patient = User.objects.get(id=patient_id)
+    if not ProblemLabel.objects.filter(name=name, css_class=css_class, patient=patient, author=user):
+        label.name = name
+        label.css_class = css_class
+        label.save()
+        resp['status'] = True
 
-        if not ProblemLabel.objects.filter(name=name, css_class=css_class, patient=patient, author=user):
-            label.name = name
-            label.css_class = css_class
-            label.save()
-            resp['status'] = True
+    resp['label'] = ProblemLabelSerializer(label).data
 
-        resp['label'] = ProblemLabelSerializer(label).data
-
-        resp['success'] = True
+    resp['success'] = True
 
     return ajax_response(resp)
 
+@permissions_required(["add_problem_label"])
 @login_required
 def add_problem_label(request, label_id, problem_id):
+    problem = Problem.objects.get(id=problem_id)
+    label = ProblemLabel.objects.get(id=label_id)
+    problem.labels.add(label)
+
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        problem = Problem.objects.get(id=problem_id)
-
-        label = ProblemLabel.objects.get(id=label_id)
-        problem.labels.add(label)
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
 
+@permissions_required(["add_problem_label"])
 @login_required
 def remove_problem_label(request, label_id, problem_id):
+    problem = Problem.objects.get(id=problem_id)
+    label = ProblemLabel.objects.get(id=label_id)
+    problem.labels.remove(label)
+
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        problem = Problem.objects.get(id=problem_id)
-        label = ProblemLabel.objects.get(id=label_id)
-        problem.labels.remove(label)
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
+@permissions_required(["add_problem_label"])
 @login_required
 def delete_problem_label(request, label_id):
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        label = ProblemLabel.objects.get(id=label_id)
-        label.delete()
-
-        resp['success'] = True
-
+    ProblemLabel.objects.get(id=label_id).delete()
+    resp['success'] = True
     return ajax_response(resp)
 
+@permissions_required(["add_problem_label"])
 @login_required
 def add_problem_list(request, patient_id, user_id):
+    datas = json.loads(request.body)
+    list_name = datas['name']
+    labels = datas['labels']
+    user = User.objects.get(id=user_id)
+    patient = User.objects.get(id=patient_id)
+
+    new_list = LabeledProblemList(user=user, name=list_name, patient=patient)
+    new_list.save()
+
+    label_ids = []
+    for label in labels:
+        l = ProblemLabel.objects.get(id=label['id'])
+        new_list.labels.add(l)
+        label_ids.append(l.id)
+
+    new_list_dict = LabeledProblemListSerializer(new_list).data
+
+    problems = Problem.objects.filter(labels__id__in=label_ids).distinct().order_by('start_date')
+    problems_holder = []
+    for problem in problems:
+        problem_dict = ProblemSerializer(problem).data
+        problems_holder.append(problem_dict)
+
+    for problem in problems_holder:
+        todo = ToDo.objects.filter(problem__id=problem['id'], accomplished=False).count()
+        event = ProblemActivity.objects.filter(problem__id=problem['id'], created_on__gte=datetime.now()-timedelta(days=30)).count()
+        if todo == 0 and event == 0:
+            problem['multiply'] = 0
+        elif todo == 0 or event == 0:
+            problem['multiply'] = 1
+        else:
+            problem['multiply'] = todo * event
+
+    problems_holder = sorted(problems_holder, key=operator.itemgetter('multiply'), reverse=True)
+
+    new_list_dict['problems'] = problems_holder
+
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        datas = json.loads(request.body)
-        list_name = datas['name']
-        labels = datas['labels']
-        user = User.objects.get(id=user_id)
-        patient = User.objects.get(id=patient_id)
-
-        new_list = LabeledProblemList(user=user, name=list_name, patient=patient)
-        new_list.save()
-
-        label_ids = []
-        for label in labels:
-            l = ProblemLabel.objects.get(id=label['id'])
-            new_list.labels.add(l)
-            label_ids.append(l.id)
-
-
-        new_list_dict = LabeledProblemListSerializer(new_list).data
-
-        problems = Problem.objects.filter(labels__id__in=label_ids).distinct().order_by('start_date')
-        problems_holder = []
-        for problem in problems:
-            problem_dict = ProblemSerializer(problem).data
-            problems_holder.append(problem_dict)
-
-        for problem in problems_holder:
-            todo = ToDo.objects.filter(problem__id=problem['id'], accomplished=False).count()
-            event = ProblemActivity.objects.filter(problem__id=problem['id'], created_on__gte=datetime.now()-timedelta(days=30)).count()
-            if todo == 0 and event == 0:
-                problem['multiply'] = 0
-            elif todo == 0 or event == 0:
-                problem['multiply'] = 1
-            else:
-                problem['multiply'] = todo * event
-
-        problems_holder = sorted(problems_holder, key=operator.itemgetter('multiply'), reverse=True)
-
-
-        new_list_dict['problems'] = problems_holder
-
-        resp['new_list'] = new_list_dict
-        resp['success'] = True
+    resp['new_list'] = new_list_dict
+    resp['success'] = True
 
     return ajax_response(resp)
 
@@ -1112,48 +1051,32 @@ def get_label_problem_lists(request, patient_id, user_id):
 
     return ajax_response(resp)
 
+@permissions_required(["add_problem_label"])
 @login_required
 def delete_problem_list(request, list_id):
     resp = {}
-    resp['success'] = False
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        problem_list = LabeledProblemList.objects.get(id=list_id)
-
-        problem_list.delete()
-
-        resp['success'] = True
-
+    problem_list = LabeledProblemList.objects.get(id=list_id)
+    problem_list.delete()
+    resp['success'] = True
     return ajax_response(resp)
 
+@permissions_required(["add_problem_label"])
 @login_required
 def rename_problem_list(request, list_id):
     resp = {}
-    resp['success'] = False
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        problem_list = LabeledProblemList.objects.get(id=list_id)
-        problem_list.name = request.POST.get('name')
-        problem_list.save()
-
-        resp['success'] = True
-
+    problem_list = LabeledProblemList.objects.get(id=list_id)
+    problem_list.name = request.POST.get('name')
+    problem_list.save()
+    resp['success'] = True
     return ajax_response(resp)
 
 @login_required
 def get_problems(request, patient_id):
     patient = User.objects.get(id=patient_id)
     problems = Problem.objects.filter(patient=patient)
-
     problems_holder = ProblemSerializer(problems, many=True).data
-
     resp = {}
     resp['problems'] = problems_holder
-
     return ajax_response(resp)
 
 @login_required
@@ -1213,83 +1136,63 @@ def add_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
 
     return ajax_response(resp)
 
+@permissions_required(["add_problem_label"])
 @login_required
 def update_problem_list_note(request, list_id):
     resp = {}
     resp['success'] = False
-    permissions = ['add_problem_label']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    problem_list = LabeledProblemList.objects.get(id=list_id)
+    problem_list.note = request.POST.get('note')
+    problem_list.save()
 
-    if permitted:
-        problem_list = LabeledProblemList.objects.get(id=list_id)
-        problem_list.note = request.POST.get('note')
-        problem_list.save()
+    activity = '"%s" was added to the folder "%s"' % (problem_list.note, problem_list.name)
 
-        activity = '"%s" was added to the folder "%s"' % (problem_list.note, problem_list.name)
+    physician = request.user
+    patient = problem_list.patient
+    op_add_event(physician, patient, activity)
 
-        physician = request.user
-        patient = problem_list.patient
-        op_add_event(physician, patient, activity)
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
+@permissions_required(["add_common_problem_list"])
 @login_required
 def add_new_common_problem(request, staff_id):
     resp = {}
     resp['success'] = False
-    permissions = ['add_common_problem_list']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    problem_name = request.POST.get('problem_name')
+    concept_id = request.POST.get('concept_id', None)
+    problem_type = request.POST.get('problem_type', None)
 
-    if permitted:
-        problem_name = request.POST.get('problem_name')
-        concept_id = request.POST.get('concept_id', None)
-        problem_type = request.POST.get('problem_type', None)
+    if CommonProblem.objects.filter(concept_id=concept_id, author=request.user).exists():
+        resp['msg'] = 'Problem already added'
+        return ajax_response(resp)
 
-        problem_exists = CommonProblem.objects.filter(concept_id=concept_id, author=request.user).exists()
+    problem = CommonProblem(problem_name=problem_name, concept_id=concept_id, author=request.user, problem_type=problem_type)
+    problem.save()
 
-        if problem_exists is not True:
-            problem = CommonProblem(problem_name=problem_name, concept_id=concept_id, author=request.user, problem_type=problem_type)
-            problem.save()
-
-            common_problem = CommonProblemSerializer(problem).data
-            resp['common_problem'] = common_problem
-            resp['success'] = True
-
-        else:
-            resp['msg'] = 'Problem already added'
-
+    common_problem = CommonProblemSerializer(problem).data
+    resp['common_problem'] = common_problem
+    resp['success'] = True
     return ajax_response(resp)
 
+@permissions_required(["add_common_problem_list"])
 @login_required
 def get_common_problems(request, staff_id):
     resp = {}
-    resp['success'] = False
-    permissions = ['add_common_problem_list']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        problems = CommonProblem.objects.filter(author=request.user)
-        common_problems = CommonProblemSerializer(problems, many=True).data
-        resp['problems'] = common_problems
-        resp['success'] = True
-
+    problems = CommonProblem.objects.filter(author=request.user)
+    common_problems = CommonProblemSerializer(problems, many=True).data
+    resp['problems'] = common_problems
+    resp['success'] = True
     return ajax_response(resp)
 
+@permissions_required(["add_common_problem_list"])
 @login_required
 def remove_common_problem(request, problem_id):
     resp = {}
     resp['success'] = False
-    permissions = ['add_common_problem_list']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        problem = CommonProblem.objects.get(id=problem_id)
-        if problem.author == request.user:
-            problem.delete()
-            resp['success'] = True
+    problem = CommonProblem.objects.get(id=problem_id)
+    if problem.author == request.user:
+        problem.delete()
+        resp['success'] = True
 
     return ajax_response(resp)
