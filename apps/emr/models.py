@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
+from apps.emr.managers import ObservationManager
 
 # DATA
 ROLE_CHOICES = (
@@ -494,6 +495,8 @@ class Observation(models.Model):
     problem = models.ForeignKey(Problem, related_name='problem_observations')
     todo_past_six_months = models.BooleanField(default=False)
     patient_refused_A1C = models.BooleanField(default=False)
+
+    objects = ObservationManager()
 
     class Meta:
         ordering = ['-created_on']

@@ -23,7 +23,7 @@ from emr.models import Observation, SharingPatient, PhysicianTeam, ObservationCo
 from emr.operations import op_add_event, op_add_todo_event
 
 
-from .serializers import ProblemSerializer, PatientImageSerializer, ProblemLabelSerializer, LabeledProblemListSerializer
+from .serializers import ProblemSerializer, PatientImageSerializer, ProblemLabelSerializer, LabeledProblemListSerializer, ProblemInfoSerializer
 from .serializers import ProblemNoteSerializer, ProblemActivitySerializer, CommonProblemSerializer
 from emr.serializers import TextNoteSerializer
 from todo_app.serializers import TodoSerializer
@@ -67,138 +67,29 @@ def track_problem_click(request, problem_id):
 # Problem
 @login_required
 def get_problem_info(request, problem_id):
-    problem_info = Problem.objects.get(id=problem_id)
+    problem_info = Problem.objects.select_related("patient").prefetch_related(
+                                "goal_set",
+                                "patientimage_set",
+                                "target", "source",
+                                "problemactivity_set",
+                                "problem_encounter_records",
+                                "problem_observations",
+                                Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
+                        ).get(id=problem_id)
+
     # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
     if problem_info.concept_id in ['73211009', '46635009', '44054006']:
-        if not Observation.objects.filter(problem=problem_info):
-            observation = Observation()
-            observation.problem = problem_info
-            observation.subject = problem_info.patient.profile
-            observation.save()
+        Observation.objects.create_if_not_exist(problem_info)
 
-    patient = problem_info.patient
-
+    serialized_problem = ProblemInfoSerializer(problem_info).data
     # Notes - Todo
     patient_notes = []
     physician_notes = []
+    patient_note_holder = [TextNoteSerializer(note).data for note in patient_notes]
+    physician_note_holder = [TextNoteSerializer(note).data for note in physician_notes]
 
-    problem_goals = Goal.objects.filter(problem=problem_info)
-    problem_todos = ToDo.objects.filter(problem=problem_info).order_by('order')
-
-    problem_images = PatientImage.objects.filter(
-        problem=problem_info)
-
-    patient_note_holder = []
-    for note in patient_notes:
-        note_dict = TextNoteSerializer(note).data
-        patient_note_holder.append(note_dict)
-
-    physician_note_holder = []
-    for note in physician_notes:
-        note_dict = TextNoteSerializer(note).data
-        physician_note_holder.append(note_dict)
-
-    problem_goals_holder = []
-    for goal in problem_goals:
-        goal_dict = GoalSerializer(goal).data
-        problem_goals_holder.append(goal_dict)
-
-    problem_todos_holder = []
-    for todo in problem_todos:
-        todo_dict = TodoSerializer(todo).data
-        problem_todos_holder.append(todo_dict)
-
-    problem_images_holder = []
-    for image in problem_images:
-        image_dict = PatientImageSerializer(image).data
-        problem_images_holder.append(image_dict)
-
-    history_note = ProblemNote.objects.filter(
-        note_type='history', problem=problem_info).order_by(
-        '-created_on').first()
-
-    if history_note is not None:
-        history_note_holder = ProblemNoteSerializer(history_note).data
-    else:
-        history_note_holder = None
-
-    patient_wiki_notes = ProblemNote.objects.filter(
-        note_type='wiki',
-        problem=problem_info,
-        author__role='patient').order_by('-created_on')
-
-    physician_wiki_notes = ProblemNote.objects.filter(
-        note_type='wiki',
-        problem=problem_info,
-        author__role='physician').order_by('-created_on')
-    other_wiki_notes = ProblemNote.objects.filter(
-        note_type='wiki', problem=problem_info).exclude(
-        author__role__in=['patient', 'physician']).order_by('-created_on')
-
-    wiki_notes_holder = {}
-    wiki_notes_holder['patient'] = ProblemNoteSerializer(
-        patient_wiki_notes, many=True).data
-    wiki_notes_holder['physician'] = ProblemNoteSerializer(
-        physician_wiki_notes, many=True).data
-    wiki_notes_holder['other'] = ProblemNoteSerializer(
-        other_wiki_notes, many=True).data
-
-    problem_dict = ProblemSerializer(problem_info).data
-
-    effecting_problems = ProblemRelationship.objects.filter(
-        target=problem_info)
-    effecting_problems_holder = []
-    for relationship in effecting_problems:
-        effecting_problems_holder.append(relationship.source.id)
-
-    effected_problems = ProblemRelationship.objects.filter(source=problem_info)
-    effected_problems_holder = []
-    for relationship in effected_problems:
-        effected_problems_holder.append(relationship.target.id)
-
-    patient_problems = Problem.objects.filter(
-        patient=patient).exclude(id=problem_id)
-    patient_problems_holder = ProblemSerializer(
-        patient_problems, many=True).data
-
-    activites = ProblemActivity.objects.filter(problem=problem_info)
-    activity_holder = ProblemActivitySerializer(activites, many=True).data
-
-    encounter_records = EncounterProblemRecord.objects.filter(
-        problem=problem_info)
-    encounter_ids = [long(x.encounter.id) for x in encounter_records]
-
-    related_encounters = Encounter.objects.filter(id__in=encounter_ids)
-
-    related_encounter_holder = EncounterSerializer(
-        related_encounters, many=True).data
-
-    observations = Observation.objects.filter(problem=problem_info)
-    observations_holder = []
-    for observation in observations:
-        observation_dict = {
-            'id': observation.id,
-            'patient_refused_A1C': observation.patient_refused_A1C,
-            'effective_datetime': observation.effective_datetime.isoformat() if observation.effective_datetime else '',
-            'created_on':  observation.created_on.isoformat() if observation.created_on else '',
-            'observation_components': [],
-        }
-
-        observation_components = ObservationComponent.objects.filter(observation=observation).order_by('-effective_datetime', '-created_on')
-        observation_components_holder = []
-        if observation_components:
-            observation_component = observation_components[0]
-            observation_components_holder.append({
-                'id': observation_component.id,
-                'value_quantity': str(observation_component.value_quantity),
-                'effective_datetime':  observation_component.effective_datetime.isoformat() if observation_component.effective_datetime else '',
-                'created_on':  observation_component.created_on.isoformat() if observation_component.created_on else '',
-            })
-            observation_dict['observation_components'] = observation_components_holder
-
-        observations_holder.append(observation_dict)
-
-    sharing_patients = SharingPatient.objects.filter(shared=patient).order_by('sharing__first_name', 'sharing__last_name')
+    sharing_patients = SharingPatient.objects.select_related("problems").filter(
+                            shared=problem_info.patient).order_by('sharing__first_name', 'sharing__last_name')
 
     sharing_patients_list = []
     for sharing_patient in sharing_patients:
@@ -206,26 +97,24 @@ def get_problem_info(request, problem_id):
         user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
         sharing_patients_list.append(user_dict)
 
-    resp = {}
-    resp['success'] = True
-    resp['info'] = problem_dict
-    resp['patient_notes'] = patient_note_holder
-    resp['physician_notes'] = physician_note_holder
-    resp['problem_goals'] = problem_goals_holder
-    resp['problem_todos'] = problem_todos_holder
-    resp['problem_images'] = problem_images_holder
-
-    resp['effecting_problems'] = effecting_problems_holder
-    resp['effected_problems'] = effected_problems_holder
-    resp['patient_problems'] = patient_problems_holder
-    resp['history_note'] = history_note_holder
-    resp['wiki_notes'] = wiki_notes_holder
-    resp['activities'] = activity_holder
-
-    resp['related_encounters'] = related_encounter_holder
-    resp['observations'] = observations_holder
-
-    resp['sharing_patients'] = sharing_patients_list
+    resp = {
+        'success': True,
+        'info': serialized_problem,
+        'patient_notes': patient_note_holder,
+        'physician_notes': physician_note_holder,
+        'problem_goals': serialized_problem["problem_goals"],
+        'problem_todos': serialized_problem["problem_todos"],
+        'problem_images': serialized_problem["problem_images"],
+        'effecting_problems': serialized_problem["effecting_problems"],
+        'effected_problems': serialized_problem["effected_problems"],
+        'patient_problems': serialized_problem["patient_other_problems"],
+        'history_note': serialized_problem["problem_notes"]["history"],
+        'wiki_notes': serialized_problem["problem_notes"]["wiki_notes"],
+        'activities': serialized_problem["activities"],
+        'related_encounters': serialized_problem["related_encounters"],
+        'observations': serialized_problem["observations"],
+        'sharing_patients': sharing_patients_list
+    }
 
     return ajax_response(resp)
 
@@ -336,7 +225,7 @@ def add_patient_common_problem(request, patient_id):
 
         problem = CommonProblem.objects.get(id=cproblem)
 
-        problem_exists = Problem.objects.filter(problem_name=problem.problem_name, concept_id=problem.concept_id, 
+        problem_exists = Problem.objects.filter(problem_name=problem.problem_name, concept_id=problem.concept_id,
             patient=patient).exists()
 
         if problem_exists is not True:
@@ -938,7 +827,7 @@ def relate_problem(request):
 
 @login_required
 def update_by_ptw(request):
-    
+
     resp = {}
 
     resp['success'] = False
@@ -982,7 +871,7 @@ def update_by_ptw(request):
                             problem_segment = ProblemSegment()
                             problem_segment.event_id = event_id
                             problem_segment.problem = problem
-                        
+
                         problem_segment.start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").date()
                         problem_segment.start_time = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").time()
                         if event['state'] == 'uncontrolled':
@@ -1012,7 +901,7 @@ def update_by_ptw(request):
 
 @login_required
 def update_state_to_ptw(request):
-    
+
     resp = {}
 
     resp['success'] = False
@@ -1046,7 +935,7 @@ def update_state_to_ptw(request):
                             problem_segment = ProblemSegment()
                             problem_segment.event_id = event_id
                             problem_segment.problem = problem
-                        
+
                         problem_segment.start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").date()
                         problem_segment.start_time = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S").time()
                         if event['state'] == 'uncontrolled':
@@ -1192,7 +1081,7 @@ def add_problem_label(request, label_id, problem_id):
     if permitted:
 
         problem = Problem.objects.get(id=problem_id)
-        
+
         label = ProblemLabel.objects.get(id=label_id)
         problem.labels.add(label)
 
@@ -1299,7 +1188,7 @@ def get_label_problem_lists(request, patient_id, user_id):
         team_members = PhysicianTeam.objects.filter(member=user)
         if team_members:
             user = team_members[0].physician
-   
+
     lists = LabeledProblemList.objects.filter(user=user, patient=patient)
     lists_holder = []
     for label_list in lists:
@@ -1340,7 +1229,7 @@ def get_label_problem_lists(request, patient_id, user_id):
 
         list_dict['problems'] = problems_holder
         lists_holder.append(list_dict)
-        
+
     resp['problem_lists'] = lists_holder
 
     return ajax_response(resp)
