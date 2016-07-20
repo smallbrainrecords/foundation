@@ -537,6 +537,8 @@
 							</span>
 							<span ng-if="!event.is_named">
 								{{ event.name_favorite }}
+                                <a href='#/encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
+                                   class="btn btn-default" target="_blank">Listen</a>
 								<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
 								<button class="btn btn-danger"
                                         ng-click="unmarkFavoriteEvent(event)">Remove</button>
