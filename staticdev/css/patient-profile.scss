@@ -29,7 +29,7 @@
     max-width: 100%;
     top: 0;
     height: 100%;
-    &:hover + .dropdown{
+    &:hover + .dropdown {
       .btn-camera {
         background-color: #000;
         opacity: 0.7;
@@ -74,10 +74,23 @@
       .glyphicon-camera {
         vertical-align: middle;
       }
-      bottom: 0px;
-      width: 100%;
+      bottom: 0;
+      width: 94%;
       .btn-text {
         width: 80%;
+      }
+    }
+
+    &:hover {
+      .btn-camera {
+        background-color: #000;
+        opacity: 0.7;
+        .glyphicon-camera {
+          font-size: 1em;
+        }
+        .btn-text {
+          display: inline-block;
+        }
       }
     }
   }
