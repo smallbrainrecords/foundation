@@ -858,7 +858,7 @@ def get_problems(request, patient_id):
 
 @login_required
 def get_sharing_problems(request, patient_id, sharing_patient_id):
-    sharing = SharingPatient.objects.select_related("problems").get(shared_id=patient_id, sharing_id=sharing_patient_id)
+    sharing = SharingPatient.objects.get(shared_id=patient_id, sharing_id=sharing_patient_id)
     resp = {
         'sharing_problems': ProblemSerializer(sharing.problems.all(), many=True).data
     }
