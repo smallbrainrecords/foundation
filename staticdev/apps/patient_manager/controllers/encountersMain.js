@@ -4,7 +4,7 @@
 
 
     angular.module('ManagerApp')
-        .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload, encounterService, recorderService, toaster, $interval) {
+        .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload, encounterService, recorderService, toaster, $interval, $rootScope) {
             var patient_id = $('#patient_id').val();
             /**
              * Storage to store multiple recording audio file
@@ -19,6 +19,20 @@
             $scope.elapsedTime = 0;
 
             /**
+             * Maximum time in second be allowed
+             * to record also encounter session
+             * When this time is reached the encounter session will be stopped automatically
+             * Default 90 mins
+             * @type {number}
+             */
+            $scope.limitTime = 5400;
+
+            /**
+             * Flag determine on progress
+             */
+            $scope.convert_flag = false;
+
+            /**
              * Status of the minor recorder
              * @type {boolean}
              */
@@ -28,11 +42,9 @@
 
             $scope.patient_id = patient_id;
 
-
-            $scope.encounter_flag = false;
+            $rootScope.encounter_flag = $scope.encounter_flag = false;
 
             /* Get Status of any running encounters */
-
             patientService.getEncounterStatus(patient_id).then(function (data) {
 
                 $scope.show_encounter_ui = data['permitted'];
@@ -44,7 +56,6 @@
                     $scope.encounter_flag = false;
                 }
             });
-
 
             $scope.start_encounter = function () {
 
@@ -68,10 +79,7 @@
                 }
             };
 
-
             $scope.stop_encounter = function () {
-
-
                 if ($scope.encounter_flag == true) {
                     var encounter_id = $scope.encounter.id;
 
@@ -82,25 +90,16 @@
                             /* Encounter Stopped */
                             $scope.encounter_flag = false;
 
-                            // TODO: Finish the recorder
-                            // var encounterCtrl = recorderService.controller("audioInput");
                             if ($scope.encounterCtrl.status.isRecording) {
                                 $scope.encounterCtrl.stopRecord();
                             } else {
                                 $scope.auto_upload();
                             }
-
-
                         } else {
-
                             alert(data['msg']);
                         }
-
                     });
-
-
                 }
-
             };
 
             /**
@@ -157,16 +156,17 @@
             $scope.record_start = function () {
                 $scope.encounterCtrl = recorderService.controller("audioInput");
             };
+
             $scope.$watch('encounterCtrl.elapsedTime', function (newVal, oldVal) {
                 $scope.elapsedTime++;
-            })
+            });
 
             $scope.view_encounter = function () {
 
-                var encounter_id = $scope.encounter.id
+                var encounter_id = $scope.encounter.id;
                 $location.path('/encounter/' + encounter_id);
 
-            }
+            };
 
 
             $scope.add_event_summary = function () {
@@ -180,7 +180,7 @@
                 var form = {
                     'event_summary': $scope.event_summary,
                     'encounter_id': $scope.encounter.id
-                }
+                };
 
                 patientService.addEventSummary(form).then(function (data) {
 
@@ -193,9 +193,16 @@
                     }
 
                 });
-            }
+            };
 
-
+            /**
+             * Track total recorded time of encounter
+             */
+            $scope.$watch('elapsedTime', function (newVal, oldVal) {
+                console.log(newVal);
+                if (newVal > $scope.limitTime)
+                    $scope.stop_encounter();//encounterCtrl.stopRecord();
+            });
         });
     /* End of controller */
 
