@@ -56,6 +56,8 @@
   }
 
   .profile-picture {
+    background: #FFFFFF;
+    border: 1px solid #cccccc;
     padding: 5px;
     position: absolute;
     bottom: -20px;
@@ -74,7 +76,7 @@
       .glyphicon-camera {
         vertical-align: middle;
       }
-      bottom: 0;
+      bottom: 5px;
       width: 94%;
       .btn-text {
         width: 80%;
