@@ -4,14 +4,29 @@
 
 
     angular.module('ManagerApp')
-        .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload, encounterService, recorderService, toaster, $interval, $rootScope) {
+        .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload, encounterService, recorderService, toaster, $interval, $rootScope, $window) {
+            /**
+             * Show an notify message when user try to refresh | close tabs | close window
+             * @param e
+             * @returns {string}
+             */
+            $window.onbeforeunload = function (e) {
+                if ($scope.encounterCtrl.status.isRecording) {
+
+                    var confirmationMessage = "\o/"; // Due to browser security we cannot customize user message here
+
+                    e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+                    return confirmationMessage;              // Gecko, WebKit, Chrome <34
+                }
+            };
+
             var patient_id = $('#patient_id').val();
             /**
+             * TODO: Restore mechanism here
              * Storage to store multiple recording audio file
              * @type {Array}
              */
             $scope.blobs = [];
-
             /**
              * Total elapsed time of audio file recorded
              * @type {number}
@@ -111,7 +126,6 @@
             $scope.convert_is_finished = function () {
                 // $scope.encounterCtrl = recorderService.controller("audioInput");
                 $scope.blobs.push($scope.encounterCtrl.audioModel);
-                // $scope.elapsedTime += encounterCtrl.elapsedTime;
 
                 // Will upload if the encounter is finished otherwise it will not uploaded
                 if (!$scope.encounter_flag) {
@@ -199,7 +213,6 @@
              * Track total recorded time of encounter
              */
             $scope.$watch('elapsedTime', function (newVal, oldVal) {
-                console.log(newVal);
                 if (newVal > $scope.limitTime)
                     $scope.stop_encounter();//encounterCtrl.stopRecord();
             });
