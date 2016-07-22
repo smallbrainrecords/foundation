@@ -25,6 +25,8 @@
     <script src="/static/apps/patient_manager/services/problemService.js" type="text/javascript"
             charset="utf-8"></script>
 
+    <script src="/static/apps/patient_manager/services/encounterFailSafeService.js"
+            type="text/javascript"></script>
     <script src="/static/apps/patient_manager/services/goalService.js" type="text/javascript" charset="utf-8"></script>
     <script src="/static/apps/patient_manager/services/encounterService.js" type="text/javascript"
             charset="utf-8"></script>
@@ -85,18 +87,15 @@
                                 View Encounter
                             </button>
 
-                            <!-- Pause/Resume recorder while encountering-->
+                            <!-- Pause/Resume recorder while encountering | Disable while converting -->
                             <button type="button" class="btn btn-default" aria-label="Left Align"
-                                    ng-if="minorRecorderFlag"
+                                    ng-if="!encounterCtrl.status.isConverting"
                                     ng-click='toggle_recorder()'>
-                                <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+                                <span ng-if="!minorRecorderFlag" class="glyphicon glyphicon-play"
+                                      aria-hidden="true"></span>
+                                <span ng-if="minorRecorderFlag" class="glyphicon glyphicon-pause"
+                                      aria-hidden="true"></span>
                             </button>
-                            <button type="button" class="btn btn-default" aria-label="Left Align"
-                                    ng-if="!minorRecorderFlag"
-                                    ng-click='toggle_recorder()'>
-                                <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
-                            </button>
-
                             <span>Elapsed: {{ elapsedTime*1000 | duration }}</span>
                         </div>
 

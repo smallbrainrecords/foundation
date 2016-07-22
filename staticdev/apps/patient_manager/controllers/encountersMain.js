@@ -1,37 +1,32 @@
 (function () {
 
     'use strict';
-
+    var blob;
 
     angular.module('ManagerApp')
-        .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload, encounterService, recorderService, toaster, $interval, $rootScope, $window) {
-            /**
-             * Show an notify message when user try to refresh | close tabs | close window
-             * @param e
-             * @returns {string}
-             */
-            $window.onbeforeunload = function (e) {
-                if ($scope.encounterCtrl.status.isRecording) {
-
-                    var confirmationMessage = "\o/"; // Due to browser security we cannot customize user message here
-
-                    e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
-                    return confirmationMessage;              // Gecko, WebKit, Chrome <34
-                }
-            };
+        .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload,
+                                                    encounterService, recorderService, toaster, $interval, $rootScope,
+                                                    encounterRecorderFailSafeService, $window) {
 
             var patient_id = $('#patient_id').val();
+
             /**
-             * TODO: Restore mechanism here
+             * Restore last unsaved session
+             * @type {Array}
+             */
+            $scope.unsavedBlob = encounterRecorderFailSafeService.restoreUnsavedBlob();
+
+            /**
              * Storage to store multiple recording audio file
              * @type {Array}
              */
             $scope.blobs = [];
+
             /**
              * Total elapsed time of audio file recorded
              * @type {number}
              */
-            $scope.elapsedTime = 0;
+            $scope.elapsedTime = encounterRecorderFailSafeService.restoreUnsavedDuration();
 
             /**
              * Maximum time in second be allowed
@@ -67,9 +62,11 @@
                 if (data['encounter_active'] == true) {
                     $scope.encounter_flag = true;
                     $scope.encounter = data['current_encounter'];
+                    $scope.blobs.push($scope.unsavedBlob);
                 } else {
                     $scope.encounter_flag = false;
                 }
+
             });
 
             $scope.start_encounter = function () {
@@ -117,15 +114,17 @@
                 }
             };
 
+
             /**
              * Callback when recorder have finished convert dataUrl to Blob
              * and upload audio to server
              * This will not fired if the main audio is on paused state
-             * @param willUpload
              */
             $scope.convert_is_finished = function () {
-                // $scope.encounterCtrl = recorderService.controller("audioInput");
                 $scope.blobs.push($scope.encounterCtrl.audioModel);
+
+                // Store for recovering session
+                encounterRecorderFailSafeService.storeBlob($scope.encounterCtrl.audioModel, $scope.elapsedTime);
 
                 // Will upload if the encounter is finished otherwise it will not uploaded
                 if (!$scope.encounter_flag) {
@@ -158,7 +157,7 @@
                 $scope.minorRecorderFlag = !$scope.minorRecorderFlag;
 
                 // Stop & convert the minor audio file
-                // $scope.encounterCtrl = recorderService.controller("audioInput");
+                $scope.encounterCtrl = $scope.encounterCtrl  || recorderService.controller("audioInput");
                 $scope.encounterCtrl.status.isRecording ? $scope.encounterCtrl.stopRecord() : $scope.encounterCtrl.startRecord();
             };
 
@@ -176,7 +175,6 @@
             });
 
             $scope.view_encounter = function () {
-
                 var encounter_id = $scope.encounter.id;
                 $location.path('/encounter/' + encounter_id);
 
@@ -214,8 +212,24 @@
              */
             $scope.$watch('elapsedTime', function (newVal, oldVal) {
                 if (newVal > $scope.limitTime)
-                    $scope.stop_encounter();//encounterCtrl.stopRecord();
+                    $scope.stop_encounter();
             });
+
+            /**
+             * Show an notify message when user try to refresh | close tabs | close window
+             * @param e
+             * @returns {string}
+             */
+            $window.onbeforeunload = function (e) {
+                if ($scope.encounterCtrl.status.isRecording) {
+
+                    var confirmationMessage = "\o/"; // Due to browser security we cannot customize user message here
+
+                    e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+                    return confirmationMessage;              // Gecko, WebKit, Chrome <34
+                }
+            };
+
         });
     /* End of controller */
 

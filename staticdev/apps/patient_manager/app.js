@@ -6,7 +6,7 @@
     var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule',
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine',
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate',
-        'observations', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio','webcam']);
+        'observations', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam']);
 
 
     ManagerApp.config(function ($routeProvider, recorderServiceProvider) {
@@ -14,7 +14,6 @@
          * Configuration for recording service
          */
         recorderServiceProvider.forceSwf(false)
-        //.setSwfUrl('/lib/recorder.swf')
             .withMp3Conversion(true, {
                 bitRate: 64
             });

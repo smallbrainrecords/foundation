@@ -127,4 +127,15 @@
     cursor: pointer;
     text-decoration: none; }
 
+#audio-player {
+  padding: 0;
+  list-style: none; }
+  #audio-player li {
+    display: inline-block; }
+    #audio-player li.progress-wrapper {
+      width: 200px; }
+      #audio-player li.progress-wrapper div.progress {
+        height: 10px;
+        margin-bottom: 0; }
+
 /*# sourceMappingURL=patient-profile.css.map */
