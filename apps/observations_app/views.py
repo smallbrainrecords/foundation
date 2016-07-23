@@ -11,28 +11,19 @@ from emr.operations import op_add_event
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
+from problems_app.views import permissions_required
 
 
 # set problem authentication to false if not physician, admin
-def set_problem_authentication_false(request, problem):
-        
-    actor_profile = UserProfile.objects.get(user=request.user)
-
+def set_problem_authentication_false(actor_profile, problem):
     role = actor_profile.role
-
-    if role in ['physician', 'admin']:
-        authenticated = True
-    else:
-        authenticated = False
-
+    authentication = role in ["physician", "admin"]
     problem.authenticated = authenticated
     problem.save()
 
 @login_required
 def track_observation_click(request, observation_id):
     actor = request.user
-    actor_profile = UserProfile.objects.get(user=actor)
-
     observation_info = Observation.objects.get(id=observation_id)
     patient = observation_info.problem.patient
 
@@ -45,259 +36,171 @@ def track_observation_click(request, observation_id):
 @login_required
 def get_observation_info(request, observation_id):
     observation_info = Observation.objects.get(id=observation_id)
-    observation_dict = ObservationSerializer(observation_info).data
-
     resp = {}
     resp['success'] = True
-    resp['info'] = observation_dict
-
+    resp['info'] = ObservationSerializer(observation_info).data
     return ajax_response(resp)
 
 
 # Note
+@permissions_required(["add_observation_note"])
 @login_required
 def add_note(request, observation_id):
-
+    note = request.POST.get("note")
+    observation_note = ObservationTextNote.objects.create(observation_id=observation_id,
+                                                          author=request.user.profile, note=note)
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_observation_note']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        note = ObservationTextNote()
-        note.observation = Observation.objects.get(id=observation_id)
-        note.author = request.user.profile
-        note.note = request.POST.get('note')
-        note.save()
-
-        new_note_dict = ObservationTextNoteSerializer(note).data
-        resp['note'] = new_note_dict
-        resp['success'] = True
-
+    resp['note'] = ObservationTextNoteSerializer(observation_note).data
+    resp['success'] = True
     return ajax_response(resp)
 
+
+@permissions_required(["edit_observation_note"])
 @login_required
 def edit_note(request, note_id):
+    note = ObservationTextNote.objects.get(id=note_id)
+    note.note = request.POST.get('note')
+    note.save()
 
     resp = {}
-    resp['success'] = False
-
-    permissions = ['edit_observation_note']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        note = ObservationTextNote.objects.get(id=note_id)
-        note.note = request.POST.get('note')
-        note.save()
-
-        new_note_dict = ObservationTextNoteSerializer(note).data
-        resp['note'] = new_note_dict
-        resp['success'] = True
-
+    resp['note'] = ObservationTextNoteSerializer(note).data
+    resp['success'] = True
     return ajax_response(resp)
 
+
+@permissions_required(["delete_observation_note"])
 @login_required
 def delete_note(request, note_id):
-
+    ObservationTextNote.objects.get(id=note_id).delete()
     resp = {}
-    resp['success'] = False
-
-    permissions = ['delete_observation_note']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        note = ObservationTextNote.objects.get(id=note_id)
-        note.delete()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
+
+@permissions_required(["add_observation"])
 @login_required
 def patient_refused(request, observation_id):
+    observation = Observation.objects.get(id=observation_id)
+    observation.effective_datetime = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
+    if request.POST.get('patient_refused_A1C', None):
+        observation.patient_refused_A1C = True
+
+    observation.save()
+    # set problem authentication
+    actor_profile = UserProfile.objects.get(user=actor)
+    set_problem_authentication_false(actor_profile, observation.problem)
+
+    summary = """
+        Patient refused a1c ,
+        <u>problem</u> <b>%s</b>
+        """ % (observation.problem.problem_name)
+
+    add_problem_activity(observation.problem, actor_profile, summary)
 
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_observation']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        observation = Observation.objects.get(id=observation_id)
-        observation.effective_datetime = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
-        if request.POST.get('patient_refused_A1C', None):
-            observation.patient_refused_A1C = True
-
-        observation.save()
-
-        new_observation_dict = ObservationSerializer(observation).data
-        resp['observation'] = new_observation_dict
-        resp['success'] = True
-
-        # set problem authentication
-        set_problem_authentication_false(request, observation.problem)
-
-        summary = """
-            Patient refused a1c ,
-            <u>problem</u> <b>%s</b>
-            """ % (observation.problem.problem_name)
-
-        add_problem_activity(observation.problem, actor_profile, summary)
-
+    resp['observation'] = ObservationSerializer(observation).data
+    resp['success'] = True
     return ajax_response(resp)
 
 
 # Value
+@permissions_required(["add_observation"])
 @login_required
 def add_value(request, observation_id):
-
     resp = {}
-    resp['success'] = False
+    actor_profile = UserProfile.objects.get(user=actor)
+    observation = Observation.objects.get(id=observation_id)
+    effective_date = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
 
-    permissions = ['add_observation']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    component = ObservationComponent.objects.create(observation=observation,
+                                                   value_quantity=request.POST.get("value", None),
+                                                   effective_datetime=effective_date,
+                                                   author=actor_profile)
+    observation.patient_refused_A1C = False
+    observation.todo_past_six_months = False
+    observation.save()
 
-    if permitted:
-        observation = Observation.objects.get(id=observation_id)
-        component = ObservationComponent()
-        component.observation = observation
-        component.value_quantity = request.POST.get('value', None)
-        component.effective_datetime = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
-        component.author = actor_profile
+    resp['component'] = ObservationComponentSerializer(component).data
+    resp['success'] = True
 
-        component.save()
+    # set problem authentication
+    set_problem_authentication_false(actor_profile, component.observation.problem)
 
-        observation.patient_refused_A1C = False
-        observation.todo_past_six_months = False
-        observation.save()
+    summary = """
+        Added new a1c value <u>A1C</u> : <b>%s</b> ,
+        <u>problem</u> <b>%s</b>
+        """ % (component.value_quantity, component.observation.problem.problem_name)
 
-        new_component_dict = ObservationComponentSerializer(component).data
-        resp['component'] = new_component_dict
-        resp['success'] = True
+    add_problem_activity(component.observation.problem, actor_profile, summary)
 
-        # set problem authentication
-        set_problem_authentication_false(request, component.observation.problem)
-
-        summary = """
-            Added new a1c value <u>A1C</u> : <b>%s</b> ,
-            <u>problem</u> <b>%s</b>
-            """ % (component.value_quantity, component.observation.problem.problem_name)
-
-        add_problem_activity(component.observation.problem, actor_profile, summary)
-
-        summary = "An A1C value of <b>%s</b> was entered" % (component.value_quantity)
-        op_add_event(request.user, observation.problem.patient, summary, observation.problem)
-
+    summary = "An A1C value of <b>%s</b> was entered" % (component.value_quantity)
+    op_add_event(request.user, observation.problem.patient, summary, observation.problem)
     return ajax_response(resp)
 
+
+@permissions_required(["delete_observation_component"])
 @login_required
 def delete_component(request, component_id):
-
+    ObservationComponent.objects.get(id=component_id).delete()
     resp = {}
-    resp['success'] = False
-
-    permissions = ['delete_observation_component']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        component = ObservationComponent.objects.get(id=component_id)
-        component.delete()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 def get_observation_component_info(request, component_id):
     observation_component_info = ObservationComponent.objects.get(id=component_id)
-    observation_component_dict = ObservationComponentSerializer(observation_component_info).data
+    resp = {}
+    resp['success'] = True
+    resp['info'] = ObservationComponentSerializer(observation_component_info).data
+    resp['observation_id'] = observation_component_info.observation.id
+    return ajax_response(resp)
+
+
+@permissions_required(["edit_observation_component"])
+@login_required
+def edit_component(request, component_id):
+    component = ObservationComponent.objects.get(id=component_id)
+    component.value_quantity = request.POST.get('value_quantity')
+    component.effective_datetime = datetime.strptime(request.POST.get('effective_datetime'), '%Y-%m-%d').date()
+    component.save()
 
     resp = {}
     resp['success'] = True
-    resp['info'] = observation_component_dict
-    resp['observation_id'] = observation_component_info.observation.id
-
+    resp['info'] = ObservationComponentSerializer(component).data
     return ajax_response(resp)
 
-@login_required
-def edit_component(request, component_id):
-
-    resp = {}
-    resp['success'] = False
-
-    permissions = ['edit_observation_component']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        component = ObservationComponent.objects.get(id=component_id)
-        component.value_quantity = request.POST.get('value_quantity')
-        component.effective_datetime = datetime.strptime(request.POST.get('effective_datetime'), '%Y-%m-%d').date()
-        component.save()
-
-        observation_component_dict = ObservationComponentSerializer(component).data
-
-        resp['success'] = True
-        resp['info'] = observation_component_dict
-
-    return ajax_response(resp)
 
 # Component Note
+@permissions_required(["add_observation_note"])
 @login_required
 def add_component_note(request, component_id):
-
+    note = ObservationComponentTextNote.objects.create(observation_component_id=component_id,
+                                                      author=request.user.profile,
+                                                      note=request.POST.get("note"))
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_observation_note']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        note = ObservationComponentTextNote()
-        note.observation_component = ObservationComponent.objects.get(id=component_id)
-        note.author = request.user.profile
-        note.note = request.POST.get('note')
-        note.save()
-
-        new_note_dict = ObservationComponentTextNoteSerializer(note).data
-        resp['note'] = new_note_dict
-        resp['success'] = True
-
+    resp['note'] = ObservationComponentTextNoteSerializer(note).data
+    resp['success'] = True
     return ajax_response(resp)
 
+
+@permissions_required(["edit_observation_note"])
 @login_required
 def edit_component_note(request, note_id):
+    note = ObservationComponentTextNote.objects.get(id=note_id)
+    note.note = request.POST.get('note')
+    note.save()
 
     resp = {}
-    resp['success'] = False
-
-    permissions = ['edit_observation_note']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        note = ObservationComponentTextNote.objects.get(id=note_id)
-        note.note = request.POST.get('note')
-        note.save()
-
-        new_note_dict = ObservationComponentTextNoteSerializer(note).data
-        resp['note'] = new_note_dict
-        resp['success'] = True
-
+    resp['note'] = ObservationComponentTextNoteSerializer(note).data
+    resp['success'] = True
     return ajax_response(resp)
 
+
+@permissions_required(["delete_observation_note"])
 @login_required
 def delete_component_note(request, note_id):
-
+    ObservationComponentTextNote.objects.get(id=note_id).delete()
     resp = {}
-    resp['success'] = False
-
-    permissions = ['delete_observation_note']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        note = ObservationComponentTextNote.objects.get(id=note_id)
-        note.delete()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)

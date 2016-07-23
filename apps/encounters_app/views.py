@@ -1,5 +1,5 @@
+from rest_framework.decorators import api_view
 from datetime import datetime, timedelta
-from django.utils import timezone
 from common.views import *
 
 from emr.models import UserProfile, Encounter, EncounterEvent
@@ -7,41 +7,22 @@ from emr.models import EncounterProblemRecord, Problem
 
 from .serializers import EncounterSerializer, EncounterEventSerializer
 from problems_app.serializers import ProblemSerializer
+from problems_app.views import permissions_required
 
 from emr.manage_patient_permissions import check_permissions
-
-
-def is_patient(user):
-    try:
-        profile = UserProfile.objects.get(user=user)
-        return profile.role == 'patient'
-    except UserProfile.DoesNotExist:
-        return False
 
 
 # Encounter
 @login_required
 def get_encounter_info(request, encounter_id):
-
-    # Encounter
     encounter = Encounter.objects.get(id=encounter_id)
+    encounter_events = EncounterEvent.objects.filter(encounter=encounter).order_by('datetime')
+    related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
+    related_problems = [x.problem for x in related_problem_records]
+
     encounter_dict = EncounterSerializer(encounter).data
-
-    # Encounter Events
-    encounter_events = EncounterEvent.objects.filter(
-        encounter=encounter).order_by('datetime')
-    encounter_events_holder = EncounterEventSerializer(
-        encounter_events, many=True).data
-
-    # Related problems
-    related_problem_records = EncounterProblemRecord.objects.filter(
-        encounter=encounter)
-    related_problem_ids = [long(x.problem.id) for x in related_problem_records]
-
-    related_problems = Problem.objects.filter(id__in=related_problem_ids)
-
-    related_problem_holder = ProblemSerializer(
-        related_problems, many=True).data
+    encounter_events_holder = EncounterEventSerializer(encounter_events, many=True).data
+    related_problem_holder = ProblemSerializer(related_problems, many=True).data
 
     resp = {}
     resp['encounter'] = encounter_dict
@@ -54,7 +35,6 @@ def get_encounter_info(request, encounter_id):
 # Encounter
 @login_required
 def patient_encounter_status(request, patient_id):
-
     encounter_active = False
     current_encounter = None
     permissions = ['add_encounter']
@@ -63,20 +43,13 @@ def patient_encounter_status(request, patient_id):
 
     if permitted:
         physician = request.user
-        patient = User.objects.get(id=patient_id)
+        latest_encounter = Encounter.objects.filter(physician=physician,
+                                                    patient_id=patient_id
+                                            ).order_by('-starttime').first()
 
-        latest_encounter = Encounter.objects.filter(
-            physician=physician,
-            patient=patient).order_by('-starttime')
-
-        if latest_encounter.exists():
-            latest_encounter = latest_encounter[0]
-
-            if latest_encounter.stoptime is None:
-                encounter_active = True
-                latest_encounter_dict = EncounterSerializer(
-                    latest_encounter).data
-                current_encounter = latest_encounter_dict
+        if latest_encounter and latest_encounter.stoptime is None:
+            encounter_active = True
+            current_encounter = EncounterSerializer(latest_encounter).data
 
     resp = {}
     resp['permitted'] = permitted
@@ -86,247 +59,107 @@ def patient_encounter_status(request, patient_id):
 
 
 # Encounter
+@permissions_required(["add_encounter"])
 @login_required
+@api_view(["POST"])
 def create_new_encounter(request, patient_id):
-
+    encounter = Encounter.objects.create_new_encounter(patient_id, request.user)
     resp = {}
-    if request.method == 'POST':
-
-        permissions = ['add_encounter']
-        actor_profile, permitted = check_permissions(permissions, request.user)
-
-        if permitted:
-            physician = request.user
-            patient = User.objects.get(id=patient_id)
-            # You may want to tell user that if already an encounter is running
-            encounter = Encounter(
-                patient=patient, physician=request.user)
-            encounter.save()
-
-            # Add event started encounter
-            event_summary = 'Started encounter by <b>%s</b>' % (
-                physician.username)
-            encounter_event = EncounterEvent(
-                encounter=encounter,
-                summary=event_summary)
-
-            encounter_event.save()
-
-            encounter_dict = EncounterSerializer(encounter).data
-            resp['success'] = True
-            resp['encounter'] = encounter_dict
-
+    resp['success'] = True
+    resp['encounter'] = EncounterSerializer(encounter).data
     return ajax_response(resp)
 
 
 # Encounter
+@permissions_required(["add_encounter"])
 @login_required
 def stop_patient_encounter(request, encounter_id):
-
     physician = request.user
-
-    permissions = ['add_encounter']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        latest_encounter = Encounter.objects.get(
-            physician=physician, id=encounter_id)
-
-        latest_encounter.stoptime = datetime.now()
-        latest_encounter.save()
-
-        event_summary = 'Stopped encounter by <b>%s</b>' % physician.username
-        encounter_event = EncounterEvent(
-            encounter=latest_encounter, summary=event_summary)
-
-        encounter_event.save()
-
-        resp = {}
-        resp['success'] = True
-        resp['msg'] = 'Encounter is stopped'
-
+    Encounter.objects.stop_patient_encounter(physician, encounter_id)
+    resp = {}
+    resp['success'] = True
+    resp['msg'] = 'Encounter is stopped'
     return ajax_response(resp)
 
 
 # Encounter
+@permissions_required(["add_event_summary"])
 @login_required
+@api_view(["POST"])
 def add_event_summary(request):
-
     resp = {}
-
-    permissions = ['add_event_summary']
-
-    actor_profile, permitted = check_permissions(permissions, request.user)
-    if request.method == 'POST' and permitted:
-
-        physician = request.user
-        encounter_id = request.POST.get('encounter_id')
-        event_summary = request.POST.get('event_summary')
-
-        latest_encounter = Encounter.objects.get(
-            physician=physician,
-            id=encounter_id)
-
-        encounter_event = EncounterEvent(
-            encounter=latest_encounter,
-            summary=event_summary)
-
-        encounter_event.save()
-
-        resp['success'] = True
+    physician = request.user
+    encounter_id = request.POST.get('encounter_id')
+    event_summary = request.POST.get('event_summary')
+    encounter_event = Encounter.objects.add_event_summary(encounter_id, physician, event_summary)
+    resp['success'] = True
     return ajax_response(resp)
 
 
 # Encounter
+@permissions_required(["add_encounter"])
 @login_required
+@api_view(["POST"])
 def update_encounter_note(request, patient_id, encounter_id):
+    note = request.POST.get('note')
+    Encounter.objects.filter(id=encounter_id).update(note=note)
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_encounter']
-
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if request.method == "POST" and permitted:
-        note = request.POST.get('note')
-        encounter = Encounter.objects.get(id=encounter_id)
-        encounter.note = note
-        encounter.save()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
 
 # Encounter
+@permissions_required(["add_encounter"])
 @login_required
+@api_view(["POST"])
 def upload_encounter_audio(request, patient_id, encounter_id):
-
-    resp = {}
-    resp['success'] = False
-
-    permissions = ['add_encounter']
-
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
     audio_file = request.FILES['file']
-
-    if request.method == 'POST' and permitted:
-        encounter = Encounter.objects.get(id=encounter_id)
-        encounter.audio = audio_file
-        encounter.save()
-
-        resp['success'] = True
-
+    Encounter.objects.filter(id=encounter_id).update(audio=audio_file)
+    resp = {}
+    resp['success'] = True
     return ajax_response(resp)
 
 
 # Encounter
+@permissions_required(["add_encounter"])
 @login_required
+@api_view(["POST"])
 def upload_encounter_video(request, patient_id, encounter_id):
-
-    resp = {}
-    resp['success'] = False
-
-    permissions = ['add_encounter']
-
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
     video_file = request.FILES['file']
-
-    if request.method == 'POST' and permitted:
-        encounter = Encounter.objects.get(id=encounter_id)
-        encounter.video = video_file
-        encounter.save()
-
+    Encounter.objects.filter(id=encounter_id).update(video=video_file)
+    resp = {}
+    resp['success'] = True
     return ajax_response(resp)
 
-def RepresentsInt(times):
-    for t in times:
-        try: 
-            int(t)
-        except ValueError:
-            return False
-
-    return True
 
 # Encounter
+@permissions_required(["add_encounter_timestamp"])
 @login_required
+@api_view(["POST"])
 def add_timestamp(request, patient_id, encounter_id):
+    encounter_event = Encounter.objects.add_timestamp(encounter_id, request.user)
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_encounter_timestamp']
-
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if request.method == "POST" and permitted:
-        encounter = Encounter.objects.get(id=encounter_id)
-        timestamp = timezone.now()
-        # timestamp = request.POST.get('timestamp', '')
-        # times = timestamp.split(":")
-        # if RepresentsInt(times):
-        #     if len(times) == 3:
-        #         plustime = timedelta(hours=int(times[0]), minutes=int(times[1]), seconds=int(times[2]))
-        #     elif len(times) == 2:
-        #         plustime = timedelta(minutes=int(times[0]), seconds=int(times[1]))
-        #     elif len(times) == 1:
-        #         plustime = timedelta(seconds=int(times[0]))
-        #     else:
-        #         plustime = timedelta(seconds=0)
-
-        #     timestamp = encounter.starttime + plustime
-        summary = 'A timestamp added by <b>' + request.user.username + '</b>'
-
-        encounter_event = EncounterEvent(
-            encounter=encounter,
-            timestamp=timestamp,
-            summary=summary)
-
-        encounter_event.save()
-
-        # Encounter Events
-        encounter_event_holder = EncounterEventSerializer(encounter_event).data
-
-        resp['success'] = True
-        resp['encounter_event'] = encounter_event_holder
-
+    resp['success'] = True
+    resp['encounter_event'] = EncounterEventSerializer(encounter_event).data
     return ajax_response(resp)
 
 # Encounter
+@permissions_required(["add_encounter_timestamp"])
 @login_required
+@api_view(["POST"])
 def mark_favorite(request, encounter_event_id):
+    is_favorite = True if request.POST.get('is_favorite', False) == "true" else False
+    EncounterEvent.objects.filter(id=encounter_event_id).update(is_favorite=is_favorite)
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_encounter_timestamp']
-
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if request.method == "POST" and permitted:
-        encounter_event = EncounterEvent.objects.get(id=encounter_event_id)
-        encounter_event.is_favorite = True if request.POST.get('is_favorite', False) == "true" else False
-        encounter_event.save()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
+@permissions_required(["add_encounter_timestamp"])
 @login_required
+@api_view(["POST"])
 def name_favorite(request, encounter_event_id):
+    name_favorite = request.POST.get("name_favorite", "")
+    EncounterEvent.objects.filter(id=encounter_event_id).update(name_favorite=name_favorite)
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_encounter_timestamp']
-
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if request.method == "POST" and permitted:
-        encounter_event = EncounterEvent.objects.get(id=encounter_event_id)
-        encounter_event.name_favorite = request.POST.get('name_favorite', '')
-        encounter_event.save()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)

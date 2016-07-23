@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
-from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager
+from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager
 
 # DATA
 ROLE_CHOICES = (
@@ -126,6 +126,8 @@ class Encounter(models.Model):
     audio = models.FileField(upload_to=get_path, blank=True)
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
+
+    objects = EncounterManager()
 
     def __unicode__(self):
         return 'Patient: %s Time: %s' % (

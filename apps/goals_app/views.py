@@ -9,210 +9,129 @@ from emr.serializers import TextNoteSerializer
 from emr.manage_patient_permissions import check_permissions
 
 from problems_app.operations import add_problem_activity
-
-
-def is_patient(user):
-    try:
-        profile = UserProfile.objects.get(user=user)
-        return profile.role == 'patient'
-    except:
-        return False
+from problems_app.views import permissions_required
 
 
 # Goals
 @login_required
 def get_goal_info(request, goal_id):
-
     goal = Goal.objects.get(id=goal_id)
     goal_notes = goal.notes.all().order_by('-id')
-
-    goal_notes_holder = []
-    for note in goal_notes:
-        note_dict = TextNoteSerializer(note).data
-        goal_notes_holder.append(note_dict)
-
-    goal_dict = GoalSerializer(goal).data
-
     resp = {}
-    resp['goal'] = goal_dict
-    resp['goal_notes'] = goal_notes_holder
-
+    resp['goal'] = GoalSerializer(goal).data
+    resp['goal_notes'] = TextNoteSerializer(goal_notes, many=True).data
     return ajax_response(resp)
 
 
 # Goals
+@permissions_required(["add_goal"])
 @login_required
 def add_patient_goal(request, patient_id):
-
-    resp = {}
-    resp['success'] = False
-
-    permissions = ['add_goal']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
     goal_name = request.POST.get('name')
-
-    patient = User.objects.get(id=patient_id)
-
-    new_goal = Goal(patient=patient, goal=goal_name)
-    new_goal.save()
-
-    goal_dict = GoalSerializer(new_goal).data
+    new_goal = Goal.objects.create(patient_id=patient_id, goal=goal_name)
 
     physician = request.user
+    patient = User.objects.get(id=patient_id)
     summary = 'Added <u>goal</u> <b>%s</b>' % goal_name
-
     op_add_event(physician, patient, summary)
 
+    resp = {}
     resp['success'] = True
-    resp['goal'] = goal_dict
-
+    resp['goal'] = GoalSerializer(new_goal).data
     return ajax_response(resp)
 
 
 # Goals
+@permissions_required(["modify_goal"])
 @login_required
 def update_goal_status(request, patient_id, goal_id):
+    patient = User.objects.get(id=patient_id)
+    goal = Goal.objects.get(id=goal_id, patient=patient)
+
+    is_controlled = request.POST.get('is_controlled') == 'true'
+    accomplished = request.POST.get('accomplished') == 'true'
+    goal.is_controlled = is_controlled
+    goal.accomplished = accomplished
+    goal.save()
+
+    status_labels = {
+        "goal": goal.goal,
+        "is_controlled": "controlled" if goal.is_controlled else "not controlled",
+        "accomplished": "accomplished" if goal.accomplished else "not accomplished",
+        "problem": goal.problem.problem_name if goal.problem else "",
+    }
+
+    physician = request.user
+    summary = "Change <u>goal</u>: <b>%(goal)s</b> <u>status</u>"
+    summary += " to <b>%(is_controlled)s</b> <b>%(accomplished)s</b>"
+    summary += " for <u>problem</u> <b>%(problem)s</b> "
+    summary = summary % status_labels
+
+    op_add_event(physician, patient, summary, goal.problem)
+
+    if goal.problem:
+        actor_profile = UserProfile.objects.get(user=request.user)
+        add_problem_activity(goal.problem, actor_profile, summary, 'output')
 
     resp = {}
-    resp['success'] = False
-
-    permissions = ['modify_goal']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        patient = User.objects.get(id=patient_id)
-        goal = Goal.objects.get(id=goal_id, patient=patient)
-
-        is_controlled = request.POST.get('is_controlled') == 'true'
-        accomplished = request.POST.get('accomplished') == 'true'
-
-        goal.is_controlled = is_controlled
-        goal.accomplished = accomplished
-
-        goal.save()
-
-        if goal.problem:
-            problem_name = goal.problem.problem_name
-        else:
-            problem_name = ''
-
-        status_labels = {}
-        status_labels['goal'] = goal.goal
-
-        if goal.is_controlled:
-            status_labels['is_controlled'] = 'controlled'
-        else:
-            status_labels['is_controlled'] = 'not controlled'
-
-        if goal.accomplished:
-            status_labels['accomplished'] = 'accomplished'
-        else:
-            status_labels['accomplished'] = 'not accomplished'
-
-        status_labels['problem'] = problem_name
-
-        physician = request.user
-        summary = "Change <u>goal</u>: <b>%(goal)s</b> <u>status</u>"
-        summary += " to <b>%(is_controlled)s</b> <b>%(accomplished)s</b>"
-        summary += " for <u>problem</u> <b>%(problem)s</b> "
-        summary = summary % status_labels
-
-        op_add_event(physician, patient, summary, goal.problem)
-
-        if goal.problem:
-            add_problem_activity(goal.problem, actor_profile, summary, 'output')
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
 
 # Goals
+@permissions_required(["modify_goal"])
 @login_required
 def add_goal_note(request, patient_id, goal_id):
+    actor_profile = UserProfile.objects.get(user=request.user)
+    goal = Goal.objects.get(id=goal_id, patient_id=patient_id)
+
+    note = request.POST.get('new_note')
+    new_note = TextNote.objects.create(note=note, by=actor_profile.role)
+    goal.notes.add(new_note)
+
+    problem_name = goal.problem.problem_name if goal.problem else "",
+    summary = """
+        Added <u>note</u> <b>%s</b> for <u>goal</u>:
+        <b>%s</b> ,
+        <u> problem </u>: <b>%s</b>
+    """ % (note, goal.goal, problem_name)
+
+    physician = request.user
+    patient = goal.patient
+    op_add_event(physician, patient, summary, goal.problem)
+
+    if goal.problem:
+        add_problem_activity(goal.problem, actor_profile, summary, 'output')
+
     resp = {}
-    resp['success'] = False
-
-    actor = request.user
-
-    permissions = ['modify_goal']
-
-    actor_profile, permitted = check_permissions(permissions, actor)
-
-    if permitted:
-
-        patient = User.objects.get(id=patient_id)
-        goal = Goal.objects.get(id=goal_id, patient=patient)
-
-        note = request.POST.get('new_note')
-
-        new_note = TextNote(
-            note=note, by=actor_profile.role)
-
-        new_note.save()
-
-        goal.notes.add(new_note)
-
-        if goal.problem:
-            problem_name = goal.problem.problem_name
-        else:
-            problem_name = ''
-
-        physician = request.user
-        patient = goal.patient
-
-        summary = """
-            Added <u>note</u> <b>%s</b> for <u>goal</u>:
-            <b>%s</b> ,
-            <u> problem </u>: <b>%s</b>
-        """ % (note, goal.goal, problem_name)
-
-        op_add_event(physician, patient, summary, goal.problem)
-
-        if goal.problem:
-            add_problem_activity(goal.problem, actor_profile, summary, 'output')
-
-        new_note_dict = TextNoteSerializer(new_note).data
-
-        resp['success'] = True
-        resp['note'] = new_note_dict
-
+    resp['success'] = True
+    resp['note'] = TextNoteSerializer(new_note).data
     return ajax_response(resp)
 
+@permissions_required(["modify_goal"])
 @login_required
 def change_name(request, patient_id, goal_id):
-
     resp = {}
-    resp['success'] = False
+    patient = User.objects.get(id=patient_id)
+    new_goal = request.POST.get("goal")
+    goal = Goal.objects.get(id=goal_id, patient=patient)
+    goal.goal = new_goal
+    goal.save()
 
-    permissions = ['modify_goal']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    status_labels = {}
+    status_labels['goal'] = goal.goal
+    status_labels['new_goal'] = new_goal
 
-    if permitted:
-        patient = User.objects.get(id=patient_id)
-        goal = Goal.objects.get(id=goal_id, patient=patient)
+    physician = request.user
+    summary = "Change <u>goal</u>: <b>%(goal)s</b> <u>name</u>"
+    summary += " to <b>%(new_goal)s</b>"
+    summary = summary % status_labels
 
-        status_labels = {}
-        status_labels['goal'] = goal.goal
-        status_labels['new_goal'] = request.POST.get('goal')
+    op_add_event(physician, patient, summary, goal.problem)
 
-        goal.goal = request.POST.get('goal')
-        goal.save()
+    if goal.problem:
+        add_problem_activity(goal.problem, actor_profile, summary, 'output')
 
-        physician = request.user
-        summary = "Change <u>goal</u>: <b>%(goal)s</b> <u>name</u>"
-        summary += " to <b>%(new_goal)s</b>"
-        summary = summary % status_labels
-
-        op_add_event(physician, patient, summary, goal.problem)
-
-        if goal.problem:
-            add_problem_activity(goal.problem, actor_profile, summary, 'output')
-
-        goal_dict = GoalSerializer(goal).data
-
-        resp['goal'] = goal_dict
-        resp['success'] = True
-
+    resp['goal'] = GoalSerializer(goal).data
+    resp['success'] = True
     return ajax_response(resp)
