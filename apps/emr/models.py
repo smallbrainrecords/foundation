@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
-from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager
+from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager, TodoManager
 
 # DATA
 ROLE_CHOICES = (
@@ -322,6 +322,8 @@ class ToDo(models.Model):
     members = models.ManyToManyField(UserProfile, blank=True)
     labels = models.ManyToManyField(Label, blank=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    objects = TodoManager()
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo))

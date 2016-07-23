@@ -83,3 +83,13 @@ class EncounterManager(models.Manager):
         encounter_event = EncounterEvent.objects.create(encounter=encounter, timestamp=timestamp, summary=summary)
         return encounter_event
 
+class TodoManager(models.Manager):
+    def add_patient_todo(self, patient, todo_name, due_date):
+        from django.db.models import Max
+        order =  self.filter(patient=patient).aggregate(Max('order'))
+        if not order['order__max']:
+            order = 1
+        else:
+            order = order['order__max'] + 1
+        new_todo = self.create(patient=patient, todo=todo_name, due_date=due_date, order=order)
+        return new_todo
