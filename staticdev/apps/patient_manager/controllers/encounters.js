@@ -26,12 +26,19 @@
 
                 // If encounter include any audio automatically playing this audio
                 if ($scope.encounter.audio != null && $routeParams.startAt != null) {
-                    $scope.encounter_audio = ngAudio.load($scope.encounter.audio);
-                    $scope.encounter_audio.setCurrentTime($routeParams.startAt);
-                    $scope.encounter_audio.play();
+                    // TODO: We have to check that audio1 element must be valid before playing
+                    var canPlay = setInterval(function () {
+                        console.log("We trying to playing audio again");
+                        var myAudio = document.getElementById('audio1');
+                        if (myAudio != null) {
+                            console.log("Hurray can play audio at position for now");
+                            myAudio.currentTime = parseInt($routeParams.startAt);
+                            myAudio.play();
+                            clearInterval(canPlay);
+                        }
+                    }, 1000);
                 }
             });
-
 
             $scope.update_note = function () {
 
