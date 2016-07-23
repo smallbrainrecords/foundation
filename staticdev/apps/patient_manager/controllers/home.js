@@ -303,7 +303,6 @@
 
             $scope.$watch('problem_term', function (newVal, oldVal) {
 
-                console.log(newVal);
                 if (newVal == undefined) {
                     return false;
                 }
@@ -413,8 +412,8 @@
                 });
             }
 
-            $scope.add_new_common_problem = function(problem, type) {
-            	var form = {};
+            $scope.add_new_common_problem = function (problem, type) {
+                var form = {};
                 form.patient_id = $scope.patient_id;
                 form.cproblem = problem;
                 form.type = type;
