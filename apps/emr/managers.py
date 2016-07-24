@@ -93,3 +93,13 @@ class TodoManager(models.Manager):
             order = order['order__max'] + 1
         new_todo = self.create(patient=patient, todo=todo_name, due_date=due_date, order=order)
         return new_todo
+
+    def add_staff_todo(self, user_id, todo_name, due_date):
+        from django.db.models import Max
+        order =  self.filter(user_id=user_id).aggregate(Max('order'))
+        if not order['order__max']:
+            order = 1
+        else:
+            order = order['order__max'] + 1
+        new_todo = self.create(user_id=user_id, todo=todo_name, due_date=due_date, order=order)
+        return new_todo

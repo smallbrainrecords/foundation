@@ -18,7 +18,7 @@ from users_app.serializers import UserProfileSerializer
 
 from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
-from problem_apps.views import permissions_required
+from problems_app.views import permissions_required
 from .operations import add_todo_activity
 
 
@@ -103,6 +103,7 @@ def update_todo_status(request, todo_id):
 
     op_add_todo_event(physician, patient, summary, todo)
 
+    actor_profile = UserProfile.objects.get(user=request.user)
     if todo.problem:
         add_problem_activity(todo.problem, actor_profile, summary, 'output')
         if accomplished:
@@ -130,6 +131,7 @@ def update_order(request):
     resp = {}
     datas = json.loads(request.body)
     id_todos = datas['todos']
+    actor_profile = UserProfile.objects.get(user=request.user)
     # patient's todo order
     if datas.has_key('patient_id'):
         patient_id = datas['patient_id']
@@ -390,8 +392,8 @@ def new_todo_label(request, todo_id):
     todo = ToDo.objects.get(id=todo_id)
     label = Label.objects.filter(name=name, css_class=css_class).first()
     if not label:
-        label = Label.objects.create(name=name, css_class=css_class
-                                    author=request.user, is_all=is_all)
+        label = Label.objects.create(name=name, css_class=css_class,
+                                     author=request.user, is_all=is_all)
         resp['new_status'] = True
         resp['new_label'] = LabelSerializer(label).data
 
@@ -427,22 +429,14 @@ def save_edit_label(request, label_id):
     return ajax_response(resp)
 
 
+@permissions_required(["add_todo"])
 @login_required
 def delete_label(request, label_id):
+    Label.objects.get(id=label_id).delete()
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        label = Label.objects.get(id=label_id)
-        label.delete()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 def todo_access_encounter(request, todo_id):
@@ -462,40 +456,28 @@ def todo_access_encounter(request, todo_id):
 
     return ajax_response(resp)
 
+
+@permissions_required(["add_todo"])
 @login_required
+@api_view(["POST"])
 def add_todo_attachment(request, todo_id):
+    attachment = ToDoAttachment.objects.create(todo_id=todo_id, user=request.user, attachment=request.FILES['0'])
     resp = {}
-    resp['success'] = False
+    resp['success'] = True
 
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        if request.method == 'POST':
-            todo = ToDo.objects.get(id=todo_id)
-
-            attachment = ToDoAttachment(todo=todo, user=request.user, attachment=request.FILES['0'])
-            attachment.save()
-
-            resp['success'] = True
-
-            attachment_dict = {
-                'attachment': attachment.filename(),
-                'datetime': datetime.strftime(attachment.datetime, '%Y-%m-%d'),
-                'id': attachment.id,
-                'user': SafeUserSerializer(attachment.user).data,
-                'todo': TodoSerializer(attachment.todo).data,
-            }
-            resp['attachment'] = attachment_dict
-
-            # todo activity
-            activity = '''
-                Attached <b>%s</b> to this todo.
-            ''' % (attachment.filename())
-            add_todo_activity(todo, actor_profile, activity, comment=None, attachment=attachment)
-
-
+    attachment_dict = {
+        'attachment': attachment.filename(),
+        'datetime': datetime.strftime(attachment.datetime, '%Y-%m-%d'),
+        'id': attachment.id,
+        'user': SafeUserSerializer(attachment.user).data,
+        'todo': TodoSerializer(attachment.todo).data,
+    }
+    resp['attachment'] = attachment_dict
+    # todo activity
+    activity = "Attached <b>%s</b> to this todo." % (attachment.filename())
+    add_todo_activity(todo, actor_profile, activity, comment=None, attachment=attachment)
     return ajax_response(resp)
+
 
 def download_attachment(request, attachment_id):
     """
@@ -509,206 +491,138 @@ def download_attachment(request, attachment_id):
     response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
     return response
 
+
+@permissions_required(["add_todo"])
 @login_required
 def delete_attachment(request, attachment_id):
+    attachment = ToDoAttachment.objects.get(id=attachment_id)
+    # todo activity
+    activity = '''
+        Deleted <b>%s</b> from this todo.
+    ''' % (attachment.filename())
+    add_todo_activity(attachment.todo, actor_profile, activity)
+    attachment.delete()
+
     resp = {}
-    resp['success'] = False
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        attachment = ToDoAttachment.objects.get(id=attachment_id)
-        # todo activity
-        activity = '''
-            Deleted <b>%s</b> from this todo.
-        ''' % (attachment.filename())
-        add_todo_activity(attachment.todo, actor_profile, activity)
-
-        attachment.delete()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
+
+@permissions_required(["add_todo"])
 @login_required
 def add_todo_member(request, todo_id):
     resp = {}
-    resp['success'] = False
+    member_id = request.POST.get('id')
+    todo = ToDo.objects.get(id=todo_id)
+    member = UserProfile.objects.get(id=int(member_id))
+    todo.members.add(member)
 
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    tagged_todo = TaggedToDoOrder.objects.create(todo=todo, user=member.user)
+    # set problem authentication
+    set_problem_authentication_false(request, todo)
 
-    if permitted:
+    # todo activity
+    activity = '''
+        <b>%s %s - %s</b> joined this todo.
+    ''' % (member.user.first_name, member.user.last_name, member.role)
+    add_todo_activity(todo, actor_profile, activity)
 
-        member_id = request.POST.get('id')
-        todo = ToDo.objects.get(id=todo_id)
-        member = UserProfile.objects.get(id=int(member_id))
-        todo.members.add(member)
-
-        tagged_todo = TaggedToDoOrder(todo=todo, user=member.user)
-        tagged_todo.save()
-
-        # set problem authentication
-        set_problem_authentication_false(request, todo)
-
-        # todo activity
-        activity = '''
-            <b>%s %s - %s</b> joined this todo.
-        ''' % (member.user.first_name, member.user.last_name, member.role)
-        add_todo_activity(todo, actor_profile, activity)
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
 
 
+@permissions_required(["add_todo"])
 @login_required
 def remove_todo_member(request, todo_id):
     resp = {}
-    resp['success'] = False
+    member_id = request.POST.get('id')
+    todo = ToDo.objects.get(id=todo_id)
+    member = UserProfile.objects.get(id=int(member_id))
+    todo.members.remove(member)
+    tagged_todo = TaggedToDoOrder.objects.filter(todo=todo, user=member.user).first()
+    if tagged_todo:
+        tagged_todo.delete()
 
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    # set problem authentication
+    set_problem_authentication_false(request, todo)
 
-    if permitted:
-        member_id = request.POST.get('id')
-        todo = ToDo.objects.get(id=todo_id)
-        member = UserProfile.objects.get(id=int(member_id))
-        todo.members.remove(member)
+    # todo activity
+    activity = '''
+        <b>%s %s - %s</b> left this todo.
+    ''' % (member.user.first_name, member.user.last_name, member.role)
+    add_todo_activity(todo, actor_profile, activity)
 
-        if TaggedToDoOrder.objects.filter(todo=todo, user=member.user):
-            tagged_todo = TaggedToDoOrder.objects.get(todo=todo, user=member.user)
-            tagged_todo.delete()
-
-        # set problem authentication
-        set_problem_authentication_false(request, todo)
-
-        # todo activity
-        activity = '''
-            <b>%s %s - %s</b> left this todo.
-        ''' % (member.user.first_name, member.user.last_name, member.role)
-        add_todo_activity(todo, actor_profile, activity)
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 def get_labels(request, user_id):
-
-    user = User.objects.get(id=user_id)
-    labels = Label.objects.filter(Q(is_all=True) | Q(Q(is_all=False) & Q(author=user)))
-
-    labels_holder = []
-    for label in labels:
-        label_dict = LabelSerializer(label).data
-        labels_holder.append(label_dict)
-
+    labels = Label.objects.filter(Q(is_all=True) | (Q(is_all=False) & Q(author_id=user_id)))
     resp = {}
-    resp['labels'] = labels_holder
-
+    resp['labels'] = LabelSerializer(labels, many=True).data
     return ajax_response(resp)
+
 
 @login_required
 def get_user_todos(request, user_id):
-    user = User.objects.get(id=user_id)
-    todos = TaggedToDoOrder.objects.filter(user=user).order_by('order', 'todo__due_date')
-
-    todos_holder = []
-    for todo in todos:
-        todo_dict = TodoSerializer(todo.todo).data
-        todos_holder.append(todo_dict)
+    tagged_todo_order = TaggedToDoOrder.objects.filter(user_id=user_id).order_by('order', 'todo__due_date')
+    tagged_todos = [t.todo for t in tagged_todo_order]
+    personal_todos = ToDo.objects.filter(user_id=user_id).order_by('order', 'due_date')
 
     resp = {}
-    resp['tagged_todos'] = todos_holder
-
-    todos = ToDo.objects.filter(user=user).order_by('order', 'due_date')
-    todos_holder = []
-    for todo in todos:
-        todo_dict = TodoSerializer(todo).data
-        todos_holder.append(todo_dict)
-    resp['personal_todos'] = todos_holder
-
+    resp['tagged_todos'] = TodoSerializer(tagged_todos, many=True).data
+    resp['personal_todos'] = TodoSerializer(personal_todos, many=True).data
     return ajax_response(resp)
 
+
+@permissions_required(["add_todo"])
 @login_required
 def add_staff_todo(request, user_id):
+    todo_name = request.POST.get('name')
+    due_date = request.POST.get('due_date', None)
+    if due_date:
+        due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
+
+    actor_profile = UserProfile.objects.get(user=request.user)
+    new_todo = ToDo.objects.add_staff_todo(user_id, todo_name, due_date)
+    # todo activity
+    activity = "Added this todo."
+    add_todo_activity(new_todo, actor_profile, activity)
+
     resp = {}
-    resp['success'] = False
-
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-
-        todo_name = request.POST.get('name')
-        due_date = request.POST.get('due_date', None)
-        if due_date:
-            due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
-
-        user = User.objects.get(id=user_id)
-
-        new_todo = ToDo(user=user, todo=todo_name, due_date=due_date)
-        order =  ToDo.objects.filter(user=user).aggregate(Max('order'))
-        if not order['order__max']:
-            order = 1
-        else:
-            order = order['order__max'] + 1
-        new_todo.order = order
-        new_todo.save()
-
-        # todo activity
-        activity = '''
-            Added this todo.
-        '''
-        add_todo_activity(new_todo, actor_profile, activity)
-
-        new_todo_dict = TodoSerializer(new_todo).data
-        resp['todo'] = new_todo_dict
-        resp['success'] = True
-
+    resp['todo'] = TodoSerializer(new_todo).data
+    resp['success'] = True
     return ajax_response(resp)
 
+
+@permissions_required(["add_todo"])
 @login_required
 def add_staff_todo_list(request, user_id):
     resp = {}
-    resp['success'] = False
+    data = json.loads(request.body)
+    list_name = data['name']
+    labels = data['labels']
+    user = User.objects.get(id=user_id)
 
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    new_list = LabeledToDoList.objects.create(user_id=user_id, name=list_name)
 
-    if permitted:
+    label_ids = []
+    for label in labels:
+        l = Label.objects.get(id=label['id'])
+        new_list.labels.add(l)
+        label_ids.append(l.id)
 
-        datas = json.loads(request.body)
-        list_name = datas['name']
-        labels = datas['labels']
-        user = User.objects.get(id=user_id)
+    todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
 
-        new_list = LabeledToDoList(user=user, name=list_name)
-        new_list.save()
+    new_list_dict = LabeledToDoListSerializer(new_list).data
+    new_list_dict['todos'] = TodoSerializer(todos, many=True).data
+    new_list_dict['expanded'] = new_list.expanded
 
-        label_ids = []
-        for label in labels:
-            l = Label.objects.get(id=label['id'])
-            new_list.labels.add(l)
-            label_ids.append(l.id)
-
-
-        new_list_dict = LabeledToDoListSerializer(new_list).data
-
-        todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
-        todos_holder = []
-        for todo in todos:
-            todo_dict = TodoSerializer(todo).data
-            todos_holder.append(todo_dict)
-
-        new_list_dict['todos'] = todos_holder
-        new_list_dict['expanded'] = new_list.expanded
-
-        resp['new_list'] = new_list_dict
-        resp['success'] = True
-
+    resp['new_list'] = new_list_dict
+    resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 def get_user_label_lists(request, user_id):
@@ -718,10 +632,9 @@ def get_user_label_lists(request, user_id):
     lists_holder = []
     for label_list in lists:
         list_dict = LabeledToDoListSerializer(label_list).data
-        label_ids = []
-        for label in label_list.labels.all():
-            label_ids.append(label.id)
 
+        # TODO: Have to simplify the below logic, after understand what is being done here.
+        label_ids = [l.id for l in label_list.labels.all()]
         if label_list.todo_list:
             todos_qs = ToDo.objects.filter(labels__id__in=label_ids).distinct()
             todos = []
@@ -734,72 +647,52 @@ def get_user_label_lists(request, user_id):
 
         else:
             todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
-        todos_holder = []
-        for todo in todos:
-            todo_dict = TodoSerializer(todo).data
-            todos_holder.append(todo_dict)
 
-        list_dict['todos'] = todos_holder
+        list_dict['todos'] = TodoSerializer(todos, many=True).data
         list_dict['expanded'] = label_list.expanded
         lists_holder.append(list_dict)
 
     resp['todo_lists'] = lists_holder
-
     return ajax_response(resp)
 
+
+@permissions_required(["add_todo"])
 @login_required
 def delete_todo_list(request, list_id):
+    LabeledToDoList.objects.get(id=list_id).delete()
     resp = {}
-    resp['success'] = False
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        todo_list = LabeledToDoList.objects.get(id=list_id)
-
-        todo_list.delete()
-
-        resp['success'] = True
-
+    resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 def staff_all_todos(request, user_id):
     resp = {}
     staff = User.objects.get(id=user_id)
-
-    team_members = PhysicianTeam.objects.filter(member=staff)
-    physician_ids = [long(x.physician.id) for x in team_members]
+    team_members = PhysicianTeam.objects.filter(member_id=user_id)
+    physician_ids = [x.physician.id for x in team_members]
     patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
-    patient_ids = [long(x.patient.id) for x in patient_controllers]
-
-    todos = ToDo.objects.filter(accomplished=False, patient__id__in=patient_ids, due_date__lte=datetime.now()).order_by('-due_date')
-    todos_list = TodoSerializer(todos, many=True).data
-
-    resp['all_todos_list'] = todos_list
-
+    patient_ids = [x.patient.id for x in patient_controllers]
+    todos = ToDo.objects.filter(accomplished=False, patient__id__in=patient_ids,
+                                due_date__lte=datetime.now()).order_by('-due_date')
+    resp['all_todos_list'] = TodoSerializer(todos, many=True).data
     return ajax_response(resp)
 
+
+@permissions_required(["add_todo"])
 @login_required
 def open_todo_list(request, list_id):
     resp = {}
-    resp['success'] = False
-    permissions = ['add_todo']
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    todo_list = LabeledToDoList.objects.get(id=list_id)
+    expanded = todo_list.expanded
+    data = json.loads(request.body)
+    todos = data['todos']
 
-    if permitted:
-        todo_list = LabeledToDoList.objects.get(id=list_id)
-        expanded = todo_list.expanded
-        datas = json.loads(request.body)
-        todos = datas['todos']
+    for todo in todos:
+        if not todo['id'] in expanded:
+            expanded.append(todo['id'])
 
-        for todo in todos:
-            if not todo['id'] in expanded:
-                expanded.append(todo['id'])
-
-        todo_list.expanded = expanded
-        todo_list.save()
-
-        resp['success'] = True
-
+    todo_list.expanded = expanded
+    todo_list.save()
+    resp['success'] = True
     return ajax_response(resp)
