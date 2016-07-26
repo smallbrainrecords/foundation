@@ -156,6 +156,8 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
     from goals_app.serializers import GoalSerializer
     from encounters_app.serializers import EncounterSerializer
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
+    labels = ProblemLabelSerializer(many=True)
+    start_date = serializers.DateField()
     problem_goals = GoalSerializer(many=True, source="goal_set")
     problem_todos = TodoSerializer(many=True, source="todo_set")
     problem_images = PatientImageSerializer(many=True, source="patientimage_set")
@@ -195,10 +197,17 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         return problem_notes
 
     def get_effecting_problems(self, obj):
-        return [relationship.target.id for relationship in obj.target.all()]
+        from emr.models import ProblemRelationship
+        relations = ProblemRelationship.objects.filter(target=obj)
+        effecting_problems = [relationship.source.id for relationship in relations]
+        print "Effecting Problems: " + str(effecting_problems)
+        return effecting_problems
 
     def get_effected_problems(self, obj):
-        return [relationship.source.id for relationship in obj.source.all()]
+        from emr.models import ProblemRelationship
+        relations = ProblemRelationship.objects.filter(source=obj)
+        return [relationship.target.id for relationship in relations]
+
 
     def get_patient_other_problems(self, obj):
         patient_problems = Problem.objects.filter(patient=obj.patient).exclude(id=obj.id)
@@ -207,9 +216,10 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
 
     def get_related_encounters(self, obj):
         from encounters_app.serializers import EncounterSerializer
-        encounter_records = obj.problem_encounter_records.all()
-        related_encounters = [record.encounter for record in encounter_records]
+        encounter_records = obj.problem_encounter_records
+        related_encounters = [record.encounter for record in encounter_records.all()]
         return EncounterSerializer(related_encounters, many=True).data
+
 
     def get_observations(self, obj):
         observations = obj.problem_observations.all()

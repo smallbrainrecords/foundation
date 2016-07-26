@@ -47,10 +47,11 @@
 			function convertDateTime(problem){
 				if(problem.start_date) {
 					var dateTime = problem.start_date;
-					var date = dateTime.split("/");
-				    var yyyy = date[2];
-				    var mm = date[0];
-				    var dd = date[1];
+                    console.log("Start Date: " + dateTime)
+					var date = dateTime.split("-");
+				    var yyyy = date[0];
+				    var mm = date[1];
+				    var dd = date[2];
 
 				    if (problem.start_time) {
 				    	return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
@@ -103,14 +104,16 @@
 						'name': problem.problem_name,
 						'id': problem.id,
 						events: [
-							{ 
-								event_id: new Date().getTime(), 
-								startTime: convertDateTime(problem), 
-								state: state 
+							{
+								event_id: new Date().getTime(),
+								startTime: convertDateTime(problem),
+								state: state
 							},
 						]
 					}
 				];
+
+                console.log("Timeline Problems: " + JSON.stringify(timeline_problems));
 
 				return timeline_problems;
 			}
@@ -118,7 +121,7 @@
 			function parseTimelineWithSegment(problem) {
 				var events = [];
 				var event;
-				
+
 				angular.forEach(problem.problem_segment, function(value) {
 					event = {};
 					event['event_id'] = value.event_id;
@@ -149,7 +152,7 @@
 				return event;
 			}
 
-			$scope.timelineSave = function (newData) { 
+			$scope.timelineSave = function (newData) {
 				var form = {};
 
 				form.patient_id = $scope.patient_id;
@@ -166,7 +169,7 @@
                 $scope.problem = data['info'];
 
                 // problem timeline
-                if ($scope.problem.problem_segment.length > 0) {
+                if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {
                 	var timeline_problems = parseTimelineWithSegment($scope.problem);
                 } else {
                 	var timeline_problems = parseTimelineWithoutSegment($scope.problem);
@@ -174,8 +177,8 @@
 
 				$scope.$watch('active_user', function(nV, oV){
 					$scope.timeline = {
-						Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'], 
-						birthday: convertDateTimeBirthday($scope.active_user['date_of_birth']), 
+						Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'],
+						birthday: convertDateTimeBirthday($scope.active_user['date_of_birth']),
 						problems: timeline_problems
 					};
 
@@ -195,7 +198,7 @@
                 $scope.effected_problems = data['effected_problems'];
 
                 $scope.history_note = data['history_note'];
-                
+
                 var wiki_notes = data['wiki_notes'];
 
                 $scope.patient_wiki_notes = wiki_notes['patient'];
@@ -331,7 +334,7 @@
 				if(problem_term == '' || problem_term == undefined) {
 					return false;
 				}
-				
+
 				var c = confirm("Are you sure?");
 
 				if(c==false){
@@ -473,7 +476,7 @@
                         }
                     });
                 }
-                
+
             }
 
             $scope.deleteEditProblemLabel = function(label) {
@@ -579,7 +582,7 @@
 				if($scope.active_user.role != "physician" && $scope.active_user.role != "admin")
 					$scope.problem.authenticated = false;
 			}
-			
+
 
 			$scope.update_start_date = function(){
 
@@ -642,7 +645,7 @@
 
 						$scope.history_note = data['note'];
 						$scope.set_authentication_false();
-						
+
 					}else if(data['success']==false){
 						toaster.pop('error', 'Warning', 'Action Failed');
 					}else{
@@ -771,7 +774,7 @@
 				var found = false;
 
 				angular.forEach(item_list, function(value){
-					
+
 					if(value==id){
 						found = true;
 					}
@@ -800,7 +803,7 @@
 
 			$scope.change_effected_problem = function(problem, target){
 
-				
+
 				var effected = target.effected;
 
 				var form = {};

@@ -456,6 +456,7 @@ def fetch_active_user(request):
     user_profile = UserProfile.objects.get(user=request.user)
 
     user_profile_serialized = UserProfileSerializer(user_profile).data
+    print user_profile_serialized
     user_profile_serialized['permissions'] = ROLE_PERMISSIONS[user_profile.role]
 
     resp = {}
