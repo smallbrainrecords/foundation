@@ -216,9 +216,14 @@
 
 				// observations
 				$scope.observations = data['observations'];
-                problemService.fetchObservations(problem_id).then(function(data2) {
-                	$scope.observations = data2['observations'];
-                });
+				if ($scope.observations.length > 0) {
+					problemService.fetchObservations(problem_id).then(function(data2) {
+	                	$scope.observations = data2['observations'];
+	                });
+				}
+
+				// observations
+				$scope.colon_cancers = data['colon_cancer'];
 
                 if($scope.history_note!=null){
 

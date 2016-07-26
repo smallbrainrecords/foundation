@@ -22,6 +22,7 @@ from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem
 from emr.models import EncounterProblemRecord, Encounter
 from emr.models import Observation, SharingPatient, PhysicianTeam, ObservationComponent
+from emr.models import ColonCancerScreening
 
 from emr.operations import op_add_event, op_add_todo_event
 
@@ -91,6 +92,10 @@ def get_problem_info(request, problem_id):
     if problem_info.concept_id in ['73211009', '46635009', '44054006']:
         Observation.objects.create_if_not_exist(problem_info)
 
+    # add colon cancer widget to problems that have concept id 102499006
+    if problem_info.concept_id in ['102499006']:
+        ColonCancerScreening.objects.create_if_not_exist(problem_info)
+
     serialized_problem = ProblemInfoSerializer(problem_info).data
     # Notes - Todo
     patient_notes = []
@@ -123,6 +128,7 @@ def get_problem_info(request, problem_id):
         'activities': serialized_problem["activities"],
         'related_encounters': serialized_problem["related_encounters"],
         'observations': serialized_problem["observations"],
+        'colon_cancer': serialized_problem["colon_cancer"],
         'sharing_patients': sharing_patients_list
     }
 

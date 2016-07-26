@@ -103,3 +103,10 @@ class TodoManager(models.Manager):
             order = order['order__max'] + 1
         new_todo = self.create(user_id=user_id, todo=todo_name, due_date=due_date, order=order)
         return new_todo
+
+
+class ColonCancerScreeningManager(models.Manager):
+    def create_if_not_exist(self, problem):
+        from emr.models import ColonCancerScreening
+        if not ColonCancerScreening.objects.filter(problem=problem).exists():
+            ColonCancerScreening.objects.create(problem=problem, patient=problem.patient.profile)

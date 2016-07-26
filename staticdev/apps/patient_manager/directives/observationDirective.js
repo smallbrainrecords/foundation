@@ -1,8 +1,8 @@
 var observations = angular.module('observations', []);
 
-observations.directive('observation', ['observationService', 'toaster', '$location', '$timeout', 'problemService', 'prompt', observationDirective]);
+observations.directive('observation', ['CollapseService', 'observationService', 'toaster', '$location', '$timeout', 'problemService', 'prompt', observationDirective]);
 
-function observationDirective(observationService, toaster, $location, $timeout, problemService, prompt, todoService) {
+function observationDirective(CollapseService, observationService, toaster, $location, $timeout, problemService, prompt, todoService) {
 
     var observationObj = {}; 
 
@@ -15,10 +15,10 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                         if(newVal) {
                             scope.observation = scope.$eval(attr.ngModel);
                             scope.today = moment();
-                            scope.show_collapse = false;
+                            scope.show_observation_collapse = CollapseService.show_observation_collapse;
                             if (scope.observation.observation_todos)
                                 if (scope.observation.observation_todos.length)
-                                    scope.a1c_date = moment(scope.observation.observation_todos[scope.observation.observation_todos.length -1].due_date);
+                                    scope.a1c_date = moment(scope.observation.observation_todos[scope.observation.observation_todos.length -1].due_date, "MM/DD/YYYY");
 
                             if(scope.observation.observation_components.length && scope.observation.todo_past_six_months==false) {
                                 scope.last_measurement = scope.observation.observation_components[scope.observation.observation_components.length -1];
@@ -48,14 +48,17 @@ function observationDirective(observationService, toaster, $location, $timeout, 
                             }
 
                             scope.open_a1c = function(){
-                                if (!scope.show_collapse) {
+                                if (!scope.show_observation_collapse) {
                                     var form = {};
                                     form.observation_id = scope.observation.id;
                                     observationService.trackObservationClickEvent(form).then(function(data){
-                                        scope.show_collapse = true;
+                                        CollapseService.ChangeObservationCollapse();
+                                        scope.show_observation_collapse = CollapseService.show_observation_collapse;
                                     });
-                                } else {
-                                    scope.show_collapse = false;
+                                }
+                                else {
+                                    CollapseService.ChangeObservationCollapse();
+                                    scope.show_observation_collapse = CollapseService.show_observation_collapse;
                                 }
                             };
 

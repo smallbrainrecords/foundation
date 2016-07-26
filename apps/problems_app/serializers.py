@@ -168,6 +168,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
     activities = ProblemActivitySerializer(many=True, source="problemactivity_set")
     related_encounters = serializers.SerializerMethodField()
     observations = serializers.SerializerMethodField()
+    colon_cancer = serializers.SerializerMethodField()
 
     class Meta:
         model = Problem
@@ -247,3 +248,16 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
 
             observations_holder.append(observation_dict)
         return observations_holder
+
+    def get_colon_cancer(self, obj):
+        colon_cancers = obj.problem_colon_cancer.all()
+        colon_cancer_holder = []
+        for colon_cancer in colon_cancers:
+            colon_cancer_dict = {
+                'id': colon_cancer.id,
+                'patient_refused': colon_cancer.patient_refused,
+                'created_on':  colon_cancer.created_on.isoformat() if colon_cancer.created_on else '',
+            }
+
+            colon_cancer_holder.append(colon_cancer_dict)
+        return colon_cancer_holder

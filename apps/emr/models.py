@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
-from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager, TodoManager
+from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager, TodoManager, ColonCancerScreeningManager
 
 # DATA
 ROLE_CHOICES = (
@@ -642,3 +642,15 @@ class CommonProblem(models.Model):
     problem_name = models.CharField(max_length=200)
     concept_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     problem_type = models.CharField(max_length=10, choices=COMMON_PROBLEM_TYPE_CHOICES, default='acute')
+
+
+class ColonCancerScreening(models.Model):
+    patient = models.ForeignKey(UserProfile, related_name='patient_colon_cancer')
+    created_on = models.DateTimeField(auto_now_add=True)
+    problem = models.ForeignKey(Problem, related_name='problem_colon_cancer')
+    patient_refused = models.BooleanField(default=False)
+
+    objects = ColonCancerScreeningManager()
+
+    class Meta:
+        ordering = ['-created_on']

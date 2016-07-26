@@ -6,7 +6,7 @@
     var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule',
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine',
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate',
-        'observations', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam']);
+        'observations', 'colon_cancers', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam']);
 
 
     ManagerApp.config(function ($routeProvider, recorderServiceProvider) {
@@ -78,6 +78,23 @@
                 controller: 'ManageSharingProblemCtrl'
             });
 
+    });
+
+    ManagerApp.factory('CollapseService', function() {
+        var CollapseService = {};
+
+        CollapseService.show_colon_collapse = false;
+        CollapseService.show_observation_collapse = false;
+
+        CollapseService.ChangeColonCollapse = function () {
+           CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
+        };
+
+        CollapseService.ChangeObservationCollapse = function () {
+           CollapseService.show_observation_collapse = !CollapseService.show_observation_collapse;
+        };
+
+        return CollapseService;
     });
 
 

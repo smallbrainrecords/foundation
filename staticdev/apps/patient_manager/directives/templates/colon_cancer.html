@@ -1,0 +1,76 @@
+<div class='col-md-12'>
+	<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+		<div class="panel panel-default">
+			<div class="panel-heading" role="tab" id="headingOne" ng-click="open_colon()">
+				<div ng-show="!show_colon_collapse" >
+  					<i class="fa fa-caret-right" aria-hidden="true"></i>
+					Colorectal cancer screening
+				</div>
+				<div ng-show="show_colon_collapse"><i class="fa fa-caret-down" aria-hidden="true"></i> Hide</div>
+			</div>
+			<div ng-show="show_colon_collapse">
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="io-box">
+										<p><b>Most recent study</b></p>
+										<div class="row">
+											<div class="col-md-6">colonoscopy</div>
+											<div class="col-md-6"></div>
+										</div>
+										<div class="row">
+											<div class="col-md-6">no polyps</div>
+											<div class="col-md-6"><a href class="btn btn-default">View report</a></div>
+										</div>
+										<p>display study note</p>
+										<p>ONLY if there is one</p>
+										<p>updated by "user" on "mm/dd/yyyy"</p>
+										<p><a href class="btn btn-default">Edit</a></p>
+										<div class="row">
+											<div class="col-md-6"><a href class="btn btn-default">Add new study</a></div>
+											<div class="col-md-6"><a href class="btn btn-default">View past studies</a></div>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-12">
+									<div class="io-box">
+										<p><b>Risk:</b> High</p>
+										<p>Family history of colorectal cancer</p>
+										<p>updated by "user" on "mm/dd/yyyy"</p>
+										<p><a href class="btn btn-default">Update</a></p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="row">
+								<div class="col-md-12">
+									<div class="io-box">
+										<p><b>Plan</b></p>
+										<p>Pending order:</p>
+										<p><a href class='btn btn-default'>Add new order</a></p>
+										<p><a href class='btn btn-default'>Repeat colonoscopy in 10 years</a></p>
+										<div class="row">
+											<div class="col-md-6"><a href class="btn btn-default">Add a different task</a></div>
+											<div class="col-md-6"><a href class="btn btn-default">Not appropriate</a></div>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-12">
+									<div class="io-box">
+										<p><b>Note:</b></p>
+										<textarea class="form-control"></textarea>
+										<p><a href class="btn btn-default">Update</a></p>
+										<p>updated by "user" on "mm/dd/yyyy"</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
