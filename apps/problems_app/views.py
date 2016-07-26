@@ -98,7 +98,7 @@ def get_problem_info(request, problem_id):
     patient_note_holder = [TextNoteSerializer(note).data for note in patient_notes]
     physician_note_holder = [TextNoteSerializer(note).data for note in physician_notes]
 
-    sharing_patients = SharingPatient.objects.select_related("problems").filter(
+    sharing_patients = SharingPatient.objects.filter(
                             shared=problem_info.patient).order_by('sharing__first_name', 'sharing__last_name')
 
     sharing_patients_list = []

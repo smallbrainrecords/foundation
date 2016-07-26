@@ -273,12 +273,12 @@ def get_patient_info(request, patient_id):
     resp = {}
     resp['info'] = UserProfileSerializer(patient_profile).data
     resp['problems'] = problem_list
-    resp['goals'] = GoalSerializer(goals, many=True)
+    resp['goals'] = GoalSerializer(goals, many=True).data
     resp['inactive_problems'] = ProblemSerializer(inactive_problems, many=True).data
-    resp['completed_goals'] = GoalSerializer(completed_goals, many=True)
+    resp['completed_goals'] = GoalSerializer(completed_goals, many=True).data
     resp['encounters'] = EncounterSerializer(encounters, many=True).data
     resp['favorites'] = EncounterEventSerializer(favorites, many=True).data
-    resp['most_recent_encounter_summarries'] = most_recent_encounter_summarries
+    resp['most_recent_encounter_summarries'] = most_recent_encounter_summaries
     resp['most_recent_encounter_related_problems'] = related_problem_holder
     resp['shared_patients'] = patients_list
     resp['sharing_patients'] = sharing_patients_list
@@ -456,10 +456,11 @@ def fetch_active_user(request):
     user_profile = UserProfile.objects.get(user=request.user)
 
     user_profile_serialized = UserProfileSerializer(user_profile).data
+    print user_profile_serialized
     user_profile_serialized['permissions'] = ROLE_PERMISSIONS[user_profile.role]
 
     resp = {}
-    resp['user_profile'] = user_profile
+    resp['user_profile'] = user_profile_serialized
     return ajax_response(resp)
 
 
