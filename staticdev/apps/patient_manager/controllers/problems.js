@@ -47,10 +47,11 @@
 			function convertDateTime(problem){
 				if(problem.start_date) {
 					var dateTime = problem.start_date;
-					var date = dateTime.split("/");
-				    var yyyy = date[2];
-				    var mm = date[0];
-				    var dd = date[1];
+                    console.log("Start Date: " + dateTime)
+					var date = dateTime.split("-");
+				    var yyyy = date[0];
+				    var mm = date[1];
+				    var dd = date[2];
 
 				    if (problem.start_time) {
 				    	return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
@@ -111,6 +112,8 @@
 						]
 					}
 				];
+
+                console.log("Timeline Problems: " + JSON.stringify(timeline_problems));
 
 				return timeline_problems;
 			}
