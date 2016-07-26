@@ -278,7 +278,7 @@ def get_patient_info(request, patient_id):
     resp['completed_goals'] = GoalSerializer(completed_goals, many=True).data
     resp['encounters'] = EncounterSerializer(encounters, many=True).data
     resp['favorites'] = EncounterEventSerializer(favorites, many=True).data
-    resp['most_recent_encounter_summarries'] = most_recent_encounter_summaries
+    resp['most_recent_encounter_summaries'] = most_recent_encounter_summaries
     resp['most_recent_encounter_related_problems'] = related_problem_holder
     resp['shared_patients'] = patients_list
     resp['sharing_patients'] = sharing_patients_list

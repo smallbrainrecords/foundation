@@ -181,7 +181,7 @@
 
                 $scope.encounters = data['encounters'];
                 $scope.favorites = data['favorites'];
-                $scope.most_recent_encounter_summarries = data['most_recent_encounter_summarries'];
+                $scope.most_recent_encounter_summaries = data['most_recent_encounter_summaries'];
                 $scope.most_recent_encounter_related_problems = data['most_recent_encounter_related_problems'];
                 $scope.shared_patients = data['shared_patients'];
                 $scope.sharing_patients = data['sharing_patients'];
@@ -652,9 +652,9 @@
                     var text = '';
 
                     // encounter copy
-                    if ($scope.most_recent_encounter_summarries.length > 0) {
+                    if ($scope.most_recent_encounter_summaries.length > 0) {
                         text += "All the encounter summaries from the most recent encounter: \r\n";
-                        angular.forEach($scope.most_recent_encounter_summarries, function (value, key) {
+                        angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
                             var container = $("<div/>");
                             container.append(value);
 

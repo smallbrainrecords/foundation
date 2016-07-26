@@ -208,6 +208,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         relations = ProblemRelationship.objects.filter(source=obj)
         return [relationship.target.id for relationship in relations]
 
+
     def get_patient_other_problems(self, obj):
         patient_problems = Problem.objects.filter(patient=obj.patient).exclude(id=obj.id)
         patient_problem_serializer = ProblemSerializer(patient_problems, many=True).data
@@ -218,6 +219,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         encounter_records = obj.problem_encounter_records
         related_encounters = [record.encounter for record in encounter_records.all()]
         return EncounterSerializer(related_encounters, many=True).data
+
 
     def get_observations(self, obj):
         observations = obj.problem_observations.all()
