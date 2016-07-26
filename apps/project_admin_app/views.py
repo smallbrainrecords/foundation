@@ -301,26 +301,33 @@ def create_user(request):
                         user_profile.portrait_image = portrait_image
 
                     user_profile.save()
-
-                    if actor_profile is not None and role == 'patient':
-                        if actor_profile.role == 'physician':
-                            patient_controller = PatientController(
-                                patient=new_user,
-                                physician=actor,
-                                author=True)
-                            patient_controller.save()
-
-                        if actor_profile.role == 'mid-level' or actor_profile.role == 'nurse' or actor_profile.role == 'secretary':
-                            teams = PhysicianTeam.objects.filter(member=actor)
-                            physician_ids = [x.physician.id for x in teams]
-
-                            physicians = User.objects.filter(id__in=physician_ids)
-                            for physician in physicians:
+                    if actor_profile is not None:
+                        if role == 'patient':
+                            if actor_profile.role == 'physician':
                                 patient_controller = PatientController(
                                     patient=new_user,
-                                    physician=physician,
+                                    physician=actor,
                                     author=True)
                                 patient_controller.save()
+
+                            if actor_profile.role == 'mid-level' or actor_profile.role == 'nurse' or actor_profile.role == 'secretary':
+                                teams = PhysicianTeam.objects.filter(member=actor)
+                                physician_ids = [x.physician.id for x in teams]
+
+                                physicians = User.objects.filter(id__in=physician_ids)
+                                for physician in physicians:
+                                    patient_controller = PatientController(
+                                        patient=new_user,
+                                        physician=physician,
+                                        author=True)
+                                    patient_controller.save()
+
+                        if role == 'mid-level' or role == 'nurse' or role == 'secretary':
+                            if actor_profile.role == 'physician':
+                                team = PhysicianTeam(
+                                    member=new_user,
+                                    physician=actor)
+                                team.save()
 
                     success = True
 

@@ -21,7 +21,7 @@
 				}
 
                 if (form.month != '' && form.month != undefined) {
-                    form.due_date = moment().add(form.month, "months").format("YYYY-MM-DD");
+                    form.due_date = moment().add(form.month, "months").format("MM/DD/YYYY");
                     form.name = 'a1c repeats in ' + form.month + ' months';
                 }
 
