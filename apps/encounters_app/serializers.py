@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from emr.models import Encounter, EncounterEvent
 from emr.models import EncounterProblemRecord
-from problems_app.serializers import ProblemSerializer
 
 
 class EncounterSerializer(serializers.ModelSerializer):

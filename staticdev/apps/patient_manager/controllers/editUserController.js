@@ -5,7 +5,7 @@
 
 	angular.module('ManagerApp')
 		.controller('EditUserCtrl', function(
-			$scope, $routeParams, ngDialog, 
+			$scope, $routeParams, ngDialog,
 			patientService, $location, $anchorScroll, toaster){
 
 			$scope.staff_roles = ['nurse','secretary', 'mid-level'];
@@ -20,6 +20,8 @@
 
 				patientService.fetchPatientInfo($scope.user_id).then(function(data){
 					$scope.user_profile = data['info'];
+                    $scope.sharing_patients = data['sharing_patients'];
+                    $scope.shared_patients = data['shared_patients'];
 				});
 
 
@@ -57,7 +59,7 @@
 				form.role = $scope.user_profile.role;
 				form.summary = $scope.user_profile.summary;
 				form.date_of_birth = $scope.user_profile.date_of_birth;
-				
+
 				var files = $scope.files;
 
 				patientService.updateProfile(form, files).then(function(data){
@@ -70,7 +72,7 @@
 					}else{
 						toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
 					}
-					
+
 				});
 
 			};
@@ -93,7 +95,7 @@
 					}else{
 						toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
 					}
-					
+
 				});
 
 			};
@@ -134,7 +136,7 @@
 
 			$scope.navigate = function(l){
 				/* Replace by directive */
-				
+
 				$("html, body").animate({ scrollTop: $('#'+l).offset().top-100 }, 500);
 			};
 

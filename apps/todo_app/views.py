@@ -13,7 +13,6 @@ from emr.operations import op_add_event, op_add_todo_event
 
 from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, \
     TodoActivitySerializer, LabelSerializer, LabeledToDoListSerializer
-from encounters_app.serializers import EncounterSerializer
 from users_app.serializers import UserProfileSerializer
 
 from emr.manage_patient_permissions import check_permissions
@@ -234,6 +233,7 @@ def update_order(request):
 
 @login_required
 def get_todo_info(request, todo_id):
+    from encounters_app.serializers import EncounterSerializer
     todo_info = ToDo.objects.get(id=todo_id)
     comments = ToDoComment.objects.filter(todo=todo_info)
     attachments = ToDoAttachment.objects.filter(todo=todo_info)
