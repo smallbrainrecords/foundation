@@ -86,12 +86,22 @@
                 });
             };
 
+            /**
+             *
+             * Add an timestamp event
+             * Get timestamp of current playing audio.
+             * TODO:1. Ask @Jim for default timestamp will be added if there is any error
+             * TODO:2. Ask @Rohit for adding support we can add timestamp from client.Currently not supported yet
+             * Default timestamp: 0
+             */
             $scope.add_timestamp = function () {
+                // Get default encounter element page
+                var myAudio = document.getElementById('audio1');
 
                 var form = {};
                 form.encounter_id = $scope.encounter_id;
                 form.patient_id = $scope.patient_id;
-                // form.timestamp = timestamp;
+                form.timestamp = (myAudio != undefined && myAudio !=null)? myAudio.currentTime : 0;
                 // form.summary = $scope.summary;
                 encounterService.addTimestamp(form).then(function (data) {
                     if (data['success'] == true) {
