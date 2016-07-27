@@ -110,3 +110,9 @@ class ColonCancerScreeningManager(models.Manager):
         from emr.models import ColonCancerScreening
         if not ColonCancerScreening.objects.filter(problem=problem).exists():
             ColonCancerScreening.objects.create(problem=problem, patient=problem.patient.profile)
+
+
+class ColonCancerStudyManager(models.Manager):
+    def create_new_study(self, colon_cancer):
+        self.create(colon=colon_cancer, patient=problem.patient.profile)
+        

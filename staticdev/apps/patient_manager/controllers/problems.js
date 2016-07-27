@@ -222,8 +222,13 @@
 	                });
 				}
 
-				// observations
+				// colon_cancers
 				$scope.colon_cancers = data['colon_cancer'];
+				if ($scope.colon_cancers.length > 0) {
+					problemService.fetchColonCancerss(problem_id).then(function(data2) {
+	                	$scope.colon_cancers = data2['colon_cancers'];
+	                });
+				}
 
                 if($scope.history_note!=null){
 

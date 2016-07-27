@@ -21,6 +21,7 @@ urlpatterns = patterns(
     url(r'^problem/(?P<problem_id>\d+)/upload_image$', 'upload_problem_image'),
     url(r'^problem/(?P<problem_id>\d+)/image/(?P<image_id>\d+)/delete/$', 'delete_problem_image'),
     url(r'^problem/(?P<problem_id>\d+)/observations$', 'get_observations'),
+    url(r'^problem/(?P<problem_id>\d+)/colon_cancers$', 'get_colon_cancers'),
 
     url(r'^problem/relate/$', 'relate_problem'),
     url(r'^problem/updateOrder/$', 'update_order'),

@@ -76,6 +76,14 @@
 
                 templateUrl: '/static/apps/patient_manager/partials/manage_sharing_problem.html',
                 controller: 'ManageSharingProblemCtrl'
+            })
+            .when("/colon_cancer/:colon_id/add_new_study", {
+                templateUrl: '/static/apps/patient_manager/partials/colon_cancer/add_new_study.html',
+                controller: 'AddNewStudyCtrl'
+            })
+            .when("/colon_cancer/:colon_id/edit_study/:study_id", {
+                templateUrl: '/static/apps/patient_manager/partials/colon_cancer/edit_study.html',
+                controller: 'EditStudyCtrl'
             });
 
     });

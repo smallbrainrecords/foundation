@@ -1,8 +1,8 @@
 var colon_cancers = angular.module('colon_cancers', []);
 
-colon_cancers.directive('colonCancer', ['toaster', '$location', '$timeout', 'prompt', 'CollapseService', colonCancerDirective]);
+colon_cancers.directive('colonCancer', ['toaster', '$location', '$timeout', 'prompt', 'CollapseService', 'colonService', colonCancerDirective]);
 
-function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseService) {
+function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseService, colonService) {
 
     var colonCancerObj = {}; 
 
@@ -20,6 +20,21 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                 CollapseService.ChangeColonCollapse();
                                 scope.show_colon_collapse = CollapseService.show_colon_collapse;
                             };
+
+                            scope.delete_study = function(study) {
+                                prompt({
+                                    "title": "Are you sure?",
+                                    "message": "Deleting a study is forever. There is no undo."
+                                }).then(function(result){
+                                    colonService.deleteStudy(study).then(function(data){
+                                        var index = scope.colon_cancer.colon_studies.indexOf(study);
+                                        scope.colon_cancer.colon_studies.splice(index, 1);
+                                        toaster.pop('success', 'Done', 'Deleted study successfully');
+                                    });
+                                },function(){
+                                    return false;
+                                });
+                            }
                         }
                     }, true);
                 }

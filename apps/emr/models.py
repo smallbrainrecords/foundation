@@ -4,7 +4,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
-from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager, TodoManager, ColonCancerScreeningManager
+from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager, \
+    TodoManager, ColonCancerScreeningManager, ColonCancerStudyManager
 
 # DATA
 ROLE_CHOICES = (
@@ -654,3 +655,30 @@ class ColonCancerScreening(models.Model):
 
     class Meta:
         ordering = ['-created_on']
+
+
+class ColonCancerStudyImage(models.Model):
+    image = models.ImageField(upload_to='studies/', blank=True)
+    author = models.ForeignKey(User, null=True, blank=True)
+    colon = models.ForeignKey(ColonCancerScreening, null=True, blank=True)
+    datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.patient))
+
+
+class ColonCancerStudy(models.Model):
+    author = models.ForeignKey(UserProfile, related_name='author_studies')
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_studies')
+    created_on = models.DateTimeField(auto_now_add=True)
+    study_date = models.DateField(null=True, blank=True)
+    finding = models.CharField(max_length=100, null=True, blank=True)
+    result = models.CharField(max_length=100, null=True, blank=True)
+    note = models.TextField(null=True, blank=True)
+    last_updated_date = models.DateField(auto_now=True)
+    last_updated_user = models.ForeignKey(UserProfile, related_name='last_updated_user_studies', null=True, blank=True)
+
+    objects = ColonCancerStudyManager()
+
+    class Meta:
+        ordering = ['-study_date']

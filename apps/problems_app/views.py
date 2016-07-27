@@ -40,6 +40,7 @@ from problems_app.operations import add_problem_activity
 from problems_app.services import ProblemService
 from todo_app.operations import add_todo_activity
 from observations_app.serializers import ObservationSerializer
+from colons_app.serializers import ColonCancerScreeningSerializer
 
 
 def permissions_required(permissions):
@@ -142,6 +143,15 @@ def get_observations(request, problem_id):
     resp = {}
     resp['success'] = True
     resp['observations'] = serialized_observations
+    return ajax_response(resp)
+
+@login_required
+def get_colon_cancers(request, problem_id):
+    colon_cancers = ColonCancerScreening.objects.filter(problem__id=problem_id)
+    serialized_colon_cancers = ColonCancerScreeningSerializer(colon_cancers, many=True).data
+    resp = {}
+    resp['success'] = True
+    resp['colon_cancers'] = serialized_colon_cancers
     return ajax_response(resp)
 
 @login_required
