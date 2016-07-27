@@ -65,10 +65,10 @@
                     $scope.blobs.push($scope.unsavedBlob);
                 } else {
                     $scope.encounter_flag = false;
+                    encounterRecorderFailSafeService.clearUnsavedData();
                 }
 
             });
-
             $scope.start_encounter = function () {
 
                 if ($scope.encounter_flag == true) {
@@ -157,7 +157,7 @@
                 $scope.minorRecorderFlag = !$scope.minorRecorderFlag;
 
                 // Stop & convert the minor audio file
-                $scope.encounterCtrl = $scope.encounterCtrl  || recorderService.controller("audioInput");
+                $scope.encounterCtrl = $scope.encounterCtrl || recorderService.controller("audioInput");
                 $scope.encounterCtrl.status.isRecording ? $scope.encounterCtrl.stopRecord() : $scope.encounterCtrl.startRecord();
             };
 
