@@ -73,6 +73,14 @@
 
                 // write the ArrayBuffer to a blob, and you're done
                 return new Blob([ab]);
-            }
+            };
+
+            /**
+             * Remove last stored session
+             */
+            this.clearUnsavedData = function () {
+                localStorage.removeItem('cached-data');
+                localStorage.removeItem('cached-duration');
+            };
         });
 })();

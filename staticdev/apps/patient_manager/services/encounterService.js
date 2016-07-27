@@ -6,7 +6,11 @@
 		function($http, $q, $cookies, httpService){
 
 
+		 this.csrf_token = function () {
 
+			var token = $cookies.csrftoken;
+			return token;
+		};
 
 		this.updateNote = function(form){
 
@@ -52,7 +56,7 @@
 			$http.post(uploadUrl, fd, {
             		transformRequest: angular.identity,
 
-            		headers: {'Content-Type': undefined}
+            		headers: {'Content-Type': undefined,'X-CSRFToken': this.csrf_token()}
     	    	})
 	        	.success(function(data){
 	        		deferred.resolve(data);
@@ -86,7 +90,7 @@
 			$http.post(uploadUrl, fd, {
             		transformRequest: angular.identity,
 
-            		headers: {'Content-Type': undefined}
+            		headers: {'Content-Type': undefined,'X-CSRFToken': this.csrf_token()}
     	    	})
 	        	.success(function(data){
 	        		deferred.resolve(data);

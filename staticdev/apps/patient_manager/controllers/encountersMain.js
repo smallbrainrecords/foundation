@@ -46,7 +46,7 @@
              * Status of the minor recorder
              * @type {boolean}
              */
-            $scope.minorRecorderFlag = false;
+            // $scope.minorRecorderFlag = false;
 
             $scope.show_encounter_ui = false;
 
@@ -65,10 +65,10 @@
                     $scope.blobs.push($scope.unsavedBlob);
                 } else {
                     $scope.encounter_flag = false;
+                    encounterRecorderFailSafeService.clearUnsavedData();
                 }
 
             });
-
             $scope.start_encounter = function () {
 
                 if ($scope.encounter_flag == true) {
@@ -150,15 +150,31 @@
             };
 
             /**
+             * toggle_recorder
              * Pause or Resume recorder while encounter
+             * Add new time stamp for later
              */
             $scope.toggle_recorder = function () {
-                // Toggle the flag
-                $scope.minorRecorderFlag = !$scope.minorRecorderFlag;
-
                 // Stop & convert the minor audio file
-                $scope.encounterCtrl = $scope.encounterCtrl  || recorderService.controller("audioInput");
+                $scope.encounterCtrl = $scope.encounterCtrl || recorderService.controller("audioInput");
                 $scope.encounterCtrl.status.isRecording ? $scope.encounterCtrl.stopRecord() : $scope.encounterCtrl.startRecord();
+
+                // Create new timestamp for this encounter too
+                var form = {};
+                form.encounter_id = $scope.encounter.id;
+                form.patient_id = $scope.patient_id;
+                form.timestamp = $scope.elapsedTime;
+                form.summary = $scope.encounterCtrl.status.isRecording ? "Encounter recorder paused" : "Encounter recorder resumed";
+                encounterService.addTimestamp(form).then(function (data) {
+                    if (data['success'] == true) {
+                        $rootScope.encounter_events.push(data['encounter_event']);
+                        toaster.pop('success', 'Done', 'Added timestamp!');
+                    } else {
+                        toaster.pop('error', 'Warning', 'Something went wrong!');
+                    }
+                });
+
+
             };
 
             /**
