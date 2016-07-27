@@ -93,12 +93,12 @@
                             <button type="button" class="btn btn-default" aria-label="Left Align"
                                     ng-if="!encounterCtrl.status.isConverting"
                                     ng-click='toggle_recorder()'>
-                                <span ng-if="!minorRecorderFlag" class="glyphicon glyphicon-play"
+                                <span ng-if="!encounterCtrl.status.isRecording" class="glyphicon glyphicon-play"
                                       aria-hidden="true"></span>
-                                <span ng-if="minorRecorderFlag" class="glyphicon glyphicon-pause"
+                                <span ng-if="encounterCtrl.status.isRecording" class="glyphicon glyphicon-pause"
                                       aria-hidden="true"></span>
                             </button>
-                            <span>Elapsed: {{ elapsedTime*1000 | duration }}</span>
+                            <span>Record time elapsed: {{ elapsedTime*1000 | duration }}</span>
                         </div>
 
                         <div class='col-md-4'>

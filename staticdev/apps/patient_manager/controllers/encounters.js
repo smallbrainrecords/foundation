@@ -4,7 +4,7 @@
 
 
     angular.module('ManagerApp')
-        .controller('EncountersCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, toaster, encounterService, ngAudio) {
+        .controller('EncountersCtrl', function ($scope,$rootScope, $routeParams, patientService, ngDialog, $location, toaster, encounterService, ngAudio) {
 
 
             var patient_id = $('#patient_id').val();
@@ -13,7 +13,6 @@
             $scope.encounter_id = encounter_id;
 
             patientService.fetchActiveUser().then(function (data) {
-
                 $scope.active_user = data['user_profile'];
 
             });
@@ -21,7 +20,7 @@
             patientService.fetchEncounterInfo(encounter_id).then(function (data) {
 
                 $scope.encounter = data['encounter'];
-                $scope.encounter_events = data['encounter_events'];
+               $rootScope.encounter_events = $scope.encounter_events = data['encounter_events'];
                 $scope.related_problems = data['related_problems'];
 
                 // If encounter include any audio automatically playing this audio
