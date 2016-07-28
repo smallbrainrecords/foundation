@@ -54,13 +54,25 @@
                 }
             }
 
-            $scope.addStudy = function(study) {
+            $scope.addStudy = function(study, image) {
                 if (study.finding == '' || study.result == '' || study.date == '' || study.finding == undefined || study.result == undefined || study.date == undefined) {
                     toaster.pop('error', 'Error', 'Please select!');
                 } else {
                     colonService.addNewStudy($scope.colon_id, study).then(function(data){
-                        toaster.pop('success', 'Done', 'Added study!');
-                        $location.url('/problem/' + $scope.colon_cancer.problem.id);
+                        var form = {};
+                        form.study_id = data.study.id;
+
+                        colonService.addImage(form, image).then(function(data){
+                            if(data['success']==true){
+                                toaster.pop('success', 'Done', 'Added study!');
+                            }else if(data['success']==false){
+                                toaster.pop('error', 'Error', 'Please fill valid data');
+                            }else{
+                                toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                            }
+                            $location.url('/problem/' + $scope.colon_cancer.problem.id);
+                        });
+                        
                     });
                 }
             }
@@ -131,7 +143,64 @@
                         toaster.pop('success', 'Done', 'Saved study!');
                     });
                 }
+            };
+
+            $scope.image_upload_url = function(){
+
+                var url = '/colon_cancer/study/'+$scope.study_id+'/upload_image';
+                return url;
             }
+
+            $scope.open_image_upload_box = function(){
+                ngDialog.open({
+                    template:'/static/apps/patient_manager/partials/modals/upload_image.html',
+                    className:'ngdialog-theme-default large-modal',
+                    scope:$scope,
+                    cache:false,
+                    controller: ['$scope',
+                    function($scope){
+                    }]
+                });
+            };
+
+
+            $scope.open_image_box = function(image){
+
+                    ngDialog.open({
+                        template:'/static/apps/patient_manager/partials/modals/image.html',
+                        className:'ngdialog-theme-default large-modal',
+                        scope:$scope,
+                        cache:false,
+                        controller: ['$scope',
+                        function($scope){
+
+                            $scope.image = image;
+
+                        }]
+                    });
+
+            };
+
+            $scope.delete_study_image = function(image){
+
+                var c = confirm("Are you sure ?");
+
+                if(c==false){
+                    return false;
+                }
+
+                var form = {};
+                form.study_id = $scope.study_id;
+                form.image_id = image.id;
+
+                colonService.deleteStudyImage(form).then(function(data){
+
+                    var image_index = $scope.study.study_images.indexOf(image);
+
+                    $scope.study.study_images.splice(image_index, 1);
+                    toaster.pop('success', 'Done', 'Deleted image!');
+                });
+            };
 
         }); /* End of controller */
 

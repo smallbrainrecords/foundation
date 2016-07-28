@@ -41,6 +41,49 @@
 				var url = '/colon_cancer/'+study.id+'/edit_study';
 				return httpService.post(study, url);
 			};
+
+			this.deleteStudyImage = function(form){
+
+				var url = '/colon_cancer/study/'+form.study_id+'/image/'+form.image_id+'/delete/';
+				return httpService.post(form, url);
+			};
+
+			this.addImage = function(form, file){
+	        	var deferred = $q.defer();
+
+	        	var uploadUrl = '/colon_cancer/study/'+form.study_id+'/addImage';
+
+	        	var fd = new FormData();
+
+	        	fd.append('csrfmiddlewaretoken', this.csrf_token());
+
+	        	fd.append(0, file);
+	        	
+
+	        	$http.post(uploadUrl, fd, {
+	            		transformRequest: angular.identity,
+	            		headers: {'Content-Type': undefined}
+	    	    	})
+		        	.success(function(data){
+		        		deferred.resolve(data);
+	        		})
+	        		.error(function(data){
+	        			deferred.resolve(data);
+
+	        		});
+
+	        	return deferred.promise;
+	    	};
+
+	    	this.addFactor = function(colon_id, factor) {
+				var url = '/colon_cancer/'+colon_id+'/add_factor';
+				return httpService.post(factor, url);
+			};
+
+			this.deleteFactor  = function(colon_id, factor) {
+				var url = '/colon_cancer/'+colon_id+'/delete_factor';
+				return httpService.post(factor, url);
+			};
 	});
 
 })();

@@ -36,6 +36,10 @@ COMMON_PROBLEM_TYPE_CHOICES = (
     ('acute', 'Acute'),
     ('chronic', 'Chronic'), )
 
+RISK_CHOICES = (
+    ('normal', 'Normal'),
+    ('high', 'High'), )
+
 
 # UTILITIES
 def get_path(instance, filename):
@@ -650,21 +654,14 @@ class ColonCancerScreening(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     problem = models.ForeignKey(Problem, related_name='problem_colon_cancer')
     patient_refused = models.BooleanField(default=False)
+    risk = models.CharField(max_length=10, choices=RISK_CHOICES, default='normal')
+    last_risk_updated_date = models.DateField(null=True, blank=True)
+    last_risk_updated_user = models.ForeignKey(UserProfile, related_name='last_risk_updated_user_colons', null=True, blank=True)
 
     objects = ColonCancerScreeningManager()
 
     class Meta:
         ordering = ['-created_on']
-
-
-class ColonCancerStudyImage(models.Model):
-    image = models.ImageField(upload_to='studies/', blank=True)
-    author = models.ForeignKey(User, null=True, blank=True)
-    colon = models.ForeignKey(ColonCancerScreening, null=True, blank=True)
-    datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-
-    def __unicode__(self):
-        return '%s' % (unicode(self.patient))
 
 
 class ColonCancerStudy(models.Model):
@@ -682,3 +679,31 @@ class ColonCancerStudy(models.Model):
 
     class Meta:
         ordering = ['-study_date']
+
+
+class ColonCancerStudyImage(models.Model):
+    image = models.ImageField(upload_to='studies/', blank=True)
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    study = models.ForeignKey(ColonCancerStudy, null=True, blank=True, related_name="study_images")
+    datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.patient))
+
+    def filename(self):
+        return os.path.basename(self.image.name)
+
+
+class RiskFactor(models.Model):
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_risk_factors')
+    factor = models.CharField(max_length=100, null=True, blank=True)
+
+
+class ColonCancerTextNote(models.Model):
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_notes')
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    note = models.TextField()
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "%s" % (self.note)

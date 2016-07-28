@@ -20,7 +20,7 @@
 		<div class='row'>
 
 			<div class='col-md-12'>
-				<b> New Study </b>
+				<b> Edit Study </b>
 				<hr>  
 
 				<form class='form-horizontal'>
@@ -60,6 +60,37 @@
 		</div>
 
 	</div><!-- End of Panel Body -->
+</div>
+
+<div class='panel panel-default'>
+	<div class='panel-heading'> 
+		Images 
+		<button class='btn btn-sm btn-default' ng-click='open_image_upload_box()'> Upload </button>
+	</div>
+
+	<div class='panel-body' ng-show="study.study_images.length > 0">
+
+		<div class='row'>
+
+			<div class='col-md-2' ng-repeat='image in study.study_images'>
+
+				<center>
+					<img ng-src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
+					<br>
+
+					<a href="{{image.image}}" target="_blank" class='btn btn-sm btn-default'>View</a>
+					
+					<button class='btn btn-sm btn-danger' ng-click='delete_study_image(image)'>
+						Delete 
+					</button>
+					<hr>
+				</center>
+			</div>
+
+		</div>
+
+	</div>
+
 </div>
 
 <script type='text/javascript'>
