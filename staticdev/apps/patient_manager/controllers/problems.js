@@ -19,6 +19,7 @@
 
 			$scope.loading = true;
 			$scope.show_other_notes = false;
+            $scope.show_physician_notes = false;
 			$scope.history_note_form = {};
 			$scope.wiki_note_form = {};
 			$scope.current_activity = 0;
@@ -619,6 +620,7 @@
 						if($scope.active_user.role=='patient'){
 							$scope.patient_wiki_notes.unshift(note);
 						}else if($scope.active_user.role=='physician'){
+                            $scope.show_physician_notes = true;
 							$scope.physician_wiki_notes.unshift(note);
 						}else{
 							$scope.show_other_notes = true;
@@ -851,6 +853,15 @@
 					$scope.show_other_notes = false;
 				}else{
 					$scope.show_other_notes = true;
+				}
+			};
+
+			$scope.toggle_physician_notes = function(){
+
+				if($scope.show_physician_notes==true){
+					$scope.show_physician_notes = false;
+				}else{
+					$scope.show_physician_notes = true;
 				}
 			};
 

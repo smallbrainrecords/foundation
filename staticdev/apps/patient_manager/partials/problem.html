@@ -29,18 +29,18 @@
 
 <div ng-if="!checkSharedProblem(problem, sharing_patients) && !loading">You can not access this page</div>
 <div ng-if="checkSharedProblem(problem, sharing_patients)">
-	
+
 	<span class='text-default'>
-		<i class='glyphicon glyphicon-menu-right'></i> 
+		<i class='glyphicon glyphicon-menu-right'></i>
 	</span>
 	<span class='text-muted'><b>  Problem: {{problem.problem_name}} <span ng-if="problem && !problem.authenticated">(not authenticated)</span></b></span>
 	<hr>
 
 	<div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"' ng-init="edit_problem=false;">
 		<div class="todo">
-			<h4 ng-show="!edit_problem">  
-				Problem : {{problem.problem_name}} 
-				<span ng-if="problem && !problem.authenticated">(not authenticated)</span> 
+			<h4 ng-show="!edit_problem">
+				Problem : {{problem.problem_name}}
+				<span ng-if="problem && !problem.authenticated">(not authenticated)</span>
 				<!-- begin label -->
 				<span class="quick-card-editor-label">
 					<a ng-repeat="label in problem.labels" href class="todo-label" ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
@@ -54,7 +54,7 @@
 				<!-- end sharing patients -->
 				<a href class="btn-custom" ng-click="edit_problem=!edit_problem"><i class="fa fa-pencil"></i></a>
 			</h4>
-			
+
 			<!-- begin change item -->
 			<div class="quick-card-editor" id="main-menu" ng-show='edit_problem' >
 
@@ -62,7 +62,7 @@
 				<div class="quick-card-editor-text">
 					<div class='row' ng-show='permitted(["change_problem_name"])'>
 						<div class='col-md-12'>
-						
+
 							<input type='text' ng-model='problem_term' class='form-control' id='problemTermInput' placeholder='Search Problem....'>
 							<button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
 								Change Problem
@@ -92,9 +92,9 @@
 					</div>
 				</div>
 				<!-- end show label and text in edit mode -->
-				
+
 				<div class="quick-card-editor-card">
-					
+
 					<!-- begin buttons -->
 					<div class="quick-card-editor-buttons">
 						<a href ng-click="edit_problem=!edit_problem; $event.stopPropagation();"><i class="fa fa-close"></i></a>
@@ -186,7 +186,7 @@
 				<div class='panel-body'>
 					<div class='row'>
 						<div class='col-md-4'>
-							<label><input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'> 
+							<label><input type='checkbox' ng-model='problem.is_controlled' ng-disabled='!permitted(["set_problem_controlled"])'>
 							Is controlled</label>
 						</div>
 						<div class='col-md-4'>
@@ -217,7 +217,7 @@
 						</div>
 						<div class='form-group'>
 							<button ng-click='update_start_date()' class='btn btn-default' ng-show='permitted(["modify_problem"])'> Update </button>
-						</div>	
+						</div>
 					</form>
 
 				</div>
@@ -262,8 +262,8 @@
 				</div>
 			</form>
 
-			<span class='text-muted'> <i> Last updated by {{history_note.author.user.first_name}} 
-				{{history_note.author.user.last_name}} @{{history_note.author.user.username}} - 
+			<span class='text-muted'> <i> Last updated by {{history_note.author.user.first_name}}
+				{{history_note.author.user.last_name}} @{{history_note.author.user.username}} -
 				{{history_note.author.role}} </i>
 			</span>
 		</div>
@@ -301,7 +301,7 @@
 	<div class='row'>
 
 		<div class='col-md-6'>
-			<b> Patient Notes </b> 
+			<b> Patient Notes </b>
 
 			<hr>
 
@@ -343,7 +343,22 @@
 			<ul class='list-group' ng-show='show_other_notes==true'>
 
 				<li ng-show='!other_wiki_notes.length' class='list-group-item'> No Notes </li>
-				<li ng-repeat='note in other_wiki_notes' class='list-group-item' ng-show="$first">
+				<li ng-repeat='note in other_wiki_notes' class='list-group-item'>
+					<b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
+					<p>{{note.created_on | date:"d MMM yyyy 'at' h:mm"}}</p>
+				</li>
+			</ul>
+
+		</div>
+		<div class='col-md-12'>
+			<button class='btn btn-link' ng-click='toggle_physician_notes()'>
+				<span ng-show='show_physician_notes'>Hide Other Physician Notes </span>
+				<span ng-show='!show_physician_notes'> Show Other Physician Notes ({{physician_wiki_notes.length}}) </span>
+			</button>
+
+			<ul class='list-group' ng-show='show_physician_notes==true'>
+				<li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes </li>
+				<li ng-repeat='note in physician_wiki_notes' class='list-group-item'>
 					<b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
 					<p>{{note.created_on | date:"d MMM yyyy 'at' h:mm"}}</p>
 				</li>
@@ -375,11 +390,11 @@
 		<div class='col-md-6'>
 
 			<b> Goals </b>
-			
+
 			<hr>
 
 			<form class='form-inline' ng-submit='add_goal(goal_form)' ng-show='permitted(["add_goal"])'>
-			
+
 				<div class='form-group'>
 					<label> Add </label>
 					<input type='text' class='form-control' ng-model='goal_form.name' id='goalNameInput'>
@@ -391,7 +406,7 @@
 			<hr>
 			</form>
 
-			
+
 
 			<ul class='list-group'>
 				<li ng-show='!problem_goals.length'> No Goals </li>
@@ -402,7 +417,7 @@
 			</ul>
 
 			<hr>
-			<a class='btn btn-default btn-md' ng-click='toggle_accomplished_goals()'> 
+			<a class='btn btn-default btn-md' ng-click='toggle_accomplished_goals()'>
 				<span ng-if='show_accomplished_goals==false'>Show accomplished Goals </span>
 				<span ng-if='show_accomplished_goals==true'>Hide accomplished Goals </span>
 			</a>
@@ -422,7 +437,7 @@
 		<div class='col-md-6'>
 
 			<b> Todo </b>
-			<hr>  
+			<hr>
 
 			<form class='form-inline' ng-submit='add_todo(todo_form)' >
 
@@ -444,9 +459,9 @@
 				<li ng-show='!problem_todos.length'> No Todos </li>
 			</ul>
 			<todo ng-model="problem_todos" accomplished="false" show-problem="false"></todo>
-			
+
 			<hr>
-			<a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'> 
+			<a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
 				<span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
 				<span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
 			</a>
@@ -472,8 +487,8 @@
 
 
 	<div class='panel panel-default'>
-		<div class='panel-heading'> 
-			Images 
+		<div class='panel-heading'>
+			Images
 			<span ng-show='permitted(["add_problem_image"])'>
 				<button class='btn btn-sm btn-default' ng-click='open_image_upload_box()'> Upload </button>
 			</span>
@@ -490,10 +505,10 @@
 						<br>
 
 						<a href="{{image.image}}" target="_blank" class='btn btn-sm btn-default'>View</a>
-						
+
 						<!-- <button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button> -->
 						<button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)' ng-show='permitted(["delete_problem_image"])'>
-							Delete 
+							Delete
 						</button>
 						<hr>
 					</center>
@@ -543,7 +558,7 @@
 					<h4> <i class='glyphicon glyphicon-arrow-right'></i>  EffectedProblems </h4>
 					<div class='row' ng-repeat='eff_problem in patient_problems'  style='padding:7px; border-bottom:1px solid #ccc;'>
 
-						<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>  
+						<input type='checkbox'  ng-model='eff_problem.effected' ng-change='change_effected_problem(problem, eff_problem)' ng-disabled='!permitted(["relate_problem"])'>
 
 						<span ng-if='eff_problem.effected==true' style='font-size:14px; font-weight:bold'>
 							<a href='#/problem/{{eff_problem.id}}'> {{eff_problem.problem_name}} </a>
@@ -581,10 +596,10 @@
 	<div class='row' ng-init="problem_activity_collapse=false;problem_activity_see_all=false;">
 		<div class='col-md-12'>
 			<div class='panel panel-default'>
-				<div class='panel-heading' ng-click="problem_activity_collapse=!problem_activity_collapse;"> 
+				<div class='panel-heading' ng-click="problem_activity_collapse=!problem_activity_collapse;">
 					<i class="fa fa-caret-down" aria-hidden="true" ng-if="problem_activity_collapse"></i>
 	  				<i class="fa fa-caret-right" aria-hidden="true" ng-if="!problem_activity_collapse"></i>
-					Problem activity 
+					Problem activity
 					<button ng-show="problem_activity_collapse" class="btn btn-default" ng-click="problem_activity_see_all=!problem_activity_see_all; $event.stopPropagation();">See all</button>
 				</div>
 				<div class='panel-body' style='max-height:375px; overflow:auto;' ng-show="problem_activity_collapse">
@@ -610,14 +625,14 @@
 	<div class='row' ng-init="encounter_collapse=false;">
 		<div class='col-md-12'>
 			<div class='panel panel-default'>
-				<div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;"> 
+				<div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
 					<i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
 	  				<i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
 					Related Encounters </div>
 				<div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;' ng-show="encounter_collapse">
 					<div ng-repeat='encounter in related_encounters' class='row' style='margin-bottom:4px; border-top:1px solid #ccc;'>
 						<div class='col-md-12'>
-							<a href='#/encounter/{{encounter.id}}'> 
+							<a href='#/encounter/{{encounter.id}}'>
 								Ref ID: {{encounter.id}} on {{encounter.starttime|date}}
 							</a>
 						</div>
@@ -634,7 +649,7 @@
 	</script>
 
 	<script type='text/javascript'>
-		
+
 		$(document).ready(function(){
 			$( "#start_date" ).datepicker({ dateFormat: 'mm/dd/yy' });
 
