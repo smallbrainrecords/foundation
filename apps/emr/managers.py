@@ -20,7 +20,7 @@ class ObservationManager(models.Manager):
 class ProblemManager(models.Manager):
     def create_new_problem(self, patient_id, problem_name, concept_id, user_profile):
         from emr.models import Problem, Observation
-        new_problem = Problem(patient__id=patient_id, problem_name=problem_name, concept_id=concept_id)
+        new_problem = Problem(patient_id=patient_id, problem_name=problem_name, concept_id=concept_id)
         if user_profile.role in ('physician', 'admin'):
             new_problem.authenticated = True
         new_problem.save()
@@ -35,7 +35,7 @@ class ProblemNoteManager(models.Manager):
         return ProblemNote.objects.create(author=author, problem=problem, note=note, note_type='history')
 
     def create_wiki_note(self, author, problem, note):
-        from apps.emr.models import ProblemNote
+        from emr.models import ProblemNote
         return ProblemNote.objects.create(author=author, problem=problem, note=note, note_type='wiki')
 
 class EncounterManager(models.Manager):

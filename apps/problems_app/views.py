@@ -166,7 +166,7 @@ def get_problem_activity(request, problem_id, last_id):
 
 
 # Problem
-@permissions_required(["add_problems"])
+@permissions_required(["add_problem"])
 @login_required
 @api_view(["POST"])
 def add_patient_problem(request, patient_id):
@@ -191,9 +191,9 @@ def add_patient_problem(request, patient_id):
     return ajax_response(resp)
 
 
-@permissions_required(["add_problems"])
+@permissions_required(["add_problem"])
 @login_required
-@api_view(["POST"])
+# @api_view(["POST"])
 def add_patient_common_problem(request, patient_id):
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
@@ -361,7 +361,7 @@ def add_history_note(request, problem_id):
 
 # Add Wiki Note
 @login_required
-@api_view(["POST"])
+# @api_view(["POST"])
 def add_wiki_note(request, problem_id):
     resp = {}
     resp['success'] = False
