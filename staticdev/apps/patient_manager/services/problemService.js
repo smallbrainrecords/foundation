@@ -203,6 +203,15 @@
 			return httpService.get(params, url);
 
 		};
+
+		this.fetchColonCancerss = function(problem_id){
+
+			var url = "/p/problem/"+problem_id+"/colon_cancers";
+			var params = {};
+
+			return httpService.get(params, url);
+
+		};
 });
 
 

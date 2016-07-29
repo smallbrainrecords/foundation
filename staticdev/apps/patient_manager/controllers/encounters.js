@@ -4,7 +4,7 @@
 
 
     angular.module('ManagerApp')
-        .controller('EncountersCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, toaster, encounterService, ngAudio) {
+        .controller('EncountersCtrl', function ($scope,$rootScope, $routeParams, patientService, ngDialog, $location, toaster, encounterService, ngAudio) {
 
 
             var patient_id = $('#patient_id').val();
@@ -13,7 +13,6 @@
             $scope.encounter_id = encounter_id;
 
             patientService.fetchActiveUser().then(function (data) {
-
                 $scope.active_user = data['user_profile'];
 
             });
@@ -21,7 +20,7 @@
             patientService.fetchEncounterInfo(encounter_id).then(function (data) {
 
                 $scope.encounter = data['encounter'];
-                $scope.encounter_events = data['encounter_events'];
+               $rootScope.encounter_events = $scope.encounter_events = data['encounter_events'];
                 $scope.related_problems = data['related_problems'];
 
                 // If encounter include any audio automatically playing this audio
@@ -86,12 +85,22 @@
                 });
             };
 
+            /**
+             *
+             * Add an timestamp event
+             * Get timestamp of current playing audio.
+             * TODO:1. Ask @Jim for default timestamp will be added if there is any error
+             * TODO:2. Ask @Rohit for adding support we can add timestamp from client.Currently not supported yet
+             * Default timestamp: 0
+             */
             $scope.add_timestamp = function () {
+                // Get default encounter element page
+                var myAudio = document.getElementById('audio1');
 
                 var form = {};
                 form.encounter_id = $scope.encounter_id;
                 form.patient_id = $scope.patient_id;
-                // form.timestamp = timestamp;
+                form.timestamp = (myAudio != undefined && myAudio !=null)? myAudio.currentTime : 0;
                 // form.summary = $scope.summary;
                 encounterService.addTimestamp(form).then(function (data) {
                     if (data['success'] == true) {

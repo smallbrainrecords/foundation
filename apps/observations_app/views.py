@@ -17,7 +17,7 @@ from problems_app.views import permissions_required
 # set problem authentication to false if not physician, admin
 def set_problem_authentication_false(actor_profile, problem):
     role = actor_profile.role
-    authentication = role in ["physician", "admin"]
+    authenticated = role in ["physician", "admin"]
     problem.authenticated = authenticated
     problem.save()
 
@@ -108,7 +108,7 @@ def patient_refused(request, observation_id):
 @login_required
 def add_value(request, observation_id):
     resp = {}
-    actor_profile = UserProfile.objects.get(user=actor)
+    actor_profile = UserProfile.objects.get(user=request.user)
     observation = Observation.objects.get(id=observation_id)
     effective_date = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
 

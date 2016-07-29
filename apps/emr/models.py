@@ -4,7 +4,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
-from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager, TodoManager, ColonCancerScreeningManager
+from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager, \
+    TodoManager, ColonCancerScreeningManager, ColonCancerStudyManager
 
 # DATA
 ROLE_CHOICES = (
@@ -34,6 +35,10 @@ NOTE_TYPE_CHOICES = (
 COMMON_PROBLEM_TYPE_CHOICES = (
     ('acute', 'Acute'),
     ('chronic', 'Chronic'), )
+
+RISK_CHOICES = (
+    ('normal', 'Normal'),
+    ('high', 'High'), )
 
 
 # UTILITIES
@@ -649,8 +654,56 @@ class ColonCancerScreening(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     problem = models.ForeignKey(Problem, related_name='problem_colon_cancer')
     patient_refused = models.BooleanField(default=False)
+    risk = models.CharField(max_length=10, choices=RISK_CHOICES, default='normal')
+    last_risk_updated_date = models.DateField(null=True, blank=True)
+    last_risk_updated_user = models.ForeignKey(UserProfile, related_name='last_risk_updated_user_colons', null=True, blank=True)
 
     objects = ColonCancerScreeningManager()
 
     class Meta:
         ordering = ['-created_on']
+
+
+class ColonCancerStudy(models.Model):
+    author = models.ForeignKey(UserProfile, related_name='author_studies')
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_studies')
+    created_on = models.DateTimeField(auto_now_add=True)
+    study_date = models.DateField(null=True, blank=True)
+    finding = models.CharField(max_length=100, null=True, blank=True)
+    result = models.CharField(max_length=100, null=True, blank=True)
+    note = models.TextField(null=True, blank=True)
+    last_updated_date = models.DateField(auto_now=True)
+    last_updated_user = models.ForeignKey(UserProfile, related_name='last_updated_user_studies', null=True, blank=True)
+
+    objects = ColonCancerStudyManager()
+
+    class Meta:
+        ordering = ['-study_date']
+
+
+class ColonCancerStudyImage(models.Model):
+    image = models.ImageField(upload_to='studies/', blank=True)
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    study = models.ForeignKey(ColonCancerStudy, null=True, blank=True, related_name="study_images")
+    datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.patient))
+
+    def filename(self):
+        return os.path.basename(self.image.name)
+
+
+class RiskFactor(models.Model):
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_risk_factors')
+    factor = models.CharField(max_length=100, null=True, blank=True)
+
+
+class ColonCancerTextNote(models.Model):
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_notes')
+    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    note = models.TextField()
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "%s" % (self.note)

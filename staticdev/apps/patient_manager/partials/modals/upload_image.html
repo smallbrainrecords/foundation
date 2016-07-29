@@ -19,7 +19,10 @@
 			}else{
 				alert("Something went wrong!");
 			}
-		}
+		},
+		error: function(data){
+			alert("Something went wrong!");
+		},
 	};
 
 	$('#uploadProblemImageFrm').ajaxForm(options);

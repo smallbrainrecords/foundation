@@ -15,31 +15,66 @@
 							<div class="row">
 								<div class="col-md-12">
 									<div class="io-box">
-										<p><b>Most recent study</b></p>
-										<div class="row">
-											<div class="col-md-6">colonoscopy</div>
-											<div class="col-md-6"></div>
+										<div class="row" ng-if="colon_cancer.colon_studies.length > 0">
+											<div class="col-md-12">
+												<p><b>Most recent study</b></p>
+												<div class="row">
+													<div class="col-md-6">{{colon_cancer.colon_studies[0].finding}}</div>
+													<div class="col-md-6"></div>
+												</div>
+												<div class="row">
+													<div class="col-md-6">{{colon_cancer.colon_studies[0].result}}</div>
+													<div class="col-md-6"><a href class="btn btn-default">View report</a></div>
+												</div>
+												<p ng-if="colon_cancer.colon_studies[0].note">Note: {{colon_cancer.colon_studies[0].note}}</p>
+												<p>updated by {{colon_cancer.colon_studies[0].last_updated_user.user.username}} on {{colon_cancer.colon_studies[0].last_updated_date|date:'M/d/yyyy'}}</p>
+												<p>
+													<a href="#/colon_cancer/{{colon_cancer.id}}/edit_study/{{colon_cancer.colon_studies[0].id}}/" class="btn btn-default">Edit</a>
+												</p>
+											</div>
+										</div>
+										<div class="row" ng-if="colon_cancer.colon_studies.length == 0">
+											<div class="col-md-12">
+												no study has been entered. normal risk screening starts at age 50. high risk screening starts at age 40, or 10 years before first degree relative with colorectal cancer or adenomatous polyps.
+											</div>
 										</div>
 										<div class="row">
-											<div class="col-md-6">no polyps</div>
-											<div class="col-md-6"><a href class="btn btn-default">View report</a></div>
+											<div class="col-md-6"><a href="#/colon_cancer/{{colon_cancer.id}}/add_new_study" class="btn btn-default">Add new study</a></div>
+											<div class="col-md-6">
+												<div class="row" ng-init="see_past_studies=false">
+													<div class='col-md-12'>
+														<button class='btn btn-default' ng-click="see_past_studies=!see_past_studies">View past studies</button>
+													</div>
+												</div>
+											</div>
 										</div>
-										<p>display study note</p>
-										<p>ONLY if there is one</p>
-										<p>updated by "user" on "mm/dd/yyyy"</p>
-										<p><a href class="btn btn-default">Edit</a></p>
-										<div class="row">
-											<div class="col-md-6"><a href class="btn btn-default">Add new study</a></div>
-											<div class="col-md-6"><a href class="btn btn-default">View past studies</a></div>
+										<div class="row" ng-show="see_past_studies">
+											<div class='col-md-12'>
+												<h2>Past studies:</h2>
+											</div>
+											<div class='col-md-12' ng-repeat="study in colon_cancer.colon_studies">
+												Study: 
+													{{study.finding}}, {{study.result}}.
+													<span ng-if="study.study_date">Date: {{study.study_date|date:'M/d/yyyy'}}.</span>
+													<span ng-if="study.author">Author: {{study.author.user.first_name}} {{study.author.user.last_name}}.</span>
+													<span ng-if="study.created_on">Date added: {{study.created_on|date:'M/d/yyyy'}}.</span>
+													<a href="#/colon_cancer/{{colon_cancer.id}}/edit_study/{{study.id}}/" class="btn btn-link">Edit</a>
+													<a href class="btn btn-link" ng-click="delete_study(study)">Delete</a>
+											</div>
 										</div>
 									</div>
 								</div>
 								<div class="col-md-12">
-									<div class="io-box">
-										<p><b>Risk:</b> High</p>
-										<p>Family history of colorectal cancer</p>
-										<p>updated by "user" on "mm/dd/yyyy"</p>
-										<p><a href class="btn btn-default">Update</a></p>
+									<div class="io-box" ng-init="show_factors=false;">
+										<p><b>Risk:</b> {{colon_cancer.risk}}</p>
+										<p ng-repeat="factor in factors" ng-if="factor.checked">{{factor.value}}</p>
+										<p ng-if="colon_cancer.last_risk_updated_user">updated by {{colon_cancer.last_risk_updated_user.user.username}} on {{colon_cancer.last_risk_updated_date|date:'M/d/yyyy'}}</p>
+										<p><a href class="btn btn-default" ng-click="show_factors=!show_factors;">Update</a></p>
+										<form ng-show="show_factors">
+											<div class="checkbox" ng-repeat="factor in factors">
+												<label><input type="checkbox" value="{{factor.value}}" ng-click="change_factor(factor)" ng-model="factor.checked">{{factor.value}}</label>
+											</div>
+										</form>
 									</div>
 								</div>
 							</div>

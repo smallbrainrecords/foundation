@@ -40,6 +40,7 @@ from problems_app.operations import add_problem_activity
 from problems_app.services import ProblemService
 from todo_app.operations import add_todo_activity
 from observations_app.serializers import ObservationSerializer
+from colons_app.serializers import ColonCancerScreeningSerializer
 
 
 def permissions_required(permissions):
@@ -145,6 +146,15 @@ def get_observations(request, problem_id):
     return ajax_response(resp)
 
 @login_required
+def get_colon_cancers(request, problem_id):
+    colon_cancers = ColonCancerScreening.objects.filter(problem__id=problem_id)
+    serialized_colon_cancers = ColonCancerScreeningSerializer(colon_cancers, many=True).data
+    resp = {}
+    resp['success'] = True
+    resp['colon_cancers'] = serialized_colon_cancers
+    return ajax_response(resp)
+
+@login_required
 def get_problem_activity(request, problem_id, last_id):
     problem = get_object_or_404(Problem, pk=problem_id)
     activities = ProblemActivity.objects.filter(problem=problem).filter(id__gt=last_id)
@@ -156,7 +166,7 @@ def get_problem_activity(request, problem_id, last_id):
 
 
 # Problem
-@permissions_required(["add_problems"])
+@permissions_required(["add_problem"])
 @login_required
 @api_view(["POST"])
 def add_patient_problem(request, patient_id):
@@ -181,9 +191,9 @@ def add_patient_problem(request, patient_id):
     return ajax_response(resp)
 
 
-@permissions_required(["add_problems"])
+@permissions_required(["add_problem"])
 @login_required
-@api_view(["POST"])
+# @api_view(["POST"])
 def add_patient_common_problem(request, patient_id):
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
@@ -351,7 +361,7 @@ def add_history_note(request, problem_id):
 
 # Add Wiki Note
 @login_required
-@api_view(["POST"])
+# @api_view(["POST"])
 def add_wiki_note(request, problem_id):
     resp = {}
     resp['success'] = False
