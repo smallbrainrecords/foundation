@@ -1,15 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db import models
-
-#def RepresentsInt(times):
-#    for t in times:
-#        try:
-#            int(t)
-#        except ValueError:
-#            return False
-#
-#    return True
 
 class ObservationManager(models.Manager):
     def create_if_not_exist(self, problem):
@@ -62,23 +53,11 @@ class EncounterManager(models.Manager):
         encounter_event = EncounterEvent.objects.create(encounter=latest_encounter, summary=event_summary)
         return encounter_event
 
-    def add_timestamp(self, encounter_id, added_by):
+    def add_timestamp(self, encounter_id, added_by, timestamp):
         from emr.models import EncounterEvent
         encounter = self.get(id=encounter_id)
-        timestamp = timezone.now()
-        # timestamp = request.POST.get('timestamp', '')
-        # times = timestamp.split(":")
-        # if RepresentsInt(times):
-        #     if len(times) == 3:
-        #         plustime = timedelta(hours=int(times[0]), minutes=int(times[1]), seconds=int(times[2]))
-        #     elif len(times) == 2:
-        #         plustime = timedelta(minutes=int(times[0]), seconds=int(times[1]))
-        #     elif len(times) == 1:
-        #         plustime = timedelta(seconds=int(times[0]))
-        #     else:
-        #         plustime = timedelta(seconds=0)
 
-        #     timestamp = encounter.starttime + plustime
+        timestamp = encounter.starttime + timedelta(seconds=timestamp)
         summary = 'A timestamp added by <b>' + added_by.username + '</b>'
         encounter_event = EncounterEvent.objects.create(encounter=encounter, timestamp=timestamp, summary=summary)
         return encounter_event

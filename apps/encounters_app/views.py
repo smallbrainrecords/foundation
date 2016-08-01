@@ -137,7 +137,8 @@ def upload_encounter_video(request, patient_id, encounter_id):
 @login_required
 @api_view(["POST"])
 def add_timestamp(request, patient_id, encounter_id):
-    encounter_event = Encounter.objects.add_timestamp(encounter_id, request.user)
+    timestamp = request.POST.get('timestamp', 0)
+    encounter_event = Encounter.objects.add_timestamp(encounter_id, request.user, int(timestamp))
     resp = {}
     resp['success'] = True
     resp['encounter_event'] = EncounterEventSerializer(encounter_event).data

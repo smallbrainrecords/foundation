@@ -6,12 +6,6 @@
 		function($http, $q, $cookies, httpService){
 
 
-		 this.csrf_token = function () {
-
-			var token = $cookies.csrftoken;
-			return token;
-		};
-
 		this.updateNote = function(form){
 
 			var url  = '/enc/patient/'+form.patient_id+'/encounter/'+form.encounter_id+'/update_note';
