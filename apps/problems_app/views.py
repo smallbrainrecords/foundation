@@ -17,7 +17,7 @@ from rest_framework.decorators import api_view
 from common.views import *
 
 from emr.models import UserProfile, Problem, ProblemOrder, ProblemLabel, LabeledProblemList
-from emr.models import Goal, ToDo, TextNote, PatientImage
+from emr.models import Goal, ToDo, TextNote, PatientImage, Label
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem
 from emr.models import EncounterProblemRecord, Encounter
@@ -525,6 +525,20 @@ def add_problem_todo(request, problem_id):
         order = order['order__max'] + 1
     new_todo.order = order
     new_todo.save()
+
+    colon_cancer_id = request.POST.get('colon_cancer_id', None)
+    if colon_cancer_id:
+        colon = ColonCancerScreening.objects.get(id=int(colon_cancer_id))
+        todo_past_five_years = request.POST.get('todo_past_five_years', None)
+        if todo_past_five_years:
+            if not Label.objects.filter(author=patient, name="screening", css_class="todo-label-yellow").exists():
+                label = Label(author=patient, name="screening", css_class="todo-label-yellow", is_all=True)
+                label.save()
+            else:
+                label = Label.objects.get(author=patient, name="screening", css_class="todo-label-yellow", is_all=True)
+            new_todo.labels.add(label)
+            colon.todo_past_five_years = True
+            colon.save()
 
     physician = request.user
 

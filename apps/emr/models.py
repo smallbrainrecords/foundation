@@ -657,6 +657,7 @@ class ColonCancerScreening(models.Model):
     risk = models.CharField(max_length=10, choices=RISK_CHOICES, default='normal')
     last_risk_updated_date = models.DateField(null=True, blank=True)
     last_risk_updated_user = models.ForeignKey(UserProfile, related_name='last_risk_updated_user_colons', null=True, blank=True)
+    todo_past_five_years = models.BooleanField(default=False)
 
     objects = ColonCancerScreeningManager()
 

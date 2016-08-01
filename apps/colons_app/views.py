@@ -153,6 +153,7 @@ def add_factor(request, colon_id):
         colon.risk = 'high'
         colon.last_risk_updated_user = actor_profile
         colon.last_risk_updated_date = datetime.now().date()
+        colon.todo_past_five_years = False
         colon.save()
         resp['factor'] = RiskFactorSerializer(factor).data
         resp['info'] = ColonCancerScreeningSerializer(colon).data
@@ -174,6 +175,7 @@ def delete_factor(request, colon_id):
             colon.risk = 'normal'
             colon.last_risk_updated_user = actor_profile
             colon.last_risk_updated_date = datetime.now().date()
+            colon.todo_past_five_years = False
             colon.save()
         resp['info'] = ColonCancerScreeningSerializer(colon).data
         resp['success'] = True

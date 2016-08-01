@@ -72,4 +72,5 @@ class ColonCancerScreeningSerializer(serializers.ModelSerializer):
             'colon_risk_factors',
             'last_risk_updated_date',
             'last_risk_updated_user',
+            'todo_past_five_years',
             )

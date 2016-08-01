@@ -78,7 +78,7 @@
             }
 
 		}) /* End of controller */
-        .controller('EditStudyCtrl', function($scope, $routeParams, ngDialog, toaster, $location, colonService){
+        .controller('EditStudyCtrl', function($scope, $routeParams, ngDialog, toaster, $location, colonService, patientService){
 
 
             var patient_id = $('#patient_id').val();
@@ -95,6 +95,10 @@
             ];
 
             $scope.results = [];
+
+            patientService.fetchActiveUser().then(function(data){
+                $scope.active_user = data['user_profile'];
+            });
 
             colonService.fetchColonCancerInfo($scope.colon_id).then(function(data){
                 $scope.colon_cancer = data['info'];
@@ -200,6 +204,14 @@
                     $scope.study.study_images.splice(image_index, 1);
                     toaster.pop('success', 'Done', 'Deleted image!');
                 });
+            };
+
+            $scope.checkPermitted = function(study, active_user) {
+                if (active_user.role == 'physician' || active_user.role == 'admin' || active_user.id == study.author.id) {
+                    return true;
+                } else {
+                    return false;
+                }
             };
 
         }); /* End of controller */
