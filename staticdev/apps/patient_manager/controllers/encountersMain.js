@@ -88,6 +88,7 @@
                         }
                         // Remove last saved session for safe
                         encounterRecorderFailSafeService.clearUnsavedData();
+                        $scope.elapsedTime = 0;
                         $scope.encounterCtrl.startRecord();
                     });
                 }

@@ -1,109 +1,109 @@
-(function(){
+(function () {
 
-	'use strict';
+    'use strict';
 
-	angular.module('ManagerApp').service('encounterService',
-		function($http, $q, $cookies, httpService){
+    angular.module('ManagerApp').service('encounterService',
+        function ($http, $q, $cookies, httpService) {
+            this.csrf_token = function () {
+                var token = $cookies.csrftoken;
+                return token;
+            };
 
+            this.updateNote = function (form) {
 
-		this.updateNote = function(form){
+                var url = '/enc/patient/' + form.patient_id + '/encounter/' + form.encounter_id + '/update_note';
+                return httpService.post(form, url);
 
-			var url  = '/enc/patient/'+form.patient_id+'/encounter/'+form.encounter_id+'/update_note';
-			return httpService.post(form, url);
+            };
 
-		};
+            this.addTimestamp = function (form) {
 
-		this.addTimestamp = function(form){
+                var url = '/enc/patient/' + form.patient_id + '/encounter/' + form.encounter_id + '/add_timestamp';
+                return httpService.post(form, url);
 
-			var url  = '/enc/patient/'+form.patient_id+'/encounter/'+form.encounter_id+'/add_timestamp';
-			return httpService.post(form, url);
+            };
 
-		};
+            this.markFavoriteEvent = function (form) {
+                var url = '/enc/encounter_event/' + form.encounter_event_id + '/mark_favorite';
+                return httpService.post(form, url);
+            };
 
-		this.markFavoriteEvent = function(form){
-			var url  = '/enc/encounter_event/'+form.encounter_event_id+'/mark_favorite';
-			return httpService.post(form, url);
-		};
-
-		this.nameFavoriteEvent = function(form){
-			var url  = '/enc/encounter_event/'+form.encounter_event_id+'/name_favorite';
-			return httpService.post(form, url);
-		};
-
-
-		this.uploadAudio = function(form, file){
-
-			var deferred = $q.defer();
-
-			var uploadUrl = '/enc/patient/'+form.patient_id;
-			uploadUrl += '/encounter/'+form.encounter_id;
-			uploadUrl += '/upload_audio/';
-
-			var fd = new FormData();
-
-			angular.forEach(form, function(value, key){
-				fd.append(key, value);
-			})
-
-			fd.append('file', file);
-
-			$http.post(uploadUrl, fd, {
-            		transformRequest: angular.identity,
-
-            		headers: {'Content-Type': undefined,'X-CSRFToken': this.csrf_token()}
-    	    	})
-	        	.success(function(data){
-	        		deferred.resolve(data);
-        		})
-        		.error(function(data){
-        			deferred.resolve(data);
-
-        		});
-
-        	return deferred.promise;
-
-		};
+            this.nameFavoriteEvent = function (form) {
+                var url = '/enc/encounter_event/' + form.encounter_event_id + '/name_favorite';
+                return httpService.post(form, url);
+            };
 
 
-		this.uploadVideo = function(form, file){
+            this.uploadAudio = function (form, file) {
 
-			var deferred = $q.defer();
-			
-			var uploadUrl = '/enc/patient/'+form.patient_id;
-			uploadUrl += '/encounter/'+form.encounter_id;
-			uploadUrl += '/upload_video/';
+                var deferred = $q.defer();
 
-			var fd = new FormData();
+                var uploadUrl = '/enc/patient/' + form.patient_id;
+                uploadUrl += '/encounter/' + form.encounter_id;
+                uploadUrl += '/upload_audio/';
 
-			angular.forEach(form, function(value, key){
-				fd.append(key, value);
-			})
+                var fd = new FormData();
 
-			fd.append('file', file);
+                angular.forEach(form, function (value, key) {
+                    fd.append(key, value);
+                })
 
-			$http.post(uploadUrl, fd, {
-            		transformRequest: angular.identity,
+                fd.append('file', file);
 
-            		headers: {'Content-Type': undefined,'X-CSRFToken': this.csrf_token()}
-    	    	})
-	        	.success(function(data){
-	        		deferred.resolve(data);
-        		})
-        		.error(function(data){
-        			deferred.resolve(data);
+                $http.post(uploadUrl, fd, {
+                    transformRequest: angular.identity,
 
-        		});
+                    headers: {'Content-Type': undefined, 'X-CSRFToken': this.csrf_token()}
+                })
+                    .success(function (data) {
+                        deferred.resolve(data);
+                    })
+                    .error(function (data) {
+                        deferred.resolve(data);
 
-        	return deferred.promise;
+                    });
 
+                return deferred.promise;
 
-		};
-
+            };
 
 
+            this.uploadVideo = function (form, file) {
 
-		});
+                var deferred = $q.defer();
 
+                var uploadUrl = '/enc/patient/' + form.patient_id;
+                uploadUrl += '/encounter/' + form.encounter_id;
+                uploadUrl += '/upload_video/';
+
+                var fd = new FormData();
+
+                angular.forEach(form, function (value, key) {
+                    fd.append(key, value);
+                })
+
+                fd.append('file', file);
+
+                $http.post(uploadUrl, fd, {
+                    transformRequest: angular.identity,
+
+                    headers: {'Content-Type': undefined, 'X-CSRFToken': this.csrf_token()}
+                })
+                    .success(function (data) {
+                        deferred.resolve(data);
+                    })
+                    .error(function (data) {
+                        deferred.resolve(data);
+
+                    });
+
+                return deferred.promise;
+
+
+            };
+
+
+        });
 
 
 })();
