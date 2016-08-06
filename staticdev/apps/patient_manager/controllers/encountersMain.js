@@ -86,6 +86,8 @@
                         if ($scope.encounterCtrl.status.isRecording) {
                             $scope.encounterCtrl.stopRecord();
                         }
+                        // Remove last saved session for safe
+                        encounterRecorderFailSafeService.clearUnsavedData();
                         $scope.encounterCtrl.startRecord();
                     });
                 }

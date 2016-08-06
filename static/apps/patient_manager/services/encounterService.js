@@ -7,7 +7,6 @@
 
 
 		this.csrf_token = function(){
-
 			var token = $cookies.csrftoken;
 			return token;
 		};
@@ -24,7 +23,8 @@
 				'data' : $.param(form),
 				'headers':
 				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+					'X-CSRFToken': this.csrf_token()
 				}
 			}).success(function(data){
 				deferred.resolve(data);

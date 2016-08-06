@@ -27,7 +27,7 @@
              */
             this.restoreUnsavedDuration = function () {
                 var duration = localStorage.getItem('cached-duration');
-                return duration === null ? 0 : duration;
+                return duration == null ? 0 : duration;
             };
 
             /**
