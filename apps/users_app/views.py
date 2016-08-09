@@ -5,10 +5,10 @@ except ImportError:
     import Image
     import ImageOps
 import operator
-
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from common.views import *
-
+# from django.shortcuts import render
 from emr.models import UserProfile, Problem
 from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
@@ -38,7 +38,6 @@ def is_patient(user):
         return profile.role == 'patient'
     except UserProfile.DoesNotExist:
         return False
-
 
 def login_user(request):
     if request.method == "GET":
