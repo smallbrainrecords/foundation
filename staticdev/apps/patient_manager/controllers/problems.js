@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService, prompt){
+		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService, prompt, $cookies){
 
 
 			var patient_id = $('#patient_id').val();
@@ -725,6 +725,10 @@
 				var url = '/p/problem/'+problem_id+'/upload_image';
 				return url;
 			}
+
+			$scope.get_csrftoken = function(){
+                return $cookies.csrftoken;
+            }
 
 			$scope.open_image_upload_box = function(){
 			    ngDialog.open({

@@ -11,12 +11,13 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                 templateUrl: '/static/apps/patient_manager/directives/templates/colon_cancer.html',
                 scope: true,
                 link: function (scope, element, attr, model) {
-                    scope.$watch('observations', function(newVal, oldVal) {
+                    scope.$watch('colon_cancers', function(newVal, oldVal) {
                         if(newVal) {
                             scope.colon_cancer = scope.$eval(attr.ngModel);
                             scope.show_colon_collapse = CollapseService.show_colon_collapse;
 
                             scope.factors = [
+                                {value: 'no known risk', checked: false},
                                 {value: 'personal history of colorectal cancer', checked: false},
                                 {value: 'personal history of adenomatous polyp', checked: false},
                                 {value: "personal history of ulcerative colitis or Crohn's disease", checked: false},
@@ -33,17 +34,19 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                 });
                             });
 
-                            if(!scope.colon_cancer.todo_past_five_years && moment().diff(scope.colon_cancer.patient.date_of_birth, 'years') >= 20 && (scope.colon_cancer.colon_risk_factors.length==0 || moment().diff(scope.colon_cancer.last_risk_updated_date, 'years') >= 5)) {
-                                form = {};
-                                form.name = 'review colorectal cancer risk assessment';
-                                form.patient_id = scope.patient_id;
-                                form.problem_id = scope.colon_cancer.problem.id;
-                                form.colon_cancer_id = scope.colon_cancer.id;
-                                form.todo_past_five_years = true;
-                                problemService.addTodo(form).then(function(data){
-                                    scope.problem_todos.push(data['todo']);
-                                    toaster.pop('success', 'Done', 'Added Todo!');
-                                });
+                            if (scope.colon_cancer.patient) {
+                                if(!scope.colon_cancer.todo_past_five_years && moment().diff(scope.colon_cancer.patient.date_of_birth, 'years') >= 20 && (scope.colon_cancer.colon_risk_factors.length==0 || moment().diff(scope.colon_cancer.last_risk_updated_date, 'years') >= 5)) {
+                                    form = {};
+                                    form.name = 'review colorectal cancer risk assessment';
+                                    form.patient_id = scope.patient_id;
+                                    form.problem_id = scope.colon_cancer.problem.id;
+                                    form.colon_cancer_id = scope.colon_cancer.id;
+                                    form.todo_past_five_years = true;
+                                    problemService.addTodo(form).then(function(data){
+                                        scope.problem_todos.push(data['todo']);
+                                        toaster.pop('success', 'Done', 'Added Todo!');
+                                    });
+                                }
                             }
 
                             scope.open_colon = function(){

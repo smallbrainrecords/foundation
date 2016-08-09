@@ -1,4 +1,5 @@
 <form class='form-inline' action='{{image_upload_url()}}' method='POST' enctype='multipart/form-data' id='uploadProblemImageFrm'>
+	<input type="hidden" name="csrfmiddlewaretoken" value="{{get_csrftoken()}}">
 	<label for="file">File:</label>
 	<input type="file" name="file[]" id="file" multiple>
 	<input type="submit" class="btn btn-default" name="submit" value="Upload">
@@ -23,6 +24,7 @@
 		error: function(data){
 			alert("Something went wrong!");
 		},
+		headers: {'Content-Type': undefined, 'X-CSRFToken': $('[name="csrfmiddlewaretoken"]').val()}
 	};
 
 	$('#uploadProblemImageFrm').ajaxForm(options);

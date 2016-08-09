@@ -58,8 +58,11 @@
 													<span ng-if="study.study_date">Date: {{study.study_date|date:'M/d/yyyy'}}.</span>
 													<span ng-if="study.author">Author: {{study.author.user.first_name}} {{study.author.user.last_name}}.</span>
 													<span ng-if="study.created_on">Date added: {{study.created_on|date:'M/d/yyyy'}}.</span>
+												<p ng-if="study.note">Note: {{study.note}}</p>
+												<p>
 													<a href="#/colon_cancer/{{colon_cancer.id}}/edit_study/{{study.id}}/" class="btn btn-link" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || active_user.id == study.author.id">Edit</a>
 													<a href class="btn btn-link" ng-click="delete_study(study)" ng-if="active_user.role == 'physician' || active_user.role == 'admin'">Delete</a>
+												</p>
 											</div>
 										</div>
 									</div>

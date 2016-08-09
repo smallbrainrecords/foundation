@@ -78,7 +78,7 @@
             }
 
 		}) /* End of controller */
-        .controller('EditStudyCtrl', function($scope, $routeParams, ngDialog, toaster, $location, colonService, patientService){
+        .controller('EditStudyCtrl', function($scope, $routeParams, ngDialog, toaster, $location, colonService, patientService, $cookies){
 
 
             var patient_id = $('#patient_id').val();
@@ -153,6 +153,10 @@
 
                 var url = '/colon_cancer/study/'+$scope.study_id+'/upload_image';
                 return url;
+            }
+
+            $scope.get_csrftoken = function(){
+                return $cookies.csrftoken;
             }
 
             $scope.open_image_upload_box = function(){

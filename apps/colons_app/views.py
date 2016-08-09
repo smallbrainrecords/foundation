@@ -4,6 +4,7 @@ from django.core.servers.basehttp import FileWrapper
 from django.http import Http404, HttpResponse
 from django.db.models import Q
 from common.views import *
+from rest_framework.decorators import api_view
 
 from emr.models import ColonCancerScreening, UserProfile, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, Problem
 from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySerializer, RiskFactorSerializer
@@ -18,12 +19,12 @@ from users_app.serializers import UserProfileSerializer
 @login_required
 def get_colon_info(request, colon_id):
     colon_info = ColonCancerScreening.objects.get(id=colon_id)
-    if Problem.objects.filter(patient=colon.patient.user, id__in=[93761005, 93854002]).exists():
+    if Problem.objects.filter(patient=colon_info.patient.user, id__in=[93761005, 93854002]).exists():
         if not RiskFactor.objects.filter(colon=colon_info, factor="personal history of colorectal cancer").exists():
             factor = RiskFactor.objects.create(colon=colon_info, factor="personal history of colorectal cancer")
             colon_info.risk = 'high'
             colon_info.save()
-    if Problem.objects.filter(patient=colon.patient.user, id__in=[64766004, 34000006]).exists():
+    if Problem.objects.filter(patient=colon_info.patient.user, id__in=[64766004, 34000006]).exists():
         if not RiskFactor.objects.filter(colon=colon_info, factor="personal history of ulcerative colitis or Crohn's disease").exists():
             factor = RiskFactor.objects.create(colon=colon_info, factor="personal history of ulcerative colitis or Crohn's disease")
             colon_info.risk = 'high'
@@ -34,6 +35,7 @@ def get_colon_info(request, colon_id):
     return ajax_response(resp)
 
 @login_required
+@api_view(["POST"])
 def add_study(request, colon_id):
     resp = {}
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -55,6 +57,7 @@ def add_study(request, colon_id):
     return ajax_response(resp)
 
 @login_required
+@api_view(["POST"])
 def delete_study(request, study_id):
     resp = {}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -73,6 +76,7 @@ def get_study_info(request, study_id):
     return ajax_response(resp)
 
 @login_required
+@api_view(["POST"])
 def edit_study(request, study_id):
     resp = {}
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -107,6 +111,7 @@ def upload_study_image(request, study_id):
     return ajax_response(resp)
 
 @login_required
+@api_view(["POST"])
 def delete_study_image(request, study_id, image_id):
     actor_profile = UserProfile.objects.get(user=request.user)
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -121,6 +126,7 @@ def delete_study_image(request, study_id, image_id):
 
 
 @login_required
+@api_view(["POST"])
 def add_study_image(request, study_id):
     actor_profile = UserProfile.objects.get(user=request.user)
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -143,6 +149,7 @@ def add_study_image(request, study_id):
     return ajax_response(resp)
 
 @login_required
+@api_view(["POST"])
 def add_factor(request, colon_id):
     resp = {}
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -150,7 +157,10 @@ def add_factor(request, colon_id):
 
     if not RiskFactor.objects.filter(colon=colon, factor=request.POST.get("value", None)).exists():
         factor = RiskFactor.objects.create(colon=colon, factor=request.POST.get("value", None))
-        colon.risk = 'high'
+        if RiskFactor.objects.filter(colon=colon).count() == 1 and request.POST.get("value", None) == 'no known risk':
+            colon.risk = 'normal'
+        else:
+            colon.risk = 'high'
         colon.last_risk_updated_user = actor_profile
         colon.last_risk_updated_date = datetime.now().date()
         colon.todo_past_five_years = False
@@ -162,6 +172,7 @@ def add_factor(request, colon_id):
     return ajax_response(resp)
 
 @login_required
+@api_view(["POST"])
 def delete_factor(request, colon_id):
     resp = {}
     actor_profile = UserProfile.objects.get(user=request.user)

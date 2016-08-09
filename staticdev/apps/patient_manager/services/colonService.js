@@ -55,14 +55,11 @@
 
 	        	var fd = new FormData();
 
-	        	fd.append('csrfmiddlewaretoken', this.csrf_token());
-
 	        	fd.append(0, file);
-	        	
 
 	        	$http.post(uploadUrl, fd, {
 	            		transformRequest: angular.identity,
-	            		headers: {'Content-Type': undefined}
+	            		headers: {'Content-Type': undefined, 'X-CSRFToken': this.csrf_token()}
 	    	    	})
 		        	.success(function(data){
 		        		deferred.resolve(data);
