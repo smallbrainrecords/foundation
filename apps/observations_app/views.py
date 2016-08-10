@@ -9,9 +9,7 @@ from emr.models import Observation, ObservationTextNote, ObservationComponent, U
 from .serializers import ObservationSerializer, ObservationTextNoteSerializer, ObservationComponentSerializer, ObservationComponentTextNoteSerializer
 from emr.operations import op_add_event
 
-from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
-from problems_app.views import permissions_required
 
 
 # set problem authentication to false if not physician, admin

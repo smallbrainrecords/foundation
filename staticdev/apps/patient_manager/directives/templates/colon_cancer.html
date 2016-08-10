@@ -4,9 +4,16 @@
 			<div class="panel-heading" role="tab" id="headingOne" ng-click="open_colon()">
 				<div ng-show="!show_colon_collapse" >
   					<i class="fa fa-caret-right" aria-hidden="true"></i>
-					Colorectal cancer screening
+					{{header}}
+					<span ng-if="colon_cancer.patient_refused">(Refused on {{colon_cancer.patient_refused_on|date:'M/d/yyyy'}})</span>
+					<span ng-if="colon_cancer.not_appropriate">(Not appropriate on {{colon_cancer.not_appropriate_on|date:'M/d/yyyy'}})</span>
 				</div>
-				<div ng-show="show_colon_collapse"><i class="fa fa-caret-down" aria-hidden="true"></i> Hide</div>
+				<div ng-show="show_colon_collapse">
+					<i class="fa fa-caret-down" aria-hidden="true"></i> 
+					{{header}}
+					<span ng-if="colon_cancer.patient_refused">(Refused on {{colon_cancer.patient_refused_on|date:'M/d/yyyy'}})</span>
+					<span ng-if="colon_cancer.not_appropriate">(Not appropriate on {{colon_cancer.not_appropriate_on|date:'M/d/yyyy'}})</span>
+				</div>
 			</div>
 			<div ng-show="show_colon_collapse">
 				<div class="panel-body">
@@ -88,20 +95,64 @@
 									<div class="io-box">
 										<p><b>Plan</b></p>
 										<p>Pending order:</p>
-										<p><a href class='btn btn-default'>Add new order</a></p>
-										<p><a href class='btn btn-default'>Repeat colonoscopy in 10 years</a></p>
+										<p ng-if='!colon_cancer.colon_cancer_todos || colon_cancer.colon_cancer_todos.length == 0'> No pending order</p>
+										<div ng-if="colon_cancer.colon_cancer_todos.length">
+											<todo ng-model="colon_cancer.colon_cancer_todos" accomplished="false" show-problem="false"></todo>
+										</div>
+										<p><a href="#/colon_cancer/{{colon_cancer.id}}/add_new_order" class='btn btn-default'>Add new order</a></p>
+										<p><a href class='btn btn-default' ng-click="repeat_todo(todo_repeat)">Repeat {{todo_repeat.name}} in {{todo_repeat.year}} years</a></p>
 										<div class="row">
-											<div class="col-md-6"><a href class="btn btn-default">Refuse</a></div>
-											<div class="col-md-6"><a href class="btn btn-default">Not appropriate</a></div>
+											<div class="col-md-6"><a href class="btn btn-default" ng-click="refuse()">Refuse</a></div>
+											<div class="col-md-6"><a href class="btn btn-default" ng-click="not_appropriate()">Not appropriate</a></div>
 										</div>
 									</div>
 								</div>
 								<div class="col-md-12">
 									<div class="io-box">
-										<p><b>Note:</b></p>
-										<textarea class="form-control"></textarea>
-										<p><a href class="btn btn-default">Update</a></p>
-										<p>updated by "user" on "mm/dd/yyyy"</p>
+										<div class="row" ng-if="colon_cancer.colon_notes.length">
+											<div class='col-md-12' ng-repeat="note in colon_cancer.colon_notes|orderBy:'datetime':true">
+												<div ng-show="$index == 0 || show_note">
+													<span ng-show="!note.edit">{{note.author.user.username}}: {{note.note}} {{note.datetime|date:'M/d/yyyy'}}</span>
+													<div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == note.author.id)">
+														<div class="comment-box" ng-show="note.edit">
+															<input type='text' ng-model='note.note'>
+														</div>
+														<div ng-show="!note.edit">
+															<a href ng-click="toggleEditNote(note)">Edit</a>
+															<a href ng-click="deleteNote(note)">Delete</a>
+														</div>
+														<p ng-show="note.edit"><a href ng-click="toggleSaveNote(note)">Save</a></p>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row" ng-init="show_note=false">
+											<div class='col-md-12'>
+												<button class='btn btn-default' ng-click="show_note=!show_note">
+													<span ng-if="!show_note">Show more notes</span>
+													<span ng-if="show_note">Show less notes</span>
+												</button>
+											</div>
+										</div>
+										</br>
+										<div class="row" ng-init="toggle_add_note=false">
+											<div class='col-md-12'>
+												<button class='btn btn-default' ng-click="toggle_add_note=!toggle_add_note">Add note</button>
+											</div>
+										</div>
+										<div class="row" ng-show="toggle_add_note">
+											<div class='col-md-12'>
+												<form class='form-inline' ng-submit='toggle_add_note=!toggle_add_note; add_note(note_form)' >
+													<div class='form-group'>
+														<label> Add </label>
+														<input type='text' class='form-control' ng-model='note_form.note'>
+													</div>
+													<div class='form-group'>
+														<input type='submit' value='Submit' class='btn btn-default'>
+													</div>
+												</form>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>

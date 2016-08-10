@@ -256,7 +256,10 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
             colon_cancer_dict = {
                 'id': colon_cancer.id,
                 'patient_refused': colon_cancer.patient_refused,
+                'not_appropriate': colon_cancer.not_appropriate,
                 'created_on':  colon_cancer.created_on.isoformat() if colon_cancer.created_on else '',
+                'patient_refused_on':  colon_cancer.patient_refused_on.isoformat() if colon_cancer.patient_refused_on else '',
+                'not_appropriate_on':  colon_cancer.not_appropriate_on.isoformat() if colon_cancer.not_appropriate_on else '',
             }
 
             colon_cancer_holder.append(colon_cancer_dict)

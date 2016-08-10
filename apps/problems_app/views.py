@@ -5,7 +5,6 @@ except ImportError:
     import Image
     import ImageOps
 
-import functools
 import json
 import operator
 from datetime import datetime, timedelta
@@ -35,26 +34,11 @@ from goals_app.serializers import GoalSerializer
 from encounters_app.serializers import EncounterSerializer
 from users_app.serializers import UserProfileSerializer
 
-from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
 from problems_app.services import ProblemService
 from todo_app.operations import add_todo_activity
 from observations_app.serializers import ObservationSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
-
-
-def permissions_required(permissions):
-    def decorator(view_func):
-        @functools.wraps(view_func)
-        def _wrapper(request, *args, **kwargs):
-            actor_profile, permitted = check_permissions(permissions, request.user)
-            if not permitted:
-                resp = {}
-                resp['success'] = False
-                return ajax_response(resp)
-            return view_func(request, *args, **kwargs)
-        return _wrapper
-    return decorator
 
 
 @login_required
@@ -530,13 +514,15 @@ def add_problem_todo(request, problem_id):
     if colon_cancer_id:
         colon = ColonCancerScreening.objects.get(id=int(colon_cancer_id))
         todo_past_five_years = request.POST.get('todo_past_five_years', None)
+        if not Label.objects.filter(author=patient, name="screening", css_class="todo-label-yellow").exists():
+            label = Label(author=patient, name="screening", css_class="todo-label-yellow", is_all=True)
+            label.save()
+        else:
+            label = Label.objects.get(author=patient, name="screening", css_class="todo-label-yellow", is_all=True)
+        new_todo.colon_cancer = colon
+        new_todo.save()
+        new_todo.labels.add(label)
         if todo_past_five_years:
-            if not Label.objects.filter(author=patient, name="screening", css_class="todo-label-yellow").exists():
-                label = Label(author=patient, name="screening", css_class="todo-label-yellow", is_all=True)
-                label.save()
-            else:
-                label = Label.objects.get(author=patient, name="screening", css_class="todo-label-yellow", is_all=True)
-            new_todo.labels.add(label)
             colon.todo_past_five_years = True
             colon.save()
 

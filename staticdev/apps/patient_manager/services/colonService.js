@@ -81,6 +81,40 @@
 				var url = '/colon_cancer/'+colon_id+'/delete_factor';
 				return httpService.post(factor, url);
 			};
+
+			this.refuse  = function(colon_id) {
+				var form = {};
+				var url = '/colon_cancer/'+colon_id+'/refuse';
+				return httpService.post(form, url);
+			};
+
+			this.not_appropriate  = function(colon_id) {
+				var form = {};
+				var url = '/colon_cancer/'+colon_id+'/not_appropriate';
+				return httpService.post(form, url);
+			};
+
+			this.trackColonCancerClickEvent = function(form){
+				var url = '/colon_cancer/'+form.colon_cancer_id+'/track/click';
+				return httpService.post(form, url);
+			};
+
+			this.addNote = function(form) {
+				var url = '/colon_cancer/'+form.colon_cancer_id+'/add_note';
+				return httpService.post(form, url);
+			};
+
+			this.editNote = function(form) {
+				var url = '/colon_cancer/note/'+form.id+'/edit';
+
+				return httpService.post(form, url);
+			};
+
+			this.deleteNote  = function(form) {
+				var url = '/colon_cancer/note/'+form.id+'/delete';
+
+				return httpService.post(form, url);
+			};
 	});
 
 })();

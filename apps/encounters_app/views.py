@@ -7,9 +7,6 @@ from emr.models import EncounterProblemRecord, Problem
 
 from .serializers import EncounterSerializer, EncounterEventSerializer
 from problems_app.serializers import ProblemSerializer
-from problems_app.views import permissions_required
-
-from emr.manage_patient_permissions import check_permissions
 
 
 # Encounter
@@ -34,25 +31,21 @@ def get_encounter_info(request, encounter_id):
 
 # Encounter
 @login_required
+@permissions_required(["add_goal"])
 def patient_encounter_status(request, patient_id):
     encounter_active = False
     current_encounter = None
-    permissions = ['add_encounter']
 
-    actor_profile, permitted = check_permissions(permissions, request.user)
+    physician = request.user
+    latest_encounter = Encounter.objects.filter(physician=physician,
+                                                patient_id=patient_id
+                                        ).order_by('-starttime').first()
 
-    if permitted:
-        physician = request.user
-        latest_encounter = Encounter.objects.filter(physician=physician,
-                                                    patient_id=patient_id
-                                            ).order_by('-starttime').first()
-
-        if latest_encounter and latest_encounter.stoptime is None:
-            encounter_active = True
-            current_encounter = EncounterSerializer(latest_encounter).data
+    if latest_encounter and latest_encounter.stoptime is None:
+        encounter_active = True
+        current_encounter = EncounterSerializer(latest_encounter).data
 
     resp = {}
-    resp['permitted'] = permitted
     resp['current_encounter'] = current_encounter
     resp['encounter_active'] = encounter_active
     return ajax_response(resp)

@@ -6,10 +6,8 @@ from emr.operations import op_add_event
 from .serializers import GoalSerializer
 
 from emr.serializers import TextNoteSerializer
-from emr.manage_patient_permissions import check_permissions
 
 from problems_app.operations import add_problem_activity
-from problems_app.views import permissions_required
 
 
 # Goals

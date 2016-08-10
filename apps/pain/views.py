@@ -4,8 +4,6 @@ from common.views import *
 from models import PainAvatar
 from django.contrib.auth.models import User
 
-from emr.manage_patient_permissions import check_permissions
-
 
 def create_pain_avatar(request, patient_id):
     if request.POST:
@@ -15,13 +13,11 @@ def create_pain_avatar(request, patient_id):
 
 
 @login_required
+@permissions_required(["update_pain"])
 def add_pain_avatar(request, patient_id):
-    permissions = ['update_pain']
-    actor_profile, permitted = check_permissions(permissions, request.user)
 
-    if request.method == 'POST' and permitted:
+    if request.method == 'POST':
         resp = {}
-        resp['permitted'] = permitted
         pain_avatar = PainAvatar.objects.create(patient_id=patient_id, json=request.POST['json'])
         return ajax_response(resp)
 

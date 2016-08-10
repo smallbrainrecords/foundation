@@ -17,7 +17,6 @@ from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemAc
 from emr.models import SharingPatient, CommonProblem
 
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
-from problems_app.views import permissions_required
 from goals_app.serializers import GoalSerializer
 from .serializers import UserProfileSerializer
 from todo_app.serializers import TodoSerializer
@@ -27,9 +26,41 @@ from .forms import LoginForm, RegisterForm, UpdateBasicProfileForm, UpdateProfil
 
 import datetime
 
-from emr.manage_patient_permissions import ROLE_PERMISSIONS, check_permissions
+from emr.manage_patient_permissions import ROLE_PERMISSIONS
 
 from emr.manage_patient_permissions import check_access
+
+
+def permissions_accessed(user, obj_user_id):
+    permitted = False
+
+    user_profile = UserProfile.objects.get(user=user)
+    if user_profile.role == 'admin':
+        permitted = True
+
+    elif user_profile.role == 'patient':
+        if user.id == obj_user_id:
+            permitted = True
+        sharing_patients = SharingPatient.objects.filter(shared_id=obj_user_id)
+        patient_ids = [x.sharing.id for x in sharing_patients]
+        if user.id in patient_ids:
+            permitted = True
+
+    elif user_profile.role == 'physician':
+        patient_controllers = PatientController.objects.filter(physician=user)
+        patient_ids = [x.patient.id for x in patient_controllers]
+        if obj_user_id in patient_ids:
+            permitted = True
+
+    elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
+        team_members = PhysicianTeam.objects.filter(member=user)
+        physician_ids = [x.physician.id for x in team_members]
+        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_ids = [x.patient.id for x in patient_controllers]
+        if obj_user_id in patient_ids:
+            permitted = True
+
+    return permitted
 
 
 def is_patient(user):
@@ -331,28 +362,22 @@ def update_patient_note(request, patient_id):
     resp['success'] = True
     return ajax_response(resp)
 
-
+@permissions_required(["update_patient_profile"])
 @login_required
 def update_patient_password(request, patient_id):
     resp = {}
     resp['success'] = False
     resp['message'] = ''
 
-    permissions = ['update_patient_profile']
-    actor_profile, permitted = check_permissions(permissions, request.user)
-
-    if permitted:
-        old_password = request.POST.get('old_password')
-        password = request.POST.get('password')
-        patient = User.objects.get(id=patient_id)
-        if patient.check_password(old_password):
-            patient.set_password(password)
-            patient.save()
-            resp['success'] = True
-        else:
-            resp['message'] = 'Incorrect password.'
+    old_password = request.POST.get('old_password')
+    password = request.POST.get('password')
+    patient = User.objects.get(id=patient_id)
+    if patient.check_password(old_password):
+        patient.set_password(password)
+        patient.save()
+        resp['success'] = True
     else:
-        resp['message'] = 'Not allowed'
+        resp['message'] = 'Incorrect password.'
 
     return ajax_response(resp)
 

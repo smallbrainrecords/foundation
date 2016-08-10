@@ -15,9 +15,7 @@ from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializ
     TodoActivitySerializer, LabelSerializer, LabeledToDoListSerializer
 from users_app.serializers import UserProfileSerializer
 
-from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
-from problems_app.views import permissions_required
 from .operations import add_todo_activity
 
 

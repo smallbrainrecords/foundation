@@ -1,10 +1,23 @@
 from rest_framework import serializers
 
-from emr.models import ColonCancerScreening, ColonCancerStudy, ColonCancerStudyImage, RiskFactor
+from emr.models import ColonCancerScreening, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, ColonCancerTextNote
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 from todo_app.serializers import TodoSerializer
 from problems_app.serializers import ProblemSerializer
+
+
+class ColonCancerTextNoteSerializer(serializers.ModelSerializer):
+    author = UserProfileSerializer()
+
+    class Meta:
+        model = ColonCancerTextNote
+        fields = (
+            'id',
+            'author',
+            'note',
+            'datetime',
+            )
 
 
 class StudyImageSerializer(serializers.ModelSerializer):
@@ -58,6 +71,8 @@ class ColonCancerScreeningSerializer(serializers.ModelSerializer):
     colon_studies = ColonCancerStudySerializer(many=True, read_only=True)
     colon_risk_factors = RiskFactorSerializer(many=True, read_only=True)
     last_risk_updated_user = UserProfileSerializer()
+    colon_cancer_todos = TodoSerializer(many=True, read_only=True)
+    colon_notes = ColonCancerTextNoteSerializer(many=True, read_only=True)
 
     class Meta:
         model = ColonCancerScreening
@@ -67,10 +82,15 @@ class ColonCancerScreeningSerializer(serializers.ModelSerializer):
             'problem',
             'created_on',
             'patient_refused',
+            'not_appropriate',
             'colon_studies',
             'risk',
             'colon_risk_factors',
             'last_risk_updated_date',
             'last_risk_updated_user',
             'todo_past_five_years',
+            'colon_cancer_todos',
+            'patient_refused_on',
+            'not_appropriate_on',
+            'colon_notes',
             )

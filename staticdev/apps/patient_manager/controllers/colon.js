@@ -218,6 +218,42 @@
                 }
             };
 
+        }) /* End of controller */
+        .controller('AddNewOrderCtrl', function($scope, $routeParams, colonService, ngDialog, problemService, toaster, $location, patientService){
+
+
+            var patient_id = $('#patient_id').val();
+            $scope.patient_id = patient_id;
+            $scope.colon_id = $routeParams.colon_id;
+
+            patientService.fetchActiveUser().then(function(data){
+                $scope.active_user = data['user_profile'];
+            });
+
+            colonService.fetchColonCancerInfo($scope.colon_id).then(function(data){
+                $scope.colon_cancer = data['info'];
+            });
+
+            $scope.add_todo = function(form) {
+                if(form==undefined){
+                    return false;
+                }
+
+                if(form.name.trim().length<1){
+                    return false;
+                }
+
+                form.patient_id = $scope.patient_id;
+                form.problem_id = $scope.colon_cancer.problem.id;
+                form.colon_cancer_id = $scope.colon_cancer.id;
+                
+                problemService.addTodo(form).then(function(data){
+                    form.name = '';
+                    toaster.pop('success', 'Done', 'Added Todo!');
+                    $location.url('/problem/' + $scope.colon_cancer.problem.id);
+                });
+
+            }
         }); /* End of controller */
 
 

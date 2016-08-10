@@ -319,6 +319,7 @@ class ToDo(models.Model):
     user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")
     problem = models.ForeignKey(Problem, null=True, blank=True)
     observation = models.ForeignKey("Observation", null=True, blank=True, related_name="observation_todos")
+    colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos")
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
@@ -654,10 +655,13 @@ class ColonCancerScreening(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     problem = models.ForeignKey(Problem, related_name='problem_colon_cancer')
     patient_refused = models.BooleanField(default=False)
+    not_appropriate = models.BooleanField(default=False)
     risk = models.CharField(max_length=10, choices=RISK_CHOICES, default='normal')
     last_risk_updated_date = models.DateField(null=True, blank=True)
     last_risk_updated_user = models.ForeignKey(UserProfile, related_name='last_risk_updated_user_colons', null=True, blank=True)
     todo_past_five_years = models.BooleanField(default=False)
+    patient_refused_on = models.DateTimeField(null=True, blank=True)
+    not_appropriate_on = models.DateTimeField(null=True, blank=True)
 
     objects = ColonCancerScreeningManager()
 

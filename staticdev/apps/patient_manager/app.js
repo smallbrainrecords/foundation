@@ -84,6 +84,10 @@
             .when("/colon_cancer/:colon_id/edit_study/:study_id", {
                 templateUrl: '/static/apps/patient_manager/partials/colon_cancer/edit_study.html',
                 controller: 'EditStudyCtrl'
+            })
+            .when("/colon_cancer/:colon_id/add_new_order", {
+                templateUrl: '/static/apps/patient_manager/partials/colon_cancer/add_new_order.html',
+                controller: 'AddNewOrderCtrl'
             });
 
     });

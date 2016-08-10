@@ -6,53 +6,71 @@ from django.db.models import Q
 from common.views import *
 from rest_framework.decorators import api_view
 
-from emr.models import ColonCancerScreening, UserProfile, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, Problem
-from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySerializer, RiskFactorSerializer
+from emr.models import ColonCancerScreening, UserProfile, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, Problem, ColonCancerTextNote
+from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySerializer, RiskFactorSerializer, ColonCancerTextNoteSerializer
 from emr.operations import op_add_event
 
-from emr.manage_patient_permissions import check_permissions
 from problems_app.operations import add_problem_activity
-from problems_app.views import permissions_required
 from users_app.serializers import UserProfileSerializer
+from users_app.views import permissions_accessed
 
 
 @login_required
-def get_colon_info(request, colon_id):
-    colon_info = ColonCancerScreening.objects.get(id=colon_id)
-    if Problem.objects.filter(patient=colon_info.patient.user, id__in=[93761005, 93854002]).exists():
-        if not RiskFactor.objects.filter(colon=colon_info, factor="personal history of colorectal cancer").exists():
-            factor = RiskFactor.objects.create(colon=colon_info, factor="personal history of colorectal cancer")
-            colon_info.risk = 'high'
-            colon_info.save()
-    if Problem.objects.filter(patient=colon_info.patient.user, id__in=[64766004, 34000006]).exists():
-        if not RiskFactor.objects.filter(colon=colon_info, factor="personal history of ulcerative colitis or Crohn's disease").exists():
-            factor = RiskFactor.objects.create(colon=colon_info, factor="personal history of ulcerative colitis or Crohn's disease")
-            colon_info.risk = 'high'
-            colon_info.save()
+def track_colon_click(request, colon_id):
     resp = {}
-    resp['success'] = True
-    resp['info'] = ColonCancerScreeningSerializer(colon_info).data
+    resp['success'] = False
+    colon_info = ColonCancerScreening.objects.get(id=colon_id)
+    if permissions_accessed(request.user, colon_info.patient.user.id):
+        actor = request.user
+        patient = colon_info.problem.patient
+
+        summary = "<b>%s</b> accessed colorectal cancer screening" % (actor.username)
+        op_add_event(actor, patient, summary, colon_info.problem)
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+def get_colon_info(request, colon_id):
+    resp = {}
+    resp['success'] = False
+    colon_info = ColonCancerScreening.objects.get(id=colon_id)
+    if permissions_accessed(request.user, colon_info.patient.user.id):
+        if Problem.objects.filter(patient=colon_info.patient.user, id__in=[93761005, 93854002]).exists():
+            if not RiskFactor.objects.filter(colon=colon_info, factor="personal history of colorectal cancer").exists():
+                factor = RiskFactor.objects.create(colon=colon_info, factor="personal history of colorectal cancer")
+                colon_info.risk = 'high'
+                colon_info.save()
+        if Problem.objects.filter(patient=colon_info.patient.user, id__in=[64766004, 34000006]).exists():
+            if not RiskFactor.objects.filter(colon=colon_info, factor="personal history of ulcerative colitis or Crohn's disease").exists():
+                factor = RiskFactor.objects.create(colon=colon_info, factor="personal history of ulcerative colitis or Crohn's disease")
+                colon_info.risk = 'high'
+                colon_info.save()
+        resp['success'] = True
+        resp['info'] = ColonCancerScreeningSerializer(colon_info).data
     return ajax_response(resp)
 
 @login_required
 @api_view(["POST"])
 def add_study(request, colon_id):
     resp = {}
-    actor_profile = UserProfile.objects.get(user=request.user)
+    resp['success'] = False
     colon = ColonCancerScreening.objects.get(id=colon_id)
-    study_date = datetime.strptime(request.POST.get('date'), '%m/%d/%Y').date()
+    if permissions_accessed(request.user, colon.patient.user.id):
+        actor_profile = UserProfile.objects.get(user=request.user)
+        study_date = datetime.strptime(request.POST.get('date'), '%m/%d/%Y').date()
 
-    study = ColonCancerStudy.objects.create(colon=colon,
-                                           finding=request.POST.get("finding", None),
-                                           result=request.POST.get("result", None),
-                                           note=request.POST.get("note", None),
-                                           study_date=study_date,
-                                           last_updated_user=actor_profile,
-                                           author=actor_profile)
-    study.save()
+        study = ColonCancerStudy.objects.create(colon=colon,
+                                               finding=request.POST.get("finding", None),
+                                               result=request.POST.get("result", None),
+                                               note=request.POST.get("note", None),
+                                               study_date=study_date,
+                                               last_updated_user=actor_profile,
+                                               author=actor_profile)
+        study.save()
 
-    resp['study'] = ColonCancerStudySerializer(study).data
-    resp['success'] = True
+        resp['study'] = ColonCancerStudySerializer(study).data
+        resp['success'] = True
 
     return ajax_response(resp)
 
@@ -60,35 +78,40 @@ def add_study(request, colon_id):
 @api_view(["POST"])
 def delete_study(request, study_id):
     resp = {}
+    resp['success'] = False
     study = ColonCancerStudy.objects.get(id=study_id)
-    study.delete()
+    if permissions_accessed(request.user, study.author.user.id):
+        study.delete()
 
-    resp['success'] = True
+        resp['success'] = True
 
     return ajax_response(resp)
 
 @login_required
 def get_study_info(request, study_id):
     resp = {}
+    resp['success'] = False
     study = ColonCancerStudy.objects.get(id=study_id)
-
-    resp['info'] = ColonCancerStudySerializer(study).data
+    if permissions_accessed(request.user, study.author.user.id):
+        resp['info'] = ColonCancerStudySerializer(study).data
     return ajax_response(resp)
 
 @login_required
 @api_view(["POST"])
 def edit_study(request, study_id):
     resp = {}
-    actor_profile = UserProfile.objects.get(user=request.user)
+    resp['success'] = False
     study = ColonCancerStudy.objects.get(id=study_id)
-    study.finding = request.POST.get("finding", None)
-    study.result = request.POST.get("result", None)
-    study.note = request.POST.get("note", None)
-    study.study_date = datetime.strptime(request.POST.get('study_date'), '%m/%d/%Y').date()
-    study.last_updated_user = actor_profile
-    study.save()
+    if permissions_accessed(request.user, study.author.user.id):
+        actor_profile = UserProfile.objects.get(user=request.user)
+        study.finding = request.POST.get("finding", None)
+        study.result = request.POST.get("result", None)
+        study.note = request.POST.get("note", None)
+        study.study_date = datetime.strptime(request.POST.get('study_date'), '%m/%d/%Y').date()
+        study.last_updated_user = actor_profile
+        study.save()
 
-    resp['success'] = True
+        resp['success'] = True
 
     return ajax_response(resp)
 
@@ -96,55 +119,60 @@ def edit_study(request, study_id):
 def upload_study_image(request, study_id):
     resp = {}
     resp['success'] = False
-    actor_profile = UserProfile.objects.get(user=request.user)
     study = ColonCancerStudy.objects.get(id=study_id)
-    study.last_updated_user = actor_profile
-    study.save()
+    if permissions_accessed(request.user, study.author.user.id):
+        actor_profile = UserProfile.objects.get(user=request.user)
+        study.last_updated_user = actor_profile
+        study.save()
 
-    images = request.FILES.getlist('file[]')
-    for image in images:
-        study_image = ColonCancerStudyImage(author=actor_profile, study=study, image=image)
-        study_image.save()
+        images = request.FILES.getlist('file[]')
+        for image in images:
+            study_image = ColonCancerStudyImage(author=actor_profile, study=study, image=image)
+            study_image.save()
 
-        resp['success'] = True
+            resp['success'] = True
 
     return ajax_response(resp)
 
 @login_required
 @api_view(["POST"])
 def delete_study_image(request, study_id, image_id):
-    actor_profile = UserProfile.objects.get(user=request.user)
-    study = ColonCancerStudy.objects.get(id=study_id)
-    study.last_updated_user = actor_profile
-    study.save()
-
-    ColonCancerStudyImage.objects.get(id=image_id).delete()
-
     resp = {}
-    resp['success'] = True
+    resp['success'] = False
+    study = ColonCancerStudy.objects.get(id=study_id)
+    if permissions_accessed(request.user, study.author.user.id):
+        actor_profile = UserProfile.objects.get(user=request.user)
+        study.last_updated_user = actor_profile
+        study.save()
+
+        ColonCancerStudyImage.objects.get(id=image_id).delete()
+
+        resp['success'] = True
     return ajax_response(resp)
 
 
 @login_required
 @api_view(["POST"])
 def add_study_image(request, study_id):
-    actor_profile = UserProfile.objects.get(user=request.user)
-    study = ColonCancerStudy.objects.get(id=study_id)
-    study.last_updated_user = actor_profile
-    study.save()
-
-    image = ColonCancerStudyImage.objects.create(study_id=study_id, author=actor_profile, image=request.FILES['0'])
     resp = {}
-    resp['success'] = True
+    resp['success'] = False
+    study = ColonCancerStudy.objects.get(id=study_id)
+    if permissions_accessed(request.user, study.author.user.id):
+        actor_profile = UserProfile.objects.get(user=request.user)
+        study.last_updated_user = actor_profile
+        study.save()
 
-    image_dict = {
-        'image': image.filename(),
-        'datetime': datetime.strftime(image.datetime, '%Y-%m-%d'),
-        'id': image.id,
-        'author': UserProfileSerializer(image.author).data,
-        'study': ColonCancerStudySerializer(image.study).data,
-    }
-    resp['image'] = image_dict
+        image = ColonCancerStudyImage.objects.create(study_id=study_id, author=actor_profile, image=request.FILES['0'])
+        resp['success'] = True
+
+        image_dict = {
+            'image': image.filename(),
+            'datetime': datetime.strftime(image.datetime, '%Y-%m-%d'),
+            'id': image.id,
+            'author': UserProfileSerializer(image.author).data,
+            'study': ColonCancerStudySerializer(image.study).data,
+        }
+        resp['image'] = image_dict
 
     return ajax_response(resp)
 
@@ -152,22 +180,24 @@ def add_study_image(request, study_id):
 @api_view(["POST"])
 def add_factor(request, colon_id):
     resp = {}
-    actor_profile = UserProfile.objects.get(user=request.user)
+    resp['success'] = False
     colon = ColonCancerScreening.objects.get(id=colon_id)
+    if permissions_accessed(request.user, colon.patient.user.id):
+        actor_profile = UserProfile.objects.get(user=request.user)
 
-    if not RiskFactor.objects.filter(colon=colon, factor=request.POST.get("value", None)).exists():
-        factor = RiskFactor.objects.create(colon=colon, factor=request.POST.get("value", None))
-        if RiskFactor.objects.filter(colon=colon).count() == 1 and request.POST.get("value", None) == 'no known risk':
-            colon.risk = 'normal'
-        else:
-            colon.risk = 'high'
-        colon.last_risk_updated_user = actor_profile
-        colon.last_risk_updated_date = datetime.now().date()
-        colon.todo_past_five_years = False
-        colon.save()
-        resp['factor'] = RiskFactorSerializer(factor).data
-        resp['info'] = ColonCancerScreeningSerializer(colon).data
-        resp['success'] = True
+        if not RiskFactor.objects.filter(colon=colon, factor=request.POST.get("value", None)).exists():
+            factor = RiskFactor.objects.create(colon=colon, factor=request.POST.get("value", None))
+            if RiskFactor.objects.filter(colon=colon).count() == 1 and request.POST.get("value", None) == 'no known risk':
+                colon.risk = 'normal'
+            else:
+                colon.risk = 'high'
+            colon.last_risk_updated_user = actor_profile
+            colon.last_risk_updated_date = datetime.now().date()
+            colon.todo_past_five_years = False
+            colon.save()
+            resp['factor'] = RiskFactorSerializer(factor).data
+            resp['info'] = ColonCancerScreeningSerializer(colon).data
+            resp['success'] = True
 
     return ajax_response(resp)
 
@@ -175,20 +205,94 @@ def add_factor(request, colon_id):
 @api_view(["POST"])
 def delete_factor(request, colon_id):
     resp = {}
-    actor_profile = UserProfile.objects.get(user=request.user)
+    resp['success'] = False
     colon = ColonCancerScreening.objects.get(id=colon_id)
+    if permissions_accessed(request.user, colon.patient.user.id):
+        actor_profile = UserProfile.objects.get(user=request.user)
 
-    if RiskFactor.objects.filter(colon=colon, factor=request.POST.get("value", None)).exists():
-        factor = RiskFactor.objects.get(colon=colon, factor=request.POST.get("value", None))
-        factor.delete()
+        if RiskFactor.objects.filter(colon=colon, factor=request.POST.get("value", None)).exists():
+            factor = RiskFactor.objects.get(colon=colon, factor=request.POST.get("value", None))
+            factor.delete()
 
-        if not RiskFactor.objects.filter(colon=colon):
-            colon.risk = 'normal'
-            colon.last_risk_updated_user = actor_profile
-            colon.last_risk_updated_date = datetime.now().date()
-            colon.todo_past_five_years = False
-            colon.save()
+            if not RiskFactor.objects.filter(colon=colon) or (RiskFactor.objects.filter(colon=colon).count() == 1 and RiskFactor.objects.filter(colon=colon, factor='no known risk').exists()):
+                colon.risk = 'normal'
+                colon.last_risk_updated_user = actor_profile
+                colon.last_risk_updated_date = datetime.now().date()
+                colon.todo_past_five_years = False
+                colon.save()
+            resp['info'] = ColonCancerScreeningSerializer(colon).data
+            resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+def refuse(request, colon_id):
+    resp = {}
+    resp['success'] = False
+    colon = ColonCancerScreening.objects.get(id=colon_id)
+    if permissions_accessed(request.user, colon.patient.user.id):
+        if colon.patient_refused:
+            colon.patient_refused = False
+        else:
+            colon.patient_refused = True
+            colon.patient_refused_on = datetime.now()
+        colon.save()
         resp['info'] = ColonCancerScreeningSerializer(colon).data
         resp['success'] = True
 
+    return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+def not_appropriate(request, colon_id):
+    resp = {}
+    resp['success'] = False
+    colon = ColonCancerScreening.objects.get(id=colon_id)
+    if permissions_accessed(request.user, colon.patient.user.id):
+        if colon.not_appropriate:
+            colon.not_appropriate = False
+        else:
+            colon.not_appropriate = True
+            colon.not_appropriate_on = datetime.now()
+        colon.save()
+        resp['info'] = ColonCancerScreeningSerializer(colon).data
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+# Note
+@login_required
+def add_note(request, colon_id):
+    resp = {}
+    resp['success'] = False
+    colon = ColonCancerScreening.objects.get(id=colon_id)
+    if permissions_accessed(request.user, colon.patient.user.id):
+        note = request.POST.get("note")
+        colon_note = ColonCancerTextNote.objects.create(colon_id=colon_id, author=request.user.profile, note=note)
+
+        resp['note'] = ColonCancerTextNoteSerializer(colon_note).data
+        resp['success'] = True
+    return ajax_response(resp)
+
+@login_required
+def edit_note(request, note_id):
+    resp = {}
+    resp['success'] = False
+    note = ColonCancerTextNote.objects.get(id=note_id)
+    if permissions_accessed(request.user, note.author.user.id):
+        note.note = request.POST.get('note')
+        note.save()
+        resp['success'] = True
+        resp['note'] = ColonCancerTextNoteSerializer(note).data
+    return ajax_response(resp)
+
+@login_required
+def delete_note(request, note_id):
+    resp = {}
+    resp['success'] = False
+    note = ColonCancerTextNote.objects.get(id=note_id)
+    if permissions_accessed(request.user, note.author.user.id):
+        note.delete()
+        resp['success'] = True
     return ajax_response(resp)
