@@ -5,14 +5,10 @@
 				<div ng-show="!show_colon_collapse" >
   					<i class="fa fa-caret-right" aria-hidden="true"></i>
 					{{header}}
-					<span ng-if="colon_cancer.patient_refused">(Refused on {{colon_cancer.patient_refused_on|date:'M/d/yyyy'}})</span>
-					<span ng-if="colon_cancer.not_appropriate">(Not appropriate on {{colon_cancer.not_appropriate_on|date:'M/d/yyyy'}})</span>
 				</div>
 				<div ng-show="show_colon_collapse">
 					<i class="fa fa-caret-down" aria-hidden="true"></i> 
 					{{header}}
-					<span ng-if="colon_cancer.patient_refused">(Refused on {{colon_cancer.patient_refused_on|date:'M/d/yyyy'}})</span>
-					<span ng-if="colon_cancer.not_appropriate">(Not appropriate on {{colon_cancer.not_appropriate_on|date:'M/d/yyyy'}})</span>
 				</div>
 			</div>
 			<div ng-show="show_colon_collapse">

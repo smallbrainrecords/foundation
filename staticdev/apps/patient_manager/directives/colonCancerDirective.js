@@ -53,12 +53,36 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                             scope.header = 'Risk: ' + scope.colon_cancer.risk;
                                         }
                                         if (scope.header != '') scope.header = scope.header + ' ';
+
+                                        var texts = [];
+                                        if (scope.colon_cancer.patient_refused) {
+                                            texts.push({text: "Refused on " + moment(scope.colon_cancer.patient_refused_on).format("MM/DD/YYYY"), date: moment(scope.colon_cancer.patient_refused_on)});
+                                        }
+                                        if (scope.colon_cancer.not_appropriate) {
+                                            texts.push({text: "Not appropriate on " + moment(scope.colon_cancer.not_appropriate_on).format("MM/DD/YYYY"), date: moment(scope.colon_cancer.not_appropriate_on)});
+                                        }
                                         if (scope.colon_cancer.colon_cancer_todos.length > 0) {
                                             scope.most_recent_todo = scope.colon_cancer.colon_cancer_todos[scope.colon_cancer.colon_cancer_todos.length-1];
-                                            scope.header = scope.header + 'Todo: ' + scope.most_recent_todo.todo + '. ';
+                                            var text = {};
+                                            text['text'] = 'Todo: ' + scope.most_recent_todo.todo;
                                             if (scope.most_recent_todo.due_date)
-                                                scope.header = scope.header + moment(scope.most_recent_todo.due_date).format("MM/DD/YYYY")
+                                               text['text'] = text['text'] + ' ' + moment(scope.most_recent_todo.due_date).format("MM/DD/YYYY")
+                                            text['date'] = moment(scope.most_recent_todo.created_on);
+                                            texts.push(text);
                                         }
+                                        var picked = {};
+                                        for (var i = 0; i < texts.length; i++) {
+                                            if (picked.date == undefined) {
+                                                picked = texts[i];
+                                            } else if (picked.date < texts[i].date) {
+                                                picked = texts[i];
+                                            }
+                                        }
+
+                                        if (picked) {
+                                            scope.header = scope.header + picked['text'];
+                                        }
+
                                     } else {
                                         scope.header = 'screening starts at 50 years old';
                                     }
@@ -116,6 +140,7 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                 colonService.refuse(scope.colon_cancer.id).then(function(data){
                                     toaster.pop('success', 'Done', 'Refused successfully');
                                     scope.colon_cancer = data['info'];
+                                    scope.set_header();
                                 });
                             };
 
@@ -123,6 +148,7 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                 colonService.not_appropriate(scope.colon_cancer.id).then(function(data){
                                     toaster.pop('success', 'Done', 'Set appropriate successfully');
                                     scope.colon_cancer = data['info'];
+                                    scope.set_header();
                                 });
                             };
 
@@ -136,6 +162,7 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                     scope.problem_todos.push(data['todo']);
                                     scope.colon_cancer.colon_cancer_todos.push(data['todo']);
                                     toaster.pop('success', 'Done', 'Added Todo!');
+                                    scope.set_header();
                                 });
                             };
 
