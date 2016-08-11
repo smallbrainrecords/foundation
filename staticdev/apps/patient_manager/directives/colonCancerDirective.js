@@ -66,23 +66,6 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                             };
                             scope.set_header();
 
-
-                            // if (scope.colon_cancer.patient) {
-                            //     if(!scope.colon_cancer.todo_past_five_years && moment().diff(scope.colon_cancer.patient.date_of_birth, 'years') >= 20 && (scope.colon_cancer.colon_risk_factors.length==0 || moment().diff(scope.colon_cancer.last_risk_updated_date, 'years') >= 5)) {
-                            //         form = {};
-                            //         form.name = 'review colorectal cancer risk assessment';
-                            //         form.patient_id = scope.patient_id;
-                            //         form.problem_id = scope.colon_cancer.problem.id;
-                            //         form.colon_cancer_id = scope.colon_cancer.id;
-                            //         form.todo_past_five_years = true;
-                            //         problemService.addTodo(form).then(function(data){
-                            //             scope.problem_todos.push(data['todo']);
-                            //             scope.colon_cancer.colon_cancer_todos.push(data['todo']);
-                            //             toaster.pop('success', 'Done', 'Added Todo!');
-                            //         });
-                            //     }
-                            // }
-
                             scope.open_colon = function(){
                                 if (!scope.show_colon_collapse) {
                                     var form = {};

@@ -159,6 +159,7 @@ INSTALLED_APPS = (
     'social_auth',
     'genericadmin',
     'compressor',
+    'cronjobs',
 )
 
 AUTHENTICATION_BACKENDS = (
