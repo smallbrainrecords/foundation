@@ -37,9 +37,25 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                             if (scope.colon_cancer.colon_studies) {
                                 if (scope.colon_cancer.colon_studies.length > 0) {
                                     scope.todo_repeat = {};
-                                    scope.todo_repeat.name = scope.colon_cancer.colon_studies[0].finding;
-                                    scope.todo_repeat.year = moment().diff(scope.colon_cancer.colon_studies[0].study_date, 'years');
-                                    if (scope.todo_repeat.year == 0) scope.todo_repeat.year = 1;
+                                    scope.last_study = scope.colon_cancer.colon_studies[0];
+                                    scope.todo_repeat.name = scope.last_study.finding;
+
+                                    if (scope.last_study.finding == 'fecal occult blood test' || scope.last_study.finding == 'fecal immunochemical test') {
+                                        scope.todo_repeat.year = 1;
+                                    } else if (scope.last_study.finding == 'colonoscopy') {
+                                        if (scope.last_study.result == 'no polyps') {
+                                            scope.todo_repeat.year = 10;
+                                        } else if (scope.last_study.result == 'adenomatous polyps' || scope.last_study.result == 'serrated polyps') {
+                                            scope.todo_repeat.year = 3;
+                                            scope.todo_repeat.name = 'surveillance colonoscopy for high risk polyp';
+                                        } else {
+                                            scope.todo_repeat.year = 0;
+                                        }
+                                    } else {
+                                        scope.todo_repeat.year = 0;
+                                    }
+
+                                    scope.todo_repeat.due_date = moment(scope.last_study.study_date).add(scope.todo_repeat.year, "years").format("MM/DD/YYYY");
                                 }
                             }
 
@@ -66,7 +82,7 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                             var text = {};
                                             text['text'] = 'Todo: ' + scope.most_recent_todo.todo;
                                             if (scope.most_recent_todo.due_date)
-                                               text['text'] = text['text'] + ' ' + moment(scope.most_recent_todo.due_date).format("MM/DD/YYYY")
+                                               text['text'] = text['text'] + ' ' + moment(scope.most_recent_todo.due_date, "MM/DD/YYYY").format("MM/DD/YYYY")
                                             text['date'] = moment(scope.most_recent_todo.created_on);
                                             texts.push(text);
                                         }
@@ -78,8 +94,7 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                                 picked = texts[i];
                                             }
                                         }
-
-                                        if (picked) {
+                                        if (!$.isEmptyObject(picked)) {
                                             scope.header = scope.header + picked['text'];
                                         }
 
@@ -154,7 +169,8 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
 
                             scope.repeat_todo = function(todo_repeat) {
                                 form = {};
-                                form.name = 'Repeat ' + todo_repeat.name + ' in ' + todo_repeat.year + ' years';
+                                form.name = todo_repeat.name;
+                                form.due_date = todo_repeat.due_date;
                                 form.patient_id = scope.patient_id;
                                 form.problem_id = scope.colon_cancer.problem.id;
                                 form.colon_cancer_id = scope.colon_cancer.id;

@@ -513,18 +513,14 @@ def add_problem_todo(request, problem_id):
     colon_cancer_id = request.POST.get('colon_cancer_id', None)
     if colon_cancer_id:
         colon = ColonCancerScreening.objects.get(id=int(colon_cancer_id))
-        todo_past_five_years = request.POST.get('todo_past_five_years', None)
         if not Label.objects.filter(author=patient, name="screening", css_class="todo-label-yellow").exists():
-            label = Label(author=patient, name="screening", css_class="todo-label-yellow", is_all=True)
+            label = Label(author=patient, name="screening", css_class="todo-label-yellow")
             label.save()
         else:
-            label = Label.objects.get(author=patient, name="screening", css_class="todo-label-yellow", is_all=True)
+            label = Label.objects.get(author=patient, name="screening", css_class="todo-label-yellow")
         new_todo.colon_cancer = colon
         new_todo.save()
         new_todo.labels.add(label)
-        if todo_past_five_years:
-            colon.todo_past_five_years = True
-            colon.save()
 
     physician = request.user
 

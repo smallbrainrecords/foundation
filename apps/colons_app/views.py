@@ -158,21 +158,22 @@ def add_study_image(request, study_id):
     resp['success'] = False
     study = ColonCancerStudy.objects.get(id=study_id)
     if permissions_accessed(request.user, study.author.user.id):
-        actor_profile = UserProfile.objects.get(user=request.user)
-        study.last_updated_user = actor_profile
-        study.save()
+        if request.FILES:
+            actor_profile = UserProfile.objects.get(user=request.user)
+            study.last_updated_user = actor_profile
+            study.save()
 
-        image = ColonCancerStudyImage.objects.create(study_id=study_id, author=actor_profile, image=request.FILES['0'])
+            image = ColonCancerStudyImage.objects.create(study_id=study_id, author=actor_profile, image=request.FILES['0'])
+
+            image_dict = {
+                'image': image.filename(),
+                'datetime': datetime.strftime(image.datetime, '%Y-%m-%d'),
+                'id': image.id,
+                'author': UserProfileSerializer(image.author).data,
+                'study': ColonCancerStudySerializer(image.study).data,
+            }
+            resp['image'] = image_dict
         resp['success'] = True
-
-        image_dict = {
-            'image': image.filename(),
-            'datetime': datetime.strftime(image.datetime, '%Y-%m-%d'),
-            'id': image.id,
-            'author': UserProfileSerializer(image.author).data,
-            'study': ColonCancerStudySerializer(image.study).data,
-        }
-        resp['image'] = image_dict
 
     return ajax_response(resp)
 
@@ -238,6 +239,7 @@ def refuse(request, colon_id):
             colon.patient_refused = True
             colon.patient_refused_on = datetime.now()
         colon.save()
+        colon = ColonCancerScreening.objects.get(id=colon_id)
         resp['info'] = ColonCancerScreeningSerializer(colon).data
         resp['success'] = True
 
@@ -256,6 +258,7 @@ def not_appropriate(request, colon_id):
             colon.not_appropriate = True
             colon.not_appropriate_on = datetime.now()
         colon.save()
+        colon = ColonCancerScreening.objects.get(id=colon_id)
         resp['info'] = ColonCancerScreeningSerializer(colon).data
         resp['success'] = True
 

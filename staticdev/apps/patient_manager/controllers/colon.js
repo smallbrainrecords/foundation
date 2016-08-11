@@ -62,17 +62,24 @@
                         var form = {};
                         form.study_id = data.study.id;
 
-                        colonService.addImage(form, image).then(function(data){
-                            if(data['success']==true){
-                                toaster.pop('success', 'Done', 'Added study!');
-                            }else if(data['success']==false){
-                                toaster.pop('error', 'Error', 'Please fill valid data');
-                            }else{
-                                toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                            }
+                        if (image) {
+                            colonService.addImage(form, image).then(function(data){
+                                if(data['success']==true){
+                                    toaster.pop('success', 'Done', 'Added study!');
+                                }else if(data['success']==false){
+                                    toaster.pop('error', 'Error', 'Please fill valid data');
+                                }else{
+                                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                                }
+                                $location.url('/problem/' + $scope.colon_cancer.problem.id);
+                            });
+                        } else {
                             $location.url('/problem/' + $scope.colon_cancer.problem.id);
-                        });
-                        
+                        }
+
+                        study.finding == '';
+                        study.result == '';
+                        study.date == '';
                     });
                 }
             }
