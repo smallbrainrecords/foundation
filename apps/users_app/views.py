@@ -49,6 +49,7 @@ def permissions_accessed(user, obj_user_id):
     elif user_profile.role == 'physician':
         patient_controllers = PatientController.objects.filter(physician=user)
         patient_ids = [x.patient.id for x in patient_controllers]
+        patient_ids.append(user.id)
         if obj_user_id in patient_ids:
             permitted = True
 
@@ -57,6 +58,7 @@ def permissions_accessed(user, obj_user_id):
         physician_ids = [x.physician.id for x in team_members]
         patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
+        patient_ids.append(user.id)
         if obj_user_id in patient_ids:
             permitted = True
 
