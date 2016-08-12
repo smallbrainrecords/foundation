@@ -8,7 +8,8 @@ VOICE_CONTROL = False
 SYNCING = False
 
 import os, sys; os.environ['LANG'] = 'en_US.UTF-8'
-BASE_DIR = os.getcwd()
+# BASE_DIR = os.getcwd()
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 APP_PATH = os.path.join(BASE_DIR, 'apps')
 sys.path.append(APP_PATH)
