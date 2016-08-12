@@ -48,6 +48,7 @@ def patient_encounter_status(request, patient_id):
     resp = {}
     resp['current_encounter'] = current_encounter
     resp['encounter_active'] = encounter_active
+    resp['permitted'] = True
     return ajax_response(resp)
 
 

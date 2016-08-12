@@ -218,11 +218,14 @@
             };
 
             $scope.checkPermitted = function(study, active_user) {
-                if (active_user.role == 'physician' || active_user.role == 'admin' || active_user.id == study.author.id) {
-                    return true;
-                } else {
-                    return false;
+                if (active_user) {
+                    if (active_user.role == 'physician' || active_user.role == 'admin' || active_user.id == study.author.id) {
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
+                return false;
             };
 
         }) /* End of controller */
