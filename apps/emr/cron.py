@@ -3,7 +3,7 @@ import datetime
 from django.contrib.auth.models import User
 from django.db.models import Max, Prefetch
 from emr.models import ColonCancerScreening, ColonCancerStudy, RiskFactor, UserProfile, Problem, ToDo, Label, \
-	PatientController, TaggedToDoOrder
+	PatientController, TaggedToDoOrder, Observation
 
 def age(when, on=None):
     if on is None:
@@ -71,3 +71,32 @@ def patient_needs_a_plan_for_colorectal_cancer_screening():
 				new_todo.members.add(controller.physician.profile)
 				tagged_todo = TaggedToDoOrder.objects.create(todo=new_todo, user=controller.physician)
 
+@cronjobs.register
+def observation_order_was_automatically_generated():
+	observations = Observation.objects.all()
+	for observation in observations:
+		if observation.observation_components.count() and observation.todo_past_six_months == False:
+			last_measurement = observation.observation_components.all().last()
+			date = last_measurement.created_on.day
+			month = last_measurement.created_on.month + 6
+			year = last_measurement.created_on.year
+			if month > 12:
+				month = month - 12
+				year = year + 1
+
+			due_date = datetime.date(year, month, date)
+			if datetime.date.today() >= due_date:
+				todo = 'A1C order was automatically generated'
+				new_todo = ToDo(patient=observation.problem.patient, problem=observation.problem, todo=todo, due_date=due_date)
+
+				order =  ToDo.objects.all().aggregate(Max('order'))
+				if not order['order__max']:
+					order = 1
+				else:
+					order = order['order__max'] + 1
+				new_todo.order = order
+				new_todo.observation = observation
+				new_todo.save()
+
+				observation.todo_past_six_months = True
+				observation.save()

@@ -20,25 +20,25 @@ function observationDirective(CollapseService, observationService, toaster, $loc
                                 if (scope.observation.observation_todos.length)
                                     scope.a1c_date = moment(scope.observation.observation_todos[scope.observation.observation_todos.length -1].due_date, "MM/DD/YYYY");
 
-                            if(scope.observation.observation_components.length && scope.observation.todo_past_six_months==false) {
-                                scope.last_measurement = scope.observation.observation_components[scope.observation.observation_components.length -1];
-                                if (moment() > moment(scope.last_measurement.created_on).add(6, "months")) {
-                                    scope.observation.todo_past_six_months = true;
-                                    form = {};
-                                    form.name = 'A1C order was automatically generated';
-                                    form.todo_past_six_months = true;
-                                    form.patient_id = scope.patient_id;
-                                    form.problem_id = scope.observation.problem.id;
-                                    form.observation_id = scope.observation.id;
-                                    form.due_date = moment(scope.last_measurement.created_on).add(6, "months").format("MM/DD/YYYY");
-                                    problemService.addTodo(form).then(function(data){
-                                        scope.problem_todos.push(data['todo']);
-                                        scope.observation.observation_todos.push(data['todo']);
-                                        toaster.pop('success', 'Done', 'Added Todo!');
-                                    });
-                                }
+                            // if(scope.observation.observation_components.length && scope.observation.todo_past_six_months==false) {
+                            //     scope.last_measurement = scope.observation.observation_components[scope.observation.observation_components.length -1];
+                            //     if (moment() > moment(scope.last_measurement.created_on).add(6, "months")) {
+                            //         scope.observation.todo_past_six_months = true;
+                            //         form = {};
+                            //         form.name = 'A1C order was automatically generated';
+                            //         form.todo_past_six_months = true;
+                            //         form.patient_id = scope.patient_id;
+                            //         form.problem_id = scope.observation.problem.id;
+                            //         form.observation_id = scope.observation.id;
+                            //         form.due_date = moment(scope.last_measurement.created_on).add(6, "months").format("MM/DD/YYYY");
+                            //         problemService.addTodo(form).then(function(data){
+                            //             scope.problem_todos.push(data['todo']);
+                            //             scope.observation.observation_todos.push(data['todo']);
+                            //             toaster.pop('success', 'Done', 'Added Todo!');
+                            //         });
+                            //     }
                                 
-                            }
+                            // }
 
                             scope.set_authentication_false = function() {
                                 if (scope.problem) {

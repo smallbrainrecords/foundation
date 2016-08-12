@@ -497,11 +497,6 @@ def add_problem_todo(request, problem_id):
         observation = Observation.objects.get(id=int(observation_id))
         new_todo.observation = observation
 
-        todo_past_six_months = request.POST.get('todo_past_six_months', None)
-        if todo_past_six_months:
-            observation.todo_past_six_months = True
-            observation.save()
-
     order =  ToDo.objects.all().aggregate(Max('order'))
     if not order['order__max']:
         order = 1
