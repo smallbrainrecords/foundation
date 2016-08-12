@@ -572,7 +572,7 @@ def get_patients_list(request):
 def add_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {}
     to_sharing_patient_profile = UserProfile.objects.get(user_id=sharing_patient_id)
-    sharing_patient = SharingPatient.objects.create(sharing=sharing_patient_id, shared=patient_id)
+    sharing_patient = SharingPatient.objects.create(sharing_id=sharing_patient_id, shared_id=patient_id)
 
     problems = Problem.objects.filter(patient_id=patient_id)
     sharing_patient.problems.add(*problems)
