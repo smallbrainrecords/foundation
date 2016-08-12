@@ -62,19 +62,39 @@
                         var form = {};
                         form.study_id = data.study.id;
 
-                        if (image) {
-                            colonService.addImage(form, image).then(function(data){
-                                if(data['success']==true){
-                                    toaster.pop('success', 'Done', 'Added study!');
-                                }else if(data['success']==false){
-                                    toaster.pop('error', 'Error', 'Please fill valid data');
-                                }else{
-                                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                        if (study.finding == 'colonoscopy' && study.result == 'adenomatous polyps') {
+                            var factor = {value: 'personal history of adenomatous polyp', checked: true};
+                            colonService.addFactor($scope.colon_id, factor).then(function(data){
+                                if (image) {
+                                    colonService.addImage(form, image).then(function(data){
+                                        if(data['success']==true){
+                                            toaster.pop('success', 'Done', 'Added study!');
+                                        }else if(data['success']==false){
+                                            toaster.pop('error', 'Error', 'Please fill valid data');
+                                        }else{
+                                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                                        }
+                                        $location.url('/problem/' + $scope.colon_cancer.problem.id);
+                                    });
+                                } else {
+                                    $location.url('/problem/' + $scope.colon_cancer.problem.id);
                                 }
-                                $location.url('/problem/' + $scope.colon_cancer.problem.id);
                             });
                         } else {
-                            $location.url('/problem/' + $scope.colon_cancer.problem.id);
+                            if (image) {
+                                colonService.addImage(form, image).then(function(data){
+                                    if(data['success']==true){
+                                        toaster.pop('success', 'Done', 'Added study!');
+                                    }else if(data['success']==false){
+                                        toaster.pop('error', 'Error', 'Please fill valid data');
+                                    }else{
+                                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                                    }
+                                    $location.url('/problem/' + $scope.colon_cancer.problem.id);
+                                });
+                            } else {
+                                $location.url('/problem/' + $scope.colon_cancer.problem.id);
+                            }
                         }
 
                         study.finding == '';
@@ -151,7 +171,14 @@
                     toaster.pop('error', 'Error', 'Please select!');
                 } else {
                     colonService.saveStudy(study).then(function(data){
-                        toaster.pop('success', 'Done', 'Saved study!');
+                        if (study.finding == 'colonoscopy' && study.result == 'adenomatous polyps') {
+                            var factor = {value: 'personal history of adenomatous polyp', checked: true};
+                            colonService.addFactor($scope.colon_id, factor).then(function(data){
+                                toaster.pop('success', 'Done', 'Saved study!');
+                            });
+                        } else {
+                            toaster.pop('success', 'Done', 'Saved study!');
+                        }
                     });
                 }
             };

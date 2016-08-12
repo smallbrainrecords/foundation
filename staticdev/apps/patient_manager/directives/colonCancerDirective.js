@@ -60,7 +60,7 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                             }
 
                             scope.set_header = function() {
-                                scope.header = 'Colorectal cancer screening';
+                                scope.header = '';
                                 if (scope.colon_cancer.patient) {
                                     if (moment().diff(scope.colon_cancer.patient.date_of_birth, 'years') < 20) {
                                         scope.header = 'review risk assessment at 20 years of age';
@@ -140,6 +140,16 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                                     colonService.addFactor(scope.colon_cancer.id, factor).then(function(data){
                                         toaster.pop('success', 'Done', 'Added factor successfully');
                                         scope.colon_cancer = data['info'];
+                                        angular.forEach(scope.factors, function(factor, key) {
+                                            factor.checked = false;
+                                        });
+                                        angular.forEach(scope.colon_cancer.colon_risk_factors, function(colon_risk_factor, key) {
+                                            angular.forEach(scope.factors, function(factor, key) {
+                                                if (colon_risk_factor.factor == factor.value) {
+                                                    factor.checked = true;
+                                                }
+                                            });
+                                        });
                                         scope.set_header();
                                     });
                                 } else {

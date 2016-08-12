@@ -387,23 +387,24 @@ def new_todo_label(request, todo_id):
     css_class = request.POST.get('css_class')
     is_all = True if request.POST.get('is_all', False) else False
 
-    todo = ToDo.objects.get(id=todo_id)
-    label = Label.objects.filter(name=name, css_class=css_class).first()
-    if not label:
-        label = Label.objects.create(name=name, css_class=css_class,
-                                     author=request.user, is_all=is_all)
-        resp['new_status'] = True
-        resp['new_label'] = LabelSerializer(label).data
+    if not name == 'screening':
+        todo = ToDo.objects.get(id=todo_id)
+        label = Label.objects.filter(name=name, css_class=css_class).first()
+        if not label:
+            label = Label.objects.create(name=name, css_class=css_class,
+                                         author=request.user, is_all=is_all)
+            resp['new_status'] = True
+            resp['new_label'] = LabelSerializer(label).data
 
-    if label.is_all or label.author == request.user:
-        if label not in todo.labels.all():
-            todo.labels.add(label)
-            resp['status'] = True
-            resp['label'] = LabelSerializer(label).data
+        if label.is_all or label.author == request.user:
+            if label not in todo.labels.all():
+                todo.labels.add(label)
+                resp['status'] = True
+                resp['label'] = LabelSerializer(label).data
 
-    # set problem authentication
-    set_problem_authentication_false(request, todo)
-    resp['success'] = True
+        # set problem authentication
+        set_problem_authentication_false(request, todo)
+        resp['success'] = True
     return ajax_response(resp)
 
 
@@ -415,24 +416,30 @@ def save_edit_label(request, label_id):
     name = request.POST.get('name')
     css_class = request.POST.get('css_class')
 
-    label = Label.objects.get(id=label_id)
-    if not Label.objects.filter(name=name, css_class=css_class):
-        label.name = name
-        label.css_class = css_class
-        label.save()
-        resp['status'] = True
+    if not name == 'screening':
+        label = Label.objects.get(id=label_id)
+        if not label.name == 'screening':
+            if not Label.objects.filter(name=name, css_class=css_class):
+                label.name = name
+                label.css_class = css_class
+                label.save()
+                resp['status'] = True
 
-    resp['label'] = LabelSerializer(label).data
-    resp['success'] = True
+            resp['label'] = LabelSerializer(label).data
+            resp['success'] = True
     return ajax_response(resp)
 
 
 @permissions_required(["add_todo"])
 @login_required
 def delete_label(request, label_id):
-    Label.objects.get(id=label_id).delete()
     resp = {}
-    resp['success'] = True
+    resp['status'] = False
+
+    label = Label.objects.get(id=label_id)
+    if not label.name == 'screening':
+        label.delete()
+        resp['success'] = True
     return ajax_response(resp)
 
 

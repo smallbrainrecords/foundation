@@ -48,7 +48,7 @@
 								</a>
 
 								<!-- begin edit label -->
-								<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin' && active_user.user.id == label.author.id)"><i class="fa fa-pencil"></i></a>
+								<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="label.name != 'screening' && (active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin' && active_user.user.id == label.author.id))"><i class="fa fa-pencil"></i></a>
 
 								<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
 									<div class="quick-card-editor-lv2-header">
@@ -244,7 +244,7 @@
 								</a>
 
 								<!-- begin edit label -->
-								<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin' && active_user.user.id == label.author.id)"><i class="fa fa-pencil"></i></a>
+								<a href class="todo-label-edit" ng-click="editLabel(label)" ng-if="label.name != 'screening' && (active_user.role == 'physician' || active_user.role == 'admin' || (label.author.profile.role != 'physician' && label.author.profile.role != 'admin' && active_user.user.id == label.author.id))"><i class="fa fa-pencil"></i></a>
 
 								<div ng-if="label.edit_label" class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
 									<div class="quick-card-editor-lv2-header">

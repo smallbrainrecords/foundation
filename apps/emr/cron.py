@@ -28,11 +28,11 @@ def review_colorectal_cancer_risk_assessment():
 			new_todo.order = order
 			new_todo.save()
 
-			if not Label.objects.filter(author=colon_cancer.patient.user, name="screening", css_class="todo-label-yellow").exists():
-				label = Label(author=colon_cancer.patient.user, name="screening", css_class="todo-label-yellow")
+			if not Label.objects.filter(name="screening", css_class="todo-label-yellow", is_all=True).exists():
+				label = Label(name="screening", css_class="todo-label-yellow", is_all=True)
 				label.save()
 			else:
-				label = Label.objects.get(author=colon_cancer.patient.user, name="screening", css_class="todo-label-yellow")
+				label = Label.objects.get(name="screening", css_class="todo-label-yellow", is_all=True)
 			new_todo.colon_cancer = colon_cancer
 			new_todo.save()
 			new_todo.labels.add(label)
@@ -57,11 +57,11 @@ def patient_needs_a_plan_for_colorectal_cancer_screening():
 			new_todo.order = order
 			new_todo.save()
 
-			if not Label.objects.filter(author=colon_cancer.patient.user, name="screening", css_class="todo-label-yellow").exists():
-				label = Label(author=colon_cancer.patient.user, name="screening", css_class="todo-label-yellow")
+			if not Label.objects.filter(name="screening", css_class="todo-label-yellow", is_all=True).exists():
+				label = Label(name="screening", css_class="todo-label-yellow", is_all=True)
 				label.save()
 			else:
-				label = Label.objects.get(author=colon_cancer.patient.user, name="screening", css_class="todo-label-yellow")
+				label = Label.objects.get(name="screening", css_class="todo-label-yellow", is_all=True)
 			new_todo.colon_cancer = colon_cancer
 			new_todo.save()
 			new_todo.labels.add(label)

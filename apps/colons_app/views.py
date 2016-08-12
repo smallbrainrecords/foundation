@@ -188,6 +188,15 @@ def add_factor(request, colon_id):
 
         if not RiskFactor.objects.filter(colon=colon, factor=request.POST.get("value", None)).exists():
             factor = RiskFactor.objects.create(colon=colon, factor=request.POST.get("value", None))
+            if factor.factor == 'no known risk':
+                factors = RiskFactor.objects.filter(colon=colon).exclude(factor='no known risk')
+                for f in factors:
+                    f.delete()
+            else:
+                factors = RiskFactor.objects.filter(colon=colon, factor='no known risk')
+                for f in factors:
+                    f.delete()
+
             if RiskFactor.objects.filter(colon=colon).count() == 1 and request.POST.get("value", None) == 'no known risk':
                 colon.risk = 'normal'
             else:
