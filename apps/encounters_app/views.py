@@ -31,7 +31,7 @@ def get_encounter_info(request, encounter_id):
 
 # Encounter
 @login_required
-@permissions_required(["add_goal"])
+@permissions_required(["add_encounter"])
 def patient_encounter_status(request, patient_id):
     encounter_active = False
     current_encounter = None

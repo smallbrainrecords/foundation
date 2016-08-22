@@ -1,5 +1,16 @@
 {% extends "base/base.html" %}
 {% block title %}  Manage Patient - {{ patient.get_full_name }}   {% endblock %}
+{% block search %}
+<form class="navbar-form navbar-left" target="_blank" action="{% url 'search' patient.id %}" method="post">
+    {% csrf_token %}
+    <input type='hidden' name='patient_id' value='{{ user.id }}'>
+    <div class="form-group">
+        <input type="text" class="form-control" placeholder="Search" name="query">
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
+{% endblock %}
+
 {% block content %}
     <script src="/static/apps/common/httpModule.js" type="text/javascript" charset="utf-8"></script>
     <script src="/static/apps/patient_manager/app.js" type="text/javascript" charset="utf-8"></script>

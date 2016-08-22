@@ -89,59 +89,6 @@
     </div><!-- End of Panel Body -->
 </div>
 <hr class="hide">
-<!-- This part is moved to edit page(Refer task: https://trello.com/c/Lk1TTr6P)
-<div class='panel panel-default' ng-show="user_id == patient_id">
-
-    <div class='panel-heading'>
-        Sharing care
-    </div>
-
-    <div class='panel-body'>
-        <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
-            Manage
-        </a>
-
-        <h4>People I can access:</h4>
-        <table class='table'>
-            <thead>
-            <th> Name</th>
-            <th> Actions</th>
-            </thead>
-            <tbody>
-            <tr ng-repeat='p in shared_patients'>
-                <td> {{ p.user.first_name }} {{ p.user.last_name }}
-                </td>
-                <td>
-                    <a href="/u/patient/manage/{{ p.user.id }}" class='btn btn-sm btn-default'>
-                        Access chart
-                    </a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        <br>
-
-        <h4>People that can access me:</h4>
-        <table class='table'>
-            <thead>
-            <th> Name</th>
-            <th> Actions</th>
-            </thead>
-            <tbody>
-            <tr ng-repeat='p in sharing_patients'>
-                <td> {{ p.user.first_name }} {{ p.user.last_name }}
-                </td>
-                <td>
-                    <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
-                        Manage
-                    </a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
- -->
 <div class='row'>
     <div class='col-md-12'>
         <div class='panel panel-default'>
@@ -448,122 +395,123 @@
             </div>
         </div>
     </div>
-</div>
-</div>
+    <div class='col-md-12'>
+        <div class='panel panel-default'>
 
-<div class='panel panel-default'>
+            <div class='panel-heading'> Todos</div>
 
-    <div class='panel-heading'> Todos</div>
+            <div class='panel-body'>
 
-    <div class='panel-body'>
-
-        <div class='row' ng-show='permitted(["add_todo"])'>
-            <div class='col-md-12'>
-                <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
-                    <div class='form-group'>
-                        <label> Todo Name </label>
-                        <input type='text' ng-model='new_todo.name' id='todoNameInput'>
-                    </div>
-                    <button type='submit' class='btn btn-default'> Add Todo</button>
-                </form>
-            </div>
-        </div>
-
-        <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
-        <hr>
-        <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
-            <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
-            <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
-        </a>
-        <hr>
-        <div class="col-md-12" ng-show='show_accomplished_todos==true'>
-            <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
-        </div>
-    </div>
-</div>
-
-
-<div class='panel panel-default' ng-init="encounter_collapse=false;">
-
-    <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
-        <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
-        <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-        Encounters
-    </div>
-
-    <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="encounter_collapse">
-
-        <ul class='ul-clean'>
-            <li ng-repeat='encounter in encounters'>
-                <div class='row'>
-                    <div class='col-md-6'>
-                        <a href='#/encounter/{{ encounter.id }}'>
-                            From <b> {{ encounter.starttime | date:'medium' }} </b> to
-                            <b>{{ encounter.stoptime | date:'medium' }}</b>
-                        </a>
-                    </div>
-                    <div class='col-md-4'>
-                        {{ encounter.duration }}
+                <div class='row' ng-show='permitted(["add_todo"])'>
+                    <div class='col-md-12'>
+                        <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
+                            <div class='form-group'>
+                                <label> Todo Name </label>
+                                <input type='text' ng-model='new_todo.name' id='todoNameInput'>
+                            </div>
+                            <button type='submit' class='btn btn-default'> Add Todo</button>
+                        </form>
                     </div>
                 </div>
-            </li>
-        </ul>
 
+                <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
+                <hr>
+                <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
+                    <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
+                    <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
+                </a>
+                <hr>
+                <div class="col-md-12" ng-show='show_accomplished_todos==true'>
+                    <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+    <div class='col-md-12'>
+        <div class='panel panel-default' ng-init="encounter_collapse=false;">
 
-<div class='panel panel-default' ng-init="favorites_collapse=false;">
+            <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
+                <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+                <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+                Encounters
+            </div>
 
-    <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
-        <i class="fa fa-caret-down" aria-hidden="true" ng-if="favorites_collapse"></i>
-        <i class="fa fa-caret-right" aria-hidden="true" ng-if="!favorites_collapse"></i>
-        Favorites
+            <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="encounter_collapse">
+
+                <ul class='ul-clean'>
+                    <li ng-repeat='encounter in encounters'>
+                        <div class='row'>
+                            <div class='col-md-6'>
+                                <a href='#/encounter/{{ encounter.id }}'>
+                                    From <b> {{ encounter.starttime | date:'medium' }} </b> to
+                                    <b>{{ encounter.stoptime | date:'medium' }}</b>
+                                </a>
+                            </div>
+                            <div class='col-md-4'>
+                                {{ encounter.duration }}
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
     </div>
+    <div class='col-md-12'>
+        <div class='panel panel-default' ng-init="favorites_collapse=false;">
 
-    <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="favorites_collapse">
-        <table class='table' ng-if='favorites.length>0'>
-            <thead>
-            <th>Name</th>
-            </thead>
-            <tbody>
-            <tr ng-repeat='event in favorites' ng-init="event.is_named=false;">
-                <td>
-						<span ng-if="event.is_favorite">
-							<span ng-if="event.is_named">
-								<input type="text" ng-model="event.name_favorite">
-								<button class="btn btn-primary" ng-click="nameFavoriteEvent(event)">Save</button>
-								<button class="btn btn-danger"
-                                        ng-click="event.is_named=!event.is_named;">Cancel</button>
-							</span>
-							<span ng-if="!event.is_named">
-								{{ event.name_favorite }}
-                                <a href='#/encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
-                                   class="btn btn-default" target="_blank">Listen</a>
-								<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
-								<button class="btn btn-danger"
-                                        ng-click="unmarkFavoriteEvent(event)">Remove</button>
-							</span>
-						</span>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+            <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
+                <i class="fa fa-caret-down" aria-hidden="true" ng-if="favorites_collapse"></i>
+                <i class="fa fa-caret-right" aria-hidden="true" ng-if="!favorites_collapse"></i>
+                Favorites
+            </div>
+
+            <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="favorites_collapse">
+                <table class='table' ng-if='favorites.length>0'>
+                    <thead>
+                    <th>Name</th>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat='event in favorites' ng-init="event.is_named=false;">
+                        <td>
+                                <span ng-if="event.is_favorite">
+                                    <span ng-if="event.is_named">
+                                        <input type="text" ng-model="event.name_favorite">
+                                        <button class="btn btn-primary" ng-click="nameFavoriteEvent(event)">Save</button>
+                                        <button class="btn btn-danger"
+                                                ng-click="event.is_named=!event.is_named;">Cancel</button>
+                                    </span>
+                                    <span ng-if="!event.is_named">
+                                        {{ event.name_favorite }}
+                                        <a href='#/encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
+                                           class="btn btn-default" target="_blank">Listen</a>
+                                        <button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
+                                        <button class="btn btn-danger"
+                                                ng-click="unmarkFavoriteEvent(event)">Remove</button>
+                                    </span>
+                                </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-</div>
+    <div class='col-md-12'>
+        <div class='panel panel-default'>
 
+            <div class='panel-heading'> Pain History</div>
 
-<div class='panel panel-default'>
+            <div class='panel-body'>
 
-    <div class='panel-heading'> Pain History</div>
+                <a href="/patient/{{ patient_id }}/pain/add_pain_avatar" class='btn btn-default pull-right'
+                   ng-show='permitted(["update_pain"])'>
+                    Update Pain
+                </a>
+                <div pain-avatar pain-data='pain_avatars'></div>
 
-    <div class='panel-body'>
-
-        <a href="/patient/{{ patient_id }}/pain/add_pain_avatar" class='btn btn-default pull-right'
-           ng-show='permitted(["update_pain"])'>
-            Update Pain
-        </a>
-        <div pain-avatar pain-data='pain_avatars'></div>
-
+            </div>
+        </div>
     </div>
 </div>
 

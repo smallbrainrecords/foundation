@@ -15,6 +15,7 @@ from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecor
 
 from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
 from emr.models import SharingPatient, CommonProblem
+from emr.models import ProblemNote
 
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
@@ -637,3 +638,43 @@ def user_info(request, user_id):
     resp['success'] = True
     resp['user_profile'] = UserProfileSerializer(user_profile).data
     return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+def search(request, user_id):
+    user = User.objects.get(id=user_id)
+    actor_profile = UserProfile.objects.get(user=request.user)
+    patient_profile = UserProfile.objects.get(user=user)
+
+    # Allowed viewers
+    # The patient, admin/physician, and other patients the patient has shared
+    allowed = False
+    allowed = check_access(patient_profile.user, actor_profile)
+
+    if not allowed:
+        return HttpResponse("Not allowed")
+    if not is_patient(user):
+        return HttpResponse("Error: this user isn't a patient")
+
+    context = {}
+    query = request.POST.get("query", None)
+    if query:
+        notes = ProblemNote.objects.filter(note__contains=query, problem__patient=user)
+        context['notes'] = notes
+
+        goals = Goal.objects.filter(goal__contains=query, patient=user)
+        context['goals'] = goals
+
+        todos = ToDo.objects.filter(todo__contains=query, patient=user)
+        context['todos'] = todos
+
+        summaries = EncounterEvent.objects.filter(summary__contains=query, encounter__patient=user)
+        context['summaries'] = summaries
+    
+
+    context['patient'] = user
+    context['user_role'] = actor_profile.role
+    context['patient_profile'] = patient_profile
+
+    context = RequestContext(request, context)
+    return render_to_response("search.html", context)

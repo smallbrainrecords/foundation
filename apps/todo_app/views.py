@@ -323,6 +323,7 @@ def change_todo_due_date(request, todo_id):
     resp = {}
     due_date = request.POST.get('due_date')
     todo = ToDo.objects.get(id=todo_id)
+    actor_profile = UserProfile.objects.get(user=request.user)
     if due_date:
         try:
             due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
@@ -467,6 +468,7 @@ def todo_access_encounter(request, todo_id):
 @api_view(["POST"])
 def add_todo_attachment(request, todo_id):
     attachment = ToDoAttachment.objects.create(todo_id=todo_id, user=request.user, attachment=request.FILES['0'])
+    actor_profile = UserProfile.objects.get(user=request.user)
     resp = {}
     resp['success'] = True
 
@@ -501,6 +503,7 @@ def download_attachment(request, attachment_id):
 @login_required
 def delete_attachment(request, attachment_id):
     attachment = ToDoAttachment.objects.get(id=attachment_id)
+    actor_profile = UserProfile.objects.get(user=request.user)
     # todo activity
     activity = '''
         Deleted <b>%s</b> from this todo.
@@ -517,6 +520,7 @@ def delete_attachment(request, attachment_id):
 @login_required
 def add_todo_member(request, todo_id):
     resp = {}
+    actor_profile = UserProfile.objects.get(user=request.user)
     member_id = request.POST.get('id')
     todo = ToDo.objects.get(id=todo_id)
     member = UserProfile.objects.get(id=int(member_id))
@@ -540,6 +544,7 @@ def add_todo_member(request, todo_id):
 @login_required
 def remove_todo_member(request, todo_id):
     resp = {}
+    actor_profile = UserProfile.objects.get(user=request.user)
     member_id = request.POST.get('id')
     todo = ToDo.objects.get(id=todo_id)
     member = UserProfile.objects.get(id=int(member_id))

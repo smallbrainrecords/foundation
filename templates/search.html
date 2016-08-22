@@ -1,0 +1,77 @@
+{% extends "base/base.html" %}
+{% block title %}  Search Patient - {{ patient.get_full_name }}   {% endblock %}
+{% block search %}
+<form class="navbar-form navbar-left" action="{% url 'search' patient.id %}" method="post">
+    {% csrf_token %}
+    <input type='hidden' name='patient_id' value='{{ user.id }}'>
+    <div class="form-group">
+        <input type="text" class="form-control" placeholder="Search" name="query">
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
+{% endblock %}
+
+{% block content %}
+    
+    <div>
+        <div class='panel panel-default'>
+            <div class='panel-heading'> Notes </div>
+            <div class='panel-body'>
+                <ul class='list-group'>
+                    {% for note in notes %}
+                        <li>
+                           <b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
+                            <p>{{note.created_on | date:"d M Y"}} at {{note.created_on | date:"H:i"}}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class='panel panel-default'>
+            <div class='panel-heading'> Todos </div>
+            <div class='panel-body'>
+                <ul class='list-group'>
+                    {% for todo in todos %}
+                        <li>
+                            {{todo.todo}}
+                            <p>{{todo.created_on | date:"d M Y"}} at {{todo.created_on | date:"H:i"}}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class='panel panel-default'>
+            <div class='panel-heading'> Goals </div>
+            <div class='panel-body'>
+                <ul class='list-group'>
+                    {% for goal in goals %}
+                        <li>
+                            {{goal.goal}}
+                            <p>{{goal.start_date | date:"d M Y"}}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class='panel panel-default'>
+            <div class='panel-heading'> Summaries </div>
+            <div class='panel-body'>
+                <ul class='list-group'>
+                    {% for summary in summaries %}
+                        <li>
+                            {{summary.summary|safe}}
+                            <p>{{summary.datetime | date:"d M Y"}} at {{summary.datetime | date:"H:i"}}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block page_js %}
+{% endblock %}
+{% block page_css %}
+{% endblock %}
