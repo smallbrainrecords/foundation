@@ -46,11 +46,11 @@ GLOBAL_PERMISSIONS = [
     'add_encounter',
     'add_encounter_event',
     'add_encounter_timestamp',
-    # observation
-    'add_observation',
-    'add_observation_note',
-    'edit_observation_note',
-    'delete_observation_note',
+    # a1c
+    'add_a1c',
+    'add_a1c_note',
+    'edit_a1c_note',
+    'delete_a1c_note',
     'delete_observation_component',
     'edit_observation_component',
     # sharing
@@ -91,9 +91,11 @@ ROLE_PERMISSIONS['patient'] = [
     'update_patient_profile',
     # encounter
     'add_encounter_timestamp',
-    # observation
-    'add_observation',
-    'add_observation_note',
+    # a1c
+    'add_a1c',
+    'add_a1c_note',
+    'delete_observation_component',
+    'edit_observation_component',
     'remove_sharing_patient',
     # my story
     'add_my_story_tab',
@@ -131,11 +133,11 @@ ROLE_PERMISSIONS['physician'] = [
     'add_encounter',
     'add_encounter_event',
     'add_encounter_timestamp',
-    # observation
-    'add_observation',
-    'add_observation_note',
-    'edit_observation_note',
-    'delete_observation_note',
+    # a1c
+    'add_a1c',
+    'add_a1c_note',
+    'edit_a1c_note',
+    'delete_a1c_note',
     'delete_observation_component',
     'edit_observation_component',
     # sharing
@@ -174,9 +176,9 @@ ROLE_PERMISSIONS['mid-level'] = [
     'add_encounter',
     'add_encounter_event',
     'add_encounter_timestamp',
-    # observation
-    'add_observation',
-    'add_observation_note',
+    # a1c
+    'add_a1c',
+    'add_a1c_note',
     # sharing
     'add_sharing_patient',
     'remove_sharing_patient',
@@ -204,9 +206,9 @@ ROLE_PERMISSIONS['nurse'] = [
     'update_patient_profile',
     # encounter
     'add_encounter_timestamp',
-    # observation
-    'add_observation',
-    'add_observation_note',
+    # a1c
+    'add_a1c',
+    'add_a1c_note',
     # sharing
     'add_sharing_patient',
     'remove_sharing_patient',
@@ -224,9 +226,9 @@ ROLE_PERMISSIONS['secretary'] = [
     'add_todo_comment',
     # encounter
     'add_encounter_timestamp',
-    # observation
-    'add_observation',
-    'add_observation_note',
+    # a1c
+    'add_a1c',
+    'add_a1c_note',
     # sharing
     'add_sharing_patient',
     'remove_sharing_patient',

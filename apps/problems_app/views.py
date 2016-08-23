@@ -20,7 +20,7 @@ from emr.models import Goal, ToDo, TextNote, PatientImage, Label
 from emr.models import ProblemRelationship
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem
 from emr.models import EncounterProblemRecord, Encounter
-from emr.models import Observation, SharingPatient, PhysicianTeam, ObservationComponent
+from emr.models import Observation, SharingPatient, PhysicianTeam, ObservationComponent, AOneC
 from emr.models import ColonCancerScreening
 
 from emr.operations import op_add_event, op_add_todo_event
@@ -37,7 +37,7 @@ from users_app.serializers import UserProfileSerializer
 from problems_app.operations import add_problem_activity
 from problems_app.services import ProblemService
 from todo_app.operations import add_todo_activity
-from observations_app.serializers import ObservationSerializer
+from a1c_app.serializers import ObservationSerializer, AOneCSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
 
 
@@ -69,13 +69,13 @@ def get_problem_info(request, problem_id):
                                 "target", "source",
                                 "problemactivity_set",
                                 "problem_encounter_records",
-                                "problem_observations",
+                                "problem_aonecs",
                                 Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
                         ).get(id=problem_id)
 
     # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
     if problem_info.concept_id in ['73211009', '46635009', '44054006']:
-        Observation.objects.create_if_not_exist(problem_info)
+        AOneC.objects.create_if_not_exist(problem_info)
 
     # add colon cancer widget to problems that have concept id 102499006
     if problem_info.concept_id in ['102499006']:
@@ -112,7 +112,7 @@ def get_problem_info(request, problem_id):
         'wiki_notes': serialized_problem["problem_notes"]["wiki_notes"],
         'activities': serialized_problem["activities"],
         'related_encounters': serialized_problem["related_encounters"],
-        'observations': serialized_problem["observations"],
+        'a1c': serialized_problem["a1c"],
         'colon_cancer': serialized_problem["colon_cancer"],
         'sharing_patients': sharing_patients_list
     }
@@ -121,12 +121,13 @@ def get_problem_info(request, problem_id):
 
 
 @login_required
-def get_observations(request, problem_id):
-    observations = Observation.objects.filter(problem__id=problem_id)
-    serialized_observations = ObservationSerializer(observations, many=True).data
+def get_a1c(request, problem_id):
+    problem = get_object_or_404(Problem, pk=problem_id)
+    a1c = problem.problem_aonecs
+    serialized_a1c = AOneCSerializer(a1c).data
     resp = {}
     resp['success'] = True
-    resp['observations'] = serialized_observations
+    resp['a1c'] = serialized_a1c
     return ajax_response(resp)
 
 @login_required
@@ -242,13 +243,6 @@ def change_name(request, problem_id):
     resp = {}
     resp['success'] = True
     resp['problem'] = ProblemSerializer(problem).data
-
-    # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
-    # if concept_id in ['73211009', '46635009', '44054006']:
-    #     observation = Observation()
-    #     observation.problem = problem
-    #     observation.subject = problem.patient.profile
-    #     observation.save()
 
     return ajax_response(resp)
 
@@ -492,10 +486,10 @@ def add_problem_todo(request, problem_id):
 
     new_todo = ToDo(patient=patient, problem=problem, todo=todo, due_date=due_date)
 
-    observation_id = request.POST.get('observation_id', None)
-    if observation_id:
-        observation = Observation.objects.get(id=int(observation_id))
-        new_todo.observation = observation
+    a1c_id = request.POST.get('a1c_id', None)
+    if a1c_id:
+        a1c = AOneC.objects.get(id=int(a1c_id))
+        new_todo.a1c = a1c
 
     order =  ToDo.objects.all().aggregate(Max('order'))
     if not order['order__max']:

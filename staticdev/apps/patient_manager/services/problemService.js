@@ -195,9 +195,9 @@
 
 		};
 
-		this.fetchObservations = function(problem_id){
+		this.fetchA1c = function(problem_id){
 
-			var url = "/p/problem/"+problem_id+"/observations";
+			var url = "/p/problem/"+problem_id+"/a1c";
 			var params = {};
 
 			return httpService.get(params, url);

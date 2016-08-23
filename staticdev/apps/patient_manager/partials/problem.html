@@ -225,11 +225,8 @@
 		</div>
 	</div>
 
-	<div class='row' ng-if="observations.length > 0">
-		<div ng-repeat="observation in observations">
-			<observation ng-model="observation"></observation>
-			<br>
-		</div>
+	<div class='row' ng-if="a1c">
+		<a1c ng-model="a1c"></a1c>
 	</div>
 
 	<div class='row' ng-if="colon_cancers.length > 0">

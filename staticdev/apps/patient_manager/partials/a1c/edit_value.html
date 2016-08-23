@@ -6,7 +6,7 @@
 		<div class='row'>
 
 			<div class='col-md-12'>
-				<a href='#/observation/{{observation_id}}/edit_or_delete_values'><b> Back to Edit or delete values </b></a>
+				<a href='#/a1c/{{a1c_id}}/edit_or_delete_values'><b> Back to Edit or delete values </b></a>
 			</div>
 		</div>
 
@@ -31,7 +31,7 @@
 					<span ng-if="a1c_date <= today">past due</span>
 				</p>
 
-				<div ng-if="active_user.role == 'physician' || active_user.role == 'admin'">
+				<div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == component.author.id)">
 					<form class='form-inline' ng-show="edit">
 						<div class="row">
 							<div class="col-md-6">

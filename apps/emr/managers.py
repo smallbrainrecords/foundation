@@ -2,22 +2,28 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db import models
 
-class ObservationManager(models.Manager):
+class AOneCManager(models.Manager):
     def create_if_not_exist(self, problem):
-        from emr.models import Observation
-        if not Observation.objects.filter(problem=problem).exists():
-            Observation.objects.create(problem=problem, subject=problem.patient.profile)
+        from emr.models import AOneC, Observation, OBSERVATION_TYPES
+        if not Observation.objects.filter(subject=problem.patient.profile, name=OBSERVATION_TYPES['a1c']['name']).exists():
+            observation = Observation.objects.create(subject=problem.patient.profile, name=OBSERVATION_TYPES['a1c']['name'])
+        else:
+            observation = Observation.objects.get(subject=problem.patient.profile, name=OBSERVATION_TYPES['a1c']['name'])
+
+        if not AOneC.objects.filter(problem=problem).exists():
+            AOneC.objects.create(problem=problem, observation=observation)
 
 class ProblemManager(models.Manager):
     def create_new_problem(self, patient_id, problem_name, concept_id, user_profile):
-        from emr.models import Problem, Observation
+        from emr.models import Problem, Observation, AOneC, OBSERVATION_TYPES
         new_problem = Problem(patient_id=patient_id, problem_name=problem_name, concept_id=concept_id)
         if user_profile.role in ('physician', 'admin'):
             new_problem.authenticated = True
         new_problem.save()
         # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
         if concept_id in ['73211009', '46635009', '44054006']:
-            Observation.objects.create(problem=new_problem, subject=new_problem.patient.profile)
+            observation = Observation.objects.create(name=OBSERVATION_TYPES['a1c']['name'], subject=new_problem.patient.profile)
+            AOneC.objects.create(problem=new_problem, observation=observation)
         return new_problem
 
 class ProblemNoteManager(models.Manager):

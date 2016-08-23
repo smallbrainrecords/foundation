@@ -48,7 +48,6 @@
 			function convertDateTime(problem){
 				if(problem.start_date) {
 					var dateTime = problem.start_date;
-                    console.log("Start Date: " + dateTime)
 					var date = dateTime.split("-");
 				    var yyyy = date[0];
 				    var mm = date[1];
@@ -114,8 +113,6 @@
 					}
 				];
 
-                console.log("Timeline Problems: " + JSON.stringify(timeline_problems));
-
 				return timeline_problems;
 			}
 
@@ -177,13 +174,15 @@
                 }
 
 				$scope.$watch('active_user', function(nV, oV){
-					$scope.timeline = {
-						Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'],
-						birthday: convertDateTimeBirthday($scope.active_user['date_of_birth']),
-						problems: timeline_problems
-					};
+					if ($scope.active_user) {
+						$scope.timeline = {
+							Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'],
+							birthday: convertDateTimeBirthday($scope.active_user['date_of_birth']),
+							problems: timeline_problems
+						};
 
-					$scope.timeline_changed = true;
+						$scope.timeline_changed = true;
+					}
 				});
 
                 $scope.patient_notes = data['patient_notes'];
@@ -215,11 +214,11 @@
 					$scope.refresh_problem_activity();
 				}, 10000);
 
-				// observations
-				$scope.observations = data['observations'];
-				if ($scope.observations.length > 0) {
-					problemService.fetchObservations(problem_id).then(function(data2) {
-	                	$scope.observations = data2['observations'];
+				// a1c
+				$scope.a1c = data['a1c'];
+				if ($scope.a1c) {
+					problemService.fetchA1c(problem_id).then(function(data2) {
+	                	$scope.a1c = data2['a1c'];
 	                });
 				}
 

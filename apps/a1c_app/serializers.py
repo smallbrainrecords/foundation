@@ -1,17 +1,17 @@
 from rest_framework import serializers
 
-from emr.models import Observation, ObservationTextNote, ObservationComponent, ObservationComponentTextNote
+from emr.models import Observation, AOneCTextNote, ObservationComponent, ObservationComponentTextNote, AOneC
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 from todo_app.serializers import TodoSerializer
 from problems_app.serializers import ProblemSerializer
 
 
-class ObservationTextNoteSerializer(serializers.ModelSerializer):
+class AOneCTextNoteSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer()
 
     class Meta:
-        model = ObservationTextNote
+        model = AOneCTextNote
         fields = (
             'id',
             'author',
@@ -53,9 +53,6 @@ class ObservationSerializer(serializers.ModelSerializer):
     encounter = UserProfileSerializer()
     performer = UserProfileSerializer()
     author = UserProfileSerializer()
-    problem = ProblemSerializer()
-    observation_todos = TodoSerializer(many=True, read_only=True)
-    observation_notes = ObservationTextNoteSerializer(many=True, read_only=True)
     observation_components = ObservationComponentSerializer(many=True, read_only=True)
 
     class Meta:
@@ -69,17 +66,26 @@ class ObservationSerializer(serializers.ModelSerializer):
             'encounter',
             'performer',
             'author',
-            'problem',
             'effective_datetime',
-            'value_quantity',
-            'value_codeableconcept',
-            'value_string',
-            'value_unit',
             'comments',
             'created_on',
-            'todo_past_six_months',
-            'observation_todos',
-            'observation_notes',
             'observation_components',
+            )
+
+class AOneCSerializer(serializers.ModelSerializer):
+    problem = ProblemSerializer()
+    observation = ObservationSerializer()
+    a1c_todos = TodoSerializer(many=True, read_only=True)
+    a1c_notes = AOneCTextNoteSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = AOneC
+        fields = (
+            'id',
+            'problem',
+            'observation',
+            'todo_past_six_months',
             'patient_refused_A1C',
+            'a1c_todos',
+            'a1c_notes',
             )

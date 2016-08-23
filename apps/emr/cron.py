@@ -3,7 +3,7 @@ import datetime
 from django.contrib.auth.models import User
 from django.db.models import Max, Prefetch
 from emr.models import ColonCancerScreening, ColonCancerStudy, RiskFactor, UserProfile, Problem, ToDo, Label, \
-	PatientController, TaggedToDoOrder, Observation
+	PatientController, TaggedToDoOrder, AOneC
 
 def age(when, on=None):
     if on is None:
@@ -72,11 +72,11 @@ def patient_needs_a_plan_for_colorectal_cancer_screening():
 				tagged_todo = TaggedToDoOrder.objects.create(todo=new_todo, user=controller.physician)
 
 @cronjobs.register
-def observation_order_was_automatically_generated():
-	observations = Observation.objects.all()
-	for observation in observations:
-		if observation.observation_components.count() and observation.todo_past_six_months == False:
-			last_measurement = observation.observation_components.all().last()
+def a1c_order_was_automatically_generated():
+	a1cs = AOneC.objects.all()
+	for a1c in a1cs:
+		if a1c.observation.observation_components.count() and a1c.todo_past_six_months == False:
+			last_measurement = a1c.observation.observation_components.all().last()
 			date = last_measurement.created_on.day
 			month = last_measurement.created_on.month + 6
 			year = last_measurement.created_on.year
@@ -87,7 +87,7 @@ def observation_order_was_automatically_generated():
 			due_date = datetime.date(year, month, date)
 			if datetime.date.today() >= due_date:
 				todo = 'A1C order was automatically generated'
-				new_todo = ToDo(patient=observation.problem.patient, problem=observation.problem, todo=todo, due_date=due_date)
+				new_todo = ToDo(patient=a1c.problem.patient, problem=a1c.problem, todo=todo, due_date=due_date)
 
 				order =  ToDo.objects.all().aggregate(Max('order'))
 				if not order['order__max']:
@@ -95,8 +95,8 @@ def observation_order_was_automatically_generated():
 				else:
 					order = order['order__max'] + 1
 				new_todo.order = order
-				new_todo.observation = observation
+				new_todo.a1c = a1c
 				new_todo.save()
 
-				observation.todo_past_six_months = True
-				observation.save()
+				a1c.todo_past_six_months = True
+				a1c.save()

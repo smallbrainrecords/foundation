@@ -167,7 +167,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
     patient_other_problems = serializers.SerializerMethodField()
     activities = ProblemActivitySerializer(many=True, source="problemactivity_set")
     related_encounters = serializers.SerializerMethodField()
-    observations = serializers.SerializerMethodField()
+    a1c = serializers.SerializerMethodField()
     colon_cancer = serializers.SerializerMethodField()
 
     class Meta:
@@ -222,19 +222,22 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         return EncounterSerializer(related_encounters, many=True).data
 
 
-    def get_observations(self, obj):
-        observations = obj.problem_observations.all()
-        observations_holder = []
-        for observation in observations:
-            observation_dict = {
-                'id': observation.id,
-                'patient_refused_A1C': observation.patient_refused_A1C,
-                'effective_datetime': observation.effective_datetime.isoformat() if observation.effective_datetime else '',
-                'created_on':  observation.created_on.isoformat() if observation.created_on else '',
-                'observation_components': [],
+    def get_a1c(self, obj):
+        a1c_dict = {}
+        if hasattr(obj, 'problem_aonecs'):
+            a1c = obj.problem_aonecs
+
+            a1c_dict = {
+                'id': a1c.id,
+                'patient_refused_A1C': a1c.patient_refused_A1C,
+                'effective_datetime': a1c.observation.effective_datetime.isoformat() if a1c.observation.effective_datetime else '',
+                'created_on':  a1c.observation.created_on.isoformat() if a1c.observation.created_on else '',
+                'observation': {
+                    'observation_components': [],
+                },
             }
 
-            observation_component = ObservationComponent.objects.filter(observation=observation).order_by('-effective_datetime', '-created_on').first()
+            observation_component = ObservationComponent.objects.filter(observation=a1c.observation).order_by('-effective_datetime', '-created_on').first()
             if observation_component:
                 observation_components_holder = [
                         {
@@ -244,10 +247,10 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
                             'created_on':  observation_component.created_on.isoformat() if observation_component.created_on else '',
                         }
                 ]
-                observation_dict['observation_components'] = observation_components_holder
 
-            observations_holder.append(observation_dict)
-        return observations_holder
+            a1c_dict['observation']['observation_components'] = observation_components_holder
+
+        return a1c_dict
 
     def get_colon_cancer(self, obj):
         colon_cancers = obj.problem_colon_cancer.all()

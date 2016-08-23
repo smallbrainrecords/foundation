@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
-from emr.managers import ObservationManager, ProblemManager, ProblemNoteManager, EncounterManager, \
+from emr.managers import AOneCManager, ProblemManager, ProblemNoteManager, EncounterManager, \
     TodoManager, ColonCancerScreeningManager, ColonCancerStudyManager
 
 # DATA
@@ -39,6 +39,13 @@ COMMON_PROBLEM_TYPE_CHOICES = (
 RISK_CHOICES = (
     ('normal', 'Normal'),
     ('high', 'High'), )
+
+# Observation type
+OBSERVATION_TYPES = {
+    'a1c': {
+        'name': 'a1c',
+    },
+}
 
 
 # UTILITIES
@@ -319,7 +326,7 @@ class ToDo(models.Model):
     patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient")
     user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")
     problem = models.ForeignKey(Problem, null=True, blank=True)
-    observation = models.ForeignKey("Observation", null=True, blank=True, related_name="observation_todos")
+    a1c = models.ForeignKey("AOneC", null=True, blank=True, related_name="a1c_todos")
     colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos")
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
@@ -493,34 +500,26 @@ class TodoActivity(models.Model):
 
 
 class Observation(models.Model):
-    status = models.CharField(max_length=16)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=16, null=True, blank=True)
     category = models.CharField(max_length=45, null=True, blank=True)
-    code = models.CharField(max_length=10)
-    subject = models.ForeignKey(UserProfile, related_name='observation_subjects')
+    code = models.CharField(max_length=10, null=True, blank=True)
+    subject = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_subjects')
     encounter = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_encounters')
     performer = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_performers')
     author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_authors')
     effective_datetime = models.DateTimeField(null=True, blank=True)
-    value_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
-    value_codeableconcept = models.CharField(max_length=40, null=True, blank=True)
-    value_string = models.TextField(null=True, blank=True)
-    value_unit = models.CharField(max_length=45, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
-    problem = models.ForeignKey(Problem, related_name='problem_observations')
-    todo_past_six_months = models.BooleanField(default=False)
-    patient_refused_A1C = models.BooleanField(default=False)
-
-    objects = ObservationManager()
 
     class Meta:
         ordering = ['-created_on']
 
 
 class ObservationComponent(models.Model):
-    status = models.CharField(max_length=16)
+    status = models.CharField(max_length=16, null=True, blank=True)
     observation = models.ForeignKey(Observation, related_name='observation_components')
-    component_code = models.CharField(max_length=10)
+    component_code = models.CharField(max_length=10, null=True, blank=True)
     value_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     value_codeableconcept = models.CharField(max_length=40, null=True, blank=True)
     value_string = models.TextField(null=True, blank=True)
@@ -624,8 +623,17 @@ class UserAddress(models.Model):
     end = models.DateField(null=True, blank=True)
 
 
-class ObservationTextNote(models.Model):
-    observation = models.ForeignKey(Observation, related_name='observation_notes')
+class AOneC(models.Model):
+    problem = models.OneToOneField(Problem, related_name='problem_aonecs')
+    todo_past_six_months = models.BooleanField(default=False)
+    patient_refused_A1C = models.BooleanField(default=False)
+    observation = models.OneToOneField(Observation, related_name='observation_aonecs')
+
+    objects = AOneCManager()
+
+
+class AOneCTextNote(models.Model):
+    a1c = models.ForeignKey(AOneC, related_name='a1c_notes')
     author = models.ForeignKey(UserProfile, null=True, blank=True)
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)

@@ -6,7 +6,7 @@
 		<div class='row'>
 
 			<div class='col-md-12'>
-				<a href='#/problem/{{observation.problem.id}}'><b> Back to problem page </b></a>
+				<a href='#/problem/{{a1c.problem.id}}'><b> Back to problem page </b></a>
 			</div>
 		</div>
 
@@ -29,7 +29,7 @@
 						<th> Action</th>
 					</thead>
 					<tbody>
-						<tr ng-repeat="component in observation.observation_components|orderBy:'effective_datetime':true">
+						<tr ng-repeat="component in a1c.observation.observation_components|orderBy:'effective_datetime':true">
 							<td ng-class="{'text-danger': component.value_quantity > 7.5}"> {{component.value_quantity| number:1 }} </td>
 							<td> {{component.effective_datetime|date:'M/d/yyyy'}} </td>
 							<td> 

@@ -6,7 +6,7 @@
     var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule',
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine',
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate',
-        'observations', 'colon_cancers', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam']);
+        'a1c', 'colon_cancers', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam']);
 
 
     ManagerApp.config(function ($routeProvider, recorderServiceProvider) {
@@ -51,20 +51,20 @@
                 templateUrl: '/static/apps/patient_manager/partials/todo.html',
                 controller: 'TodoCtrl'
             })
-            .when("/observation/:observation_id/add_different_order", {
-                templateUrl: '/static/apps/patient_manager/partials/observation/add_different_order.html',
+            .when("/a1c/:a1c_id/add_different_order", {
+                templateUrl: '/static/apps/patient_manager/partials/a1c/add_different_order.html',
                 controller: 'AddDifferentOrderCtrl'
             })
-            .when("/observation/:observation_id/enter_new_value", {
-                templateUrl: '/static/apps/patient_manager/partials/observation/enter_new_value.html',
+            .when("/a1c/:a1c_id/enter_new_value", {
+                templateUrl: '/static/apps/patient_manager/partials/a1c/enter_new_value.html',
                 controller: 'EnterNewValueCtrl'
             })
-            .when("/observation/:observation_id/edit_or_delete_values", {
-                templateUrl: '/static/apps/patient_manager/partials/observation/edit_or_delete_values.html',
+            .when("/a1c/:a1c_id/edit_or_delete_values", {
+                templateUrl: '/static/apps/patient_manager/partials/a1c/edit_or_delete_values.html',
                 controller: 'EditOrDeleteValuesCtrl'
             })
             .when("/observation_component/:component_id/edit_value", {
-                templateUrl: '/static/apps/patient_manager/partials/observation/edit_value.html',
+                templateUrl: '/static/apps/patient_manager/partials/a1c/edit_value.html',
                 controller: 'EditValueCtrl'
             })
             .when('/manage/sharing', {
@@ -96,14 +96,14 @@
         var CollapseService = {};
 
         CollapseService.show_colon_collapse = false;
-        CollapseService.show_observation_collapse = false;
+        CollapseService.show_a1c_collapse = false;
 
         CollapseService.ChangeColonCollapse = function () {
            CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
         };
 
-        CollapseService.ChangeObservationCollapse = function () {
-           CollapseService.show_observation_collapse = !CollapseService.show_observation_collapse;
+        CollapseService.ChangeA1cCollapse = function () {
+           CollapseService.show_a1c_collapse = !CollapseService.show_a1c_collapse;
         };
 
         return CollapseService;

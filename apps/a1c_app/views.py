@@ -5,8 +5,10 @@ from django.http import Http404, HttpResponse
 from django.db.models import Q
 from common.views import *
 
-from emr.models import Observation, ObservationTextNote, ObservationComponent, UserProfile, ObservationComponentTextNote
-from .serializers import ObservationSerializer, ObservationTextNoteSerializer, ObservationComponentSerializer, ObservationComponentTextNoteSerializer
+from emr.models import Observation, AOneCTextNote, ObservationComponent, UserProfile, ObservationComponentTextNote, \
+    AOneC
+from .serializers import ObservationSerializer, AOneCTextNoteSerializer, ObservationComponentSerializer, \
+    ObservationComponentTextNoteSerializer, AOneCSerializer
 from emr.operations import op_add_event
 
 from problems_app.operations import add_problem_activity
@@ -20,89 +22,91 @@ def set_problem_authentication_false(actor_profile, problem):
     problem.save()
 
 @login_required
-def track_observation_click(request, observation_id):
+def track_a1c_click(request, a1c_id):
     actor = request.user
-    observation_info = Observation.objects.get(id=observation_id)
-    patient = observation_info.problem.patient
+    a1c_info = AOneC.objects.get(id=a1c_id)
+    patient = a1c_info.problem.patient
 
     summary = "<b>%s</b> visited <u>a1c</u> module" % (actor.username)
-    op_add_event(actor, patient, summary, observation_info.problem)
+    op_add_event(actor, patient, summary, a1c_info.problem)
 
     resp = {}
     return ajax_response(resp)
 
 @login_required
-def get_observation_info(request, observation_id):
-    observation_info = Observation.objects.get(id=observation_id)
+def get_a1c_info(request, a1c_id):
+    a1c_info = AOneC.objects.get(id=a1c_id)
     resp = {}
     resp['success'] = True
-    resp['info'] = ObservationSerializer(observation_info).data
+    resp['info'] = AOneCSerializer(a1c_info).data
     return ajax_response(resp)
 
 
 # Note
-@permissions_required(["add_observation_note"])
+@permissions_required(["add_a1c_note"])
 @login_required
-def add_note(request, observation_id):
+def add_note(request, a1c_id):
     note = request.POST.get("note")
-    observation_note = ObservationTextNote.objects.create(observation_id=observation_id,
-                                                          author=request.user.profile, note=note)
+    a1c_note = AOneCTextNote.objects.create(a1c_id=a1c_id,
+                                            author=request.user.profile, note=note)
     resp = {}
-    resp['note'] = ObservationTextNoteSerializer(observation_note).data
+    resp['note'] = AOneCTextNoteSerializer(a1c_note).data
     resp['success'] = True
     return ajax_response(resp)
 
 
-@permissions_required(["edit_observation_note"])
+@permissions_required(["edit_a1c_note"])
 @login_required
 def edit_note(request, note_id):
-    note = ObservationTextNote.objects.get(id=note_id)
+    note = AOneCTextNote.objects.get(id=note_id)
     note.note = request.POST.get('note')
     note.save()
 
     resp = {}
-    resp['note'] = ObservationTextNoteSerializer(note).data
+    resp['note'] = AOneCTextNoteSerializer(note).data
     resp['success'] = True
     return ajax_response(resp)
 
 
-@permissions_required(["delete_observation_note"])
+@permissions_required(["delete_a1c_note"])
 @login_required
 def delete_note(request, note_id):
-    ObservationTextNote.objects.get(id=note_id).delete()
+    AOneCTextNote.objects.get(id=note_id).delete()
     resp = {}
     resp['success'] = True
     return ajax_response(resp)
 
 
-@permissions_required(["add_observation"])
+@permissions_required(["add_a1c"])
 @login_required
-def patient_refused(request, observation_id):
-    observation = Observation.objects.get(id=observation_id)
+def patient_refused(request, a1c_id):
+    a1c = AOneC.objects.get(id=a1c_id)
+    observation = a1c.observation
     observation.effective_datetime = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
-    if request.POST.get('patient_refused_A1C', None):
-        observation.patient_refused_A1C = True
-
     observation.save()
+    if request.POST.get('patient_refused_A1C', None):
+        a1c.patient_refused_A1C = True
+
+    a1c.save()
     # set problem authentication
     actor_profile = UserProfile.objects.get(user=actor)
-    set_problem_authentication_false(actor_profile, observation.problem)
+    set_problem_authentication_false(actor_profile, a1c.problem)
 
     summary = """
         Patient refused a1c ,
         <u>problem</u> <b>%s</b>
-        """ % (observation.problem.problem_name)
+        """ % (a1c.problem.problem_name)
 
-    add_problem_activity(observation.problem, actor_profile, summary)
+    add_problem_activity(a1c.problem, actor_profile, summary)
 
     resp = {}
-    resp['observation'] = ObservationSerializer(observation).data
+    resp['a1c'] = AOneCSerializer(a1c).data
     resp['success'] = True
     return ajax_response(resp)
 
 
 # Value
-@permissions_required(["add_observation"])
+@permissions_required(["add_a1c"])
 @login_required
 def add_value(request, observation_id):
     resp = {}
@@ -114,25 +118,27 @@ def add_value(request, observation_id):
                                                    value_quantity=request.POST.get("value", None),
                                                    effective_datetime=effective_date,
                                                    author=actor_profile)
-    observation.patient_refused_A1C = False
-    observation.todo_past_six_months = False
-    observation.save()
+
+    a1c = observation.observation_aonecs
+    a1c.patient_refused_A1C = False
+    a1c.todo_past_six_months = False
+    a1c.save()
 
     resp['component'] = ObservationComponentSerializer(component).data
     resp['success'] = True
 
     # set problem authentication
-    set_problem_authentication_false(actor_profile, component.observation.problem)
+    set_problem_authentication_false(actor_profile, a1c.problem)
 
     summary = """
         Added new a1c value <u>A1C</u> : <b>%s</b> ,
         <u>problem</u> <b>%s</b>
-        """ % (component.value_quantity, component.observation.problem.problem_name)
+        """ % (component.value_quantity, a1c.problem.problem_name)
 
-    add_problem_activity(component.observation.problem, actor_profile, summary)
+    add_problem_activity(a1c.problem, actor_profile, summary)
 
     summary = "An A1C value of <b>%s</b> was entered" % (component.value_quantity)
-    op_add_event(request.user, observation.problem.patient, summary, observation.problem)
+    op_add_event(request.user, a1c.problem.patient, summary, a1c.problem)
     return ajax_response(resp)
 
 
@@ -151,7 +157,7 @@ def get_observation_component_info(request, component_id):
     resp = {}
     resp['success'] = True
     resp['info'] = ObservationComponentSerializer(observation_component_info).data
-    resp['observation_id'] = observation_component_info.observation.id
+    resp['a1c_id'] = observation_component_info.observation.observation_aonecs.id
     return ajax_response(resp)
 
 
@@ -170,7 +176,7 @@ def edit_component(request, component_id):
 
 
 # Component Note
-@permissions_required(["add_observation_note"])
+@permissions_required(["add_a1c_note"])
 @login_required
 def add_component_note(request, component_id):
     note = ObservationComponentTextNote.objects.create(observation_component_id=component_id,
@@ -182,7 +188,7 @@ def add_component_note(request, component_id):
     return ajax_response(resp)
 
 
-@permissions_required(["edit_observation_note"])
+@permissions_required(["edit_a1c_note"])
 @login_required
 def edit_component_note(request, note_id):
     note = ObservationComponentTextNote.objects.get(id=note_id)
@@ -195,7 +201,7 @@ def edit_component_note(request, note_id):
     return ajax_response(resp)
 
 
-@permissions_required(["delete_observation_note"])
+@permissions_required(["delete_a1c_note"])
 @login_required
 def delete_component_note(request, note_id):
     ObservationComponentTextNote.objects.get(id=note_id).delete()

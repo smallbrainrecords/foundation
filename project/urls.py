@@ -72,7 +72,7 @@ urlpatterns = patterns('',
     url(r'^todo/', include('todo_app.urls')),
 
     # Observations
-    url(r'^observation/', include('observations_app.urls')),
+    url(r'^a1c/', include('a1c_app.urls')),
 
     # colon cancer
     url(r'^colon_cancer/', include('colons_app.urls')),

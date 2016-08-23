@@ -2,26 +2,26 @@
 	<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 		<div class="panel panel-default">
 			<div class="panel-heading" role="tab" id="headingOne" ng-click="open_a1c()">
-				<div ng-show="!show_observation_collapse" ng-class="{'text-danger': observation.observation_components[observation.observation_components.length -1].value_quantity > 7.5}">
+				<div ng-show="!show_a1c_collapse" ng-class="{'text-danger': a1c.observation.observation_components[a1c.observation.observation_components.length -1].value_quantity > 7.5}">
   					<i class="fa fa-caret-right" aria-hidden="true"></i>
 					A1C: 
-					<span ng-if="observation.patient_refused_A1C">Refused on {{observation.effective_datetime|date:'M/d/yyyy'}}</span>
-					<span ng-if="observation.observation_components.length && !observation.patient_refused_A1C">
-						{{observation.observation_components[observation.observation_components.length -1].value_quantity| number:1}}% on {{observation.observation_components[observation.observation_components.length -1].effective_datetime|date:'M/d/yyyy'}}
+					<span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
+					<span ng-if="a1c.observation.observation_components.length && !a1c.patient_refused_A1C">
+						{{a1c.observation.observation_components[a1c.observation.observation_components.length -1].value_quantity| number:1}}% on {{a1c.observation.observation_components[a1c.observation.observation_components.length -1].effective_datetime|date:'M/d/yyyy'}}
 						<span ng-if="a1c_date <= today">past due</span>
 					</span>
 				</div>
-				<div ng-show="show_observation_collapse"><i class="fa fa-caret-down" aria-hidden="true"></i> Hide</div>
+				<div ng-show="show_a1c_collapse"><i class="fa fa-caret-down" aria-hidden="true"></i> Hide</div>
 			</div>
-			<div ng-show="show_observation_collapse">
+			<div ng-show="show_a1c_collapse">
 				<div class="panel-body">
 					<div class='row'>
 
-						<div class='col-md-12' ng-class="{'text-danger': observation.observation_components[observation.observation_components.length -1].value_quantity > 7.5}">
+						<div class='col-md-12' ng-class="{'text-danger': a1c.observation.observation_components[a1c.observation.observation_components.length -1].value_quantity > 7.5}">
 							A1C: 
-							<span ng-if="observation.patient_refused_A1C">Refused on {{observation.effective_datetime|date:'M/d/yyyy'}}</span>
-							<span ng-if="observation.observation_components.length && !observation.patient_refused_A1C">
-								{{observation.observation_components[observation.observation_components.length -1].value_quantity| number:1}}% on {{observation.observation_components[observation.observation_components.length -1].effective_datetime|date:'M/d/yyyy'}}
+							<span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
+							<span ng-if="a1c.observation.observation_components.length && !a1c.patient_refused_A1C">
+								{{a1c.observation.observation_components[a1c.observation.observation_components.length -1].value_quantity| number:1}}% on {{a1c.observation.observation_components[a1c.observation.observation_components.length -1].effective_datetime|date:'M/d/yyyy'}}
 								<span ng-if="a1c_date <= today">past due</span>
 							</span>
 						</div>
@@ -31,13 +31,13 @@
 						<div class='col-md-6'>
 							<div class="row">
 								<div class='col-md-12'>
-									<a href="#/observation/{{observation.id}}/enter_new_value" class='btn btn-default'>Enter new value</a>
+									<a href="#/a1c/{{a1c.id}}/enter_new_value" class='btn btn-default'>Enter new value</a>
 								</div>
 							</div>
 							</br>
 							<div class="row">
 								<div class='col-md-12'>
-									<a href="#/observation/{{observation.id}}/edit_or_delete_values" class='btn btn-default'>Edit values</a>
+									<a href="#/a1c/{{a1c.id}}/edit_or_delete_values" class='btn btn-default'>Edit values</a>
 								</div>
 							</div>
 							</br>
@@ -45,7 +45,7 @@
 								<div class='col-md-12'>
 									<h2>Past values:</h2>
 								</div>
-								<div class='col-md-12' ng-repeat="component in observation.observation_components|orderBy:['effective_datetime','created_on']:true" ng-if="(!observation.patient_refused_A1C) || (observation.patient_refused_A1C)" ng-class="{'text-danger': component.value_quantity > 7.5}">
+								<div class='col-md-12' ng-repeat="component in a1c.observation.observation_components|orderBy:['effective_datetime','created_on']:true" ng-class="{'text-danger': component.value_quantity > 7.5}">
 									A1C: 
 										{{component.value_quantity| number:1}}% on {{component.effective_datetime|date:'M/d/yyyy'}}.
 
@@ -66,8 +66,8 @@
 								</div>
 							</div>
 							</br>
-							<div class="row" ng-if="observation.observation_notes.length">
-								<div class='col-md-12' ng-repeat="note in observation.observation_notes">
+							<div class="row" ng-if="a1c.a1c_notes.length">
+								<div class='col-md-12' ng-repeat="note in a1c.a1c_notes">
 									<div ng-show="$index == 0 || show_note">
 										<span ng-show="!note.edit">{{note.author.user.username}}: {{note.note}} {{note.datetime|date:'M/d/yyyy'}}</span>
 										<div ng-if="active_user.role == 'physician' || active_user.role == 'admin'">
@@ -115,11 +115,11 @@
 							<div class="row">
 								<div class='col-md-12'>
 									<p>Pending order:</p>
-									<p ng-if='!observation.observation_todos || observation.observation_todos.length == 0'> No pending order</p>
-									<div ng-if="observation.observation_todos.length">
-										<todo ng-model="observation.observation_todos" accomplished="false" show-problem="false"></todo>
+									<p ng-if='!a1c.a1c_todos || a1c.a1c_todos.length == 0'> No pending order</p>
+									<div ng-if="a1c.a1c_todos.length">
+										<todo ng-model="a1c.a1c_todos" accomplished="false" show-problem="false"></todo>
 									</div>
-									<a href="#/observation/{{observation.id}}/add_different_order" class='btn btn-default'>Add a different task</a>
+									<a href="#/a1c/{{a1c.id}}/add_different_order" class='btn btn-default'>Add a different task</a>
 								</div>
 							</div>
 							</br>

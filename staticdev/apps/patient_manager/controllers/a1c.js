@@ -4,15 +4,15 @@
 
 
 	angular.module('ManagerApp')
-		.controller('AddDifferentOrderCtrl', function($scope, $routeParams, observationService, ngDialog, problemService, toaster, $location){
+		.controller('AddDifferentOrderCtrl', function($scope, $routeParams, a1cService, ngDialog, problemService, toaster, $location){
 
 
 			var patient_id = $('#patient_id').val();
 			$scope.patient_id = patient_id;
-			$scope.observation_id = $routeParams.observation_id;
+			$scope.a1c_id = $routeParams.a1c_id;
 
-			observationService.fetchObservationInfo($scope.observation_id).then(function(data){
-                $scope.observation = data['info'];
+			a1cService.fetchA1cInfo($scope.a1c_id).then(function(data){
+                $scope.a1c = data['info'];
             });
 
             $scope.add_todo = function(form) {
@@ -30,28 +30,28 @@
 				}
 
 				form.patient_id = $scope.patient_id;
-				form.problem_id = $scope.observation.problem.id;
-				form.observation_id = $scope.observation.id;
+				form.problem_id = $scope.a1c.problem.id;
+				form.a1c_id = $scope.a1c.id;
 				problemService.addTodo(form).then(function(data){
                     form.name = '';
 					form.month = '';
 					toaster.pop('success', 'Done', 'Added Todo!');
-                    $location.url('/problem/' + $scope.observation.problem.id);
+                    $location.url('/problem/' + $scope.a1c.problem.id);
 				});
             }
 
 
 
 		})
-		.controller('EnterNewValueCtrl', function($scope, $routeParams, observationService, ngDialog, problemService, toaster, patientService, $location){
+		.controller('EnterNewValueCtrl', function($scope, $routeParams, a1cService, ngDialog, problemService, toaster, patientService, $location){
 
 
 			var patient_id = $('#patient_id').val();
 			$scope.patient_id = patient_id;
-			$scope.observation_id = $routeParams.observation_id;
+			$scope.a1c_id = $routeParams.a1c_id;
 
-			observationService.fetchObservationInfo($scope.observation_id).then(function(data){
-                $scope.observation = data['info'];
+			a1cService.fetchA1cInfo($scope.a1c_id).then(function(data){
+                $scope.a1c = data['info'];
             });
 
             patientService.fetchActiveUser().then(function(data){
@@ -73,10 +73,10 @@
             	if(value.date==undefined) {
             		value.date = moment().format("YYYY-MM-DD");
             	}
-            	value.observation_id = $scope.observation_id;
-            	observationService.addNewValue(value).then(function(data){
+            	value.observation_id = $scope.a1c.observation.id;
+            	a1cService.addNewValue(value).then(function(data){
 	                toaster.pop('success', 'Done', 'Added New value!');
-                    $location.url('/problem/' + $scope.observation.problem.id);
+                    $location.url('/problem/' + $scope.a1c.problem.id);
 	            });
             };
 
@@ -86,18 +86,18 @@
             		value.date = moment().format("YYYY-MM-DD");
             	}
             	value.patient_refused_A1C = true;
-            	value.observation_id = $scope.observation_id;
-            	observationService.addValueRefused(value).then(function(data){
+            	value.a1c_id = $scope.a1c_id;
+            	a1cService.addValueRefused(value).then(function(data){
 	                toaster.pop('success', 'Done', 'Patient refused!');
-                    $location.url('/problem/' + $scope.observation.problem.id);
+                    $location.url('/problem/' + $scope.a1c.problem.id);
 	            });
             };
 
             $scope.add_note = function(form) {
                 if (form.note == '') return;
-                form.observation_id = $scope.observation_id;
-                observationService.addNote(form).then(function(data) {
-                    $scope.observation.observation_notes.push(data['note']);
+                form.a1c_id = $scope.a1c_id;
+                a1cService.addNote(form).then(function(data) {
+                    $scope.a1c.a1c_notes.push(data['note']);
                     form.note = '';
                     toaster.pop('success', 'Done', 'Added Note!');
                 });
@@ -108,7 +108,7 @@
             }
 
             $scope.toggleSaveNote = function(note) {
-                observationService.editNote(note).then(function(data) {
+                a1cService.editNote(note).then(function(data) {
                     note.edit = false;
                     toaster.pop('success', 'Done', 'Edited note successfully');
                 });
@@ -119,9 +119,9 @@
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
                 }).then(function(result){
-                    observationService.deleteNote(note).then(function(data){
-                        var index = $scope.observation.observation_notes.indexOf(note);
-                        $scope.observation.observation_notes.splice(index, 1);
+                    a1cService.deleteNote(note).then(function(data){
+                        var index = $scope.a1c.a1c_notes.indexOf(note);
+                        $scope.a1c.a1c_notes.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted note successfully');
                     });
                 },function(){
@@ -130,19 +130,19 @@
             }
 
 		})
-        .controller('EditOrDeleteValuesCtrl', function($scope, $routeParams, observationService, ngDialog, problemService, toaster, patientService, prompt){
+        .controller('EditOrDeleteValuesCtrl', function($scope, $routeParams, a1cService, ngDialog, problemService, toaster, patientService, prompt){
 
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
-            $scope.observation_id = $routeParams.observation_id;
+            $scope.a1c_id = $routeParams.a1c_id;
 
             patientService.fetchActiveUser().then(function(data){
                 $scope.active_user = data['user_profile'];
             });
 
-            observationService.fetchObservationInfo($scope.observation_id).then(function(data){
-                $scope.observation = data['info'];
+            a1cService.fetchA1cInfo($scope.a1c_id).then(function(data){
+                $scope.a1c = data['info'];
             });
 
             $scope.deleteValue = function(component) {
@@ -150,9 +150,9 @@
                     "title": "Are you sure?",
                     "message": "Deleting a value is forever. There is no undo."
                 }).then(function(result){
-                    observationService.deleteValue(component).then(function(data){
-                        var index = $scope.observation.observation_components.indexOf(component);
-                        $scope.observation.observation_components.splice(index, 1);
+                    a1cService.deleteValue(component).then(function(data){
+                        var index = $scope.a1c.observation.observation_components.indexOf(component);
+                        $scope.a1c.observation.observation_components.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted value successfully');
                     });
                 },function(){
@@ -161,7 +161,7 @@
             };
 
         })
-        .controller('EditValueCtrl', function($scope, $routeParams, observationService, ngDialog, problemService, toaster, patientService, prompt, $location){
+        .controller('EditValueCtrl', function($scope, $routeParams, a1cService, ngDialog, problemService, toaster, patientService, prompt, $location){
 
 
             var patient_id = $('#patient_id').val();
@@ -172,9 +172,9 @@
                 $scope.active_user = data['user_profile'];
             });
 
-            observationService.fetchObservationComponentInfo($scope.component_id).then(function(data){
+            a1cService.fetchObservationComponentInfo($scope.component_id).then(function(data){
                 $scope.component = data['info'];
-                $scope.observation_id = data['observation_id'];
+                $scope.a1c_id = data['a1c_id'];
                 $scope.today = moment();
                 $scope.a1c_date = moment($scope.component.effective_datetime);
                 $scope.a1c_date_format = moment($scope.component.effective_datetime).format("YYYY-MM-DD");
@@ -185,9 +185,9 @@
                     "title": "Are you sure?",
                     "message": "Deleting a value is forever. There is no undo."
                 }).then(function(result){
-                    observationService.deleteValue(component).then(function(data){
+                    a1cService.deleteValue(component).then(function(data){
                         toaster.pop('success', 'Done', 'Deleted value successfully');
-                        $location.url('/observation/' + $scope.observation_id + '/edit_or_delete_values');
+                        $location.url('/a1c/' + $scope.a1c_id + '/edit_or_delete_values');
                     });
                 },function(){
                     return false;
@@ -208,7 +208,7 @@
                 form.component_id = component_id;
                 form.value_quantity = value_quantity;
                 form.effective_datetime = effective_datetime;
-                observationService.editValue(form).then(function(data){
+                a1cService.editValue(form).then(function(data){
                     $scope.component = data['info'];
                     $scope.a1c_date = moment($scope.component.effective_datetime);
                     $scope.a1c_date_format = moment($scope.component.effective_datetime).format("YYYY-MM-DD");
@@ -219,7 +219,7 @@
             $scope.add_note = function(form) {
                 if (form.note == '') return;
                 form.component_id = $scope.component_id;
-                observationService.addComponentNote(form).then(function(data) {
+                a1cService.addComponentNote(form).then(function(data) {
                     $scope.component.observation_component_notes.push(data['note']);
                     form.note = '';
                     toaster.pop('success', 'Done', 'Added Note!');
@@ -231,7 +231,7 @@
             }
 
             $scope.toggleSaveNote = function(note) {
-                observationService.editComponentNote(note).then(function(data) {
+                a1cService.editComponentNote(note).then(function(data) {
                     note.edit = false;
                     toaster.pop('success', 'Done', 'Edited note successfully');
                 });
@@ -242,7 +242,7 @@
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
                 }).then(function(result){
-                    observationService.deleteComponentNote(note).then(function(data){
+                    a1cService.deleteComponentNote(note).then(function(data){
                         var index = $scope.component.observation_component_notes.indexOf(note);
                         $scope.component.observation_component_notes.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted note successfully');
