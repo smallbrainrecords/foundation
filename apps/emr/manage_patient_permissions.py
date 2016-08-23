@@ -56,6 +56,8 @@ GLOBAL_PERMISSIONS = [
     # sharing
     'add_sharing_patient',
     'remove_sharing_patient',
+    # my story
+    'add_my_story_tab',
     # Pain
     'update_pain', ]
 
@@ -93,6 +95,8 @@ ROLE_PERMISSIONS['patient'] = [
     'add_observation',
     'add_observation_note',
     'remove_sharing_patient',
+    # my story
+    'add_my_story_tab',
     # Pain
     'update_pain', ]
 
@@ -137,6 +141,8 @@ ROLE_PERMISSIONS['physician'] = [
     # sharing
     'add_sharing_patient',
     'remove_sharing_patient',
+    # my story
+    'add_my_story_tab',
     # Pain
     'update_pain', ]
 

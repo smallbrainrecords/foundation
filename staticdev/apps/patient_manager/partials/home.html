@@ -89,447 +89,579 @@
     </div><!-- End of Panel Body -->
 </div>
 <hr class="hide">
+
+<!-- Begin tabs -->
+<div class='row'>
+    <div class='col-md-12 text-center home-page-tabs'>
+        <ul class="nav nav-pills" role="tablist">
+            <li role="presentation" class="active">
+                <a href=".tab-problems" role="tab" data-toggle="tab">Problems</a>
+            </li>
+            <li role="presentation">
+                <a href=".tab-my-story" role="tab" data-toggle="tab">My story</a>
+            </li>
+            <li role="presentation">
+                <a href=".tab-data" role="tab" data-toggle="tab">Data</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<!-- End tabs -->
 <div class='row'>
     <div class='col-md-12'>
-        <div class='panel panel-default'>
-            <div class='panel-heading'> Problems</div>
-
-            <div class='panel-body'>
-
+        <div class="tab-content">
+            <!-- Problems tab -->
+            <div role="tabpanel" class="tab-pane active tab-problems">
                 <div class='row'>
-                    <div class='col-md-6 col-md-offset-4'>
-                        <ul class="nav nav-pills" role="tablist">
-                            <li role="presentation" class="active">
-                                <a href=".tab-active-problem" aria-controls="home" role="tab" data-toggle="tab">Active
-                                    Problems</a>
-                            </li>
-                            <li role="presentation">
-                                <a href=".tab-inactive-problem" aria-controls="profile" role="tab" data-toggle="tab">Inactive
-                                    Problems</a>
-                            </li>
-                            <li role="presentation">
-                                <a href=".tab-add-problem" aria-controls="profile" role="tab" data-toggle="tab">Add
-                                    Problem</a>
-                            </li>
-                        </ul>
+                    <div class='col-md-12'>
+                        <div class='panel panel-default'>
+                            <div class='panel-heading'> Problems</div>
+
+                            <div class='panel-body'>
+
+                                <div class='row'>
+                                    <div class='col-md-6 col-md-offset-4'>
+                                        <ul class="nav nav-pills" role="tablist">
+                                            <li role="presentation" class="active">
+                                                <a href=".tab-active-problem" aria-controls="home" role="tab" data-toggle="tab">Active
+                                                    Problems</a>
+                                            </li>
+                                            <li role="presentation">
+                                                <a href=".tab-inactive-problem" aria-controls="profile" role="tab" data-toggle="tab">Inactive
+                                                    Problems</a>
+                                            </li>
+                                            <li role="presentation">
+                                                <a href=".tab-add-problem" aria-controls="profile" role="tab" data-toggle="tab">Add
+                                                    Problem</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="tab-content problem-tabs">
+                                    <div role="tabpanel" class="tab-pane active tab-active-problem">
+                                        <div>
+                                            <ul class='ul-clean' ui-sortable="sortableOptionsProblem" ng-model="problems"
+                                                ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
+                                                <li ng-repeat="problem in problems"
+                                                    ng-show="problem.is_active==true && !inArray(problem_lists, problem)"
+                                                    ng-click='open_problem(problem)'
+                                                    ng-if="checkSharedProblem(problem, sharing_patients)">
+                                                    <div class='item-box'
+                                                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                                                        {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+                                                        <!-- begin label -->
+                                                        <!-- <span class="quick-card-editor-label">
+                                                            <a ng-repeat="label in problem.labels" class="todo-label"
+                                                               ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
+                                                        </span> -->
+                                                        <!-- end label -->
+                                                        <!-- begin sharing patients -->
+                                                        <span ng-repeat="p in sharing_patients"
+                                                              ng-if="isInArray(p.problems, problem.id)">
+                                                            <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
+                                                        </span>
+                                                        <!-- end sharing patients -->
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                            <ul class='ul-clean'
+                                                ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
+                                                <li ng-repeat='problem in problems'
+                                                    ng-show="problem.is_active==true && !inArray(problem_lists, problem)"
+                                                    ng-click='open_problem(problem)'>
+
+                                                    <div class='item-box'
+                                                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+
+                                                        {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+                                                        <!-- begin sharing patients -->
+                                                        <span ng-repeat="p in sharing_patients"
+                                                              ng-if="isInArray(p.problems, problem.id)">
+                                                            <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
+                                                        </span>
+                                                        <!-- end sharing patients -->
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane tab-inactive-problem">
+                                        <div style='max-height:375px; overflow-y:auto;'>
+                                            <ul class='ul-clean' ui-sortable="sortableOptionsProblem" ng-model="problems"
+                                                ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
+                                                <li ng-repeat="problem in problems"
+                                                    ng-show="problem.is_active==false && !inArray(problem_lists, problem)"
+                                                    ng-click='open_problem(problem)'
+                                                    ng-if="checkSharedProblem(problem, sharing_patients)">
+                                                    <div class='item-box'
+                                                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                                                        {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+                                                        <!-- begin sharing patients -->
+                                                        <span ng-repeat="p in sharing_patients"
+                                                              ng-if="isInArray(p.problems, problem.id)">
+                                                            <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
+                                                        </span>
+                                                        <!-- end sharing patients -->
+                                                    </div>
+                                                </li>
+                                            </ul>
+
+                                            <ul class='ul-clean'
+                                                ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
+                                                <li ng-repeat='problem in problems'
+                                                    ng-show="problem.is_active==false && !inArray(problem_lists, problem)"
+                                                    ng-click='open_problem(problem)'>
+
+                                                    <div class='item-box'
+                                                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+
+                                                        {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+                                                        <!-- begin sharing patients -->
+                                                        <span ng-repeat="p in sharing_patients"
+                                                              ng-if="isInArray(p.problems, problem.id)">
+                                                            <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
+                                                        </span>
+                                                        <!-- end sharing patients -->
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <!-- end inactive problem tab -->
+                                    <!-- add problem tab -->
+                                    <div role="tabpanel" class="tab-pane tab-add-problem">
+                                        <div class='row' ng-show='permitted(["add_problem"])'>
+                                            <div class='col-md-12'>
+                                                <br>
+                                                <div ng-if="active_user.role=='physician' || active_user.role=='mid-level'">
+                                                    <div>
+                                                        <p>Common problem:</p>
+                                                        <select class='form-control' ng-model="acute_form">
+                                                            <option ng-repeat="acute in acutes"
+                                                                    value="{{ acute.id }}"> {{ acute.problem_name }} </option>
+                                                        </select>
+                                                        <button class='btn btn-sm btn-default'
+                                                                ng-click='add_new_common_problem(acute_form, "acute")'>
+                                                            Add acute problem
+                                                        </button>
+                                                    </div>
+                                                    <br>
+                                                    <div>
+                                                        <select class='form-control' ng-model="chronic_form">
+                                                            <option ng-repeat="chronic in chronics"
+                                                                    value="{{ chronic.id }}"> {{ chronic.problem_name }} </option>
+                                                        </select>
+                                                        <button class='btn btn-sm btn-default'
+                                                                ng-click='add_new_common_problem(chronic_form, "chronic")'>
+                                                            Add chronic problem
+                                                        </button>
+                                                    </div>
+                                                    <br>
+                                                </div>
+                                                <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
+                                                       placeholder='Search Problem....'>
+                                                <button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
+                                                    Add Problem
+                                                </button>
+                                                <br>
+                                                <div ng-show='new_problem.set==true'>
+                                                    <hr>
+                                                    <label> {{ new_problem.code }} </label>
+                                                    {{ new_problem.term }} <br>
+                                                    <button class='btn btn-sm btn-default' ng-click='add_problem()'>
+                                                        Add Problem
+                                                    </button>
+                                                    <button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
+                                                        Cancel
+                                                    </button>
+                                                    <hr>
+                                                </div>
+                                            </div>
+                                            <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
+                                                <div ng-repeat='problem_term in problem_terms' style='margin-top:12px;'>
+                                                    <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
+                                                            ng-click='set_new_problem(problem_term)'>
+                                                        {{ problem_term.term }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- end tab add problem -->
+                                </div>
+                                <hr>
+                                <div class='panel panel-default' ng-repeat="list in problem_lists"
+                                     ng-init="list.collapse=false;list.rename=false;">
+
+                                    <div class='panel-heading' ng-click="set_collapse(list);">
+                                        <i class="fa fa-caret-down pull-left" aria-hidden="true" ng-if="list.collapse"></i>
+                                        <i class="fa fa-caret-right pull-left" aria-hidden="true" ng-if="!list.collapse"></i>
+                                        <span ng-show="!list.rename"> 
+                                            <span class="quick-card-editor-label" ng-if="check_problem_list_controlled(list)">
+                                                <a class="todo-label todo-label-red"></a>
+                                            </span>
+                                            {{ list.name }} <span>({{ list.problems.length }})</span>
+                                            <span ng-if="check_problem_list_authenticated(list)">(not-authenticated)</span>
+                                        </span>
+                                        <span ng-show="list.rename"> 
+                                            <input type="text" ng-model="list.name"> 
+                                            <button class="btn btn-default"
+                                                    ng-click="rename_list(list); $event.stopPropagation();">Save</button>
+                                            <button class="btn btn-default"
+                                                    ng-click="list.rename=!list.rename; $event.stopPropagation();">Cancel</button>
+                                        </span>
+                                        <span ng-show="list.collapse && !list.rename"
+                                              ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
+                                            <a href class="btn btn-danger" ng-click="delete_list(list); $event.stopPropagation();">Delete</a>
+                                            <a href class="btn btn-primary"
+                                               ng-click="list.rename=!list.rename; $event.stopPropagation();">Rename</a>
+                                        </span>
+                                    </div>
+
+                                    <div class='panel-body' ng-show="list.collapse">
+                                        <div class='row'>
+                                            <div class='col-md-12'>
+                                                <textarea class='form-control' ng-model='list.note'></textarea>
+                                                <br>
+                                                <button class='btn btn-default' ng-click='update_problem_list_note(list)'>
+                                                    Update
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <br>
+                                        <problem ng-model="list.problems" is-list="list.id"></problem>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class='col-md-12'>
+                        <div class='panel panel-default'>
+
+                            <div class='panel-heading'> Goals</div>
+                            <div class='panel-body'>
+                                <div class='row'>
+                                    <div class='col-md-6 col-md-offset-4'>
+                                        <ul class="nav nav-pills" role="tablist">
+                                            <li role="presentation" class="active">
+                                                <a href=".tab-incomplete-goals" aria-controls="goals" role="tab" data-toggle="tab">
+                                                    Current/Incomplete Goals </a>
+                                            </li>
+                                            <li role="presentation">
+                                                <a href=".tab-completed-goals" aria-controls="incomplete_goals" role="tab"
+                                                   data-toggle="tab">Completed Goals</a>
+                                            </li>
+                                            <li role="presentation" ng-show='permitted(["add_goal"])'>
+                                                <a href=".tab-add-goal" aria-controls="add_goal" role="tab" data-toggle="tab">Add
+                                                    Goal</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="tab-content">
+                                    <div role="tabpanel" class="tab-pane active tab-incomplete-goals">
+                                        <div style='max-height:375px; overflow-y:auto;'>
+                                            <ul class='ul-clean'>
+                                                <li ng-repeat='goal in goals'
+                                                    ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
+                                                    <div class='item-box'
+                                                         ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
+                                                        <a class='btn  btn-default btn-sm' href='#/goal/{{ goal.id }}'>
+                                                            View
+                                                        </a>
+
+                                                        {{ goal.goal }} <span ng-if="goal.problem">for problem <a
+                                                            href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane tab-completed-goals">
+                                        <div style='max-height:375px; overflow-y:auto;'>
+                                            <ul class='ul-clean'>
+                                                <li ng-repeat='goal in completed_goals'
+                                                    ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
+                                                    <div class='item-box'
+                                                         ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
+                                                        <a class='btn  btn-default btn-sm' href='#/goal/{{ goal.id }}'>
+                                                            View
+                                                        </a>
+
+                                                        {{ goal.goal }} <span ng-if="goal.problem">for problem <a
+                                                            href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane tab-add-goal" ng-show='permitted(["add_goal"])'>
+                                        <div class='row'>
+                                            <div class='col-md-10 col-md-offset-1'>
+                                                <form role='form' ng-submit='add_goal(new_goal)'>
+                                                    <div class='form-group'>
+                                                        <label> Goal Name </label>
+                                                        <input type='text' ng-model='new_goal.name' class='form-control'>
+                                                    </div>
+                                                    <button type='submit' class='btn btn-default'> Add Goal</button>
+
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='col-md-12'>
+                        <div class='panel panel-default'>
+
+                            <div class='panel-heading'> Todos</div>
+
+                            <div class='panel-body'>
+
+                                <div class='row' ng-show='permitted(["add_todo"])'>
+                                    <div class='col-md-12'>
+                                        <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
+                                            <div class='form-group'>
+                                                <label> Todo Name </label>
+                                                <input type='text' ng-model='new_todo.name' id='todoNameInput'>
+                                            </div>
+                                            <button type='submit' class='btn btn-default'> Add Todo</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
+                                <hr>
+                                <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
+                                    <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
+                                    <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
+                                </a>
+                                <hr>
+                                <div class="col-md-12" ng-show='show_accomplished_todos==true'>
+                                    <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='col-md-12'>
+                        <div class='panel panel-default' ng-init="encounter_collapse=false;">
+
+                            <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
+                                <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+                                <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+                                Encounters
+                            </div>
+
+                            <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="encounter_collapse">
+
+                                <ul class='ul-clean'>
+                                    <li ng-repeat='encounter in encounters'>
+                                        <div class='row'>
+                                            <div class='col-md-6'>
+                                                <a href='#/encounter/{{ encounter.id }}'>
+                                                    From <b> {{ encounter.starttime | date:'medium' }} </b> to
+                                                    <b>{{ encounter.stoptime | date:'medium' }}</b>
+                                                </a>
+                                            </div>
+                                            <div class='col-md-4'>
+                                                {{ encounter.duration }}
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class='col-md-12'>
+                        <div class='panel panel-default' ng-init="favorites_collapse=false;">
+
+                            <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
+                                <i class="fa fa-caret-down" aria-hidden="true" ng-if="favorites_collapse"></i>
+                                <i class="fa fa-caret-right" aria-hidden="true" ng-if="!favorites_collapse"></i>
+                                Favorites
+                            </div>
+
+                            <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="favorites_collapse">
+                                <table class='table' ng-if='favorites.length>0'>
+                                    <thead>
+                                    <th>Name</th>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat='event in favorites' ng-init="event.is_named=false;">
+                                        <td>
+                                                <span ng-if="event.is_favorite">
+                                                    <span ng-if="event.is_named">
+                                                        <input type="text" ng-model="event.name_favorite">
+                                                        <button class="btn btn-primary" ng-click="nameFavoriteEvent(event)">Save</button>
+                                                        <button class="btn btn-danger"
+                                                                ng-click="event.is_named=!event.is_named;">Cancel</button>
+                                                    </span>
+                                                    <span ng-if="!event.is_named">
+                                                        {{ event.name_favorite }}
+                                                        <a href='#/encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
+                                                           class="btn btn-default" target="_blank">Listen</a>
+                                                        <button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
+                                                        <button class="btn btn-danger"
+                                                                ng-click="unmarkFavoriteEvent(event)">Remove</button>
+                                                    </span>
+                                                </span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='col-md-12'>
+                        <div class='panel panel-default'>
+
+                            <div class='panel-heading'> Pain History</div>
+
+                            <div class='panel-body'>
+
+                                <a href="/patient/{{ patient_id }}/pain/add_pain_avatar" class='btn btn-default pull-right'
+                                   ng-show='permitted(["update_pain"])'>
+                                    Update Pain
+                                </a>
+                                <div pain-avatar pain-data='pain_avatars'></div>
+
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="tab-content problem-tabs">
-                    <div role="tabpanel" class="tab-pane active tab-active-problem">
-                        <div>
-                            <ul class='ul-clean' ui-sortable="sortableOptionsProblem" ng-model="problems"
-                                ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-                                <li ng-repeat="problem in problems"
-                                    ng-show="problem.is_active==true && !inArray(problem_lists, problem)"
-                                    ng-click='open_problem(problem)'
-                                    ng-if="checkSharedProblem(problem, sharing_patients)">
-                                    <div class='item-box'
-                                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
-                                        {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
-                                        <!-- begin label -->
-                                        <!-- <span class="quick-card-editor-label">
-                                            <a ng-repeat="label in problem.labels" class="todo-label"
-                                               ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-                                        </span> -->
-                                        <!-- end label -->
-                                        <!-- begin sharing patients -->
-										<span ng-repeat="p in sharing_patients"
-                                              ng-if="isInArray(p.problems, problem.id)">
-											<img ng-src="{{ p.portrait_image }}" class='tiny-img'>
-										</span>
-                                        <!-- end sharing patients -->
-                                    </div>
-                                </li>
-                            </ul>
-                            <ul class='ul-clean'
-                                ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
-                                <li ng-repeat='problem in problems'
-                                    ng-show="problem.is_active==true && !inArray(problem_lists, problem)"
-                                    ng-click='open_problem(problem)'>
+                <div class='row'>
 
-                                    <div class='item-box'
-                                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                    <div class='col-md-12'>
 
-                                        {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
-                                        <!-- begin sharing patients -->
-										<span ng-repeat="p in sharing_patients"
-                                              ng-if="isInArray(p.problems, problem.id)">
-											<img ng-src="{{ p.portrait_image }}" class='tiny-img'>
-										</span>
-                                        <!-- end sharing patients -->
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane tab-inactive-problem">
-                        <div style='max-height:375px; overflow-y:auto;'>
-                            <ul class='ul-clean' ui-sortable="sortableOptionsProblem" ng-model="problems"
-                                ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-                                <li ng-repeat="problem in problems"
-                                    ng-show="problem.is_active==false && !inArray(problem_lists, problem)"
-                                    ng-click='open_problem(problem)'
-                                    ng-if="checkSharedProblem(problem, sharing_patients)">
-                                    <div class='item-box'
-                                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
-                                        {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
-                                        <!-- begin sharing patients -->
-										<span ng-repeat="p in sharing_patients"
-                                              ng-if="isInArray(p.problems, problem.id)">
-											<img ng-src="{{ p.portrait_image }}" class='tiny-img'>
-										</span>
-                                        <!-- end sharing patients -->
-                                    </div>
-                                </li>
-                            </ul>
+                        <div class='panel panel-default'>
 
-                            <ul class='ul-clean'
-                                ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
-                                <li ng-repeat='problem in problems'
-                                    ng-show="problem.is_active==false && !inArray(problem_lists, problem)"
-                                    ng-click='open_problem(problem)'>
+                            <div class='panel-heading'> Problems</div>
 
-                                    <div class='item-box'
-                                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
-
-                                        {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
-                                        <!-- begin sharing patients -->
-										<span ng-repeat="p in sharing_patients"
-                                              ng-if="isInArray(p.problems, problem.id)">
-											<img ng-src="{{ p.portrait_image }}" class='tiny-img'>
-										</span>
-                                        <!-- end sharing patients -->
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <!-- end inactive problem tab -->
-                    <!-- add problem tab -->
-                    <div role="tabpanel" class="tab-pane tab-add-problem">
-                        <div class='row' ng-show='permitted(["add_problem"])'>
-                            <div class='col-md-12'>
-                                <br>
-                                <div ng-if="active_user.role=='physician' || active_user.role=='mid-level'">
-                                    <div>
-                                        <p>Common problem:</p>
-                                        <select class='form-control' ng-model="acute_form">
-                                            <option ng-repeat="acute in acutes"
-                                                    value="{{ acute.id }}"> {{ acute.problem_name }} </option>
-                                        </select>
-                                        <button class='btn btn-sm btn-default'
-                                                ng-click='add_new_common_problem(acute_form, "acute")'>
-                                            Add acute problem
-                                        </button>
-                                    </div>
-                                    <br>
-                                    <div>
-                                        <select class='form-control' ng-model="chronic_form">
-                                            <option ng-repeat="chronic in chronics"
-                                                    value="{{ chronic.id }}"> {{ chronic.problem_name }} </option>
-                                        </select>
-                                        <button class='btn btn-sm btn-default'
-                                                ng-click='add_new_common_problem(chronic_form, "chronic")'>
-                                            Add chronic problem
-                                        </button>
-                                    </div>
-                                    <br>
-                                </div>
-                                <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
-                                       placeholder='Search Problem....'>
-                                <button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
-                                    Add Problem
-                                </button>
-                                <br>
-                                <div ng-show='new_problem.set==true'>
-                                    <hr>
-                                    <label> {{ new_problem.code }} </label>
-                                    {{ new_problem.term }} <br>
-                                    <button class='btn btn-sm btn-default' ng-click='add_problem()'>
-                                        Add Problem
-                                    </button>
-                                    <button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
-                                        Cancel
-                                    </button>
-                                    <hr>
-                                </div>
-                            </div>
-                            <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
-                                <div ng-repeat='problem_term in problem_terms' style='margin-top:12px;'>
-                                    <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
-                                            ng-click='set_new_problem(problem_term)'>
-                                        {{ problem_term.term }}
-                                    </button>
-                                </div>
+                            <div class='panel-body'>
+                                <problem-timeline ng-model="timeline"></problem-timeline>
                             </div>
                         </div>
                     </div>
-                    <!-- end tab add problem -->
                 </div>
                 <hr>
-                <div class='panel panel-default' ng-repeat="list in problem_lists"
-                     ng-init="list.collapse=false;list.rename=false;">
-
-                    <div class='panel-heading' ng-click="set_collapse(list);">
-                        <i class="fa fa-caret-down pull-left" aria-hidden="true" ng-if="list.collapse"></i>
-                        <i class="fa fa-caret-right pull-left" aria-hidden="true" ng-if="!list.collapse"></i>
-                        <span ng-show="!list.rename"> 
-                            <span class="quick-card-editor-label" ng-if="check_problem_list_controlled(list)">
-                                <a class="todo-label todo-label-red"></a>
-                            </span>
-                            {{ list.name }} <span>({{ list.problems.length }})</span>
-                            <span ng-if="check_problem_list_authenticated(list)">(not-authenticated)</span>
-                        </span>
-                        <span ng-show="list.rename"> 
-                            <input type="text" ng-model="list.name"> 
-                            <button class="btn btn-default"
-                                    ng-click="rename_list(list); $event.stopPropagation();">Save</button>
-                            <button class="btn btn-default"
-                                    ng-click="list.rename=!list.rename; $event.stopPropagation();">Cancel</button>
-                        </span>
-                        <span ng-show="list.collapse && !list.rename"
-                              ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-                            <a href class="btn btn-danger" ng-click="delete_list(list); $event.stopPropagation();">Delete</a>
-                            <a href class="btn btn-primary"
-                               ng-click="list.rename=!list.rename; $event.stopPropagation();">Rename</a>
-                        </span>
-                    </div>
-
-                    <div class='panel-body' ng-show="list.collapse">
-                        <div class='row'>
-                            <div class='col-md-12'>
-                                <textarea class='form-control' ng-model='list.note'></textarea>
-                                <br>
-                                <button class='btn btn-default' ng-click='update_problem_list_note(list)'>
-                                    Update
-                                </button>
-                            </div>
-                        </div>
-                        <br>
-                        <problem ng-model="list.problems" is-list="list.id"></problem>
-                    </div>
-                </div>
-
             </div>
-        </div>
-
-    </div>
-
-    <div class='col-md-12'>
-        <div class='panel panel-default'>
-
-            <div class='panel-heading'> Goals</div>
-            <div class='panel-body'>
-                <div class='row'>
-                    <div class='col-md-6 col-md-offset-4'>
-                        <ul class="nav nav-pills" role="tablist">
-                            <li role="presentation" class="active">
-                                <a href=".tab-incomplete-goals" aria-controls="goals" role="tab" data-toggle="tab">
-                                    Current/Incomplete Goals </a>
-                            </li>
-                            <li role="presentation">
-                                <a href=".tab-completed-goals" aria-controls="incomplete_goals" role="tab"
-                                   data-toggle="tab">Completed Goals</a>
-                            </li>
-                            <li role="presentation" ng-show='permitted(["add_goal"])'>
-                                <a href=".tab-add-goal" aria-controls="add_goal" role="tab" data-toggle="tab">Add
-                                    Goal</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane active tab-incomplete-goals">
-                        <div style='max-height:375px; overflow-y:auto;'>
-                            <ul class='ul-clean'>
-                                <li ng-repeat='goal in goals'
-                                    ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
-                                    <div class='item-box'
-                                         ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
-                                        <a class='btn  btn-default btn-sm' href='#/goal/{{ goal.id }}'>
-                                            View
-                                        </a>
-
-                                        {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                            href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
-                                    </div>
+            <!-- End Problems tab -->
+            <!-- story tab -->
+            <div role="tabpanel" class="tab-pane tab-my-story">
+                <h3>My Story</h3>
+                <br>
+                <div class="row my-story">
+                    <div class="col-sm-3 my-story-left">
+                        <div>
+                            <ul class='ul-clean my-story-list' style="padding-left: 0;">
+                                <li ng-repeat="tab in my_story_tabs">
+                                    <button class="btn-link" ng-click="view_my_story_tab(tab);" ng-class="{'active': tab==selected_tab}">{{tab.name}}</button>
                                 </li>
                             </ul>
                         </div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane tab-completed-goals">
-                        <div style='max-height:375px; overflow-y:auto;'>
-                            <ul class='ul-clean'>
-                                <li ng-repeat='goal in completed_goals'
-                                    ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
-                                    <div class='item-box'
-                                         ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
-                                        <a class='btn  btn-default btn-sm' href='#/goal/{{ goal.id }}'>
-                                            View
-                                        </a>
-
-                                        {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                            href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane tab-add-goal" ng-show='permitted(["add_goal"])'>
-                        <div class='row'>
-                            <div class='col-md-10 col-md-offset-1'>
-                                <form role='form' ng-submit='add_goal(new_goal)'>
-                                    <div class='form-group'>
-                                        <label> Goal Name </label>
-                                        <input type='text' ng-model='new_goal.name' class='form-control'>
-                                    </div>
-                                    <button type='submit' class='btn btn-default'> Add Goal</button>
-
-                                </form>
+                        <button class="btn btn-default" ng-click="toggle_add_my_story_tab();" ng-show="!show_add_my_story_tab">Add Tab</button>
+                        <form ng-show="show_add_my_story_tab">
+                            <div class="form-group">
+                                <input type="text" name="new-tab" ng-model="new_tab.name">
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class='col-md-12'>
-        <div class='panel panel-default'>
-
-            <div class='panel-heading'> Todos</div>
-
-            <div class='panel-body'>
-
-                <div class='row' ng-show='permitted(["add_todo"])'>
-                    <div class='col-md-12'>
-                        <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
-                            <div class='form-group'>
-                                <label> Todo Name </label>
-                                <input type='text' ng-model='new_todo.name' id='todoNameInput'>
+                            <div class="radio">
+                              <label>
+                                <input type="radio" ng-value="true" checked ng-model="new_tab.private">
+                                keep it private
+                              </label>
                             </div>
-                            <button type='submit' class='btn btn-default'> Add Todo</button>
+                            <div class="radio">
+                              <label>
+                                <input type="radio" ng-value="" ng-model="new_tab.private">
+                                share with doctor
+                              </label>
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-default" ng-click="toggle_add_my_story_tab();">cancel</button>
+                                <button class="btn btn-default" ng-click="add_my_story_tab(new_tab);">Save</button>
+                            </div>
                         </form>
                     </div>
-                </div>
+                    <div class="col-sm-9 my-story-right">
+                        <div class="row" ng-show="selected_tab">
+                            <div class="col-sm-6">
+                                <button class="btn btn-default" ng-click="toggle_add_my_story_text();" ng-show="!show_add_my_story_text">Add Text Component</button>
+                                <form class="form-horizontal" ng-show="show_add_my_story_text">
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">Name</label>
+                                        <div class="col-sm-10">
+                                          <input type="text" class="form-control" ng-model="new_text.name">
+                                        </div>
+                                    </div>
 
-                <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
-                <hr>
-                <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
-                    <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
-                    <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
-                </a>
-                <hr>
-                <div class="col-md-12" ng-show='show_accomplished_todos==true'>
-                    <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class='col-md-12'>
-        <div class='panel panel-default' ng-init="encounter_collapse=false;">
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">Text</label>
+                                        <div class="col-sm-10">
+                                          <input type="text" class="form-control" ng-model="new_text.text">
+                                        </div>
+                                    </div>
 
-            <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
-                <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
-                <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                Encounters
-            </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">Snomed concept id</label>
+                                        <div class="col-sm-10">
+                                          <input type="text" class="form-control" ng-model="new_text.concept_id">
+                                        </div>
+                                    </div>
 
-            <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="encounter_collapse">
+                                    <div class="form-group">
+                                        <div class="col-sm-2"> </div>
+                                        <div class="col-sm-10">
+                                            <div class="radio">
+                                              <label>
+                                                <input type="radio" ng-value="true" checked ng-model="new_text.private">
+                                                keep it private
+                                              </label>
+                                            </div>
+                                            <div class="radio">
+                                              <label>
+                                                <input type="radio" ng-value="" ng-model="new_text.private">
+                                                share with doctor
+                                              </label>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                <ul class='ul-clean'>
-                    <li ng-repeat='encounter in encounters'>
-                        <div class='row'>
-                            <div class='col-md-6'>
-                                <a href='#/encounter/{{ encounter.id }}'>
-                                    From <b> {{ encounter.starttime | date:'medium' }} </b> to
-                                    <b>{{ encounter.stoptime | date:'medium' }}</b>
-                                </a>
+                                    <div class="form-group">
+                                        <div class="col-sm-2"> </div>
+                                        <div class="col-sm-10">
+                                            <button class="btn btn-default" ng-click="toggle_add_my_story_text();">cancel</button>
+                                            <button class="btn btn-default" ng-click="add_my_story_text(new_text);">Save</button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
-                            <div class='col-md-4'>
-                                {{ encounter.duration }}
+                            <div class="col-sm-6">
+                                <button class="btn btn-default pull-right" ng-click="edit_my_story_tab();">Edit</button>
                             </div>
                         </div>
-                    </li>
-                </ul>
-
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class='col-md-12'>
-        <div class='panel panel-default' ng-init="favorites_collapse=false;">
-
-            <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
-                <i class="fa fa-caret-down" aria-hidden="true" ng-if="favorites_collapse"></i>
-                <i class="fa fa-caret-right" aria-hidden="true" ng-if="!favorites_collapse"></i>
-                Favorites
+            <!-- end story tab -->
+            <!-- data tab -->
+            <div role="tabpanel" class="tab-pane tab-data">
+                data
             </div>
-
-            <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="favorites_collapse">
-                <table class='table' ng-if='favorites.length>0'>
-                    <thead>
-                    <th>Name</th>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat='event in favorites' ng-init="event.is_named=false;">
-                        <td>
-                                <span ng-if="event.is_favorite">
-                                    <span ng-if="event.is_named">
-                                        <input type="text" ng-model="event.name_favorite">
-                                        <button class="btn btn-primary" ng-click="nameFavoriteEvent(event)">Save</button>
-                                        <button class="btn btn-danger"
-                                                ng-click="event.is_named=!event.is_named;">Cancel</button>
-                                    </span>
-                                    <span ng-if="!event.is_named">
-                                        {{ event.name_favorite }}
-                                        <a href='#/encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
-                                           class="btn btn-default" target="_blank">Listen</a>
-                                        <button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
-                                        <button class="btn btn-danger"
-                                                ng-click="unmarkFavoriteEvent(event)">Remove</button>
-                                    </span>
-                                </span>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <div class='col-md-12'>
-        <div class='panel panel-default'>
-
-            <div class='panel-heading'> Pain History</div>
-
-            <div class='panel-body'>
-
-                <a href="/patient/{{ patient_id }}/pain/add_pain_avatar" class='btn btn-default pull-right'
-                   ng-show='permitted(["update_pain"])'>
-                    Update Pain
-                </a>
-                <div pain-avatar pain-data='pain_avatars'></div>
-
-            </div>
+            <!-- end data tab -->
         </div>
     </div>
 </div>
 
-<div class='row'>
 
-    <div class='col-md-12'>
-
-        <div class='panel panel-default'>
-
-            <div class='panel-heading'> Problems</div>
-
-            <div class='panel-body'>
-                <problem-timeline ng-model="timeline"></problem-timeline>
-            </div>
-        </div>
-    </div>
-</div>
-<hr>
 
 
 <script type='text/javascript'>

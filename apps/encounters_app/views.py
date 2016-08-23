@@ -108,7 +108,9 @@ def update_encounter_note(request, patient_id, encounter_id):
 @api_view(["POST"])
 def upload_encounter_audio(request, patient_id, encounter_id):
     audio_file = request.FILES['file']
-    Encounter.objects.filter(id=encounter_id).update(audio=audio_file)
+    enc = Encounter.objects.get(id=encounter_id)
+    enc.audio = audio_file
+    enc.save()
     resp = {}
     resp['success'] = True
     return ajax_response(resp)
@@ -120,7 +122,9 @@ def upload_encounter_audio(request, patient_id, encounter_id):
 @api_view(["POST"])
 def upload_encounter_video(request, patient_id, encounter_id):
     video_file = request.FILES['file']
-    Encounter.objects.filter(id=encounter_id).update(video=video_file)
+    enc = Encounter.objects.get(id=encounter_id)
+    enc.video = video_file
+    enc.save()
     resp = {}
     resp['success'] = True
     return ajax_response(resp)

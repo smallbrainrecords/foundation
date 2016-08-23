@@ -742,6 +742,90 @@
                 });
             };
 
+            /*
+            *   get my story data
+            */
+            $scope.my_story_tabs = [];
+            $scope.selected_tab = null;
+            patientService.getMyStory($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.my_story_tabs = data['info'];
+                    $scope.selected_tab = $scope.my_story_tabs[0];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
+            /*
+            *   toggle add my story tab
+            */
+            $scope.show_add_my_story_tab = false;
+            $scope.toggle_add_my_story_tab = function () {
+                $scope.show_add_my_story_tab = !$scope.show_add_my_story_tab;
+            };
+
+            $scope.new_tab = {};
+            $scope.new_tab.private = true;
+            $scope.add_my_story_tab = function (new_tab) {
+                if (new_tab.name) {
+                    var form = {};
+                    form.name = new_tab.name;
+                    form.private = new_tab.private;
+                    form.patient_id = $scope.patient_id;
+                    patientService.addMyStoryTab(form).then(function (data) {
+                        if (data['success'] == true) {
+                            $scope.my_story_tabs.push(data['tab']);
+                            new_tab.name = '';
+                            new_tab.private = true;
+                            toaster.pop('success', "Done", "New tab created successfully!");
+                        } else {
+                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                        }
+                    });
+                } else {
+                    toaster.pop('error', "Error", "Please input name!");
+                }
+            };
+
+            /*
+            *   toggle view my story tab
+            */
+            
+            $scope.view_my_story_tab = function(tab) {
+                $scope.selected_tab = tab;
+            };
+
+            /*
+            *   toggle add my story text
+            */
+            $scope.show_add_my_story_text = false;
+            $scope.toggle_add_my_story_text = function () {
+                $scope.show_add_my_story_text = !$scope.show_add_my_story_text;
+            };
+
+            $scope.new_text = {};
+            $scope.new_text.private = true;
+            $scope.add_my_story_text = function (tab, new_text) {
+                var form = {};
+                form.name = new_text.name;
+                form.text = new_text.text;
+                form.private = new_text.private;
+                form.concept_id = new_text.concept_id;
+                form.patient_id = $scope.patient_id;
+                patientService.addMyStoryText(form).then(function (data) {
+                    if (data['success'] == true) {
+                        tab.my_story_tab_components.push(data['component']);
+                        new_text.name = '';
+                        new_text.text = '';
+                        new_text.concept_id = '';
+                        new_text.private = true;
+                        toaster.pop('success', "Done", "New Text Component created successfully!");
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            };
+
         });
     /* End of controller */
 

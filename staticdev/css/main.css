@@ -422,3 +422,66 @@ ce-entity ce-flag{
 	margin-bottom: 10px;
 	padding: 10px;
 }
+
+.home-page-tabs .nav {
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	border-top: none;
+	margin-bottom: 40px;
+	margin-top: -50px;
+}
+
+.home-page-tabs .nav > li {
+	display: inline-block;
+	float: none;
+	margin: 0 !important;
+}
+
+.home-page-tabs .nav .nav-pills > li {
+	margin: 0 !important;
+}
+
+.home-page-tabs .nav > li a {
+	color: #337ab7;
+	font-weight: 700;
+	padding: 13px 30px;
+	border-right: 1px solid #ddd;
+	background: none !important;
+	border-radius: 0;
+}
+
+.home-page-tabs .nav-pills > li.active > a, 
+.home-page-tabs .nav-pills > li.active > a:hover, 
+.home-page-tabs .nav-pills > li.active > a:focus {
+	color: grey;
+}
+
+.my-story {
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.my-story-left {
+	border-right: 1px solid #ddd;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-bottom: -1000px;
+	padding-bottom: 1000px;
+}
+
+.my-story-right {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+.my-story-list li button {
+	border-radius: 0px;
+	border: none;
+}
+
+.my-story-list li button.active {
+	color: black;
+	font-weight: bold;
+	border-left: 3px solid black;
+}

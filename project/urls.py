@@ -77,6 +77,9 @@ urlpatterns = patterns('',
     # colon cancer
     url(r'^colon_cancer/', include('colons_app.urls')),
 
+    # my story 
+    url(r'^my_story/', include('my_story_app.urls')),
+
     # Pain Avatars
     url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars'),
     url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', 'pain.views.add_pain_avatar'),

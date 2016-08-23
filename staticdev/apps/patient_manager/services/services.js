@@ -301,12 +301,21 @@
 		};
 
 		this.addCommonProblem = function(form){
-
 			var url = '/p/patient/'+form.patient_id+'/problems/add/new_common_problem';
 
 			return httpService.post(form, url);
+		};
 
+		this.getMyStory = function(patient_id) {
+			var params = {};
+			var url = '/my_story/'+patient_id+'/get_my_story';
+			return httpService.get(params, url);
+		}
 
+		this.addMyStoryTab = function(form){
+			var url = '/my_story/'+form.patient_id+'/add_tab';
+
+			return httpService.post(form, url);
 		};
 
 

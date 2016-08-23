@@ -227,6 +227,7 @@ class SharingPatient(models.Model):
     sharing = models.ForeignKey(User, related_name='patient_sharing')
     shared = models.ForeignKey(User, related_name='patient_shared')
     problems = models.ManyToManyField(Problem, blank=True, related_name="sharing_problems")
+    is_my_story_shared = models.BooleanField(default=True)
 
 
 class ProblemOrder(models.Model):
@@ -712,3 +713,43 @@ class ColonCancerTextNote(models.Model):
 
     def __unicode__(self):
         return "%s" % (self.note)
+
+
+class MyStoryTab(models.Model):
+    patient = models.ForeignKey(User, related_name="patient_story_tabs")
+    author = models.ForeignKey(User, related_name="author_story_tabs", null=True, blank=True)
+    name = models.TextField()
+    datetime = models.DateTimeField(auto_now_add=True)
+    private = models.BooleanField(default=True)
+    is_all = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
+
+
+class MyStoryTextComponent(models.Model):
+    patient = models.ForeignKey(User, related_name="patient_story_texts")
+    author = models.ForeignKey(User, related_name="author_story_texts", null=True, blank=True)
+    tab = models.ForeignKey(MyStoryTab, null=True, blank=True, related_name="my_story_tab_components")
+    name = models.TextField(null=True, blank=True)
+    text = models.TextField(null=True, blank=True)
+    datetime = models.DateTimeField(auto_now_add=True)
+    last_updated_user = models.ForeignKey(User, null=True, blank=True)
+    last_updated_date = models.DateField(auto_now=True)
+    concept_id = models.CharField(max_length=20, blank=True, null=True)
+    private = models.BooleanField(default=True)
+    is_all = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
+
+
+class MyStoryTextComponentEntry(models.Model):
+    author = models.ForeignKey(User, related_name="author_story_text_entries")
+    component = models.ForeignKey(MyStoryTextComponent, null=True, blank=True, related_name="text_component_entries")
+    text = models.TextField(null=True, blank=True)
+    datetime = models.DateTimeField(blank=True, null=True)
+    private = models.BooleanField(default=True)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
