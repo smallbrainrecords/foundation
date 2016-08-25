@@ -248,7 +248,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
                         }
                 ]
 
-            a1c_dict['observation']['observation_components'] = observation_components_holder
+                a1c_dict['observation']['observation_components'] = observation_components_holder
 
         return a1c_dict
 
