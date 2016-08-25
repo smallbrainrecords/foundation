@@ -38,7 +38,7 @@ def get_datas(request, patient_id):
     resp['success'] = False
     
     if permissions_accessed(request.user, int(patient_id)):
-        observations = Observation.objects.filter(subject__user__id=int(patient_id)).exclude(name=OBSERVATION_TYPES['a1c']['name'])
+        observations = Observation.objects.filter(subject__user__id=int(patient_id)).exclude(name=OBSERVATION_TYPES['a1c']['name']).filter(observation_aonecs=None)
         
         if request.user.profile.role == 'nurse' or request.user.profile.role == 'secretary':
             team_members = PhysicianTeam.objects.filter(member=request.user)
