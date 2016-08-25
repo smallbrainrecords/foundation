@@ -318,6 +318,12 @@
 			return httpService.post(form, url);
 		};
 
+		this.getDatas = function(patient_id) {
+			var params = {};
+			var url = '/data/'+patient_id+'/get_datas';
+			return httpService.get(params, url);
+		}
+
 
 	});
 

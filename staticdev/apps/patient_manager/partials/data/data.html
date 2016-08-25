@@ -1,0 +1,28 @@
+<toaster-container></toaster-container>
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<a href='#/'><b> Back to home page </b></a>
+			</div>
+		</div>
+
+	</div><!-- End of Panel Body -->
+</div>
+
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				{{ data.name }} {{ data.created_on | date:'M/d/yyyy' }}
+                <p ng-if="data.observation_components.length > 0">{{ data.observation_components[data.observation_components.length -1].value_quantity }}</p>
+			</div>
+		</div>
+	</div>
+</div>

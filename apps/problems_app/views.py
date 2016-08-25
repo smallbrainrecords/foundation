@@ -123,11 +123,14 @@ def get_problem_info(request, problem_id):
 @login_required
 def get_a1c(request, problem_id):
     problem = get_object_or_404(Problem, pk=problem_id)
-    a1c = problem.problem_aonecs
-    serialized_a1c = AOneCSerializer(a1c).data
     resp = {}
-    resp['success'] = True
-    resp['a1c'] = serialized_a1c
+    resp['success'] = False
+    if hasattr(problem, 'problem_aonecs'):
+        a1c = problem.problem_aonecs
+        serialized_a1c = AOneCSerializer(a1c).data
+        resp = {}
+        resp['success'] = True
+        resp['a1c'] = serialized_a1c
     return ajax_response(resp)
 
 @login_required

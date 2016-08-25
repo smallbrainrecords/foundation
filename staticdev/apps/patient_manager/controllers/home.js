@@ -826,6 +826,34 @@
                 });
             };
 
+            /*
+            *   get data
+            */
+            $scope.datas = [];
+            patientService.getDatas($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.datas = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
+            /*
+            * open data page
+            */
+            $scope.open_data = function(data) {
+                $location.path('/data/' + data.id);
+            };
+
+            /*
+            *   toggle add new data type
+            */
+            $scope.new_data_type = {};
+            $scope.show_add_new_data_type = false;
+            $scope.toggle_add_new_data_type = function () {
+                $scope.show_add_new_data_type = !$scope.show_add_new_data_type;
+            };
+
         });
     /* End of controller */
 

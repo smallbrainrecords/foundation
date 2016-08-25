@@ -654,7 +654,76 @@
             <!-- end story tab -->
             <!-- data tab -->
             <div role="tabpanel" class="tab-pane tab-data">
-                data
+                <div class="row">
+                    <div class='col-md-12'>
+                        <div class='panel panel-default'>
+
+                            <div class='panel-heading'></div>
+
+                            <div class='panel-body'>
+                                <div style='max-height:375px; overflow-y:auto;'>
+                                    <ul class='ul-clean' ui-sortable="" ng-model="datas">
+                                        <li ng-repeat="data in datas" ng-click='open_data(data)'>
+                                            <div class='item-box'>
+                                                {{ data.name }} {{ data.created_on | date:'M/d/yyyy' }}
+                                                <p ng-if="data.observation_components.length > 0">{{ data.observation_components[data.observation_components.length -1].value_quantity }}</p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class='col-md-12'>
+                        <div class='panel panel-default'>
+
+                            <div class='panel-body'>
+                                <button class="btn btn-default" ng-show="!show_add_new_data_type" ng-click="toggle_add_new_data_type();">Add new data type</button>
+                                <form class="form-horizontal" ng-show="show_add_new_data_type">
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">Name</label>
+                                        <div class="col-sm-10">
+                                          <input type="text" class="form-control" ng-model="new_data_type.name">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">Loinc code</label>
+                                        <div class="col-sm-10">
+                                          <input type="text" class="form-control" ng-model="new_data_type.code">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">Unit</label>
+                                        <div class="col-sm-10">
+                                          <input type="text" class="form-control" ng-model="new_data_type.unit">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">Color</label>
+                                        <div class="col-sm-10">
+                                            <color-picker ng-model="new_data_type.color" options="{format: 'hex'}"></color-picker>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <div class="col-sm-2"> </div>
+                                        <div class="col-sm-10">
+                                            <button class="btn btn-default" ng-click="toggle_add_new_data_type();">cancel</button>
+                                            <button class="btn btn-default" ng-click="">Save</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
             <!-- end data tab -->
         </div>

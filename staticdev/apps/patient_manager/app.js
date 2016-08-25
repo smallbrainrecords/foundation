@@ -6,7 +6,8 @@
     var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule',
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine',
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate',
-        'a1c', 'colon_cancers', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam']);
+        'a1c', 'colon_cancers', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam',
+        'color.picker']);
 
 
     ManagerApp.config(function ($routeProvider, recorderServiceProvider) {
@@ -88,6 +89,10 @@
             .when("/colon_cancer/:colon_id/add_new_order", {
                 templateUrl: '/static/apps/patient_manager/partials/colon_cancer/add_new_order.html',
                 controller: 'AddNewOrderCtrl'
+            })
+            .when('/data/:data_id', {
+                templateUrl: '/static/apps/patient_manager/partials/data/data.html',
+                controller: 'DataCtrl'
             });
 
     });
