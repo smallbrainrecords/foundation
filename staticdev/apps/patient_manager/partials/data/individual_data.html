@@ -1,0 +1,44 @@
+<toaster-container></toaster-container>
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<a href='#/data/{{individual_data.observation}}/show_all_data'><b> Back to data page </b></a>
+			</div>
+		</div>
+
+	</div><!-- End of Panel Body -->
+</div>
+
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+                <p>{{individual_data.value_quantity}}</p>
+                <p>{{individual_data.author.user.first_name}} {{individual_data.author.user.last_name}}</p>
+                <p>Created on: {{ individual_data.created_on|date:'M/d/yyyy HH:mm' }}</p>
+                <p>Effective datetime: {{ individual_data.effective_datetime|date:'M/d/yyyy HH:mm' }}</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<button class="btn btn-default" ng-if="!active_user.role=='patient' || active_user.id== individual_data.author.id">Edit</button>
+				<button class="btn btn-default" ng-if="!active_user.role=='patient' || active_user.id== individual_data.author.id">Delete</button>
+			</div>
+		</div>
+	</div>
+</div>

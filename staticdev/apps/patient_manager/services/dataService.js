@@ -19,6 +19,32 @@
 
 			};
 
+			this.fetchPinToProblem = function(data_id){
+				var url = "/data/"+data_id+"/get_pins";
+				var params = {};
+
+				return httpService.get(params, url);
+
+			};
+
+			this.dataPinToProblem = function(patient_id, form) {
+				var url = '/data/'+patient_id+'/pin_to_problem';
+				return httpService.post(form, url);
+			};
+
+			this.addData = function(patient_id, data_id, form) {
+				var url = '/data/'+patient_id + '/' + data_id + '/add_new_data';
+				return httpService.post(form, url);
+			};
+
+			this.fetchIndividualDataInfo = function(patient_id, component_id){
+				var url = "/data/"+ patient_id + "/" +component_id+"/individual_data_info";
+				var params = {};
+
+				return httpService.get(params, url);
+
+			};
+
 	});
 
 })();

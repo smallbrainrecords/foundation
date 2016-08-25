@@ -99,6 +99,8 @@ ROLE_PERMISSIONS['patient'] = [
     'remove_sharing_patient',
     # my story
     'add_my_story_tab',
+    # data
+    'set_data_order',
     # Pain
     'update_pain', ]
 
@@ -145,6 +147,8 @@ ROLE_PERMISSIONS['physician'] = [
     'remove_sharing_patient',
     # my story
     'add_my_story_tab',
+    # data
+    'set_data_order',
     # Pain
     'update_pain', ]
 

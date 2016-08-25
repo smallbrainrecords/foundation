@@ -5,7 +5,7 @@
 
     angular.module('ManagerApp')
 
-        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog, toaster, $location, todoService, prompt, $timeout) {
+        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog, toaster, $location, todoService, prompt, $timeout, CollapseService) {
 
 
             patientService.fetchActiveUser().then(function (data) {
@@ -742,6 +742,15 @@
                 });
             };
 
+             /*
+            *   handle cache homepage tabs
+            */
+            $scope.show_homepage_tab = CollapseService.show_homepage_tab;
+            $scope.change_homepage_tab = function(tab){
+                CollapseService.ChangeHomepageTab(tab);
+                $scope.show_homepage_tab = CollapseService.show_homepage_tab;
+            };
+
             /*
             *   get my story data
             */
@@ -829,10 +838,46 @@
             /*
             *   get data
             */
+
             $scope.datas = [];
             patientService.getDatas($scope.patient_id).then(function (data) {
                 if (data['success'] == true) {
                     $scope.datas = data['info'];
+
+                    var tmpListData = $scope.datas;
+                    $scope.sortingLogData = [];
+                    $scope.sortedData = false;
+                    $scope.draggedData = false;
+                    $scope.sortableOptionsData = {
+                        update: function (e, ui) {
+                            $scope.sortedData = true;
+                        },
+                        start: function () {
+                            $scope.draggedData = true;
+                        },
+                        stop: function (e, ui) {
+                            // this callback has the changed model
+                            if ($scope.sortedData) {
+                                $scope.sortingLogData = [];
+                                tmpListData.map(function (i) {
+                                    $scope.sortingLogData.push(i.id);
+                                });
+                                var form = {};
+
+                                form.datas = $scope.sortingLogData;
+                                form.patient_id = $scope.patient_id;
+
+                                patientService.updateDataOrder(form).then(function (data) {
+                                    toaster.pop('success', 'Done', 'Updated Data Order');
+                                });
+                            }
+                            $scope.sortedData = false;
+                            $timeout(function () {
+                                $scope.draggedData = false;
+                            }, 100);
+                        }
+                    };
+
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
@@ -842,7 +887,8 @@
             * open data page
             */
             $scope.open_data = function(data) {
-                $location.path('/data/' + data.id);
+                if (!$scope.draggedData)
+                    $location.path('/data/' + data.id);
             };
 
             /*
@@ -852,6 +898,27 @@
             $scope.show_add_new_data_type = false;
             $scope.toggle_add_new_data_type = function () {
                 $scope.show_add_new_data_type = !$scope.show_add_new_data_type;
+            };
+
+            $scope.add_new_data_type = function (new_data_type) {
+                var form = {};
+                form.name = new_data_type.name;
+                form.code = new_data_type.code;
+                form.unit = new_data_type.unit;
+                form.color = new_data_type.color;
+                form.patient_id = $scope.patient_id;
+                patientService.addNewDataType(form).then(function (data) {
+                    if (data['success'] == true) {
+                        $scope.datas.push(data['observation'])
+                        new_data_type.name = '';
+                        new_data_type.code = '';
+                        new_data_type.unit = '';
+                        new_data_type.color = '';
+                        toaster.pop('success', "Done", "New Data Type created successfully!");
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
             };
 
         });

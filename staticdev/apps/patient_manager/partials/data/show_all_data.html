@@ -1,0 +1,33 @@
+<toaster-container></toaster-container>
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<a href='#/data/{{data.id}}'><b> Back to data page </b></a>
+			</div>
+		</div>
+
+	</div><!-- End of Panel Body -->
+</div>
+
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+                <ul class='ul-clean'>
+                    <li ng-repeat='component in data.observation_components'>
+                        <a href='#/data/individual_data/{{component.id}}'>
+                            {{ component.value_quantity }} {{ component.effective_datetime|date:'M/d/yyyy HH:mm' }}
+                        </a>
+                    </li>
+                </ul>
+			</div>
+		</div>
+	</div>
+</div>

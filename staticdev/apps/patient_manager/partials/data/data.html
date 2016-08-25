@@ -26,3 +26,64 @@
 		</div>
 	</div>
 </div>
+
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<a href="#/data/{{data.id}}/show_all_data" class="btn btn-default">Show all data</a>
+				<a href="#/data/{{data.id}}/add_data" class="btn btn-default">Add data point</a>
+				<button class="btn btn-default" ng-click="toggle_pin_to_new_problem();" ng-if="!active_user.role=='patient' || active_user.id== data.author.id">Pin to new problem</button>
+				<button class="btn btn-default" ng-click="toggle_add_new_data_type();">Settings</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class='panel panel-default'>
+	<div class='panel-heading'>
+		<h3>List of pinned problems</h3>
+	</div>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<div style='max-height:375px; overflow-y:auto;'>
+                    <ul class='ul-clean'>
+                        <li ng-repeat='problem in problems'
+                            ng-show="problem.pin">
+                            <div class='item-box'
+                                 ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+
+                                {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class='panel panel-default' ng-show="show_pin_to_new_problem" ng-if="!active_user.role=='patient' || active_user.id== data.author.id">
+	<div class='panel-heading'>
+		<h3>List of current problems</h3>
+	</div>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<p ng-repeat="problem in problems">
+					<input type="checkbox" ng-model="problem.pin" ng-change="data_pin_to_problem(data.id, problem.id);"> {{problem.problem_name}}
+				</p>
+			</div>
+		</div>
+	</div>
+</div>

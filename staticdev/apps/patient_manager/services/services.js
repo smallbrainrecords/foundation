@@ -324,6 +324,17 @@
 			return httpService.get(params, url);
 		}
 
+		this.addNewDataType = function(form){
+			var url = '/data/'+form.patient_id+'/add_new_data_type';
+
+			return httpService.post(form, url);
+		};
+
+		this.updateDataOrder= function(form){
+			var url = '/data/updateOrder';
+			return httpService.postJson(form, url);
+		};
+
 
 	});
 

@@ -93,6 +93,18 @@
             .when('/data/:data_id', {
                 templateUrl: '/static/apps/patient_manager/partials/data/data.html',
                 controller: 'DataCtrl'
+            })
+            .when('/data/:data_id/add_data', {
+                templateUrl: '/static/apps/patient_manager/partials/data/add_data.html',
+                controller: 'AddDataCtrl'
+            })
+            .when('/data/:data_id/show_all_data', {
+                templateUrl: '/static/apps/patient_manager/partials/data/show_all_data.html',
+                controller: 'ShowAllDataCtrl'
+            })
+            .when('/data/individual_data/:individual_data_id', {
+                templateUrl: '/static/apps/patient_manager/partials/data/individual_data.html',
+                controller: 'IndividualDataCtrl'
             });
 
     });
@@ -102,6 +114,7 @@
 
         CollapseService.show_colon_collapse = false;
         CollapseService.show_a1c_collapse = false;
+        CollapseService.show_homepage_tab = 'problems'; // problems, my_story, data
 
         CollapseService.ChangeColonCollapse = function () {
            CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
@@ -109,6 +122,10 @@
 
         CollapseService.ChangeA1cCollapse = function () {
            CollapseService.show_a1c_collapse = !CollapseService.show_a1c_collapse;
+        };
+
+        CollapseService.ChangeHomepageTab = function (tab) {
+           CollapseService.show_homepage_tab = tab;
         };
 
         return CollapseService;

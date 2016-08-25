@@ -511,6 +511,7 @@ class Observation(models.Model):
     effective_datetime = models.DateTimeField(null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
+    color = models.CharField(max_length=7, null=True, blank=True)
 
     class Meta:
         ordering = ['-created_on']
@@ -531,6 +532,21 @@ class ObservationComponent(models.Model):
 
     class Meta:
         ordering = ['effective_datetime', 'created_on']
+
+
+class ObservationOrder(models.Model):
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="patient_observation_order")
+    user = models.ForeignKey(User, null=True, blank=True, related_name="user_observation_order")
+    order = ListField(null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.user.username))
+
+
+class ObservationPinToProblem(models.Model):
+    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='pin_authors')
+    observation = models.ForeignKey(Observation, null=True, blank=True, related_name='pin_observations')
+    problem = models.ForeignKey(Problem, null=True, blank=True, related_name='pin_problems')
 
 
 class Country(models.Model):

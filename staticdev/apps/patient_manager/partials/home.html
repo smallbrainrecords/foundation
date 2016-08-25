@@ -94,14 +94,14 @@
 <div class='row'>
     <div class='col-md-12 text-center home-page-tabs'>
         <ul class="nav nav-pills" role="tablist">
-            <li role="presentation" class="active">
-                <a href=".tab-problems" role="tab" data-toggle="tab">Problems</a>
+            <li role="presentation" ng-class="show_homepage_tab=='problems' ? 'active': ''">
+                <a href=".tab-problems" role="tab" data-toggle="tab" ng-click="change_homepage_tab('problems');">Problems</a>
             </li>
-            <li role="presentation">
-                <a href=".tab-my-story" role="tab" data-toggle="tab">My story</a>
+            <li role="presentation" ng-class="show_homepage_tab=='my_story' ? 'active': ''">
+                <a href=".tab-my-story" role="tab" data-toggle="tab" ng-click="change_homepage_tab('my_story');">My story</a>
             </li>
-            <li role="presentation">
-                <a href=".tab-data" role="tab" data-toggle="tab">Data</a>
+            <li role="presentation" ng-class="show_homepage_tab=='data' ? 'active': ''">
+                <a href=".tab-data" role="tab" data-toggle="tab" ng-click="change_homepage_tab('data');">Data</a>
             </li>
         </ul>
     </div>
@@ -111,7 +111,7 @@
     <div class='col-md-12'>
         <div class="tab-content">
             <!-- Problems tab -->
-            <div role="tabpanel" class="tab-pane active tab-problems">
+            <div role="tabpanel" class="tab-pane tab-problems" ng-class="show_homepage_tab=='problems' ? 'active': ''">
                 <div class='row'>
                     <div class='col-md-12'>
                         <div class='panel panel-default'>
@@ -556,7 +556,7 @@
             </div>
             <!-- End Problems tab -->
             <!-- story tab -->
-            <div role="tabpanel" class="tab-pane tab-my-story">
+            <div role="tabpanel" class="tab-pane tab-my-story" ng-class="show_homepage_tab=='my_story' ? 'active': ''">
                 <h3>My Story</h3>
                 <br>
                 <div class="row my-story">
@@ -653,7 +653,7 @@
             </div>
             <!-- end story tab -->
             <!-- data tab -->
-            <div role="tabpanel" class="tab-pane tab-data">
+            <div role="tabpanel" class="tab-pane tab-data" ng-class="show_homepage_tab=='data' ? 'active': ''">
                 <div class="row">
                     <div class='col-md-12'>
                         <div class='panel panel-default'>
@@ -662,7 +662,16 @@
 
                             <div class='panel-body'>
                                 <div style='max-height:375px; overflow-y:auto;'>
-                                    <ul class='ul-clean' ui-sortable="" ng-model="datas">
+                                    <ul class='ul-clean' ui-sortable="sortableOptionsData" ng-model="datas" ng-if="active_user.role=='physician' || active_user.role=='patient'">
+                                        <li ng-repeat="data in datas" ng-click='open_data(data)'>
+                                            <div class='item-box'>
+                                                {{ data.name }} {{ data.created_on | date:'M/d/yyyy' }}
+                                                <p ng-if="data.observation_components.length > 0">{{ data.observation_components[data.observation_components.length -1].value_quantity }}</p>
+                                            </div>
+                                        </li>
+                                    </ul>
+
+                                    <ul class='ul-clean' ng-model="datas" ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary' || active_user.role=='mid-level'">
                                         <li ng-repeat="data in datas" ng-click='open_data(data)'>
                                             <div class='item-box'>
                                                 {{ data.name }} {{ data.created_on | date:'M/d/yyyy' }}
@@ -715,7 +724,7 @@
                                         <div class="col-sm-2"> </div>
                                         <div class="col-sm-10">
                                             <button class="btn btn-default" ng-click="toggle_add_new_data_type();">cancel</button>
-                                            <button class="btn btn-default" ng-click="">Save</button>
+                                            <button class="btn btn-default" ng-click="add_new_data_type(new_data_type);">Save</button>
                                         </div>
                                     </div>
                                 </form>

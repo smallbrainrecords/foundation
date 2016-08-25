@@ -7,8 +7,8 @@ from common.views import *
 
 from emr.models import Observation, AOneCTextNote, ObservationComponent, UserProfile, ObservationComponentTextNote, \
     AOneC
-from .serializers import ObservationSerializer, AOneCTextNoteSerializer, ObservationComponentSerializer, \
-    ObservationComponentTextNoteSerializer, AOneCSerializer
+from .serializers import AOneCTextNoteSerializer, AOneCSerializer
+from data_app.serializers import ObservationComponentTextNoteSerializer, ObservationComponentSerializer, ObservationSerializer
 from emr.operations import op_add_event
 
 from problems_app.operations import add_problem_activity

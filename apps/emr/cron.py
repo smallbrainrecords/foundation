@@ -3,7 +3,7 @@ import datetime
 from django.contrib.auth.models import User
 from django.db.models import Max, Prefetch
 from emr.models import ColonCancerScreening, ColonCancerStudy, RiskFactor, UserProfile, Problem, ToDo, Label, \
-	PatientController, TaggedToDoOrder, AOneC
+	PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem
 
 def age(when, on=None):
     if on is None:

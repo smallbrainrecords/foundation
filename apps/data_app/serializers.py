@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from emr.models import Observation, ObservationComponent, ObservationComponentTextNote
+from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationPinToProblem
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
@@ -30,6 +30,7 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
             'created_on',
             'observation_component_notes',
             'author',
+            'observation',
             )
 
 class ObservationSerializer(serializers.ModelSerializer):
@@ -55,4 +56,18 @@ class ObservationSerializer(serializers.ModelSerializer):
             'comments',
             'created_on',
             'observation_components',
+            'color',
+            )
+
+
+class ObservationPinToProblemSerializer(serializers.ModelSerializer):
+    author = UserProfileSerializer()
+
+    class Meta:
+        model = ObservationPinToProblem
+        fields = (
+            'id',
+            'author',
+            'observation',
+            'problem',
             )
