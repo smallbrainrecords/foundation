@@ -36,7 +36,7 @@
 			<div class='col-md-12'>
 				<a href="#/data/{{data.id}}/show_all_data" class="btn btn-default">Show all data</a>
 				<a href="#/data/{{data.id}}/add_data" class="btn btn-default">Add data point</a>
-				<button class="btn btn-default" ng-click="toggle_pin_to_new_problem();" ng-if="!active_user.role=='patient' || active_user.id== data.author.id">Pin to new problem</button>
+				<button class="btn btn-default" ng-click="toggle_pin_to_new_problem();" ng-if="active_user.role !='patient' || active_user.id== data.author.id">Pin to new problem</button>
 				<button class="btn btn-default" ng-click="toggle_add_new_data_type();">Settings</button>
 			</div>
 		</div>

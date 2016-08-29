@@ -89,6 +89,7 @@ def add_new_data_type(request, patient_id):
         observation = Observation.objects.create(subject_id=int(patient_id),
                                        author=request.user.profile,
                                        name=request.POST.get("name", None),
+                                       code=request.POST.get("code", None),
                                        color=request.POST.get("color", None))
 
         observation.save()
@@ -178,4 +179,34 @@ def get_individual_data_info(request, patient_id, component_id):
         if not component.observation.name == OBSERVATION_TYPES['a1c']['name']:
             resp['info'] = ObservationComponentSerializer(component).data
             resp['success'] = True
+    return ajax_response(resp)
+
+@login_required
+def delete_individual_data(request, patient_id, component_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        component = ObservationComponent.objects.get(id=component_id)
+        component.delete()
+        resp['success'] = True
+    return ajax_response(resp)
+
+@login_required
+def save_data(request, patient_id, component_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        component = ObservationComponent.objects.get(id=component_id)
+        
+        effective_datetime = request.POST.get("datetime", None)
+        if effective_datetime:
+            effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
+        value_quantity = request.POST.get("value_quantity", None)
+
+        component.effective_datetime = effective_datetime
+        component.value_quantity = value_quantity
+        component.save()
+
+        resp['info'] = ObservationComponentSerializer(component).data
+        resp['success'] = True
     return ajax_response(resp)

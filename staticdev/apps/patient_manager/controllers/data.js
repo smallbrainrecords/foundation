@@ -141,6 +141,44 @@
                     toaster.pop('error', 'Error', 'Something went wrong, please try again!');
                 }
             });
+
+            $scope.deleteIndividualData = function(individual_data_id) {
+                dataService.deleteIndividualData($scope.patient_id, individual_data_id).then(function(data){
+                    if(data['success']==true){
+                        toaster.pop('success', 'Done', 'Deleted data!');
+                        $location.url('/data/' + $scope.individual_data.observation + '/show_all_data');
+                    }else if(data['success']==false){
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    }else{
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            };
+
+            $scope.show_edit = false;
+            $scope.toggleEdit = function() {
+                $scope.show_edit = !$scope.show_edit;
+            };
+
+            $scope.save_data = function(new_data) {
+                if (new_data.time == "" || new_data.time == undefined) {
+                    new_data.time = "12:00";
+                }
+                if (!moment(new_data.time, "HH:mm").isValid()) {
+                    toaster.pop('error', 'Error', 'Please enter time!');
+                    return;
+                }
+                new_data.datetime = new_data.date + " " + new_data.time;
+                dataService.saveData($scope.patient_id, new_data.id, new_data).then(function(data){
+                    if(data['success']==true){
+                        toaster.pop('success', 'Done', 'Saved data!');
+                    }else if(data['success']==false){
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    }else{
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            };
 			
         }); /* End of controller */
 })();

@@ -10,4 +10,6 @@ urlpatterns = patterns('data_app.views',
     url(r'^(?P<observation_id>\d+)/get_pins$', 'get_pins'),
     url(r'^(?P<patient_id>\d+)/pin_to_problem$', 'obseration_pin_to_problem'),
     url(r'^(?P<patient_id>\d+)/(?P<observation_id>\d+)/add_new_data$', 'add_new_data'),
+    url(r'^(?P<patient_id>\d+)/(?P<component_id>\d+)/delete_individual_data$', 'delete_individual_data'),
+    url(r'^(?P<patient_id>\d+)/(?P<component_id>\d+)/save_data$', 'save_data'),
 )

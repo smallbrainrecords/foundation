@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from datetime import datetime, timedelta
 
 from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationPinToProblem
 
@@ -20,6 +21,8 @@ class ObservationComponentTextNoteSerializer(serializers.ModelSerializer):
 class ObservationComponentSerializer(serializers.ModelSerializer):
     observation_component_notes = ObservationComponentTextNoteSerializer(many=True, read_only=True)
     author = UserProfileSerializer()
+    date = serializers.SerializerMethodField()
+    time = serializers.SerializerMethodField()
 
     class Meta:
         model = ObservationComponent
@@ -31,7 +34,15 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
             'observation_component_notes',
             'author',
             'observation',
+            'date',
+            'time',
             )
+
+    def get_date(self, obj):
+        return obj.effective_datetime.strftime('%m/%d/%Y')
+
+    def get_time(self, obj):
+        return obj.effective_datetime.strftime('%H:%M')
 
 class ObservationSerializer(serializers.ModelSerializer):
     subject = UserProfileSerializer()

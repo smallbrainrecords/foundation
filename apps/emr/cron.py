@@ -3,7 +3,7 @@ import datetime
 from django.contrib.auth.models import User
 from django.db.models import Max, Prefetch
 from emr.models import ColonCancerScreening, ColonCancerStudy, RiskFactor, UserProfile, Problem, ToDo, Label, \
-	PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem
+	PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem, Observation
 
 def age(when, on=None):
     if on is None:
@@ -100,3 +100,19 @@ def a1c_order_was_automatically_generated():
 
 				a1c.todo_past_six_months = True
 				a1c.save()
+
+@cronjobs.register
+def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times():
+	# then that data is added to all patients for that problem
+	pins = ObservationPinToProblem.objects.filter(author__role="physician")
+	for pin in pins:
+		if pin.observation.code and pin.problem.concept_id:
+			if ObservationPinToProblem.objects.filter(author__role="physician", observation__code=pin.observation.code, problem__concept_id=pin.problem.concept_id).count() > 3:
+				problems = Problem.objects.filter(concept_id=pin.problem.concept_id)
+				for problem in problems:
+					if Observation.objects.filter(code=pin.observation.code, subject=problem.patient.profile).exists():
+						observations = Observation.objects.filter(code=pin.observation.code, subject=problem.patient.profile)
+						for observation in observations:
+							if not ObservationPinToProblem.objects.filter(problem=problem, observation=observation).exists():
+								p = ObservationPinToProblem(problem=problem, author=pin.author, observation=observation)
+								p.save()

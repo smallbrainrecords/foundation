@@ -45,6 +45,17 @@
 
 			};
 
+			this.deleteIndividualData = function(patient_id, component_id) {
+				var form = {};
+				var url = "/data/"+ patient_id + "/" +component_id+"/delete_individual_data";
+				return httpService.post(form, url);
+			};
+
+			this.saveData = function(patient_id, component_id, form) {
+				var url = '/data/'+patient_id + '/' + component_id + '/save_data';
+				return httpService.post(form, url);
+			};
+
 	});
 
 })();
