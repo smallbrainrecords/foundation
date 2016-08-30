@@ -67,6 +67,10 @@
 	            });
             };
 
+            $scope.open_problem = function(problem){
+                $location.path('/problem/'+problem.id);
+            };
+
 			
         }) /* End of controller */
         .controller('AddDataCtrl', function($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService){
@@ -180,5 +184,57 @@
                 });
             };
 			
+        }) /* End of controller */
+        .controller('DataSettingsCtrl', function($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService){
+
+            var patient_id = $('#patient_id').val();
+            $scope.patient_id = patient_id;
+            $scope.data_id = $routeParams.data_id;
+
+            patientService.fetchActiveUser().then(function(data){
+                $scope.active_user = data['user_profile'];
+            });
+
+            dataService.fetchDataInfo($scope.data_id).then(function(data){
+                $scope.data = data['info'];
+            });
+
+            $scope.show_edit_data = false;
+            $scope.toggleEdit = function() {
+                $scope.show_edit_data = !$scope.show_edit_data;
+            };
+
+            $scope.saveEdit = function (data) {
+                var form = {};
+                form.name = data.name;
+                form.code = data.code;
+                form.unit = data.unit;
+                form.color = data.color;
+                form.patient_id = $scope.patient_id;
+                form.data_id = $scope.data_id;
+                dataService.saveDataType(form).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', "Done", "Saved Data Type successfully!");
+                        $scope.show_edit_data = false;
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            };
+
+            $scope.deleteData = function() {
+                dataService.deleteData($scope.patient_id, $scope.data_id).then(function(data){
+                    if(data['success']==true){
+                        toaster.pop('success', 'Done', 'Deleted data!');
+                        $location.url('/');
+                    }else if(data['success']==false){
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    }else{
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            };
+
+            
         }); /* End of controller */
 })();

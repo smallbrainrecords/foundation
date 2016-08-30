@@ -56,6 +56,18 @@
 				return httpService.post(form, url);
 			};
 
+			this.saveDataType = function(form){
+				var url = '/data/'+form.patient_id + '/' + form.data_id +'/save_data_type';
+
+				return httpService.post(form, url);
+			};
+
+			this.deleteData = function(patient_id, data_id) {
+				var form = {};
+				var url = "/data/"+ patient_id + "/" +data_id+"/delete_data";
+				return httpService.post(form, url);
+			};
+
 	});
 
 })();

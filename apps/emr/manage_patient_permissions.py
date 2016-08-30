@@ -58,6 +58,8 @@ GLOBAL_PERMISSIONS = [
     'remove_sharing_patient',
     # my story
     'add_my_story_tab',
+    # data
+    'add_data_type',
     # Pain
     'update_pain', ]
 
@@ -101,6 +103,7 @@ ROLE_PERMISSIONS['patient'] = [
     'add_my_story_tab',
     # data
     'set_data_order',
+    'add_data_type',
     # Pain
     'update_pain', ]
 
@@ -149,6 +152,7 @@ ROLE_PERMISSIONS['physician'] = [
     'add_my_story_tab',
     # data
     'set_data_order',
+    'add_data_type',
     # Pain
     'update_pain', ]
 

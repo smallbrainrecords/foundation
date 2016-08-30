@@ -4,7 +4,7 @@
 
 
 	angular.module('ManagerApp')
-		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService, prompt, $cookies){
+		.controller('ProblemsCtrl', function($scope, $routeParams, $interval,  patientService, problemService, ngDialog, toaster, todoService, prompt, $cookies, $location){
 
 
 			var patient_id = $('#patient_id').val();
@@ -41,6 +41,10 @@
 
             problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function(data){
                 $scope.problem_labels = data['labels'];
+            });
+
+            problemService.fetchPinToProblem($scope.problem_id).then(function(data){
+                $scope.pins = data['pins'];
             });
 
 			problemService.trackProblemClickEvent(problem_id).then(function(data){});
@@ -939,6 +943,14 @@
 					}
 				}
 			};
+
+			/*
+            * open data page
+            */
+            $scope.open_data = function(data) {
+                $location.path('/data/' + data.id);
+            };
+
 		}); /* End of controller */
 
 

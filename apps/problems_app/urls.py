@@ -45,4 +45,5 @@ urlpatterns = patterns(
     url(r'^problem/staff/(?P<staff_id>\d+)/add_new_common_problem$', 'add_new_common_problem'),
     url(r'^problem/staff/(?P<staff_id>\d+)/get_common_problems$', 'get_common_problems'),
     url(r'^problem/remove_common_problem/(?P<problem_id>\d+)$', 'remove_common_problem'),
+    url(r'^problem/(?P<problem_id>\d+)/get_pins$', 'get_pins'),
     )

@@ -105,6 +105,10 @@
             .when('/data/individual_data/:individual_data_id', {
                 templateUrl: '/static/apps/patient_manager/partials/data/individual_data.html',
                 controller: 'IndividualDataCtrl'
+            })
+            .when('/data/:data_id/settings', {
+                templateUrl: '/static/apps/patient_manager/partials/data/settings.html',
+                controller: 'DataSettingsCtrl'
             });
 
     });

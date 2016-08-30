@@ -81,6 +81,7 @@ def get_observation_info(request, observation_id):
     return ajax_response(resp)
 
 @login_required
+@permissions_required(["add_data_type"])
 @api_view(["POST"])
 def add_new_data_type(request, patient_id):
     resp = {}
@@ -209,4 +210,41 @@ def save_data(request, patient_id, component_id):
 
         resp['info'] = ObservationComponentSerializer(component).data
         resp['success'] = True
+    return ajax_response(resp)
+
+@login_required
+@permissions_required(["add_data_type"])
+@api_view(["POST"])
+def save_data_type(request, patient_id, observation_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        observation = Observation.objects.get(id=observation_id)
+        observation.name = request.POST.get("name", None)
+        observation.code = request.POST.get("code", None)
+        observation.color = request.POST.get("color", None)
+
+        observation.save()
+
+        resp['observation'] = ObservationSerializer(observation).data
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+@permissions_required(["add_data_type"])
+@api_view(["POST"])
+def delete_data(request, patient_id, observation_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        observation = Observation.objects.get(id=observation_id)
+        pins = ObservationPinToProblem.objects.filter(observation_id=observation_id)
+        for pin in pins:
+            pin.delete()
+
+        observation.delete()
+
+        resp['success'] = True
+
     return ajax_response(resp)

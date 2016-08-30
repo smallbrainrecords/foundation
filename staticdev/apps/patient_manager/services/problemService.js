@@ -188,29 +188,30 @@
 		};
 
 		this.updateProblemListNote = function(form){
-
 			var url = '/p/problem/'+form.list_id+'/update_problem_list_note';
 
 			return httpService.post(form, url);
-
 		};
 
 		this.fetchA1c = function(problem_id){
-
 			var url = "/p/problem/"+problem_id+"/a1c";
 			var params = {};
 
 			return httpService.get(params, url);
-
 		};
 
 		this.fetchColonCancerss = function(problem_id){
-
 			var url = "/p/problem/"+problem_id+"/colon_cancers";
 			var params = {};
 
 			return httpService.get(params, url);
+		};
 
+		this.fetchPinToProblem = function(problem_id){
+			var url = "/p/problem/"+problem_id+"/get_pins";
+			var params = {};
+
+			return httpService.get(params, url);
 		};
 });
 
