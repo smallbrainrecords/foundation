@@ -592,60 +592,73 @@
                         </form>
                     </div>
                     <div class="col-sm-9 my-story-right">
-                        <div class="row" ng-show="selected_tab">
-                            <div class="col-sm-6">
-                                <button class="btn btn-default" ng-click="toggle_add_my_story_text();" ng-show="!show_add_my_story_text">Add Text Component</button>
-                                <form class="form-horizontal" ng-show="show_add_my_story_text">
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Name</label>
-                                        <div class="col-sm-10">
-                                          <input type="text" class="form-control" ng-model="new_text.name">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Text</label>
-                                        <div class="col-sm-10">
-                                          <input type="text" class="form-control" ng-model="new_text.text">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Snomed concept id</label>
-                                        <div class="col-sm-10">
-                                          <input type="text" class="form-control" ng-model="new_text.concept_id">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <div class="col-sm-2"> </div>
-                                        <div class="col-sm-10">
-                                            <div class="radio">
-                                              <label>
-                                                <input type="radio" ng-value="true" checked ng-model="new_text.private">
-                                                keep it private
-                                              </label>
-                                            </div>
-                                            <div class="radio">
-                                              <label>
-                                                <input type="radio" ng-value="" ng-model="new_text.private">
-                                                share with doctor
-                                              </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <div class="col-sm-2"> </div>
-                                        <div class="col-sm-10">
-                                            <button class="btn btn-default" ng-click="toggle_add_my_story_text();">cancel</button>
-                                            <button class="btn btn-default" ng-click="add_my_story_text(new_text);">Save</button>
-                                        </div>
-                                    </div>
-                                </form>
+                        <div ng-show="selected_tab">
+                            <div class="row" ng-repeat="component in selected_tab.my_story_tab_components">
+                                <div class="col-sm-12">
+                                    <p><b>{{component.name}}</b></p>
+                                    <textarea ng-model="component.text"></textarea>
+                                    <p>Last edited by: {{component.last_updated_user.username}} on {{component.last_updated_date|date:'M/d/yyyy'}}  
+                                        <button class="btn btn-link" ng-click="">see previous entries ({{component.text_component_entries.length}})</button>
+                                    </p>
+                                </div>
+                                <br>
                             </div>
-                            <div class="col-sm-6">
-                                <button class="btn btn-default pull-right" ng-click="edit_my_story_tab();">Edit</button>
+                            <br>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <button class="btn btn-default" ng-click="toggle_add_my_story_text();" ng-show="!show_add_my_story_text">Add Text Component</button>
+                                    <form class="form-horizontal" ng-show="show_add_my_story_text">
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Name</label>
+                                            <div class="col-sm-10">
+                                              <input type="text" class="form-control" ng-model="new_text.name">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Text</label>
+                                            <div class="col-sm-10">
+                                              <input type="text" class="form-control" ng-model="new_text.text">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Snomed concept id</label>
+                                            <div class="col-sm-10">
+                                              <input type="text" class="form-control" ng-model="new_text.concept_id">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <div class="col-sm-2"> </div>
+                                            <div class="col-sm-10">
+                                                <div class="radio">
+                                                  <label>
+                                                    <input type="radio" ng-value="true" checked ng-model="new_text.private">
+                                                    keep it private
+                                                  </label>
+                                                </div>
+                                                <div class="radio">
+                                                  <label>
+                                                    <input type="radio" ng-value="" ng-model="new_text.private">
+                                                    share with doctor
+                                                  </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <div class="col-sm-2"> </div>
+                                            <div class="col-sm-10">
+                                                <button class="btn btn-default" ng-click="toggle_add_my_story_text();">cancel</button>
+                                                <button class="btn btn-default" ng-click="add_my_story_text(selected_tab, new_text);">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="col-sm-6">
+                                    <button class="btn btn-default pull-right" ng-click="edit_my_story_tab();">Edit</button>
+                                </div>
                             </div>
                         </div>
                     </div>

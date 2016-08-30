@@ -318,6 +318,12 @@
 			return httpService.post(form, url);
 		};
 
+		this.addMyStoryText = function(form){
+			var url = '/my_story/'+form.patient_id+ '/' +form.tab_id+'/add_text';
+
+			return httpService.post(form, url);
+		};
+
 		this.getDatas = function(patient_id) {
 			var params = {};
 			var url = '/data/'+patient_id+'/get_datas';
@@ -330,12 +336,15 @@
 			return httpService.post(form, url);
 		};
 
-		this.updateDataOrder= function(form){
+		this.updateDataOrder = function(form){
 			var url = '/data/updateOrder';
 			return httpService.postJson(form, url);
 		};
 
-
+		this.trackDataClickEvent = function(form){
+			var url = '/data/track/click';
+			return httpService.post(form, url);
+		};
 	});
 
 })();

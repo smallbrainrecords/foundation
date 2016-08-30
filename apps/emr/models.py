@@ -41,11 +41,56 @@ RISK_CHOICES = (
     ('high', 'High'), )
 
 # Observation type
-OBSERVATION_TYPES = {
-    'a1c': {
+OBSERVATION_TYPES = [
+    {
         'name': 'a1c',
     },
-}
+    {
+        'name': 'heart rate',
+        'unit': [
+            'bpm',
+        ],
+    },
+    {
+        'name': 'blood pressure',
+        'unit': [
+            'mmHg',
+        ],
+    },
+    {
+        'name': 'respiratory rate',
+        'unit': [
+            'breaths/min',
+        ],
+    },
+    {
+        'name': 'body temperature',
+        'unit': [
+            'F',
+            'C',
+        ],
+    },
+    {
+        'name': 'height',
+        'unit': [
+            'ft',
+            'cm',
+        ],
+    },
+    {
+        'name': 'weight',
+        'unit': [
+            'lb',
+            'kg',
+        ],
+    },
+    {
+        'name': 'body mass index',
+        'unit': [
+            'bmi',
+        ],
+    },
+]
 
 
 # UTILITIES
@@ -532,6 +577,12 @@ class ObservationComponent(models.Model):
 
     class Meta:
         ordering = ['effective_datetime', 'created_on']
+
+
+class ObservationUnit(models.Model):
+    observation = models.ForeignKey(Observation, related_name='observation_units')
+    value_unit = models.CharField(max_length=45, null=True, blank=True)
+    is_used = models.BooleanField(default=False)
 
 
 class ObservationOrder(models.Model):

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from datetime import datetime, timedelta
 
-from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationPinToProblem
+from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationPinToProblem, ObservationUnit
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
@@ -15,6 +15,18 @@ class ObservationComponentTextNoteSerializer(serializers.ModelSerializer):
             'author',
             'note',
             'datetime',
+            )
+
+
+class ObservationUnitSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ObservationUnit
+        fields = (
+            'id',
+            'observation',
+            'value_unit',
+            'is_used',
             )
 
 
@@ -50,6 +62,7 @@ class ObservationSerializer(serializers.ModelSerializer):
     performer = UserProfileSerializer()
     author = UserProfileSerializer()
     observation_components = ObservationComponentSerializer(many=True, read_only=True)
+    observation_units = ObservationUnitSerializer(many=True, read_only=True)
 
     class Meta:
         model = Observation
@@ -67,6 +80,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             'comments',
             'created_on',
             'observation_components',
+            'observation_units',
             'color',
             )
 

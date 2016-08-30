@@ -2,6 +2,7 @@ from django.conf.urls import patterns, include, url
 
 
 urlpatterns = patterns('data_app.views',
+	url(r'^track/click$', 'track_observation_click'),
 	url(r'^(?P<observation_id>\d+)/info$', 'get_observation_info'),
 	url(r'^(?P<patient_id>\d+)/(?P<component_id>\d+)/individual_data_info$', 'get_individual_data_info'),
     url(r'^(?P<patient_id>\d+)/get_datas$', 'get_datas'),

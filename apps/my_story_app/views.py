@@ -69,3 +69,32 @@ def add_tab(request, patient_id):
         resp['success'] = True
 
     return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+@permissions_required(["add_my_story_tab"])
+def add_text(request, patient_id, tab_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        tab = MyStoryTab.objects.get(id=int(tab_id))
+        patient_user = User.objects.get(id=patient_id)
+
+        text = MyStoryTextComponent()
+        text.name = request.POST.get("name", None)
+        text.text = request.POST.get("text", None)
+        text.concept_id = request.POST.get("concept_id", None)
+
+        private = True if request.POST.get('private', False) else False
+        text.private = private
+
+        text.patient = patient_user
+        text.author = request.user
+        text.last_updated_user = request.user
+        text.tab = tab
+        text.save()
+
+        resp['component'] = MyStoryTextComponentSerializer(text).data
+        resp['success'] = True
+
+    return ajax_response(resp)

@@ -10,7 +10,6 @@
 
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
-
             });
 
             var patient_id = $('#patient_id').val();
@@ -749,6 +748,11 @@
             $scope.change_homepage_tab = function(tab){
                 CollapseService.ChangeHomepageTab(tab);
                 $scope.show_homepage_tab = CollapseService.show_homepage_tab;
+                if ($scope.show_homepage_tab=="data") {
+                    var form = {};
+                    form.patient_id = $scope.patient_id;
+                    patientService.trackDataClickEvent(form).then(function(data){});
+                }
             };
 
             /*
@@ -821,6 +825,7 @@
                 form.private = new_text.private;
                 form.concept_id = new_text.concept_id;
                 form.patient_id = $scope.patient_id;
+                form.tab_id = tab.id;
                 patientService.addMyStoryText(form).then(function (data) {
                     if (data['success'] == true) {
                         tab.my_story_tab_components.push(data['component']);
@@ -887,8 +892,15 @@
             * open data page
             */
             $scope.open_data = function(data) {
-                if (!$scope.draggedData)
+                if (!$scope.draggedData) {
+                    var form = {};
+                    form.patient_id = $scope.patient_id;
+                    form.observation_id = data.id;
+                    patientService.trackDataClickEvent(form).then(function(data){
+
+                    });
                     $location.path('/data/' + data.id);
+                }
             };
 
             /*

@@ -87,8 +87,8 @@
         <div class='row'>
 
             <div class='col-md-12'>
-                <button class="btn btn-default" ng-if="(active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin'" ng-click="toggleEdit();">Edit</button>
-                <button class="btn btn-default" ng-if="(active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin'" ng-click="deleteData(data.id);">Delete</button>
+                <button class="btn btn-default" ng-if="data.author!= null && ((active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin')" ng-click="toggleEdit();">Edit</button>
+                <button class="btn btn-default" ng-if="data.author!= null && ((active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin')" ng-click="deleteData(data.id);">Delete</button>
             </div>
         </div>
     </div>
