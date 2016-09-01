@@ -98,3 +98,66 @@ def add_text(request, patient_id, tab_id):
         resp['success'] = True
 
     return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+@permissions_required(["add_my_story_tab"])
+def delete_tab(request, patient_id, tab_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        tab = MyStoryTab.objects.get(id=int(tab_id))
+        MyStoryTextComponentEntry.objects.filter(component__tab=tab).delete()
+        MyStoryTextComponent.objects.filter(tab=tab).delete()
+        tab.delete()
+        
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+@permissions_required(["add_my_story_tab"])
+def save_tab(request, patient_id, tab_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        tab = MyStoryTab.objects.get(id=int(tab_id))
+        tab.name = request.POST.get("name", None)
+        tab.save()
+        
+        resp['tab'] = MyStoryTabSerializer(tab).data
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+@permissions_required(["add_my_story_tab"])
+def delete_text_component(request, patient_id, component_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        component = MyStoryTextComponent.objects.get(id=int(component_id))
+        MyStoryTextComponentEntry.objects.filter(component=component).delete()
+        component.delete()
+        
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+@permissions_required(["add_my_story_tab"])
+def save_text_component(request, patient_id, component_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        component = MyStoryTextComponent.objects.get(id=int(component_id))
+        component.name = request.POST.get("name", None)
+        component.save()
+        
+        resp['component'] = MyStoryTextComponentSerializer(component).data
+        resp['success'] = True
+
+    return ajax_response(resp)
