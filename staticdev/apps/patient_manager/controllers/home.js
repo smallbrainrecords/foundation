@@ -23,6 +23,16 @@
             $scope.new_list.labels = [];
             $scope.problem_lists = [];
             $scope.is_home = true;
+            /**
+             * Generate chartData from observation_components
+             */
+            $scope.generateChartData = generateChartData;
+
+            /**
+             * Generate chartLabel for each observation_components
+             * @type {generateChartLabel}
+             */
+            $scope.generateChartLabel = generateChartLabel;
 
             todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                 $scope.members = data['members'];
@@ -741,23 +751,24 @@
                 });
             };
 
-             /*
-            *   handle cache homepage tabs
-            */
+            /*
+             *   handle cache homepage tabs
+             */
             $scope.show_homepage_tab = CollapseService.show_homepage_tab;
-            $scope.change_homepage_tab = function(tab){
+            $scope.change_homepage_tab = function (tab) {
                 CollapseService.ChangeHomepageTab(tab);
                 $scope.show_homepage_tab = CollapseService.show_homepage_tab;
-                if ($scope.show_homepage_tab=="data") {
+                if ($scope.show_homepage_tab == "data") {
                     var form = {};
                     form.patient_id = $scope.patient_id;
-                    patientService.trackDataClickEvent(form).then(function(data){});
+                    patientService.trackDataClickEvent(form).then(function (data) {
+                    });
                 }
             };
 
             /*
-            *   get my story data
-            */
+             *   get my story data
+             */
             $scope.my_story_tabs = [];
             $scope.selected_tab = null;
             patientService.getMyStory($scope.patient_id).then(function (data) {
@@ -770,8 +781,8 @@
             });
 
             /*
-            *   toggle add my story tab
-            */
+             *   toggle add my story tab
+             */
             $scope.show_add_my_story_tab = false;
             $scope.toggle_add_my_story_tab = function () {
                 $scope.show_add_my_story_tab = !$scope.show_add_my_story_tab;
@@ -801,17 +812,17 @@
             };
 
             /*
-            *   toggle view my story tab
-            */
-            
-            $scope.view_my_story_tab = function(tab) {
+             *   toggle view my story tab
+             */
+
+            $scope.view_my_story_tab = function (tab) {
                 $scope.selected_tab = tab;
                 $scope.show_edit_my_story_tab = false;
             };
 
             /*
-            *   toggle add my story text
-            */
+             *   toggle add my story text
+             */
             $scope.show_add_my_story_text = false;
             $scope.toggle_add_my_story_text = function () {
                 $scope.show_add_my_story_text = !$scope.show_add_my_story_text;
@@ -842,21 +853,21 @@
             };
 
             /*
-            *   toggle edit my story tab
-            */
+             *   toggle edit my story tab
+             */
             $scope.show_edit_my_story_tab = false;
             $scope.edit_my_story_tab = function () {
                 $scope.show_edit_my_story_tab = !$scope.show_edit_my_story_tab;
             };
 
             /*
-            *   delete my story tab
-            */
+             *   delete my story tab
+             */
             $scope.delete_my_story_tab = function (selected_tab) {
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a tab is forever. There is no undo."
-                }).then(function(result){
+                }).then(function (result) {
                     patientService.deleteMyStoryTab($scope.patient_id, selected_tab.id).then(function (data) {
                         if (data['success'] == true) {
                             var index = $scope.my_story_tabs.indexOf(selected_tab);
@@ -870,7 +881,7 @@
                             toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                         }
                     });
-                },function(){
+                }, function () {
                     return false;
                 });
             };
@@ -895,13 +906,13 @@
             };
 
             /*
-            *   delete my story tab
-            */
+             *   delete my story tab
+             */
             $scope.delete_my_story_text = function (component) {
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a text component is forever. There is no undo."
-                }).then(function(result){
+                }).then(function (result) {
                     patientService.deleteMyStoryText($scope.patient_id, component.id).then(function (data) {
                         if (data['success'] == true) {
                             var index = $scope.selected_tab.my_story_tab_components.indexOf(component);
@@ -912,7 +923,7 @@
                             toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                         }
                     });
-                },function(){
+                }, function () {
                     return false;
                 });
             };
@@ -932,8 +943,8 @@
             };
 
             /*
-            *   get data
-            */
+             *   get data
+             */
 
             $scope.datas = [];
             patientService.getDatas($scope.patient_id).then(function (data) {
@@ -980,14 +991,14 @@
             });
 
             /*
-            * open data page
-            */
-            $scope.open_data = function(data) {
+             * open data page
+             */
+            $scope.open_data = function (data) {
                 if (!$scope.draggedData) {
                     var form = {};
                     form.patient_id = $scope.patient_id;
                     form.observation_id = data.id;
-                    patientService.trackDataClickEvent(form).then(function(data){
+                    patientService.trackDataClickEvent(form).then(function (data) {
 
                     });
                     $location.path('/data/' + data.id);
@@ -995,8 +1006,8 @@
             };
 
             /*
-            *   toggle add new data type
-            */
+             *   toggle add new data type
+             */
             $scope.new_data_type = {};
             $scope.show_add_new_data_type = false;
             $scope.toggle_add_new_data_type = function () {
@@ -1023,6 +1034,32 @@
                     }
                 });
             };
+
+            /**
+             *
+             * @returns {Array}
+             */
+            function generateChartData(observation_components) {
+                // Generate data point(s)
+                $scope.chartTmp = _.map(observation_components, function (item, key) {
+                    return item.value_quantity == null ? 0 : item.value_quantity;
+                });
+
+                return [$scope.chartTmp]
+            }
+
+            /**
+             * Generate label for data chart
+             * @param observation_components
+             */
+            function generateChartLabel(observation_components) {
+                // Generate data label
+                var labels = _.map(observation_components, function (item, key) {
+                    return item.date;
+                });
+
+                return labels;
+            }
 
         });
     /* End of controller */
