@@ -1,59 +1,75 @@
 <toaster-container></toaster-container>
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<a href='#/'><b> Back to home page </b></a>
-			</div>
-		</div>
+            <div class='col-md-12'>
+                <a href='#/'><b> Back to home page </b></a>
+            </div>
+        </div>
 
-	</div><!-- End of Panel Body -->
+    </div><!-- End of Panel Body -->
 </div>
 
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
-
-			<div class='col-md-12'>
-				{{ data.name }} {{ data.created_on | date:'M/d/yyyy' }}
-                <p ng-if="data.observation_components.length > 0">{{ data.observation_components[data.observation_components.length -1].value_quantity }}</p>
-			</div>
-		</div>
-	</div>
+        <div class='row'>
+            <div class='col-md-12'>
+                <div class="row">
+                    <div class="col-md-4 col-md-offset-4">
+                        <span class="pull-right">Chart type</span>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="chart" id="chart" ng-model="displayedChart" ng-init="displayedChart=0"
+                                class="form-control">
+                            <option value="0">Line</option>
+                            <option value="1">Bar</option>
+                        </select>
+                    </div>
+                </div>
+                <h2 class="text-center">{{ data.name }}</h2>
+                <canvas ng-if="displayedChart==0" class="chart chart-line" chart-data="chartData"
+                        chart-labels="labels"></canvas>
+                <canvas ng-if="displayedChart==1" class="chart chart-bar" chart-data="chartData"
+                        chart-labels="labels"></canvas>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<a href="#/data/{{data.id}}/show_all_data" class="btn btn-default">Show all data</a>
-				<a href="#/data/{{data.id}}/add_data" class="btn btn-default">Add data point</a>
-				<button class="btn btn-default" ng-click="toggle_pin_to_new_problem();" ng-if="active_user.role !='patient' || active_user.id== data.author.id">Pin to new problem</button>
-				<a class="btn btn-default" href="#/data/{{data.id}}/settings">Settings</a>
-			</div>
-		</div>
-	</div>
+            <div class='col-md-12'>
+                <a href="#/data/{{ data.id }}/show_all_data" class="btn btn-default">Show all data</a>
+                <a href="#/data/{{ data.id }}/add_data" class="btn btn-default">Add data point</a>
+                <button class="btn btn-default" ng-click="toggle_pin_to_new_problem();"
+                        ng-if="active_user.role !='patient' || active_user.id== data.author.id">Pin to new problem
+                </button>
+                <a class="btn btn-default" href="#/data/{{ data.id }}/settings">Settings</a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class='panel panel-default'>
-	<div class='panel-heading'>
-		<h3>List of pinned problems</h3>
-	</div>
+    <div class='panel-heading'>
+        <h3>List of pinned problems</h3>
+    </div>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<div style='max-height:375px; overflow-y:auto;'>
+            <div class='col-md-12'>
+                <div style='max-height:375px; overflow-y:auto;'>
                     <ul class='ul-clean'>
                         <li ng-repeat='problem in problems'
                             ng-show="problem.pin">
@@ -66,25 +82,27 @@
                         </li>
                     </ul>
                 </div>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class='panel panel-default' ng-show="show_pin_to_new_problem" ng-if="active_user.role!='patient' || active_user.id== data.author.id">
-	<div class='panel-heading'>
-		<h3>List of current problems</h3>
-	</div>
+<div class='panel panel-default' ng-show="show_pin_to_new_problem"
+     ng-if="active_user.role!='patient' || active_user.id== data.author.id">
+    <div class='panel-heading'>
+        <h3>List of current problems</h3>
+    </div>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<p ng-repeat="problem in problems">
-					<input type="checkbox" ng-model="problem.pin" ng-change="data_pin_to_problem(data.id, problem.id);"> {{problem.problem_name}}
-				</p>
-			</div>
-		</div>
-	</div>
+            <div class='col-md-12'>
+                <p ng-repeat="problem in problems">
+                    <input type="checkbox" ng-model="problem.pin"
+                           ng-change="data_pin_to_problem(data.id, problem.id);"> {{ problem.problem_name }}
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
