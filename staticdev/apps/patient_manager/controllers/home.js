@@ -806,6 +806,7 @@
             
             $scope.view_my_story_tab = function(tab) {
                 $scope.selected_tab = tab;
+                $scope.show_edit_my_story_tab = false;
             };
 
             /*
@@ -834,6 +835,96 @@
                         new_text.concept_id = '';
                         new_text.private = true;
                         toaster.pop('success', "Done", "New Text Component created successfully!");
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            };
+
+            /*
+            *   toggle edit my story tab
+            */
+            $scope.show_edit_my_story_tab = false;
+            $scope.edit_my_story_tab = function () {
+                $scope.show_edit_my_story_tab = !$scope.show_edit_my_story_tab;
+            };
+
+            /*
+            *   delete my story tab
+            */
+            $scope.delete_my_story_tab = function (selected_tab) {
+                prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a tab is forever. There is no undo."
+                }).then(function(result){
+                    patientService.deleteMyStoryTab($scope.patient_id, selected_tab.id).then(function (data) {
+                        if (data['success'] == true) {
+                            var index = $scope.my_story_tabs.indexOf(selected_tab);
+                            $scope.my_story_tabs.splice(index, 1);
+
+                            if ($scope.my_story_tabs.length > 0)
+                                $scope.selected_tab = $scope.my_story_tabs[0];
+                            $scope.show_edit_my_story_tab = false;
+                            toaster.pop('success', "Done", "Deleted tab successfully!");
+                        } else {
+                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                        }
+                    });
+                },function(){
+                    return false;
+                });
+            };
+
+            $scope.save_my_story_tab = function (selected_tab) {
+                if (selected_tab.name) {
+                    var form = {};
+                    form.name = selected_tab.name;
+                    form.tab_id = selected_tab.id;
+                    form.patient_id = $scope.patient_id;
+                    patientService.saveMyStoryTab(form).then(function (data) {
+                        if (data['success'] == true) {
+                            $scope.show_edit_my_story_tab = false;
+                            toaster.pop('success', "Done", "Saved tab successfully!");
+                        } else {
+                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                        }
+                    });
+                } else {
+                    toaster.pop('error', "Error", "Please input name!");
+                }
+            };
+
+            /*
+            *   delete my story tab
+            */
+            $scope.delete_my_story_text = function (component) {
+                prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a text component is forever. There is no undo."
+                }).then(function(result){
+                    patientService.deleteMyStoryText($scope.patient_id, component.id).then(function (data) {
+                        if (data['success'] == true) {
+                            var index = $scope.selected_tab.my_story_tab_components.indexOf(component);
+                            $scope.selected_tab.my_story_tab_components.splice(index, 1);
+
+                            toaster.pop('success', "Done", "Deleted text component successfully!");
+                        } else {
+                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                        }
+                    });
+                },function(){
+                    return false;
+                });
+            };
+
+            $scope.save_my_story_text = function (component) {
+                var form = {};
+                form.name = component.name;
+                form.component_id = component.id;
+                form.patient_id = $scope.patient_id;
+                patientService.saveMyStoryText(form).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', "Done", "Saved text component successfully!");
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }

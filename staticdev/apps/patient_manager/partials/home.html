@@ -564,7 +564,11 @@
                         <div>
                             <ul class='ul-clean my-story-list' style="padding-left: 0;">
                                 <li ng-repeat="tab in my_story_tabs">
-                                    <button class="btn-link" ng-click="view_my_story_tab(tab);" ng-class="{'active': tab==selected_tab}">{{tab.name}}</button>
+                                    <button class="btn-link" ng-click="view_my_story_tab(tab);" ng-class="{'active': tab==selected_tab}" ng-hide="show_edit_my_story_tab && tab==selected_tab">{{tab.name}}</button>
+                                    <span class="row" ng-show="show_edit_my_story_tab && tab==selected_tab">
+                                        <input type="text" ng-model="selected_tab.name">
+                                        <button class="btn btn-default" ng-click="save_my_story_tab(selected_tab);">Save</button>
+                                    </span>
                                 </li>
                             </ul>
                         </div>
@@ -595,7 +599,14 @@
                         <div ng-show="selected_tab">
                             <div class="row" ng-repeat="component in selected_tab.my_story_tab_components">
                                 <div class="col-sm-12">
-                                    <p><b>{{component.name}}</b></p>
+                                    <div>
+                                        <b ng-show="!show_edit_my_story_tab">{{component.name}}</b>
+                                        <span ng-show="show_edit_my_story_tab">
+                                            <input type="text" ng-model="component.name">
+                                            <button class="btn btn-default" ng-click="save_my_story_text(component);">Save</button>
+                                            <button class="btn btn-default" ng-click="delete_my_story_text(component);">Delete</button>
+                                        </span>
+                                    </div>
                                     <textarea ng-model="component.text"></textarea>
                                     <p>Last edited by: {{component.last_updated_user.username}} on {{component.last_updated_date|date:'M/d/yyyy'}}  
                                         <button class="btn btn-link" ng-click="">see previous entries ({{component.text_component_entries.length}})</button>
@@ -657,7 +668,11 @@
                                     </form>
                                 </div>
                                 <div class="col-sm-6">
-                                    <button class="btn btn-default pull-right" ng-click="edit_my_story_tab();">Edit</button>
+                                    <button class="btn btn-default pull-right" ng-click="edit_my_story_tab();">
+                                        <span ng-show="!show_edit_my_story_tab">Edit</span>
+                                        <span ng-show="show_edit_my_story_tab">Cancel</span>
+                                    </button>
+                                    <button class="btn btn-default pull-right" ng-show="show_edit_my_story_tab" ng-click="delete_my_story_tab(selected_tab);">Delete</button>
                                 </div>
                             </div>
                         </div>

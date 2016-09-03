@@ -345,6 +345,32 @@
 			var url = '/data/track/click';
 			return httpService.post(form, url);
 		};
+
+		this.deleteMyStoryTab = function(patient_id, tab_id){
+			var form = {};
+			var url = '/my_story/'+patient_id+'/delete_tab/' + tab_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.saveMyStoryTab = function(form){
+			var url = '/my_story/'+form.patient_id+'/save_tab/' + form.tab_id;;
+
+			return httpService.post(form, url);
+		};
+
+		this.deleteMyStoryText = function(patient_id, component_id){
+			var form = {};
+			var url = '/my_story/'+patient_id+'/delete_text_component/' + component_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.saveMyStoryText = function(form){
+			var url = '/my_story/'+form.patient_id+'/save_text_component/' + form.component_id;;
+
+			return httpService.post(form, url);
+		};
 	});
 
 })();
