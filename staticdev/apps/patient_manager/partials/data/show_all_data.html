@@ -29,9 +29,12 @@
 			<div class='col-md-12'>
                 <ul class='ul-clean'>
                     <li ng-repeat='component in data.observation_components'>
-                        <a href='#/data/individual_data/{{component.id}}'>
-                            {{ component.value_quantity }} {{ component.effective_datetime|date:'M/d/yyyy HH:mm' }}
-                        </a>
+                    	<p ng-repeat="value in component.observation_component_values">
+                    		<span ng-if="data.observation_components.length > 1">{{ component.name }}: </span>
+                    		<a href='#/data/individual_data/{{value.id}}'>
+	                            {{ value.value_quantity }} {{ value.effective_datetime|date:'M/d/yyyy HH:mm' }}
+	                        </a>
+                    	</p>
                     </li>
                 </ul>
 			</div>

@@ -735,10 +735,13 @@
                             <div class='panel-heading'></div>
 
                             <div class='panel-body'>
-                                <div style='max-height:375px; overflow-y:auto;'>
-                                    <ul class='ul-clean' ui-sortable="sortableOptionsData" ng-model="datas"
+                                <div>
+                                    <ul class='ul-clean' 
+                                        ui-sortable="sortableOptionsData" 
+                                        ng-model="datas"
                                         ng-if="active_user.role=='physician' || active_user.role=='patient'">
-                                        <li ng-repeat="data in datas" ng-click='open_data(data)'>
+                                        <li ng-repeat="data in datas" 
+                                            ng-click='open_data(data)'>
                                             <div class='item-box'>
                                                 <div class="row">
                                                     <div class="col-md-6 text-left">
@@ -748,17 +751,21 @@
                                                         <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
                                                     </div>
                                                 </div>
-                                                <canvas ng-if="data.observation_components.length > 0"
+                                                <div ng-repeat="component in data.observation_components">
+                                                    <canvas ng-if="component.observation_component_values.length > 0"
                                                         class="chart chart-line"
-                                                        chart-data="generateChartData(data.observation_components)"
-                                                        chart-labels="generateChartLabel(data.observation_components)"></canvas>
+                                                        chart-data="component.chartTmp"
+                                                        chart-labels="component.labels"></canvas>
+                                                </div>
                                             </div>
                                         </li>
                                     </ul>
 
-                                    <ul class='ul-clean' ng-model="datas"
+                                    <ul class='ul-clean' 
+                                        ng-model="datas"
                                         ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary' || active_user.role=='mid-level'">
-                                        <li ng-repeat="data in datas" ng-click='open_data(data)'>
+                                        <li ng-repeat="data in datas" 
+                                            ng-click='open_data(data)'>
                                             <div class='item-box'>
                                                 <div class="row">
                                                     <div class="col-md-6 text-left">
@@ -768,10 +775,12 @@
                                                         <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
                                                     </div>
                                                 </div>
-                                                <canvas ng-if="data.observation_components.length > 0"
+                                                <div ng-repeat="component in data.observation_components">
+                                                    <canvas ng-if="component.observation_component_values.length > 0"
                                                         class="chart chart-line"
-                                                        chart-data="generateChartData(data.observation_components)"
-                                                        chart-labels="generateChartLabel(data.observation_components)"></canvas>
+                                                        chart-data="component.chartTmp"
+                                                        chart-labels="component.labels"></canvas>
+                                                </div>
                                             </div>
                                         </li>
                                     </ul>
@@ -786,10 +795,13 @@
                         <div class='panel panel-default'>
 
                             <div class='panel-body'>
-                                <button class="btn btn-default" ng-show="!show_add_new_data_type"
-                                        ng-click="toggle_add_new_data_type();">Add new data type
+                                <button class="btn btn-default" 
+                                    ng-show="!show_add_new_data_type"
+                                    ng-click="toggle_add_new_data_type();">
+                                    Add new data type
                                 </button>
-                                <form class="form-horizontal" ng-show="show_add_new_data_type">
+                                <form class="form-horizontal" 
+                                    ng-show="show_add_new_data_type">
                                     <div class="form-group">
                                         <label class="col-sm-2 control-label">Name</label>
                                         <div class="col-sm-10">
@@ -815,18 +827,20 @@
                                         <label class="col-sm-2 control-label">Color</label>
                                         <div class="col-sm-10">
                                             <color-picker ng-model="new_data_type.color"
-                                                          options="{format: 'hex'}"></color-picker>
+                                                options="{format: 'hex'}"></color-picker>
                                         </div>
                                     </div>
 
                                     <div class="form-group">
                                         <div class="col-sm-2"></div>
                                         <div class="col-sm-10">
-                                            <button class="btn btn-default" ng-click="toggle_add_new_data_type();">
+                                            <button class="btn btn-default" 
+                                                ng-click="toggle_add_new_data_type();">
                                                 cancel
                                             </button>
                                             <button class="btn btn-default"
-                                                    ng-click="add_new_data_type(new_data_type);">Save
+                                                ng-click="add_new_data_type(new_data_type);">
+                                                Save
                                             </button>
                                         </div>
                                     </div>

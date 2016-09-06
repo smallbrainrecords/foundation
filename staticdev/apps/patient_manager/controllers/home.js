@@ -951,6 +951,13 @@
                 if (data['success'] == true) {
                     $scope.datas = data['info'];
 
+                    angular.forEach($scope.datas, function(data, key) {
+                        angular.forEach(data.observation_components, function(component, key) {
+                            component.chartTmp = $scope.generateChartData(component.observation_component_values);
+                            component.labels = $scope.generateChartLabel(component.observation_component_values);
+                        });
+                    });
+
                     var tmpListData = $scope.datas;
                     $scope.sortingLogData = [];
                     $scope.sortedData = false;
@@ -1039,9 +1046,9 @@
              *
              * @returns {Array}
              */
-            function generateChartData(observation_components) {
+            function generateChartData(observation_component_values) {
                 // Generate data point(s)
-                $scope.chartTmp = _.map(observation_components, function (item, key) {
+                $scope.chartTmp = _.map(observation_component_values, function (item, key) {
                     return item.value_quantity == null ? 0 : item.value_quantity;
                 });
 
@@ -1050,11 +1057,11 @@
 
             /**
              * Generate label for data chart
-             * @param observation_components
+             * @param observation_component_values
              */
-            function generateChartLabel(observation_components) {
+            function generateChartLabel(observation_component_values) {
                 // Generate data label
-                var labels = _.map(observation_components, function (item, key) {
+                var labels = _.map(observation_component_values, function (item, key) {
                     return item.date;
                 });
 

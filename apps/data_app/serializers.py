@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from datetime import datetime, timedelta
 
-from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationPinToProblem, ObservationUnit
+from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationPinToProblem, ObservationUnit, ObservationValue
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
@@ -30,16 +30,52 @@ class ObservationUnitSerializer(serializers.ModelSerializer):
             )
 
 
+class ObservationValueSerializer(serializers.ModelSerializer):
+    author = UserProfileSerializer()
+    date = serializers.SerializerMethodField()
+    time = serializers.SerializerMethodField()
+    observation = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ObservationValue
+        fields = (
+            'id',
+            'component',
+            'author',
+            'value_quantity',
+            'effective_datetime',
+            'created_on',
+            'date',
+            'time',
+            'observation',
+            )
+
+    def get_date(self, obj):
+        if not obj.effective_datetime:
+            return ''
+        return obj.effective_datetime.strftime('%m/%d/%Y')
+
+    def get_time(self, obj):
+        if not obj.effective_datetime:
+            return ''
+        return obj.effective_datetime.strftime('%H:%M')
+
+    def get_observation(self, obj):
+        return obj.component.observation.id
+
+
 class ObservationComponentSerializer(serializers.ModelSerializer):
     observation_component_notes = ObservationComponentTextNoteSerializer(many=True, read_only=True)
     author = UserProfileSerializer()
     date = serializers.SerializerMethodField()
     time = serializers.SerializerMethodField()
+    observation_component_values = ObservationValueSerializer(many=True, read_only=True)
 
     class Meta:
         model = ObservationComponent
         fields = (
             'id',
+            'name',
             'value_quantity',
             'effective_datetime',
             'created_on',
@@ -48,13 +84,20 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
             'observation',
             'date',
             'time',
+            'observation_component_values',
+            'component_code',
             )
 
     def get_date(self, obj):
+        if not obj.effective_datetime:
+            return ''
         return obj.effective_datetime.strftime('%m/%d/%Y')
 
     def get_time(self, obj):
+        if not obj.effective_datetime:
+            return ''
         return obj.effective_datetime.strftime('%H:%M')
+
 
 class ObservationSerializer(serializers.ModelSerializer):
     subject = UserProfileSerializer()

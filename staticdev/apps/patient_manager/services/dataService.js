@@ -32,8 +32,8 @@
 				return httpService.post(form, url);
 			};
 
-			this.addData = function(patient_id, data_id, form) {
-				var url = '/data/'+patient_id + '/' + data_id + '/add_new_data';
+			this.addData = function(patient_id, component_id, form) {
+				var url = '/data/'+patient_id + '/' + component_id + '/add_new_data';
 				return httpService.post(form, url);
 			};
 

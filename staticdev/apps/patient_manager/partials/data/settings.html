@@ -29,7 +29,7 @@
     </div>
 </div>
 
-<div class='panel panel-default' ng-show="show_edit_data" ng-if="(active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin'">
+<div class='panel panel-default' ng-show="show_edit_data" ng-if="(active_user.role=='patient' && active_user.id== data.author.id) || active_user.role == 'physician' || active_user.role == 'admin'">
     <div class='panel-heading'>
         <h3>Edit data</h3>
     </div>
@@ -46,17 +46,17 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" ng-repeat="component in data.observation_components">
                         <label class="col-sm-2 control-label">Loinc code</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-model="data.code">
+                          <input type="text" class="form-control" ng-value="component.component_code" ng-model="data.new_code" ng-init="data.new_code=component.component_code">
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" ng-repeat='unit in data.observation_units'>
                         <label class="col-sm-2 control-label">Unit</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-model="data.unit">
+                          <input type="text" class="form-control" ng-value="unit.value_unit" ng-model="data.new_unit"  ng-init="data.new_unit=unit.value_unit">
                         </div>
                     </div>
 

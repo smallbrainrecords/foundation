@@ -35,10 +35,10 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label">Value</label>
+                    <div class="form-group" ng-repeat="component in data.observation_components">
+                        <label class="col-sm-2 control-label">{{ component.name }}</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-model="new_data.value">
+                          <input type="text" class="form-control" ng-model="component.new_value">
                         </div>
                     </div>
 

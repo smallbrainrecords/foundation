@@ -50,11 +50,23 @@ OBSERVATION_TYPES = [
         'unit': [
             'bpm',
         ],
+        'loinc_code': '8867-4',
     },
     {
         'name': 'blood pressure',
         'unit': [
             'mmHg',
+        ],
+        'loinc_code': '',
+        'components': [
+            {
+                'name': 'systolic',
+                'loinc_code': '8480-6',
+            },
+            {
+                'name': 'diastolic',
+                'loinc_code': '8462-4',
+            },
         ],
     },
     {
@@ -62,6 +74,7 @@ OBSERVATION_TYPES = [
         'unit': [
             'breaths/min',
         ],
+        'loinc_code': '9279-1',
     },
     {
         'name': 'body temperature',
@@ -69,6 +82,7 @@ OBSERVATION_TYPES = [
             'F',
             'C',
         ],
+        'loinc_code': '8310-5',
     },
     {
         'name': 'height',
@@ -76,6 +90,7 @@ OBSERVATION_TYPES = [
             'ft',
             'cm',
         ],
+        'loinc_code': '8302-2',
     },
     {
         'name': 'weight',
@@ -83,12 +98,21 @@ OBSERVATION_TYPES = [
             'lb',
             'kg',
         ],
+        'loinc_code': '',
     },
     {
         'name': 'body mass index',
         'unit': [
             'bmi',
         ],
+        'loinc_code': '39156-5',
+    },
+    {
+        'name': 'oxygen saturation',
+        'unit': [
+            '%',
+        ],
+        'loinc_code': '3141-9',
     },
 ]
 
@@ -561,8 +585,12 @@ class Observation(models.Model):
     class Meta:
         ordering = ['-created_on']
 
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
+
 
 class ObservationComponent(models.Model):
+    name = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=16, null=True, blank=True)
     observation = models.ForeignKey(Observation, related_name='observation_components')
     component_code = models.CharField(max_length=10, null=True, blank=True)
@@ -578,11 +606,26 @@ class ObservationComponent(models.Model):
     class Meta:
         ordering = ['effective_datetime', 'created_on']
 
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
+
 
 class ObservationUnit(models.Model):
     observation = models.ForeignKey(Observation, related_name='observation_units')
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     is_used = models.BooleanField(default=False)
+
+
+class ObservationValue(models.Model):
+    status = models.CharField(max_length=16, null=True, blank=True)
+    component = models.ForeignKey(ObservationComponent, related_name='observation_component_values')
+    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_value_authors')
+    value_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    value_codeableconcept = models.CharField(max_length=40, null=True, blank=True)
+    value_string = models.TextField(null=True, blank=True)
+    value_unit = models.CharField(max_length=45, null=True, blank=True)
+    effective_datetime = models.DateTimeField(null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
 
 class ObservationOrder(models.Model):

@@ -7,10 +7,10 @@ from common.views import *
 from rest_framework.decorators import api_view
 
 from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationOrder, \
-    PhysicianTeam, PatientController, ObservationPinToProblem, Problem, ObservationUnit
+    PhysicianTeam, PatientController, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue
 from emr.models import OBSERVATION_TYPES
 from .serializers import ObservationComponentTextNoteSerializer, ObservationComponentSerializer, \
-    ObservationSerializer, ObservationPinToProblemSerializer
+    ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
 from emr.operations import op_add_event
 
 from users_app.serializers import UserProfileSerializer
@@ -51,9 +51,28 @@ def get_datas(request, patient_id):
                 observation.subject = patient_user.profile
                 observation.save()
 
-                observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=data['unit'][0])
-                observation_unit.is_used = True # will be changed in future when having conversion
-                observation_unit.save()
+                first_loop = True
+                for unit in data['unit']:
+                    observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=unit)
+                    if first_loop:
+                        observation_unit.is_used = True # will be changed in future when having conversion
+                        first_loop = False
+                    observation_unit.save()
+
+                if data.has_key('components'):
+                    for component in data['components']:
+                        observation_component = ObservationComponent()
+                        observation_component.observation = observation
+                        observation_component.component_code = component['loinc_code']
+                        observation_component.name = component['name']
+                        observation_component.save()
+
+                else:
+                    observation_component = ObservationComponent()
+                    observation_component.observation = observation
+                    observation_component.component_code = data['loinc_code']
+                    observation_component.name = data['name']
+                    observation_component.save()
 
         observations = Observation.objects.filter(subject__user__id=int(patient_id)).exclude(name=OBSERVATION_TYPES[0]['name']).filter(observation_aonecs=None)
         
@@ -107,7 +126,6 @@ def add_new_data_type(request, patient_id):
         observation = Observation.objects.create(subject_id=int(patient_id),
                                        author=request.user.profile,
                                        name=request.POST.get("name", None),
-                                       code=request.POST.get("code", None),
                                        color=request.POST.get("color", None))
 
         observation.save()
@@ -117,6 +135,12 @@ def add_new_data_type(request, patient_id):
             observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=unit)
             observation_unit.is_used = True # will be changed in future when having conversion
             observation_unit.save()
+
+        observation_component = ObservationComponent()
+        observation_component.observation = observation
+        observation_component.component_code =request.POST.get("code", None)
+        observation_component.name = request.POST.get("name", None)
+        observation_component.save()
 
         resp['observation'] = ObservationSerializer(observation).data
         resp['success'] = True
@@ -177,7 +201,7 @@ def obseration_pin_to_problem(request, patient_id):
 
 @login_required
 @api_view(["POST"])
-def add_new_data(request, patient_id, observation_id):
+def add_new_data(request, patient_id, component_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
@@ -186,55 +210,55 @@ def add_new_data(request, patient_id, observation_id):
             effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
         value = request.POST.get("value", None)
 
-        component = ObservationComponent(author=request.user.profile, observation_id=observation_id, effective_datetime=effective_datetime, value_quantity=value)
-        component.save()
+        value = ObservationValue(author=request.user.profile, component_id=component_id, effective_datetime=effective_datetime, value_quantity=value)
+        value.save()
 
-        summary = "A value of <b>%s</b> was added for <b>%s</b>" % (component.value_quantity, component.observation.name)
-        op_add_event(request.user, component.observation.subject.user, summary)
+        summary = "A value of <b>%s</b> was added for <b>%s</b>" % (value.value_quantity, value.component.observation.name)
+        op_add_event(request.user, value.component.observation.subject.user, summary)
 
-        resp['component'] = ObservationComponentSerializer(component).data
+        resp['value'] = ObservationValueSerializer(value).data
         resp['success'] = True
 
     return ajax_response(resp)
 
 @login_required
-def get_individual_data_info(request, patient_id, component_id):
+def get_individual_data_info(request, patient_id, value_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
-        component = ObservationComponent.objects.get(id=component_id)
-        if not component.observation.name == OBSERVATION_TYPES[0]['name']:
-            resp['info'] = ObservationComponentSerializer(component).data
+        value = ObservationValue.objects.get(id=value_id)
+        if not value.component.observation.name == OBSERVATION_TYPES[0]['name']:
+            resp['info'] = ObservationValueSerializer(value).data
             resp['success'] = True
     return ajax_response(resp)
 
 @login_required
-def delete_individual_data(request, patient_id, component_id):
+def delete_individual_data(request, patient_id, value_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
-        component = ObservationComponent.objects.get(id=component_id)
-        component.delete()
+        value = ObservationValue.objects.get(id=value_id)
+        value.delete()
         resp['success'] = True
     return ajax_response(resp)
 
 @login_required
-def save_data(request, patient_id, component_id):
+def save_data(request, patient_id, value_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
-        component = ObservationComponent.objects.get(id=component_id)
+        value = ObservationValue.objects.get(id=value_id)
         
         effective_datetime = request.POST.get("datetime", None)
         if effective_datetime:
             effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
         value_quantity = request.POST.get("value_quantity", None)
 
-        component.effective_datetime = effective_datetime
-        component.value_quantity = value_quantity
-        component.save()
+        value.effective_datetime = effective_datetime
+        value.value_quantity = value_quantity
+        value.save()
 
-        resp['info'] = ObservationComponentSerializer(component).data
+        resp['info'] = ObservationValueSerializer(value).data
         resp['success'] = True
     return ajax_response(resp)
 
@@ -248,10 +272,21 @@ def save_data_type(request, patient_id, observation_id):
         observation = Observation.objects.get(id=observation_id)
         if not observation.author == None: # prevent default datas
             observation.name = request.POST.get("name", None)
-            observation.code = request.POST.get("code", None)
             observation.color = request.POST.get("color", None)
 
             observation.save()
+
+            # TODO: will be changed later if we have more components in one custom observation
+            for component in observation.observation_components.all():
+                component.name = request.POST.get("name", None)
+                component.component_code = request.POST.get("code", None)
+                component.save()
+
+            unit = request.POST.get("unit", None)
+            if unit:
+                for observation_unit in observation.observation_units.all():
+                    observation_unit.value_unit = unit
+                    observation_unit.save()
 
             resp['observation'] = ObservationSerializer(observation).data
             resp['success'] = True
@@ -270,6 +305,11 @@ def delete_data(request, patient_id, observation_id):
             pins = ObservationPinToProblem.objects.filter(observation_id=observation_id)
             for pin in pins:
                 pin.delete()
+
+            for component in observation.observation_components.all():
+                for value in component.observation_component_values.all():
+                    value.delete()
+                component.delete()
 
             observation.delete()
 

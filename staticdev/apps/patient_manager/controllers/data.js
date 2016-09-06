@@ -15,20 +15,50 @@
 
             });
 
-            dataService.fetchDataInfo($scope.data_id).then(function (data) {
-                $scope.data = data['info'];
+            /**
+             *
+             * @returns {Array}
+             */
+            $scope.generateChartData = function(observation_component_values) {
+                // Generate data point(s)
+                $scope.chartTmp = _.map(observation_component_values, function (item, key) {
+                    return item.value_quantity == null ? 0 : item.value_quantity;
+                });
+
+                return [$scope.chartTmp]
+            }
+
+            /**
+             * Generate label for data chart
+             * @param observation_component_values
+             */
+            $scope.generateChartLabel = function(observation_component_values) {
                 // Generate data label
-                $scope.labels = _.map($scope.data.observation_components, function (item, key) {
+                var labels = _.map(observation_component_values, function (item, key) {
                     return item.date;
                 });
 
-                // Generate data point(s)
-                $scope.chartTmp = _.map($scope.data.observation_components, function (item, key) {
-                    return item.value_quantity == null ? 0 : item.value_quantity;
+                return labels;
+            }
+
+            dataService.fetchDataInfo($scope.data_id).then(function (data) {
+                $scope.data = data['info'];
+                angular.forEach($scope.data.observation_components, function(component, key) {
+                    component.chartTmp = $scope.generateChartData(component.observation_component_values);
+                    component.labels = $scope.generateChartLabel(component.observation_component_values);
                 });
-                $scope.chartData = [
-                    $scope.chartTmp
-                ];
+                // Generate data label
+                // $scope.labels = _.map($scope.data.observation_components, function (item, key) {
+                //     return item.date;
+                // });
+
+                // // Generate data point(s)
+                // $scope.chartTmp = _.map($scope.data.observation_components, function (item, key) {
+                //     return item.value_quantity == null ? 0 : item.value_quantity;
+                // });
+                // $scope.chartData = [
+                //     $scope.chartTmp
+                // ];
 
             });
 
@@ -110,15 +140,20 @@
                     return;
                 }
                 new_data.datetime = new_data.date + " " + new_data.time;
-                dataService.addData($scope.patient_id, $scope.data_id, new_data).then(function (data) {
-                    if (data['success'] == true) {
-                        toaster.pop('success', 'Done', 'Added data!');
-                        $location.url('/data/' + $scope.data_id);
-                    } else if (data['success'] == false) {
-                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
-                    } else {
-                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                    }
+
+                angular.forEach($scope.data.observation_components, function(component, key) {
+                    new_data.value = component.new_value;
+                    dataService.addData($scope.patient_id, component.id, new_data).then(function (data) {
+                        if (data['success'] == true) {
+                            toaster.pop('success', 'Done', 'Added data!');
+                            if (key == $scope.data.observation_components.length - 1)
+                                $location.url('/data/' + $scope.data_id);
+                        } else if (data['success'] == false) {
+                            toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                        } else {
+                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                        }
+                    });
                 });
             };
 
@@ -220,8 +255,8 @@
             $scope.saveEdit = function (data) {
                 var form = {};
                 form.name = data.name;
-                form.code = data.code;
-                form.unit = data.unit;
+                form.code = data.new_code;
+                form.unit = data.new_unit;
                 form.color = data.color;
                 form.patient_id = $scope.patient_id;
                 form.data_id = $scope.data_id;
