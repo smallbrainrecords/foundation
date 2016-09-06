@@ -816,6 +816,10 @@
              */
 
             $scope.view_my_story_tab = function (tab) {
+                var form = {};
+                form.patient_id = $scope.patient_id;
+                form.tab_id = tab.id;
+                patientService.trackTabClickEvent(form).then(function (data) {});
                 $scope.selected_tab = tab;
                 $scope.show_edit_my_story_tab = false;
             };
@@ -942,6 +946,27 @@
                 });
             };
 
+            $scope.change_component_text = function(component) {
+                var form = {};
+                form.text = component.text;
+                form.component_id = component.id;
+                form.patient_id = $scope.patient_id;
+                patientService.saveMyStoryText(form).then(function (data) {
+                    if (data['success'] == true) {
+                        component.text_component_entries.push(data['entry']);
+                        component.last_updated_user = data['component']['last_updated_user'];
+                        component.last_updated_date = data['component']['last_updated_date'];
+                        toaster.pop('success', "Done", "Saved text component successfully!");
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            };
+
+            $scope.show_previous_entries = false;
+            $scope.see_previous_entries = function () {
+                $scope.show_previous_entries = !$scope.show_previous_entries;
+            };
             /*
              *   get data
              */

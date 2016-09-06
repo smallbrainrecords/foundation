@@ -58,6 +58,7 @@ GLOBAL_PERMISSIONS = [
     'remove_sharing_patient',
     # my story
     'add_my_story_tab',
+    'save_text_component',
     # data
     'add_data_type',
     # Pain
@@ -101,6 +102,7 @@ ROLE_PERMISSIONS['patient'] = [
     'remove_sharing_patient',
     # my story
     'add_my_story_tab',
+    'save_text_component',
     # data
     'set_data_order',
     'add_data_type',
@@ -150,6 +152,7 @@ ROLE_PERMISSIONS['physician'] = [
     'remove_sharing_patient',
     # my story
     'add_my_story_tab',
+    'save_text_component',
     # data
     'set_data_order',
     'add_data_type',
@@ -190,6 +193,8 @@ ROLE_PERMISSIONS['mid-level'] = [
     # sharing
     'add_sharing_patient',
     'remove_sharing_patient',
+    # my story
+    'save_text_component',
     # Pain
     'update_pain', ]
 
@@ -220,6 +225,8 @@ ROLE_PERMISSIONS['nurse'] = [
     # sharing
     'add_sharing_patient',
     'remove_sharing_patient',
+    # my story
+    'save_text_component',
     # Pain
     'update_pain', ]
 
@@ -240,6 +247,8 @@ ROLE_PERMISSIONS['secretary'] = [
     # sharing
     'add_sharing_patient',
     'remove_sharing_patient',
+    # my story
+    'save_text_component',
     # Patient Profile
     'update_patient_profile', ]
 

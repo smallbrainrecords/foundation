@@ -15,17 +15,18 @@ from users_app.views import permissions_accessed
 
 
 @login_required
-def track_tab_click(request, tab_id):
+def track_tab_click(request):
     resp = {}
     resp['success'] = False
-    tab_info = MyStoryTab.objects.get(id=tab_id)
-    if permissions_accessed(request.user, tab_info.patient.id):
-        actor = request.user
-        patient = tab_info.patient
+    if request.POST.get("tab_id", None):
+        tab_info = MyStoryTab.objects.get(id=request.POST.get("tab_id", None))
+        if permissions_accessed(request.user, tab_info.patient.id):
+            actor = request.user
+            patient = tab_info.patient
 
-        summary = "<b>%s</b> accessed %s" % (actor.username, tab_info.name)
-        op_add_event(actor, patient, summary)
-        resp['success'] = True
+            summary = "<b>%s</b> accessed %s" % (actor.username, tab_info.name)
+            op_add_event(actor, patient, summary)
+            resp['success'] = True
 
     return ajax_response(resp)
 
@@ -107,11 +108,12 @@ def delete_tab(request, patient_id, tab_id):
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
         tab = MyStoryTab.objects.get(id=int(tab_id))
-        MyStoryTextComponentEntry.objects.filter(component__tab=tab).delete()
-        MyStoryTextComponent.objects.filter(tab=tab).delete()
-        tab.delete()
+        if request.user.id == tab.author.id:
+            MyStoryTextComponentEntry.objects.filter(component__tab=tab).delete()
+            MyStoryTextComponent.objects.filter(tab=tab).delete()
+            tab.delete()
         
-        resp['success'] = True
+            resp['success'] = True
 
     return ajax_response(resp)
 
@@ -139,22 +141,33 @@ def delete_text_component(request, patient_id, component_id):
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
         component = MyStoryTextComponent.objects.get(id=int(component_id))
-        MyStoryTextComponentEntry.objects.filter(component=component).delete()
-        component.delete()
+        if request.user.id == component.author.id:
+            MyStoryTextComponentEntry.objects.filter(component=component).delete()
+            component.delete()
         
-        resp['success'] = True
+            resp['success'] = True
 
     return ajax_response(resp)
 
 @login_required
 @api_view(["POST"])
-@permissions_required(["add_my_story_tab"])
+@permissions_required(["save_text_component"])
 def save_text_component(request, patient_id, component_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
         component = MyStoryTextComponent.objects.get(id=int(component_id))
-        component.name = request.POST.get("name", None)
+        if request.POST.get("name", None):
+            component.name = request.POST.get("name", None)
+        if request.POST.get("text", None):
+            entry = MyStoryTextComponentEntry(component=component, text=component.text, datetime=component.datetime, private=component.private, author=component.author)
+            entry.save()
+
+            component.text = request.POST.get("text", None)
+            component.last_updated_user = request.user
+
+            resp['entry'] = MyStoryTextComponentEntrySerializer(entry).data
+
         component.save()
         
         resp['component'] = MyStoryTextComponentSerializer(component).data

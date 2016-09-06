@@ -863,11 +863,14 @@ class MyStoryTextComponent(models.Model):
 
 
 class MyStoryTextComponentEntry(models.Model):
-    author = models.ForeignKey(User, related_name="author_story_text_entries")
+    author = models.ForeignKey(User, related_name="author_story_text_entries", null=True, blank=True)
     component = models.ForeignKey(MyStoryTextComponent, null=True, blank=True, related_name="text_component_entries")
     text = models.TextField(null=True, blank=True)
     datetime = models.DateTimeField(blank=True, null=True)
     private = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-datetime']
 
     def __unicode__(self):
         return "%s" % (self.name)

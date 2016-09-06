@@ -485,3 +485,7 @@ ce-entity ce-flag{
 	font-weight: bold;
 	border-left: 3px solid black;
 }
+
+.data-frame {
+	background: #ddd;
+}

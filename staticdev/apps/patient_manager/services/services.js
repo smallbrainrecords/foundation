@@ -371,6 +371,11 @@
 
 			return httpService.post(form, url);
 		};
+
+		this.trackTabClickEvent = function(form){
+			var url = '/my_story/track/click';
+			return httpService.post(form, url);
+		};
 	});
 
 })();
