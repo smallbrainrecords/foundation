@@ -593,10 +593,10 @@
                         <div>
                             <ul class='ul-clean my-story-list' style="padding-left: 0;">
                                 <li ng-repeat="tab in my_story_tabs">
-                                    <button class="btn-link" 
-                                        ng-click="view_my_story_tab(tab);"
-                                        ng-class="{'active': tab==selected_tab}"
-                                        ng-hide="show_edit_my_story_tab && tab==selected_tab">{{ tab.name }}</button>
+                                    <button class="btn-link"
+                                            ng-click="view_my_story_tab(tab);"
+                                            ng-class="{'active': tab==selected_tab}"
+                                            ng-hide="show_edit_my_story_tab && tab==selected_tab">{{ tab.name }}</button>
                                     <span class="row" ng-show="show_edit_my_story_tab && tab==selected_tab">
                                         <input type="text" ng-model="selected_tab.name">
                                         <button class="btn btn-default"
@@ -605,10 +605,11 @@
                                 </li>
                             </ul>
                         </div>
-                        <button class="btn btn-default" 
-                            ng-click="toggle_add_my_story_tab();"
-                            ng-show="!show_add_my_story_tab"
-                            ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin'">Add Tab
+                        <button class="btn btn-default"
+                                ng-click="toggle_add_my_story_tab();"
+                                ng-show="!show_add_my_story_tab"
+                                ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin'">
+                            Add Tab
                         </button>
                         <form ng-show="show_add_my_story_tab">
                             <div class="form-group">
@@ -641,22 +642,26 @@
                                         <span ng-show="show_edit_my_story_tab">
                                             <input type="text" ng-model="component.name">
                                             <button class="btn btn-default" ng-click="save_my_story_text(component);">Save</button>
-                                            <button class="btn btn-default" 
-                                                ng-click="delete_my_story_text(component);"
-                                                ng-if="active_user.user.id==component.author.id">Delete</button>
+                                            <button class="btn btn-default"
+                                                    ng-click="delete_my_story_text(component);"
+                                                    ng-if="active_user.user.id==component.author.id">Delete</button>
                                         </span>
                                     </div>
-                                    <textarea class="form-control" ng-model="component.text" ng-change="change_component_text(component)" ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
+                                    <textarea class="form-control" ng-model="component.text"
+                                              ng-change="change_component_text(component)"
+                                              ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
                                     <p>Last edited by: {{ component.last_updated_user.username }}
                                         on {{ component.last_updated_date|date:'M/d/yyyy' }}
-                                        <button class="btn btn-link" ng-click="see_previous_entries()">see previous entries
+                                        <button class="btn btn-link" ng-click="see_previous_entries()">see previous
+                                            entries
                                             ({{ component.text_component_entries.length }})
                                         </button>
                                     </p>
                                     <div ng-show="show_previous_entries">
                                         <div ng-repeat="entry in component.text_component_entries">
-                                            {{ entry.text }} 
-                                            <p>by {{ entry.author.username }} on {{ entry.datetime|date:'M/d/yyyy' }}</p>
+                                            {{ entry.text }}
+                                            <p>by {{ entry.author.username }}
+                                                on {{ entry.datetime|date:'M/d/yyyy' }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -665,10 +670,11 @@
                             <br>
                             <div class="row">
                                 <div class="col-sm-6">
-                                    <button class="btn btn-default" 
-                                        ng-click="toggle_add_my_story_text();"
-                                        ng-show="!show_add_my_story_text"
-                                        ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin'">Add Text Component
+                                    <button class="btn btn-default"
+                                            ng-click="toggle_add_my_story_text();"
+                                            ng-show="!show_add_my_story_text"
+                                            ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin'">
+                                        Add Text Component
                                     </button>
                                     <form class="form-horizontal" ng-show="show_add_my_story_text">
                                         <div class="form-group">
@@ -729,10 +735,10 @@
                                         <span ng-show="!show_edit_my_story_tab">Edit</span>
                                         <span ng-show="show_edit_my_story_tab">Cancel</span>
                                     </button>
-                                    <button class="btn btn-default pull-right" 
-                                        ng-show="show_edit_my_story_tab"
-                                        ng-click="delete_my_story_tab(selected_tab);"
-                                        ng-if="active_user.user.id==selected_tab.author.id">Delete
+                                    <button class="btn btn-default pull-right"
+                                            ng-show="show_edit_my_story_tab"
+                                            ng-click="delete_my_story_tab(selected_tab);"
+                                            ng-if="active_user.user.id==selected_tab.author.id">Delete
                                     </button>
                                 </div>
                             </div>
@@ -751,13 +757,14 @@
 
                             <div class='panel-body'>
                                 <div>
-                                    <ul class='ul-clean' 
-                                        ui-sortable="sortableOptionsData" 
+                                    <ul class='ul-clean'
+                                        ui-sortable="sortableOptionsData"
                                         ng-model="datas"
                                         ng-if="active_user.role=='physician' || active_user.role=='patient'">
-                                        <li ng-repeat="data in datas" 
+                                        <li ng-repeat="data in datas"
                                             ng-click='open_data(data)'>
-                                            <div class='item-box data-frame' ng-style="{'background-color': data.color}">
+                                            <div class='item-box data-frame'
+                                                 ng-style="{'background-color': data.color}">
                                                 <div class="row">
                                                     <div class="col-md-6 text-left">
                                                         <span>{{ data.name }}</span>
@@ -766,22 +773,22 @@
                                                         <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
                                                     </div>
                                                 </div>
-                                                <div ng-repeat="component in data.observation_components">
-                                                    <canvas ng-if="component.observation_component_values.length > 0"
-                                                        class="chart chart-line"
-                                                        chart-data="component.chartTmp"
-                                                        chart-labels="component.labels"></canvas>
-                                                </div>
+                                                    <canvas ng-if="data.observation_components.length > 0"
+                                                            class="chart chart-line"
+                                                            chart-data="data.chartTmp"
+                                                            chart-labels="data.labels"></canvas>
+
                                             </div>
                                         </li>
                                     </ul>
 
-                                    <ul class='ul-clean' 
+                                    <ul class='ul-clean'
                                         ng-model="datas"
                                         ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary' || active_user.role=='mid-level'">
-                                        <li ng-repeat="data in datas" 
+                                        <li ng-repeat="data in datas"
                                             ng-click='open_data(data)'>
-                                            <div class='item-box data-frame' ng-style="{'background-color': data.color}">
+                                            <div class='item-box data-frame'
+                                                 ng-style="{'background-color': data.color}">
                                                 <div class="row">
                                                     <div class="col-md-6 text-left">
                                                         <span>{{ data.name }}</span>
@@ -792,9 +799,9 @@
                                                 </div>
                                                 <div ng-repeat="component in data.observation_components">
                                                     <canvas ng-if="component.observation_component_values.length > 0"
-                                                        class="chart chart-line"
-                                                        chart-data="component.chartTmp"
-                                                        chart-labels="component.labels"></canvas>
+                                                            class="chart chart-line"
+                                                            chart-data="component.chartTmp"
+                                                            chart-labels="component.labels"></canvas>
                                                 </div>
                                             </div>
                                         </li>
@@ -810,13 +817,13 @@
                         <div class='panel panel-default'>
 
                             <div class='panel-body'>
-                                <button class="btn btn-default" 
-                                    ng-show="!show_add_new_data_type"
-                                    ng-click="toggle_add_new_data_type();">
+                                <button class="btn btn-default"
+                                        ng-show="!show_add_new_data_type"
+                                        ng-click="toggle_add_new_data_type();">
                                     Add new data type
                                 </button>
-                                <form class="form-horizontal" 
-                                    ng-show="show_add_new_data_type">
+                                <form class="form-horizontal"
+                                      ng-show="show_add_new_data_type">
                                     <div class="form-group">
                                         <label class="col-sm-2 control-label">Name</label>
                                         <div class="col-sm-10">
@@ -842,19 +849,19 @@
                                         <label class="col-sm-2 control-label">Color</label>
                                         <div class="col-sm-10">
                                             <color-picker ng-model="new_data_type.color"
-                                                options="{format: 'hex'}"></color-picker>
+                                                          options="{format: 'hex'}"></color-picker>
                                         </div>
                                     </div>
 
                                     <div class="form-group">
                                         <div class="col-sm-2"></div>
                                         <div class="col-sm-10">
-                                            <button class="btn btn-default" 
-                                                ng-click="toggle_add_new_data_type();">
+                                            <button class="btn btn-default"
+                                                    ng-click="toggle_add_new_data_type();">
                                                 cancel
                                             </button>
                                             <button class="btn btn-default"
-                                                ng-click="add_new_data_type(new_data_type);">
+                                                    ng-click="add_new_data_type(new_data_type);">
                                                 Save
                                             </button>
                                         </div>

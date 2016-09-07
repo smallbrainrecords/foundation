@@ -33,11 +33,13 @@
                         </div>
                     </div>
                     <h2 class="text-center" ng-if="data.observation_components.length > 1">{{ data.name }}</h2>
-                    <div ng-repeat="component in data.observation_components">
-                        <h3 class="text-center">{{ component.name }}</h3>
-                        <canvas ng-if="displayedChart==0" class="chart chart-line" chart-data="component.chartTmp" chart-labels="component.labels"></canvas>
-                        <canvas ng-if="displayedChart==1" class="chart chart-bar" chart-data="component.chartTmp" chart-labels="component.labels"></canvas>
-                    </div>
+                    <h3 class="text-center">{{ component.name }}</h3>
+                        <canvas ng-if="displayedChart==0" class="chart chart-line"
+                                chart-data="chartTmp"
+                                chart-labels="labels"></canvas>
+                        <canvas ng-if="displayedChart==1" class="chart chart-bar"
+                                chart-data="chartTmp"
+                                chart-labels="labels"></canvas>
                 </div>
             </div>
         </div>

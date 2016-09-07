@@ -4,7 +4,6 @@
 
 
     angular.module('ManagerApp')
-
         .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog, toaster, $location, todoService, prompt, $timeout, CollapseService) {
 
 
@@ -819,7 +818,8 @@
                 var form = {};
                 form.patient_id = $scope.patient_id;
                 form.tab_id = tab.id;
-                patientService.trackTabClickEvent(form).then(function (data) {});
+                patientService.trackTabClickEvent(form).then(function (data) {
+                });
                 $scope.selected_tab = tab;
                 $scope.show_edit_my_story_tab = false;
             };
@@ -946,7 +946,7 @@
                 });
             };
 
-            $scope.change_component_text = function(component) {
+            $scope.change_component_text = function (component) {
                 var form = {};
                 form.text = component.text;
                 form.component_id = component.id;
@@ -976,10 +976,10 @@
                 if (data['success'] == true) {
                     $scope.datas = data['info'];
 
-                    angular.forEach($scope.datas, function(data, key) {
-                        angular.forEach(data.observation_components, function(component, key) {
-                            component.chartTmp = $scope.generateChartData(component.observation_component_values);
-                            component.labels = $scope.generateChartLabel(component.observation_component_values);
+                    angular.forEach($scope.datas, function (data, key) {
+                        angular.forEach(data.observation_components, function (component, key) {
+                            data.chartTmp = $scope.generateChartData(component.observation_component_values);
+                            data.labels = $scope.generateChartLabel(component.observation_component_values);
                         });
                     });
 
@@ -1073,11 +1073,11 @@
              */
             function generateChartData(observation_component_values) {
                 // Generate data point(s)
-                $scope.chartTmp = _.map(observation_component_values, function (item, key) {
+                var chartTmp = _.map(observation_component_values, function (item, key) {
                     return item.value_quantity == null ? 0 : item.value_quantity;
                 });
 
-                return [$scope.chartTmp]
+                return [chartTmp]
             }
 
             /**
@@ -1096,5 +1096,5 @@
         });
     /* End of controller */
 
-
 })();
+

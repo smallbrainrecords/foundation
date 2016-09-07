@@ -21,11 +21,11 @@
              */
             $scope.generateChartData = function(observation_component_values) {
                 // Generate data point(s)
-                $scope.chartTmp = _.map(observation_component_values, function (item, key) {
+                var chartTmp = _.map(observation_component_values, function (item, key) {
                     return item.value_quantity == null ? 0 : item.value_quantity;
                 });
 
-                return [$scope.chartTmp]
+                return [chartTmp]
             }
 
             /**
@@ -44,22 +44,9 @@
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
                 angular.forEach($scope.data.observation_components, function(component, key) {
-                    component.chartTmp = $scope.generateChartData(component.observation_component_values);
-                    component.labels = $scope.generateChartLabel(component.observation_component_values);
+                    $scope.chartTmp = $scope.generateChartData(component.observation_component_values);
+                    $scope.labels = $scope.generateChartLabel(component.observation_component_values);
                 });
-                // Generate data label
-                // $scope.labels = _.map($scope.data.observation_components, function (item, key) {
-                //     return item.date;
-                // });
-
-                // // Generate data point(s)
-                // $scope.chartTmp = _.map($scope.data.observation_components, function (item, key) {
-                //     return item.value_quantity == null ? 0 : item.value_quantity;
-                // });
-                // $scope.chartData = [
-                //     $scope.chartTmp
-                // ];
-
             });
 
             problemService.fetchProblems($scope.patient_id).then(function (data) {
