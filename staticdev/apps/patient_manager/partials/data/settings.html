@@ -1,16 +1,16 @@
 <toaster-container></toaster-container>
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<a href='#/data/{{data.id}}'><b> Back to data page </b></a>
-			</div>
-		</div>
+            <div class='col-md-12'>
+                <a href='#/data/{{ data.id }}'><b> Back to data page </b></a>
+            </div>
+        </div>
 
-	</div><!-- End of Panel Body -->
+    </div><!-- End of Panel Body -->
 </div>
 
 <div class='panel panel-default'>
@@ -19,44 +19,49 @@
     </div>
 
     <div class='panel-body'>
-
         <div class='row'>
-
             <div class='col-md-12'>
-                
+                <select name="chart" id="chart" ng-model="data.graph" ng-change="change_graph_type()" ng-disable="updating"
+                        class="form-control">
+                    <option value="Line">Line</option>
+                    <option value="Bar">Bar</option>
+                </select>
             </div>
         </div>
     </div>
 </div>
 
-<div class='panel panel-default' ng-show="show_edit_data" ng-if="(active_user.role=='patient' && active_user.id== data.author.id) || active_user.role == 'physician' || active_user.role == 'admin'">
+<div class='panel panel-default' ng-show="show_edit_data"
+     ng-if="(active_user.role=='patient' && active_user.id== data.author.id) || active_user.role == 'physician' || active_user.role == 'admin'">
     <div class='panel-heading'>
         <h3>Edit data</h3>
     </div>
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<form class="form-horizontal">
+            <div class='col-md-12'>
+                <form class="form-horizontal">
                     <div class="form-group">
                         <label class="col-sm-2 control-label">Name</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-model="data.name">
+                            <input type="text" class="form-control" ng-model="data.name">
                         </div>
                     </div>
 
                     <div class="form-group" ng-repeat="component in data.observation_components">
                         <label class="col-sm-2 control-label">Loinc code</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-value="component.component_code" ng-model="data.new_code" ng-init="data.new_code=component.component_code">
+                            <input type="text" class="form-control" ng-value="component.component_code"
+                                   ng-model="data.new_code" ng-init="data.new_code=component.component_code">
                         </div>
                     </div>
 
                     <div class="form-group" ng-repeat='unit in data.observation_units'>
                         <label class="col-sm-2 control-label">Unit</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-value="unit.value_unit" ng-model="data.new_unit"  ng-init="data.new_unit=unit.value_unit">
+                            <input type="text" class="form-control" ng-value="unit.value_unit" ng-model="data.new_unit"
+                                   ng-init="data.new_unit=unit.value_unit">
                         </div>
                     </div>
 
@@ -66,18 +71,18 @@
                             <color-picker ng-model="data.color" options="{format: 'hex'}"></color-picker>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
-                        <div class="col-sm-2"> </div>
+                        <div class="col-sm-2"></div>
                         <div class="col-sm-10">
                             <button class="btn btn-default" ng-click="toggleEdit();">cancel</button>
                             <button class="btn btn-default" ng-click="saveEdit(data);">Save</button>
                         </div>
                     </div>
                 </form>
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class='panel panel-default'>
@@ -87,18 +92,24 @@
         <div class='row'>
 
             <div class='col-md-12'>
-                <button class="btn btn-default" ng-if="data.author!= null && ((active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin')" ng-click="toggleEdit();">Edit</button>
-                <button class="btn btn-default" ng-if="data.author!= null && ((active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin')" ng-click="deleteData(data.id);">Delete</button>
+                <button class="btn btn-default"
+                        ng-if="data.author!= null && ((active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin')"
+                        ng-click="toggleEdit();">Edit
+                </button>
+                <button class="btn btn-default"
+                        ng-if="data.author!= null && ((active_user.role=='patient' && active_user.id== data.author.id) || active_user.role=='physician' || active_user.role=='admin')"
+                        ng-click="deleteData(data.id);">Delete
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script type='text/javascript'>
-	
-	$(document).ready(function(){
 
-		$( "#due_date" ).datepicker({ dateFormat: 'mm/dd/yy' });
+    $(document).ready(function () {
 
-	});
+        $("#due_date").datepicker({dateFormat: 'mm/dd/yy'});
+
+    });
 </script>

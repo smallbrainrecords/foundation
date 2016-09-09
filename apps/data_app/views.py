@@ -21,7 +21,7 @@ from users_app.views import permissions_accessed
 def track_observation_click(request):
     resp = {}
     resp['success'] = False
-    
+
     actor = request.user
     if request.POST.get("patient_id", None):
         patient = User.objects.get(id=request.POST.get("patient_id", None))
@@ -36,16 +36,18 @@ def track_observation_click(request):
 
     return ajax_response(resp)
 
+
 @login_required
 def get_datas(request, patient_id):
     resp = {}
     resp['success'] = False
-    
+
     if permissions_accessed(request.user, int(patient_id)):
         # add default datas: heart rate, blood pressure, respiratory rate, body temperature, height, weight, body mass index
         patient_user = User.objects.get(id=patient_id)
         for data in OBSERVATION_TYPES:
-            if not data['name'] == 'a1c' and not Observation.objects.filter(name=data['name'], author=None, subject=patient_user.profile).exists():
+            if not data['name'] == 'a1c' and not Observation.objects.filter(name=data['name'], author=None,
+                                                                            subject=patient_user.profile).exists():
                 observation = Observation()
                 observation.name = data['name']
                 observation.subject = patient_user.profile
@@ -55,7 +57,7 @@ def get_datas(request, patient_id):
                 for unit in data['unit']:
                     observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=unit)
                     if first_loop:
-                        observation_unit.is_used = True # will be changed in future when having conversion
+                        observation_unit.is_used = True  # will be changed in future when having conversion
                         first_loop = False
                     observation_unit.save()
 
@@ -74,8 +76,9 @@ def get_datas(request, patient_id):
                     observation_component.name = data['name']
                     observation_component.save()
 
-        observations = Observation.objects.filter(subject__user__id=int(patient_id)).exclude(name=OBSERVATION_TYPES[0]['name']).filter(observation_aonecs=None)
-        
+        observations = Observation.objects.filter(subject__user__id=int(patient_id)).exclude(
+            name=OBSERVATION_TYPES[0]['name']).filter(observation_aonecs=None)
+
         if request.user.profile.role == 'nurse' or request.user.profile.role == 'secretary':
             team_members = PhysicianTeam.objects.filter(member=request.user)
             if team_members:
@@ -102,7 +105,6 @@ def get_datas(request, patient_id):
                 observation_dict = ObservationSerializer(observation).data
                 observation_list.append(observation_dict)
 
-
         resp['success'] = True
         resp['info'] = observation_list
     return ajax_response(resp)
@@ -116,6 +118,7 @@ def get_observation_info(request, observation_id):
     resp['info'] = ObservationSerializer(observation).data
     return ajax_response(resp)
 
+
 @login_required
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
@@ -124,21 +127,21 @@ def add_new_data_type(request, patient_id):
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
         observation = Observation.objects.create(subject_id=int(patient_id),
-                                       author=request.user.profile,
-                                       name=request.POST.get("name", None),
-                                       color=request.POST.get("color", None))
+                                                 author=request.user.profile,
+                                                 name=request.POST.get("name", None),
+                                                 color=request.POST.get("color", None))
 
         observation.save()
 
         unit = request.POST.get("unit", None)
         if unit:
             observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=unit)
-            observation_unit.is_used = True # will be changed in future when having conversion
+            observation_unit.is_used = True  # will be changed in future when having conversion
             observation_unit.save()
 
         observation_component = ObservationComponent()
         observation_component.observation = observation
-        observation_component.component_code =request.POST.get("code", None)
+        observation_component.component_code = request.POST.get("code", None)
         observation_component.name = request.POST.get("name", None)
         observation_component.save()
 
@@ -146,6 +149,7 @@ def add_new_data_type(request, patient_id):
         resp['success'] = True
 
     return ajax_response(resp)
+
 
 @permissions_required(["set_data_order"])
 @login_required
@@ -166,9 +170,9 @@ def update_order(request):
         order.order = id_datas
         order.save()
 
-
         resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 def get_pins(request, observation_id):
@@ -177,6 +181,7 @@ def get_pins(request, observation_id):
     resp['success'] = True
     resp['pins'] = ObservationPinToProblemSerializer(pins, many=True).data
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -191,13 +196,15 @@ def obseration_pin_to_problem(request, patient_id):
             pin = ObservationPinToProblem.objects.get(observation_id=observation_id, problem_id=problem_id)
             pin.delete();
         except ObservationPinToProblem.DoesNotExist:
-            pin = ObservationPinToProblem(author=request.user.profile, observation_id=observation_id, problem_id=problem_id)
+            pin = ObservationPinToProblem(author=request.user.profile, observation_id=observation_id,
+                                          problem_id=problem_id)
             pin.save()
 
         resp['pin'] = ObservationPinToProblemSerializer(pin).data
         resp['success'] = True
 
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -210,16 +217,19 @@ def add_new_data(request, patient_id, component_id):
             effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
         value = request.POST.get("value", None)
 
-        value = ObservationValue(author=request.user.profile, component_id=component_id, effective_datetime=effective_datetime, value_quantity=value)
+        value = ObservationValue(author=request.user.profile, component_id=component_id,
+                                 effective_datetime=effective_datetime, value_quantity=value)
         value.save()
 
-        summary = "A value of <b>%s</b> was added for <b>%s</b>" % (value.value_quantity, value.component.observation.name)
+        summary = "A value of <b>%s</b> was added for <b>%s</b>" % (
+            value.value_quantity, value.component.observation.name)
         op_add_event(request.user, value.component.observation.subject.user, summary)
 
         resp['value'] = ObservationValueSerializer(value).data
         resp['success'] = True
 
     return ajax_response(resp)
+
 
 @login_required
 def get_individual_data_info(request, patient_id, value_id):
@@ -232,6 +242,7 @@ def get_individual_data_info(request, patient_id, value_id):
             resp['success'] = True
     return ajax_response(resp)
 
+
 @login_required
 def delete_individual_data(request, patient_id, value_id):
     resp = {}
@@ -242,13 +253,14 @@ def delete_individual_data(request, patient_id, value_id):
         resp['success'] = True
     return ajax_response(resp)
 
+
 @login_required
 def save_data(request, patient_id, value_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
         value = ObservationValue.objects.get(id=value_id)
-        
+
         effective_datetime = request.POST.get("datetime", None)
         if effective_datetime:
             effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
@@ -262,6 +274,7 @@ def save_data(request, patient_id, value_id):
         resp['success'] = True
     return ajax_response(resp)
 
+
 @login_required
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
@@ -270,7 +283,7 @@ def save_data_type(request, patient_id, observation_id):
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
         observation = Observation.objects.get(id=observation_id)
-        if not observation.author == None: # prevent default datas
+        if not observation.author == None:  # prevent default datas
             observation.name = request.POST.get("name", None)
             observation.color = request.POST.get("color", None)
 
@@ -293,6 +306,7 @@ def save_data_type(request, patient_id, observation_id):
 
     return ajax_response(resp)
 
+
 @login_required
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
@@ -301,7 +315,7 @@ def delete_data(request, patient_id, observation_id):
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
         observation = Observation.objects.get(id=observation_id)
-        if not observation.author == None: # prevent default datas
+        if not observation.author == None:  # prevent default datas
             pins = ObservationPinToProblem.objects.filter(observation_id=observation_id)
             for pin in pins:
                 pin.delete()
@@ -314,5 +328,21 @@ def delete_data(request, patient_id, observation_id):
             observation.delete()
 
             resp['success'] = True
+
+    return ajax_response(resp)
+
+# TODO: AnhDN Check this working flow
+@login_required
+@permissions_required(["add_data_type"])
+@api_view(["POST"])
+def update_graph(request):
+    resp = {}
+    resp['success'] = False
+    # If user have access to this data
+    if permissions_accessed(request.user, int(request.POST.get('patient_id'))):
+        observation = Observation.objects.get(id=request.POST.get('data_id'))
+        observation.graph = request.POST.get('graph_type')
+        observation.save()
+        resp['success'] = True
 
     return ajax_response(resp)

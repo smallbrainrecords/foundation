@@ -19,7 +19,7 @@
              *
              * @returns {Array}
              */
-            $scope.generateChartData = function(observation_component_values) {
+            $scope.generateChartData = function (observation_component_values) {
                 // Generate data point(s)
                 var chartTmp = _.map(observation_component_values, function (item, key) {
                     return item.value_quantity == null ? 0 : item.value_quantity;
@@ -32,7 +32,7 @@
              * Generate label for data chart
              * @param observation_component_values
              */
-            $scope.generateChartLabel = function(observation_component_values) {
+            $scope.generateChartLabel = function (observation_component_values) {
                 // Generate data label
                 var labels = _.map(observation_component_values, function (item, key) {
                     return item.date;
@@ -43,7 +43,7 @@
 
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
-                angular.forEach($scope.data.observation_components, function(component, key) {
+                angular.forEach($scope.data.observation_components, function (component, key) {
                     $scope.chartTmp = $scope.generateChartData(component.observation_component_values);
                     $scope.labels = $scope.generateChartLabel(component.observation_component_values);
                 });
@@ -128,7 +128,7 @@
                 }
                 new_data.datetime = new_data.date + " " + new_data.time;
 
-                angular.forEach($scope.data.observation_components, function(component, key) {
+                angular.forEach($scope.data.observation_components, function (component, key) {
                     new_data.value = component.new_value;
                     dataService.addData($scope.patient_id, component.id, new_data).then(function (data) {
                         if (data['success'] == true) {
@@ -270,6 +270,28 @@
                 });
             };
 
+            /**
+             * Update the displayed graph type of this data
+             */
+            $scope.change_graph_type = function () {
+                $scope.updating = true;
+                var form = {};
+                form.patient_id = $scope.patient_id;
+                form.data_id = $scope.data.id;
+                form.graph_type = $scope.data.graph;
+
+                dataService.updateGraphType(form).then(function (data) {
+                    $scope.updating = false;
+
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'Graph type ');
+                    } else if (data['success'] == false) {
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                })
+            };
 
         });
     /* End of controller */

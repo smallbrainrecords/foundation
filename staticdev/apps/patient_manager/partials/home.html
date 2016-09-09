@@ -778,12 +778,14 @@
                                                         <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
                                                     </div>
                                                 </div>
-                                                <canvas ng-if="data.observation_components.length > 0"
-                                                        class="chart chart-line"
-                                                        chart-data="data.chartTmp"
-                                                        chart-labels="data.labels"></canvas>
-
-                                            </div>
+                                                <div ng-if="data.observation_components.length > 0">
+                                                    <canvas ng-if="data.graph=='Line'" class="chart chart-line"
+                                                            chart-data="data.chartTmp"
+                                                            chart-labels="data.labels"></canvas>
+                                                    <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
+                                                            chart-data="data.chartTmp"
+                                                            chart-labels="data.labels"></canvas>
+                                                </div>
                                         </li>
                                     </ul>
 
