@@ -767,16 +767,21 @@
                                                  ng-style="{'background-color': data.color}">
                                                 <div class="row">
                                                     <div class="col-md-6 text-left">
-                                                        <span>{{ data.name }}</span>
+                                                        <h3>{{ data.name }}</h3>
                                                     </div>
                                                     <div class="col-md-6 text-right">
+                                                        <h3>
+                                                            <span
+                                                                    ng-bind="data.observation_components[data.observation_components.length -1].value_quantity || 0"></span>
+                                                            <span ng-bind="data.observation_units[0].value_unit"></span>
+                                                        </h3>
                                                         <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
                                                     </div>
                                                 </div>
-                                                    <canvas ng-if="data.observation_components.length > 0"
-                                                            class="chart chart-line"
-                                                            chart-data="data.chartTmp"
-                                                            chart-labels="data.labels"></canvas>
+                                                <canvas ng-if="data.observation_components.length > 0"
+                                                        class="chart chart-line"
+                                                        chart-data="data.chartTmp"
+                                                        chart-labels="data.labels"></canvas>
 
                                             </div>
                                         </li>
