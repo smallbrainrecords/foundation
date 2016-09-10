@@ -752,8 +752,18 @@
                 <div class="row">
                     <div class='col-md-12'>
                         <div class='panel panel-default'>
-
-                            <div class='panel-heading'></div>
+                            <div class='panel-heading'>
+                                <div class="btn-group btn-group-justified graph-view-mode">
+                                    <label class="btn btn-default" ng-click="viewMode='Week'"
+                                           ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
+                                    <label class="btn btn-default" ng-click="viewMode='Month'"
+                                           ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
+                                    <label class="btn btn-default" ng-click="viewMode='Year'"
+                                           ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
+                                    <label class="btn btn-default" ng-click="viewMode='All'"
+                                           ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
+                                </div>
+                            </div>
 
                             <div class='panel-body'>
                                 <div>
@@ -824,6 +834,7 @@
                         <div class='panel panel-default'>
 
                             <div class='panel-body'>
+
                                 <button class="btn btn-default"
                                         ng-show="!show_add_new_data_type"
                                         ng-click="toggle_add_new_data_type();">

@@ -144,4 +144,11 @@
 .graph-header {
   color: white; }
 
+.graph-view-mode .mode-active {
+  background: #FF2C55;
+  color: white; }
+.graph-view-mode .mode-inactive {
+  background: #FED7D0;
+  color: #C03C51; }
+
 /*# sourceMappingURL=patient-profile.css.map */

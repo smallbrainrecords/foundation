@@ -23,6 +23,14 @@
             $scope.problem_lists = [];
             $scope.is_home = true;
             /**
+             * Default graph view mode: Year
+             * Available view mode:
+             * Week - Month - Year - All
+             * @type {string}
+             */
+            $scope.viewMode = 'Year';
+
+            /**
              * Generate chartData from observation_components
              */
             $scope.generateChartData = generateChartData;
@@ -1093,6 +1101,7 @@
                 return labels;
             }
 
+            $scope.change_homepage_tab('data');
         });
     /* End of controller */
 
