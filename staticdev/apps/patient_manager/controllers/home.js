@@ -1126,9 +1126,6 @@
                     }
                 });
             };
-
-
-            $scope.change_homepage_tab('data');
         });
     /* End of controller */
 
