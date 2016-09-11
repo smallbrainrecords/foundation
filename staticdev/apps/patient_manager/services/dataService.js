@@ -127,8 +127,6 @@
                         var filter = _.filter(data, function (item) {
                             return moment(item.effective_datetime).isAfter(weekAgo);
                         });
-                        console.log(filter.length);
-
                         return filter;
 
                         break;
@@ -137,8 +135,6 @@
                         var filter = _.filter(data, function (item) {
                             return moment(item.effective_datetime).isAfter(monthAgo);
                         });
-                        console.log(filter.length);
-
                         return filter;
                         break;
                     case "Year":
@@ -146,9 +142,7 @@
                         var filter = _.filter(data, function (item) {
                             return moment(item.effective_datetime).isAfter(yearAgo);
                         });
-                        console.log(filter.length);
                         return filter;
-
                         break;
                     case "All":
                     default:
