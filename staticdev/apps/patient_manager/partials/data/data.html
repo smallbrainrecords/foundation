@@ -19,6 +19,16 @@
 
         <div class='row'>
             <div class='col-md-12'>
+                <div class="btn-group btn-group-justified graph-view-mode">
+                    <label class="btn btn-default" ng-click="viewMode='Week'"
+                           ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
+                    <label class="btn btn-default" ng-click="viewMode='Month'"
+                           ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
+                    <label class="btn btn-default" ng-click="viewMode='Year'"
+                           ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
+                    <label class="btn btn-default" ng-click="viewMode='All'"
+                           ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
+                </div>
                 <div class='item-box data-frame' ng-style="{'background-color': data.color}">
                     <div class="row graph-header">
                         <div class="col-md-6 text-left">
@@ -27,20 +37,21 @@
                         <div class="col-md-6 text-right">
                             <h3>
                                                             <span
-                                                                    ng-bind="data.observation_components[data.observation_components.length -1].value_quantity || 0"></span>
+                                                                    ng-bind="data.mostRecentValue || 0"></span>
                                 <span ng-bind="data.observation_units[0].value_unit"></span>
                             </h3>
                             <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
                         </div>
                     </div>
 
-
                     <canvas ng-if="data.graph=='Line'" class="chart chart-line"
-                            chart-data="chartTmp"
-                            chart-labels="labels"></canvas>
+                            chart-data="data.chartData"
+                            chart-series="data.chartSeries"
+                            chart-labels="data.chartLabel"></canvas>
                     <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
-                            chart-data="chartTmp"
-                            chart-labels="labels"></canvas>
+                            chart-data="data.chartData"
+                            chart-series="data.chartSeries"
+                            chart-labels="data.chartLabel"></canvas>
                 </div>
             </div>
         </div>

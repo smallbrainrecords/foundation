@@ -782,19 +782,21 @@
                                                     <div class="col-md-6 text-right">
                                                         <h3>
                                                             <span
-                                                                    ng-bind="data.observation_components[data.observation_components.length -1].value_quantity || 0"></span>
+                                                                    ng-bind="data.mostRecentValue"></span>
                                                             <span ng-bind="data.observation_units[0].value_unit"></span>
                                                         </h3>
                                                         <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
                                                     </div>
                                                 </div>
                                                 <div ng-if="data.observation_components.length > 0">
-                                                    <canvas ng-if="data.graph=='Line'" class="chart chart-line"
-                                                            chart-data="data.chartTmp"
-                                                            chart-labels="data.labels"></canvas>
+                                                    <canvas class="chart chart-line"
+                                                            chart-data="data.chartData"
+                                                            chart-series="data.chartSeries"
+                                                            chart-labels="data.chartLabel"></canvas>
                                                     <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
-                                                            chart-data="data.chartTmp"
-                                                            chart-labels="data.labels"></canvas>
+                                                            chart-data="data.chartData"
+                                                            chart-series="data.chartSeries"
+                                                            chart-labels="data.chartLabel"></canvas>
                                                 </div>
                                         </li>
                                     </ul>

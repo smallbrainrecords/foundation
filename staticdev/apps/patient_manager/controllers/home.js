@@ -22,6 +22,7 @@
             $scope.new_list.labels = [];
             $scope.problem_lists = [];
             $scope.is_home = true;
+
             /**
              * Default graph view mode: Year
              * Available view mode:
@@ -29,17 +30,64 @@
              * @type {string}
              */
             $scope.viewMode = 'Year';
+            $scope.$watch("viewMode", function (newVal, oldVal) {
+
+            });
 
             /**
-             * Generate chartData from observation_components
+             * Generate chartData from observation
+             * TODO: It's should be limited by viewMode
+             * @param observation
              */
-            $scope.generateChartData = generateChartData;
+            $scope.generateChartData = function generateChartData(observation) {
+                var result = [];
+
+                // Generate data point(s)
+                _.map(observation.observation_components, function (item, key) {
+                    result.push(_.pluck(item.observation_component_values, 'value_quantity'));
+                });
+
+                return result;
+            };
 
             /**
              * Generate chartLabel for each observation_components
              * @type {generateChartLabel}
              */
-            $scope.generateChartLabel = generateChartLabel;
+            $scope.generateChartLabel = function generateChartLabel(observation) {
+                if (observation.observation_components.length == 0)
+                    return [];
+                // Generate data point(s)
+                return _.pluck(observation.observation_components[0].observation_component_values, 'effective_datetime');
+            };
+
+            /**
+             *
+             * @param observation
+             * @return {Array}
+             */
+            $scope.generateChartSeries = function (observation) {
+                if (observation.observation_components.length == 0)
+                    return [];
+                return _.pluck(observation.observation_components, 'name');
+            };
+
+            /**
+             *
+             * @param observation
+             * @return {*}
+             */
+            $scope.generateMostRecentValue = function (observation) {
+                var result = [];
+                if (observation.observation_components.length == 0)
+                    return result.toString();
+
+                _.map(observation.observation_components, function (item, key) {
+                    result.push(_.last(item.observation_component_values).value_quantity);
+                });
+
+                return result.join(" / ");
+            };
 
             todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                 $scope.members = data['members'];
@@ -186,7 +234,7 @@
 
                     $scope.timeline_changed = true;
                 });
-            }
+            };
 
             patientService.fetchPatientInfo(patient_id).then(function (data) {
                 $scope.patient_info = data['info'];
@@ -274,7 +322,7 @@
                 }
 
                 $scope.show_accomplished_todos = flag;
-            }
+            };
 
 
             $scope.add_goal = function (form) {
@@ -393,7 +441,7 @@
                 });
 
 
-            }
+            };
 
             $scope.add_new_problem = function (problem_term) {
                 if (problem_term == '' || problem_term == undefined) {
@@ -426,7 +474,7 @@
                         toaster.pop('error', 'Error', 'Something went wrong');
                     }
                 });
-            }
+            };
 
             $scope.add_new_common_problem = function (problem, type) {
                 var form = {};
@@ -461,7 +509,7 @@
 
                 });
 
-            }
+            };
 
             $scope.open_problem = function (problem) {
 
@@ -656,7 +704,7 @@
             };
 
             function copyToClipboard(text) {
-                var $temp = $("<textarea/>")
+                var $temp = $("<textarea/>");
                 $("body").append($temp);
                 $temp.val(text).select();
                 document.execCommand("copy");
@@ -694,7 +742,7 @@
                         });
                     }
 
-                    copyToClipboard(text)
+                    copyToClipboard(text);
                     event.preventDefault();
                 }
             });
@@ -985,10 +1033,14 @@
                     $scope.datas = data['info'];
 
                     angular.forEach($scope.datas, function (data, key) {
-                        angular.forEach(data.observation_components, function (component, key) {
-                            data.chartTmp = $scope.generateChartData(component.observation_component_values);
-                            data.labels = $scope.generateChartLabel(component.observation_component_values);
-                        });
+                        //TODO: Temporary fix for urls not recognized
+                        if (data.graph == null || data.graph == undefined)
+                            data.graph = 'Line';
+
+                        data.chartData = $scope.generateChartData(data);
+                        data.chartLabel = $scope.generateChartLabel(data);
+                        data.chartSeries = $scope.generateChartSeries(data);
+                        data.mostRecentValue = $scope.generateMostRecentValue(data)
                     });
 
                     var tmpListData = $scope.datas;
@@ -1063,7 +1115,7 @@
                 form.patient_id = $scope.patient_id;
                 patientService.addNewDataType(form).then(function (data) {
                     if (data['success'] == true) {
-                        $scope.datas.push(data['observation'])
+                        $scope.datas.push(data['observation']);
                         new_data_type.name = '';
                         new_data_type.code = '';
                         new_data_type.unit = '';
@@ -1075,31 +1127,6 @@
                 });
             };
 
-            /**
-             *
-             * @returns {Array}
-             */
-            function generateChartData(observation_component_values) {
-                // Generate data point(s)
-                var chartTmp = _.map(observation_component_values, function (item, key) {
-                    return item.value_quantity == null ? 0 : item.value_quantity;
-                });
-
-                return [chartTmp]
-            }
-
-            /**
-             * Generate label for data chart
-             * @param observation_component_values
-             */
-            function generateChartLabel(observation_component_values) {
-                // Generate data label
-                var labels = _.map(observation_component_values, function (item, key) {
-                    return item.date;
-                });
-
-                return labels;
-            }
 
             $scope.change_homepage_tab('data');
         });

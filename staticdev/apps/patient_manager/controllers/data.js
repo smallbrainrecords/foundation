@@ -9,6 +9,16 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.data_id = $routeParams.data_id;
+            /**
+             * Default graph view mode: Year
+             * Available view mode:
+             * Week - Month - Year - All
+             * @type {string}
+             */
+            $scope.viewMode = 'Year';
+            $scope.$watch("viewMode", function (newVal, oldVal) {
+
+            });
 
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
@@ -16,37 +26,71 @@
             });
 
             /**
-             *
-             * @returns {Array}
+             * Generate chartData from observation
+             * TODO: It's should be limited by viewMode
+             * @param observation
              */
-            $scope.generateChartData = function (observation_component_values) {
+            $scope.generateChartData = function generateChartData(observation) {
+                var result = [];
+
                 // Generate data point(s)
-                var chartTmp = _.map(observation_component_values, function (item, key) {
-                    return item.value_quantity == null ? 0 : item.value_quantity;
+                _.map(observation.observation_components, function (item, key) {
+                    result.push(_.pluck(item.observation_component_values, 'value_quantity'));
                 });
 
-                return [chartTmp]
-            }
+                return result;
+            };
 
             /**
-             * Generate label for data chart
-             * @param observation_component_values
+             * Generate chartLabel for each observation_components
+             * @type {generateChartLabel}
              */
-            $scope.generateChartLabel = function (observation_component_values) {
-                // Generate data label
-                var labels = _.map(observation_component_values, function (item, key) {
-                    return item.date;
+            $scope.generateChartLabel = function generateChartLabel(observation) {
+                if (observation.observation_components.length == 0)
+                    return [];
+                // Generate data point(s)
+                return _.pluck(observation.observation_components[0].observation_component_values, 'effective_datetime');
+            };
+
+            /**
+             *
+             * @param observation
+             * @return {Array}
+             */
+            $scope.generateChartSeries = function (observation) {
+                if (observation.observation_components.length == 0)
+                    return [];
+                return _.pluck(observation.observation_components, 'name');
+            };
+
+            /**
+             *
+             * @param observation
+             * @return {*}
+             */
+            $scope.generateMostRecentValue = function (observation) {
+                var result = [];
+                if (observation.observation_components.length == 0)
+                    return result.toString();
+
+                _.map(observation.observation_components, function (item, key) {
+                    result.push(_.last(item.observation_component_values).value_quantity);
                 });
 
-                return labels;
-            }
+                return result.join(" / ");
+            };
+
 
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
-                angular.forEach($scope.data.observation_components, function (component, key) {
-                    $scope.chartTmp = $scope.generateChartData(component.observation_component_values);
-                    $scope.labels = $scope.generateChartLabel(component.observation_component_values);
-                });
+                //TODO: Temporary fix for urls not recognized
+                if ($scope.data.graph == null || $scope.data.graph == undefined)
+                    $scope.data.graph = 'Line';
+
+                $scope.data.chartData = $scope.generateChartData($scope.data);
+                $scope.data.chartLabel = $scope.generateChartLabel($scope.data);
+                $scope.data.chartSeries = $scope.generateChartSeries($scope.data);
+                $scope.data.mostRecentValue = $scope.generateMostRecentValue($scope.data);
             });
 
             problemService.fetchProblems($scope.patient_id).then(function (data) {
