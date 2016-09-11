@@ -32,7 +32,25 @@
              */
             $scope.viewMode = 'Year';
             $scope.$watch("viewMode", function (newVal, oldVal) {
+                if (newVal != oldVal) {
+                    angular.forEach($scope.datas, function (data, key) {
+                        // Default graph type
+                        if (data.graph == null || data.graph == undefined)
+                            data.graph = 'Line';
 
+                        // Temporary data using for generate graph
+                        var tmpData = angular.copy(data);
+                        // Sorting before processing
+                        _.map(tmpData.observation_components, function (item, key) {
+                            item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                            // Sorting before generating
+                            item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                        });
+                        data.chartData = dataService.generateChartData(tmpData);
+                        data.chartLabel = dataService.generateChartLabel(tmpData);
+                    });
+                }
             });
 
             todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
@@ -978,20 +996,24 @@
                 if (data['success'] == true) {
                     $scope.datas = data['info'];
 
+                    // TODO: DRY
                     angular.forEach($scope.datas, function (data, key) {
-                        //TODO: Temporary fix for urls not recognized
+                        // Default graph type
                         if (data.graph == null || data.graph == undefined)
                             data.graph = 'Line';
 
-                        _.map(data.observation_components, function (item, key) {
+                        // Temporary data using for generate graph
+                        var tmpData = angular.copy(data);
+                        // Sorting before processing
+                        _.map(tmpData.observation_components, function (item, key) {
+                            item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
 
                             // Sorting before generating
                             item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
                         });
+                        data.chartData = dataService.generateChartData(tmpData);
+                        data.chartLabel = dataService.generateChartLabel(tmpData);
 
-
-                        data.chartData = dataService.generateChartData(data);
-                        data.chartLabel = dataService.generateChartLabel(data);
                         data.chartSeries = dataService.generateChartSeries(data);
                         data.mostRecentValue = dataService.generateMostRecentValue(data)
                     });
@@ -1079,6 +1101,8 @@
                     }
                 });
             };
+
+            $scope.change_homepage_tab('data');
         });
     /* End of controller */
 

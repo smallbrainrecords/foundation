@@ -15,9 +15,22 @@
              * Week - Month - Year - All
              * @type {string}
              */
-            $scope.viewMode = 'All';
+            $scope.viewMode = 'Year';
             $scope.$watch("viewMode", function (newVal, oldVal) {
+                if (newVal != oldVal) {
+                    // Temporary data using for generate graph
+                    var tmpData = angular.copy($scope.data);
 
+                    // Sorting before processing
+                    _.map(tmpData.observation_components, function (item, key) {
+                        item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                        // Sorting before generating
+                        item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                    });
+                    $scope.data.chartData = dataService.generateChartData(tmpData);
+                    $scope.data.chartLabel = dataService.generateChartLabel(tmpData);
+                }
             });
 
             patientService.fetchActiveUser().then(function (data) {
@@ -27,20 +40,25 @@
 
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
-                //TODO: Temporary fix for urls not recognized
+
+                // Default data chart
                 if ($scope.data.graph == null || $scope.data.graph == undefined)
                     $scope.data.graph = 'Line';
 
+                // Temporary data using for generate graph
+                var tmpData = angular.copy($scope.data);
+
                 // Sorting before processing
-                _.map($scope.data.observation_components, function (item, key) {
-                    // item.observation_component_values = dataService.updateViewMode($scope.viewMode, $scope.data);
+                _.map(tmpData.observation_components, function (item, key) {
+                    item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
 
                     // Sorting before generating
                     item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
                 });
+                $scope.data.chartData = dataService.generateChartData(tmpData);
+                $scope.data.chartLabel = dataService.generateChartLabel(tmpData);
 
-                $scope.data.chartData = dataService.generateChartData($scope.data);
-                $scope.data.chartLabel = dataService.generateChartLabel($scope.data);
+                // Unaffected graph option when timerang filter changed
                 $scope.data.chartSeries = dataService.generateChartSeries($scope.data);
                 $scope.data.mostRecentValue = dataService.generateMostRecentValue($scope.data);
             });

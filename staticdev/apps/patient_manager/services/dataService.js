@@ -117,26 +117,38 @@
             };
 
             this.updateViewMode = function (viewMode, data) {
-                var now = moment();
-                // Limiting data for the chart. TODO: It's should be limited from server side
+                var now = moment().utc();
+
+                // TODO: It's should be limited from server side
+                // Limiting data for the chart.
                 switch (viewMode) {
                     case "Week":
                         var weekAgo = now.subtract(1, 'week');
-                        return _.filter(item.observation_component_values, function (item) {
+                        var filter = _.filter(data, function (item) {
                             return moment(item.effective_datetime).isAfter(weekAgo);
                         });
+                        console.log(filter.length);
+
+                        return filter;
+
                         break;
                     case "Month":
                         var monthAgo = now.subtract(1, 'month');
-                        return _.filter(item.observation_component_values, function (item) {
+                        var filter = _.filter(data, function (item) {
                             return moment(item.effective_datetime).isAfter(monthAgo);
                         });
+                        console.log(filter.length);
+
+                        return filter;
                         break;
                     case "Year":
                         var yearAgo = now.subtract(1, 'year');
-                        return _.filter(item.observation_component_values, function (item) {
+                        var filter = _.filter(data, function (item) {
                             return moment(item.effective_datetime).isAfter(yearAgo);
                         });
+                        console.log(filter.length);
+                        return filter;
+
                         break;
                     case "All":
                     default:
