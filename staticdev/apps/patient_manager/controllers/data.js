@@ -4,7 +4,7 @@
 
 
     angular.module('ManagerApp')
-        .controller('DataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService, $timeout) {
+        .controller('DataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService, $filter) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
@@ -15,7 +15,7 @@
              * Week - Month - Year - All
              * @type {string}
              */
-            $scope.viewMode = 'Year';
+            $scope.viewMode = 'All';
             $scope.$watch("viewMode", function (newVal, oldVal) {
 
             });
@@ -25,72 +25,24 @@
 
             });
 
-            /**
-             * Generate chartData from observation
-             * TODO: It's should be limited by viewMode
-             * @param observation
-             */
-            $scope.generateChartData = function generateChartData(observation) {
-                var result = [];
-
-                // Generate data point(s)
-                _.map(observation.observation_components, function (item, key) {
-                    result.push(_.pluck(item.observation_component_values, 'value_quantity'));
-                });
-
-                return result;
-            };
-
-            /**
-             * Generate chartLabel for each observation_components
-             * @type {generateChartLabel}
-             */
-            $scope.generateChartLabel = function generateChartLabel(observation) {
-                if (observation.observation_components.length == 0)
-                    return [];
-                // Generate data point(s)
-                return _.pluck(observation.observation_components[0].observation_component_values, 'effective_datetime');
-            };
-
-            /**
-             *
-             * @param observation
-             * @return {Array}
-             */
-            $scope.generateChartSeries = function (observation) {
-                if (observation.observation_components.length == 0)
-                    return [];
-                return _.pluck(observation.observation_components, 'name');
-            };
-
-            /**
-             *
-             * @param observation
-             * @return {*}
-             */
-            $scope.generateMostRecentValue = function (observation) {
-                var result = [];
-                if (observation.observation_components.length == 0)
-                    return result.toString();
-
-                _.map(observation.observation_components, function (item, key) {
-                    result.push(_.last(item.observation_component_values).value_quantity);
-                });
-
-                return result.join(" / ");
-            };
-
-
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
                 //TODO: Temporary fix for urls not recognized
                 if ($scope.data.graph == null || $scope.data.graph == undefined)
                     $scope.data.graph = 'Line';
 
-                $scope.data.chartData = $scope.generateChartData($scope.data);
-                $scope.data.chartLabel = $scope.generateChartLabel($scope.data);
-                $scope.data.chartSeries = $scope.generateChartSeries($scope.data);
-                $scope.data.mostRecentValue = $scope.generateMostRecentValue($scope.data);
+                // Sorting before processing
+                _.map($scope.data.observation_components, function (item, key) {
+                    // item.observation_component_values = dataService.updateViewMode($scope.viewMode, $scope.data);
+
+                    // Sorting before generating
+                    item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                });
+
+                $scope.data.chartData = dataService.generateChartData($scope.data);
+                $scope.data.chartLabel = dataService.generateChartLabel($scope.data);
+                $scope.data.chartSeries = dataService.generateChartSeries($scope.data);
+                $scope.data.mostRecentValue = dataService.generateMostRecentValue($scope.data);
             });
 
             problemService.fetchProblems($scope.patient_id).then(function (data) {

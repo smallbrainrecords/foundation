@@ -151,4 +151,7 @@
   background: #FED7D0;
   color: #C03C51; }
 
+.no-padding {
+  padding: 0 !important; }
+
 /*# sourceMappingURL=patient-profile.css.map */

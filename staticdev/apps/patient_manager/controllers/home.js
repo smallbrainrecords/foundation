@@ -4,7 +4,8 @@
 
 
     angular.module('ManagerApp')
-        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog, toaster, $location, todoService, prompt, $timeout, CollapseService) {
+        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog,
+                                          dataService, toaster, $location, todoService, prompt, $timeout, CollapseService, $filter) {
 
 
             patientService.fetchActiveUser().then(function (data) {
@@ -33,61 +34,6 @@
             $scope.$watch("viewMode", function (newVal, oldVal) {
 
             });
-
-            /**
-             * Generate chartData from observation
-             * TODO: It's should be limited by viewMode
-             * @param observation
-             */
-            $scope.generateChartData = function generateChartData(observation) {
-                var result = [];
-
-                // Generate data point(s)
-                _.map(observation.observation_components, function (item, key) {
-                    result.push(_.pluck(item.observation_component_values, 'value_quantity'));
-                });
-
-                return result;
-            };
-
-            /**
-             * Generate chartLabel for each observation_components
-             * @type {generateChartLabel}
-             */
-            $scope.generateChartLabel = function generateChartLabel(observation) {
-                if (observation.observation_components.length == 0)
-                    return [];
-                // Generate data point(s)
-                return _.pluck(observation.observation_components[0].observation_component_values, 'effective_datetime');
-            };
-
-            /**
-             *
-             * @param observation
-             * @return {Array}
-             */
-            $scope.generateChartSeries = function (observation) {
-                if (observation.observation_components.length == 0)
-                    return [];
-                return _.pluck(observation.observation_components, 'name');
-            };
-
-            /**
-             *
-             * @param observation
-             * @return {*}
-             */
-            $scope.generateMostRecentValue = function (observation) {
-                var result = [];
-                if (observation.observation_components.length == 0)
-                    return result.toString();
-
-                _.map(observation.observation_components, function (item, key) {
-                    result.push(_.last(item.observation_component_values).value_quantity);
-                });
-
-                return result.join(" / ");
-            };
 
             todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                 $scope.members = data['members'];
@@ -1037,10 +983,17 @@
                         if (data.graph == null || data.graph == undefined)
                             data.graph = 'Line';
 
-                        data.chartData = $scope.generateChartData(data);
-                        data.chartLabel = $scope.generateChartLabel(data);
-                        data.chartSeries = $scope.generateChartSeries(data);
-                        data.mostRecentValue = $scope.generateMostRecentValue(data)
+                        _.map(data.observation_components, function (item, key) {
+
+                            // Sorting before generating
+                            item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                        });
+
+
+                        data.chartData = dataService.generateChartData(data);
+                        data.chartLabel = dataService.generateChartLabel(data);
+                        data.chartSeries = dataService.generateChartSeries(data);
+                        data.mostRecentValue = dataService.generateMostRecentValue(data)
                     });
 
                     var tmpListData = $scope.datas;

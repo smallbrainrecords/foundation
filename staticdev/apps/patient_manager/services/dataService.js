@@ -76,8 +76,74 @@
                 var url = '/data/update_graph';
 
                 return httpService.post(form, url);
-            }
+            };
 
+
+            this.generateChartData = function (observation) {
+                var result = [];
+
+                // Generate data point(s)
+                _.map(observation.observation_components, function (item, key) {
+
+                    result.push(_.pluck(item.observation_component_values, 'value_quantity'));
+                });
+
+                return result;
+            };
+
+            this.generateChartLabel = function (observation) {
+                if (observation.observation_components.length == 0)
+                    return [];
+                // Generate data point(s)
+                return _.pluck(observation.observation_components[0].observation_component_values, 'date');
+            };
+
+            this.generateChartSeries = function (observation) {
+                if (observation.observation_components.length == 0)
+                    return [];
+                return _.pluck(observation.observation_components, 'name');
+            };
+
+            this.generateMostRecentValue = function (observation) {
+                var result = [];
+                if (observation.observation_components.length == 0)
+                    return result.toString();
+
+                _.map(observation.observation_components, function (item, key) {
+                    result.push(_.last(item.observation_component_values).value_quantity);
+                });
+
+                return result.join(" / ");
+            };
+
+            this.updateViewMode = function (viewMode, data) {
+                var now = moment();
+                // Limiting data for the chart. TODO: It's should be limited from server side
+                switch (viewMode) {
+                    case "Week":
+                        var weekAgo = now.subtract(1, 'week');
+                        return _.filter(item.observation_component_values, function (item) {
+                            return moment(item.effective_datetime).isAfter(weekAgo);
+                        });
+                        break;
+                    case "Month":
+                        var monthAgo = now.subtract(1, 'month');
+                        return _.filter(item.observation_component_values, function (item) {
+                            return moment(item.effective_datetime).isAfter(monthAgo);
+                        });
+                        break;
+                    case "Year":
+                        var yearAgo = now.subtract(1, 'year');
+                        return _.filter(item.observation_component_values, function (item) {
+                            return moment(item.effective_datetime).isAfter(yearAgo);
+                        });
+                        break;
+                    case "All":
+                    default:
+                        return data;
+                        break;
+                }
+            }
         });
 
 })();

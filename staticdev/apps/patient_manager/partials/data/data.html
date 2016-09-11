@@ -18,7 +18,7 @@
     <div class='panel-body'>
 
         <div class='row'>
-            <div class='col-md-12'>
+            <div class='col-md-12 no-padding'>
                 <div class="btn-group btn-group-justified graph-view-mode">
                     <label class="btn btn-default" ng-click="viewMode='Week'"
                            ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
@@ -40,7 +40,7 @@
                                                                     ng-bind="data.mostRecentValue || 0"></span>
                                 <span ng-bind="data.observation_units[0].value_unit"></span>
                             </h3>
-                            <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
+                            <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                         </div>
                     </div>
 

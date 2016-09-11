@@ -765,9 +765,9 @@
                                 </div>
                             </div>
 
-                            <div class='panel-body'>
+                            <div class='panel-body no-padding'>
                                 <div>
-                                    <ul class='ul-clean'
+                                    <ul class='ul-clean no-padding'
                                         ui-sortable="sortableOptionsData"
                                         ng-model="datas"
                                         ng-if="active_user.role=='physician' || active_user.role=='patient'">
@@ -785,7 +785,8 @@
                                                                     ng-bind="data.mostRecentValue"></span>
                                                             <span ng-bind="data.observation_units[0].value_unit"></span>
                                                         </h3>
-                                                        <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
+                                                        <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+
                                                     </div>
                                                 </div>
                                                 <div ng-if="data.observation_components.length > 0">
