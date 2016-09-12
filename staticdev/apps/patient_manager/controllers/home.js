@@ -4,8 +4,8 @@
 
 
     angular.module('ManagerApp')
-
-        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog, toaster, $location, todoService, prompt, $timeout, CollapseService) {
+        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog,
+                                          dataService, toaster, $location, todoService, prompt, $timeout, CollapseService, $filter) {
 
 
             patientService.fetchActiveUser().then(function (data) {
@@ -23,16 +23,35 @@
             $scope.new_list.labels = [];
             $scope.problem_lists = [];
             $scope.is_home = true;
-            /**
-             * Generate chartData from observation_components
-             */
-            $scope.generateChartData = generateChartData;
 
             /**
-             * Generate chartLabel for each observation_components
-             * @type {generateChartLabel}
+             * Default graph view mode: Year
+             * Available view mode:
+             * Week - Month - Year - All
+             * @type {string}
              */
-            $scope.generateChartLabel = generateChartLabel;
+            $scope.viewMode = 'Year';
+            $scope.$watch("viewMode", function (newVal, oldVal) {
+                if (newVal != oldVal) {
+                    angular.forEach($scope.datas, function (data, key) {
+                        // Default graph type
+                        if (data.graph == null || data.graph == undefined)
+                            data.graph = 'Line';
+
+                        // Temporary data using for generate graph
+                        var tmpData = angular.copy(data);
+                        // Sorting before processing
+                        _.map(tmpData.observation_components, function (item, key) {
+                            item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                            // Sorting before generating
+                            item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                        });
+                        data.chartData = dataService.generateChartData(tmpData);
+                        data.chartLabel = dataService.generateChartLabel(tmpData);
+                    });
+                }
+            });
 
             todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                 $scope.members = data['members'];
@@ -179,7 +198,7 @@
 
                     $scope.timeline_changed = true;
                 });
-            }
+            };
 
             patientService.fetchPatientInfo(patient_id).then(function (data) {
                 $scope.patient_info = data['info'];
@@ -267,7 +286,7 @@
                 }
 
                 $scope.show_accomplished_todos = flag;
-            }
+            };
 
 
             $scope.add_goal = function (form) {
@@ -386,7 +405,7 @@
                 });
 
 
-            }
+            };
 
             $scope.add_new_problem = function (problem_term) {
                 if (problem_term == '' || problem_term == undefined) {
@@ -419,7 +438,7 @@
                         toaster.pop('error', 'Error', 'Something went wrong');
                     }
                 });
-            }
+            };
 
             $scope.add_new_common_problem = function (problem, type) {
                 var form = {};
@@ -454,7 +473,7 @@
 
                 });
 
-            }
+            };
 
             $scope.open_problem = function (problem) {
 
@@ -649,7 +668,7 @@
             };
 
             function copyToClipboard(text) {
-                var $temp = $("<textarea/>")
+                var $temp = $("<textarea/>");
                 $("body").append($temp);
                 $temp.val(text).select();
                 document.execCommand("copy");
@@ -687,7 +706,7 @@
                         });
                     }
 
-                    copyToClipboard(text)
+                    copyToClipboard(text);
                     event.preventDefault();
                 }
             });
@@ -819,7 +838,8 @@
                 var form = {};
                 form.patient_id = $scope.patient_id;
                 form.tab_id = tab.id;
-                patientService.trackTabClickEvent(form).then(function (data) {});
+                patientService.trackTabClickEvent(form).then(function (data) {
+                });
                 $scope.selected_tab = tab;
                 $scope.show_edit_my_story_tab = false;
             };
@@ -946,7 +966,7 @@
                 });
             };
 
-            $scope.change_component_text = function(component) {
+            $scope.change_component_text = function (component) {
                 var form = {};
                 form.text = component.text;
                 form.component_id = component.id;
@@ -976,11 +996,26 @@
                 if (data['success'] == true) {
                     $scope.datas = data['info'];
 
-                    angular.forEach($scope.datas, function(data, key) {
-                        angular.forEach(data.observation_components, function(component, key) {
-                            component.chartTmp = $scope.generateChartData(component.observation_component_values);
-                            component.labels = $scope.generateChartLabel(component.observation_component_values);
+                    // TODO: DRY
+                    angular.forEach($scope.datas, function (data, key) {
+                        // Default graph type
+                        if (data.graph == null || data.graph == undefined)
+                            data.graph = 'Line';
+
+                        // Temporary data using for generate graph
+                        var tmpData = angular.copy(data);
+                        // Sorting before processing
+                        _.map(tmpData.observation_components, function (item, key) {
+                            item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                            // Sorting before generating
+                            item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
                         });
+                        data.chartData = dataService.generateChartData(tmpData);
+                        data.chartLabel = dataService.generateChartLabel(tmpData);
+
+                        data.chartSeries = dataService.generateChartSeries(data);
+                        data.mostRecentValue = dataService.generateMostRecentValue(data)
                     });
 
                     var tmpListData = $scope.datas;
@@ -1055,7 +1090,7 @@
                 form.patient_id = $scope.patient_id;
                 patientService.addNewDataType(form).then(function (data) {
                     if (data['success'] == true) {
-                        $scope.datas.push(data['observation'])
+                        $scope.datas.push(data['observation']);
                         new_data_type.name = '';
                         new_data_type.code = '';
                         new_data_type.unit = '';
@@ -1067,34 +1102,9 @@
                 });
             };
 
-            /**
-             *
-             * @returns {Array}
-             */
-            function generateChartData(observation_component_values) {
-                // Generate data point(s)
-                $scope.chartTmp = _.map(observation_component_values, function (item, key) {
-                    return item.value_quantity == null ? 0 : item.value_quantity;
-                });
-
-                return [$scope.chartTmp]
-            }
-
-            /**
-             * Generate label for data chart
-             * @param observation_component_values
-             */
-            function generateChartLabel(observation_component_values) {
-                // Generate data label
-                var labels = _.map(observation_component_values, function (item, key) {
-                    return item.date;
-                });
-
-                return labels;
-            }
-
+            // $scope.change_homepage_tab('data');
         });
     /* End of controller */
 
-
 })();
+

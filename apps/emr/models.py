@@ -581,6 +581,7 @@ class Observation(models.Model):
     comments = models.TextField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     color = models.CharField(max_length=7, null=True, blank=True)
+    graph = models.TextField(default='Line')
 
     class Meta:
         ordering = ['-created_on']

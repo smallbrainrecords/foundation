@@ -18,26 +18,40 @@
     <div class='panel-body'>
 
         <div class='row'>
-            <div class='col-md-12'>
+            <div class='col-md-12 no-padding'>
+                <div class="btn-group btn-group-justified graph-view-mode">
+                    <label class="btn btn-default" ng-click="viewMode='Week'"
+                           ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
+                    <label class="btn btn-default" ng-click="viewMode='Month'"
+                           ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
+                    <label class="btn btn-default" ng-click="viewMode='Year'"
+                           ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
+                    <label class="btn btn-default" ng-click="viewMode='All'"
+                           ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
+                </div>
                 <div class='item-box data-frame' ng-style="{'background-color': data.color}">
-                    <div class="row">
-                        <div class="col-md-4 col-md-offset-4">
-                            <span class="pull-right">Chart type</span>
+                    <div class="row graph-header">
+                        <div class="col-md-6 text-left">
+                            <h3>{{ data.name }}</h3>
                         </div>
-                        <div class="col-md-4">
-                            <select name="chart" id="chart" ng-model="displayedChart" ng-init="displayedChart=0"
-                                    class="form-control">
-                                <option value="0">Line</option>
-                                <option value="1">Bar</option>
-                            </select>
+                        <div class="col-md-6 text-right">
+                            <h3>
+                                                            <span
+                                                                    ng-bind="data.mostRecentValue || 0"></span>
+                                <span ng-bind="data.observation_units[0].value_unit"></span>
+                            </h3>
+                            <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                         </div>
                     </div>
-                    <h2 class="text-center" ng-if="data.observation_components.length > 1">{{ data.name }}</h2>
-                    <div ng-repeat="component in data.observation_components">
-                        <h3 class="text-center">{{ component.name }}</h3>
-                        <canvas ng-if="displayedChart==0" class="chart chart-line" chart-data="component.chartTmp" chart-labels="component.labels"></canvas>
-                        <canvas ng-if="displayedChart==1" class="chart chart-bar" chart-data="component.chartTmp" chart-labels="component.labels"></canvas>
-                    </div>
+
+                    <canvas ng-if="data.graph=='Line'" class="chart chart-line"
+                            chart-data="data.chartData"
+                            chart-series="data.chartSeries"
+                            chart-labels="data.chartLabel"></canvas>
+                    <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
+                            chart-data="data.chartData"
+                            chart-series="data.chartSeries"
+                            chart-labels="data.chartLabel"></canvas>
                 </div>
             </div>
         </div>

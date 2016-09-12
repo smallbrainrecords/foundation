@@ -125,7 +125,8 @@ class ObservationSerializer(serializers.ModelSerializer):
             'observation_components',
             'observation_units',
             'color',
-            )
+            'graph',
+        )
 
 
 class ObservationPinToProblemSerializer(serializers.ModelSerializer):

@@ -3,14 +3,14 @@
     'use strict';
 
 
-    var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule',"chart.js",
-        'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine',
+    var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 'treeControl', 'chart.js',
+        'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 'ngDraggable',
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate',
         'a1c', 'colon_cancers', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam',
         'color.picker']);
 
 
-    ManagerApp.config(function ($routeProvider, recorderServiceProvider) {
+    ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider) {
         /**
          * Configuration for recording service
          */
@@ -19,6 +19,16 @@
                 bitRate: 64
             });
 
+        /**
+         * Global chart configuration
+         */
+        ChartJsProvider.setOptions({
+            chartColors: ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF']
+        });
+
+        /**
+         * Application route
+         */
         $routeProvider
             .when('/', {
 
@@ -113,7 +123,7 @@
 
     });
 
-    ManagerApp.factory('CollapseService', function() {
+    ManagerApp.factory('CollapseService', function () {
         var CollapseService = {};
 
         CollapseService.show_colon_collapse = false;
@@ -121,15 +131,15 @@
         CollapseService.show_homepage_tab = 'problems'; // problems, my_story, data
 
         CollapseService.ChangeColonCollapse = function () {
-           CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
+            CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
         };
 
         CollapseService.ChangeA1cCollapse = function () {
-           CollapseService.show_a1c_collapse = !CollapseService.show_a1c_collapse;
+            CollapseService.show_a1c_collapse = !CollapseService.show_a1c_collapse;
         };
 
         CollapseService.ChangeHomepageTab = function (tab) {
-           CollapseService.show_homepage_tab = tab;
+            CollapseService.show_homepage_tab = tab;
         };
 
         return CollapseService;

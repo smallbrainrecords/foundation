@@ -4,62 +4,63 @@
 
 
     angular.module('ManagerApp')
-        .controller('DataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService, $timeout) {
+        .controller('DataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService, $filter) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.data_id = $routeParams.data_id;
+            /**
+             * Default graph view mode: Year
+             * Available view mode:
+             * Week - Month - Year - All
+             * @type {string}
+             */
+            $scope.viewMode = 'Year';
+            $scope.$watch("viewMode", function (newVal, oldVal) {
+                if (newVal != oldVal) {
+                    // Temporary data using for generate graph
+                    var tmpData = angular.copy($scope.data);
+
+                    // Sorting before processing
+                    _.map(tmpData.observation_components, function (item, key) {
+                        item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                        // Sorting before generating
+                        item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                    });
+                    $scope.data.chartData = dataService.generateChartData(tmpData);
+                    $scope.data.chartLabel = dataService.generateChartLabel(tmpData);
+                }
+            });
 
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
 
             });
 
-            /**
-             *
-             * @returns {Array}
-             */
-            $scope.generateChartData = function(observation_component_values) {
-                // Generate data point(s)
-                $scope.chartTmp = _.map(observation_component_values, function (item, key) {
-                    return item.value_quantity == null ? 0 : item.value_quantity;
-                });
-
-                return [$scope.chartTmp]
-            }
-
-            /**
-             * Generate label for data chart
-             * @param observation_component_values
-             */
-            $scope.generateChartLabel = function(observation_component_values) {
-                // Generate data label
-                var labels = _.map(observation_component_values, function (item, key) {
-                    return item.date;
-                });
-
-                return labels;
-            }
-
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
-                angular.forEach($scope.data.observation_components, function(component, key) {
-                    component.chartTmp = $scope.generateChartData(component.observation_component_values);
-                    component.labels = $scope.generateChartLabel(component.observation_component_values);
+
+                // Default data chart
+                if ($scope.data.graph == null || $scope.data.graph == undefined)
+                    $scope.data.graph = 'Line';
+
+                // Temporary data using for generate graph
+                var tmpData = angular.copy($scope.data);
+
+                // Sorting before processing
+                _.map(tmpData.observation_components, function (item, key) {
+                    item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                    // Sorting before generating
+                    item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
                 });
-                // Generate data label
-                // $scope.labels = _.map($scope.data.observation_components, function (item, key) {
-                //     return item.date;
-                // });
+                $scope.data.chartData = dataService.generateChartData(tmpData);
+                $scope.data.chartLabel = dataService.generateChartLabel(tmpData);
 
-                // // Generate data point(s)
-                // $scope.chartTmp = _.map($scope.data.observation_components, function (item, key) {
-                //     return item.value_quantity == null ? 0 : item.value_quantity;
-                // });
-                // $scope.chartData = [
-                //     $scope.chartTmp
-                // ];
-
+                // Unaffected graph option when timerang filter changed
+                $scope.data.chartSeries = dataService.generateChartSeries($scope.data);
+                $scope.data.mostRecentValue = dataService.generateMostRecentValue($scope.data);
             });
 
             problemService.fetchProblems($scope.patient_id).then(function (data) {
@@ -141,7 +142,7 @@
                 }
                 new_data.datetime = new_data.date + " " + new_data.time;
 
-                angular.forEach($scope.data.observation_components, function(component, key) {
+                angular.forEach($scope.data.observation_components, function (component, key) {
                     new_data.value = component.new_value;
                     dataService.addData($scope.patient_id, component.id, new_data).then(function (data) {
                         if (data['success'] == true) {
@@ -283,6 +284,26 @@
                 });
             };
 
+
+            /**
+             * Update the displayed graph type of this data
+             */
+            $scope.change_graph_type = function () {
+                var form = {};
+                form.patient_id = $scope.patient_id;
+                form.data_id = $scope.data.id;
+                form.graph_type = $scope.data.graph;
+
+                dataService.updateGraphType(form).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'Graph type ');
+                    } else if (data['success'] == false) {
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                })
+            };
 
         });
     /* End of controller */

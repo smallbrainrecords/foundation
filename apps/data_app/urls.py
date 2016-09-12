@@ -15,4 +15,5 @@ urlpatterns = patterns('data_app.views',
     url(r'^(?P<patient_id>\d+)/(?P<component_id>\d+)/add_new_data$', 'add_new_data'),
     url(r'^(?P<patient_id>\d+)/(?P<value_id>\d+)/delete_individual_data$', 'delete_individual_data'),
     url(r'^(?P<patient_id>\d+)/(?P<value_id>\d+)/save_data$', 'save_data'),
+    url(r'^update_graph$', 'update_graph'),
 )

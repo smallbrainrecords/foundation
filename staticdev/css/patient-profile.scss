@@ -212,6 +212,26 @@
   }
 }
 
-.list-group{
+.list-group {
   list-style: none;
+}
+
+.graph-header {
+  color: white;
+}
+
+.graph-view-mode {
+  .mode-active {
+    background: #FF2C55;
+    color: white;
+  }
+
+  .mode-inactive {
+    background: #FED7D0;
+    color: #C03C51;
+  }
+}
+
+.no-padding {
+  padding: 0 !important;
 }
