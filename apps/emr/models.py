@@ -98,7 +98,7 @@ OBSERVATION_TYPES = [
             'lb',
             'kg',
         ],
-        'loinc_code': '',
+        'loinc_code': '3141-9',
     },
     {
         'name': 'body mass index',
@@ -112,7 +112,7 @@ OBSERVATION_TYPES = [
         'unit': [
             '%',
         ],
-        'loinc_code': '3141-9',
+        'loinc_code': '59408-5',
     },
 ]
 

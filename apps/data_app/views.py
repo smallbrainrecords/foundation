@@ -208,6 +208,8 @@ def add_new_data(request, patient_id, component_id):
         effective_datetime = request.POST.get("datetime", None)
         if effective_datetime:
             effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
+        else:
+            effective_datetime = datetime.now()
         value = request.POST.get("value", None)
 
         value = ObservationValue(author=request.user.profile, component_id=component_id, effective_datetime=effective_datetime, value_quantity=value)
