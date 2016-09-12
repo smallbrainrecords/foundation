@@ -110,7 +110,11 @@
                     return result.toString();
 
                 _.map(observation.observation_components, function (item, key) {
-                    result.push(_.last(item.observation_component_values).value_quantity);
+                    // result.push(_.last(item.observation_component_values).value_quantity);
+                    if (item.observation_component_values.length > 0)
+                        result.push(item.observation_component_values[item.observation_component_values.length-1].value_quantity);
+                    else 
+                        result.push(null);
                 });
 
                 return result.join(" / ");

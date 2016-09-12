@@ -20,6 +20,11 @@ function a1cDirective(CollapseService, a1cService, toaster, $location, $timeout,
                                 if (scope.a1c.a1c_todos.length)
                                     scope.a1c_date = moment(scope.a1c.a1c_todos[scope.a1c.a1c_todos.length -1].due_date, "MM/DD/YYYY");
 
+                            if (scope.a1c.observation.observation_components.length > 0)
+                                scope.first_component = scope.a1c.observation.observation_components[0];
+                            if (scope.first_component.observation_component_values.length > 0)
+                                scope.last_value = scope.first_component.observation_component_values[scope.first_component.observation_component_values.length - 1];
+
                             scope.set_authentication_false = function() {
                                 if (scope.problem) {
                                     if(scope.active_user.role != "physician" && scope.active_user.role != "admin")

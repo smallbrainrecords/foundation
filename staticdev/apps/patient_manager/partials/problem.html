@@ -245,7 +245,7 @@
 	<div class='panel panel-default' ng-if="pins.length > 0">
 		<div class='panel-body'>
             <div style='max-height:375px; overflow-y:auto;'>
-                <ul class='ul-clean'>
+                <ul class='ul-clean no-padding'>
                     <li ng-repeat="data in pins" ng-click='open_data(data)'>
                         <div class='item-box'>
                             {{ data.name }} {{ data.created_on | date:'M/d/yyyy' }}

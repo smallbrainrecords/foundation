@@ -1052,25 +1052,25 @@
                         }
                     };
 
+                    /*
+                     * open data page
+                     */
+                    $scope.open_data = function (data) {
+                        if (!$scope.draggedData) {
+                            var form = {};
+                            form.patient_id = $scope.patient_id;
+                            form.observation_id = data.id;
+                            patientService.trackDataClickEvent(form).then(function (data) {
+
+                            });
+                            $location.path('/data/' + data.id);
+                        }
+                    };
+
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
             });
-
-            /*
-             * open data page
-             */
-            $scope.open_data = function (data) {
-                if (!$scope.draggedData) {
-                    var form = {};
-                    form.patient_id = $scope.patient_id;
-                    form.observation_id = data.id;
-                    patientService.trackDataClickEvent(form).then(function (data) {
-
-                    });
-                    $location.path('/data/' + data.id);
-                }
-            };
 
             /*
              *   toggle add new data type

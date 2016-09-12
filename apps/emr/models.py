@@ -753,8 +753,8 @@ class AOneCTextNote(models.Model):
         return "%s" % (self.note)
 
 
-class ObservationComponentTextNote(models.Model):
-    observation_component = models.ForeignKey(ObservationComponent, related_name='observation_component_notes')
+class ObservationValueTextNote(models.Model):
+    observation_value = models.ForeignKey(ObservationValue, related_name='observation_value_notes')
     author = models.ForeignKey(UserProfile, null=True, blank=True)
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)

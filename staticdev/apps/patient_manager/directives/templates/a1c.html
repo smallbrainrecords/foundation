@@ -2,12 +2,12 @@
 	<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 		<div class="panel panel-default">
 			<div class="panel-heading" role="tab" id="headingOne" ng-click="open_a1c()">
-				<div ng-show="!show_a1c_collapse" ng-class="{'text-danger': a1c.observation.observation_components[a1c.observation.observation_components.length -1].value_quantity > 7.5}">
+				<div ng-show="!show_a1c_collapse" ng-class="{'text-danger': last_value.value_quantity > 7.5}">
   					<i class="fa fa-caret-right" aria-hidden="true"></i>
 					A1C: 
 					<span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
-					<span ng-if="a1c.observation.observation_components.length && !a1c.patient_refused_A1C">
-						{{a1c.observation.observation_components[a1c.observation.observation_components.length -1].value_quantity| number:1}}% on {{a1c.observation.observation_components[a1c.observation.observation_components.length -1].effective_datetime|date:'M/d/yyyy'}}
+					<span ng-if="first_component.observation_component_values.length && !a1c.patient_refused_A1C">
+						{{last_value.value_quantity| number:1}}% on {{last_value.effective_datetime|date:'M/d/yyyy'}}
 						<span ng-if="a1c_date <= today">past due</span>
 					</span>
 				</div>
@@ -17,11 +17,11 @@
 				<div class="panel-body">
 					<div class='row'>
 
-						<div class='col-md-12' ng-class="{'text-danger': a1c.observation.observation_components[a1c.observation.observation_components.length -1].value_quantity > 7.5}">
+						<div class='col-md-12' ng-class="{'text-danger': last_value.value_quantity > 7.5}">
 							A1C: 
 							<span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
-							<span ng-if="a1c.observation.observation_components.length && !a1c.patient_refused_A1C">
-								{{a1c.observation.observation_components[a1c.observation.observation_components.length -1].value_quantity| number:1}}% on {{a1c.observation.observation_components[a1c.observation.observation_components.length -1].effective_datetime|date:'M/d/yyyy'}}
+							<span ng-if="first_component.observation_component_values.length && !a1c.patient_refused_A1C">
+								{{last_value.value_quantity| number:1}}% on {{last_value.effective_datetime|date:'M/d/yyyy'}}
 								<span ng-if="a1c_date <= today">past due</span>
 							</span>
 						</div>
@@ -45,18 +45,18 @@
 								<div class='col-md-12'>
 									<h2>Past values:</h2>
 								</div>
-								<div class='col-md-12' ng-repeat="component in a1c.observation.observation_components|orderBy:['effective_datetime','created_on']:true" ng-class="{'text-danger': component.value_quantity > 7.5}">
+								<div class='col-md-12' ng-repeat="value in first_component.observation_component_values|orderBy:['effective_datetime','created_on']:true" ng-class="{'text-danger': component.value_quantity > 7.5}">
 									A1C: 
-										{{component.value_quantity| number:1}}% on {{component.effective_datetime|date:'M/d/yyyy'}}.
+										{{value.value_quantity| number:1}}% on {{value.effective_datetime|date:'M/d/yyyy'}}.
 
-										<span ng-if="component.observation_component_notes.length">
+										<span ng-if="value.observation_value_notes.length">
 											Note: 
-											<span ng-repeat="note in component.observation_component_notes">
+											<span ng-repeat="note in value.observation_value_notes">
 												{{note.note}}.
 											</span>
 										</span>
-										<span ng-if="component.author">Author: {{component.author.user.username}}.</span>
-										<span ng-if="component.created_on">Date added: {{component.created_on|date:'M/d/yyyy'}}.</span>
+										<span ng-if="value.author">Author: {{value.author.user.username}}.</span>
+										<span ng-if="value.created_on">Date added: {{value.created_on|date:'M/d/yyyy'}}.</span>
 								</div>
 							</div>
 							</br>

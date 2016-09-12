@@ -488,4 +488,5 @@ ce-entity ce-flag{
 
 .data-frame {
 	background: #ddd;
+	border: none;
 }

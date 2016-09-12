@@ -16,6 +16,7 @@
 <div class='panel panel-default'>
 
 	<div class='panel-body'>
+		<h3>{{ data.name }}</h3>
 		<p ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}} </p>
 	</div>
 </div>

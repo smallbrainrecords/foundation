@@ -4,14 +4,24 @@ from django.db import models
 
 class AOneCManager(models.Manager):
     def create_if_not_exist(self, problem):
-        from emr.models import AOneC, Observation, OBSERVATION_TYPES
+        from emr.models import AOneC, Observation, ObservationComponent, OBSERVATION_TYPES
         if not Observation.objects.filter(subject=problem.patient.profile, name=OBSERVATION_TYPES[0]['name']).exists():
-            observation = Observation.objects.create(subject=problem.patient.profile, name=OBSERVATION_TYPES[0]['name'])
+            observation = Observation.objects.create(subject=problem.patient.profile,
+                                                    name=OBSERVATION_TYPES[0]['name'])
+
+            observation.save()
         else:
             observation = Observation.objects.get(subject=problem.patient.profile, name=OBSERVATION_TYPES[0]['name'])
 
+        if not ObservationComponent.objects.filter(observation=observation, name=OBSERVATION_TYPES[0]['name']).exists():
+            observation_component = ObservationComponent()
+            observation_component.observation = observation
+            observation_component.name = OBSERVATION_TYPES[0]['name']
+            observation_component.save()
+
         if not AOneC.objects.filter(problem=problem).exists():
             AOneC.objects.create(problem=problem, observation=observation)
+        
 
 class ProblemManager(models.Manager):
     def create_new_problem(self, patient_id, problem_name, concept_id, user_profile):

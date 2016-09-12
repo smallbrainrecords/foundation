@@ -27,6 +27,14 @@
 
 			};
 
+			this.fetchObservationValueInfo = function(value_id){
+				var url = "/a1c/"+value_id+"/value_info";
+				var params = {};
+
+				return httpService.get(params, url);
+
+			};
+
 			this.addNote = function(form) {
 				var url = '/a1c/'+form.a1c_id+'/add_note';
 				return httpService.post(form, url);
@@ -45,35 +53,35 @@
 			};
 
 			this.addNewValue = function(form) {
-				var url = '/a1c/'+form.observation_id+'/add_value';
+				var url = '/a1c/'+form.component_id+'/add_value';
 				return httpService.post(form, url);
 			};
 
-			this.deleteValue  = function(component) {
-				var url = '/a1c/component/'+component.id+'/delete';
+			this.deleteValue  = function(value) {
+				var url = '/a1c/value/'+value.id+'/delete';
 
 				return httpService.post(component, url);
 			};
 
 			this.editValue  = function(form) {
-				var url = '/a1c/component/'+form.component_id+'/edit';
+				var url = '/a1c/value/'+form.value_id+'/edit';
 
 				return httpService.post(form, url);
 			};
 
-			this.addComponentNote = function(form) {
-				var url = '/a1c/component/'+form.component_id+'/add_note';
+			this.addValueNote = function(form) {
+				var url = '/a1c/value/'+form.value_id+'/add_note';
 				return httpService.post(form, url);
 			};
 
-			this.editComponentNote = function(form) {
-				var url = '/a1c/component/note/'+form.id+'/edit';
+			this.editValueNote = function(form) {
+				var url = '/a1c/value/note/'+form.id+'/edit';
 
 				return httpService.post(form, url);
 			};
 
-			this.deleteComponentNote  = function(form) {
-				var url = '/a1c/component/note/'+form.id+'/delete';
+			this.deleteValueNote  = function(form) {
+				var url = '/a1c/value/note/'+form.id+'/delete';
 
 				return httpService.post(form, url);
 			};

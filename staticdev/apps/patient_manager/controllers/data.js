@@ -190,6 +190,9 @@
             dataService.fetchIndividualDataInfo($scope.patient_id, $scope.individual_data_id).then(function (data) {
                 if (data['success'] == true) {
                     $scope.individual_data = data['info'];
+                    dataService.fetchDataInfo($scope.individual_data.observation).then(function (data) {
+                        $scope.data = data['info'];
+                    });
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, please try again!');
                 }

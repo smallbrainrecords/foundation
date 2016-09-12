@@ -74,7 +74,7 @@
                 templateUrl: '/static/apps/patient_manager/partials/a1c/edit_or_delete_values.html',
                 controller: 'EditOrDeleteValuesCtrl'
             })
-            .when("/observation_component/:component_id/edit_value", {
+            .when("/observation_value/:value_id/edit_value", {
                 templateUrl: '/static/apps/patient_manager/partials/a1c/edit_value.html',
                 controller: 'EditValueCtrl'
             })

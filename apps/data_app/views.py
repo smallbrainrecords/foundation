@@ -6,10 +6,10 @@ from django.db.models import Q
 from common.views import *
 from rest_framework.decorators import api_view
 
-from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationOrder, \
+from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationOrder, \
     PhysicianTeam, PatientController, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue
 from emr.models import OBSERVATION_TYPES
-from .serializers import ObservationComponentTextNoteSerializer, ObservationComponentSerializer, \
+from .serializers import ObservationValueTextNoteSerializer, ObservationComponentSerializer, \
     ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
 from emr.operations import op_add_event
 
@@ -76,8 +76,7 @@ def get_datas(request, patient_id):
                     observation_component.name = data['name']
                     observation_component.save()
 
-        observations = Observation.objects.filter(subject__user__id=int(patient_id)).exclude(
-            name=OBSERVATION_TYPES[0]['name']).filter(observation_aonecs=None)
+        observations = Observation.objects.filter(subject__user__id=int(patient_id))
 
         if request.user.profile.role == 'nurse' or request.user.profile.role == 'secretary':
             team_members = PhysicianTeam.objects.filter(member=request.user)
@@ -126,7 +125,7 @@ def add_new_data_type(request, patient_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
-        observation = Observation.objects.create(subject_id=int(patient_id),
+        observation = Observation.objects.create(subject__user__id=int(patient_id),
                                                  author=request.user.profile,
                                                  name=request.POST.get("name", None),
                                                  color=request.POST.get("color", None))

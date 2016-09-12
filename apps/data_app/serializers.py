@@ -1,15 +1,15 @@
 from rest_framework import serializers
 from datetime import datetime, timedelta
 
-from emr.models import Observation, ObservationComponent, ObservationComponentTextNote, ObservationPinToProblem, ObservationUnit, ObservationValue
+from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationPinToProblem, ObservationUnit, ObservationValue
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
-class ObservationComponentTextNoteSerializer(serializers.ModelSerializer):
+class ObservationValueTextNoteSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer()
 
     class Meta:
-        model = ObservationComponentTextNote
+        model = ObservationValueTextNote
         fields = (
             'id',
             'author',
@@ -35,6 +35,7 @@ class ObservationValueSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
     time = serializers.SerializerMethodField()
     observation = serializers.SerializerMethodField()
+    observation_value_notes = ObservationValueTextNoteSerializer(many=True, read_only=True)
 
     class Meta:
         model = ObservationValue
@@ -48,6 +49,7 @@ class ObservationValueSerializer(serializers.ModelSerializer):
             'date',
             'time',
             'observation',
+            'observation_value_notes',
             )
 
     def get_date(self, obj):
@@ -65,7 +67,6 @@ class ObservationValueSerializer(serializers.ModelSerializer):
 
 
 class ObservationComponentSerializer(serializers.ModelSerializer):
-    observation_component_notes = ObservationComponentTextNoteSerializer(many=True, read_only=True)
     author = UserProfileSerializer()
     date = serializers.SerializerMethodField()
     time = serializers.SerializerMethodField()
@@ -79,7 +80,6 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
             'value_quantity',
             'effective_datetime',
             'created_on',
-            'observation_component_notes',
             'author',
             'observation',
             'date',
