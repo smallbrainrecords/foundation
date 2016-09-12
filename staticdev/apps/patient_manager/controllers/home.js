@@ -809,17 +809,22 @@
 
             $scope.new_tab = {};
             $scope.new_tab.private = true;
+            $scope.new_tab.all_patients = true;
             $scope.add_my_story_tab = function (new_tab) {
                 if (new_tab.name) {
                     var form = {};
                     form.name = new_tab.name;
-                    form.private = new_tab.private;
+                    if ($scope.active_user.role == 'patient')
+                        form.private = new_tab.private;
+                    if ($scope.active_user.role == 'admin' || $scope.active_user.role == 'physician')
+                        form.all_patients = new_tab.all_patients;
                     form.patient_id = $scope.patient_id;
                     patientService.addMyStoryTab(form).then(function (data) {
                         if (data['success'] == true) {
                             $scope.my_story_tabs.push(data['tab']);
                             new_tab.name = '';
                             new_tab.private = true;
+                            new_tab.all_patients = true;
                             toaster.pop('success', "Done", "New tab created successfully!");
                         } else {
                             toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -858,7 +863,8 @@
                 var form = {};
                 form.name = new_text.name;
                 form.text = new_text.text;
-                form.private = new_text.private;
+                if ($scope.active_user.role == 'patient')
+                    form.private = new_tab.private;
                 form.concept_id = new_text.concept_id;
                 form.patient_id = $scope.patient_id;
                 form.tab_id = tab.id;
@@ -986,6 +992,20 @@
             $scope.show_previous_entries = false;
             $scope.see_previous_entries = function () {
                 $scope.show_previous_entries = !$scope.show_previous_entries;
+            };
+
+            $scope.checkSharedMyStory = function () {
+                if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
+                    return true;
+                } else {
+                    is_shared = false;
+                    angular.forEach($scope.sharing_patients, function(user, key) {
+                        if (user.id == $scope.active_user.id && user.is_my_story_shared) {
+                            is_shared = true;
+                        }
+                    });
+                    return is_shared;
+                }
             };
             /*
              *   get data

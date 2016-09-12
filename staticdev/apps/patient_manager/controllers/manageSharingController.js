@@ -103,6 +103,7 @@
 
 			problemService.fetchSharingProblems($scope.patient_id, $scope.sharing_patient_id).then(function(data){
 				$scope.sharing_problems = data['sharing_problems'];
+				$scope.is_my_story_shared = data['is_my_story_shared'];
 			});
 
 			$scope.inArray = function(array, item) {
@@ -138,7 +139,13 @@
 					});
 	            	
 	            }
-			}
+			};
+
+			$scope.changeSharingMyStory = function() {
+				patientService.changeSharingMyStory($scope.patient_id, $scope.sharing_patient_id).then(function(data){
+					toaster.pop('success', 'Done', 'Changed sharing my story');
+				});
+			};
 		}); /* End of controller */
 
 

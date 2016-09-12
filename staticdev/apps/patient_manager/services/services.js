@@ -292,6 +292,12 @@
 			return httpService.post(form, url);
 		};
 
+		this.changeSharingMyStory = function(patient_id, sharing_patient_id){
+			var form = {};
+			var url = '/u/patient/change_sharing_my_story/' + patient_id + '/' + sharing_patient_id;
+			return httpService.post(form, url);
+		};
+
 		this.getUserInfo = function(user_id){
 
 			var params = {};

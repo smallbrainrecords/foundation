@@ -6,7 +6,7 @@ from django.db.models import Q
 from common.views import *
 from rest_framework.decorators import api_view
 
-from emr.models import MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry
+from emr.models import MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry, PatientController, UserProfile
 from .serializers import MyStoryTextComponentEntrySerializer, MyStoryTextComponentSerializer, MyStoryTabSerializer
 from emr.operations import op_add_event
 
@@ -58,13 +58,35 @@ def add_tab(request, patient_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
-        tab = MyStoryTab.objects.create(patient_id=int(patient_id),
-                                       author=request.user,
-                                       name=request.POST.get("name", None))
+        all_patients = True if request.POST.get('all_patients', False) else False
 
-        private = True if request.POST.get('private', False) else False
-        tab.private = private
-        tab.save()
+        if all_patients:
+            user_profile = UserProfile.objects.get(user=request.user)
+            if user_profile.role == 'admin':
+                patients = UserProfile.objects.filter(role='patient')
+
+            elif user_profile.role == 'physician':
+                patient_controllers = PatientController.objects.filter(physician=request.user)
+                patient_ids = [x.patient.id for x in patient_controllers]
+                patients = UserProfile.objects.filter(user__id__in=patient_ids)
+
+            tab = None
+            for patient in patients:
+                patient_tab = MyStoryTab.objects.create(patient=patient.user,
+                                                author=request.user,
+                                                name=request.POST.get("name", None))
+
+                if int(patient_id) == patient.user.id:
+                    tab = patient_tab
+
+        else:
+            tab = MyStoryTab.objects.create(patient_id=int(patient_id),
+                                            author=request.user,
+                                            name=request.POST.get("name", None))
+
+            private = True if request.POST.get('private', False) else False
+            tab.private = private
+            tab.save()
 
         resp['tab'] = MyStoryTabSerializer(tab).data
         resp['success'] = True

@@ -97,7 +97,7 @@
             <li role="presentation" ng-class="show_homepage_tab=='problems' ? 'active': ''">
                 <a href=".tab-problems" role="tab" data-toggle="tab" ng-click="change_homepage_tab('problems');">Problems</a>
             </li>
-            <li role="presentation" ng-class="show_homepage_tab=='my_story' ? 'active': ''">
+            <li role="presentation" ng-class="show_homepage_tab=='my_story' ? 'active': ''" ng-if="checkSharedMyStory()">
                 <a href=".tab-my-story" role="tab" data-toggle="tab" ng-click="change_homepage_tab('my_story');">My
                     story</a>
             </li>
@@ -585,14 +585,17 @@
             </div>
             <!-- End Problems tab -->
             <!-- story tab -->
-            <div role="tabpanel" class="tab-pane tab-my-story" ng-class="show_homepage_tab=='my_story' ? 'active': ''">
+            <div role="tabpanel" class="tab-pane tab-my-story" 
+                ng-class="show_homepage_tab=='my_story' ? 'active': ''"
+                ng-if="checkSharedMyStory()">
                 <h3>My Story</h3>
                 <br>
                 <div class="row my-story">
                     <div class="col-sm-3 my-story-left">
                         <div>
                             <ul class='ul-clean my-story-list' style="padding-left: 0;">
-                                <li ng-repeat="tab in my_story_tabs">
+                                <li ng-repeat="tab in my_story_tabs" 
+                                    ng-if="tab.private==false || active_user.role=='patient' || active_user.user.id==tab.author.id">
                                     <button class="btn-link"
                                             ng-click="view_my_story_tab(tab);"
                                             ng-class="{'active': tab==selected_tab}"
@@ -615,17 +618,33 @@
                             <div class="form-group">
                                 <input type="text" name="new-tab" ng-model="new_tab.name">
                             </div>
-                            <div class="radio">
-                                <label>
-                                    <input type="radio" ng-value="true" checked ng-model="new_tab.private">
-                                    keep it private
-                                </label>
+                            <div ng-if="active_user.role=='physician' || active_user.role=='admin'">
+                                <div class="radio">
+                                    <label>
+                                        <input type="radio" ng-value="true" checked ng-model="new_tab.all_patients">
+                                        All patients
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input type="radio" ng-value="" ng-model="new_tab.all_patients">
+                                        Only current patient
+                                    </label>
+                                </div>
                             </div>
-                            <div class="radio">
-                                <label>
-                                    <input type="radio" ng-value="" ng-model="new_tab.private">
-                                    share with doctor
-                                </label>
+                            <div ng-if="active_user.role=='patient'">
+                                <div class="radio">
+                                    <label>
+                                        <input type="radio" ng-value="true" checked ng-model="new_tab.private">
+                                        keep it private
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input type="radio" ng-value="" ng-model="new_tab.private">
+                                        share with doctor
+                                    </label>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <button class="btn btn-default" ng-click="toggle_add_my_story_tab();">cancel</button>
@@ -635,7 +654,9 @@
                     </div>
                     <div class="col-sm-9 my-story-right">
                         <div ng-show="selected_tab">
-                            <div class="row" ng-repeat="component in selected_tab.my_story_tab_components">
+                            <div class="row" 
+                                ng-repeat="component in selected_tab.my_story_tab_components" 
+                                ng-if="component.private==false || active_user.role=='patient' || active_user.user.id==component.author.id">
                                 <div class="col-sm-12">
                                     <div>
                                         <b ng-show="!show_edit_my_story_tab">{{ component.name }}</b>
@@ -698,7 +719,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="form-group">
+                                        <div class="form-group" ng-if="active_user.role=='patient'">
                                             <div class="col-sm-2"></div>
                                             <div class="col-sm-10">
                                                 <div class="radio">

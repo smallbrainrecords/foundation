@@ -21,6 +21,11 @@
 			<input type="checkbox" ng-if="!inArray(sharing_problems, problem)" ng-click="changeSharingProblem(problem);">
 			<span>{{problem.problem_name}}</span>
 		</p>
+		<p>
+			<input type="checkbox" checked="checked" ng-if="is_my_story_shared" ng-click="changeSharingMyStory();">
+			<input type="checkbox" ng-if="!is_my_story_shared" ng-click="changeSharingMyStory();">
+			<span>my story</span>
+		</p>
 	</div>
 	<div class='col-md-4'>
 		of patient {{active_user.user.first_name}} {{active_user.user.last_name}}

@@ -296,6 +296,7 @@ def get_patient_info(request, patient_id):
     for sharing_patient in sharing_patients:
         user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
         user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
+        user_dict['is_my_story_shared'] = sharing_patient.is_my_story_shared
         sharing_patients_list.append(user_dict)
 
 
@@ -590,6 +591,18 @@ def add_sharing_patient(request, patient_id, sharing_patient_id):
 def remove_sharing_patient(request, patient_id, sharing_patient_id):
     sharing_patient = SharingPatient.objects.get(sharing_id=sharing_patient_id, shared_id=patient_id)
     sharing_patient.delete()
+    resp = {}
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@permissions_required(["add_sharing_patient"])
+@login_required
+@api_view(["POST"])
+def change_sharing_my_story(request, patient_id, sharing_patient_id):
+    sharing_patient = SharingPatient.objects.get(sharing_id=sharing_patient_id, shared_id=patient_id)
+    sharing_patient.is_my_story_shared = not sharing_patient.is_my_story_shared
+    sharing_patient.save()
     resp = {}
     resp['success'] = True
     return ajax_response(resp)
