@@ -938,13 +938,34 @@
     </div>
 </div>
 
+<div class='bottom-bar' 
+    ng-show="active_user.role=='patient' || active_user.role=='nurse'">
+    <div class='row'>
+
+        <div class='col-md-12'>
+            <form class="form-inline" ng-if="active_user.role=='nurse'">
+                <input type='text' placeholder='W' class='form-control' ng-model='bfdi.weight'>
+                <input type='text' placeholder='BP systolic' class='form-control' ng-model='bfdi.systolic'>
+                <input type='text' placeholder='BP diastolic' class='form-control' ng-model='bfdi.diastolic'>
+                <input type='text' placeholder='T' class='form-control' ng-model='bfdi.body_temperature'>
+                <input type='text' placeholder='RR' class='form-control' ng-model='bfdi.respiratory_rate'>
+                <input type='text' placeholder='INR' class='form-control' ng-model='bfdi.inr' ng-if="check_has_data_loinc_code(datas, '6301-6');">
+            </form>
+            <form class="form-inline" ng-if="active_user.role=='patient'">
+                <input type='text' class='form-control' 
+                    placeholder='{{data.name}}' 
+                    ng-repeat="data in mostCommonData"
+                    ng-model="data.new_value" 
+                    ng-change="add_bfdi_value(data)"
+                    ng-model-options="{updateOn: 'blur', debounce: 1000}">
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <script type='text/javascript'>
-
     $(document).ready(function () {
-
         $("#due_date").datepicker({dateFormat: 'yy-mm-dd'});
-
     });
 </script>
-
