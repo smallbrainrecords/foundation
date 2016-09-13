@@ -841,6 +841,7 @@ class MyStoryTab(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)
+    tab_all = models.BigIntegerField(null=True, blank=True)
 
     def __unicode__(self):
         return "%s" % (self.name)

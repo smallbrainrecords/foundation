@@ -7,6 +7,7 @@ except ImportError:
 import operator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
+from django.db.models import Q
 from common.views import *
 # from django.shortcuts import render
 from emr.models import UserProfile, Problem
@@ -16,6 +17,7 @@ from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecor
 from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
 from emr.models import SharingPatient, CommonProblem
 from emr.models import ProblemNote
+from emr.models import MyStoryTab, MyStoryTextComponent
 
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
@@ -683,6 +685,12 @@ def search(request, user_id):
 
         summaries = EncounterEvent.objects.filter(summary__contains=query, encounter__patient=user)
         context['summaries'] = summaries
+
+        tabs = MyStoryTab.objects.filter(name__contains=query, patient=user)
+        context['tabs'] = tabs
+
+        text_components = MyStoryTextComponent.objects.filter(Q(name__contains=query) | Q(text__contains=query), patient=user)
+        context['text_components'] = text_components
     
 
     context['patient'] = user

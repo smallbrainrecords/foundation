@@ -859,12 +859,15 @@
 
             $scope.new_text = {};
             $scope.new_text.private = true;
+            $scope.new_text.all_patients = true;
             $scope.add_my_story_text = function (tab, new_text) {
                 var form = {};
                 form.name = new_text.name;
                 form.text = new_text.text;
                 if ($scope.active_user.role == 'patient')
                     form.private = new_tab.private;
+                if ($scope.active_user.role == 'admin' || $scope.active_user.role == 'physician')
+                    form.all_patients = new_text.all_patients;
                 form.concept_id = new_text.concept_id;
                 form.patient_id = $scope.patient_id;
                 form.tab_id = tab.id;
@@ -875,6 +878,7 @@
                         new_text.text = '';
                         new_text.concept_id = '';
                         new_text.private = true;
+                        new_text.all_patients = true;
                         toaster.pop('success', "Done", "New Text Component created successfully!");
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');

@@ -69,6 +69,34 @@
                 </ul>
             </div>
         </div>
+
+        <div class='panel panel-default'>
+            <div class='panel-heading'> My Story Tabs </div>
+            <div class='panel-body'>
+                <ul class='list-group'>
+                    {% for tab in tabs %}
+                        <li>
+                            {{tab.name}}
+                            <p>{{tab.datetime | date:"d M Y"}} at {{tab.datetime | date:"H:i"}}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class='panel panel-default'>
+            <div class='panel-heading'> My Story Text Components </div>
+            <div class='panel-body'>
+                <ul class='list-group'>
+                    {% for text_component in text_components %}
+                        <li>
+                            {{text_component.name}}
+                            <p>{{text_component.datetime | date:"d M Y"}} at {{text_component.datetime | date:"H:i"}}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
     </div>
 {% endblock %}
 {% block page_js %}
