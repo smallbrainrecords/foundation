@@ -93,7 +93,7 @@
                     data.chartData = dataService.generateChartData(tmpData);
                     data.chartLabel = dataService.generateChartLabel(tmpData);
 
-                    // Unaffected graph option when timerang filter changed
+                    // Unaffected graph option when time range filter changed
                     data.chartSeries = dataService.generateChartSeries(data);
                     data.mostRecentValue = dataService.generateMostRecentValue(data);
                 });
