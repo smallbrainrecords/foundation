@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from emr.models import Observation, AOneCTextNote, ObservationComponent, ObservationComponentTextNote, AOneC
+from emr.models import Observation, AOneCTextNote, ObservationComponent, ObservationValueTextNote, AOneC
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 from todo_app.serializers import TodoSerializer

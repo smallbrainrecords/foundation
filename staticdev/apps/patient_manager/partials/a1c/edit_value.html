@@ -25,19 +25,19 @@
 			</div>
 			<div class='col-md-12' ng-init="edit=false;">
 
-				<p ng-class="{'text-danger': component.value_quantity > 7.5}">A1C: 
-					<span ng-if="component.patient_refused_A1C">refused </span>
-					{{component.value_quantity| number:1}}% on {{component.effective_datetime|date:'M/d/yyyy'}}
+				<p ng-class="{'text-danger': value.value_quantity > 7.5}">A1C: 
+					<span ng-if="value.patient_refused_A1C">refused </span>
+					{{value.value_quantity| number:1}}% on {{value.effective_datetime|date:'M/d/yyyy'}}
 					<span ng-if="a1c_date <= today">past due</span>
 				</p>
 
-				<div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == component.author.id)">
+				<div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == value.author.id)">
 					<form class='form-inline' ng-show="edit">
 						<div class="row">
 							<div class="col-md-6">
 								<div class='form-group'>
 									<label> New value </label>
-									<input type='text' class='form-control' ng-model='component.value_quantity'>
+									<input type='text' class='form-control' ng-model='value.value_quantity'>
 								</div>
 								<div class='form-group'>
 									<label> Date </label>
@@ -47,7 +47,7 @@
 							<div class="col-md-6">
 								<div class='form-group'>
 									<input ng-click="edit=false;" type='button' value='Cancel' class='btn btn-default'>
-									<input ng-click="editValue(component.id, component.value_quantity, a1c_date_format)" type='submit' value='Save' class='btn btn-default'>
+									<input ng-click="editValue(value.id, value.value_quantity, a1c_date_format)" type='submit' value='Save' class='btn btn-default'>
 								</div>
 							</div>
 						</div>
@@ -55,7 +55,7 @@
 					</form>
 					<p ng-show="!edit">
 						<a href ng-click="edit=!edit">Edit</a>
-						<a href ng-click="deleteValue(component)">Delete</a>	
+						<a href ng-click="deleteValue(value)">Delete</a>	
 					</p>
 				</div>
 			</div>
@@ -74,8 +74,8 @@
 				<hr> 
 			</div>
 		</div>
-		<div class="row" ng-if="component.observation_component_notes.length">
-			<div class='col-md-12' ng-repeat="note in component.observation_component_notes">
+		<div class="row" ng-if="value.observation_value_notes.length">
+			<div class='col-md-12' ng-repeat="note in value.observation_value_notes">
 				<div ng-show="$index == 0 || show_note">
 					<span ng-show="!note.edit">{{note.author.user.username}}: {{note.note}} {{note.datetime|date:'M/d/yyyy'}}</span>
 					<div ng-if="active_user.role == 'physician' || active_user.role == 'admin'">

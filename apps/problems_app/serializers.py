@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 
 from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel, LabeledProblemList
-from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem, ObservationComponent
+from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem, ObservationComponent, ObservationValue
 
 from users_app.serializers import UserProfileSerializer, SafeUserSerializer
 from emr.serializers import TextNoteSerializer
@@ -237,18 +237,28 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
                 },
             }
 
-            observation_component = ObservationComponent.objects.filter(observation=a1c.observation).order_by('-effective_datetime', '-created_on').first()
-            if observation_component:
-                observation_components_holder = [
-                        {
-                            'id': observation_component.id,
-                            'value_quantity': str(observation_component.value_quantity),
-                            'effective_datetime':  observation_component.effective_datetime.isoformat() if observation_component.effective_datetime else '',
-                            'created_on':  observation_component.created_on.isoformat() if observation_component.created_on else '',
-                        }
-                ]
+            observation_components = ObservationComponent.objects.filter(observation=a1c.observation)
+            for component in observation_components:
+                component_dict = {
+                    'id': component.id,
+                    'name': component.name,
+                    'observation_component_values': [],
+                }
 
-                a1c_dict['observation']['observation_components'] = observation_components_holder
+                observation_component_value = ObservationValue.objects.filter(component=component.id).order_by('-effective_datetime', '-created_on').first()
+                if observation_component_value:
+                    observation_component_value_holder = [
+                            {
+                                'id': observation_component_value.id,
+                                'value_quantity': str(observation_component_value.value_quantity),
+                                'effective_datetime':  observation_component_value.effective_datetime.isoformat() if observation_component_value.effective_datetime else '',
+                                'created_on':  observation_component_value.created_on.isoformat() if observation_component_value.created_on else '',
+                            }
+                    ]
+
+                    component_dict['observation_component_values'] = observation_component_value_holder
+
+                a1c_dict['observation']['observation_components'].append(component_dict)
 
         return a1c_dict
 

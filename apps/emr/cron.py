@@ -75,31 +75,33 @@ def patient_needs_a_plan_for_colorectal_cancer_screening():
 def a1c_order_was_automatically_generated():
 	a1cs = AOneC.objects.all()
 	for a1c in a1cs:
-		if a1c.observation.observation_components.count() and a1c.todo_past_six_months == False:
-			last_measurement = a1c.observation.observation_components.all().last()
-			date = last_measurement.created_on.day
-			month = last_measurement.created_on.month + 6
-			year = last_measurement.created_on.year
-			if month > 12:
-				month = month - 12
-				year = year + 1
+		if a1c.observation.observation_components.all():
+			first_component = a1c.observation.observation_components.all().first()
+			if first_component.observation_component_values.count() and a1c.todo_past_six_months == False:
+				last_measurement = first_component.observation_component_values.all().last()
+				date = last_measurement.created_on.day
+				month = last_measurement.created_on.month + 6
+				year = last_measurement.created_on.year
+				if month > 12:
+					month = month - 12
+					year = year + 1
 
-			due_date = datetime.date(year, month, date)
-			if datetime.date.today() >= due_date:
-				todo = 'A1C order was automatically generated'
-				new_todo = ToDo(patient=a1c.problem.patient, problem=a1c.problem, todo=todo, due_date=due_date)
+				due_date = datetime.date(year, month, date)
+				if datetime.date.today() >= due_date:
+					todo = 'A1C order was automatically generated'
+					new_todo = ToDo(patient=a1c.problem.patient, problem=a1c.problem, todo=todo, due_date=due_date)
 
-				order =  ToDo.objects.all().aggregate(Max('order'))
-				if not order['order__max']:
-					order = 1
-				else:
-					order = order['order__max'] + 1
-				new_todo.order = order
-				new_todo.a1c = a1c
-				new_todo.save()
+					order =  ToDo.objects.all().aggregate(Max('order'))
+					if not order['order__max']:
+						order = 1
+					else:
+						order = order['order__max'] + 1
+					new_todo.order = order
+					new_todo.a1c = a1c
+					new_todo.save()
 
-				a1c.todo_past_six_months = True
-				a1c.save()
+					a1c.todo_past_six_months = True
+					a1c.save()
 
 @cronjobs.register
 def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times():

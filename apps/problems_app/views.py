@@ -865,7 +865,8 @@ def get_problems(request, patient_id):
 def get_sharing_problems(request, patient_id, sharing_patient_id):
     sharing = SharingPatient.objects.get(shared_id=patient_id, sharing_id=sharing_patient_id)
     resp = {
-        'sharing_problems': ProblemSerializer(sharing.problems.all(), many=True).data
+        'sharing_problems': ProblemSerializer(sharing.problems.all(), many=True).data,
+        'is_my_story_shared': sharing.is_my_story_shared
     }
     return ajax_response(resp)
 

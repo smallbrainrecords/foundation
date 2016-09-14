@@ -809,17 +809,22 @@
 
             $scope.new_tab = {};
             $scope.new_tab.private = true;
+            $scope.new_tab.all_patients = true;
             $scope.add_my_story_tab = function (new_tab) {
                 if (new_tab.name) {
                     var form = {};
                     form.name = new_tab.name;
-                    form.private = new_tab.private;
+                    if ($scope.active_user.role == 'patient')
+                        form.private = new_tab.private;
+                    if ($scope.active_user.role == 'admin' || $scope.active_user.role == 'physician')
+                        form.all_patients = new_tab.all_patients;
                     form.patient_id = $scope.patient_id;
                     patientService.addMyStoryTab(form).then(function (data) {
                         if (data['success'] == true) {
                             $scope.my_story_tabs.push(data['tab']);
                             new_tab.name = '';
                             new_tab.private = true;
+                            new_tab.all_patients = true;
                             toaster.pop('success', "Done", "New tab created successfully!");
                         } else {
                             toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -854,11 +859,15 @@
 
             $scope.new_text = {};
             $scope.new_text.private = true;
+            $scope.new_text.all_patients = true;
             $scope.add_my_story_text = function (tab, new_text) {
                 var form = {};
                 form.name = new_text.name;
                 form.text = new_text.text;
-                form.private = new_text.private;
+                if ($scope.active_user.role == 'patient')
+                    form.private = new_tab.private;
+                if ($scope.active_user.role == 'admin' || $scope.active_user.role == 'physician')
+                    form.all_patients = new_text.all_patients;
                 form.concept_id = new_text.concept_id;
                 form.patient_id = $scope.patient_id;
                 form.tab_id = tab.id;
@@ -869,6 +878,7 @@
                         new_text.text = '';
                         new_text.concept_id = '';
                         new_text.private = true;
+                        new_text.all_patients = true;
                         toaster.pop('success', "Done", "New Text Component created successfully!");
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -987,6 +997,23 @@
             $scope.see_previous_entries = function () {
                 $scope.show_previous_entries = !$scope.show_previous_entries;
             };
+
+            $scope.checkSharedMyStory = function () {
+                if ($scope.active_user) {
+                    if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
+                        return true;
+                    } else {
+                        is_shared = false;
+                        angular.forEach($scope.sharing_patients, function(user, key) {
+                            if (user.id == $scope.active_user.id && user.is_my_story_shared) {
+                                is_shared = true;
+                            }
+                        });
+                        return is_shared;
+                    }
+                }
+                return false;
+            };
             /*
              *   get data
              */
@@ -1015,8 +1042,14 @@
                         data.chartLabel = dataService.generateChartLabel(tmpData);
 
                         data.chartSeries = dataService.generateChartSeries(data);
-                        data.mostRecentValue = dataService.generateMostRecentValue(data)
+                        data.mostRecentValue = dataService.generateMostRecentValue(data);
                     });
+
+                    if ($scope.active_user) {
+                        if ($scope.active_user.role == 'patient') {
+                            $scope.mostCommonData = dataService.generateMostCommonData($scope.datas);
+                        }
+                    }
 
                     var tmpListData = $scope.datas;
                     $scope.sortingLogData = [];
@@ -1052,25 +1085,25 @@
                         }
                     };
 
+                    /*
+                     * open data page
+                     */
+                    $scope.open_data = function (data) {
+                        if (!$scope.draggedData) {
+                            var form = {};
+                            form.patient_id = $scope.patient_id;
+                            form.observation_id = data.id;
+                            patientService.trackDataClickEvent(form).then(function (data) {
+
+                            });
+                            $location.path('/data/' + data.id);
+                        }
+                    };
+
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
             });
-
-            /*
-             * open data page
-             */
-            $scope.open_data = function (data) {
-                if (!$scope.draggedData) {
-                    var form = {};
-                    form.patient_id = $scope.patient_id;
-                    form.observation_id = data.id;
-                    patientService.trackDataClickEvent(form).then(function (data) {
-
-                    });
-                    $location.path('/data/' + data.id);
-                }
-            };
 
             /*
              *   toggle add new data type
@@ -1099,6 +1132,44 @@
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
+                });
+            };
+
+            $scope.check_has_data_loinc_code = function (datas, code) {
+                var is_inr = false;
+                angular.forEach(datas, function (data, key) {
+                    angular.forEach(data.observation_components, function (component, key2) {
+                        if (component.component_code == code) {
+                            is_inr = true;
+                        }
+                    });
+                });
+                return is_inr;
+            };
+
+            $scope.add_bfdi_value = function(data) {
+                var new_data = {};
+                new_data.datetime = moment().format("MM/DD/YYYY HH:mm");
+
+                angular.forEach(data.observation_components, function (component, key) {
+                    new_data.value = data.new_value;
+                    dataService.addData($scope.patient_id, component.id, new_data).then(function (data) {
+                        if (data['success'] == true) {
+                            toaster.pop('success', 'Done', 'Added data!');
+                            // angular.forEach($scope.datas, function (sdata, data_key) {
+                            //     angular.forEach(data.observation_components, function (scomponent, component_key) {
+                            //         if (scomponent.id == component.id) {
+                            //             scomponent.observation_component_values.push(data['value']);
+                            //         }
+                            //     });
+                            // });
+                            data.new_value = '';
+                        } else if (data['success'] == false) {
+                            toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                        } else {
+                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                        }
+                    });
                 });
             };
 

@@ -5,8 +5,8 @@ from .models import UserProfile, AccessLog, Encounter, \
     GuidelineForm, PatientImage, Sharing, ProblemRelationship, \
     ProblemSegment, Label, ToDoAttachment, ToDoComment, LabeledToDoList, \
     Country, State, City, TelecomSystem, Telecom, AddressType, AddressUse, Observation, \
-    ObservationComponent, ProblemLabel, SharingPatient, MaritalStatus, \
-    CommonProblem, ColonCancerScreening, RiskFactor, ObservationPinToProblem
+    ObservationComponent, ObservationValue, ProblemLabel, SharingPatient, MaritalStatus, \
+    CommonProblem, ColonCancerScreening, RiskFactor, ObservationPinToProblem, MyStoryTab, MyStoryTextComponent
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -133,6 +133,7 @@ admin.site.register(ToDoComment)
 admin.site.register(LabeledToDoList)
 admin.site.register(Observation)
 admin.site.register(ObservationComponent)
+admin.site.register(ObservationValue)
 admin.site.register(ProblemLabel)
 admin.site.register(SharingPatient)
 admin.site.register(MaritalStatus)
@@ -140,3 +141,5 @@ admin.site.register(CommonProblem)
 admin.site.register(ColonCancerScreening)
 admin.site.register(RiskFactor)
 admin.site.register(ObservationPinToProblem)
+admin.site.register(MyStoryTab)
+admin.site.register(MyStoryTextComponent)

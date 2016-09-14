@@ -98,7 +98,7 @@ OBSERVATION_TYPES = [
             'lb',
             'kg',
         ],
-        'loinc_code': '',
+        'loinc_code': '3141-9',
     },
     {
         'name': 'body mass index',
@@ -112,7 +112,7 @@ OBSERVATION_TYPES = [
         'unit': [
             '%',
         ],
-        'loinc_code': '3141-9',
+        'loinc_code': '59408-5',
     },
 ]
 
@@ -753,8 +753,8 @@ class AOneCTextNote(models.Model):
         return "%s" % (self.note)
 
 
-class ObservationComponentTextNote(models.Model):
-    observation_component = models.ForeignKey(ObservationComponent, related_name='observation_component_notes')
+class ObservationValueTextNote(models.Model):
+    observation_value = models.ForeignKey(ObservationValue, related_name='observation_value_notes')
     author = models.ForeignKey(UserProfile, null=True, blank=True)
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)
@@ -841,6 +841,7 @@ class MyStoryTab(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)
+    tab_all = models.BigIntegerField(null=True, blank=True)
 
     def __unicode__(self):
         return "%s" % (self.name)

@@ -110,7 +110,17 @@
                     return result.toString();
 
                 _.map(observation.observation_components, function (item, key) {
-                    result.push(_.last(item.observation_component_values).value_quantity);
+                    // result.push(_.last(item.observation_component_values).value_quantity);
+                    if (item.observation_component_values.length > 0) {
+                        var quantity = item.observation_component_values[item.observation_component_values.length-1].value_quantity;
+                        // Round number if blood pressure
+                        if (observation.name == 'blood pressure') {
+                            quantity = Math.round(quantity);
+                        }
+                        result.push(quantity);
+                    }
+                    else 
+                        result.push('');
                 });
 
                 return result.join(" / ");
@@ -149,7 +159,48 @@
                         return data;
                         break;
                 }
-            }
+            };
+
+            this.getValueCount = function (data) {
+                var now = moment().utc();
+                var yearAgo = now.subtract(1, 'year');
+                var count = 0;
+
+                _.each(data.observation_components, function (component, key, list) {
+                    var filter = _.filter(component.observation_component_values, function (item) {
+                        return moment(item.created_on).isAfter(yearAgo);
+                    });
+                    count += filter.length;
+                });
+
+                return count;
+            };
+
+            this.generateMostCommonData = function(datas) {
+                var mostCommonData = _.sortBy(datas, function(data){
+                    var now = moment().utc();
+                    var yearAgo = now.subtract(1, 'year');
+                    var count = 0;
+
+                    _.each(data.observation_components, function (component, key, list) {
+                        var filter = _.filter(component.observation_component_values, function (item) {
+                            return moment(item.created_on).isAfter(yearAgo);
+                        });
+                        count += filter.length;
+                    });
+
+                    return count;
+                });
+
+                mostCommonData = _.last(mostCommonData, 3);
+                var lastRecentData = datas[0];
+
+                if (!_.contains(_.pluck(mostCommonData, "id"), lastRecentData.id)) {
+                    mostCommonData.push(lastRecentData);
+                }
+
+                return _.last(mostCommonData, 3);
+            };
         });
 
 })();

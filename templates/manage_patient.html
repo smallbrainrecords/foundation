@@ -79,7 +79,9 @@
         {% verbatim %}
 
 
-        <div id='encounter-bar' class='bottom-bar' ng-controller='EncountersMainCtrl'>
+        <div id='encounter-bar' class='bottom-bar' 
+            ng-controller='EncountersMainCtrl' 
+            ng-show='show_encounter_ui==true'>
             <ng-audio-recorder id='audioInput' audio-model='recordedInput' show-player="false"
                                on-conversion-complete="convert_is_finished()"
                                on-record-start="record_start()">
@@ -87,7 +89,7 @@
                     Message for users when recording is not possible.
                 </div>
             </ng-audio-recorder>
-            <div class='row' id='encounter-box' ng-show='show_encounter_ui==true'>
+            <div class='row' id='encounter-box'>
 
                 <div class='col-md-12' ng-show='encounter_flag==false'>
                     <button class='btn btn-warning btn-md' ng-click='start_encounter()'>

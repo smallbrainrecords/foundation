@@ -73,7 +73,7 @@
             	if(value.date==undefined) {
             		value.date = moment().format("YYYY-MM-DD");
             	}
-            	value.observation_id = $scope.a1c.observation.id;
+            	value.component_id = $scope.a1c.observation.observation_components[0].id;
             	a1cService.addNewValue(value).then(function(data){
 	                toaster.pop('success', 'Done', 'Added New value!');
                     $location.url('/problem/' + $scope.a1c.problem.id);
@@ -143,16 +143,19 @@
 
             a1cService.fetchA1cInfo($scope.a1c_id).then(function(data){
                 $scope.a1c = data['info'];
+
+                if ($scope.a1c.observation.observation_components.length > 0)
+                    $scope.first_component = $scope.a1c.observation.observation_components[0];
             });
 
-            $scope.deleteValue = function(component) {
+            $scope.deleteValue = function(value) {
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a value is forever. There is no undo."
                 }).then(function(result){
-                    a1cService.deleteValue(component).then(function(data){
-                        var index = $scope.a1c.observation.observation_components.indexOf(component);
-                        $scope.a1c.observation.observation_components.splice(index, 1);
+                    a1cService.deleteValue(value).then(function(data){
+                        var index = $scope.first_component.observation_component_values.indexOf(value);
+                        $scope.first_component.observation_component_values.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted value successfully');
                     });
                 },function(){
@@ -166,26 +169,26 @@
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
-            $scope.component_id = $routeParams.component_id;
+            $scope.value_id = $routeParams.value_id;
 
             patientService.fetchActiveUser().then(function(data){
                 $scope.active_user = data['user_profile'];
             });
 
-            a1cService.fetchObservationComponentInfo($scope.component_id).then(function(data){
-                $scope.component = data['info'];
+            a1cService.fetchObservationValueInfo($scope.value_id).then(function(data){
+                $scope.value = data['info'];
                 $scope.a1c_id = data['a1c_id'];
                 $scope.today = moment();
-                $scope.a1c_date = moment($scope.component.effective_datetime);
-                $scope.a1c_date_format = moment($scope.component.effective_datetime).format("YYYY-MM-DD");
+                $scope.a1c_date = moment($scope.value.effective_datetime);
+                $scope.a1c_date_format = moment($scope.value.effective_datetime).format("YYYY-MM-DD");
             });
 
-            $scope.deleteValue = function(component) {
+            $scope.deleteValue = function(value) {
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a value is forever. There is no undo."
                 }).then(function(result){
-                    a1cService.deleteValue(component).then(function(data){
+                    a1cService.deleteValue(value).then(function(data){
                         toaster.pop('success', 'Done', 'Deleted value successfully');
                         $location.url('/a1c/' + $scope.a1c_id + '/edit_or_delete_values');
                     });
@@ -194,7 +197,7 @@
                 });
             };
 
-            $scope.editValue = function(component_id, value_quantity, effective_datetime) {
+            $scope.editValue = function(value_id, value_quantity, effective_datetime) {
                 if(isNaN(parseFloat(value_quantity))) {
                     toaster.pop('error', 'Error', 'Please enter float value!');
                     return false;
@@ -205,22 +208,22 @@
                     return false;
                 }
                 var form = {};
-                form.component_id = component_id;
+                form.value_id = value_id;
                 form.value_quantity = value_quantity;
                 form.effective_datetime = effective_datetime;
                 a1cService.editValue(form).then(function(data){
-                    $scope.component = data['info'];
-                    $scope.a1c_date = moment($scope.component.effective_datetime);
-                    $scope.a1c_date_format = moment($scope.component.effective_datetime).format("YYYY-MM-DD");
+                    $scope.value = data['info'];
+                    $scope.a1c_date = moment($scope.value.effective_datetime);
+                    $scope.a1c_date_format = moment($scope.value.effective_datetime).format("YYYY-MM-DD");
                     toaster.pop('success', 'Done', 'Edited value successfully');
                 });
             }
 
             $scope.add_note = function(form) {
                 if (form.note == '') return;
-                form.component_id = $scope.component_id;
-                a1cService.addComponentNote(form).then(function(data) {
-                    $scope.component.observation_component_notes.push(data['note']);
+                form.value_id = $scope.value_id;
+                a1cService.addValueNote(form).then(function(data) {
+                    $scope.value.observation_value_notes.push(data['note']);
                     form.note = '';
                     toaster.pop('success', 'Done', 'Added Note!');
                 });
@@ -231,7 +234,7 @@
             }
 
             $scope.toggleSaveNote = function(note) {
-                a1cService.editComponentNote(note).then(function(data) {
+                a1cService.editValueNote(note).then(function(data) {
                     note.edit = false;
                     toaster.pop('success', 'Done', 'Edited note successfully');
                 });
@@ -242,9 +245,9 @@
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
                 }).then(function(result){
-                    a1cService.deleteComponentNote(note).then(function(data){
-                        var index = $scope.component.observation_component_notes.indexOf(note);
-                        $scope.component.observation_component_notes.splice(index, 1);
+                    a1cService.deleteValueNote(note).then(function(data){
+                        var index = $scope.value.observation_value_notes.indexOf(note);
+                        $scope.value.observation_value_notes.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted note successfully');
                     });
                 },function(){
