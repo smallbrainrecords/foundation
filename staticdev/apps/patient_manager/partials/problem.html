@@ -300,7 +300,7 @@
                                 </div>
                             </div>
                             <div ng-if="data.observation_components.length > 0">
-                                <canvas class="chart chart-line"
+                                <canvas ng-if="data.graph=='Line'" class="chart chart-line"
                                         chart-data="data.chartData"
                                         chart-series="data.chartSeries"
                                         chart-labels="data.chartLabel"></canvas>
