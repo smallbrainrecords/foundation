@@ -94,8 +94,8 @@
                     data.chartLabel = dataService.generateChartLabel(tmpData);
 
                     // Unaffected graph option when time range filter changed
-                    data.chartSeries = dataService.generateChartSeries(data);
-                    data.mostRecentValue = dataService.generateMostRecentValue(data);
+                    data.chartSeries = dataService.generateChartSeries(tmpData);
+                    data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
                 });
             });
 

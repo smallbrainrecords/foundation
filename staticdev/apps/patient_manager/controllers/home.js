@@ -1041,8 +1041,8 @@
                         data.chartData = dataService.generateChartData(tmpData);
                         data.chartLabel = dataService.generateChartLabel(tmpData);
 
-                        data.chartSeries = dataService.generateChartSeries(data);
-                        data.mostRecentValue = dataService.generateMostRecentValue(data);
+                        data.chartSeries = dataService.generateChartSeries(tmpData);
+                        data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
                     });
 
                     if ($scope.active_user) {
