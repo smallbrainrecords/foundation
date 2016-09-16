@@ -59,8 +59,8 @@
                 $scope.data.chartLabel = dataService.generateChartLabel(tmpData);
 
                 // Unaffected graph option when timerang filter changed
-                $scope.data.chartSeries = dataService.generateChartSeries($scope.data);
-                $scope.data.mostRecentValue = dataService.generateMostRecentValue($scope.data);
+                $scope.data.chartSeries = dataService.generateChartSeries(tmpData);
+                $scope.data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
             });
 
             problemService.fetchProblems($scope.patient_id).then(function (data) {
