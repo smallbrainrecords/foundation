@@ -111,14 +111,15 @@
 
 
                 _.map(observation.observation_components, function (item, key) {
-                    // result.push(_.last(item.observation_component_values).value_quantity);
                     if (item.observation_component_values.length > 0) {
                         // The most recent value descendant sort. So first item will be most recent item
-                        var quantity = item.observation_component_values[0].value_quantity;
+                        var valueQuantity = _.last(item.observation_component_values).value_quantity;
+                        result.push(valueQuantity);
+                        // var quantity = item.observation_component_values[0].value_quantity;
 
                         // Round number if blood pressure
                         if (observation.name == 'blood pressure') {
-                            quantity = Math.round(quantity);
+                            valueQuantity = Math.round(quantity);
                         }
                         result.push(quantity);
                     }
