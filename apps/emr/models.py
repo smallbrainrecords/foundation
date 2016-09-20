@@ -16,29 +16,25 @@ ROLE_CHOICES = (
     ('secretary', 'Secretary'),
     ('admin', 'Admin'),)
 
-
 SEX_CHOICES = (
     ('male', 'Male'),
     ('female', 'Female'),)
 
-
 BY_CHOICES = (
     ('patient', 'patient'),
-    ('physician', 'physician'), )
-
+    ('physician', 'physician'),)
 
 NOTE_TYPE_CHOICES = (
     ('wiki', 'Wiki'),
-    ('history', 'History'), )
-
+    ('history', 'History'),)
 
 COMMON_PROBLEM_TYPE_CHOICES = (
     ('acute', 'Acute'),
-    ('chronic', 'Chronic'), )
+    ('chronic', 'Chronic'),)
 
 RISK_CHOICES = (
     ('normal', 'Normal'),
-    ('high', 'High'), )
+    ('high', 'High'),)
 
 # Observation type
 OBSERVATION_TYPES = [
@@ -152,6 +148,7 @@ class ListField(models.TextField):
         value = self._get_val_from_obj(obj)
         return self.get_db_prep_value(value)
 
+
 class MaritalStatus(models.Model):
     code = models.CharField(max_length=1, null=True, blank=True)
     display = models.CharField(max_length=20, null=True, blank=True)
@@ -258,8 +255,8 @@ class EncounterEvent(models.Model):
             s = '0' + str(s)
         return '%s:%s' % (h, s)
 
-class TextNote(models.Model):
 
+class TextNote(models.Model):
     author = models.ForeignKey(UserProfile, null=True, blank=True)
     by = models.CharField(max_length=20, choices=BY_CHOICES)
     note = models.TextField()
@@ -325,7 +322,7 @@ class ProblemSegment(models.Model):
     start_time = models.TimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ('start_date', 'start_time', )
+        ordering = ('start_date', 'start_time',)
 
     def __unicode__(self):
         return '%s segment %s' % (self.problem.problem_name, self.start_date)
@@ -391,6 +388,16 @@ class Label(models.Model):
         return '%s' % (unicode(self.name))
 
 
+class ToDoGroup(models.Model):
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_group_patient")
+    name = models.TextField(null=True, blank=True)
+    order = models.BigIntegerField(null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s' % (unicode(self.name))
+
+
 class ToDo(models.Model):
     patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient")
     user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")
@@ -404,6 +411,8 @@ class ToDo(models.Model):
     order = models.BigIntegerField(null=True, blank=True)
     members = models.ManyToManyField(UserProfile, blank=True)
     labels = models.ManyToManyField(Label, blank=True)
+    group = models.ForeignKey(ToDoGroup, null=True, blank=True,related_name='items')
+    position = models.IntegerField(null=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     objects = TodoManager()
@@ -778,7 +787,8 @@ class ColonCancerScreening(models.Model):
     not_appropriate = models.BooleanField(default=False)
     risk = models.CharField(max_length=10, choices=RISK_CHOICES, default='normal')
     last_risk_updated_date = models.DateField(null=True, blank=True)
-    last_risk_updated_user = models.ForeignKey(UserProfile, related_name='last_risk_updated_user_colons', null=True, blank=True)
+    last_risk_updated_user = models.ForeignKey(UserProfile, related_name='last_risk_updated_user_colons', null=True,
+                                               blank=True)
     todo_past_five_years = models.BooleanField(default=False)
     patient_refused_on = models.DateTimeField(null=True, blank=True)
     not_appropriate_on = models.DateTimeField(null=True, blank=True)

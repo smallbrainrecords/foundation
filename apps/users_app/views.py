@@ -11,7 +11,7 @@ from django.db.models import Q
 from common.views import *
 # from django.shortcuts import render
 from emr.models import UserProfile, Problem
-from emr.models import Goal, ToDo
+from emr.models import Goal, ToDo, ToDoGroup
 from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
 
 from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
@@ -22,7 +22,7 @@ from emr.models import MyStoryTab, MyStoryTextComponent
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
 from .serializers import UserProfileSerializer
-from todo_app.serializers import TodoSerializer
+from todo_app.serializers import TodoSerializer, TodoGroupSerializer
 from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
 
 from .forms import LoginForm, RegisterForm, UpdateBasicProfileForm, UpdateProfileForm, UpdateEmailForm
@@ -334,10 +334,14 @@ def get_timeline_info(request, patient_id):
 
 @login_required
 def get_patient_todos_info(request, patient_id):
+    #TODO: Grouped by group id
+    groups = ToDoGroup.objects
     todos = ToDo.objects.filter(patient_id=patient_id).order_by("order")
+
     pending_todos = [todo for todo in todos if todo.accomplished is False]
     accomplished_todos = [todo for todo in todos if todo.accomplished is True]
     resp = {}
+    resp['groups'] = TodoGroupSerializer(groups,many=True).data
     resp['pending_todos'] = TodoSerializer(pending_todos, many=True).data
     resp['accomplished_todos'] = TodoSerializer(accomplished_todos, many=True).data
     resp['problem_todos'] = TodoSerializer(todos, many=True).data
