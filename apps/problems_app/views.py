@@ -963,4 +963,5 @@ def get_pins(request, problem_id):
     resp = {}
     resp['success'] = True
     resp['pins'] = ObservationSerializer(observations, many=True).data
+    resp['problem_pins'] = ObservationPinToProblemSerializer(pins, many=True).data
     return ajax_response(resp)
