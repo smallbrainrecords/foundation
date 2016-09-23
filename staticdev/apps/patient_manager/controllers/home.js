@@ -865,8 +865,8 @@
                 form.name = new_text.name;
                 form.text = new_text.text;
                 if ($scope.active_user.role == 'patient')
-                    form.private = new_tab.private;
-                if ($scope.active_user.role == 'admin' || $scope.active_user.role == 'physician')
+                    form.private = new_text.private;
+                if (tab.is_all && ($scope.active_user.role == 'admin' || $scope.active_user.role == 'physician'))
                     form.all_patients = new_text.all_patients;
                 form.concept_id = new_text.concept_id;
                 form.patient_id = $scope.patient_id;
