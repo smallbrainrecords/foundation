@@ -122,6 +122,8 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.data_id = $routeParams.data_id;
+            $scope.new_data = {};
+            $scope.new_data.date = moment().format("MM/DD/YYYY");
 
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
