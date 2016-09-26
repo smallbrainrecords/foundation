@@ -715,26 +715,27 @@ def open_todo_list(request, list_id):
     return ajax_response(resp)
 
 
-# TODO: AnhDN Where to used to manipulate database object
+# TODO: AnhDN: How to check object permission before manipulate these object
+
 @login_required
 def create_todo_group(request, patient_id):
     group_name = request.POST.get('name')
-    todo_A = ToDo.objects.get(id=request.POST.get('todo_1'))
-    todo_B = ToDo.objects.get(id=request.POST.get('todo_2'))
+    todo__a = ToDo.objects.get(id=request.POST.get('todo_1'))
+    todo__b = ToDo.objects.get(id=request.POST.get('todo_2'))
     patient = User.objects.get(id=patient_id)
     resp = {}
 
     # Create new todoGroup item
-    group = ToDoGroup(name=group_name, patient=patient, order=todo_A.order)
+    group = ToDoGroup(name=group_name, patient=patient, order=todo__a.order)
     group.save()
 
     # Update group of first todo item
-    todo_A.group = group
-    todo_A.save()
+    todo__a.group = group
+    todo__a.save()
 
     # Update group of second todo item
-    todo_B.group = group
-    todo_B.save()
+    todo__b.group = group
+    todo__b.save()
 
     # Update new data
     groups = ToDoGroup.objects.filter(patient_id=patient_id).order_by("order")
@@ -753,8 +754,6 @@ def update_todo_group(request, todo_group_id):
     order = request.POST.get('order')
     group = ToDoGroup.objects.get(id=todo_group_id)
 
-    # TODO: Need to check permission
-    # if(group.patient_id == patient):
     group.name = group_name
     group.order = order
     group.save()
@@ -782,15 +781,13 @@ def remove_todo_group(request, todo_group_id):
     return ajax_response(resp)
 
 
-# Update group of an todo item
 @login_required
 def update_group(request):
     patient = request.POST.get('patient')
     group = request.POST.get('group')
     todo = ToDo.objects.get(id=request.POST.get('todo'))
     resp = {}
-    # TODO: Need to check permission
-    # if(todo.patient_id == patient):
+
     todo.group_id = group
     todo.save()
 
