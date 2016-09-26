@@ -952,20 +952,25 @@
 
         <div class='col-md-12'>
             <form class="form-inline" ng-if="active_user.role=='nurse'">
-                <input type='text' placeholder='W' class='form-control' ng-model='bfdi.weight'>
-                <input type='text' placeholder='BP systolic' class='form-control' ng-model='bfdi.systolic'>
-                <input type='text' placeholder='BP diastolic' class='form-control' ng-model='bfdi.diastolic'>
-                <input type='text' placeholder='T' class='form-control' ng-model='bfdi.body_temperature'>
-                <input type='text' placeholder='RR' class='form-control' ng-model='bfdi.respiratory_rate'>
-                <input type='text' placeholder='INR' class='form-control' ng-model='bfdi.inr' ng-if="check_has_data_loinc_code(datas, '6301-6');">
+                <div class="form-group" ng-repeat="data in mostCommonData">
+                    <input type='text' class='form-control' 
+                        placeholder='{{data.name == component.name ? data.ph : data.ph + " " + component.name}}' 
+                        ng-repeat="component in data.observation_components"
+                        ng-model="component.new_value" 
+                        ng-change="add_bfdi_value(component)"
+                        ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                </div>
+                
             </form>
             <form class="form-inline" ng-if="active_user.role=='patient'">
-                <input type='text' class='form-control' 
-                    placeholder='{{data.name}}' 
-                    ng-repeat="data in mostCommonData"
-                    ng-model="data.new_value" 
-                    ng-change="add_bfdi_value(data)"
-                    ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                <div class="form-group" ng-repeat="data in mostCommonData">
+                    <input type='text' class='form-control' 
+                        placeholder='{{data.name == component.name ? data.name : data.name + " " + component.name}}' 
+                        ng-repeat="component in data.observation_components"
+                        ng-model="component.new_value" 
+                        ng-change="add_bfdi_value(component)"
+                        ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                </div>
             </form>
         </div>
     </div>

@@ -1049,6 +1049,32 @@
                         if ($scope.active_user.role == 'patient') {
                             $scope.mostCommonData = dataService.generateMostCommonData($scope.datas);
                         }
+
+                        if ($scope.active_user.role == 'nurse') {
+                            $scope.mostCommonData = [];
+                            angular.forEach($scope.datas, function (data, key) {
+                                if (data.name == 'weight') {
+                                    data.ph = 'W'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                if (data.name == 'body temperature') {
+                                    data.ph = 'T'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                if (data.name == 'respiratory rate') {
+                                    data.ph = 'RR'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                if (data.loinc_code == '6301-6') {
+                                    data.ph = 'INR'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                if (data.name == 'blood pressure') {
+                                    data.ph = 'BP'
+                                    $scope.mostCommonData.push(data);
+                                }
+                            });
+                        }
                     }
 
                     var tmpListData = $scope.datas;
@@ -1147,33 +1173,46 @@
                 return is_inr;
             };
 
-            $scope.add_bfdi_value = function(data) {
+            $scope.add_bfdi_value = function(component) {
                 var new_data = {};
                 new_data.datetime = moment().format("MM/DD/YYYY HH:mm");
 
-                angular.forEach(data.observation_components, function (component, key) {
-                    new_data.value = data.new_value;
-                    dataService.addData($scope.patient_id, component.id, new_data).then(function (data) {
-                        if (data['success'] == true) {
-                            toaster.pop('success', 'Done', 'Added data!');
-                            // angular.forEach($scope.datas, function (sdata, data_key) {
-                            //     angular.forEach(data.observation_components, function (scomponent, component_key) {
-                            //         if (scomponent.id == component.id) {
-                            //             scomponent.observation_component_values.push(data['value']);
-                            //         }
-                            //     });
-                            // });
-                            data.new_value = '';
-                        } else if (data['success'] == false) {
-                            toaster.pop('error', 'Error', 'Something went wrong, please try again!');
-                        } else {
-                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                        }
-                    });
+                new_data.value = component.new_value;
+                dataService.addData($scope.patient_id, component.id, new_data).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'Added data!');
+                        angular.forEach($scope.datas, function (sdata, data_key) {
+                            angular.forEach(sdata.observation_components, function (scomponent, component_key) {
+                                if (scomponent.id == component.id) {
+                                    scomponent.observation_component_values.push(data['value']);
+                                }
+                            });
+
+                            // Default graph type
+                            if (sdata.graph == null || sdata.graph == undefined)
+                                sdata.graph = 'Line';
+
+                            // Temporary data using for generate graph
+                            var tmpData = angular.copy(sdata);
+                            // Sorting before processing
+                            _.map(tmpData.observation_components, function (item, key) {
+                                item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                                // Sorting before generating
+                                item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                            });
+                            sdata.chartData = dataService.generateChartData(tmpData);
+                            sdata.chartLabel = dataService.generateChartLabel(tmpData);
+                            sdata.mostRecentValue = dataService.generateMostRecentValue(tmpData);
+                        });
+                        component.new_value = '';
+                    } else if (data['success'] == false) {
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
                 });
             };
-
-            // $scope.change_homepage_tab('data');
         });
     /* End of controller */
 
