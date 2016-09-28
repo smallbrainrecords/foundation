@@ -36,7 +36,7 @@
 
             $scope.changeView = function (viewName) {
                 $scope.viewMode = viewName;
-                angular.forEach($scope.pins, function (data, key) {
+                angular.forEach($scope.datas, function (data, key) {
 
                     // Default graph type
                     if (data.graph == null || data.graph == undefined)
@@ -75,27 +75,47 @@
 
             problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
                 $scope.pins = data['pins'];
-                angular.forEach($scope.pins, function (data, key) {
+                $scope.problem_pins = data['problem_pins'];
 
-                    // Default graph type
-                    if (data.graph == null || data.graph == undefined)
-                        data.graph = 'Line';
+                $scope.datas = [];
+                patientService.getDatas($scope.patient_id).then(function (data) {
+                    if (data['success'] == true) {
+                        $scope.datas = data['info'];
 
-                    // Temporary data using for generate graph
-                    var tmpData = angular.copy(data);
-                    // Sorting before processing
-                    _.map(tmpData.observation_components, function (item, key) {
-                        item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+                        angular.forEach($scope.datas, function (data, key) {
+                            var is_pin = false;
+                            angular.forEach($scope.problem_pins, function (pin, key) {
+                                if (data.id == pin.observation) {
+                                    is_pin = true;
+                                    data.pin_author = pin.author.id;
+                                }
+                            });
+                            data.pin = is_pin;
 
-                        // Sorting before generating
-                        item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
-                    });
-                    data.chartData = dataService.generateChartData(tmpData);
-                    data.chartLabel = dataService.generateChartLabel(tmpData);
+                            // Default graph type
+                            if (data.graph == null || data.graph == undefined)
+                                data.graph = 'Line';
 
-                    // Unaffected graph option when time range filter changed
-                    data.chartSeries = dataService.generateChartSeries(tmpData);
-                    data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
+                            // Temporary data using for generate graph
+                            var tmpData = angular.copy(data);
+                            // Sorting before processing
+                            _.map(tmpData.observation_components, function (item, key) {
+                                item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                                // Sorting before generating
+                                item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                            });
+                            data.chartData = dataService.generateChartData(tmpData);
+                            data.chartLabel = dataService.generateChartLabel(tmpData);
+
+                            // Unaffected graph option when time range filter changed
+                            data.chartSeries = dataService.generateChartSeries(tmpData);
+                            data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
+                        });
+
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
                 });
             });
 
@@ -1005,6 +1025,32 @@
              */
             $scope.open_data = function (data) {
                 $location.path('/data/' + data.id);
+            };
+
+            // labeled problems list
+            $scope.change_pinned_data = false;
+            $scope.open_change_data = function () {
+                $scope.change_pinned_data = true;
+            };
+
+            $scope.close_change_data = function () {
+                $scope.change_pinned_data = false;
+            };
+
+            $scope.data_pin_to_problem = function (data_id, problem_id) {
+                var form = {};
+                form.data_id = data_id;
+                form.problem_id = problem_id;
+
+                dataService.dataPinToProblem($scope.patient_id, form).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'Pinned data!');
+                    } else if (data['success'] == false) {
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
             };
 
         });

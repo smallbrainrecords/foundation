@@ -226,6 +226,7 @@ def add_new_data(request, patient_id, component_id):
             value.value_quantity, value.component.observation.name)
         op_add_event(request.user, value.component.observation.subject.user, summary)
 
+        value.effective_datetime = ObservationValue.objects.get(id=value.id).effective_datetime
         resp['value'] = ObservationValueSerializer(value).data
         resp['success'] = True
 

@@ -108,6 +108,7 @@
                         <a href ng-click="open_create_label_problems_list();"
                            ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'"><i
                                 class="fa fa-tags"></i>Create problems list</a>
+                        <a href ng-click="open_change_data();"><i class="fa fa-tags"></i>Change Data</a>
                     </div>
                     <!-- end buttons -->
                     <!-- begin change label -->
@@ -184,6 +185,20 @@
                         </form>
                     </div>
                     <!-- end create label problems list -->
+                    <!-- begin change data -->
+                    <div ng-if="change_pinned_data" class="quick-card-editor-lv2" style="color: black;">
+                        <div class="quick-card-editor-lv2-header">
+                            <a href ng-click="close_change_data(); $event.stopPropagation();"><i
+                                    class="fa fa-close"></i></a>
+                        </div>
+                        <p ng-repeat="data in datas">
+                            <input type="checkbox" 
+                                    ng-model="data.pin" 
+                                    ng-change="data_pin_to_problem(data.id, problem.id);"
+                                    ng-disabled="active_user.role == 'patient' && active_user.id != data.pin_author && data.pin_author != null"> {{ data.name }}
+                        </p>
+                    </div>
+                    <!-- end change data -->
                 </div>
             </div>
             <!-- end change item -->
@@ -266,7 +281,7 @@
         </div>
     </div>
 
-    <div class='panel panel-default' ng-if="pins.length > 0">
+    <div class='panel panel-default' ng-if="datas.length > 0">
         <div class="panel-header">
             <div class="btn-group btn-group-justified graph-view-mode">
                 <label class="btn btn-default" ng-click="changeView('Week')"
@@ -282,7 +297,9 @@
         <div class='panel-body no-padding'>
             <div >
                 <ul class='ul-clean no-padding'>
-                    <li ng-repeat="data in pins" ng-click='open_data(data)'>
+                    <li ng-repeat="data in datas" 
+                        ng-click='open_data(data)'
+                        ng-show="data.pin">
                         <div class='item-box data-frame'
                              ng-style="{'background-color': data.color}">
                             <div class="row graph-header">

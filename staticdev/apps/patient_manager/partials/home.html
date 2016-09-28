@@ -839,21 +839,29 @@
                                             ng-click='open_data(data)'>
                                             <div class='item-box data-frame'
                                                  ng-style="{'background-color': data.color}">
-                                                <div class="row">
+                                                <div class="row  graph-header">
                                                     <div class="col-md-6 text-left">
-                                                        <span>{{ data.name }}</span>
+                                                        <h3>{{ data.name }}</h3>
                                                     </div>
                                                     <div class="col-md-6 text-right">
-                                                        <span>{{ data.created_on | date:'M/d/yyyy' }}</span>
+                                                        <h3>
+                                                            <span ng-bind="data.mostRecentValue"></span>
+                                                            <span ng-bind="data.observation_units[0].value_unit"></span>
+                                                        </h3>
+                                                        <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+
                                                     </div>
                                                 </div>
-                                                <div ng-repeat="component in data.observation_components">
-                                                    <canvas ng-if="component.observation_component_values.length > 0"
-                                                            class="chart chart-line"
-                                                            chart-data="component.chartTmp"
-                                                            chart-labels="component.labels"></canvas>
+                                                <div ng-if="data.observation_components.length > 0">
+                                                    <canvas  ng-if="data.graph=='Line'"  class="chart chart-line"
+                                                            chart-data="data.chartData"
+                                                            chart-series="data.chartSeries"
+                                                            chart-labels="data.chartLabel"></canvas>
+                                                    <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
+                                                            chart-data="data.chartData"
+                                                            chart-series="data.chartSeries"
+                                                            chart-labels="data.chartLabel"></canvas>
                                                 </div>
-                                            </div>
                                         </li>
                                     </ul>
                                 </div>
@@ -935,21 +943,25 @@
 
         <div class='col-md-12'>
             <form class="form-inline" ng-if="active_user.role=='nurse'">
-                <input type='text' placeholder='W' class='form-control' ng-model='bfdi.weight'>
-                <input type='text' placeholder='BP systolic' class='form-control' ng-model='bfdi.systolic'>
-                <input type='text' placeholder='BP diastolic' class='form-control' ng-model='bfdi.diastolic'>
-                <input type='text' placeholder='T' class='form-control' ng-model='bfdi.body_temperature'>
-                <input type='text' placeholder='RR' class='form-control' ng-model='bfdi.respiratory_rate'>
-                <input type='text' placeholder='INR' class='form-control' ng-model='bfdi.inr'
-                       ng-if="check_has_data_loinc_code(datas, '6301-6');">
+                <div class="form-group" ng-repeat="data in mostCommonData">
+                    <input type='text' class='form-control'
+                        placeholder='{{data.name == component.name ? data.ph : data.ph + " " + component.name}}'
+                        ng-repeat="component in data.observation_components"
+                        ng-model="component.new_value"
+                        ng-change="add_bfdi_value(component)"
+                        ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                </div>
+
             </form>
             <form class="form-inline" ng-if="active_user.role=='patient'">
-                <input type='text' class='form-control'
-                       placeholder='{{ data.name }}'
-                       ng-repeat="data in mostCommonData"
-                       ng-model="data.new_value"
-                       ng-change="add_bfdi_value(data)"
-                       ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                <div class="form-group" ng-repeat="data in mostCommonData">
+                    <input type='text' class='form-control'
+                        placeholder='{{data.name == component.name ? data.name : data.name + " " + component.name}}'
+                        ng-repeat="component in data.observation_components"
+                        ng-model="component.new_value"
+                        ng-change="add_bfdi_value(component)"
+                        ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                </div>
             </form>
         </div>
     </div>
