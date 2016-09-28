@@ -74,7 +74,11 @@
                 $scope.pending_todos = data['pending_todos'];
                 $scope.accomplished_todos = data['accomplished_todos'];
                 $scope.problem_todos = data['problem_todos'];
-
+                // TODO: Item need tobe update
+                $scope.groupedIem = {
+                    name: "rootItem",
+                    items: data['groups']
+                };
                 $scope.todos_ready = true;
             });
 

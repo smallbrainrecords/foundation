@@ -96,6 +96,9 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
 
                                     patientService.updateTodoOrder(form).then(function (data) {
                                         toaster.pop('success', 'Done', 'Updated Todo Order');
+                                        // Update tree
+                                        scope.updateTodoTree(data);
+
                                         scope.set_authentication_false();
                                     });
                                 }
