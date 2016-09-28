@@ -1003,8 +1003,8 @@
                     if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
                         return true;
                     } else {
-                        is_shared = false;
-                        angular.forEach($scope.sharing_patients, function(user, key) {
+                        var is_shared = false;
+                        angular.forEach($scope.sharing_patients, function (user, key) {
                             if (user.id == $scope.active_user.id && user.is_my_story_shared) {
                                 is_shared = true;
                             }
@@ -1147,7 +1147,7 @@
                 return is_inr;
             };
 
-            $scope.add_bfdi_value = function(data) {
+            $scope.add_bfdi_value = function (data) {
                 var new_data = {};
                 new_data.datetime = moment().format("MM/DD/YYYY HH:mm");
 

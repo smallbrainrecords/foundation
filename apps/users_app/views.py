@@ -339,7 +339,8 @@ def get_timeline_info(request, patient_id):
 def get_patient_todos_info(request, patient_id):
     # TODO: Grouped by group id
     groups = ToDoGroup.objects.filter(patient_id=patient_id).order_by("order")
-    ungroup_todos = ToDo.objects.filter(patient_id=patient_id).filter(group_id=None).order_by("order")
+    ungrouped= ToDo.objects.filter(patient_id=patient_id).filter(group_id=None).order_by("order")
+    ungroup_todos = [todo for todo in ungrouped if todo.accomplished is False]
     todos = ToDo.objects.filter(patient_id=patient_id).order_by("order")
 
     pending_todos = [todo for todo in todos if todo.accomplished is False]

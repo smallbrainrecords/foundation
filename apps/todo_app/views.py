@@ -120,10 +120,15 @@ def update_todo_status(request, todo_id):
     accomplished_todos = [todo for todo in todos if todo.accomplished]
     pending_todos = [todo for todo in todos if not todo.accomplished]
 
+    groups = ToDoGroup.objects.filter(patient_id=patient).order_by("order")
+    ungrouped = ToDo.objects.filter(patient_id=patient).filter(group_id=None).order_by("order")
+    ungroup_todos = [todo for todo in ungrouped if todo.accomplished is False]
+
     resp = {}
     resp['success'] = True
     resp['accomplished_todos'] = TodoSerializer(accomplished_todos, many=True).data
     resp['pending_todos'] = TodoSerializer(pending_todos, many=True).data
+    resp['groups'] = TodoGroupSerializer(groups, many=True).data + TodoSerializer(ungroup_todos, many=True).data
     return ajax_response(resp)
 
 
@@ -750,6 +755,7 @@ def create_todo_group(request, patient_id):
 @login_required
 def update_todo_group(request, todo_group_id):
     resp = {}
+    patient = request.POST.get('patient_id')
     group_name = request.POST.get('name')
     order = request.POST.get('order')
     group = ToDoGroup.objects.get(id=todo_group_id)
@@ -757,6 +763,12 @@ def update_todo_group(request, todo_group_id):
     group.name = group_name
     group.order = order
     group.save()
+
+    groups = ToDoGroup.objects.filter(patient_id=patient).order_by("order")
+    ungroup_todos = ToDo.objects.filter(patient_id=patient).filter(group_id=None).order_by("order")
+
+    resp['success'] = True
+    resp['groups'] = TodoGroupSerializer(groups, many=True).data + TodoSerializer(ungroup_todos, many=True).data
 
     resp['success'] = True
     return ajax_response(resp)
@@ -791,5 +803,9 @@ def update_group(request):
     todo.group_id = group
     todo.save()
 
+    groups = ToDoGroup.objects.filter(patient_id=patient).order_by("order")
+    ungroup_todos = ToDo.objects.filter(patient_id=patient).filter(group_id=None).order_by("order")
+
     resp['success'] = True
+    resp['groups'] = TodoGroupSerializer(groups, many=True).data + TodoSerializer(ungroup_todos, many=True).data
     return ajax_response(resp)
