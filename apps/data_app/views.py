@@ -125,7 +125,8 @@ def add_new_data_type(request, patient_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
-        observation = Observation.objects.create(subject__user__id=int(patient_id),
+        patient = User.objects.get(id=int(patient_id))
+        observation = Observation.objects.create(subject=patient.profile,
                                                  author=request.user.profile,
                                                  name=request.POST.get("name", None),
                                                  color=request.POST.get("color", None))

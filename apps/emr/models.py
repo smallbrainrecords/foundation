@@ -637,6 +637,9 @@ class ObservationValue(models.Model):
     effective_datetime = models.DateTimeField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
+    class Meta:
+        ordering = ['effective_datetime', 'created_on']
+
 
 class ObservationOrder(models.Model):
     patient = models.ForeignKey(User, null=True, blank=True, related_name="patient_observation_order")

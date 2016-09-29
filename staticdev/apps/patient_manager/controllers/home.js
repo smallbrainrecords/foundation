@@ -1069,14 +1069,17 @@
                                     data.ph = 'RR'
                                     $scope.mostCommonData.push(data);
                                 }
-                                if (data.loinc_code == '6301-6') {
-                                    data.ph = 'INR'
-                                    $scope.mostCommonData.push(data);
-                                }
+                                
                                 if (data.name == 'blood pressure') {
                                     data.ph = 'BP'
                                     $scope.mostCommonData.push(data);
                                 }
+                                angular.forEach(data.observation_components, function (component, component_key) {
+                                    if (component.component_code == '6301-6') {
+                                        data.ph = 'INR'
+                                        $scope.mostCommonData.push(data);
+                                    }
+                                });
                             });
                         }
                     }
