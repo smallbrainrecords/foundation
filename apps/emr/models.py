@@ -411,7 +411,7 @@ class ToDo(models.Model):
     order = models.BigIntegerField(null=True, blank=True)
     members = models.ManyToManyField(UserProfile, blank=True)
     labels = models.ManyToManyField(Label, blank=True)
-    group = models.ForeignKey(ToDoGroup, null=True, blank=True,related_name='items')
+    group = models.ForeignKey(ToDoGroup, null=True, blank=True,on_delete=models.SET_NULL,related_name='items')
     position = models.IntegerField(null=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 

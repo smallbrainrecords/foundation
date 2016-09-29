@@ -11,12 +11,20 @@ from emr.models import UserProfile, ToDo, ToDoGroup, ToDoComment, Label, ToDoAtt
     Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController, SharingPatient
 from emr.operations import op_add_event, op_add_todo_event
 
-from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, \
+from .serializers import TodoSerializer, TodoGroupSerializer, ToDoCommentSerializer, SafeUserSerializer, \
     TodoActivitySerializer, LabelSerializer, LabeledToDoListSerializer
 from users_app.serializers import UserProfileSerializer
 
 from problems_app.operations import add_problem_activity
 from .operations import add_todo_activity
+
+
+def get_todo_group(patient_id):
+    groups = ToDoGroup.objects.filter(patient_id=patient_id).order_by("order")
+    un_grouped = ToDo.objects.filter(patient_id=patient_id).filter(group_id=None).filter(accomplished=False).order_by(
+        "order")
+
+    return TodoGroupSerializer(groups, many=True).data + TodoSerializer(un_grouped, many=True).data
 
 
 def is_patient(user):
@@ -86,7 +94,10 @@ def update_todo_status(request, todo_id):
 
     todo = ToDo.objects.get(id=todo_id)
     todo.accomplished = accomplished
-    todo.save(update_fields=["accomplished"])
+    # If item is moved to accomplished also remove it from current folder
+    if (accomplished):
+        todo.group = None
+    todo.save(update_fields=["accomplished", "group"])
     # set problem authentication
     set_problem_authentication_false(request, todo)
 
@@ -117,10 +128,15 @@ def update_todo_status(request, todo_id):
     accomplished_todos = [todo for todo in todos if todo.accomplished]
     pending_todos = [todo for todo in todos if not todo.accomplished]
 
+    groups = ToDoGroup.objects.filter(patient_id=patient).order_by("order")
+    ungrouped = ToDo.objects.filter(patient_id=patient).filter(group_id=None).order_by("order")
+    ungroup_todos = [todo for todo in ungrouped if todo.accomplished is False]
+
     resp = {}
     resp['success'] = True
     resp['accomplished_todos'] = TodoSerializer(accomplished_todos, many=True).data
     resp['pending_todos'] = TodoSerializer(pending_todos, many=True).data
+    resp['groups'] = TodoGroupSerializer(groups, many=True).data + TodoSerializer(ungroup_todos, many=True).data
     return ajax_response(resp)
 
 
@@ -228,6 +244,7 @@ def update_order(request):
         labeled_list.save()
 
     resp['success'] = True
+    resp['groups'] = get_todo_group(patient_id)
     return ajax_response(resp)
 
 
@@ -712,65 +729,80 @@ def open_todo_list(request, list_id):
     return ajax_response(resp)
 
 
-# TODO: AnhDN Where to used to manipulate database object
+# TODO: AnhDN: How to check object permission before manipulate these object
+
 @login_required
 def create_todo_group(request, patient_id):
     group_name = request.POST.get('name')
-    order = request.POST.get('order')
+    todo__a = ToDo.objects.get(id=request.POST.get('todo_1'))
+    todo__b = ToDo.objects.get(id=request.POST.get('todo_2'))
     patient = User.objects.get(id=patient_id)
-
     resp = {}
 
-    group = ToDoGroup(name=group_name, patient=patient, order=order)
+    # Create new todoGroup item
+    group = ToDoGroup(name=group_name, patient=patient, order=todo__a.order)
     group.save()
 
+    # Update group of first todo item
+    todo__a.group = group
+    todo__a.save()
+
+    # Update group of second todo item
+    todo__b.group = group
+    todo__b.save()
+
+    # Update new data
+    groups = ToDoGroup.objects.filter(patient_id=patient_id).order_by("order")
+    ungroup_todos = ToDo.objects.filter(patient_id=patient_id).filter(group_id=None).order_by("order")
+
     resp['success'] = True
+    resp['groups'] = get_todo_group(patient_id)
+
     return ajax_response(resp)
 
 
-## Update todo groupname or grouporder
 @login_required
-def update_todo_group(request,todo_group_id):
-    resp = {}
+def update_todo_group(request, todo_group_id):
+    patient_id = request.POST.get('patient_id')
     group_name = request.POST.get('name')
     order = request.POST.get('order')
+    resp = {}
     group = ToDoGroup.objects.get(id=todo_group_id)
 
-    # TODO: Need to check permission
-    # if(group.patient_id == patient):
     group.name = group_name
     group.order = order
     group.save()
 
     resp['success'] = True
+    resp['groups'] = get_todo_group(patient_id)
     return ajax_response(resp)
 
 
-## Delete an todo_group
 @login_required
 def remove_todo_group(request, todo_group_id):
     resp = {}
-    patient = request.POST.get('patient')
+    patient_id = request.POST.get('patient')
     group = ToDoGroup.objects.get(id=todo_group_id)
     # TODO: Need to check permission
     # if(group.patient_id ==patient)
     group.delete()
 
     resp['success'] = True
+    resp['groups'] = get_todo_group(patient_id)
+
     return ajax_response(resp)
 
 
-# Update group of an todo item
 @login_required
 def update_group(request):
-    patient = request.POST.get('patient')
+    patient_id = request.POST.get('patient')
     group = request.POST.get('group')
     todo = ToDo.objects.get(id=request.POST.get('todo'))
     resp = {}
-    # TODO: Need to check permission
-    # if(todo.patient_id == patient):
+
     todo.group_id = group
     todo.save()
 
     resp['success'] = True
+    resp['groups'] = get_todo_group(patient_id)
     return ajax_response(resp)
