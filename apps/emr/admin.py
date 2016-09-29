@@ -120,6 +120,20 @@ class PatientControllerAdmin(reversion.VersionAdmin):
     list_display = ['patient', 'physician']
 
 
+class ObservationComponentAdmin(reversion.VersionAdmin):
+    list_display = ['name', 'get_observation_name', 'get_observation_id']
+
+    def get_observation_name(self, obj):
+        return obj.observation.name
+    get_observation_name.short_description = 'Observation name'
+    get_observation_name.admin_order_field = 'observation__name'
+
+    def get_observation_id(self, obj):
+        return obj.observation.id
+    get_observation_id.short_description = 'Observation id'
+    get_observation_id.admin_order_field = 'observation__id'
+
+
 admin.site.register(PatientImage, PatientImageAdmin)
 admin.site.register(Sharing)
 admin.site.register(ProblemRelationship)
@@ -132,7 +146,7 @@ admin.site.register(ToDoAttachment)
 admin.site.register(ToDoComment)
 admin.site.register(LabeledToDoList)
 admin.site.register(Observation)
-admin.site.register(ObservationComponent)
+admin.site.register(ObservationComponent, ObservationComponentAdmin)
 admin.site.register(ObservationValue)
 admin.site.register(ProblemLabel)
 admin.site.register(SharingPatient)
