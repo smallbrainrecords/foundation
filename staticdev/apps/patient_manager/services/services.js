@@ -382,6 +382,12 @@
 			var url = '/my_story/track/click';
 			return httpService.post(form, url);
 		};
+
+		this.getInr = function(patient_id) {
+			var params = {};
+			var url = '/inr/'+patient_id+'/get_inr';
+			return httpService.get(params, url);
+		}
 	});
 
 })();

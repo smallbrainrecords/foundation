@@ -893,7 +893,7 @@ class MyStoryTextComponentEntry(models.Model):
 
 
 class Inr(models.Model):
-    patient = models.ForeignKey(User, related_name="patient_inr")
+    patient = models.OneToOneField(User, related_name="patient_inr")
     note = models.TextField(blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 

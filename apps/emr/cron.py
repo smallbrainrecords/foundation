@@ -3,7 +3,8 @@ import datetime
 from django.contrib.auth.models import User
 from django.db.models import Max, Prefetch
 from emr.models import ColonCancerScreening, ColonCancerStudy, RiskFactor, UserProfile, Problem, ToDo, Label, \
-	PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem, Observation
+	PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem, Observation, MedicationPinToProblem, \
+	Medication
 
 def age(when, on=None):
     if on is None:
@@ -117,4 +118,20 @@ def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_time
 						for observation in observations:
 							if not ObservationPinToProblem.objects.filter(problem=problem, observation=observation).exists():
 								p = ObservationPinToProblem(problem=problem, author=pin.author, observation=observation)
+								p.save()
+
+@cronjobs.register
+def physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_3_times():
+	# then that medication is added to all patients for that problem
+	pins = MedicationPinToProblem.objects.filter(author__role="physician")
+	for pin in pins:
+		if pin.medication.concept_id and pin.problem.concept_id:
+			if MedicationPinToProblem.objects.filter(author__role="physician", medication__concept_id=pin.medication.concept_id, problem__concept_id=pin.problem.concept_id).count() > 3:
+				problems = Problem.objects.filter(concept_id=pin.problem.concept_id)
+				for problem in problems:
+					if Medication.objects.filter(concept_id=pin.medication.concept_id, inr__patient=problem.patient).exists():
+						medications = Medication.objects.filter(concept_id=pin.medication.concept_id, inr__patient=problem.patient)
+						for medication in medications:
+							if not MedicationPinToProblem.objects.filter(problem=problem, medication=medication).exists():
+								p = MedicationPinToProblem(problem=problem, author=pin.author, medication=medication)
 								p.save()

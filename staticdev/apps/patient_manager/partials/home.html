@@ -112,6 +112,10 @@
         <div class="tab-content">
             <!-- Problems tab -->
             <div role="tabpanel" class="tab-pane tab-problems" ng-class="show_homepage_tab=='problems' ? 'active': ''">
+                <div class='row' ng-if="inr">
+                    <inr ng-model="inr"></inr>
+                </div>
+
                 <div class='row'>
                     <div class='col-md-12'>
                         <div class='panel panel-default'>

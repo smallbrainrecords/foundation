@@ -1220,6 +1220,18 @@
                     }
                 });
             };
+
+            /*
+             *   inr
+             */
+            $scope.inr = {};
+            patientService.getInr($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.inr = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
         });
     /* End of controller */
 
