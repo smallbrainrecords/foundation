@@ -6,7 +6,8 @@ from .models import UserProfile, AccessLog, Encounter, \
     ProblemSegment, Label, ToDoAttachment, ToDoComment, LabeledToDoList, \
     Country, State, City, TelecomSystem, Telecom, AddressType, AddressUse, Observation, \
     ObservationComponent, ObservationValue, ProblemLabel, SharingPatient, MaritalStatus, \
-    CommonProblem, ColonCancerScreening, RiskFactor, ObservationPinToProblem, MyStoryTab, MyStoryTextComponent
+    CommonProblem, ColonCancerScreening, RiskFactor, ObservationPinToProblem, MyStoryTab, MyStoryTextComponent, \
+    Medication
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -157,3 +158,4 @@ admin.site.register(RiskFactor)
 admin.site.register(ObservationPinToProblem)
 admin.site.register(MyStoryTab)
 admin.site.register(MyStoryTextComponent)
+admin.site.register(Medication)

@@ -404,6 +404,7 @@ class ToDo(models.Model):
     problem = models.ForeignKey(Problem, null=True, blank=True)
     a1c = models.ForeignKey("AOneC", null=True, blank=True, related_name="a1c_todos")
     colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos")
+    inr = models.ForeignKey("Inr", null=True, blank=True, related_name="inr_todos")
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
@@ -889,3 +890,51 @@ class MyStoryTextComponentEntry(models.Model):
 
     def __unicode__(self):
         return "%s" % (self.name)
+
+
+class Inr(models.Model):
+    patient = models.ForeignKey(User, related_name="patient_inr")
+    note = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_on']
+
+
+class InrValue(models.Model):
+    author = models.ForeignKey(UserProfile, related_name='author_inr_values')
+    inr = models.ForeignKey(Inr, related_name='inr_values')
+    value = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    effective_datetime = models.DateTimeField(null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-effective_datetime', '-created_on']
+
+
+class Medication(models.Model):
+    author = models.ForeignKey(UserProfile, related_name='author_medications')
+    inr = models.ForeignKey(Inr, related_name='inr_medications')
+    name = models.TextField(null=True, blank=True)
+    concept_id = models.CharField(max_length=20, blank=True, null=True)
+    current = models.BooleanField(default=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_on']
+
+
+class MedicationPinToProblem(models.Model):
+    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='author_pin_medications')
+    medication = models.ForeignKey(Medication, related_name='medication_pin_medications')
+    problem = models.ForeignKey(Problem, related_name='problem_pin_medications')
+
+
+class MedicationTextNote(models.Model):
+    medication = models.ForeignKey(Medication, related_name='medication_notes')
+    author = models.ForeignKey(UserProfile)
+    note = models.TextField()
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "%s" % (self.note)

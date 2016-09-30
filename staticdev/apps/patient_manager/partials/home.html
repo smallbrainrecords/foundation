@@ -1,6 +1,22 @@
 <toaster-container></toaster-container>
 <p style='padding-bottom:40px;'></p>
 
+<div class='panel panel-default' ng-if="active_user.role!='patient'">
+    <div class='panel-heading'>Note (office users only)</div>
+    <div class='panel-body'>
+        <div class='row'>
+
+            <div class='col-md-12'>
+                <textarea class='form-control' ng-model='patient_info.note'></textarea>
+                <br>
+                <button class='btn btn-default' ng-click='update_patient_note()'>
+                    Update
+                </button>
+            </div>
+        </div>
+    </div><!-- End of Panel Body -->
+</div>
+
 <!-- Facebook like cover & profile image -->
 <div class='panel panel-default profile-section'>
     <div class='panel-body'>
