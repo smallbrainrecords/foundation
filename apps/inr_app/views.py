@@ -35,7 +35,7 @@ def add_medication(request, patient_id, inr_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
-        Medication.objects.filter(inr_id=inr_id).update(current=False)
+        # Medication.objects.filter(inr_id=inr_id).update(current=False)
 
         medication = Medication()
         medication.author = request.user.profile
