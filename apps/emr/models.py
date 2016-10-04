@@ -388,16 +388,6 @@ class Label(models.Model):
         return '%s' % (unicode(self.name))
 
 
-class ToDoGroup(models.Model):
-    patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_group_patient")
-    name = models.TextField(null=True, blank=True)
-    order = models.BigIntegerField(null=True, blank=True)
-    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-
-    def __unicode__(self):
-        return '%s' % (unicode(self.name))
-
-
 class ToDo(models.Model):
     patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient")
     user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")
@@ -412,8 +402,6 @@ class ToDo(models.Model):
     order = models.BigIntegerField(null=True, blank=True)
     members = models.ManyToManyField(UserProfile, blank=True)
     labels = models.ManyToManyField(Label, blank=True)
-    group = models.ForeignKey(ToDoGroup, null=True, blank=True,on_delete=models.SET_NULL,related_name='items')
-    position = models.IntegerField(null=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     objects = TodoManager()

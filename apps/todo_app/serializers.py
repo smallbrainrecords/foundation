@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from emr.models import  ToDoGroup, ToDo, ToDoComment, Label, ToDoAttachment, TodoActivity, LabeledToDoList
+from emr.models import  ToDo, ToDoComment, Label, ToDoAttachment, TodoActivity, LabeledToDoList
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
@@ -75,8 +75,6 @@ class TodoSerializer(serializers.ModelSerializer):
             'comments',
             'attachments',
             'members',
-            'group',
-            'position',
             'created_on',
             )
 
@@ -85,17 +83,6 @@ class TodoSerializer(serializers.ModelSerializer):
         return ProblemSerializer(obj.problem).data
 
 
-class TodoGroupSerializer(serializers.ModelSerializer):
-    items = TodoSerializer(many=True)
-    class Meta:
-        model = ToDoGroup
-
-        fields = (
-            'id',
-            'patient',
-            'name',
-            'items'
-        )
 
 class ToDoCommentSerializer(serializers.ModelSerializer):
 

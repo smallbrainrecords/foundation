@@ -34,9 +34,5 @@ urlpatterns = patterns('todo_app.views',
     url(r'^todo/(?P<list_id>\d+)/deleteTodoList$', 'delete_todo_list'),
     url(r'^todo/(?P<list_id>\d+)/open_todo_list$', 'open_todo_list'),
 
-    url(r'^patient/(?P<patient_id>\d+)/todogroup/create_todo_group','create_todo_group'),
-    # It's could be update group name, group order
-    url(r'^todoGroup/(?P<todo_group_id>\d+)/update_todo_group','update_todo_group'),
-    url(r'^todoGroup/(?P<todo_group_id>\d+)/delete','remove_todo_group'),
-    url(r'^todo/updateGroup','update_group')
+
 )

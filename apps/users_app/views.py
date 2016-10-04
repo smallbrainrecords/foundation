@@ -11,7 +11,7 @@ from django.db.models import Q
 from common.views import *
 # from django.shortcuts import render
 from emr.models import UserProfile, Problem
-from emr.models import Goal, ToDo, ToDoGroup
+from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
 
 from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
@@ -22,7 +22,7 @@ from emr.models import MyStoryTab, MyStoryTextComponent
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
 from .serializers import UserProfileSerializer
-from todo_app.serializers import TodoSerializer, TodoGroupSerializer
+from todo_app.serializers import TodoSerializer
 from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
 
 from .forms import LoginForm, RegisterForm, UpdateBasicProfileForm, UpdateProfileForm, UpdateEmailForm
@@ -206,6 +206,7 @@ def manage_patient(request, user_id):
 # TODO: Clean up later
 @login_required
 def get_patient_info(request, patient_id):
+
     patient_user = User.objects.get(id=patient_id)
     patient_profile = UserProfile.objects.get(user=patient_user)
 
@@ -247,9 +248,7 @@ def get_patient_info(request, patient_id):
 
         for problem in problem_list:
             todo = ToDo.objects.filter(problem__id=problem['id'], accomplished=False).count()
-            event = ProblemActivity.objects.filter(problem__id=problem['id'],
-                                                   created_on__gte=datetime.datetime.now() - datetime.timedelta(
-                                                       days=30)).count()
+            event = ProblemActivity.objects.filter(problem__id=problem['id'], created_on__gte=datetime.datetime.now()-datetime.timedelta(days=30)).count()
             if todo == 0 and event == 0:
                 problem['multiply'] = 0
             elif todo == 0 or event == 0:
@@ -274,8 +273,7 @@ def get_patient_info(request, patient_id):
     related_problem_holder = []
     encounter = Encounter.objects.filter(patient=patient_user).order_by("-starttime").first()
     if encounter:
-        most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user,
-                                                                     encounter=encounter)
+        most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user, encounter=encounter)
 
         for event in most_recent_encounter_events:
             if not "Started encounter by" in event.summary and not "Stopped encounter by" in event.summary:
@@ -289,21 +287,20 @@ def get_patient_info(request, patient_id):
         related_problem_holder = ProblemSerializer(related_problems, many=True).data
 
     # sharing system
-    shared_patients = SharingPatient.objects.filter(sharing=patient_user).order_by('shared__first_name',
-                                                                                   'shared__last_name')
+    shared_patients = SharingPatient.objects.filter(sharing=patient_user).order_by('shared__first_name', 'shared__last_name')
     patients_list = []
     for shared_patient in shared_patients:
         user_dict = UserProfileSerializer(shared_patient.shared.profile).data
         patients_list.append(user_dict)
 
-    sharing_patients = SharingPatient.objects.filter(shared=patient_user).order_by('sharing__first_name',
-                                                                                   'sharing__last_name')
+    sharing_patients = SharingPatient.objects.filter(shared=patient_user).order_by('sharing__first_name', 'sharing__last_name')
     sharing_patients_list = []
     for sharing_patient in sharing_patients:
         user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
         user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
         user_dict['is_my_story_shared'] = sharing_patient.is_my_story_shared
         sharing_patients_list.append(user_dict)
+
 
     # common problems
     acutes = CommonProblem.objects.filter(author=request.user, problem_type="acute")
@@ -337,17 +334,10 @@ def get_timeline_info(request, patient_id):
 
 @login_required
 def get_patient_todos_info(request, patient_id):
-    # TODO: Grouped by group id
-    groups = ToDoGroup.objects.filter(patient_id=patient_id).order_by("order")
-    ungrouped= ToDo.objects.filter(patient_id=patient_id).filter(group_id=None).order_by("order")
-    ungroup_todos = [todo for todo in ungrouped if todo.accomplished is False]
     todos = ToDo.objects.filter(patient_id=patient_id).order_by("order")
-
     pending_todos = [todo for todo in todos if todo.accomplished is False]
     accomplished_todos = [todo for todo in todos if todo.accomplished is True]
     resp = {}
-    resp['groups'] = TodoGroupSerializer(groups, many=True).data + TodoSerializer(ungroup_todos, many=True).data
-
     resp['pending_todos'] = TodoSerializer(pending_todos, many=True).data
     resp['accomplished_todos'] = TodoSerializer(accomplished_todos, many=True).data
     resp['problem_todos'] = TodoSerializer(todos, many=True).data
@@ -559,6 +549,7 @@ def get_patients_list(request):
         patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
         patients = UserProfile.objects.filter(user__id__in=patient_ids)
+
 
     patients_list = UserProfileSerializer(patients, many=True).data
     for patient in patients_list:
