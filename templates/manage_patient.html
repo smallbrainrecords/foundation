@@ -3,8 +3,8 @@
 {% block patient_header%}
 <li>
     <a href="#/" class="headerWrap">
-        <span class="float-right">{{patient.get_full_name}}</span>
-        <img ng-src="patient.portrait_image" alt="" class="profileThumb float-left">
+        <span class="float-right">{{patient.get_full_name}}({{ patient_profile.date_of_birth }})</span>
+        <img src="{{ patient_profile.portrait_image.url }}" alt="" class="profileThumb float-left">
     </a>
 </li>
 {% endblock %}
@@ -89,8 +89,6 @@
 
 
     {% verbatim %}
-
-
     <div id='encounter-bar' class='bottom-bar'
          ng-controller='EncountersMainCtrl'
          ng-show='show_encounter_ui==true'>
