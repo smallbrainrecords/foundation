@@ -11,7 +11,7 @@
     }
 
     #problem-header.affix {
-        top: 0;
+        top: 50px;
     }
 
     .problem-controlled {
@@ -24,13 +24,6 @@
         color: white;
     }
 </style>
-<div class="stickyHeaderWrap clearfix">
-    <a href='#/'>
-        <img ng-src="patient_info.portrait_image" alt="" class="profileThumb">
-        <button class="name">{{patient_info.user.first_name}} {{patient_info.user.last_name}}</button>
-    </a>
-</div>
-
 <div ng-if="!checkSharedProblem(problem, sharing_patients) && !loading">You can not access this page</div>
 <div ng-if="checkSharedProblem(problem, sharing_patients)">
 

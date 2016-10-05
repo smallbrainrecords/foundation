@@ -133,6 +133,9 @@
 
 
                 {% if user.is_authenticated %}
+                {% block patient_header%}
+
+                {% endblock %}
 
                 <li><a href="/u/home"> Home </a></li>
                 <li><a href="/logout">Logout</a></li>

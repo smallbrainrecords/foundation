@@ -157,18 +157,20 @@ body {
 .no-padding {
   padding: 0 !important; }
 
-.stickyHeaderWrap {
+.headerWrap {
   padding: 10px 15px;
   display: block; }
-  .stickyHeaderWrap a {
+  .headerWrap a {
     color: #000;
     cursor: pointer;
     font-weight: 700; }
-  .stickyHeaderWrap .profileThumb {
-    display: block;
-    float: left;
-    height: 32px;
-    width: 32px;
-    margin-right: 10px; }
+  .headerWrap span {
+    padding-left: 10px; }
+  .headerWrap .profileThumb {
+    border-radius: 2px;
+    height: 24px;
+    margin: 2px -2px 0 -8px;
+    vertical-align: inherit;
+    width: 24px; }
 
 /*# sourceMappingURL=patient-profile.css.map */

@@ -241,7 +241,7 @@ body {
 }
 
 //Problem details stylesheet
-.stickyHeaderWrap {
+.headerWrap {
   padding: 10px 15px;
   display: block;
   a {
@@ -249,12 +249,15 @@ body {
     cursor: pointer;
     font-weight: 700;
   }
+  span{
+    padding-left: 10px;
+  }
   .profileThumb {
-    display: block;
-    float: left;
-    height: 32px;
-    width: 32px;
-    margin-right: 10px;
+    border-radius: 2px;
+    height: 24px;
+    margin: 2px -2px 0 -8px;
+    vertical-align: inherit;
+    width: 24px;
   }
 
 }
