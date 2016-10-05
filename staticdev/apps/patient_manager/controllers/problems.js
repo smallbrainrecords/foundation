@@ -73,6 +73,10 @@
                 $scope.problem_labels = data['labels'];
             });
 
+            patientService.fetchPatientInfo(patient_id).then(function (data) {
+                $scope.patient_info = data['info'];
+            });
+
             problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
                 $scope.pins = data['pins'];
                 $scope.problem_pins = data['problem_pins'];

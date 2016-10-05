@@ -1,3 +1,6 @@
+body {
+  padding-top: 70px; }
+
 .profile-section {
   position: relative;
   width: 851px;
@@ -154,22 +157,18 @@
 .no-padding {
   padding: 0 !important; }
 
-.apps-container {
-  padding-bottom: 20px;
-  padding-left: 0; }
-
-.app {
-  padding: 5px 10px;
-  margin: 5px 0;
-  border: 2px solid #444;
-  border-radius: 5px;
-  background-color: #EA8A8A;
-  font-size: 1.1em;
-  font-weight: bold;
-  text-align: center;
-  cursor: move; }
-
-tg-dynamic-directive {
+.stickyHeaderWrap {
+  padding: 10px 15px;
   display: block; }
+  .stickyHeaderWrap a {
+    color: #000;
+    cursor: pointer;
+    font-weight: 700; }
+  .stickyHeaderWrap .profileThumb {
+    display: block;
+    float: left;
+    height: 32px;
+    width: 32px;
+    margin-right: 10px; }
 
 /*# sourceMappingURL=patient-profile.css.map */
