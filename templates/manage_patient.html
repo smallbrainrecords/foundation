@@ -3,7 +3,7 @@
 {% block patient_header%}
 <li>
     <a href="#/" class="headerWrap">
-        <span class="float-right">{{patient.get_full_name}}({{ patient_profile.date_of_birth }})</span>
+        <span class="float-right">{{patient.get_full_name}}({{ patient_profile.date_of_birth  |date:"m/d/Y"}})</span>
         <img src="{{ patient_profile.portrait_image.url }}" alt="" class="profileThumb float-left">
     </a>
 </li>
