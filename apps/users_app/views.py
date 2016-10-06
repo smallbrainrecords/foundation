@@ -178,7 +178,10 @@ def home(request):
 # Users
 @login_required
 def manage_patient(request, user_id):
-    user = User.objects.get(id=user_id)
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return HttpResponse('Something went wrong !')
     actor_profile = UserProfile.objects.get(user=request.user)
     patient_profile = UserProfile.objects.get(user=user)
 

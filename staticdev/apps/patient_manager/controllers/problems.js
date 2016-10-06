@@ -5,7 +5,8 @@
 
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService,
-                                              $filter, ngDialog, toaster, todoService, prompt, $cookies, $location, dataService) {
+                                              $filter, ngDialog, toaster, todoService, prompt, $cookies, $location, 
+                                              dataService, inrService) {
 
 
             var patient_id = $('#patient_id').val();
@@ -1049,6 +1050,62 @@
                 dataService.dataPinToProblem($scope.patient_id, form).then(function (data) {
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Pinned data!');
+                    } else if (data['success'] == false) {
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            };
+
+            /*
+            *   medication
+            */
+            $scope.inr = {};
+            patientService.getInr($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.inr = data['info'];
+
+                    problemService.fetchMedicationPinToProblem($scope.problem_id).then(function (data) {
+                        $scope.medication_pins = data['pins'];
+
+                        angular.forEach($scope.inr.inr_medications, function (medication, key) {
+                            var is_pin = false;
+                            angular.forEach($scope.medication_pins, function (pin, key) {
+                                if (medication.id == pin.medication.id) {
+                                    is_pin = true;
+                                    medication.pin_author = pin.author.id;
+                                }
+                            });
+                            medication.pin = is_pin;
+                        });
+                    });
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
+            $scope.open_medication = function(medication) {
+                $location.url('/inr/medication/' + medication.id);
+            };
+
+            $scope.change_pinned_medication = false;
+            $scope.open_change_medication = function () {
+                $scope.change_pinned_medication = true;
+            };
+
+            $scope.close_change_medication = function () {
+                $scope.change_pinned_medication = false;
+            };
+
+            $scope.medication_pin_to_problem = function (medication, problem_id) {
+                var form = {};
+                form.medication_id = medication.id;
+                form.problem_id = problem_id;
+
+                inrService.medicationPinToProblem($scope.patient_id, form).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', 'Done', 'Pinned problem!');
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
                     } else {

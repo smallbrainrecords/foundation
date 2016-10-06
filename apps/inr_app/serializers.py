@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from emr.models import Inr, InrValue, Medication, MedicationTextNote
+from emr.models import Inr, InrValue, Medication, MedicationTextNote, MedicationPinToProblem
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
@@ -69,4 +69,18 @@ class InrSerializer(serializers.ModelSerializer):
             'created_on',
             'inr_values',
             'inr_medications',
+            )
+
+
+class MedicationPinToProblemSerializer(serializers.ModelSerializer):
+    author = UserProfileSerializer()
+    medication = MedicationSerializer()
+
+    class Meta:
+        model = MedicationPinToProblem
+        fields = (
+            'id',
+            'author',
+            'medication',
+            'problem',
             )

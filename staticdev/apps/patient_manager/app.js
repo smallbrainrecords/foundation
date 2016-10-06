@@ -119,6 +119,10 @@
             .when('/data/:data_id/settings', {
                 templateUrl: '/static/apps/patient_manager/partials/data/settings.html',
                 controller: 'DataSettingsCtrl'
+            })
+            .when('/inr/medication/:medication_id', {
+                templateUrl: '/static/apps/patient_manager/partials/inr/medication.html',
+                controller: 'MedicationCtrl'
             });
 
     });

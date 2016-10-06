@@ -6,8 +6,8 @@ from django.db.models import Q
 from common.views import *
 from rest_framework.decorators import api_view
 
-from emr.models import Inr, InrValue, Medication, MedicationTextNote, PatientController, UserProfile
-from .serializers import MedicationTextNoteSerializer, MedicationSerializer, InrValueSerializer, InrSerializer
+from emr.models import Inr, InrValue, Medication, MedicationTextNote, PatientController, UserProfile, MedicationPinToProblem
+from .serializers import MedicationTextNoteSerializer, MedicationSerializer, InrValueSerializer, InrSerializer, MedicationPinToProblemSerializer
 from emr.operations import op_add_event
 
 from users_app.serializers import UserProfileSerializer
@@ -27,6 +27,21 @@ def get_inr(request, patient_id):
             
         resp['success'] = True
         resp['info'] = InrSerializer(inr).data
+    return ajax_response(resp)
+
+@login_required
+def get_medication(request, patient_id, medication_id):
+    resp = {}
+    resp['success'] = False
+    
+    if permissions_accessed(request.user, int(patient_id)):
+        try:
+            medication = Medication.objects.get(id=medication_id)
+        except Medication.DoesNotExist:
+            pass
+            
+        resp['success'] = True
+        resp['info'] = MedicationSerializer(medication).data
     return ajax_response(resp)
 
 @login_required
@@ -84,4 +99,35 @@ def delete_note(request, note_id):
     MedicationTextNote.objects.get(id=note_id).delete()
     resp = {}
     resp['success'] = True
+    return ajax_response(resp)
+
+@login_required
+def get_pins(request, medication_id):
+    pins = MedicationPinToProblem.objects.filter(medication_id=medication_id)
+    resp = {}
+    resp['success'] = True
+    resp['pins'] = MedicationPinToProblemSerializer(pins, many=True).data
+    return ajax_response(resp)
+
+
+@login_required
+@api_view(["POST"])
+def pin_to_problem(request, patient_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        medication_id = request.POST.get("medication_id", None)
+        problem_id = request.POST.get("problem_id", None)
+
+        try:
+            pin = MedicationPinToProblem.objects.get(medication_id=medication_id, problem_id=problem_id)
+            pin.delete();
+        except MedicationPinToProblem.DoesNotExist:
+            pin = MedicationPinToProblem(author=request.user.profile, medication_id=medication_id,
+                                          problem_id=problem_id)
+            pin.save()
+
+        resp['pin'] = MedicationPinToProblemSerializer(pin).data
+        resp['success'] = True
+
     return ajax_response(resp)

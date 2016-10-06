@@ -22,6 +22,7 @@ from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProbl
 from emr.models import EncounterProblemRecord, Encounter
 from emr.models import Observation, SharingPatient, PhysicianTeam, ObservationComponent, AOneC, ObservationPinToProblem
 from emr.models import ColonCancerScreening
+from emr.models import Medication, MedicationPinToProblem
 
 from emr.operations import op_add_event, op_add_todo_event
 
@@ -40,6 +41,7 @@ from todo_app.operations import add_todo_activity
 from a1c_app.serializers import AOneCSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
 from data_app.serializers import ObservationPinToProblemSerializer, ObservationSerializer
+from inr_app.serializers import MedicationSerializer, MedicationPinToProblemSerializer
 
 
 @login_required
@@ -957,11 +959,19 @@ def remove_common_problem(request, problem_id):
     return ajax_response(resp)
 
 @login_required
-def get_pins(request, problem_id):
+def get_data_pins(request, problem_id):
     pins = ObservationPinToProblem.objects.filter(problem_id=problem_id)
     observations = [x.observation for x in pins]
     resp = {}
     resp['success'] = True
     resp['pins'] = ObservationSerializer(observations, many=True).data
     resp['problem_pins'] = ObservationPinToProblemSerializer(pins, many=True).data
+    return ajax_response(resp)
+
+@login_required
+def get_medication_pins(request, problem_id):
+    pins = MedicationPinToProblem.objects.filter(problem_id=problem_id)
+    resp = {}
+    resp['success'] = True
+    resp['pins'] = MedicationPinToProblemSerializer(pins, many=True).data
     return ajax_response(resp)

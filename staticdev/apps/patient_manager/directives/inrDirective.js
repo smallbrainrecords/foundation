@@ -37,69 +37,9 @@ function inrDirective(CollapseService, toaster, $location, $timeout, prompt, inr
                                 });
                             };
 
-                            scope.dosage_increase = function(medication) {
-                                if (medication.concept_id == null) {
-                                    prompt({
-                                        "message": "This is largest dosage form"
-                                    }).then(function(result){
-                                        return false;
-                                    },function(){
-                                        return false;
-                                    });
-                                }
+                            scope.open_medication = function(medication) {
+                                $location.url('/inr/medication/' + medication.id);
                             };
-
-                            scope.dosage_decrease = function(medication) {
-                                if (medication.concept_id == null) {
-                                    prompt({
-                                        "message": "This is smallest dosage form"
-                                    }).then(function(result){
-                                        return false;
-                                    },function(){
-                                        return false;
-                                    });
-                                }
-                            };
-
-                            scope.see_medication_history = function(medication) {
-                                medication.show_medication_history = !medication.show_medication_history;
-                            };
-
-                            scope.add_note = function(form, medication) {
-                                if (form.note == '') return;
-                                form.medication_id = medication.id;
-                                form.patient_id = scope.patient_id;
-                                inrService.addMedicationNote(form).then(function(data) {
-                                    medication.medication_notes.push(data['note']);
-                                    toaster.pop('success', 'Done', 'Added note!');
-                                });
-                            };
-
-                            scope.edit_note = function(note) {
-                                note.show_edit_note = !note.show_edit_note;
-                            };
-
-                            scope.save_note = function(note) {
-                                inrService.editNote(note).then(function(data) {
-                                    note.show_edit_note = false;
-                                    toaster.pop('success', 'Done', 'Edited note successfully');
-                                });
-                            };
-
-                            scope.delete_note = function(note, medication) {
-                                prompt({
-                                    "title": "Are you sure?",
-                                    "message": "Deleting a note is forever. There is no undo."
-                                }).then(function(result){
-                                    inrService.deleteNote(note).then(function(data){
-                                        var index = medication.medication_notes.indexOf(note);
-                                        medication.medication_notes.splice(index, 1);
-                                        toaster.pop('success', 'Done', 'Deleted note successfully');
-                                    });
-                                },function(){
-                                    return false;
-                                });
-                            }
                         }
                     }, true);
                 }

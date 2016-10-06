@@ -46,68 +46,23 @@
 
 									<div class="row">
 										<div class='col-md-12'>
-											<div>
-	                                            <div class="io-box" style='margin-bottom: 40px;' 
-	                                            	ng-repeat='medication in inr.inr_medications'
-	                                            	ng-init='medication.show_medication_history=false;'
-	                                            	ng-show='medication.current'>
-                                                    {{ medication.name }}
-
-                                                    <button class="btn btn-default" ng-click="dosage_increase(medication);">increase</button>
-                                                    <button class="btn btn-default" ng-click="dosage_decrease(medication);">decrease</button>
-                                                    <button class="btn btn-default" ng-click="see_medication_history(medication);">see medication history</button>
-
-                                                    <div class="row" 
-                                                    	ng-show="medication.show_medication_history">
-														<div class='col-md-6'>
-															<h3>history of dosages</h3>
-														</div>
-														<div class='col-md-6'>
-															<h3>notes</h3>
-															<p ng-repeat="note in medication.medication_notes"
-																ng-init="note.show_edit_note=false;">
-																<span ng-show="!note.show_edit_note">
-																	{{ note.note }}
-																	<button class="btn btn-default" ng-click="edit_note(note);">edit</button>
-																	<button class="btn btn-default" ng-click="delete_note(note, medication);">delete</button>
-																</span>
-																<span ng-show="note.show_edit_note">
-																	<input type='text' class='form-control' ng-model='note.note'>
-																	<button class="btn btn-default" ng-click="save_note(note);">save</button>
-																	<button class="btn btn-default" ng-click="edit_note(note);">Cancel</button>
-																</span>
-															</p>
-														</div>
-													</div>
-
-													<div class="row">
-														<div class='col-md-12'>
-															<form ng-if="medication.medication_notes.length > 0">
-																<div ng-repeat="note in medication.medication_notes" ng-if="$last">
-																	<div class='form-group'>
-																		<label> Note </label>
-																		<textarea class='form-control' 
-																			ng-model='note.note'></textarea>
-																		<p>Last edited by: {{ note.author.user.username }} on {{ note.datetime|date:'M/d/yyyy' }}</p>
-																	</div>
-																	<div class='form-group'>
-																		<input type='submit' value='Save' class='btn btn-default' ng-click="add_note(note, medication);">
-																	</div>
-																</div>
-															</form>
-															<form ng-if="medication.medication_notes.length == 0">
-																<div class='form-group'>
-																	<label> Note </label>
-																	<textarea class='form-control' ng-model='new_note.note'></textarea>
-																</div>
-																<div class='form-group'>
-																	<input type='submit' value='Add' class='btn btn-default' ng-click="add_note(new_note, medication);">
-																</div>
-															</form>
-													 	</div>
-	                                        		</div>
-	                                            </div>
-	                                        </div>
+	                                        <table class="table table-striped">
+	                                        	<thead>
+                                        			<th>Dosage</th>
+                                        			<th>Note</th>
+	                                        	</thead>
+	                                        	<tbody>
+	                                        		<tr ng-repeat='medication in inr.inr_medications' 
+	                                        			ng-show='medication.current'>
+	                                        			<td>
+	                                        				<span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                        				</td>
+	                                        			<td>
+	                                        				<span ng-repeat="note in medication.medication_notes" ng-if="$last">{{ note.note }}</span>
+	                                        			</td>
+	                                        		</tr>
+	                                        	</tbody>
+	                                        </table>
 				                		</div>
 				                	</div>
 
@@ -120,68 +75,23 @@
 
 	                                <div class="row" ng-show="show_inactive_medications">
 										<div class='col-md-12'>
-											<div>
-	                                            <div class="io-box" style='margin-bottom: 40px;' 
-	                                            	ng-repeat='medication in inr.inr_medications'
-	                                            	ng-init='medication.show_medication_history=false;'
-	                                            	ng-show='medication.current==false'>
-                                                    {{ medication.name }}
-
-                                                    <button class="btn btn-default" ng-click="dosage_increase(medication);">increase</button>
-                                                    <button class="btn btn-default" ng-click="dosage_decrease(medication);">decrease</button>
-                                                    <button class="btn btn-default" ng-click="see_medication_history(medication);">see medication history</button>
-
-                                                    <div class="row" 
-                                                    	ng-show="medication.show_medication_history">
-														<div class='col-md-6'>
-															<h3>history of dosages</h3>
-														</div>
-														<div class='col-md-6'>
-															<h3>notes</h3>
-															<p ng-repeat="note in medication.medication_notes"
-																ng-init="note.show_edit_note=false;">
-																<span ng-show="!note.show_edit_note">
-																	{{ note.note }}
-																	<button class="btn btn-default" ng-click="edit_note(note);">edit</button>
-																	<button class="btn btn-default" ng-click="delete_note(note, medication);">delete</button>
-																</span>
-																<span ng-show="note.show_edit_note">
-																	<input type='text' class='form-control' ng-model='note.note'>
-																	<button class="btn btn-default" ng-click="save_note(note);">save</button>
-																	<button class="btn btn-default" ng-click="edit_note(note);">Cancel</button>
-																</span>
-															</p>
-														</div>
-													</div>
-
-													<div class="row">
-														<div class='col-md-12'>
-															<form ng-if="medication.medication_notes.length > 0">
-																<div ng-repeat="note in medication.medication_notes" ng-if="$last">
-																	<div class='form-group'>
-																		<label> Note </label>
-																		<textarea class='form-control' 
-																			ng-model='note.note'></textarea>
-																		<p>Last edited by: {{ note.author.user.username }} on {{ note.datetime|date:'M/d/yyyy' }}</p>
-																	</div>
-																	<div class='form-group'>
-																		<input type='submit' value='Save' class='btn btn-default' ng-click="add_note(note, medication);">
-																	</div>
-																</div>
-															</form>
-															<form ng-if="medication.medication_notes.length == 0">
-																<div class='form-group'>
-																	<label> Note </label>
-																	<textarea class='form-control' ng-model='new_note.note'></textarea>
-																</div>
-																<div class='form-group'>
-																	<input type='submit' value='Add' class='btn btn-default' ng-click="add_note(new_note, medication);">
-																</div>
-															</form>
-													 	</div>
-	                                        		</div>
-	                                            </div>
-	                                        </div>
+											<table class="table table-striped">
+	                                        	<thead>
+                                        			<th>Dosage</th>
+                                        			<th>Note</th>
+	                                        	</thead>
+	                                        	<tbody>
+	                                        		<tr ng-repeat='medication in inr.inr_medications' 
+	                                        			ng-show='!medication.current'>
+	                                        			<td>
+	                                        				<span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                        				</td>
+	                                        			<td>
+	                                        				<span ng-repeat="note in medication.medication_notes" ng-if="$last">{{ note.note }}</span>
+	                                        			</td>
+	                                        		</tr>
+	                                        	</tbody>
+	                                        </table>
 				                		</div>
 				                	</div>
 

@@ -208,7 +208,14 @@
 		};
 
 		this.fetchPinToProblem = function(problem_id){
-			var url = "/p/problem/"+problem_id+"/get_pins";
+			var url = "/p/problem/"+problem_id+"/get_data_pins";
+			var params = {};
+
+			return httpService.get(params, url);
+		};
+
+		this.fetchMedicationPinToProblem = function(problem_id){
+			var url = "/p/problem/"+problem_id+"/get_medication_pins";
 			var params = {};
 
 			return httpService.get(params, url);

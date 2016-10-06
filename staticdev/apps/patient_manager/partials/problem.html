@@ -108,6 +108,7 @@
                            ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'"><i
                                 class="fa fa-tags"></i>Create problems list</a>
                         <a href ng-click="open_change_data();"><i class="fa fa-tags"></i>Change Data</a>
+                        <a href ng-click="open_change_medication();"><i class="fa fa-tags"></i>Change Medication</a>
                     </div>
                     <!-- end buttons -->
                     <!-- begin change label -->
@@ -199,6 +200,21 @@
                         </p>
                     </div>
                     <!-- end change data -->
+                    <!-- begin change medication -->
+                    <div ng-if="change_pinned_medication" class="quick-card-editor-lv2" style="color: black;">
+                        <div class="quick-card-editor-lv2-header">
+                            <a href ng-click="close_change_medication(); $event.stopPropagation();"><i
+                                    class="fa fa-close"></i></a>
+                        </div>
+                        <p ng-repeat="medication in inr.inr_medications">
+                            <input type="checkbox"
+                                   ng-model="medication.pin"
+                                   ng-change="medication_pin_to_problem(medication, problem.id);"
+                                   ng-disabled="active_user.role == 'patient' && (active_user.id != medication.pin_author || medication.pin_author != null)">
+                            {{ medication.name }}
+                        </p>
+                    </div>
+                    <!-- end change medication -->
                 </div>
             </div>
             <!-- end change item -->
@@ -329,6 +345,62 @@
                         </div>
                     </li>
                 </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class='panel panel-default'>
+        <div class='panel-heading'> Medications </div>
+        <div class='panel-body'>
+            <div class="row">
+                <div class='col-md-12'>
+                    <table class="table table-striped">
+                        <thead>
+                            <th>Medication</th>
+                            <th>Note</th>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat='medication in inr.inr_medications' 
+                                ng-show='medication.current && medication.pin'>
+                                <td>
+                                    <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                </td>
+                                <td>
+                                    <span ng-repeat="note in medication.medication_notes" ng-if="$last">{{ note.note }}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <hr ng-init="show_inactive_medications=false;">
+            <a class='btn btn-default btn-md' ng-click='show_inactive_medications=!show_inactive_medications;'>
+                <span ng-if='show_inactive_medications==false'>Show inactive medications </span>
+                <span ng-if='show_inactive_medications==true'>Hide inactive medications </span>
+            </a>
+            <hr>
+
+            <div class="row" ng-show="show_inactive_medications">
+                <div class='col-md-12'>
+                    <table class="table table-striped">
+                        <thead>
+                            <th>Medication</th>
+                            <th>Note</th>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat='medication in inr.inr_medications' 
+                                ng-show='!medication.current && medication.pin'>
+                                <td>
+                                    <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                </td>
+                                <td>
+                                    <span ng-repeat="note in medication.medication_notes" ng-if="$last">{{ note.note }}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
