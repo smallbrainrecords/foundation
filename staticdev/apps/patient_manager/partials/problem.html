@@ -24,6 +24,8 @@
         color: white;
     }
 </style>
+<a href='#/'><b> Manage Patient </b></a>
+
 <div ng-if="!checkSharedProblem(problem, sharing_patients) && !loading">You can not access this page</div>
 <div ng-if="checkSharedProblem(problem, sharing_patients)">
 
@@ -468,7 +470,7 @@
 
     <div class='panel panel-default'>
 
-        <div class='panel-heading'> Goals and Todos</div>
+        <div class='panel-heading'> Goals</div>
 
 
         <div class='panel-body'>
@@ -476,7 +478,7 @@
 
             <div class='row'>
 
-                <div class='col-md-6'>
+                <div class='col-md-12'>
 
                     <b> Goals </b>
 
@@ -525,8 +527,25 @@
 
 
                 </div>
+            </div>
 
-                <div class='col-md-6'>
+
+        </div>
+
+
+    </div>
+
+    <div class='panel panel-default'>
+
+        <div class='panel-heading'> Todos</div>
+
+
+        <div class='panel-body'>
+
+
+            <div class='row'>
+
+                <div class='col-md-12'>
 
                     <b> Todo </b>
                     <hr>

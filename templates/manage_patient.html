@@ -4,7 +4,9 @@
 <li>
     <a href="#/" class="headerWrap">
         <span class="float-right">{{patient.get_full_name}} {{ patient_profile.date_of_birth  |date:"m/d/Y"}}</span>
+        {% if patient_profile.portrait_image %}
         <img src="{{ patient_profile.portrait_image.url }}" alt="" class="profileThumb float-left">
+        {% endif %}
     </a>
 </li>
 {% endblock %}

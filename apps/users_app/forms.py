@@ -29,7 +29,7 @@ class UpdateBasicProfileForm(forms.Form):
 
 class UpdateProfileForm(forms.Form):
     user_id = forms.IntegerField(required=True)
-    phone_number = forms.CharField(max_length=255, required=True)
+    phone_number = forms.CharField(max_length=255, required=False)
     sex = forms.ChoiceField(choices=SEX_CHOICES, required=True)
     summary = forms.CharField(required=False)
     cover_image = forms.ImageField(required=False)

@@ -616,7 +616,7 @@
             };
 
             $scope.checkSharedProblem = function (problem, sharing_patients) {
-                if ($scope.patient_id == $scope.user_id || $scope.active_user.role == 'physician' || $scope.active_user.role == 'mid-level') {
+                if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
                     return true;
                 } else {
                     var is_existed = false;
@@ -1067,6 +1067,10 @@
                                 
                                 if (data.name == 'blood pressure') {
                                     data.ph = 'BP'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                if (data.name == 'heart rate') {
+                                    data.ph = 'pulse'
                                     $scope.mostCommonData.push(data);
                                 }
                                 angular.forEach(data.observation_components, function (component, component_key) {
