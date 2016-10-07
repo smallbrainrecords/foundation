@@ -76,6 +76,7 @@
 
             patientService.fetchPatientInfo(patient_id).then(function (data) {
                 $scope.patient_info = data['info'];
+
             });
 
             problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
@@ -275,7 +276,10 @@
                 $scope.physician_notes = data['physician_notes'];
 
                 $scope.problem_goals = data['problem_goals'];
+                $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'],'accomplished');
                 $scope.problem_todos = data['problem_todos'];
+                $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'],'accomplished');
+
                 $scope.todos_ready = true;
 
                 $scope.problem_images = data['problem_images'];
