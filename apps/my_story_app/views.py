@@ -36,9 +36,38 @@ def get_my_story(request, patient_id):
     resp['success'] = False
     
     if permissions_accessed(request.user, int(patient_id)):
-        tabs = MyStoryTab.objects.filter(patient_id=int(patient_id))
+        tabs = MyStoryTab.objects.filter(Q(patient_id=int(patient_id)) | Q(is_all=True))
+
+        exclude_tabs = []
+        for tab in tabs:
+            if tab.author.profile.role == 'physician' and tab.is_all:
+                patient_controllers = PatientController.objects.filter(physician=tab.author)
+                patient_ids = [x.patient.id for x in patient_controllers]
+
+                if not int(patient_id) in patient_ids:
+                    exclude_tabs.append(tab.id)
+
+        tabs = tabs.exclude(id__in=exclude_tabs)
+
         resp['success'] = True
-        resp['info'] = MyStoryTabSerializer(tabs, many=True).data
+        tabs_serializer = MyStoryTabSerializer(tabs, many=True).data
+
+        for tab in tabs_serializer:
+            components = MyStoryTextComponent.objects.filter(tab_id=tab["id"]).filter(Q(patient_id=int(patient_id)) | Q(is_all=True))
+            exclude_components = []
+            for component in components:
+                if component.author.profile.role == 'physician' and component.is_all:
+                    patient_controllers = PatientController.objects.filter(physician=component.author)
+                    patient_ids = [x.patient.id for x in patient_controllers]
+
+                    if not int(patient_id) in patient_ids:
+                        exclude_components.append(component.id)
+
+            components = components.exclude(id__in=exclude_components)
+
+            tab["my_story_tab_components"] = MyStoryTextComponentSerializer(components, many=True).data
+
+        resp['info'] = tabs_serializer
     return ajax_response(resp)
 
 @login_required
@@ -68,26 +97,26 @@ def add_tab(request, patient_id):
         tab.private = private
         if all_patients:
             tab.is_all = True
-            tab.tab_all = tab.id
+            # tab.tab_all = tab.id
         tab.save()
 
-        if all_patients:
-            user_profile = UserProfile.objects.get(user=request.user)
-            if user_profile.role == 'admin':
-                patients = UserProfile.objects.filter(role='patient')
+        # if all_patients:
+        #     user_profile = UserProfile.objects.get(user=request.user)
+        #     if user_profile.role == 'admin':
+        #         patients = UserProfile.objects.filter(role='patient')
 
-            elif user_profile.role == 'physician':
-                patient_controllers = PatientController.objects.filter(physician=request.user)
-                patient_ids = [x.patient.id for x in patient_controllers]
-                patients = UserProfile.objects.filter(user__id__in=patient_ids)
+        #     elif user_profile.role == 'physician':
+        #         patient_controllers = PatientController.objects.filter(physician=request.user)
+        #         patient_ids = [x.patient.id for x in patient_controllers]
+        #         patients = UserProfile.objects.filter(user__id__in=patient_ids)
 
-            for patient in patients:
-                if not int(patient_id) == patient.user.id:
-                    patient_tab = MyStoryTab.objects.create(patient=patient.user,
-                                                author=request.user,
-                                                name=request.POST.get("name", None),
-                                                is_all=True,
-                                                tab_all=tab.id)
+        #     for patient in patients:
+        #         if not int(patient_id) == patient.user.id:
+        #             patient_tab = MyStoryTab.objects.create(patient=patient.user,
+        #                                         author=request.user,
+        #                                         name=request.POST.get("name", None),
+        #                                         is_all=True,
+        #                                         tab_all=tab.id)
 
         resp['tab'] = MyStoryTabSerializer(tab).data
         resp['success'] = True
@@ -106,48 +135,51 @@ def add_text(request, patient_id, tab_id):
 
         all_patients = True if request.POST.get('all_patients', False) else False
 
-        if all_patients:
-            user_profile = UserProfile.objects.get(user=request.user)
-            if user_profile.role == 'admin':
-                patients = UserProfile.objects.filter(role='patient')
+        # if all_patients:
+        #     user_profile = UserProfile.objects.get(user=request.user)
+        #     if user_profile.role == 'admin':
+        #         patients = UserProfile.objects.filter(role='patient')
 
-            elif user_profile.role == 'physician':
-                patient_controllers = PatientController.objects.filter(physician=request.user)
-                patient_ids = [x.patient.id for x in patient_controllers]
-                patients = UserProfile.objects.filter(user__id__in=patient_ids)
+        #     elif user_profile.role == 'physician':
+        #         patient_controllers = PatientController.objects.filter(physician=request.user)
+        #         patient_ids = [x.patient.id for x in patient_controllers]
+        #         patients = UserProfile.objects.filter(user__id__in=patient_ids)
 
-            text = None
-            for patient in patients:
-                patient_text = MyStoryTextComponent()
-                patient_text.name = request.POST.get("name", None)
-                patient_text.text = request.POST.get("text", None)
-                patient_text.concept_id = request.POST.get("concept_id", None)
-                patient_text.patient = patient.user
-                patient_text.author = request.user
-                patient_text.last_updated_user = request.user
+        #     text = None
+        #     for patient in patients:
+        #         patient_text = MyStoryTextComponent()
+        #         patient_text.name = request.POST.get("name", None)
+        #         patient_text.text = request.POST.get("text", None)
+        #         patient_text.concept_id = request.POST.get("concept_id", None)
+        #         patient_text.patient = patient.user
+        #         patient_text.author = request.user
+        #         patient_text.last_updated_user = request.user
 
-                patient_tab = MyStoryTab.objects.filter(tab_all=tab.tab_all, is_all=True, patient=patient.user)
-                if patient_tab:
-                    patient_text.tab = patient_tab[0]
-                    patient_text.is_all = True
-                    patient_text.save()
+        #         patient_tab = MyStoryTab.objects.filter(tab_all=tab.tab_all, is_all=True, patient=patient.user)
+        #         if patient_tab:
+        #             patient_text.tab = patient_tab[0]
+        #             patient_text.is_all = True
+        #             patient_text.save()
 
-                    if int(patient_id) == patient.user.id:
-                        text = patient_text
-        else:
-            text = MyStoryTextComponent()
-            text.name = request.POST.get("name", None)
-            text.text = request.POST.get("text", None)
-            text.concept_id = request.POST.get("concept_id", None)
+        #             if int(patient_id) == patient.user.id:
+        #                 text = patient_text
+        # else:
+        text = MyStoryTextComponent()
+        text.name = request.POST.get("name", None)
+        text.text = request.POST.get("text", None)
+        text.concept_id = request.POST.get("concept_id", None)
 
-            private = True if request.POST.get('private', False) else False
-            text.private = private
+        private = True if request.POST.get('private', False) else False
+        text.private = private
 
-            text.patient = patient_user
-            text.author = request.user
-            text.last_updated_user = request.user
-            text.tab = tab
-            text.save()
+        text.patient = patient_user
+        text.author = request.user
+        text.last_updated_user = request.user
+        text.tab = tab
+
+        if all_patients and tab.is_all:
+            text.is_all = True
+        text.save()
 
         if text:
             resp['component'] = MyStoryTextComponentSerializer(text).data

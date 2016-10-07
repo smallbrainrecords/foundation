@@ -51,7 +51,6 @@ class MyStoryTabSerializer(serializers.ModelSerializer):
 
     patient = SafeUserSerializer()
     author = SafeUserSerializer()
-    my_story_tab_components = MyStoryTextComponentSerializer(many=True, read_only=True)
 
     class Meta:
         model = MyStoryTab
@@ -63,6 +62,5 @@ class MyStoryTabSerializer(serializers.ModelSerializer):
             'name',
             'datetime',
             'private',
-            'my_story_tab_components',
             'is_all',
             )

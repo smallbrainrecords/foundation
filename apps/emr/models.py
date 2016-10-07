@@ -877,7 +877,7 @@ class MyStoryTextComponentEntry(models.Model):
         ordering = ['-datetime']
 
     def __unicode__(self):
-        return "%s" % (self.name)
+        return "%s" % (self.component.name)
 
 
 class Inr(models.Model):

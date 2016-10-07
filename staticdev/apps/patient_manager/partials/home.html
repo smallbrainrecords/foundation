@@ -678,7 +678,8 @@
                                         </span>
                                     </div>
                                     <textarea class="form-control" ng-model="component.text"
-                                              ng-change="change_component_text(component)"
+                                              ng-change="change_component_text(component)" 
+                                              ng-disabled="active_user.role != 'physician' && active_user.role!='admin' && active_user.user.id!=component.author.id"
                                               ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
                                     <p>Last edited by: {{ component.last_updated_user.username }}
                                         on {{ component.last_updated_date|date:'M/d/yyyy' }}
