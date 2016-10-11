@@ -29,195 +29,212 @@
 <div ng-if="!checkSharedProblem(problem, sharing_patients) && !loading">You can not access this page</div>
 <div ng-if="checkSharedProblem(problem, sharing_patients)">
 
-	<!--<span class='text-default'>-->
-		<!--<i class='glyphicon glyphicon-menu-right'></i>-->
-	<!--</span>-->
+    <!--<span class='text-default'>-->
+    <!--<i class='glyphicon glyphicon-menu-right'></i>-->
+    <!--</span>-->
     <!--<span class='text-muted'><b>  Problem: {{ problem.problem_name }} <span ng-if="problem && !problem.authenticated">(not authenticated)</span></b></span>-->
     <!--<hr>-->
 
     <div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100'
          ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'
          ng-init="edit_problem=false;">
-        <div class="todo">
-            <h4 ng-show="!edit_problem">
-                Problem : {{ problem.problem_name }}
-                <span ng-if="problem && !problem.authenticated">(not authenticated)</span>
-                <!-- begin label -->
-                <span class="quick-card-editor-label">
+        <div class="col-md-8">
+            <div class="todo">
+                <h4 ng-show="!edit_problem">
+                    Problem : {{ problem.problem_name }}
+                    <span ng-if="problem && !problem.authenticated">(not authenticated)</span>
+                    <!-- begin label -->
+                    <span class="quick-card-editor-label">
 					<a ng-repeat="label in problem.labels" href class="todo-label" ng-class="label.css_class"
                        ng-if="label.author.id==user_id"></a>
 				</span>
-                <!-- end label -->
-                <!-- begin sharing patients -->
-                <span ng-repeat="p in sharing_patients"
-                      ng-if="isInArray(p.problems, problem.id)">
+                    <!-- end label -->
+                    <!-- begin sharing patients -->
+                    <span ng-repeat="p in sharing_patients"
+                          ng-if="isInArray(p.problems, problem.id)">
 					<img ng-src="{{ p.portrait_image }}" class='tiny-img' title="{{ p.user.first_name }}">
 				</span>
-                <!-- end sharing patients -->
-                <a href class="btn-custom" ng-click="edit_problem=!edit_problem"><i class="fa fa-pencil"></i></a>
-            </h4>
+                    <!-- end sharing patients -->
+                    <a href class="btn-custom" ng-click="edit_problem=!edit_problem"><i class="fa fa-pencil"></i></a>
+                </h4>
 
-            <!-- begin change item -->
-            <div class="quick-card-editor" id="main-menu" ng-show='edit_problem'>
+                <!-- begin change item -->
+                <div class="quick-card-editor" id="main-menu" ng-show='edit_problem'>
 
-                <!-- show label and text in edit mode -->
-                <div class="quick-card-editor-text">
-                    <div class='row' ng-show='permitted(["change_problem_name"])'>
-                        <div class='col-md-12'>
+                    <!-- show label and text in edit mode -->
+                    <div class="quick-card-editor-text">
+                        <div class='row' ng-show='permitted(["change_problem_name"])'>
+                            <div class='col-md-12'>
 
-                            <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
-                                   placeholder='Search Problem....'>
-                            <button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
-                                Change Problem
-                            </button>
-
-                            <div ng-show='new_problem.set==true'>
-                                <hr>
-                                <label> {{ new_problem.code }} </label>
-                                {{ new_problem.term }} <br>
-                                <button class='btn btn-sm btn-default' ng-click='change_problem_name()'>
+                                <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
+                                       placeholder='Search Problem....'>
+                                <button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
                                     Change Problem
                                 </button>
-                                <button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
-                                    Cancel
-                                </button>
-                                <hr>
-                            </div>
 
-                        </div>
-                        <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
-                            <div ng-repeat='problem_term in problem_terms' style='margin-top:12px;'>
-                                <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
-                                        ng-click='set_new_problem(problem_term)'>
-                                    {{ problem_term.term }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- end show label and text in edit mode -->
-
-                <div class="quick-card-editor-card">
-
-                    <!-- begin buttons -->
-                    <div class="quick-card-editor-buttons">
-                        <a href ng-click="edit_problem=!edit_problem; $event.stopPropagation();"><i
-                                class="fa fa-close"></i></a>
-                        <a href ng-click="open_change_problem_label();"><i class="fa fa-tags"></i>Edit label</a>
-                        <a href ng-click="open_create_label_problems_list();"
-                           ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'"><i
-                                class="fa fa-tags"></i>Create problems list</a>
-                        <a href ng-click="open_change_data();"><i class="fa fa-tags"></i>Change Data</a>
-                        <a href ng-click="open_change_medication();"><i class="fa fa-tags"></i>Change Medication</a>
-                    </div>
-                    <!-- end buttons -->
-                    <!-- begin change label -->
-                    <div ng-if="change_problem_label" class="quick-card-editor-lv2">
-                        <div class="quick-card-editor-lv2-header">
-                            <a href ng-click="close_change_problem_label(); $event.stopPropagation();"><i
-                                    class="fa fa-close"></i></a>
-                        </div>
-                        <div ng-repeat="label in problem_labels">
-                            <a href class="todo-label" ng-class="label.css_class"
-                               ng-click="changeProblemLabel(problem, label)">
-                                {{ label.name }}
-                                <i class="fa fa-check" ng-repeat="l in problem.labels" ng-if="l.id==label.id"></i>
-                            </a>
-                            <!-- begin edit label -->
-                            <a href class="todo-label-edit" ng-click="editProblemLabel(label)"
-                               ng-if="user_id==label.author.id"><i class="fa fa-pencil"></i></a>
-
-                            <div ng-if="label.edit_label"
-                                 class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
-                                <div class="quick-card-editor-lv2-header">
-                                    <a href ng-click="editProblemLabel(label); $event.stopPropagation();"><i
-                                            class="fa fa-close"></i></a>
+                                <div ng-show='new_problem.set==true'>
+                                    <hr>
+                                    <label> {{ new_problem.code }} </label>
+                                    {{ new_problem.term }} <br>
+                                    <button class='btn btn-sm btn-default' ng-click='change_problem_name()'>
+                                        Change Problem
+                                    </button>
+                                    <button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
+                                        Cancel
+                                    </button>
+                                    <hr>
                                 </div>
-                                <input type="text" ng-model="label.name">
-                                <a ng-repeat="component in problem_labels_component" href class="todo-label"
-                                   ng-class="component.css_class"
-                                   ng-click="selectEditProblemLabelComponent(label, component)">
-                                    <i class="fa fa-check" ng-if="component.css_class==label.css_class"></i>
+
+                            </div>
+                            <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
+                                <div ng-repeat='problem_term in problem_terms' style='margin-top:12px;'>
+                                    <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
+                                            ng-click='set_new_problem(problem_term)'>
+                                        {{ problem_term.term }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end show label and text in edit mode -->
+
+                    <div class="quick-card-editor-card">
+
+                        <!-- begin buttons -->
+                        <div class="quick-card-editor-buttons">
+                            <a href ng-click="edit_problem=!edit_problem; $event.stopPropagation();"><i
+                                    class="fa fa-close"></i></a>
+                            <a href ng-click="open_change_problem_label();"><i class="fa fa-tags"></i>Edit label</a>
+                            <a href ng-click="open_create_label_problems_list();"
+                               ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'"><i
+                                    class="fa fa-tags"></i>Create problems list</a>
+                            <a href ng-click="open_change_data();"><i class="fa fa-tags"></i>Change Data</a>
+                            <a href ng-click="open_change_medication();"><i class="fa fa-tags"></i>Change Medication</a>
+                        </div>
+                        <!-- end buttons -->
+                        <!-- begin change label -->
+                        <div ng-if="change_problem_label" class="quick-card-editor-lv2">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_change_problem_label(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <div ng-repeat="label in problem_labels">
+                                <a href class="todo-label" ng-class="label.css_class"
+                                   ng-click="changeProblemLabel(problem, label)">
+                                    {{ label.name }}
+                                    <i class="fa fa-check" ng-repeat="l in problem.labels" ng-if="l.id==label.id"></i>
                                 </a>
-                                <a href ng-click="saveEditProblemLabel(label)">Save</a>
-                                <a href class="btn btn-danger" ng-click="deleteEditProblemLabel(label)">Delete</a>
-                            </div>
-                            <!-- end edit label -->
+                                <!-- begin edit label -->
+                                <a href class="todo-label-edit" ng-click="editProblemLabel(label)"
+                                   ng-if="user_id==label.author.id"><i class="fa fa-pencil"></i></a>
 
-                        </div>
-                        <a href ng-click="open_create_problem_label();"><i class="fa fa-tags"></i>Create new label</a>
-                    </div>
-
-                    <div ng-if="create_problem_label" class="quick-card-editor-lv2 quick-card-editor-lv3">
-                        <div class="quick-card-editor-lv2-header">
-                            <a href ng-click="close_create_problem_label(); $event.stopPropagation();"><i
-                                    class="fa fa-close"></i></a>
-                        </div>
-                        <input type="text" ng-model="problem_label_component.name">
-                        <a ng-repeat="component in problem_labels_component" href class="todo-label"
-                           ng-class="component.css_class" ng-click="selectProblemLabelComponent(component)">
-                            <i class="fa fa-check" ng-if="component.css_class==problem_label_component.css_class"></i>
-                        </a>
-                        <a href ng-click="saveCreateProblemLabel(problem)">Save</a>
-                    </div>
-                    <!-- end change label -->
-                    <!-- begin create label problems list -->
-                    <div ng-if="create_label_problems_list" class="quick-card-editor-lv2">
-                        <div class="quick-card-editor-lv2-header">
-                            <a href ng-click="close_create_label_problems_list(); $event.stopPropagation();"><i
-                                    class="fa fa-close"></i></a>
-                        </div>
-
-                        <form class='form-inline' role='form' ng-submit='add_problem_list(new_list)'>
-                            <div class='form-group'>
-                                <input type='text' ng-model='new_list.name'>
-                                <div ng-repeat="label in problem_labels">
-                                    <a href class="todo-label" ng-class="label.css_class"
-                                       ng-click="add_new_list_label(new_list, label)">
-                                        {{ label.name }}
-                                        <i class="fa fa-check" ng-repeat="l in new_list.labels"
-                                           ng-if="l.id==label.id"></i>
+                                <div ng-if="label.edit_label"
+                                     class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
+                                    <div class="quick-card-editor-lv2-header">
+                                        <a href ng-click="editProblemLabel(label); $event.stopPropagation();"><i
+                                                class="fa fa-close"></i></a>
+                                    </div>
+                                    <input type="text" ng-model="label.name">
+                                    <a ng-repeat="component in problem_labels_component" href class="todo-label"
+                                       ng-class="component.css_class"
+                                       ng-click="selectEditProblemLabelComponent(label, component)">
+                                        <i class="fa fa-check" ng-if="component.css_class==label.css_class"></i>
                                     </a>
+                                    <a href ng-click="saveEditProblemLabel(label)">Save</a>
+                                    <a href class="btn btn-danger" ng-click="deleteEditProblemLabel(label)">Delete</a>
                                 </div>
+                                <!-- end edit label -->
+
                             </div>
-                            <br>
-                            <button type='submit' class='btn btn-default'> Add List</button>
-                        </form>
-                    </div>
-                    <!-- end create label problems list -->
-                    <!-- begin change data -->
-                    <div ng-if="change_pinned_data" class="quick-card-editor-lv2" style="color: black;">
-                        <div class="quick-card-editor-lv2-header">
-                            <a href ng-click="close_change_data(); $event.stopPropagation();"><i
-                                    class="fa fa-close"></i></a>
+                            <a href ng-click="open_create_problem_label();"><i class="fa fa-tags"></i>Create new
+                                label</a>
                         </div>
-                        <p ng-repeat="data in datas">
-                            <input type="checkbox"
-                                   ng-model="data.pin"
-                                   ng-change="data_pin_to_problem(data.id, problem.id);"
-                                   ng-disabled="active_user.role == 'patient' && active_user.id != data.pin_author && data.pin_author != null">
-                            {{ data.name }}
-                        </p>
-                    </div>
-                    <!-- end change data -->
-                    <!-- begin change medication -->
-                    <div ng-if="change_pinned_medication" class="quick-card-editor-lv2" style="color: black;">
-                        <div class="quick-card-editor-lv2-header">
-                            <a href ng-click="close_change_medication(); $event.stopPropagation();"><i
-                                    class="fa fa-close"></i></a>
+
+                        <div ng-if="create_problem_label" class="quick-card-editor-lv2 quick-card-editor-lv3">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_create_problem_label(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <input type="text" ng-model="problem_label_component.name">
+                            <a ng-repeat="component in problem_labels_component" href class="todo-label"
+                               ng-class="component.css_class" ng-click="selectProblemLabelComponent(component)">
+                                <i class="fa fa-check"
+                                   ng-if="component.css_class==problem_label_component.css_class"></i>
+                            </a>
+                            <a href ng-click="saveCreateProblemLabel(problem)">Save</a>
                         </div>
-                        <p ng-repeat="medication in inr.inr_medications">
-                            <input type="checkbox"
-                                   ng-model="medication.pin"
-                                   ng-change="medication_pin_to_problem(medication, problem.id);"
-                                   ng-disabled="active_user.role == 'patient' && (active_user.id != medication.pin_author || medication.pin_author != null)">
-                            {{ medication.name }}
-                        </p>
+                        <!-- end change label -->
+                        <!-- begin create label problems list -->
+                        <div ng-if="create_label_problems_list" class="quick-card-editor-lv2">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_create_label_problems_list(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+
+                            <form class='form-inline' role='form' ng-submit='add_problem_list(new_list)'>
+                                <div class='form-group'>
+                                    <input type='text' ng-model='new_list.name'>
+                                    <div ng-repeat="label in problem_labels">
+                                        <a href class="todo-label" ng-class="label.css_class"
+                                           ng-click="add_new_list_label(new_list, label)">
+                                            {{ label.name }}
+                                            <i class="fa fa-check" ng-repeat="l in new_list.labels"
+                                               ng-if="l.id==label.id"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <br>
+                                <button type='submit' class='btn btn-default'> Add List</button>
+                            </form>
+                        </div>
+                        <!-- end create label problems list -->
+                        <!-- begin change data -->
+                        <div ng-if="change_pinned_data" class="quick-card-editor-lv2" style="color: black;">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_change_data(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <p ng-repeat="data in datas">
+                                <input type="checkbox"
+                                       ng-model="data.pin"
+                                       ng-change="data_pin_to_problem(data.id, problem.id);"
+                                       ng-disabled="active_user.role == 'patient' && active_user.id != data.pin_author && data.pin_author != null">
+                                {{ data.name }}
+                            </p>
+                        </div>
+                        <!-- end change data -->
+                        <!-- begin change medication -->
+                        <div ng-if="change_pinned_medication" class="quick-card-editor-lv2" style="color: black;">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_change_medication(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <p ng-repeat="medication in inr.inr_medications">
+                                <input type="checkbox"
+                                       ng-model="medication.pin"
+                                       ng-change="medication_pin_to_problem(medication, problem.id);"
+                                       ng-disabled="active_user.role == 'patient' && (active_user.id != medication.pin_author || medication.pin_author != null)">
+                                {{ medication.name }}
+                            </p>
+                        </div>
+                        <!-- end change medication -->
                     </div>
-                    <!-- end change medication -->
                 </div>
+                <!-- end change item -->
             </div>
-            <!-- end change item -->
+        </div>
+        <div class='col-md-4'>
+            <form class='form form-inline'>
+
+                <div class='form-group'>
+                    <input type='text' class='form-control' ng-model='problem.start_date' id="start_date">
+                </div>
+                <div class='form-group'>
+                    <button ng-click='update_start_date()' class='btn btn-default'
+                            ng-show='permitted(["modify_problem"])'> Update
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -227,7 +244,7 @@
 
     <div class='row'>
 
-        <div class='col-md-8'>
+        <div class='col-md-12'>
 
             <div class='panel panel-default'>
 
@@ -253,29 +270,6 @@
                     </div>
                 </div>
 
-            </div>
-        </div>
-        <div class='col-md-4'>
-
-            <div class='panel panel-default'>
-
-                <div class='panel-heading'>Start Date</div>
-
-                <div class='panel-body'>
-
-                    <form class='form form-inline'>
-
-                        <div class='form-group'>
-                            <input type='text' class='form-control' ng-model='problem.start_date' id="start_date">
-                        </div>
-                        <div class='form-group'>
-                            <button ng-click='update_start_date()' class='btn btn-default'
-                                    ng-show='permitted(["modify_problem"])'> Update
-                            </button>
-                        </div>
-                    </form>
-
-                </div>
             </div>
         </div>
     </div>
@@ -350,25 +344,26 @@
     </div>
 
     <div class='panel panel-default'>
-        <div class='panel-heading'> Medications </div>
+        <div class='panel-heading'> Medications</div>
         <div class='panel-body'>
             <div class="row">
                 <div class='col-md-12'>
                     <table class="table table-striped">
                         <thead>
-                            <th>Medication</th>
-                            <th>Note</th>
+                        <th>Medication</th>
+                        <th>Note</th>
                         </thead>
                         <tbody>
-                            <tr ng-repeat='medication in inr.inr_medications' 
-                                ng-show='medication.current && medication.pin'>
-                                <td>
-                                    <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
-                                </td>
-                                <td>
-                                    <span ng-repeat="note in medication.medication_notes" ng-if="$last">{{ note.note }}</span>
-                                </td>
-                            </tr>
+                        <tr ng-repeat='medication in inr.inr_medications'
+                            ng-show='medication.current && medication.pin'>
+                            <td>
+                                <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                            </td>
+                            <td>
+                                <span ng-repeat="note in medication.medication_notes"
+                                      ng-if="$last">{{ note.note }}</span>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -385,19 +380,20 @@
                 <div class='col-md-12'>
                     <table class="table table-striped">
                         <thead>
-                            <th>Medication</th>
-                            <th>Note</th>
+                        <th>Medication</th>
+                        <th>Note</th>
                         </thead>
                         <tbody>
-                            <tr ng-repeat='medication in inr.inr_medications' 
-                                ng-show='!medication.current && medication.pin'>
-                                <td>
-                                    <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
-                                </td>
-                                <td>
-                                    <span ng-repeat="note in medication.medication_notes" ng-if="$last">{{ note.note }}</span>
-                                </td>
-                            </tr>
+                        <tr ng-repeat='medication in inr.inr_medications'
+                            ng-show='!medication.current && medication.pin'>
+                            <td>
+                                <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                            </td>
+                            <td>
+                                <span ng-repeat="note in medication.medication_notes"
+                                      ng-if="$last">{{ note.note }}</span>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
