@@ -274,7 +274,7 @@
         </div>
     </div>
 
-       <div class='panel panel-default'>
+    <div class='panel panel-default'>
 
         <div class='panel-heading'> Todos</div>
 
@@ -346,117 +346,124 @@
             This problem was previously named "{{ problem.old_problem_name }}"
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-6">
 
-    <div class='panel panel-default' ng-if="datas.length > 0">
-        <div class="panel-header">
-            <div class="btn-group btn-group-justified graph-view-mode">
-                <label class="btn btn-default" ng-click="changeView('Week')"
-                       ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
-                <label class="btn btn-default" ng-click="changeView('Month')"
-                       ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
-                <label class="btn btn-default" ng-click="changeView('Year')"
-                       ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
-                <label class="btn btn-default" ng-click="changeView('All')"
-                       ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
-            </div>
-        </div>
-        <div class='panel-body no-padding'>
-            <div>
-                <ul class='ul-clean no-padding'>
-                    <li ng-repeat="data in datas"
-                        ng-click='open_data(data)'
-                        ng-show="data.pin">
-                        <div class='item-box data-frame'
-                             ng-style="{'background-color': data.color}">
-                            <div class="row graph-header">
-                                <div class="col-md-6 text-left">
-                                    <h3>{{ data.name }}</h3>
-                                </div>
-                                <div class="col-md-6 text-right">
-                                    <h3>
+
+            <div class='panel panel-default' ng-if="datas.length > 0">
+                <div class="panel-header">
+                    <div class="btn-group btn-group-justified graph-view-mode">
+                        <label class="btn btn-default" ng-click="changeView('Week')"
+                               ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
+                        <label class="btn btn-default" ng-click="changeView('Month')"
+                               ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
+                        <label class="btn btn-default" ng-click="changeView('Year')"
+                               ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
+                        <label class="btn btn-default" ng-click="changeView('All')"
+                               ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
+                    </div>
+                </div>
+                <div class='panel-body no-padding'>
+                    <div>
+                        <ul class='ul-clean no-padding'>
+                            <li ng-repeat="data in datas"
+                                ng-click='open_data(data)'
+                                ng-show="data.pin">
+                                <div class='item-box data-frame'
+                                     ng-style="{'background-color': data.color}">
+                                    <div class="row graph-header">
+                                        <div class="col-md-6 text-left">
+                                            <h3>{{ data.name }}</h3>
+                                        </div>
+                                        <div class="col-md-6 text-right">
+                                            <h3>
                                                             <span
                                                                     ng-bind="data.mostRecentValue"></span>
-                                        <span ng-bind="data.observation_units[0].value_unit"></span>
-                                    </h3>
-                                    <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+                                                <span ng-bind="data.observation_units[0].value_unit"></span>
+                                            </h3>
+                                            <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
 
+                                        </div>
+                                    </div>
+                                    <div ng-if="data.observation_components.length > 0">
+                                        <canvas ng-if="data.graph=='Line'" class="chart chart-line"
+                                                chart-data="data.chartData"
+                                                chart-series="data.chartSeries"
+                                                chart-labels="data.chartLabel"></canvas>
+                                        <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
+                                                chart-data="data.chartData"
+                                                chart-series="data.chartSeries"
+                                                chart-labels="data.chartLabel"></canvas>
+                                    </div>
                                 </div>
-                            </div>
-                            <div ng-if="data.observation_components.length > 0">
-                                <canvas ng-if="data.graph=='Line'" class="chart chart-line"
-                                        chart-data="data.chartData"
-                                        chart-series="data.chartSeries"
-                                        chart-labels="data.chartLabel"></canvas>
-                                <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
-                                        chart-data="data.chartData"
-                                        chart-series="data.chartSeries"
-                                        chart-labels="data.chartLabel"></canvas>
-                            </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+
+            <div class='panel panel-default'>
+                <div class='panel-heading'> Medications</div>
+                <div class='panel-body'>
+                    <div class="row">
+                        <div class='col-md-12'>
+                            <table class="table table-striped">
+                                <thead>
+                                <th>Medication</th>
+                                <th>Note</th>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat='medication in inr.inr_medications'
+                                    ng-show='medication.current && medication.pin'>
+                                    <td>
+                                        <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                    </td>
+                                    <td>
+                                <span ng-repeat="note in medication.medication_notes"
+                                      ng-if="$last">{{ note.note }}</span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
                         </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
+                    </div>
 
-    <div class='panel panel-default'>
-        <div class='panel-heading'> Medications</div>
-        <div class='panel-body'>
-            <div class="row">
-                <div class='col-md-12'>
-                    <table class="table table-striped">
-                        <thead>
-                        <th>Medication</th>
-                        <th>Note</th>
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat='medication in inr.inr_medications'
-                            ng-show='medication.current && medication.pin'>
-                            <td>
-                                <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
-                            </td>
-                            <td>
+                    <hr ng-init="show_inactive_medications=false;">
+                    <a class='btn btn-default btn-md' ng-click='show_inactive_medications=!show_inactive_medications;'>
+                        <span ng-if='show_inactive_medications==false'>Show inactive medications </span>
+                        <span ng-if='show_inactive_medications==true'>Hide inactive medications </span>
+                    </a>
+                    <hr>
+
+                    <div class="row" ng-show="show_inactive_medications">
+                        <div class='col-md-12'>
+                            <table class="table table-striped">
+                                <thead>
+                                <th>Medication</th>
+                                <th>Note</th>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat='medication in inr.inr_medications'
+                                    ng-show='!medication.current && medication.pin'>
+                                    <td>
+                                        <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                    </td>
+                                    <td>
                                 <span ng-repeat="note in medication.medication_notes"
                                       ng-if="$last">{{ note.note }}</span>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <hr ng-init="show_inactive_medications=false;">
-            <a class='btn btn-default btn-md' ng-click='show_inactive_medications=!show_inactive_medications;'>
-                <span ng-if='show_inactive_medications==false'>Show inactive medications </span>
-                <span ng-if='show_inactive_medications==true'>Hide inactive medications </span>
-            </a>
-            <hr>
-
-            <div class="row" ng-show="show_inactive_medications">
-                <div class='col-md-12'>
-                    <table class="table table-striped">
-                        <thead>
-                        <th>Medication</th>
-                        <th>Note</th>
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat='medication in inr.inr_medications'
-                            ng-show='!medication.current && medication.pin'>
-                            <td>
-                                <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
-                            </td>
-                            <td>
-                                <span ng-repeat="note in medication.medication_notes"
-                                      ng-if="$last">{{ note.note }}</span>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
-
     <div class='panel panel-default'>
 
         <div class='panel-heading'> Problem History</div>
@@ -654,8 +661,6 @@
 
 
     </div>
-
-
 
 
     <div class='panel panel-default'>
