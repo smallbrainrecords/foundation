@@ -274,6 +274,62 @@
         </div>
     </div>
 
+       <div class='panel panel-default'>
+
+        <div class='panel-heading'> Todos</div>
+
+
+        <div class='panel-body'>
+
+
+            <div class='row'>
+
+                <div class='col-md-12'>
+
+                    <form class='form-inline' ng-submit='add_todo(todo_form)'>
+
+                        <div class='form-group'>
+                            <label> Add </label>
+                            <input type='text' class='form-control' ng-model='todo_form.name' id='todoNameInput'>
+                        </div>
+
+                        <div class='form-group'>
+                            <input type='submit' value='Submit' class='btn btn-default'>
+                        </div>
+
+
+                    </form>
+
+                    <hr>
+
+                    <ul class='list-group'>
+                        <li ng-show='!problem_todos.length'> No Todos</li>
+                    </ul>
+                    <todo ng-model="problem_todos" accomplished="false" show-problem="false"></todo>
+
+                    <hr>
+                    <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
+                        <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
+                        <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
+                    </a>
+                    <hr>
+                    <div ng-if='show_accomplished_todos==true'>
+                        <ul class='list-group'>
+                            <li ng-show='!problem_todos.length'> No Todos</li>
+                        </ul>
+                        <todo ng-model="problem_todos" accomplished="true" show-problem="false"></todo>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
     <div class='row' ng-if="a1c">
         <a1c ng-model="a1c"></a1c>
     </div>
@@ -599,61 +655,7 @@
 
     </div>
 
-    <div class='panel panel-default'>
 
-        <div class='panel-heading'> Todos</div>
-
-
-        <div class='panel-body'>
-
-
-            <div class='row'>
-
-                <div class='col-md-12'>
-
-                    <form class='form-inline' ng-submit='add_todo(todo_form)'>
-
-                        <div class='form-group'>
-                            <label> Add </label>
-                            <input type='text' class='form-control' ng-model='todo_form.name' id='todoNameInput'>
-                        </div>
-
-                        <div class='form-group'>
-                            <input type='submit' value='Submit' class='btn btn-default'>
-                        </div>
-
-
-                    </form>
-
-                    <hr>
-
-                    <ul class='list-group'>
-                        <li ng-show='!problem_todos.length'> No Todos</li>
-                    </ul>
-                    <todo ng-model="problem_todos" accomplished="false" show-problem="false"></todo>
-
-                    <hr>
-                    <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
-                        <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
-                        <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
-                    </a>
-                    <hr>
-                    <div ng-if='show_accomplished_todos==true'>
-                        <ul class='list-group'>
-                            <li ng-show='!problem_todos.length'> No Todos</li>
-                        </ul>
-                        <todo ng-model="problem_todos" accomplished="true" show-problem="false"></todo>
-                    </div>
-                </div>
-
-
-            </div>
-
-
-        </div>
-
-
-    </div>
 
 
     <div class='panel panel-default'>
