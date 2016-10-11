@@ -148,7 +148,7 @@
                                 <div class="tab-content problem-tabs">
                                     <div role="tabpanel" class="tab-pane active tab-active-problem">
                                         <div>
-                                            <ul class='ul-clean' ui-sortable="sortableOptionsProblem"
+                                            <ul class='ul-clean no-padding' ui-sortable="sortableOptionsProblem"
                                                 ng-model="problems"
                                                 ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
                                                 <li ng-repeat="problem in problems"
@@ -174,7 +174,7 @@
                                                     </div>
                                                 </li>
                                             </ul>
-                                            <ul class='ul-clean'
+                                            <ul class='ul-clean no-padding'
                                                 ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
                                                 <li ng-repeat='problem in problems'
                                                     ng-show="problem.is_active==true && !inArray(problem_lists, problem)"
@@ -198,7 +198,7 @@
                                     </div>
                                     <div role="tabpanel" class="tab-pane tab-inactive-problem">
                                         <div style='max-height:375px; overflow-y:auto;'>
-                                            <ul class='ul-clean' ui-sortable="sortableOptionsProblem"
+                                            <ul class='ul-clean no-padding' ui-sortable="sortableOptionsProblem"
                                                 ng-model="problems"
                                                 ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
                                                 <li ng-repeat="problem in problems"
@@ -219,7 +219,7 @@
                                                 </li>
                                             </ul>
 
-                                            <ul class='ul-clean'
+                                            <ul class='ul-clean no-padding'
                                                 ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary'">
                                                 <li ng-repeat='problem in problems'
                                                     ng-show="problem.is_active==false && !inArray(problem_lists, problem)"
@@ -370,7 +370,7 @@
                             <div class='panel-body'>
                                 <div class='row'>
                                     <div class='col-md-6 col-md-offset-4'>
-                                        <ul class="nav nav-pills" role="tablist">
+                                        <ul class="nav nav-pills no-padding" role="tablist">
                                             <li role="presentation" class="active">
                                                 <a href=".tab-incomplete-goals" aria-controls="goals" role="tab"
                                                    data-toggle="tab">
@@ -393,7 +393,7 @@
                                 <div class="tab-content">
                                     <div role="tabpanel" class="tab-pane active tab-incomplete-goals">
                                         <div style='max-height:375px; overflow-y:auto;'>
-                                            <ul class='ul-clean'>
+                                            <ul class='ul-clean no-padding'>
                                                 <li ng-repeat='goal in goals'
                                                     ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
                                                     <div class='item-box'
@@ -411,7 +411,7 @@
                                     </div>
                                     <div role="tabpanel" class="tab-pane tab-completed-goals">
                                         <div style='max-height:375px; overflow-y:auto;'>
-                                            <ul class='ul-clean'>
+                                            <ul class='ul-clean no-padding'>
                                                 <li ng-repeat='goal in completed_goals'
                                                     ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
                                                     <div class='item-box'
