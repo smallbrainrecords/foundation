@@ -711,11 +711,12 @@
                 <div class='col-md-4'>
 
                     <h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i></h4>
-                    <div class='row' ng-repeat='eff_problem in patient_problems'
+                    <div class='row'
+                         ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effecting: true}'
                          style='padding:7px; border-bottom:1px solid #ccc;'>
 
-
-                        <input type='checkbox' ng-model='eff_problem.effecting'
+                        <!--Only show if edit mode is enabled-->
+                        <input ng-if="editMode" type='checkbox' ng-model='eff_problem.effecting'
                                ng-change='change_effecting_problem(eff_problem, problem)'
                                ng-disabled='!permitted(["relate_problem"])'>
 
@@ -737,10 +738,11 @@
                 <div class='col-md-4'>
 
                     <h4><i class='glyphicon glyphicon-arrow-right'></i> EffectedProblems </h4>
-                    <div class='row' ng-repeat='eff_problem in patient_problems'
+                    <div class='row'
+                         ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effected: true}'
                          style='padding:7px; border-bottom:1px solid #ccc;'>
-
-                        <input type='checkbox' ng-model='eff_problem.effected'
+                        <!--Only show if edit mode is enabled-->
+                        <input ng-if="editMode" type='checkbox' ng-model='eff_problem.effected'
                                ng-change='change_effected_problem(problem, eff_problem)'
                                ng-disabled='!permitted(["relate_problem"])'>
 
@@ -758,6 +760,11 @@
 
             </div>
 
+        </div>
+        <div class="panel-footer text-right">
+            <button class="btn btn-default" ng-click="editMode=!editMode" ng-init="editMode=false">{{editMode
+                ?'Save':'Edit'}}
+            </button>
         </div>
     </div>
 
