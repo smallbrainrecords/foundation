@@ -119,6 +119,7 @@ def add_tab(request, patient_id):
         #                                         tab_all=tab.id)
 
         resp['tab'] = MyStoryTabSerializer(tab).data
+        resp['tab']["my_story_tab_components"] = []
         resp['success'] = True
 
     return ajax_response(resp)
@@ -248,6 +249,7 @@ def save_text_component(request, patient_id, component_id):
         if request.POST.get("name", None):
             if request.user.id == component.author.id:
                 component.name = request.POST.get("name", None)
+                component.concept_id = request.POST.get("concept_id", None)
         if request.POST.get("text", None):
             entry = MyStoryTextComponentEntry(component=component, text=component.text, datetime=component.datetime, private=component.private, author=component.author)
             entry.save()

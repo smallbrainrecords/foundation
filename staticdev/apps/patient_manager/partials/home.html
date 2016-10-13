@@ -670,7 +670,8 @@
                                         <b ng-hide="show_edit_my_story_tab && active_user.user.id==component.author.id">{{
                                             component.name }}</b>
                                         <span ng-show="show_edit_my_story_tab && active_user.user.id==component.author.id">
-                                            <input type="text" ng-model="component.name">
+                                            <b>Name: </b><input type="text" ng-model="component.name">
+                                            <b>Concept ID: </b><input type="text" ng-model="component.concept_id">
                                             <button class="btn btn-default" ng-click="save_my_story_text(component);">Save</button>
                                             <button class="btn btn-default"
                                                     ng-click="delete_my_story_text(component);"
