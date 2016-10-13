@@ -501,6 +501,8 @@ def fetch_active_user(request):
 def staff(request):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
+    if user_profile.role == 'patient' or user_profile.role == 'admin':
+        return HttpResponseRedirect('/')
     physicians = PhysicianTeam.objects.filter(member=user)
 
     physician_ids = [x.physician.id for x in physicians]

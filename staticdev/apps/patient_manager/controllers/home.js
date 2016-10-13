@@ -964,6 +964,7 @@
             $scope.save_my_story_text = function (component) {
                 var form = {};
                 form.name = component.name;
+                form.concept_id = component.concept_id;
                 form.component_id = component.id;
                 form.patient_id = $scope.patient_id;
                 patientService.saveMyStoryText(form).then(function (data) {
