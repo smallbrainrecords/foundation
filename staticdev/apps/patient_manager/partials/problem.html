@@ -274,60 +274,174 @@
         </div>
     </div>
 
-    <div class='panel panel-default'>
+    <div class="row">
+        <div class="col-md-6">
+            <div class='panel panel-default'>
 
-        <div class='panel-heading'> Todos</div>
+                <div class='panel-heading'> Todos</div>
 
 
-        <div class='panel-body'>
+                <div class='panel-body'>
 
 
-            <div class='row'>
+                    <div class='row'>
 
-                <div class='col-md-12'>
+                        <div class='col-md-12'>
 
-                    <form class='form-inline' ng-submit='add_todo(todo_form)'>
+                            <form class='form-inline' ng-submit='add_todo(todo_form)'>
 
-                        <div class='form-group'>
-                            <label> Add </label>
-                            <input type='text' class='form-control' ng-model='todo_form.name' id='todoNameInput'>
+                                <div class='form-group'>
+                                    <label> Add </label>
+                                    <input type='text' class='form-control' ng-model='todo_form.name'
+                                           id='todoNameInput'>
+                                </div>
+
+                                <div class='form-group'>
+                                    <input type='submit' value='Submit' class='btn btn-default'>
+                                </div>
+
+
+                            </form>
+
+                            <hr>
+
+                            <ul class='list-group'>
+                                <li ng-show='!problem_todos.length'> No Todos</li>
+                            </ul>
+                            <todo ng-model="problem_todos" accomplished="false" show-problem="false"></todo>
+
+                            <hr>
+                            <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
+                                <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
+                                <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
+                            </a>
+                            <hr>
+                            <div ng-if='show_accomplished_todos==true'>
+                                <ul class='list-group'>
+                                    <li ng-show='!problem_todos.length'> No Todos</li>
+                                </ul>
+                                <todo ng-model="problem_todos" accomplished="true" show-problem="false"></todo>
+                            </div>
                         </div>
 
-                        <div class='form-group'>
-                            <input type='submit' value='Submit' class='btn btn-default'>
-                        </div>
 
-
-                    </form>
-
-                    <hr>
-
-                    <ul class='list-group'>
-                        <li ng-show='!problem_todos.length'> No Todos</li>
-                    </ul>
-                    <todo ng-model="problem_todos" accomplished="false" show-problem="false"></todo>
-
-                    <hr>
-                    <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
-                        <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
-                        <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
-                    </a>
-                    <hr>
-                    <div ng-if='show_accomplished_todos==true'>
-                        <ul class='list-group'>
-                            <li ng-show='!problem_todos.length'> No Todos</li>
-                        </ul>
-                        <todo ng-model="problem_todos" accomplished="true" show-problem="false"></todo>
                     </div>
+
+
                 </div>
 
 
             </div>
 
-
         </div>
+        <div class="col-md-6">
+            <div class='panel panel-default'>
+
+                <div class='panel-heading'>Notes</div>
+
+                <div class='panel-body'>
+
+                    <div class='row'>
+
+                        <div class='col-md-12'>
+
+                            <form class='form' ng-submit='add_wiki_note(wiki_note_form)'>
+
+                                <div class='form-group'>
+                            <textarea ng-model='wiki_note_form.note' class='form-control' style='height:75px;'
+                                      required></textarea>
+                                </div>
+                                <div class='form-group'>
+                                    <button type='submit' class='btn btn-default'>
+                                        Add
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <div class='row'>
+
+                        <div class='col-md-6'>
+                            <b> Patient Notes </b>
+
+                            <hr>
+
+                            <ul class='list-group'>
+
+                                <li ng-show='!patient_wiki_notes.length' class='list-group-item'> No Notes</li>
+                                <li ng-repeat='note in patient_wiki_notes' class='list-group-item' ng-show="$first">
+                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
+                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class='col-md-6'>
+                            <b> Physician Notes </b>
+
+                            <hr>
+
+                            <ul class='list-group'>
+
+                                <li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes</li>
+                                <li ng-repeat='note in physician_wiki_notes' class='list-group-item' ng-show="$first">
+                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
+                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class='row'>
+                        <div class='col-md-12'>
+                            <button class='btn btn-link' ng-click='toggle_other_notes()'>
+                                <span ng-show='show_other_notes'>Hide Other Notes </span>
+                                <span ng-show='!show_other_notes'> Show Other Notes ({{ other_wiki_notes.length }}) </span>
+                            </button>
+
+                            <ul class='list-group' ng-show='show_other_notes==true'>
+
+                                <li ng-show='!other_wiki_notes.length' class='list-group-item'> No Notes</li>
+                                <li ng-repeat='note in other_wiki_notes' class='list-group-item'>
+                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
+                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+                                </li>
+                            </ul>
+
+                        </div>
+                        <div class='col-md-12'>
+                            <button class='btn btn-link' ng-click='toggle_physician_notes()'>
+                                <span ng-show='show_physician_notes'>Hide Other Physician Notes </span>
+                                <span ng-show='!show_physician_notes'> Show Other Physician Notes ({{ physician_wiki_notes.length }}) </span>
+                            </button>
+
+                            <ul class='list-group' ng-show='show_physician_notes==true'>
+                                <li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes</li>
+                                <li ng-repeat='note in physician_wiki_notes' class='list-group-item'>
+                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
+                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+                                </li>
+                            </ul>
 
 
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+        </div>
     </div>
 
     <div class='row' ng-if="a1c">
@@ -486,114 +600,6 @@
 				{{ history_note.author.user.last_name }} @{{ history_note.author.user.username }} -
 				{{ history_note.author.role }} </i>
 			</span>
-        </div>
-
-    </div>
-
-
-    <div class='panel panel-default'>
-
-        <div class='panel-heading'> Wiki Notes</div>
-
-        <div class='panel-body'>
-
-            <div class='row'>
-
-                <div class='col-md-12'>
-
-                    <form class='form' ng-submit='add_wiki_note(wiki_note_form)'>
-
-                        <div class='form-group'>
-                            <textarea ng-model='wiki_note_form.note' class='form-control' style='height:75px;'
-                                      required></textarea>
-                        </div>
-                        <div class='form-group'>
-                            <button type='submit' class='btn btn-default'>
-                                Add
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-            </div>
-
-            <hr>
-
-            <div class='row'>
-
-                <div class='col-md-6'>
-                    <b> Patient Notes </b>
-
-                    <hr>
-
-                    <ul class='list-group'>
-
-                        <li ng-show='!patient_wiki_notes.length' class='list-group-item'> No Notes</li>
-                        <li ng-repeat='note in patient_wiki_notes' class='list-group-item' ng-show="$first">
-                            <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                - {{ note.author.user.username }} </b> : {{ note.note }}
-                            <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class='col-md-6'>
-                    <b> Physician Notes </b>
-
-                    <hr>
-
-                    <ul class='list-group'>
-
-                        <li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes</li>
-                        <li ng-repeat='note in physician_wiki_notes' class='list-group-item' ng-show="$first">
-                            <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                - {{ note.author.user.username }} </b> : {{ note.note }}
-                            <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <hr>
-
-            <div class='row'>
-                <div class='col-md-12'>
-                    <button class='btn btn-link' ng-click='toggle_other_notes()'>
-                        <span ng-show='show_other_notes'>Hide Other Notes </span>
-                        <span ng-show='!show_other_notes'> Show Other Notes ({{ other_wiki_notes.length }}) </span>
-                    </button>
-
-                    <ul class='list-group' ng-show='show_other_notes==true'>
-
-                        <li ng-show='!other_wiki_notes.length' class='list-group-item'> No Notes</li>
-                        <li ng-repeat='note in other_wiki_notes' class='list-group-item'>
-                            <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                - {{ note.author.user.username }} </b> : {{ note.note }}
-                            <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
-                        </li>
-                    </ul>
-
-                </div>
-                <div class='col-md-12'>
-                    <button class='btn btn-link' ng-click='toggle_physician_notes()'>
-                        <span ng-show='show_physician_notes'>Hide Other Physician Notes </span>
-                        <span ng-show='!show_physician_notes'> Show Other Physician Notes ({{ physician_wiki_notes.length }}) </span>
-                    </button>
-
-                    <ul class='list-group' ng-show='show_physician_notes==true'>
-                        <li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes</li>
-                        <li ng-repeat='note in physician_wiki_notes' class='list-group-item'>
-                            <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                - {{ note.author.user.username }} </b> : {{ note.note }}
-                            <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
-                        </li>
-                    </ul>
-
-
-                </div>
-            </div>
-
-
         </div>
 
     </div>
