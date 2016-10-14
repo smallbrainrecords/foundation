@@ -210,10 +210,13 @@ LOGGING = {
     }
 }
 
+SNOMEDCT = {}
+
 
 PROBLEMS_PATH = '/root/core/static/js/problems/'
 ALLOWED_HOSTS = [
     '192.210.207.188', # Allow domain and subdomains
+    '146.148.52.187',
 ]
 
 try:

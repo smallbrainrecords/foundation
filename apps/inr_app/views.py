@@ -9,9 +9,24 @@ from rest_framework.decorators import api_view
 from emr.models import Inr, InrValue, Medication, MedicationTextNote, PatientController, UserProfile, MedicationPinToProblem
 from .serializers import MedicationTextNoteSerializer, MedicationSerializer, InrValueSerializer, InrSerializer, MedicationPinToProblemSerializer
 from emr.operations import op_add_event
+from emr.mysnomedct import SnomedctConnector
 
 from users_app.serializers import UserProfileSerializer
 from users_app.views import permissions_accessed
+
+@login_required
+def list_terms(request):
+    # We list snomed given a query
+    query = request.GET['query']
+    if query:
+        query = query.replace(" ", "%")
+    snomedct_conn = SnomedctConnector()
+    snomedct_conn.cursor = snomedct_conn.connect()
+    medications = snomedct_conn.get_medications(query)
+
+    results_holder = json.dumps(medications)
+
+    return HttpResponse(results_holder, content_type="application/json")
 
 
 @login_required

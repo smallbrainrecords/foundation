@@ -48,6 +48,13 @@
                 var url = '/inr/medication/' + patient_id + '/pin_to_problem';
                 return httpService.post(form, url);
             };
+
+            this.listTerms = function(query){
+				var params = {'query': query};
+				var url = "/inr/list_terms";
+
+				return httpService.get(params, url);
+			};
 	});
 
 })();
