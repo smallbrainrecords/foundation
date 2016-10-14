@@ -482,7 +482,7 @@ def add_todo_attachment(request, todo_id):
     resp['attachment'] = attachment_dict
     # todo activity
     activity = "Attached <b>%s</b> to this todo." % (attachment.filename())
-    add_todo_activity(todo, actor_profile, activity, comment=None, attachment=attachment)
+    add_todo_activity(attachment.todo, actor_profile, activity, comment=None, attachment=attachment)
     return ajax_response(resp)
 
 
