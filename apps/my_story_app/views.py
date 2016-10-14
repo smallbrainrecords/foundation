@@ -66,6 +66,9 @@ def get_my_story(request, patient_id):
             components = components.exclude(id__in=exclude_components)
 
             tab["my_story_tab_components"] = MyStoryTextComponentSerializer(components, many=True).data
+            for component in tab["my_story_tab_components"]:
+                entries = MyStoryTextComponentEntry.objects.filter(component_id=component["id"], patient_id=int(patient_id))
+                component["text_component_entries"] = MyStoryTextComponentEntrySerializer(entries, many=True).data
 
         resp['info'] = tabs_serializer
     return ajax_response(resp)
@@ -97,26 +100,7 @@ def add_tab(request, patient_id):
         tab.private = private
         if all_patients:
             tab.is_all = True
-            # tab.tab_all = tab.id
         tab.save()
-
-        # if all_patients:
-        #     user_profile = UserProfile.objects.get(user=request.user)
-        #     if user_profile.role == 'admin':
-        #         patients = UserProfile.objects.filter(role='patient')
-
-        #     elif user_profile.role == 'physician':
-        #         patient_controllers = PatientController.objects.filter(physician=request.user)
-        #         patient_ids = [x.patient.id for x in patient_controllers]
-        #         patients = UserProfile.objects.filter(user__id__in=patient_ids)
-
-        #     for patient in patients:
-        #         if not int(patient_id) == patient.user.id:
-        #             patient_tab = MyStoryTab.objects.create(patient=patient.user,
-        #                                         author=request.user,
-        #                                         name=request.POST.get("name", None),
-        #                                         is_all=True,
-        #                                         tab_all=tab.id)
 
         resp['tab'] = MyStoryTabSerializer(tab).data
         resp['tab']["my_story_tab_components"] = []
@@ -135,39 +119,8 @@ def add_text(request, patient_id, tab_id):
         patient_user = User.objects.get(id=patient_id)
 
         all_patients = True if request.POST.get('all_patients', False) else False
-
-        # if all_patients:
-        #     user_profile = UserProfile.objects.get(user=request.user)
-        #     if user_profile.role == 'admin':
-        #         patients = UserProfile.objects.filter(role='patient')
-
-        #     elif user_profile.role == 'physician':
-        #         patient_controllers = PatientController.objects.filter(physician=request.user)
-        #         patient_ids = [x.patient.id for x in patient_controllers]
-        #         patients = UserProfile.objects.filter(user__id__in=patient_ids)
-
-        #     text = None
-        #     for patient in patients:
-        #         patient_text = MyStoryTextComponent()
-        #         patient_text.name = request.POST.get("name", None)
-        #         patient_text.text = request.POST.get("text", None)
-        #         patient_text.concept_id = request.POST.get("concept_id", None)
-        #         patient_text.patient = patient.user
-        #         patient_text.author = request.user
-        #         patient_text.last_updated_user = request.user
-
-        #         patient_tab = MyStoryTab.objects.filter(tab_all=tab.tab_all, is_all=True, patient=patient.user)
-        #         if patient_tab:
-        #             patient_text.tab = patient_tab[0]
-        #             patient_text.is_all = True
-        #             patient_text.save()
-
-        #             if int(patient_id) == patient.user.id:
-        #                 text = patient_text
-        # else:
         text = MyStoryTextComponent()
         text.name = request.POST.get("name", None)
-        text.text = request.POST.get("text", None)
         text.concept_id = request.POST.get("concept_id", None)
 
         private = True if request.POST.get('private', False) else False
@@ -175,15 +128,23 @@ def add_text(request, patient_id, tab_id):
 
         text.patient = patient_user
         text.author = request.user
-        text.last_updated_user = request.user
         text.tab = tab
 
         if all_patients and tab.is_all:
             text.is_all = True
         text.save()
 
+        entry = MyStoryTextComponentEntry()
+        entry.component = text
+        entry.text = request.POST.get("text", None)
+        entry.patient = patient_user
+        entry.author = request.user
+        entry.save()
+
         if text:
             resp['component'] = MyStoryTextComponentSerializer(text).data
+            entries = MyStoryTextComponentEntry.objects.filter(component_id=text.id, patient_id=int(patient_id))
+            resp['component']["text_component_entries"] = MyStoryTextComponentEntrySerializer(entries, many=True).data
             resp['success'] = True
 
     return ajax_response(resp)
@@ -250,24 +211,40 @@ def save_text_component(request, patient_id, component_id):
             if request.user.id == component.author.id:
                 component.name = request.POST.get("name", None)
                 component.concept_id = request.POST.get("concept_id", None)
-        if request.POST.get("text", None):
-            entry = MyStoryTextComponentEntry(component=component, text=component.text, datetime=component.datetime, private=component.private, author=component.author)
-            entry.save()
-
-            component.text = request.POST.get("text", None)
-            component.last_updated_user = request.user
-
-            resp['entry'] = MyStoryTextComponentEntrySerializer(entry).data
-
-            actor = request.user
-            patient = User.objects.get(id=patient_id)
-
-            summary = "<b>%s</b> note was updated to %s" % (component.name, component.text)
-            op_add_event(actor, patient, summary)
 
         component.save()
         
         resp['component'] = MyStoryTextComponentSerializer(component).data
+        entries = MyStoryTextComponentEntry.objects.filter(component_id=component.id, patient_id=int(patient_id))
+        resp['component']["text_component_entries"] = MyStoryTextComponentEntrySerializer(entries, many=True).data
+        resp['success'] = True
+
+    return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+@permissions_required(["save_text_component"])
+def save_text_component_entry(request, patient_id, component_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        component = MyStoryTextComponent.objects.get(id=int(component_id))
+        patient = User.objects.get(id=patient_id)
+
+        entry = MyStoryTextComponentEntry()
+        entry.component = component
+        entry.text = request.POST.get("text", None)
+        entry.patient = patient
+        entry.author = request.user
+        entry.save()
+
+        resp['entry'] = MyStoryTextComponentEntrySerializer(entry).data
+
+        actor = request.user
+
+        summary = "<b>%s</b> note was updated to %s" % (component.name, entry.text)
+        op_add_event(actor, patient, summary)
+
         resp['success'] = True
 
     return ajax_response(resp)

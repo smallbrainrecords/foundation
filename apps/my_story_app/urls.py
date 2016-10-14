@@ -11,4 +11,5 @@ urlpatterns = patterns('my_story_app.views',
     url(r'^(?P<patient_id>\d+)/save_tab/(?P<tab_id>\d+)$', 'save_tab'),
     url(r'^(?P<patient_id>\d+)/delete_text_component/(?P<component_id>\d+)$', 'delete_text_component'),
     url(r'^(?P<patient_id>\d+)/save_text_component/(?P<component_id>\d+)$', 'save_text_component'),
+    url(r'^(?P<patient_id>\d+)/save_text_component_entry/(?P<component_id>\d+)$', 'save_text_component_entry'),
 )

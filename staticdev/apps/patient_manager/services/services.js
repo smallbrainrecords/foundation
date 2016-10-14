@@ -378,6 +378,12 @@
 			return httpService.post(form, url);
 		};
 
+		this.saveMyStoryTextEntry = function(form){
+			var url = '/my_story/'+form.patient_id+'/save_text_component_entry/' + form.component_id;;
+
+			return httpService.post(form, url);
+		};
+
 		this.trackTabClickEvent = function(form){
 			var url = '/my_story/track/click';
 			return httpService.post(form, url);

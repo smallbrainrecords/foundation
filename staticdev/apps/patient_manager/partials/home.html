@@ -667,8 +667,7 @@
                                  ng-if="component.private==false || active_user.role=='patient' || active_user.user.id==component.author.id">
                                 <div class="col-sm-12">
                                     <div>
-                                        <b ng-hide="show_edit_my_story_tab && active_user.user.id==component.author.id">{{
-                                            component.name }}</b>
+                                        <b ng-hide="show_edit_my_story_tab && active_user.user.id==component.author.id">{{ component.name }}</b>
                                         <span ng-show="show_edit_my_story_tab && active_user.user.id==component.author.id">
                                             <b>Name: </b><input type="text" ng-model="component.name">
                                             <b>Concept ID: </b><input type="text" ng-model="component.concept_id">
@@ -678,19 +677,30 @@
                                                     ng-if="active_user.user.id==component.author.id">Delete</button>
                                         </span>
                                     </div>
-                                    <textarea class="form-control" ng-model="component.text"
-                                              ng-change="change_component_text(component)" 
-                                              ng-disabled="active_user.role != 'physician' && active_user.role!='admin' && active_user.user.id!=component.author.id"
-                                              ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
-                                    <p>Last edited by: {{ component.last_updated_user.username }}
-                                        on {{ component.last_updated_date|date:'M/d/yyyy' }}
-                                        <button class="btn btn-link" ng-click="see_previous_entries()">see previous
-                                            entries
-                                            ({{ component.text_component_entries.length }})
-                                        </button>
-                                    </p>
+                                    <div ng-repeat="entry in component.text_component_entries"
+                                         ng-if="$first">
+                                        <textarea class="form-control" ng-model="entry.text"
+                                                ng-change="change_component_text(component, entry, oldText)" 
+                                                ng-click="oldText = entry.text" 
+                                                ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
+
+                                        <p>Last edited by: {{ entry.author.username }}
+                                            on {{ entry.datetime|date:'M/d/yyyy' }}
+                                            <button class="btn btn-link" ng-click="see_previous_entries()">see previous entries
+                                                ({{ component.text_component_entries.length - 1 }})
+                                            </button>
+                                        </p>
+                                    </div>
+                                    <div ng-if="component.text_component_entries.length == 0">
+                                        <textarea class="form-control" ng-model="entry.text"
+                                                ng-change="change_component_text(component, entry, oldText)" 
+                                                ng-click="oldText = entry.text" 
+                                                ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
+                                    </div>
+                                    
                                     <div ng-show="show_previous_entries">
-                                        <div ng-repeat="entry in component.text_component_entries">
+                                        <div ng-repeat="entry in component.text_component_entries"
+                                             ng-if="!$first">
                                             {{ entry.text }}
                                             <p>by {{ entry.author.username }}
                                                 on {{ entry.datetime|date:'M/d/yyyy' }}</p>

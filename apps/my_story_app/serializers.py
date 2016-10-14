@@ -12,11 +12,11 @@ class MyStoryTextComponentEntrySerializer(serializers.ModelSerializer):
         model = MyStoryTextComponentEntry
         fields = (
             'id',
+            'patient',
             'author',
             'component',
             'text',
             'datetime',
-            'private',
             )
 
 
@@ -24,8 +24,6 @@ class MyStoryTextComponentSerializer(serializers.ModelSerializer):
 
     patient = SafeUserSerializer()
     author = SafeUserSerializer()
-    last_updated_user = SafeUserSerializer()
-    text_component_entries = MyStoryTextComponentEntrySerializer(many=True, read_only=True)
 
     class Meta:
         model = MyStoryTextComponent
@@ -36,13 +34,9 @@ class MyStoryTextComponentSerializer(serializers.ModelSerializer):
             'author',
             'tab',
             'name',
-            'text',
             'datetime',
-            'last_updated_user',
-            'last_updated_date',
             'concept_id',
             'private',
-            'text_component_entries',
             'is_all',
             )
 

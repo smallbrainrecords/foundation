@@ -976,16 +976,17 @@
                 });
             };
 
-            $scope.change_component_text = function (component) {
+            $scope.change_component_text = function (component, entry, oldText) {
                 var form = {};
-                form.text = component.text;
+                form.text = entry.text;
                 form.component_id = component.id;
+                form.entry_id = entry.id;
                 form.patient_id = $scope.patient_id;
-                patientService.saveMyStoryText(form).then(function (data) {
+                patientService.saveMyStoryTextEntry(form).then(function (data) {
                     if (data['success'] == true) {
-                        component.text_component_entries.push(data['entry']);
-                        component.last_updated_user = data['component']['last_updated_user'];
-                        component.last_updated_date = data['component']['last_updated_date'];
+                        component.text_component_entries.unshift(data['entry']);
+                        if (typeof oldText !== 'undefined')
+                            entry.text = oldText;
                         toaster.pop('success', "Done", "Saved text component successfully!");
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');

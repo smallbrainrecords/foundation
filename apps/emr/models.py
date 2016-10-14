@@ -843,7 +843,6 @@ class MyStoryTab(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)
-    tab_all = models.BigIntegerField(null=True, blank=True)
 
     def __unicode__(self):
         return "%s" % (self.name)
@@ -854,7 +853,6 @@ class MyStoryTextComponent(models.Model):
     author = models.ForeignKey(User, related_name="author_story_texts", null=True, blank=True)
     tab = models.ForeignKey(MyStoryTab, null=True, blank=True, related_name="my_story_tab_components")
     name = models.TextField(null=True, blank=True)
-    text = models.TextField(null=True, blank=True)
     datetime = models.DateTimeField(auto_now_add=True)
     last_updated_user = models.ForeignKey(User, null=True, blank=True)
     last_updated_date = models.DateField(auto_now=True)
@@ -867,17 +865,17 @@ class MyStoryTextComponent(models.Model):
 
 
 class MyStoryTextComponentEntry(models.Model):
+    patient = models.ForeignKey(User, related_name="patient_story_text_entries", null=True, blank=True)
     author = models.ForeignKey(User, related_name="author_story_text_entries", null=True, blank=True)
     component = models.ForeignKey(MyStoryTextComponent, null=True, blank=True, related_name="text_component_entries")
     text = models.TextField(null=True, blank=True)
-    datetime = models.DateTimeField(blank=True, null=True)
-    private = models.BooleanField(default=True)
+    datetime = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         ordering = ['-datetime']
 
     def __unicode__(self):
-        return "%s" % (self.component.name)
+        return "%s" % (self.text)
 
 
 class Inr(models.Model):
