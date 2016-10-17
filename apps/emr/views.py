@@ -619,28 +619,43 @@ class LoginError(View):
 # ****************** New Code *********************
 @login_required
 def list_snomed_terms(request):
-    from pymedtermino import *
-    import pymedtermino.snomedct
     # We list snomed given a query
+    from emr.mysnomedct import SnomedctConnector
     query = request.GET['query']
-    results = pymedtermino.snomedct.SNOMEDCT.search(query)
-    results_holder = []
-    disorders = []
-    findings = []
-    for result in results:
-        if '(disorder)' in result.term:
-            disorders.append(
-                {'term': result.term, 'code': result.code, 'active': result.active})
-        if '(finding)' in result.term:
-            findings.append(
-                {'term': result.term, 'code': result.code, 'active': result.active})
+    if query:
+        query = query.replace(" ", "%")
+    snomedct_conn = SnomedctConnector()
+    snomedct_conn.cursor = snomedct_conn.connect()
+    medications = snomedct_conn.get_problems(query)
 
-    disorders = sorted(disorders, key=lambda x: x['term'])
-    findings = sorted(findings, key=lambda x: x['term'])
-
-    results_holder.extend(disorders)
-    results_holder.extend(findings)
-
-    results_holder = json.dumps(results_holder)
+    results_holder = json.dumps(medications)
 
     return HttpResponse(results_holder, content_type="application/json")
+
+# @login_required
+# def list_snomed_terms(request):
+#     from pymedtermino import *
+#     import pymedtermino.snomedct
+#     # We list snomed given a query
+#     query = request.GET['query']
+#     results = pymedtermino.snomedct.SNOMEDCT.search(query)
+#     results_holder = []
+#     disorders = []
+#     findings = []
+#     for result in results:
+#         if '(disorder)' in result.term:
+#             disorders.append(
+#                 {'term': result.term, 'code': result.code, 'active': result.active})
+#         if '(finding)' in result.term:
+#             findings.append(
+#                 {'term': result.term, 'code': result.code, 'active': result.active})
+
+#     disorders = sorted(disorders, key=lambda x: x['term'])
+#     findings = sorted(findings, key=lambda x: x['term'])
+
+#     results_holder.extend(disorders)
+#     results_holder.extend(findings)
+
+#     results_holder = json.dumps(results_holder)
+
+#     return HttpResponse(results_holder, content_type="application/json")

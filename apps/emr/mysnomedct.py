@@ -28,3 +28,15 @@ class SnomedctConnector():
 		for row in results:
 			medications.append({'concept_id': row[0], 'name': row[1]})
 		return medications[:self.limit]
+
+	def get_problems(self, query=None):
+		if query:
+			sql = "select conceptid, term from vw_problems WHERE term LIKE '%" + query + "%'"
+		else:
+			sql = 'select conceptid, term from vw_problems'
+		self.cursor.execute(sql)
+		results = self.cursor.fetchall()
+		problems = []
+		for row in results:
+			problems.append({'code': row[0], 'term': row[1]})
+		return problems[:self.limit]

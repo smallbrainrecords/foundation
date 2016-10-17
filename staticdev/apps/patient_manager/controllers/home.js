@@ -335,20 +335,13 @@
                 }
 
                 $scope.unset_new_problem();
-
                 if (newVal.length > 2) {
-
                     patientService.listTerms(newVal).then(function (data) {
-
                         $scope.problem_terms = data;
-
                     });
                 } else {
-
                     $scope.problem_terms = [];
-
                 }
-
             });
 
 
