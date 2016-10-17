@@ -82,6 +82,7 @@
             problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
                 $scope.pins = data['pins'];
                 $scope.problem_pins = data['problem_pins'];
+                $scope.hasPinnedGraph = false;
 
                 $scope.datas = [];
                 patientService.getDatas($scope.patient_id).then(function (data) {
@@ -93,6 +94,7 @@
                             angular.forEach($scope.problem_pins, function (pin, key) {
                                 if (data.id == pin.observation) {
                                     is_pin = true;
+                                    $scope.hasPinnedGraph = true;
                                     data.pin_author = pin.author.id;
                                 }
                             });
@@ -1069,6 +1071,7 @@
             patientService.getInr($scope.patient_id).then(function (data) {
                 if (data['success'] == true) {
                     $scope.inr = data['info'];
+                    $scope.hasPinnedMedication= false;
 
                     problemService.fetchMedicationPinToProblem($scope.problem_id).then(function (data) {
                         $scope.medication_pins = data['pins'];
@@ -1078,6 +1081,7 @@
                             angular.forEach($scope.medication_pins, function (pin, key) {
                                 if (medication.id == pin.medication.id) {
                                     is_pin = true;
+                                    $scope.hasPinnedMedication = true;
                                     medication.pin_author = pin.author.id;
                                 }
                             });

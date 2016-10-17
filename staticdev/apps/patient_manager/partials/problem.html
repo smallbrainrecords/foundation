@@ -460,11 +460,15 @@
             This problem was previously named "{{ problem.old_problem_name }}"
         </div>
     </div>
+
     <div class="row">
-        <div class="col-md-6">
-
-
-            <div class='panel panel-default' ng-if="datas.length > 0">
+        <!--hasPinnedGraph == true &&  inr.inr_medications.length > 0 == true col-md-6-->
+        <!--hasPinnedGraph == true &&  inr.inr_medications.length > 0 != true col-md-12-->
+        <!--hasPinnedGraph == false &&  inr.inr_medications.length > 0 == true col-md-12-->
+        <!--hasPinnedGraph == false &&  inr.inr_medications.length > 0 != true hide-->
+<!--col-md-6 | col-md-12-->
+        <div ng-if="hasPinnedGraph" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-12'">
+            <div class='panel panel-default'>
                 <div class="panel-header">
                     <div class="btn-group btn-group-justified graph-view-mode">
                         <label class="btn btn-default" ng-click="changeView('Week')"
@@ -516,8 +520,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-
+        <div ng-if="hasPinnedMedication" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-12'">
             <div class='panel panel-default'>
                 <div class='panel-heading'> Medications</div>
                 <div class='panel-body'>
@@ -575,9 +578,9 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
+
     <div class='panel panel-default'>
 
         <div class='panel-heading'> Problem History</div>
@@ -717,9 +720,8 @@
                 <div class='col-md-4'>
 
                     <h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i></h4>
-                    <div class='row'
-                         ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effecting: true}'
-                         style='padding:7px; border-bottom:1px solid #ccc;'>
+                    <div class='row no-margin'
+                         ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effecting: true}'>
 
                         <!--Only show if edit mode is enabled-->
                         <input ng-if="editMode" type='checkbox' ng-model='eff_problem.effecting'
@@ -737,16 +739,15 @@
 
                 </div>
 
-                <div class='col-md-4'>
+                <div class='col-md-4 text-center'>
                     <h3> {{ problem.problem_name }} </h3>
                 </div>
 
                 <div class='col-md-4'>
 
                     <h4><i class='glyphicon glyphicon-arrow-right'></i> EffectedProblems </h4>
-                    <div class='row'
-                         ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effected: true}'
-                         style='padding:7px; border-bottom:1px solid #ccc;'>
+                    <div class='row no-margin'
+                         ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effected: true}'>
                         <!--Only show if edit mode is enabled-->
                         <input ng-if="editMode" type='checkbox' ng-model='eff_problem.effected'
                                ng-change='change_effected_problem(problem, eff_problem)'
