@@ -85,13 +85,32 @@
 
 				form.user_id = $scope.user_id;
 
-				staffService.addToDo(form).then(function(data){
-					var new_todo = data['todo'];
-					$scope.personal_todos.push(new_todo);
-					$scope.new_todo = {};
-					toaster.pop('success', 'Done', 'New Todo added successfully');
-				});
+				prompt({
+                    title: 'Add Due Date',
+                    message: 'Enter due date',
+                    input: true,
+                    label: 'Due Date',
+                }).then(function(due_date){
+                    if(moment(due_date, "MM/DD/YYYY", true).isValid()) {
+                        form.due_date = due_date;
+                    } else if(moment(due_date, "M/D/YYYY", true).isValid()) {
+                        form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
+                    } else if(moment(due_date, "MM/YYYY", true).isValid()) {
+                        form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
+                    } else if(moment(due_date, "M/YYYY", true).isValid()) {
+                        form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
+                    } else {
+                        toaster.pop('error', 'Error', 'Please enter a valid date!');
+                        return false;
+                    }
 
+                    staffService.addToDo(form).then(function(data){
+						var new_todo = data['todo'];
+						$scope.personal_todos.push(new_todo);
+						$scope.new_todo = {};
+						toaster.pop('success', 'Done', 'New Todo added successfully');
+					});
+                });
 			};
 
 			$scope.add_new_list_label = function(new_list, label) {

@@ -796,14 +796,35 @@
 
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
-                problemService.addTodo(form).then(function (data) {
 
-                    form.name = '';
-                    $scope.problem_todos.push(data['todo']);
-                    toaster.pop('success', 'Done', 'Added Todo!');
-                    $scope.set_authentication_false();
-                    /* Not-angular-way */
-                    $('#todoNameInput').focus();
+                prompt({
+                    title: 'Add Due Date',
+                    message: 'Enter due date',
+                    input: true,
+                    label: 'Due Date',
+                }).then(function(due_date){
+                    if(moment(due_date, "MM/DD/YYYY", true).isValid()) {
+                        form.due_date = due_date;
+                    } else if(moment(due_date, "M/D/YYYY", true).isValid()) {
+                        form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
+                    } else if(moment(due_date, "MM/YYYY", true).isValid()) {
+                        form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
+                    } else if(moment(due_date, "M/YYYY", true).isValid()) {
+                        form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
+                    } else {
+                        toaster.pop('error', 'Error', 'Please enter a valid date!');
+                        return false;
+                    }
+
+                    problemService.addTodo(form).then(function (data) {
+
+                        form.name = '';
+                        $scope.problem_todos.push(data['todo']);
+                        toaster.pop('success', 'Done', 'Added Todo!');
+                        $scope.set_authentication_false();
+                        /* Not-angular-way */
+                        $('#todoNameInput').focus();
+                    });
                 });
             };
 

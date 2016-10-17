@@ -80,8 +80,10 @@ class TodoSerializer(serializers.ModelSerializer):
 
     def get_problem(self, obj):
         from problems_app.serializers import ProblemSerializer
-        return ProblemSerializer(obj.problem).data
-
+        if obj.problem:
+            return ProblemSerializer(obj.problem).data
+        else:
+            return None
 
 
 class ToDoCommentSerializer(serializers.ModelSerializer):

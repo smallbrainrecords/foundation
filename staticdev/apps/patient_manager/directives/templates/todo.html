@@ -7,7 +7,7 @@
 
 				<input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
 					<span ng-if="item.due_date"> due by <span ng-class="isDueDate(item.due_date)">{{item.due_date}}</span></span>
-					<span ng-if="item.problem && show_problem"> for problem
+					<span ng-if="item.problem && show_problem"> for problem 
 						<a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a>
 					</span>
 					<!-- begin label -->
