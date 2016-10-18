@@ -1,6 +1,6 @@
 #!/bin/bash
 cd /home/softdevelop_vd
-workon foundation
+source /home/softdevelop_vd/Env/foundation/bin/activate
 cd foundation
 python manage.py cron review_colorectal_cancer_risk_assessment
 python manage.py cron patient_needs_a_plan_for_colorectal_cancer_screening
