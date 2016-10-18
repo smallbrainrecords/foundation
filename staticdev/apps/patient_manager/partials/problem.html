@@ -67,7 +67,9 @@
                             <div class='col-md-12'>
 
                                 <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
-                                       placeholder='Search Problem....'>
+                                       placeholder='Search Problem....' 
+                                       ng-change="problem_name_changed(problem_term);" 
+                                       ng-model-options="{ updateOn: 'default blur', debounce: { default: 1000, blur: 500 } }">
                                 <button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
                                     Change Problem
                                 </button>
@@ -110,6 +112,9 @@
                                     class="fa fa-tags"></i>Create problems list</a>
                             <a href ng-click="open_change_data();"><i class="fa fa-tags"></i>Change Data</a>
                             <a href ng-click="open_change_medication();"><i class="fa fa-tags"></i>Change Medication</a>
+                            <a href ng-click="delete_problem();"
+                               ng-if="(active_user.role=='physician' || active_user.role=='admin' || active_user.role=='mid-level') && encounter_flag"><i
+                                    class="fa fa-tags"></i>Delete problem</a>
                         </div>
                         <!-- end buttons -->
                         <!-- begin change label -->

@@ -146,3 +146,18 @@ def pin_to_problem(request, patient_id):
         resp['success'] = True
 
     return ajax_response(resp)
+
+@login_required
+@api_view(["POST"])
+def change_active_medication(request, patient_id, medication_id):
+    resp = {}
+    resp['success'] = False
+    if permissions_accessed(request.user, int(patient_id)):
+        medication = Medication.objects.get(id=medication_id)
+        medication.current = not medication.current
+        medication.save()
+
+        resp['medication'] = MedicationSerializer(medication).data
+        resp['success'] = True
+
+    return ajax_response(resp)

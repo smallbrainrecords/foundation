@@ -138,6 +138,12 @@
                 $location.path('/problem/' + problem.id);
             };
 
+            $scope.change_active_medication = function() {
+                inrService.changeActiveMedication($scope.patient_id, $scope.medication_id).then(function(data) {
+                    toaster.pop('success', 'Done', 'Changed successfully!');
+                });
+            };
+
         });
     /* End of controller */
 })();

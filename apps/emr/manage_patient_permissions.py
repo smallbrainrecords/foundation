@@ -27,6 +27,7 @@ GLOBAL_PERMISSIONS = [
     'set_problem_order',
     'change_problem_name',
     'add_problem_label',
+    'delete_problem',
     # Problem Notes
     'add_patient_problem_note',
     'add_physician_problem_note',
@@ -46,6 +47,7 @@ GLOBAL_PERMISSIONS = [
     'add_encounter',
     'add_encounter_event',
     'add_encounter_timestamp',
+    'delete_encounter',
     # a1c
     'add_a1c',
     'add_a1c_note',
@@ -125,6 +127,7 @@ ROLE_PERMISSIONS['physician'] = [
     'change_problem_name',
     'add_problem_label',
     'add_common_problem_list',
+    'delete_problem',
     # Goal
     'add_goal',
     'modify_goal',
@@ -140,6 +143,7 @@ ROLE_PERMISSIONS['physician'] = [
     'add_encounter',
     'add_encounter_event',
     'add_encounter_timestamp',
+    'delete_encounter',
     # a1c
     'add_a1c',
     'add_a1c_note',
@@ -173,6 +177,7 @@ ROLE_PERMISSIONS['mid-level'] = [
     'change_problem_name',
     'add_problem_label',
     'add_common_problem_list',
+    'delete_problem',
     # Goal
     'add_goal',
     'modify_goal',

@@ -355,29 +355,36 @@
                 $scope.sharing_patients = data['sharing_patients'];
             });
 
-            // change problem name
-            $scope.$watch('problem_term', function (newVal, oldVal) {
-
-                if (newVal == undefined) {
+            // delete problem
+            $scope.delete_problem = function() {
+                prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a problem is forever. There is no undo."
+                }).then(function (result) {
+                    var form = {};
+                    form.problem_id = $scope.problem_id;
+                    form.patient_id = $scope.patient_id;
+                    problemService.deleteProblem(form).then(function (data) {
+                        toaster.pop('success', 'Done', 'Deleted problem successfully');
+                        $location.url('/');
+                    });
+                }, function () {
                     return false;
-                }
+                });
+            };
+
+            // change problem name
+            $scope.problem_name_changed = function (problem_term) {
 
                 $scope.unset_new_problem();
-
-                if (newVal.length > 2) {
-
-                    patientService.listTerms(newVal).then(function (data) {
-
+                if (problem_term.length > 2) {
+                    patientService.listTerms(problem_term).then(function (data) {
                         $scope.problem_terms = data;
-
                     });
                 } else {
-
                     $scope.problem_terms = [];
-
                 }
-
-            });
+            };
 
             $scope.set_new_problem = function (problem) {
 

@@ -61,10 +61,12 @@
 
                 if (data['encounter_active'] == true) {
                     $scope.encounter_flag = true;
+                    $rootScope.encounter_flag = true;
                     $scope.encounter = data['current_encounter'];
                     $scope.blobs.push($scope.unsavedBlob);
                 } else {
                     $scope.encounter_flag = false;
+                    $rootScope.encounter_flag = false;
                     encounterRecorderFailSafeService.clearUnsavedData();
                 }
 
@@ -81,6 +83,7 @@
                         alert('New Encounter Started');
                         $scope.encounter = data['encounter'];
                         $scope.encounter_flag = true;
+                        $rootScope.encounter_flag = true;
 
                         $scope.encounterCtrl = recorderService.controller("audioInput");
                         if ($scope.encounterCtrl.status.isRecording) {
@@ -105,6 +108,7 @@
                             alert(data['msg']);
                             /* Encounter Stopped */
                             $scope.encounter_flag = false;
+                            $rootScope.encounter_flag = false;
 
                             if ($scope.encounterCtrl.status.isRecording) {
                                 $scope.encounterCtrl.stopRecord();

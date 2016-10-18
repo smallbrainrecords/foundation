@@ -975,3 +975,25 @@ def get_medication_pins(request, problem_id):
     resp['success'] = True
     resp['pins'] = MedicationPinToProblemSerializer(pins, many=True).data
     return ajax_response(resp)
+
+@permissions_required(["delete_problem"])
+@login_required
+def delete_problem(request, problem_id):
+    resp = {}
+    resp['success'] = False
+
+    physician = request.user
+    patient_id = request.POST.get('patient_id', None)
+    latest_encounter = Encounter.objects.filter(physician=physician,
+                                                patient_id=patient_id
+                                        ).order_by('-starttime').first()
+
+    if latest_encounter and latest_encounter.stoptime is None:
+        resp['success'] = True
+
+        problem = Problem.objects.get(id=problem_id)
+        summary = "Deleted <u>problem</u>: <b>%s</b>" % problem.problem_name
+        op_add_event(physician, problem.patient, summary)
+        problem.delete()
+
+    return ajax_response(resp)

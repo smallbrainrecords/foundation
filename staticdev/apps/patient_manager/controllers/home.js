@@ -733,6 +733,16 @@
                     copyToClipboard(text);
                     event.preventDefault();
                 }
+
+                if (event.ctrlKey && event.keyCode == 68 && $location.path() == '/') {
+                    event.preventDefault();
+                    $scope.change_homepage_tab('data');
+                }
+
+                if (event.ctrlKey && event.keyCode == 83 && $location.path() == '/') {
+                    event.preventDefault();
+                    $scope.change_homepage_tab('mystory');
+                }
             });
 
             /**
@@ -806,6 +816,10 @@
                     form.patient_id = $scope.patient_id;
                     patientService.trackDataClickEvent(form).then(function (data) {
                     });
+                } else {
+                    $timeout(function () {
+                        $scope.show_homepage_tab = CollapseService.show_homepage_tab;
+                    }, 500);
                 }
             };
 

@@ -695,7 +695,7 @@ def search(request, user_id):
         tabs = MyStoryTab.objects.filter(name__contains=query, patient=user)
         context['tabs'] = tabs
 
-        text_components = MyStoryTextComponent.objects.filter(Q(name__contains=query) | Q(text__contains=query), patient=user)
+        text_components = MyStoryTextComponent.objects.filter(Q(name__contains=query), patient=user)
         context['text_components'] = text_components
 
 
@@ -705,3 +705,49 @@ def search(request, user_id):
 
     context = RequestContext(request, context)
     return render_to_response("search.html", context)
+
+@login_required
+@api_view(["POST"])
+def staff_search(request):
+    user_profile = UserProfile.objects.get(user=request.user)
+    if user_profile.role == 'patient':
+        return HttpResponse("Not allowed")
+    patient_ids = []
+    if user_profile.role == 'admin':
+        patients = UserProfile.objects.filter(role='patient')
+        patient_ids = [x.user.id for x in patients]
+    elif user_profile.role == 'physician':
+        patient_controllers = PatientController.objects.filter(physician=request.user)
+        patient_ids = [x.patient.id for x in patient_controllers]
+    elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
+        team_members = PhysicianTeam.objects.filter(member=request.user)
+        physician_ids = [x.physician.id for x in team_members]
+        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_ids = [x.patient.id for x in patient_controllers]
+
+    context = {}
+    query = request.POST.get("query", None)
+    if query:
+        notes = ProblemNote.objects.filter(note__contains=query, problem__patient__id__in=patient_ids)
+        context['notes'] = notes
+
+        goals = Goal.objects.filter(goal__contains=query, patient__id__in=patient_ids)
+        context['goals'] = goals
+
+        todos = ToDo.objects.filter(todo__contains=query, patient__id__in=patient_ids)
+        context['todos'] = todos
+
+        summaries = EncounterEvent.objects.filter(summary__contains=query, encounter__patient__id__in=patient_ids)
+        context['summaries'] = summaries
+
+        tabs = MyStoryTab.objects.filter(name__contains=query, patient__id__in=patient_ids)
+        context['tabs'] = tabs
+
+        text_components = MyStoryTextComponent.objects.filter(Q(name__contains=query), patient__id__in=patient_ids)
+        context['text_components'] = text_components
+
+
+    context['user_profile'] = user_profile
+
+    context = RequestContext(request, context)
+    return render_to_response("staff_search.html", context)

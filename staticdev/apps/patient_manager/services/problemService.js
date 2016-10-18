@@ -220,6 +220,11 @@
 
 			return httpService.get(params, url);
 		};
+
+		this.deleteProblem = function(form){
+			var url = '/p/problem/'+form.problem_id+'/delete';
+			return httpService.post(form, url);
+		};
 });
 
 

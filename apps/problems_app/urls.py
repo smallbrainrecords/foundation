@@ -11,6 +11,7 @@ urlpatterns = patterns(
     url(r'^patient/(?P<patient_id>\d+)/problems/add/new_problem$', 'add_patient_problem'),
     url(r'^patient/(?P<patient_id>\d+)/problems/add/new_common_problem$', 'add_patient_common_problem'),
 
+    url(r'^problem/(?P<problem_id>\d+)/delete$', 'delete_problem'),
     url(r'^problem/(?P<problem_id>\d+)/change_name$', 'change_name'),
     url(r'^problem/(?P<problem_id>\d+)/update_status$', 'update_problem_status'),
     url(r'^problem/(?P<problem_id>\d+)/update_start_date$', 'update_start_date'),

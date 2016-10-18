@@ -55,6 +55,11 @@
 
 				return httpService.get(params, url);
 			};
+
+			this.changeActiveMedication = function(patient_id, medication_id) {
+				var url = '/inr/' + patient_id + '/' + medication_id + '/change_active_medication';
+				return httpService.post({}, url);
+			};
 	});
 
 })();

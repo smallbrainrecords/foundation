@@ -8,6 +8,7 @@ urlpatterns = patterns(
     url(r'^register/$', 'register_user'),
     url(r'^home/$', 'home'),
     url(r'^staff/$', 'staff'),
+    url(r'^staff/search$', 'staff_search', name="staff_search"),
     url(r'^patient/manage/(?P<user_id>\d+)/$', 'manage_patient'),
     url(r'^patient/manage/(?P<user_id>\d+)/search$', 'search', name="search"),
     url(r'^patient/(?P<patient_id>\d+)/info$', 'get_patient_info'),

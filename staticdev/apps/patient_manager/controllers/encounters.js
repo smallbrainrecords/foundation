@@ -4,7 +4,7 @@
 
 
     angular.module('ManagerApp')
-        .controller('EncountersCtrl', function ($scope,$rootScope, $routeParams, patientService, ngDialog, $location, toaster, encounterService, ngAudio) {
+        .controller('EncountersCtrl', function ($scope,$rootScope, $routeParams, patientService, ngDialog, $location, toaster, encounterService, ngAudio, prompt) {
 
 
             var patient_id = $('#patient_id').val();
@@ -139,6 +139,23 @@
                 encounterService.nameFavoriteEvent(form).then(function (data) {
                     encounter_event.is_named = false;
                     toaster.pop('success', 'Done', 'Named favorite!');
+                });
+            };
+
+            $scope.deleteEncounter = function () {
+                prompt({
+                    "title": "Are you sure?",
+                    "message": "This is irreversible."
+                }).then(function (result) {
+                    var form = {};
+                    form.encounter_id = $scope.encounter_id;
+                    form.patient_id = $scope.patient_id;
+                    encounterService.deleteEncounter(form).then(function (data) {
+                        toaster.pop('success', 'Done', 'Deleted encounter!');
+                        $location.url('/');
+                    });
+                }, function () {
+                    return false;
                 });
             };
 

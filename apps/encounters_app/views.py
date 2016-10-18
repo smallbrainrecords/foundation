@@ -162,3 +162,12 @@ def name_favorite(request, encounter_event_id):
     resp = {}
     resp['success'] = True
     return ajax_response(resp)
+
+@permissions_required(["delete_encounter"])
+@login_required
+@api_view(["POST"])
+def delete_encounter(request, patient_id, encounter_id):
+    enc = Encounter.objects.get(id=encounter_id).delete()
+    resp = {}
+    resp['success'] = True
+    return ajax_response(resp)

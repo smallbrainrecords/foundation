@@ -207,10 +207,9 @@ def save_text_component(request, patient_id, component_id):
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
         component = MyStoryTextComponent.objects.get(id=int(component_id))
-        if request.POST.get("name", None):
-            if request.user.id == component.author.id:
-                component.name = request.POST.get("name", None)
-                component.concept_id = request.POST.get("concept_id", None)
+        if request.user.id == component.author.id:
+            component.name = request.POST.get("name", None)
+            component.concept_id = request.POST.get("concept_id", None)
 
         component.save()
         

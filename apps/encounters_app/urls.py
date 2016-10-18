@@ -14,4 +14,5 @@ urlpatterns = patterns('encounters_app.views',
     url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/add_timestamp$', 'add_timestamp'),
     url(r'^encounter_event/(?P<encounter_event_id>\d+)/mark_favorite$', 'mark_favorite'),
     url(r'^encounter_event/(?P<encounter_event_id>\d+)/name_favorite$', 'name_favorite'),
+    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/delete$', 'delete_encounter'),
 	)

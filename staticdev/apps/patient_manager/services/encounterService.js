@@ -102,6 +102,11 @@
 
             };
 
+            this.deleteEncounter = function (form) {
+                var url = '/enc/patient/' + form.patient_id + '/encounter/' + form.encounter_id + '/delete';
+                return httpService.post(form, url);
+            };
+
 
         });
 

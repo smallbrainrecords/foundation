@@ -11,4 +11,5 @@ urlpatterns = patterns('inr_app.views',
     url(r'^(?P<patient_id>\d+)/medication/(?P<medication_id>\d+)/info$', 'get_medication'),
     url(r'^medication/(?P<medication_id>\d+)/get_pins$', 'get_pins'),
     url(r'^medication/(?P<patient_id>\d+)/pin_to_problem$', 'pin_to_problem'),
+    url(r'^(?P<patient_id>\d+)/(?P<medication_id>\d+)/change_active_medication$', 'change_active_medication'),
 )
