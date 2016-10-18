@@ -68,3 +68,14 @@ class AssignPhysicianMemberForm(forms.Form):
     user_id = forms.CharField(max_length=255, required=True)
     member_type = forms.ChoiceField(choices=MEMBER_TYPE_CHOICES, required=True)
     physician_id = forms.CharField(max_length=255, required=True)
+
+
+class UpdateActiveForm(forms.Form):
+    user_id = forms.IntegerField(required=True)
+    is_active = forms.BooleanField(required=False)
+    active_reason = forms.CharField(required=False)
+
+
+class UpdateDeceasedDateForm(forms.Form):
+    user_id = forms.IntegerField(required=True)
+    deceased_date = forms.CharField(required=False)

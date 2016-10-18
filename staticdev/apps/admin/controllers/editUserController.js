@@ -313,7 +313,56 @@
 					items.splice(target, 1);
 				}
 				return target_value;
-			}
+			};
+
+			$scope.update_active = function(){
+
+				var form = {};
+
+				form.user_id = $scope.user_id;
+				form.is_active = $scope.user_profile.user.is_active;
+				if (form.is_active)
+					$scope.user_profile.active_reason = '';
+				form.active_reason = $scope.user_profile.active_reason;
+
+				adminService.updateActive(form).then(function(data){
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Updated active');
+					}else if(data['success']==false){
+						toaster.pop('error', 'Error', 'Please fill valid data');
+					}else{
+						toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+					}
+				});
+
+			};
+
+			$scope.update_deceased_date = function(){
+
+				var form = {};
+
+				form.user_id = $scope.user_id;
+				form.deceased_date = $scope.user_profile.deceased_date;
+
+				if (form.deceased_date == '') {
+					
+				} else if(!moment(form.deceased_date, "MM/DD/YYYY", true).isValid()) {
+                    toaster.pop('error', 'Error', 'Please enter a valid date!');
+                    $scope.user_profile.user.is_active = false;
+                    return false;
+                }
+
+				adminService.updateDeceasedDate(form).then(function(data){
+					if(data['success']==true){
+						toaster.pop('success', 'Done', 'Updated deceased date');
+					}else if(data['success']==false){
+						toaster.pop('error', 'Error', 'Please fill valid data');
+					}else{
+						toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+					}
+				});
+
+			};
 
 
 			$scope.init();

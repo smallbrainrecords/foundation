@@ -8,6 +8,7 @@ import logging
 from .forms import UpdateProfileForm, UpdateBasicProfileForm
 from .forms import UpdateEmailForm, UpdatePasswordForm
 from .forms import CreateUserForm, AssignPhysicianMemberForm
+from .forms import UpdateActiveForm, UpdateDeceasedDateForm
 
 import datetime
 
@@ -585,4 +586,51 @@ def list_assigned_physicians(request):
     resp['errors'] = errors
     resp['physicians'] = physicians_list
     resp['unassigned_physicians'] = unassigned_physicians_list
+    return ajax_response(resp)
+
+@login_required
+def update_active(request):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        form = UpdateActiveForm(request.POST)
+        if form.is_valid():
+            is_active = form.cleaned_data['is_active']
+            user_id = form.cleaned_data['user_id']
+            active_reason = form.cleaned_data['active_reason']
+
+            user = User.objects.get(id=user_id)
+            user.is_active = is_active
+            user.save()
+
+            user_profile = UserProfile.objects.get(user=user)
+            user_profile.active_reason = active_reason
+            user_profile.save()
+
+            resp['success'] = True
+    return ajax_response(resp)
+
+@login_required
+def update_deceased_date(request):
+    resp = {}
+    resp['success'] = False
+
+    if request.method == 'POST':
+        form = UpdateDeceasedDateForm(request.POST)
+        if form.is_valid():
+            user_id = form.cleaned_data['user_id']
+            deceased_date = form.cleaned_data['deceased_date']
+
+            user = User.objects.get(id=user_id)
+            user_profile = UserProfile.objects.get(user=user)
+            if deceased_date:
+                user_profile.deceased_date = get_new_date(deceased_date)
+                user.is_active = False
+                user.save()
+            else:
+                user_profile.deceased_date = None
+            user_profile.save()
+
+            resp['success'] = True
     return ajax_response(resp)

@@ -30,6 +30,7 @@ class SafeUserSerializer(serializers.ModelSerializer):
 				'username',
 				'email',
 				'profile',
+				'is_active',
 			)
 
 
@@ -37,6 +38,7 @@ class SafeUserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
 
 	user = SafeUserSerializer()
+	deceased_date = serializers.DateTimeField(format='%m/%d/%Y')
 
 	class Meta:
 		model = UserProfile
@@ -53,4 +55,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 				'date_of_birth',
 				'phone_number',
 				'note',
+				'active_reason',
+				'deceased_date',
 			)

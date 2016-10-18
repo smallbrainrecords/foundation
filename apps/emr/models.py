@@ -169,6 +169,7 @@ class UserProfile(models.Model):
     marital_status = models.ForeignKey(MaritalStatus, null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     note = models.TextField(null=True, blank=True)
+    active_reason = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
@@ -854,8 +855,6 @@ class MyStoryTextComponent(models.Model):
     tab = models.ForeignKey(MyStoryTab, null=True, blank=True, related_name="my_story_tab_components")
     name = models.TextField(null=True, blank=True)
     datetime = models.DateTimeField(auto_now_add=True)
-    last_updated_user = models.ForeignKey(User, null=True, blank=True)
-    last_updated_date = models.DateField(auto_now=True)
     concept_id = models.CharField(max_length=20, blank=True, null=True)
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)

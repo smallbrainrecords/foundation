@@ -190,6 +190,16 @@
 			return httpService.post(params, url);
 		};
 
+		this.updateActive = function(form){
+			var url = '/project/admin/user/update/active/';
+			return httpService.post(form, url);
+		};
+
+		this.updateDeceasedDate = function(form){
+			var url = '/project/admin/user/update/deceased_date/';
+			return httpService.post(form, url);
+		};
+
 	});
 
 })();

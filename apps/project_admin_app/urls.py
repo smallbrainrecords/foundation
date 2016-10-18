@@ -31,6 +31,12 @@ urlpatterns = patterns(
     url(r'^user/update/password/$',
         'update_password', name='pa_update_password'),
 
+    url(r'^user/update/active/$',
+        'update_active', name='pa_update_active'),
+
+    url(r'^user/update/deceased_date/$',
+        'update_deceased_date', name='pa_update_deceased_date'),
+
     url(r'^user/create/$',
         'create_user', name='pa_create_user'),
 

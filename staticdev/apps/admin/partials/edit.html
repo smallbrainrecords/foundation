@@ -1,3 +1,4 @@
+<toaster-container></toaster-container>
 <div class='row'>
     <div class='col-md-12'>
         <hr>
@@ -49,12 +50,16 @@
                         Physicians assigned
                     </button>
                 </li>
-                <li>
+                <li ng-if="user_profile.role=='patient'">
+                    <button class='btn btn-link' ng-click='navigate("manageSharing")'>
+                        Manage sharing
+                    </button>
+                </li>
+                <li ng-if="user_profile.role=='patient'">
                     <button class='btn btn-link' ng-click='navigate("managePatient")'>
                         Manage patient
                     </button>
                 </li>
-
 
             </ul>
 
@@ -598,7 +603,7 @@
 
         </div>
 
-        <div class='panel panel-default' id='managePatient'>
+        <div class='panel panel-default' id='manageSharing' ng-if="user_profile.role=='patient'">
 
             <div class='panel-heading'>
                 Sharing care
@@ -649,11 +654,45 @@
                 </table>
             </div>
         </div>
+        <div class='panel panel-default' id='managePatient' ng-if="user_profile.role=='patient'">
+
+            <div class='panel-heading'>
+                Manage patient
+            </div>
+
+            <div class='panel-body'>
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <div class='col-md-12'>
+                            <label>Reason:</label>
+                            <textarea class="form-control" ng-model='user_profile.active_reason'></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class='col-md-12'>
+                            <label><input type='checkbox' ng-model='user_profile.user.is_active'>
+                                Is Active</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class='col-md-12'>
+                            <button class="btn btn-default" ng-click="update_active();">Update</button>
+                        </div>
+                    </div>
+                </form>
+
+                <form>
+                    <div class="form-group">
+                        <p>Deceased date:</p>
+                        <input type='text' class='form-control' id="deceased_date" ng-model="user_profile.deceased_date">
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-default" ng-click="update_deceased_date();">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-
-</div>
-
-<div style='height:375px; width:100%;'>
 
 </div>
 
@@ -663,6 +702,6 @@
     $(document).ready(function () {
 
         $("#dob").datepicker({dateFormat: 'yy-mm-dd'});
-
+        $("#deceased_date").datepicker({dateFormat: 'mm/dd/yy'});
     });
 </script>
