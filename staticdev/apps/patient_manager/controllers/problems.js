@@ -133,10 +133,10 @@
             function convertDateTime(problem) {
                 if (problem.start_date) {
                     var dateTime = problem.start_date;
-                    var date = dateTime.split("-");
-                    var yyyy = date[0];
-                    var mm = date[1];
-                    var dd = date[2];
+                    var date = dateTime.split("/");
+                    var yyyy = date[2];
+                    var mm = date[0];
+                    var dd = date[1];
 
                     if (problem.start_time) {
                         return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
@@ -693,6 +693,11 @@
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
                 form.start_date = $scope.problem.start_date;
+
+                if(!moment(form.start_date, "MM/DD/YYYY", true).isValid()) {
+                    toaster.pop('error', 'Error', 'Please enter a valid date!');
+                    return false;
+                }
 
                 problemService.updateStartDate(form).then(function (data) {
 
