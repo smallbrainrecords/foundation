@@ -324,11 +324,29 @@
                         form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
                     } else if(moment(due_date, "M/YYYY", true).isValid()) {
                         form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
+                    } else if(moment(due_date, "MM/DD/YY", true).isValid()) {
+                        form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
+                    } else if(moment(due_date, "M/D/YY", true).isValid()) {
+                        form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
+                    } else if(moment(due_date, "MM/YY", true).isValid()) {
+                        form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
+                    } else if(moment(due_date, "M/YY", true).isValid()) {
+                        form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
                     } else {
                         toaster.pop('error', 'Error', 'Please enter a valid date!');
                         return false;
                     }
 
+                    patientService.addToDo(form).then(function (data) {
+                        var new_todo = data['todo'];
+                        $scope.pending_todos.push(new_todo);
+                        $scope.problem_todos.push(new_todo);
+
+                        $scope.new_todo = {};
+
+                        toaster.pop('success', 'Done', 'New Todo added successfully');
+                    });
+                }, function () {
                     patientService.addToDo(form).then(function (data) {
                         var new_todo = data['todo'];
                         $scope.pending_todos.push(new_todo);

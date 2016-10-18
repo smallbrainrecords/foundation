@@ -811,11 +811,29 @@
                         form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
                     } else if(moment(due_date, "M/YYYY", true).isValid()) {
                         form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
+                    } else if(moment(due_date, "MM/DD/YY", true).isValid()) {
+                        form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
+                    } else if(moment(due_date, "M/D/YY", true).isValid()) {
+                        form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
+                    } else if(moment(due_date, "MM/YY", true).isValid()) {
+                        form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
+                    } else if(moment(due_date, "M/YY", true).isValid()) {
+                        form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
                     } else {
                         toaster.pop('error', 'Error', 'Please enter a valid date!');
                         return false;
                     }
 
+                    problemService.addTodo(form).then(function (data) {
+
+                        form.name = '';
+                        $scope.problem_todos.push(data['todo']);
+                        toaster.pop('success', 'Done', 'Added Todo!');
+                        $scope.set_authentication_false();
+                        /* Not-angular-way */
+                        $('#todoNameInput').focus();
+                    });
+                }, function () {
                     problemService.addTodo(form).then(function (data) {
 
                         form.name = '';
