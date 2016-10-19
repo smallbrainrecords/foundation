@@ -21,7 +21,12 @@
                     {% for note in notes %}
                         <li>
                            <b> {{note.author.user.first_name}} {{note.author.user.last_name}} - {{note.author.user.username}} </b> : {{note.note}}
-                            <p>{{note.created_on | date:"d M Y"}} at {{note.created_on | date:"H:i"}}</p>
+                            <p>
+                                {{note.created_on | date:"d M Y"}} at {{note.created_on | date:"H:i"}}
+                                <a href='/u/patient/manage/{{note.problem.patient.id}}/'>
+                                    {{note.problem.patient.first_name}} {{note.problem.patient.last_name}}
+                                </a> 
+                            </p>
                         </li>
                     {% endfor %}
                 </ul>
@@ -35,7 +40,12 @@
                     {% for todo in todos %}
                         <li>
                             {{todo.todo}}
-                            <p>{{todo.created_on | date:"d M Y"}} at {{todo.created_on | date:"H:i"}}</p>
+                            <p>
+                                {{todo.created_on | date:"d M Y"}} at {{todo.created_on | date:"H:i"}}
+                                <a href='/u/patient/manage/{{todo.patient.id}}/'>
+                                    {{todo.patient.first_name}} {{todo.patient.last_name}}
+                                </a> 
+                            </p>
                         </li>
                     {% endfor %}
                 </ul>
@@ -49,7 +59,12 @@
                     {% for goal in goals %}
                         <li>
                             {{goal.goal}}
-                            <p>{{goal.start_date | date:"d M Y"}}</p>
+                            <p>
+                                {{goal.start_date | date:"d M Y"}}
+                                <a href='/u/patient/manage/{{goal.patient.id}}/'>
+                                    {{goal.patient.first_name}} {{goal.patient.last_name}}
+                                </a> 
+                            </p>
                         </li>
                     {% endfor %}
                 </ul>
@@ -63,7 +78,12 @@
                     {% for summary in summaries %}
                         <li>
                             {{summary.summary|safe}}
-                            <p>{{summary.datetime | date:"d M Y"}} at {{summary.datetime | date:"H:i"}}</p>
+                            <p>
+                                {{summary.datetime | date:"d M Y"}} at {{summary.datetime | date:"H:i"}}
+                                <a href='/u/patient/manage/{{summary.encounter.patient.id}}/'>
+                                    {{summary.encounter.patient.first_name}} {{summary.encounter.patient.last_name}}
+                                </a>
+                            </p>
                         </li>
                     {% endfor %}
                 </ul>
@@ -77,7 +97,12 @@
                     {% for tab in tabs %}
                         <li>
                             {{tab.name}}
-                            <p>{{tab.datetime | date:"d M Y"}} at {{tab.datetime | date:"H:i"}}</p>
+                            <p>
+                                {{tab.datetime | date:"d M Y"}} at {{tab.datetime | date:"H:i"}}
+                                <a href='/u/patient/manage/{{tab.patient.id}}/'>
+                                    {{tab.patient.first_name}} {{tab.patient.last_name}}
+                                </a>
+                            </p>
                         </li>
                     {% endfor %}
                 </ul>
@@ -91,7 +116,12 @@
                     {% for text_component in text_components %}
                         <li>
                             {{text_component.name}}
-                            <p>{{text_component.datetime | date:"d M Y"}} at {{text_component.datetime | date:"H:i"}}</p>
+                            <p>
+                                {{text_component.datetime | date:"d M Y"}} at {{text_component.datetime | date:"H:i"}}
+                                <a href='/u/patient/manage/{{text_component.patient.id}}/'>
+                                    {{text_component.patient.first_name}} {{text_component.patient.last_name}}
+                                </a> 
+                            </p>
                         </li>
                     {% endfor %}
                 </ul>
