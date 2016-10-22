@@ -39,6 +39,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 	user = SafeUserSerializer()
 	deceased_date = serializers.DateTimeField(format='%m/%d/%Y')
+	date_of_birth = serializers.DateTimeField(format='%m/%d/%Y')
 
 	class Meta:
 		model = UserProfile
