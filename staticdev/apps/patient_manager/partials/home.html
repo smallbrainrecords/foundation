@@ -311,19 +311,13 @@
                                     <!-- end tab add problem -->
                                 </div>
                                 <hr>
-                                <div class='panel panel-default' ng-repeat="list in problem_lists"
-                                     ng-init="list.collapse=false;list.rename=false;">
+                                <div class='panel panel-default' 
+                                    ng-repeat="list in problem_lists"
+                                    ng-init="list.collapse=false;list.rename=false;">
 
-                                    <div class='panel-heading' ng-click="set_collapse(list);">
-                                        <i class="fa fa-caret-down pull-left" aria-hidden="true"
-                                           ng-if="list.collapse"></i>
-                                        <i class="fa fa-caret-right pull-left" aria-hidden="true"
-                                           ng-if="!list.collapse"></i>
-                                        <span ng-show="!list.rename"> 
-                                            <span class="quick-card-editor-label"
-                                                  ng-if="check_problem_list_controlled(list)">
-                                                <a class="todo-label todo-label-red"></a>
-                                            </span>
+                                    <div class='panel-heading' ng-click="set_collapse(list);"
+                                        ng-class="check_problem_list_controlled(list)? 'red-box' : ''">
+                                        <span ng-show="!list.rename">
                                             {{ list.name }} <span>({{ list.problems.length }})</span>
                                             <span ng-if="check_problem_list_authenticated(list)">(not-authenticated)</span>
                                         </span>
@@ -486,7 +480,7 @@
                             <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
                                 <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
                                 <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                                Encounters
+                                Encounters ({{encounters.length}})
                             </div>
 
                             <div class='panel-body' style='max-height:325px; overflow:auto'

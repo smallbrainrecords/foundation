@@ -28,9 +28,9 @@
 
 
 .red-box{
-    background-color: #f2dede;
-    border-color: #ebccd1;
-    color: #a94442;
+    background-color: #f2dede !important;
+    border-color: #ebccd1 !important;
+    color: #a94442 !important;
 }
 
 #ngdialog1.large-modal .ngdialog-content{
@@ -144,6 +144,11 @@ ce-entity ce-flag{
 #problem-header:hover .btn-custom,
 .todo:hover .btn-custom{
 	display: block;
+}
+
+.problem-uncontrolled {
+    background-color: red !important;
+    color: white !important;
 }
 
 .btn-custom:hover {
@@ -409,7 +414,7 @@ ce-entity ce-flag{
 .problem-tabs .quick-card-editor-label,
 #problem-header .quick-card-editor-label{
 	display: inline-block;
-	top: 5px;
+	top: 0;
 }
 
 .tiny-img {

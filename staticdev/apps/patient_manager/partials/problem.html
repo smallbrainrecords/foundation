@@ -839,7 +839,7 @@
                 <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
                     <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
                     <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                    Related Encounters
+                    Related Encounters ({{related_encounters.length}})
                 </div>
                 <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'
                      ng-show="encounter_collapse">

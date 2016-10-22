@@ -791,7 +791,9 @@ def add_problem_list(request, patient_id, user_id):
     ProblemService.populate_multiplicity(problems_holder)
     problems_holder = sorted(problems_holder, key=operator.itemgetter('multiply'), reverse=True)
 
-    labeled_problems = LabeledProblemList.objects.create(user_id=user_id, name=list_name, patient_id=patient_id, labels=problem_labels)
+    labeled_problems = LabeledProblemList.objects.create(user_id=user_id, name=list_name, patient_id=patient_id)
+    for label in problem_labels:
+        labeled_problems.labels.add(label)
     new_list_dict = LabeledProblemListSerializer(labeled_problems).data
     new_list_dict['problems'] = problems_holder
 
