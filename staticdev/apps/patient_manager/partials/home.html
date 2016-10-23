@@ -52,9 +52,13 @@
             </a>
         </div>
         <div class="bottom-info">
-            <span class="patient-name float-left"><strong> {{ patient_info.user.first_name }} {{ patient_info.user.last_name }} </strong></span>
+            <span class="patient-name float-left"><strong> {{ patient_info.user.first_name }} {{ patient_info.user.last_name }}  {{ patient_info.date_of_birth | age}} </strong></span>
+
+            <!--Vitals infos-->
+
             <a href='#/edit/' class='btn btn-sm btn-default float-right'>Edit</a>
         </div>
+
     </div><!-- End of Panel Body -->
 </div>
 
