@@ -681,5 +681,31 @@
 
             }
         };
-    })
+    });
+
+    myTools.directive('autoFocus', function ($timeout) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                $timeout(function () {
+                    element.focus();
+                }, 500);
+            }
+        };
+    });
+
+    myTools.filter('age', function () {
+            return function (input, current) {
+                // This syntax is usable in this case
+                // NaN || {whatever} evaluates to {whatever}
+                current = Date.parse(current) || Date.now();
+
+                // Difference in milliseconds
+                var ageDiffMs = current - new Date(input).getTime();
+                var ageDate = new Date(ageDiffMs);
+
+                return Math.abs(ageDate.getUTCFullYear() - 1970);
+            }
+        }
+    );
 })();

@@ -67,8 +67,8 @@
                             <div class='col-md-12'>
 
                                 <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
-                                       placeholder='Search Problem....' 
-                                       ng-change="problem_name_changed(problem_term);" 
+                                       placeholder='Search Problem....'
+                                       ng-change="problem_name_changed(problem_term);"
                                        ng-model-options="{ updateOn: 'default blur', debounce: { default: 1000, blur: 500 } }">
                                 <button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
                                     Change Problem
@@ -353,8 +353,9 @@
                             <form class='form' ng-submit='add_wiki_note(wiki_note_form)'>
 
                                 <div class='form-group'>
-                            <textarea ng-model='wiki_note_form.note' class='form-control' style='height:75px;'
-                                      required></textarea>
+                                <textarea ng-model='wiki_note_form.note' class='form-control' style='height:75px;'
+                                          auto-focus
+                                          required></textarea>
                                 </div>
                                 <div class='form-group'>
                                     <button type='submit' class='btn btn-default'>
@@ -471,7 +472,7 @@
         <!--hasPinnedGraph == true &&  inr.inr_medications.length > 0 != true col-md-12-->
         <!--hasPinnedGraph == false &&  inr.inr_medications.length > 0 == true col-md-12-->
         <!--hasPinnedGraph == false &&  inr.inr_medications.length > 0 != true hide-->
-<!--col-md-6 | col-md-12-->
+        <!--col-md-6 | col-md-12-->
         <div ng-if="hasPinnedGraph" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-12'">
             <div class='panel panel-default'>
                 <div class="panel-header">

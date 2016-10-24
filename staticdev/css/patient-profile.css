@@ -3,7 +3,6 @@ body {
 
 .profile-section {
   position: relative;
-  width: 851px;
   height: 315px;
   margin-bottom: 50px;
   border: none; }
@@ -26,7 +25,7 @@ body {
         display: inline-block; }
   .profile-section .patient-name {
     color: #fff;
-    font-size: 28px; }
+    font-size: 56px; }
   .profile-section .btn-cover-picture-edit {
     left: 20px; }
     .profile-section .btn-cover-picture-edit:hover {
