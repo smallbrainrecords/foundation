@@ -134,21 +134,55 @@
                 return timeline_problem;
             }
 
+            // function parseTimelineWithSegment(problem) {
+            //     var events = [];
+            //     var event;
+
+            //     angular.forEach(problem.problem_segment, function (value) {
+            //         event = {};
+            //         event['event_id'] = value.event_id;
+            //         event['startTime'] = convertDateTime(value);
+            //         event['state'] = getTimelineWidgetState(value);
+            //         events.push(event);
+            //     });
+
+            //     events.push({
+            //         event_id: new Date().getTime(),
+            //         startTime: convertDateTime(problem),
+            //         state: getTimelineWidgetState(problem)
+            //     });
+
+            //     var timeline_problem = {
+            //         'name': problem.problem_name,
+            //         'id': problem.id,
+            //         events: events
+            //     };
+
+            //     return timeline_problem;
+            // }
+
             function parseTimelineWithSegment(problem) {
                 var events = [];
                 var event;
+                var temp;
 
-                angular.forEach(problem.problem_segment, function (value) {
+                angular.forEach(problem.problem_segment, function (value, key) {
                     event = {};
                     event['event_id'] = value.event_id;
-                    event['startTime'] = convertDateTime(value);
                     event['state'] = getTimelineWidgetState(value);
+
+                    if (key == 0) {
+                        event['startTime'] = convertDateTime(problem);
+                    } else {
+                        event['startTime'] = convertDateTime(temp);
+                    }
+                    temp = value;
                     events.push(event);
                 });
 
                 events.push({
                     event_id: new Date().getTime(),
-                    startTime: convertDateTime(problem),
+                    startTime: convertDateTime(temp),
                     state: getTimelineWidgetState(problem)
                 });
 

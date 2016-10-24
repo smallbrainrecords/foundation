@@ -149,10 +149,10 @@
 
             function convertDateTimeBirthday(dateTime) {
                 if (dateTime) {
-                    var date = dateTime.split("-");
-                    var yyyy = date[0];
-                    var mm = date[1];
-                    var dd = date[2];
+                    var date = dateTime.split("/");
+                    var yyyy = date[2];
+                    var mm = date[0];
+                    var dd = date[1];
 
                     return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
                 }
@@ -204,18 +204,25 @@
             function parseTimelineWithSegment(problem) {
                 var events = [];
                 var event;
+                var temp;
 
-                angular.forEach(problem.problem_segment, function (value) {
+                angular.forEach(problem.problem_segment, function (value, key) {
                     event = {};
                     event['event_id'] = value.event_id;
-                    event['startTime'] = convertDateTime(value);
                     event['state'] = getTimelineWidgetState(value);
+
+                    if (key == 0) {
+                        event['startTime'] = convertDateTime(problem);
+                    } else {
+                        event['startTime'] = convertDateTime(temp);
+                    }
+                    temp = value;
                     events.push(event);
                 });
 
                 events.push({
                     event_id: new Date().getTime(),
-                    startTime: convertDateTime(problem),
+                    startTime: convertDateTime(temp),
                     state: getTimelineWidgetState(problem)
                 });
 
@@ -244,7 +251,7 @@
 
                 form.patient_id = $scope.patient_id;
                 form.timeline_data = newData;
-                $scope.problem.start_date = convertDateTimeBack(newData.problems[0].events[newData.problems[0].events.length - 1].startTime);
+                $scope.problem.start_date = convertDateTimeBack(newData.problems[0].events[0].startTime);
 
                 problemService.updateByPTW(form).then(function (data) {
                     toaster.pop('success', 'Done', 'Updated Problem');
@@ -262,11 +269,11 @@
                     var timeline_problems = parseTimelineWithoutSegment($scope.problem);
                 }
 
-                $scope.$watch('active_user', function (nV, oV) {
-                    if ($scope.active_user) {
+                $scope.$watch('patient_info', function (nV, oV) {
+                    if ($scope.patient_info) {
                         $scope.timeline = {
-                            Name: $scope.active_user['user']['first_name'] + $scope.active_user['user']['last_name'],
-                            birthday: convertDateTimeBirthday($scope.active_user['date_of_birth']),
+                            Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
+                            birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
                             problems: timeline_problems
                         };
 
@@ -678,9 +685,8 @@
 
                     form_problem.patient_id = $scope.patient_id;
                     form_problem.timeline_data = $scope.timeline;
-                    $scope.problem.start_date = convertDateTimeBack($scope.timeline.problems[0].events[$scope.timeline.problems[0].events.length - 1].startTime);
+                    $scope.problem.start_date = convertDateTimeBack($scope.timeline.problems[0].events[0].startTime);
                     problemService.updateStateToPTW(form_problem).then(function (data) {
-                        $scope.timeline_changed = true;
                         toaster.pop('success', 'Done', 'Updated Problem Status');
                     });
                 });
@@ -707,11 +713,9 @@
                 }
 
                 problemService.updateStartDate(form).then(function (data) {
-
                     toaster.pop('success', 'Done', 'Updated Start Date');
                     $scope.set_authentication_false();
-                    $scope.timeline.problems[0].events[$scope.timeline.problems[0].events.length - 2].startTime = convertDateTime($scope.problem.start_date);
-                    $scope.timeline_changed = true;
+                    $scope.timeline.problems[0].events[0].startTime = convertDateTime($scope.problem);
                 });
             };
 

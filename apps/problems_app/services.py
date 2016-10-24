@@ -18,29 +18,36 @@ class ProblemService(object):
     @staticmethod
     def update_from_timeline_data(problem_json):
         problem = Problem.objects.get(id=int(problem_json['id']))
-        start_date = datetime.strptime(problem_json['events'][-1]['startTime'], "%d/%m/%Y %H:%M:%S")
+        start_date = datetime.strptime(problem_json['events'][0]['startTime'], "%d/%m/%Y %H:%M:%S")
         problem.start_date = start_date.date()
         problem.start_time = start_date.time()
         problem.save()
 
         if len(problem_json['events']) > 1:
-            # break if the last one, this is current problem
-            for event in problem_json['events'][:-1]:
-                try:
-                    event_id = int(event['event_id'])
+            # start time of the next one is for the current one,
+            # first loop item, start time is problem
+            # other side, state of last loop item is problem
+            i = 0
+            for event in problem_json['events']:
+                if not i == len(problem_json['events']) - 1:
                     try:
-                        problem_segment = ProblemSegment.objects.get(event_id=event_id)
-                    except ProblemSegment.DoesNotExist:
-                        problem_segment = ProblemSegment()
-                        problem_segment.event_id = event_id
-                        problem_segment.problem = problem
+                        event_id = int(event['event_id'])
+                        try:
+                            problem_segment = ProblemSegment.objects.get(event_id=event_id)
+                        except ProblemSegment.DoesNotExist:
+                            problem_segment = ProblemSegment()
+                            problem_segment.event_id = event_id
+                            problem_segment.problem = problem
 
-                    start_date = datetime.strptime(event['startTime'], "%d/%m/%Y %H:%M:%S")
-                    problem_segment.start_date = start_date.date()
-                    problem_segment.start_time = start_date.time()
-                    problem_segment.is_active = event["state"] != "inactive"
-                    problem_segment.is_controlled = event["state"] == "controlled"
-                    problem_segment.save()
-                except ValueError:
-                    event_id = None
+                        start_date = datetime.strptime(problem_json['events'][i+1]['startTime'], "%d/%m/%Y %H:%M:%S")
+                        problem_segment.start_date = start_date.date()
+                        problem_segment.start_time = start_date.time()
+                        problem_segment.is_active = event["state"] != "inactive"
+                        problem_segment.is_controlled = event["state"] == "controlled"
+                        problem_segment.save()
+                    except ValueError:
+                        event_id = None
+
+                i += 1
+
         return problem

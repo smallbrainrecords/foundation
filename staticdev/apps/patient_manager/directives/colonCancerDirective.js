@@ -62,9 +62,9 @@ function colonCancerDirective(toaster, $location, $timeout, prompt, CollapseServ
                             scope.set_header = function() {
                                 scope.header = '';
                                 if (scope.colon_cancer.patient) {
-                                    if (moment().diff(scope.colon_cancer.patient.date_of_birth, 'years') < 20) {
+                                    if (moment().diff(moment(scope.colon_cancer.patient.date_of_birth, "MM/DD/YYYY"), 'years') < 20) {
                                         scope.header = 'review risk assessment at 20 years of age';
-                                    } else if (moment().diff(scope.colon_cancer.patient.date_of_birth, 'years') > 50) {
+                                    } else if (moment().diff(moment(scope.colon_cancer.patient.date_of_birth, "MM/DD/YYYY"), 'years') > 50) {
                                         if (scope.colon_cancer.risk) {
                                             scope.header = 'Risk: ' + scope.colon_cancer.risk;
                                         }
