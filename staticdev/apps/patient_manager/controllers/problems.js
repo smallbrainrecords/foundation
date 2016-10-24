@@ -277,7 +277,8 @@
                             problems: timeline_problems
                         };
 
-                        $scope.timeline_changed = true;
+                        $scope.timeline_ready = true;
+                        $scope.timeline_changed = [{changing: new Date().getTime()}];
                     }
                 });
 
@@ -716,6 +717,7 @@
                     toaster.pop('success', 'Done', 'Updated Start Date');
                     $scope.set_authentication_false();
                     $scope.timeline.problems[0].events[0].startTime = convertDateTime($scope.problem);
+                    $scope.timeline_changed.push({changing: new Date().getTime()});
                 });
             };
 

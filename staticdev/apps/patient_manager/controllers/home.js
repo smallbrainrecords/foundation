@@ -229,7 +229,7 @@
                         problems: timeline_problems
                     };
 
-                    $scope.timeline_changed = true;
+                    $scope.timeline_ready = true;
                 });
             };
 
