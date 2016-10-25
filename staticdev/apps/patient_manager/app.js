@@ -120,8 +120,8 @@
                 templateUrl: '/static/apps/patient_manager/partials/data/settings.html',
                 controller: 'DataSettingsCtrl'
             })
-            .when('/inr/medication/:medication_id', {
-                templateUrl: '/static/apps/patient_manager/partials/inr/medication.html',
+            .when('/medication/:medication_id', {
+                templateUrl: '/static/apps/patient_manager/partials/medication/medication.html',
                 controller: 'MedicationCtrl'
             });
 

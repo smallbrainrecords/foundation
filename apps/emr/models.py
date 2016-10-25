@@ -878,8 +878,9 @@ class MyStoryTextComponentEntry(models.Model):
 
 
 class Inr(models.Model):
-    patient = models.OneToOneField(User, related_name="patient_inr")
-    note = models.TextField(blank=True, null=True)
+    author = models.ForeignKey(UserProfile, related_name='author_inrs', blank=True, null=True)
+    patient = models.ForeignKey(UserProfile, related_name="patient_inrs")
+    pin = models.ForeignKey(ObservationPinToProblem, related_name='observation_inrs', blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -891,15 +892,28 @@ class InrValue(models.Model):
     inr = models.ForeignKey(Inr, related_name='inr_values')
     value = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
+    current_dose = models.TextField(null=True, blank=True)
+    new_dosage = models.TextField(null=True, blank=True)
+    next_inr = models.DateTimeField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-effective_datetime', '-created_on']
 
 
+class InrTextNote(models.Model):
+    inr = models.ForeignKey(Inr, related_name='inr_notes')
+    author = models.ForeignKey(UserProfile)
+    note = models.TextField()
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return "%s" % (self.note)
+
+
 class Medication(models.Model):
     author = models.ForeignKey(UserProfile, related_name='author_medications')
-    inr = models.ForeignKey(Inr, related_name='inr_medications')
+    patient = models.ForeignKey(UserProfile, related_name="patient_medications", blank=True, null=True)
     name = models.TextField(null=True, blank=True)
     concept_id = models.CharField(max_length=20, blank=True, null=True)
     current = models.BooleanField(default=True)

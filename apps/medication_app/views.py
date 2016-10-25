@@ -6,8 +6,8 @@ from django.db.models import Q
 from common.views import *
 from rest_framework.decorators import api_view
 
-from emr.models import Inr, InrValue, Medication, MedicationTextNote, PatientController, UserProfile, MedicationPinToProblem
-from .serializers import MedicationTextNoteSerializer, MedicationSerializer, InrValueSerializer, InrSerializer, MedicationPinToProblemSerializer
+from emr.models import Medication, MedicationTextNote, PatientController, UserProfile, MedicationPinToProblem
+from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
 from emr.operations import op_add_event
 from emr.mysnomedct import SnomedctConnector
 
@@ -30,18 +30,15 @@ def list_terms(request):
 
 
 @login_required
-def get_inr(request, patient_id):
+def get_medications(request, patient_id):
     resp = {}
     resp['success'] = False
     
     if permissions_accessed(request.user, int(patient_id)):
-        try:
-            inr = Inr.objects.get(patient_id=int(patient_id))
-        except Inr.DoesNotExist:
-            inr = Inr.objects.create(patient_id=int(patient_id))
+        medications = Medication.objects.filter(patient__user__id=patient_id)
             
         resp['success'] = True
-        resp['info'] = InrSerializer(inr).data
+        resp['info'] = MedicationSerializer(medications, many=True).data
     return ajax_response(resp)
 
 @login_required
@@ -61,15 +58,14 @@ def get_medication(request, patient_id, medication_id):
 
 @login_required
 @api_view(["POST"])
-def add_medication(request, patient_id, inr_id):
+def add_medication(request, patient_id):
     resp = {}
     resp['success'] = False
     if permissions_accessed(request.user, int(patient_id)):
-        # Medication.objects.filter(inr_id=inr_id).update(current=False)
-
+        patient_user = User.objects.get(id=patient_id)
         medication = Medication()
         medication.author = request.user.profile
-        medication.inr_id = inr_id
+        medication.patient = patient_user.profile
         medication.name = request.POST.get("name", None)
         medication.concept_id = request.POST.get("concept_id", None)
         medication.save()

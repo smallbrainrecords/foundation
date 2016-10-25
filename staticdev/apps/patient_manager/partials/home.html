@@ -108,7 +108,7 @@
                 <a href=".tab-data" role="tab" data-toggle="tab" ng-click="change_homepage_tab('data');">Data</a>
             </li>
             <li role="presentation" 
-                ng-if="inr" 
+                ng-if="medications" 
                 ng-class="show_homepage_tab=='medication' ? 'active': ''">
                 <a href=".tab-medication" role="tab" data-toggle="tab" ng-click="change_homepage_tab('medication');">Medication</a>
             </li>
@@ -966,8 +966,8 @@
             <!-- end data tab -->
             <!-- medication tab -->
             <div role="tabpanel" class="tab-pane tab-medication" ng-class="show_homepage_tab=='medication' ? 'active': ''">
-                <div class='row' ng-if="inr">
-                    <medication ng-model="inr"></medication>
+                <div class='row' ng-if="medications">
+                    <medication ng-model="medications"></medication>
                 </div>
             </div>
             <!-- end medication tab -->

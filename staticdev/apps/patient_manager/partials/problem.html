@@ -214,7 +214,7 @@
                                 <a href ng-click="close_change_medication(); $event.stopPropagation();"><i
                                         class="fa fa-close"></i></a>
                             </div>
-                            <p ng-repeat="medication in inr.inr_medications">
+                            <p ng-repeat="medication in medications">
                                 <input type="checkbox"
                                        ng-model="medication.pin"
                                        ng-change="medication_pin_to_problem(medication, problem.id);"
@@ -461,10 +461,6 @@
         </div>
     </div>
 
-    <div class='row' ng-if="inr">
-        <inr ng-model="inr"></inr>
-    </div>
-
     <div class='panel panel-default' ng-show="problem.old_problem_name">
         <div class='panel-body'>
             This problem was previously named "{{ problem.old_problem_name }}"
@@ -472,10 +468,10 @@
     </div>
 
     <div class="row">
-        <!--hasPinnedGraph == true &&  inr.inr_medications.length > 0 == true col-md-6-->
-        <!--hasPinnedGraph == true &&  inr.inr_medications.length > 0 != true col-md-12-->
-        <!--hasPinnedGraph == false &&  inr.inr_medications.length > 0 == true col-md-12-->
-        <!--hasPinnedGraph == false &&  inr.inr_medications.length > 0 != true hide-->
+        <!--hasPinnedGraph == true &&  medications.length > 0 == true col-md-6-->
+        <!--hasPinnedGraph == true &&  medications.length > 0 != true col-md-12-->
+        <!--hasPinnedGraph == false &&  medications.length > 0 == true col-md-12-->
+        <!--hasPinnedGraph == false &&  medications.length > 0 != true hide-->
         <!--col-md-6 | col-md-12-->
         <div ng-if="hasPinnedGraph" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-12'">
             <div class='panel panel-default'>
@@ -542,7 +538,7 @@
                                 <th>Note</th>
                                 </thead>
                                 <tbody>
-                                <tr ng-repeat='medication in inr.inr_medications'
+                                <tr ng-repeat='medication in medications'
                                     ng-show='medication.current && medication.pin'>
                                     <td>
                                         <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
@@ -572,7 +568,7 @@
                                 <th>Note</th>
                                 </thead>
                                 <tbody>
-                                <tr ng-repeat='medication in inr.inr_medications'
+                                <tr ng-repeat='medication in medications'
                                     ng-show='!medication.current && medication.pin'>
                                     <td>
                                         <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>

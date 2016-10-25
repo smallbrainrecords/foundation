@@ -1299,12 +1299,11 @@
             };
 
             /*
-             *   inr
+             *   medication
              */
-            $scope.inr = {};
-            patientService.getInr($scope.patient_id).then(function (data) {
+            patientService.getMedications($scope.patient_id).then(function (data) {
                 if (data['success'] == true) {
-                    $scope.inr = data['info'];
+                    $scope.medications = data['info'];
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }

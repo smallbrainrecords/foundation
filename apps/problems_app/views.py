@@ -41,7 +41,7 @@ from todo_app.operations import add_todo_activity
 from a1c_app.serializers import AOneCSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
 from data_app.serializers import ObservationPinToProblemSerializer, ObservationSerializer
-from inr_app.serializers import MedicationSerializer, MedicationPinToProblemSerializer
+from medication_app.serializers import MedicationSerializer, MedicationPinToProblemSerializer
 
 
 @login_required

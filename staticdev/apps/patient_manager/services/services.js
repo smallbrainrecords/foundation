@@ -389,9 +389,9 @@
 			return httpService.post(form, url);
 		};
 
-		this.getInr = function(patient_id) {
+		this.getMedications = function(patient_id) {
 			var params = {};
-			var url = '/inr/'+patient_id+'/get_inr';
+			var url = '/medication/'+patient_id+'/get_medications';
 			return httpService.get(params, url);
 		}
 	});

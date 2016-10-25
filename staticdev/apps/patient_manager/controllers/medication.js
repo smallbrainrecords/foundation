@@ -4,7 +4,7 @@
 
 
     angular.module('ManagerApp')
-        .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, patientService, $filter, inrService, prompt) {
+        .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, patientService, $filter, medicationService, prompt) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
@@ -14,7 +14,7 @@
                 $scope.active_user = data['user_profile'];
             });
 
-            inrService.fetchMedicationInfo($scope.patient_id, $scope.medication_id).then(function (data) {
+            medicationService.fetchMedicationInfo($scope.patient_id, $scope.medication_id).then(function (data) {
                 $scope.medication = data['info'];
             });
 
@@ -50,7 +50,7 @@
                 if (form.note == '') return;
                 form.medication_id = $scope.medication.id;
                 form.patient_id = $scope.patient_id;
-                inrService.addMedicationNote(form).then(function(data) {
+                medicationService.addMedicationNote(form).then(function(data) {
                     $scope.medication.medication_notes.push(data['note']);
                     if (typeof oldNote !== 'undefined')
                         form.note = oldNote;
@@ -63,7 +63,7 @@
             };
 
             $scope.save_note = function(note) {
-                inrService.editNote(note).then(function(data) {
+                medicationService.editNote(note).then(function(data) {
                     note.show_edit_note = false;
                     toaster.pop('success', 'Done', 'Edited note successfully');
                 });
@@ -74,7 +74,7 @@
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
                 }).then(function(result){
-                    inrService.deleteNote(note).then(function(data){
+                    medicationService.deleteNote(note).then(function(data){
                         var index = $scope.medication.medication_notes.indexOf(note);
                         $scope.medication.medication_notes.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted note successfully');
@@ -89,7 +89,7 @@
             problemService.fetchProblems($scope.patient_id).then(function (data) {
                 $scope.problems = data['problems'];
 
-                inrService.fetchPinToProblem($scope.medication_id).then(function (data) {
+                medicationService.fetchPinToProblem($scope.medication_id).then(function (data) {
                     $scope.pins = data['pins'];
 
                     angular.forEach($scope.problems, function (problem) {
@@ -123,7 +123,7 @@
                 form.medication_id = medication_id;
                 form.problem_id = problem_id;
 
-                inrService.medicationPinToProblem($scope.patient_id, form).then(function (data) {
+                medicationService.medicationPinToProblem($scope.patient_id, form).then(function (data) {
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Pinned problem!');
                     } else if (data['success'] == false) {
@@ -139,7 +139,7 @@
             };
 
             $scope.change_active_medication = function() {
-                inrService.changeActiveMedication($scope.patient_id, $scope.medication_id).then(function(data) {
+                medicationService.changeActiveMedication($scope.patient_id, $scope.medication_id).then(function(data) {
                     toaster.pop('success', 'Done', 'Changed successfully!');
                 });
             };

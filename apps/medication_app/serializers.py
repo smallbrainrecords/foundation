@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from emr.models import Inr, InrValue, Medication, MedicationTextNote, MedicationPinToProblem
+from emr.models import Inr, InrValue, Medication, MedicationTextNote, MedicationPinToProblem, InrTextNote
 
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
@@ -21,6 +21,7 @@ class MedicationTextNoteSerializer(serializers.ModelSerializer):
 
 class MedicationSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer()
+    patient = UserProfileSerializer()
     medication_notes = MedicationTextNoteSerializer(many=True, read_only=True)
 
     class Meta:
@@ -29,8 +30,8 @@ class MedicationSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'author',
+            'patient',
             'medication_notes',
-            'inr',
             'name',
             'concept_id',
             'current',
@@ -50,25 +51,44 @@ class InrValueSerializer(serializers.ModelSerializer):
             'author',
             'value',
             'effective_datetime',
+            'current_dose',
+            'new_dosage',
+            'next_inr',
             'created_on',
             )
 
 
+class InrTextNote(serializers.ModelSerializer):
+    author = UserProfileSerializer()
+
+    class Meta:
+        model = InrTextNote
+        fields = (
+            'id',
+            'author',
+            'note',
+            'inr',
+            'datetime',
+            )
+
+
 class InrSerializer(serializers.ModelSerializer):
-    patient = SafeUserSerializer()
+    author = UserProfileSerializer()
+    patient = UserProfileSerializer()
     inr_values = InrValueSerializer(many=True, read_only=True)
-    inr_medications = MedicationSerializer(many=True, read_only=True)
+    inr_notes = InrTextNote(many=True, read_only=True)
 
     class Meta:
         model = Inr
 
         fields = (
             'id',
+            'author',
             'patient',
-            'note',
+            'pin',
             'created_on',
             'inr_values',
-            'inr_medications',
+            'inr_notes',
             )
 
 

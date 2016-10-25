@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location, 
-                                              dataService, inrService) {
+                                              dataService, medicationService) {
 
 
             var patient_id = $('#patient_id').val();
@@ -331,9 +331,6 @@
                         $scope.colon_cancers = data2['colon_cancers'];
                     });
                 }
-
-                // inr
-                $scope.inr = true;
 
                 if ($scope.history_note != null) {
 
@@ -1129,16 +1126,16 @@
             /*
             *   medication
             */
-            $scope.inr = {};
-            patientService.getInr($scope.patient_id).then(function (data) {
+            $scope.medications = [];
+            patientService.getMedications($scope.patient_id).then(function (data) {
                 if (data['success'] == true) {
-                    $scope.inr = data['info'];
+                    $scope.medications = data['info'];
                     $scope.hasPinnedMedication= false;
 
                     problemService.fetchMedicationPinToProblem($scope.problem_id).then(function (data) {
                         $scope.medication_pins = data['pins'];
 
-                        angular.forEach($scope.inr.inr_medications, function (medication, key) {
+                        angular.forEach($scope.medications, function (medication, key) {
                             var is_pin = false;
                             angular.forEach($scope.medication_pins, function (pin, key) {
                                 if (medication.id == pin.medication.id) {
@@ -1156,7 +1153,7 @@
             });
 
             $scope.open_medication = function(medication) {
-                $location.url('/inr/medication/' + medication.id);
+                $location.url('/medication/' + medication.id);
             };
 
             $scope.change_pinned_medication = false;
@@ -1173,8 +1170,14 @@
                 form.medication_id = medication.id;
                 form.problem_id = problem_id;
 
-                inrService.medicationPinToProblem($scope.patient_id, form).then(function (data) {
+                medicationService.medicationPinToProblem($scope.patient_id, form).then(function (data) {
                     if (data['success'] == true) {
+                        var is_pin = false;
+                        angular.forEach($scope.medications, function (medication, key) {
+                            if (medication.pin) 
+                                is_pin = true;
+                            $scope.hasPinnedMedication= is_pin;
+                        });
                         toaster.pop('success', 'Done', 'Pinned problem!');
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
