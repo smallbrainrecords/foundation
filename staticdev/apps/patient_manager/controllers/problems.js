@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location, 
-                                              dataService, medicationService) {
+                                              dataService, medicationService, inrService) {
 
 
             var patient_id = $('#patient_id').val();
@@ -1115,6 +1115,11 @@
                 dataService.dataPinToProblem($scope.patient_id, form).then(function (data) {
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Pinned data!');
+                        if (data.inr)
+                            $scope.inrs.push(data.inr);
+                        else if (data.remove_inr) 
+                            $scope.inrs = [];
+                        
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
                     } else {
@@ -1176,7 +1181,7 @@
                         angular.forEach($scope.medications, function (medication, key) {
                             if (medication.pin) 
                                 is_pin = true;
-                            $scope.hasPinnedMedication= is_pin;
+                            $scope.hasPinnedMedication = is_pin;
                         });
                         toaster.pop('success', 'Done', 'Pinned problem!');
                     } else if (data['success'] == false) {
@@ -1186,6 +1191,18 @@
                     }
                 });
             };
+
+            /*
+            *   medication
+            */
+            $scope.inrs = [];
+            inrService.getInrs($scope.patient_id, $scope.problem_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.inrs = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
 
         });
     /* End of controller */

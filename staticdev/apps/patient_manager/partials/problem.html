@@ -461,6 +461,13 @@
         </div>
     </div>
 
+    <div class='row' ng-if="inrs.length > 0">
+        <div ng-repeat="inr in inrs">
+            <inr ng-model="inr"></inr>
+            <br>
+        </div>
+    </div>
+
     <div class='panel panel-default' ng-show="problem.old_problem_name">
         <div class='panel-body'>
             This problem was previously named "{{ problem.old_problem_name }}"

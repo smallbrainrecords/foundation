@@ -880,7 +880,8 @@ class MyStoryTextComponentEntry(models.Model):
 class Inr(models.Model):
     author = models.ForeignKey(UserProfile, related_name='author_inrs', blank=True, null=True)
     patient = models.ForeignKey(UserProfile, related_name="patient_inrs")
-    pin = models.ForeignKey(ObservationPinToProblem, related_name='observation_inrs', blank=True, null=True)
+    observation = models.ForeignKey(Observation, related_name='observation_pin_inrs', blank=True, null=True)
+    problem = models.ForeignKey(Problem, related_name='problem_pin_inrs', blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:

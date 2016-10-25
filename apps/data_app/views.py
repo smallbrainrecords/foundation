@@ -7,7 +7,8 @@ from common.views import *
 from rest_framework.decorators import api_view
 
 from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationOrder, \
-    PhysicianTeam, PatientController, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue
+    PhysicianTeam, PatientController, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue, \
+    Inr
 from emr.models import OBSERVATION_TYPES
 from .serializers import ObservationValueTextNoteSerializer, ObservationComponentSerializer, \
     ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
@@ -15,6 +16,7 @@ from emr.operations import op_add_event
 
 from users_app.serializers import UserProfileSerializer
 from users_app.views import permissions_accessed
+from inr_app.serializers import InrSerializer
 
 
 @login_required
@@ -191,14 +193,25 @@ def obseration_pin_to_problem(request, patient_id):
     if permissions_accessed(request.user, int(patient_id)):
         observation_id = request.POST.get("data_id", None)
         problem_id = request.POST.get("problem_id", None)
+        observation = Observation.objects.get(id=observation_id)
 
         try:
             pin = ObservationPinToProblem.objects.get(observation_id=observation_id, problem_id=problem_id)
-            pin.delete();
+            pin.delete()
+
+            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists():
+                if Inr.objects.filter(observation_id=observation_id, problem_id=problem_id).exists():
+                    Inr.objects.filter(observation_id=observation_id, problem_id=problem_id).delete()
+                    resp['remove_inr'] = True
         except ObservationPinToProblem.DoesNotExist:
-            pin = ObservationPinToProblem(author=request.user.profile, observation_id=observation_id,
-                                          problem_id=problem_id)
+            pin = ObservationPinToProblem(author=request.user.profile, observation_id=observation_id, problem_id=problem_id)
             pin.save()
+
+            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists():
+                patient_user = User.objects.get(id=patient_id)
+                inr = Inr(observation_id=observation_id, problem_id=problem_id, author=request.user.profile, patient=patient_user.profile)
+                inr.save()
+                resp['inr'] = InrSerializer(inr).data
 
         resp['pin'] = ObservationPinToProblemSerializer(pin).data
         resp['success'] = True
