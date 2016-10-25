@@ -7,7 +7,7 @@
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 'ngDraggable',
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate',
         'a1c', 'colon_cancers', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam',
-        'color.picker', 'inr']);
+        'color.picker', 'medication', 'inr']);
 
 
     ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider) {

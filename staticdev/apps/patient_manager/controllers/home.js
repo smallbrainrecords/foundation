@@ -96,10 +96,10 @@
 
             function convertDateTimeBirthday(dateTime) {
                 if (dateTime) {
-                    var date = dateTime.split("-");
-                    var yyyy = date[0];
-                    var mm = date[1];
-                    var dd = date[2];
+                    var date = dateTime.split("/");
+                    var yyyy = date[2];
+                    var mm = date[0];
+                    var dd = date[1];
 
                     return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
                 }
@@ -180,11 +180,13 @@
                     events.push(event);
                 });
 
-                events.push({
-                    event_id: new Date().getTime(),
-                    startTime: convertDateTime(temp),
-                    state: getTimelineWidgetState(problem)
-                });
+                if (temp) {
+                    events.push({
+                        event_id: new Date().getTime(),
+                        startTime: convertDateTime(temp),
+                        state: getTimelineWidgetState(problem)
+                    });
+                }
 
                 var timeline_problem = {
                     'name': problem.problem_name,
@@ -213,7 +215,7 @@
                     var timeline_problems = [];
                     angular.forEach(data2['timeline_problems'], function (value, key) {
 
-                        if (value.problem_segment) {
+                        if (value.problem_segment.length !== undefined && value.problem_segment.length > 0) {
                             var timeline_problem = parseTimelineWithSegment(value);
                         } else {
                             var timeline_problem = parseTimelineWithoutSegment(value);
@@ -230,6 +232,7 @@
                     };
 
                     $scope.timeline_ready = true;
+                    $scope.timeline_changed = [{changing: new Date().getTime()}];
                 });
             };
 

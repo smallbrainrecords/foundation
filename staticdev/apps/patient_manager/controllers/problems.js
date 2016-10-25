@@ -220,11 +220,13 @@
                     events.push(event);
                 });
 
-                events.push({
-                    event_id: new Date().getTime(),
-                    startTime: convertDateTime(temp),
-                    state: getTimelineWidgetState(problem)
-                });
+                if (temp) {
+                    events.push({
+                        event_id: new Date().getTime(),
+                        startTime: convertDateTime(temp),
+                        state: getTimelineWidgetState(problem)
+                    });
+                }
 
                 var timeline_problems = [
                     {
@@ -329,6 +331,9 @@
                         $scope.colon_cancers = data2['colon_cancers'];
                     });
                 }
+
+                // inr
+                $scope.inr = true;
 
                 if ($scope.history_note != null) {
 
