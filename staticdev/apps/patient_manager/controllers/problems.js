@@ -745,6 +745,9 @@
 
                         form.note = '';
                         $scope.set_authentication_false();
+
+                        // https://trello.com/c/ZFlgZLOz. Move cursor to todo input text field
+                        $('#todoNameInput').focus();
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Warning', 'Action Failed');
                     } else {
