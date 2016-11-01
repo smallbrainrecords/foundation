@@ -9,6 +9,11 @@
         {% endif %}
     </a>
 </li>
+<!--Vitals infos-->
+<li id="vitals_blood_pressure"></li>
+<li id="vitals_body_temperature"></li>
+<li id="vitals_weight"></li>
+<li id="vitals_heart_rate"></li>
 {% endblock %}
 {% block search %}
 <form class="navbar-form navbar-left" target="_blank" action="{% url 'search' patient.id %}" method="post">

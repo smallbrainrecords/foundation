@@ -352,22 +352,22 @@
                     message: 'Enter due date',
                     input: true,
                     label: 'Due Date',
-                }).then(function(due_date){
-                    if(moment(due_date, "MM/DD/YYYY", true).isValid()) {
+                }).then(function (due_date) {
+                    if (moment(due_date, "MM/DD/YYYY", true).isValid()) {
                         form.due_date = due_date;
-                    } else if(moment(due_date, "M/D/YYYY", true).isValid()) {
+                    } else if (moment(due_date, "M/D/YYYY", true).isValid()) {
                         form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
-                    } else if(moment(due_date, "MM/YYYY", true).isValid()) {
+                    } else if (moment(due_date, "MM/YYYY", true).isValid()) {
                         form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
-                    } else if(moment(due_date, "M/YYYY", true).isValid()) {
+                    } else if (moment(due_date, "M/YYYY", true).isValid()) {
                         form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
-                    } else if(moment(due_date, "MM/DD/YY", true).isValid()) {
+                    } else if (moment(due_date, "MM/DD/YY", true).isValid()) {
                         form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
-                    } else if(moment(due_date, "M/D/YY", true).isValid()) {
+                    } else if (moment(due_date, "M/D/YY", true).isValid()) {
                         form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
-                    } else if(moment(due_date, "MM/YY", true).isValid()) {
+                    } else if (moment(due_date, "MM/YY", true).isValid()) {
                         form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
-                    } else if(moment(due_date, "M/YY", true).isValid()) {
+                    } else if (moment(due_date, "M/YY", true).isValid()) {
                         form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
                     } else {
                         toaster.pop('error', 'Error', 'Please enter a valid date!');
@@ -1120,6 +1120,29 @@
 
                         data.chartSeries = dataService.generateChartSeries(tmpData);
                         data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
+
+                        // TODO: Manipulate DOM manually and inside JS code. Need to refine this
+                        if (data.name == 'weight') {
+                            // $scope.vitals.weight = data;
+                            var dom = '<a href="#/data/' + data.id + '">W:' + data.mostRecentValue + '</a>';
+                            $("#vitals_weight").html(dom);
+                        }
+                        if (data.name == 'body temperature') {
+                            // $scope.vitals.body_temperature = data;
+                            var dom = '<a href="#/data/' + data.id + '">T:' + data.mostRecentValue + '</a>';
+                            $("#vitals_body_temperature").html(dom);
+                        }
+
+                        if (data.name == 'blood pressure') {
+                            // $scope.vitals.blood_pressure = data;
+                            var dom = '<a href="#/data/' + data.id + '">BP:' + data.mostRecentValue + '</a>';
+                            $("#vitals_blood_pressure").html(dom);
+                        }
+                        if (data.name == 'heart rate') {
+                            // $scope.vitals.heart_rate = data;
+                            var dom = '<a href="#/data/' + data.id + '">P:' + data.mostRecentValue + '</a>';
+                            $("#vitals_heart_rate ").html(dom);
+                        }
                     });
 
                     if ($scope.active_user) {
@@ -1142,7 +1165,7 @@
                                     data.ph = 'RR'
                                     $scope.mostCommonData.push(data);
                                 }
-                                
+
                                 if (data.name == 'blood pressure') {
                                     data.ph = 'BP'
                                     $scope.mostCommonData.push(data);
@@ -1257,7 +1280,7 @@
                 return is_inr;
             };
 
-            $scope.add_bfdi_value = function(component) {
+            $scope.add_bfdi_value = function (component) {
                 var new_data = {};
                 new_data.datetime = moment().format("MM/DD/YYYY HH:mm");
 

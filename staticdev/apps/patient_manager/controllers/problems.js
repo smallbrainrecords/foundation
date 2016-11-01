@@ -119,6 +119,29 @@
                             // Unaffected graph option when time range filter changed
                             data.chartSeries = dataService.generateChartSeries(tmpData);
                             data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
+
+                            // TODO: Manipulate DOM manually and inside JS code. Need to refine this
+                        if (data.name == 'weight') {
+                            // $scope.vitals.weight = data;
+                            var dom = '<a href="#/data/' + data.id + '">W:' + data.mostRecentValue + '</a>';
+                            $("#vitals_weight").html(dom);
+                        }
+                        if (data.name == 'body temperature') {
+                            // $scope.vitals.body_temperature = data;
+                            var dom = '<a href="#/data/' + data.id + '">T:' + data.mostRecentValue + '</a>';
+                            $("#vitals_body_temperature").html(dom);
+                        }
+
+                        if (data.name == 'blood pressure') {
+                            // $scope.vitals.blood_pressure = data;
+                            var dom = '<a href="#/data/' + data.id + '">BP:' + data.mostRecentValue + '</a>';
+                            $("#vitals_blood_pressure").html(dom);
+                        }
+                        if (data.name == 'heart rate') {
+                            // $scope.vitals.heart_rate = data;
+                            var dom = '<a href="#/data/' + data.id + '">P:' + data.mostRecentValue + '</a>';
+                            $("#vitals_heart_rate ").html(dom);
+                        }
                         });
 
                     } else {
