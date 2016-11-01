@@ -21,24 +21,20 @@
 <script src="/static/apps/admin/controllers/manageSharingController.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/admin/services/adminService.js" type="text/javascript" charset="utf-8"></script>
 
-<div id='ng-app' ng-app='AdminApp' class='no-js' lang-'en'>
+<div id='ng-app' ng-app='AdminApp' class='no-js' lang="en">
 
-	<div ng-controller='GlobalCtrl'>
+    <div ng-controller='GlobalCtrl'>
 
-		<center> 
-			<a href='/old/home'> Go to  old Physician/Admin Dashboard </a> 
-		</center>
-
-
+        <center>
+            <a href='/old/home'> Go to old Physician/Admin Dashboard </a>
+        </center>
 
 
-	
+        <div ng-view>
+            Loading...
+        </div>
 
-		<div ng-view>
-			Loading...
-		</div>
-
-	</div>
+    </div>
 
 </div>
 
