@@ -118,12 +118,24 @@
                         // var quantity = item.observation_component_values[0].value_quantity;
 
                         // Round number if blood pressure
-                        if (observation.name == 'blood pressure') {
-                            valueQuantity = Math.round(valueQuantity );
+                        if ('blood pressure' == observation.name) {
+                            valueQuantity = Math.round(valueQuantity);
+                        }
+
+                        if ('weight' == observation.name) {
+                            valueQuantity = valueQuantity.toFixed(1);
+                        }
+
+                        if ('body temperature' == observation.name) {
+                            valueQuantity = valueQuantity.toFixed(1);
+                        }
+
+                        if ('heart rate' == observation.name) {
+                            valueQuantity = Math.round(valueQuantity);
                         }
                         result.push(valueQuantity);
                     }
-                    else 
+                    else
                         result.push('');
                 });
 
@@ -180,8 +192,8 @@
                 return count;
             };
 
-            this.generateMostCommonData = function(datas) {
-                var mostCommonData = _.sortBy(datas, function(data){
+            this.generateMostCommonData = function (datas) {
+                var mostCommonData = _.sortBy(datas, function (data) {
                     var now = moment().utc();
                     var yearAgo = now.subtract(1, 'year');
                     var count = 0;
