@@ -119,19 +119,19 @@
 
                         // Round number if blood pressure
                         if ('blood pressure' == observation.name) {
-                            valueQuantity = Math.round(valueQuantity);
+                            valueQuantity = isNaN(valueQuantity) ? 0 : Math.round(parseFloat(valueQuantity));
                         }
 
                         if ('weight' == observation.name) {
-                            valueQuantity = valueQuantity.toFixed(1);
+                            valueQuantity = isNaN(valueQuantity) ? 0 : parseFloat(valueQuantity).toFixed(1);
                         }
 
                         if ('body temperature' == observation.name) {
-                            valueQuantity = valueQuantity.toFixed(1);
+                            valueQuantity = isNaN(valueQuantity) ? 0 : parseFloat(valueQuantity).toFixed(1);
                         }
 
                         if ('heart rate' == observation.name) {
-                            valueQuantity = Math.round(valueQuantity);
+                            valueQuantity = isNaN(valueQuantity) ? 0 : Math.round(parseFloat(valueQuantity));
                         }
                         result.push(valueQuantity);
                     }
