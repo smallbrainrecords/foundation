@@ -15,6 +15,21 @@
 				var url = '/inr/'+patient_id+ '/' + problem_id +'/get_inrs';
 				return httpService.get(params, url);
 			}
+			this.setTargetforInr = function(inr_id, target) {
+				var params = {"target": target};
+				var url = '/inr/'+inr_id+'/set_target';
+				return httpService.get(params, url);
+			}
+			this.getListProblem = function(id){
+				var params = {"id": id};
+				var url = '/inr/get_list_problem';
+				return httpService.get(params, url);
+			}
+			this.saveInrValue = function(datas){
+				var params = {"datas": datas};
+				var url = '/inr/save_inrvalue';
+				return httpService.post(datas, url);
+			}
 	});
 
 })();

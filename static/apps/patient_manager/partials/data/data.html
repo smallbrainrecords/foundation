@@ -1,0 +1,125 @@
+<toaster-container></toaster-container>
+<div class='panel panel-default'>
+
+    <div class='panel-body'>
+
+        <div class='row'>
+
+            <div class='col-md-12'>
+                <a href='#/'><b> Back to home page </b></a>
+            </div>
+        </div>
+
+    </div><!-- End of Panel Body -->
+</div>
+
+<div class='panel panel-default'>
+
+    <div class='panel-body'>
+
+        <div class='row'>
+            <div class='col-md-12 no-padding'>
+                <div class="btn-group btn-group-justified graph-view-mode">
+                    <label class="btn btn-default" ng-click="viewMode='Week'"
+                           ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
+                    <label class="btn btn-default" ng-click="viewMode='Month'"
+                           ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
+                    <label class="btn btn-default" ng-click="viewMode='Year'"
+                           ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
+                    <label class="btn btn-default" ng-click="viewMode='All'"
+                           ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
+                </div>
+                <div class='item-box data-frame' ng-style="{'background-color': data.color}">
+                    <div class="row graph-header">
+                        <div class="col-md-6 text-left">
+                            <h3>{{ data.name }}</h3>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <h3>
+                                                            <span
+                                                                    ng-bind="data.mostRecentValue || 0"></span>
+                                <span ng-bind="data.observation_units[0].value_unit"></span>
+                            </h3>
+                            <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+                        </div>
+                    </div>
+
+                    <canvas ng-if="data.graph=='Line'" class="chart chart-line"
+                            chart-data="data.chartData"
+                            chart-series="data.chartSeries"
+                            chart-labels="data.chartLabel"></canvas>
+                    <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
+                            chart-data="data.chartData"
+                            chart-series="data.chartSeries"
+                            chart-labels="data.chartLabel"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='panel panel-default'>
+
+    <div class='panel-body'>
+
+        <div class='row'>
+
+            <div class='col-md-12'>
+                <a href="#/data/{{ data.id }}/show_all_data" class="btn btn-default">Show all data</a>
+                <a href="#/data/{{ data.id }}/add_data" class="btn btn-default">Add data point</a>
+                <button class="btn btn-default" ng-click="toggle_pin_to_new_problem();"
+                        ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.id">Pin to new problem
+                </button>
+                <a class="btn btn-default" href="#/data/{{ data.id }}/settings">Settings</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='panel panel-default'>
+    <div class='panel-heading'>
+        <h3>List of pinned problems</h3>
+    </div>
+
+    <div class='panel-body'>
+
+        <div class='row'>
+
+            <div class='col-md-12'>
+                <div style='max-height:375px; overflow-y:auto;'>
+                    <ul class='ul-clean'>
+                        <li ng-repeat='problem in problems'
+                            ng-show="problem.pin">
+                            <div class='item-box'
+                                 ng-class='problem.is_controlled==true ? "green-box" : "red-box" '
+                                 ng-click="open_problem(problem);">
+
+                                {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='panel panel-default' ng-show="show_pin_to_new_problem"
+     ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.id">
+    <div class='panel-heading'>
+        <h3>List of current problems</h3>
+    </div>
+
+    <div class='panel-body'>
+
+        <div class='row'>
+
+            <div class='col-md-12'>
+                <p ng-repeat="problem in problems">
+                    <input type="checkbox" ng-model="problem.pin"
+                           ng-change="data_pin_to_problem(data.id, problem.id);"> {{ problem.problem_name }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

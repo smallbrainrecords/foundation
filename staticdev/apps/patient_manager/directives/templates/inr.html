@@ -17,8 +17,8 @@
 	                <div class="row">
 						<div class='col-md-8'>
 							<p>Target inr: 
-                                <label><input type="checkbox" ng-model="inr.target">2-3</label>
-                                <label><input type="checkbox" ng-model="inr.target">2.5-3.5</label>
+                                <label><input ng-click="checkradio(inr)" type="radio" ng-model="inr.target" value="1">2-3</label>
+                                <label><input ng-click="checkradio(inr)" type="radio" ng-model="inr.target" value="0">2.5-3.5</label>
                             </p>
                             <div class="io-box">
                                 <div class='table-responsive'>
@@ -26,25 +26,25 @@
                                         <thead>
                                             <th>
                                                 Date measured
-                                                <input type="text" name="">
+                                                <input type="text" ng-model='inrvalue.effective_datetime' name="">
                                             </th>
                                             <th>
                                                 Current dose
-                                                <input type="text" name="">
+                                                <input type="text" ng-model='inrvalue.current_dose' name="">
                                             </th>
                                             <th>
                                                 Inr
-                                                <input type="text" name="">
+                                                <input type="number" ng-model='inrvalue.value' name="">
                                             </th>
                                             <th>
                                                 New dosage
-                                                <input type="text" name="">
+                                                <input type="text" ng-model='inrvalue.new_dosage' name="">
                                             </th>
                                             <th>
                                                 Next Inr
-                                                <input type="text" name="">
+                                                <input type="text" ng-model='inrvalue.next_inr' name="">
                                             </th>
-                                            <th><button class="btn btn-default" ng-click="">Save</button></th>
+                                            <th><button class="btn btn-default" ng-click="saveinrvalue()">Save</button></th>
                                         </thead>
                                         <tbody>
                                             <tr ng-repeat='value in inr.inr_values'
@@ -77,8 +77,8 @@
                                 <div class="row">
                                     <div class='col-md-12'>
                                         <p>Related problems:</p>
-                                        <ul>
-                                            <li></li>
+                                        <ul ng-repeat="problem in problems">
+                                            <li>{{problem.problem_name}}</li>
                                         </ul>
                                         <p>Wafarin Tablets:</p>
                                         <ul>

@@ -88,7 +88,6 @@
                 patientService.getDatas($scope.patient_id).then(function (data) {
                     if (data['success'] == true) {
                         $scope.datas = data['info'];
-
                         angular.forEach($scope.datas, function (data, key) {
                             var is_pin = false;
                             angular.forEach($scope.problem_pins, function (pin, key) {
@@ -286,7 +285,15 @@
             patientService.fetchProblemInfo(problem_id).then(function (data) {
 
                 $scope.problem = data['info'];
-
+                $scope.inr = data['info'].inr;
+                $scope.inrs = [];
+                inrService.getInrs($scope.patient_id, $scope.inr).then(function (data) {
+                    if (data['success'] == true) {
+                        $scope.inrs = data['info'];
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
                 // problem timeline
                 if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {
                     var timeline_problems = parseTimelineWithSegment($scope.problem);
@@ -1162,10 +1169,8 @@
                 if (data['success'] == true) {
                     $scope.medications = data['info'];
                     $scope.hasPinnedMedication= false;
-
                     problemService.fetchMedicationPinToProblem($scope.problem_id).then(function (data) {
                         $scope.medication_pins = data['pins'];
-
                         angular.forEach($scope.medications, function (medication, key) {
                             var is_pin = false;
                             angular.forEach($scope.medication_pins, function (pin, key) {
@@ -1221,14 +1226,6 @@
             /*
             *   medication
             */
-            $scope.inrs = [];
-            inrService.getInrs($scope.patient_id, $scope.problem_id).then(function (data) {
-                if (data['success'] == true) {
-                    $scope.inrs = data['info'];
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
 
         });
     /* End of controller */

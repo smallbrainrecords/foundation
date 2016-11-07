@@ -7,7 +7,7 @@ from .models import UserProfile, AccessLog, Encounter, \
     Country, State, City, TelecomSystem, Telecom, AddressType, AddressUse, Observation, \
     ObservationComponent, ObservationValue, ProblemLabel, SharingPatient, MaritalStatus, \
     CommonProblem, ColonCancerScreening, RiskFactor, ObservationPinToProblem, MyStoryTab, MyStoryTextComponent, \
-    Medication
+    Medication, Inr, MedicationPinToProblem, MedicationTextNote, InrValue
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -159,3 +159,7 @@ admin.site.register(ObservationPinToProblem)
 admin.site.register(MyStoryTab)
 admin.site.register(MyStoryTextComponent)
 admin.site.register(Medication)
+admin.site.register(Inr)
+admin.site.register(MedicationPinToProblem)
+admin.site.register(MedicationTextNote)
+admin.site.register(InrValue)

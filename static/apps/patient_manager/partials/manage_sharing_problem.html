@@ -1,0 +1,34 @@
+<toaster-container></toaster-container>
+<center> 
+	<h3> 
+		<a href='#/manage/sharing'><i class='glyphicon glyphicon-arrow-left'></i> Back To Manage Sharing Page </a> 
+	</h3> 
+</center>
+<hr>
+
+<center> <h3> Manage Sharing Problems </h3> </center>
+<hr>
+
+
+<div class='row'>
+	<div class='col-md-4'>
+		patient {{sharing_patient.user.first_name}} {{sharing_patient.user.last_name}}
+		can access
+	</div>
+	<div class='col-md-4'>
+		<p ng-repeat="problem in problems">
+			<input type="checkbox" checked="checked" ng-if="inArray(sharing_problems, problem)" ng-click="changeSharingProblem(problem);">
+			<input type="checkbox" ng-if="!inArray(sharing_problems, problem)" ng-click="changeSharingProblem(problem);">
+			<span>{{problem.problem_name}}</span>
+		</p>
+		<p>
+			<input type="checkbox" checked="checked" ng-if="is_my_story_shared" ng-click="changeSharingMyStory();">
+			<input type="checkbox" ng-if="!is_my_story_shared" ng-click="changeSharingMyStory();">
+			<span>my story</span>
+		</p>
+	</div>
+	<div class='col-md-4'>
+		of patient {{active_user.user.first_name}} {{active_user.user.last_name}}
+
+	</div>
+</div>

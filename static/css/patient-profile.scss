@@ -1,0 +1,268 @@
+body {
+  padding-top: 70px;
+}
+
+.profile-section {
+  position: relative;
+  //width: 851px;
+  height: 315px;
+  margin-bottom: 50px;
+  //margin: auto auto 50px;
+  border: none;
+  .panel-body {
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    //&:hover {
+    //  .btn-camera {
+    //    background-color: #000;
+    //    opacity: 0.7;
+    //    .glyphicon-camera {
+    //      font-size: 1em;
+    //    }
+    //    .btn-text {
+    //      display: inline-block;
+    //    }
+    //  }
+    //}
+  }
+
+  .cover-image {
+    position: absolute;
+    width: 100%;
+    max-width: 100%;
+    top: 0;
+    height: 100%;
+    &:hover + .dropdown {
+      .btn-camera {
+        background-color: #000;
+        opacity: 0.7;
+        .glyphicon-camera {
+          font-size: 1em;
+        }
+        .btn-text {
+          display: inline-block;
+        }
+      }
+    }
+  }
+
+  .patient-name {
+    color: #fff;
+    font-size: 56px;
+  }
+
+  .btn-cover-picture-edit {
+    left: 20px;
+    &:hover {
+      border: 1px solid #fff;
+    }
+  }
+
+  .profile-picture {
+    background: #FFFFFF;
+    border: 1px solid #cccccc;
+    padding: 5px;
+    position: absolute;
+    bottom: -20px;
+    width: 168px;
+    margin: 0 30px;
+    height: 168px;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn-profile-picture-edit {
+      .glyphicon-camera {
+        vertical-align: middle;
+      }
+      bottom: 5px;
+      width: 94%;
+      .btn-text {
+        width: 80%;
+      }
+    }
+
+    &:hover {
+      .btn-camera {
+        background-color: #000;
+        opacity: 0.7;
+        .glyphicon-camera {
+          font-size: 1em;
+        }
+        .btn-text {
+          display: inline-block;
+        }
+      }
+    }
+  }
+
+  .bottom-info {
+    line-height: 30px;
+    //margin-left: 180px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 5px 10px;
+    border: none;
+    width: 75%;
+  }
+
+  .btn-camera {
+    color: #c2c1c0;
+    //width: 100%;
+    position: absolute;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 5px;
+    .glyphicon-camera {
+      display: inline-block;
+      font-size: 1.5em;
+    }
+    .btn-text {
+      color: #fff;
+      display: none;
+    }
+    &:hover {
+      background-color: #000;
+      opacity: 0.7;
+      .glyphicon-camera {
+        font-size: 1em;
+      }
+      .btn-text {
+        display: inline-block;
+      }
+    }
+  }
+
+}
+
+.float-right {
+  float: right;
+}
+
+.float-left {
+  float: left;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.btn-upload, .btn-take-photo {
+  cursor: pointer;
+  line-height: 36px;
+  padding: 28px 0;
+}
+
+.preview-image {
+  margin: auto;
+}
+
+.dropdown {
+  li {
+    a {
+      padding: 3px 10px;
+    }
+  }
+}
+
+.dropdown.open {
+  .btn-camera {
+    background-color: #000;
+    opacity: 0.7;
+    .glyphicon-camera {
+      font-size: 1em;
+    }
+    .btn-text {
+      display: inline-block;
+    }
+  }
+  .fa.fa-sort-asc {
+    position: absolute;
+    top: -8px;
+    font-size: 2em;
+    color: #FFF;
+    left: 20px;
+  }
+}
+
+.dropdown-menu.cover-photo-menu {
+  font-size: 12px;
+  top: 35px;
+  left: 20px;
+  a {
+    cursor: pointer;
+    text-decoration: none;
+  }
+}
+
+#audio-player {
+  padding: 0;
+  list-style: none;
+  li {
+    display: inline-block;
+    &.progress-wrapper {
+      width: 200px;
+      div.progress {
+        height: 10px;
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+.list-group {
+  list-style: none;
+}
+
+.graph-header {
+  color: white;
+}
+
+.graph-view-mode {
+  .mode-active {
+    background: #FF2C55;
+    color: white;
+  }
+
+  .mode-inactive {
+    background: #FED7D0;
+    color: #C03C51;
+  }
+}
+
+.no-padding {
+  padding: 0 !important;
+}
+
+.no-margin{
+  margin: 0 !important;
+}
+
+//Problem details stylesheet
+.headerWrap {
+  padding: 10px 15px;
+  display: block;
+  a {
+    color: #000;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  span{
+    padding-left: 10px;
+  }
+  .profileThumb {
+    border-radius: 2px;
+    height: 24px;
+    margin: 2px -2px 0 -8px;
+    vertical-align: inherit;
+    width: 24px;
+  }
+
+}
+

@@ -5,8 +5,6 @@
 
 	angular.module('ManagerApp')
 		.controller('HomeCtrl', function($scope, $routeParams, patientService, ngDialog, toaster){
-
-
 			var patient_id = $('#patient_id').val();
 			$scope.patient_id = patient_id;
 			$scope.show_accomplished_todos = false;

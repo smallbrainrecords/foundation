@@ -1,0 +1,178 @@
+body {
+  padding-top: 70px; }
+
+.profile-section {
+  position: relative;
+  height: 315px;
+  margin-bottom: 50px;
+  border: none; }
+  .profile-section .panel-body {
+    padding: 0;
+    width: 100%;
+    height: 100%; }
+  .profile-section .cover-image {
+    position: absolute;
+    width: 100%;
+    max-width: 100%;
+    top: 0;
+    height: 100%; }
+    .profile-section .cover-image:hover + .dropdown .btn-camera {
+      background-color: #000;
+      opacity: 0.7; }
+      .profile-section .cover-image:hover + .dropdown .btn-camera .glyphicon-camera {
+        font-size: 1em; }
+      .profile-section .cover-image:hover + .dropdown .btn-camera .btn-text {
+        display: inline-block; }
+  .profile-section .patient-name {
+    color: #fff;
+    font-size: 56px; }
+  .profile-section .btn-cover-picture-edit {
+    left: 20px; }
+    .profile-section .btn-cover-picture-edit:hover {
+      border: 1px solid #fff; }
+  .profile-section .profile-picture {
+    background: #FFFFFF;
+    border: 1px solid #cccccc;
+    padding: 5px;
+    position: absolute;
+    bottom: -20px;
+    width: 168px;
+    margin: 0 30px;
+    height: 168px;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px; }
+    .profile-section .profile-picture img {
+      width: 100%;
+      height: 100%; }
+    .profile-section .profile-picture .btn-profile-picture-edit {
+      bottom: 5px;
+      width: 94%; }
+      .profile-section .profile-picture .btn-profile-picture-edit .glyphicon-camera {
+        vertical-align: middle; }
+      .profile-section .profile-picture .btn-profile-picture-edit .btn-text {
+        width: 80%; }
+    .profile-section .profile-picture:hover .btn-camera {
+      background-color: #000;
+      opacity: 0.7; }
+      .profile-section .profile-picture:hover .btn-camera .glyphicon-camera {
+        font-size: 1em; }
+      .profile-section .profile-picture:hover .btn-camera .btn-text {
+        display: inline-block; }
+  .profile-section .bottom-info {
+    line-height: 30px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 5px 10px;
+    border: none;
+    width: 75%; }
+  .profile-section .btn-camera {
+    color: #c2c1c0;
+    position: absolute;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 5px; }
+    .profile-section .btn-camera .glyphicon-camera {
+      display: inline-block;
+      font-size: 1.5em; }
+    .profile-section .btn-camera .btn-text {
+      color: #fff;
+      display: none; }
+    .profile-section .btn-camera:hover {
+      background-color: #000;
+      opacity: 0.7; }
+      .profile-section .btn-camera:hover .glyphicon-camera {
+        font-size: 1em; }
+      .profile-section .btn-camera:hover .btn-text {
+        display: inline-block; }
+
+.float-right {
+  float: right; }
+
+.float-left {
+  float: left; }
+
+.align-center {
+  text-align: center; }
+
+.btn-upload, .btn-take-photo {
+  cursor: pointer;
+  line-height: 36px;
+  padding: 28px 0; }
+
+.preview-image {
+  margin: auto; }
+
+.dropdown li a {
+  padding: 3px 10px; }
+
+.dropdown.open .btn-camera {
+  background-color: #000;
+  opacity: 0.7; }
+  .dropdown.open .btn-camera .glyphicon-camera {
+    font-size: 1em; }
+  .dropdown.open .btn-camera .btn-text {
+    display: inline-block; }
+.dropdown.open .fa.fa-sort-asc {
+  position: absolute;
+  top: -8px;
+  font-size: 2em;
+  color: #FFF;
+  left: 20px; }
+
+.dropdown-menu.cover-photo-menu {
+  font-size: 12px;
+  top: 35px;
+  left: 20px; }
+  .dropdown-menu.cover-photo-menu a {
+    cursor: pointer;
+    text-decoration: none; }
+
+#audio-player {
+  padding: 0;
+  list-style: none; }
+  #audio-player li {
+    display: inline-block; }
+    #audio-player li.progress-wrapper {
+      width: 200px; }
+      #audio-player li.progress-wrapper div.progress {
+        height: 10px;
+        margin-bottom: 0; }
+
+.list-group {
+  list-style: none; }
+
+.graph-header {
+  color: white; }
+
+.graph-view-mode .mode-active {
+  background: #FF2C55;
+  color: white; }
+.graph-view-mode .mode-inactive {
+  background: #FED7D0;
+  color: #C03C51; }
+
+.no-padding {
+  padding: 0 !important; }
+
+.no-margin {
+  margin: 0 !important; }
+
+.headerWrap {
+  padding: 10px 15px;
+  display: block; }
+  .headerWrap a {
+    color: #000;
+    cursor: pointer;
+    font-weight: 700; }
+  .headerWrap span {
+    padding-left: 10px; }
+  .headerWrap .profileThumb {
+    border-radius: 2px;
+    height: 24px;
+    margin: 2px -2px 0 -8px;
+    vertical-align: inherit;
+    width: 24px; }
+
+/*# sourceMappingURL=patient-profile.css.map */

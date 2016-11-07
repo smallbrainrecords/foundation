@@ -35,7 +35,10 @@ COMMON_PROBLEM_TYPE_CHOICES = (
 RISK_CHOICES = (
     ('normal', 'Normal'),
     ('high', 'High'),)
-
+TARGET_CHOICES  = (
+    (1, '2-3'),
+    (0, '2.5-3.5')
+    )
 # Observation type
 OBSERVATION_TYPES = [
     {
@@ -290,7 +293,7 @@ class Problem(MPTTModel):
     start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
     labels = models.ManyToManyField(ProblemLabel, blank=True)
     old_problem_name = models.CharField(max_length=200, blank=True, null=True)
-
+    inr = models.ForeignKey("Inr", related_name='inr_problem', blank=True, null=True)
     objects = ProblemManager()
 
     def __unicode__(self):
@@ -881,11 +884,13 @@ class Inr(models.Model):
     author = models.ForeignKey(UserProfile, related_name='author_inrs', blank=True, null=True)
     patient = models.ForeignKey(UserProfile, related_name="patient_inrs")
     observation = models.ForeignKey(Observation, related_name='observation_pin_inrs', blank=True, null=True)
-    problem = models.ForeignKey(Problem, related_name='problem_pin_inrs', blank=True, null=True)
+    # problem = models.ForeignKey(Problem, related_name='problem_pin_inrs', blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
-
+    target = models.PositiveIntegerField(choices=TARGET_CHOICES)
     class Meta:
         ordering = ['-created_on']
+    def __str__(self):
+        return "%s" % (self.observation)
 
 
 class InrValue(models.Model):
@@ -922,6 +927,8 @@ class Medication(models.Model):
 
     class Meta:
         ordering = ['-created_on']
+    def __str__(self):
+        return "%s" % (self.name)
 
 
 class MedicationPinToProblem(models.Model):

@@ -1,0 +1,97 @@
+<toaster-container></toaster-container>
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<a href='#/data/{{individual_data.observation}}/show_all_data'><b> Back to all data page </b></a>
+			</div>
+		</div>
+
+	</div><!-- End of Panel Body -->
+</div>
+
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<h3>{{ data.name }}</h3>
+                <p>{{individual_data.value_quantity}} <span ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}} </span></p>
+                <p>{{individual_data.author.user.first_name}} {{individual_data.author.user.last_name}}</p>
+                <p>Created on: {{ individual_data.created_on|date:'M/d/yyyy HH:mm' }}</p>
+                <p>Date measured: {{ individual_data.date }} {{ individual_data.time }}</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class='panel panel-default' ng-show="show_edit">
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Date</label>
+                        <div class="col-sm-10">
+                          <input type="text" class="form-control" ng-model="individual_data.date" id="due_date">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Time</label>
+                        <div class="col-sm-10">
+                          <input type="text" class="form-control" ng-model="individual_data.time">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Value</label>
+                        <div class="col-sm-10">
+                          <input type="text" class="form-control" ng-model="individual_data.value_quantity">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-sm-2"> </div>
+                        <div class="col-sm-10">
+                            <button class="btn btn-default" ng-click="toggleEdit();">Cancel</button>
+                            <button class="btn btn-default" ng-click="save_data(individual_data);">Save</button>
+                        </div>
+                    </div>
+                </form>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div class='panel panel-default'>
+
+	<div class='panel-body'>
+
+		<div class='row'>
+
+			<div class='col-md-12'>
+				<button class="btn btn-default" ng-if="active_user.role!='patient' || active_user.id== individual_data.author.id" ng-click="toggleEdit();">Edit</button>
+				<button class="btn btn-default" ng-if="active_user.role!='patient' || active_user.id== individual_data.author.id" ng-click="deleteIndividualData(individual_data.id);">Delete</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type='text/javascript'>
+	
+	$(document).ready(function(){
+
+		$( "#due_date" ).datepicker({ dateFormat: 'mm/dd/yy' });
+
+	});
+</script>

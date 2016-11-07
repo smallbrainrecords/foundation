@@ -26,7 +26,7 @@ function generateProblemElementsHtml(problemJson) {
     problemElements.forEach(function(problemElement) {
         problemElementsHtml += '<h4>' + problemElement + '</h4>';
         problemElementsHtml += '<div>';
-        problemElementsHtml += window["generateProblem"+problemElement+"Html"](problemJson);
+        // problemElementsHtml += window["generateProblem"+problemElement+"Html"](problemJson);
         problemElementsHtml += '</div>';
     });
     return problemElementsHtml;
