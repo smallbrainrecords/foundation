@@ -30,6 +30,16 @@
 				var url = '/inr/save_inrvalue';
 				return httpService.post(datas, url);
 			}
+			this.editInrValue = function(value, id){
+				var params = {"datas": value};
+				var url = '/inr/'+id+'/edit_inrvalue';
+				return httpService.post(value, url);
+			}
+			this.deleteInrValue = function(id){
+				var params = {};
+				var url = '/inr/'+id+'/delete_inrvalue';
+				return httpService.get(params, url);
+			}
 	});
 
 })();

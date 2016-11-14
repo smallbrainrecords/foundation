@@ -50,9 +50,32 @@ def get_list_problem(request):
 def save_inrvalue(request):
 	resp = {}
 	resp['success'] = True
-	inrvalue = InrValue(effective_datetime=request.POST['effective_datetime'], current_dose=request.POST['current_dose'], value=float(request.POST['value']), new_dosage=request.POST['new_dosage'], next_inr=request.POST['next_inr'], inr_id=int(request.POST['inr']), author_id=int(request.POST['author_id']))
+	inrvalue = InrValue(effective_datetime=request.POST['effective_datetime'], current_dose=request.POST['current_dose'], value=float(request.POST['value']), new_dosage=request.POST['new_dosage'], next_inr=request.POST['next_inr'], inr_id=int(request.POST['inr']), author_id=int(request.POST['author_id']), ispatient=True)
 	try:
 		inrvalue.save()
+		resp['id'] = inrvalue.pk
+	except:
+		resp['success'] = False 
+	return ajax_response(resp)
+
+@login_required
+@api_view(['POST'])
+def edit_inrvalue(request, inr_id):
+	resp = {}
+	resp['success'] = True
+	try:
+		InrValue.objects.filter(id=inr_id, ispatient=True).update(effective_datetime=request.POST['effective_datetime'], current_dose=request.POST['current_dose'], value=float(request.POST['value']), new_dosage=request.POST['new_dosage'], next_inr=request.POST['next_inr'])
+	except:
+		resp['success'] = False 
+	return ajax_response(resp)
+
+@login_required
+@api_view(['GET'])
+def delete_inrvalue(request, inr_id):
+	resp = {}
+	resp['success'] = True
+	try:
+		InrValue.objects.get(id = inr_id, ispatient=True).delete()
 	except:
 		resp['success'] = False 
 	return ajax_response(resp)

@@ -427,7 +427,12 @@ ce-entity ce-flag{
 	margin-bottom: 10px;
 	padding: 10px;
 }
-
+.io-box .table-responsive tbody td .smallbutton{
+	padding: 1px 5px;
+}
+.io-box .table-responsive .listinrvalue tbody td input{
+	width: 100%;
+}
 .home-page-tabs .nav {
 	border: 1px solid #ddd;
 	border-radius: 4px;

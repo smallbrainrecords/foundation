@@ -902,7 +902,7 @@ class InrValue(models.Model):
     new_dosage = models.TextField(null=True, blank=True)
     next_inr = models.DateTimeField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
-
+    ispatient = models.BooleanField(default=False)
     class Meta:
         ordering = ['-effective_datetime', '-created_on']
 

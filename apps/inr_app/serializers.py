@@ -21,6 +21,7 @@ class InrValueSerializer(serializers.ModelSerializer):
             'current_dose',
             'new_dosage',
             'next_inr',
+            'ispatient',
             'created_on',
             )
 
