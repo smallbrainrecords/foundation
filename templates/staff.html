@@ -18,7 +18,10 @@
 <script src="/static/apps/staff/controllers/homeController.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/todo.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/manageSharingController.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/staff/controllers/manageCommonProblemController.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/controllers/manageCommonProblemController.js" type="text/javascript"
+        charset="utf-8"></script>
+<script src="/static/apps/staff/controllers/uploadDocumentController.js" type="text/javascript"
+        charset="utf-8"></script>
 <script src="/static/apps/staff/services/staffService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/physicianService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/todoService.js" type="text/javascript" charset="utf-8"></script>
@@ -28,100 +31,99 @@
 
 <div class='row'>
 
-	<div class='col-md-3'>
-		<div class='panel panel-default'>
+    <div class='col-md-3'>
+        <div class='panel panel-default'>
 
-			<div class='panel-heading'>
-				 Info
-			</div>
-			<div class='panel-body'>
-				<b> Name </b>:  {{user.first_name}} {{user.last_name}} 
-				<br>
-				<b> Role </b>:  {{user_profile.get_role_display}}
-				<br>
-				<b> Username </b>:  {{user.username}}
-				<br>
-					<a class='btn btn-default' href='/project/admin/#/add/user'>Add User</a>
-				</br>
-				</br>
-		        <a class='btn btn-default' href='/#/manage/sharing'>
-		          Manage sharing between patients
-		        </a>
-		        {% if user_profile.role == 'mid-level' or user_profile.role == 'physician' %}
-		        	</br>
-		        	</br>
-			        <a class='btn btn-default' href='/#/manage/common_problems'>
-			          Adding common problems
-			        </a>
-				{% endif %}
-			</div>
+            <div class='panel-heading'>
+                Info
+            </div>
+            <div class='panel-body'>
+                <b> Name </b>: {{user.first_name}} {{user.last_name}}
+                <br>
+                <b> Role </b>: {{user_profile.get_role_display}}
+                <br>
+                <b> Username </b>: {{user.username}}
+                <br>
+                <a class='btn btn-default btn-manage' href='/project/admin/#/add/user'>Add User</a>
 
-		</div>
-	</div>
+                <a class='btn btn-default btn-manage' href='/#/manage/sharing'>
+                    Manage sharing between patients
+                </a>
+                {% if user_profile.role == 'mid-level' or user_profile.role == 'physician' %}
+                <a class='btn btn-default btn-manage' href='/#/manage/common_problems'>
+                    Adding common problems
+                </a>
 
-	<div class='col-md-9'>
+                {% endif %}
+                {% if user_profile.role == 'physician' or user_profile.role == 'secretary' or user_profile.role == 'nurse' %}
+                <a class='btn btn-default btn-manage' href='/#/manage/upload_documents'>
+                    Upload documents
+                </a>
+                {% endif %}
 
-		<div id='ng-app' ng-app='StaffApp' class='no-js' lang-'en'>
+            </div>
 
-			<div ng-view>
-				Loading...
-			</div>
+        </div>
+    </div>
 
-		</div>
+    <div class='col-md-9'>
+        <div id='ng-app' ng-app='StaffApp' class='no-js' lang="en">
+            <div ng-view>
+                Loading...
+            </div>
+        </div>
+        {% if user_profile.role == 'mid-level' or user_profile.role == 'nurse' or user_profile.role == 'secretary' %}
+        <div class='panel panel-default'>
 
-		{% if user_profile.role == 'mid-level' or user_profile.role == 'nurse' or user_profile.role == 'secretary' %}
-		<div class='panel panel-default'>
+            <div class='panel-heading'>
+                Physicians Assigned
+            </div>
+            <div class='panel-body'>
 
-			<div class='panel-heading'>
-				 Physicians Assigned
-			</div>
-			<div class='panel-body'>
+                {% for physician in physicians %}
 
-				{% for physician in physicians %}
+                <p>{{physician.first_name}} {{physician.last_name}} {{physician.username}}</p>
+                {% endfor %}
 
-					<p>{{physician.first_name}} {{physician.last_name}} {{physician.username}}</p>
-				{% endfor %}
+            </div>
 
-			</div>
+        </div>
 
-		</div>
+        <div class='panel panel-default'>
+            <div class='panel-heading'>
+                Patients Assigned
+            </div>
+            <div class='panel-body'>
 
-		<div class='panel panel-default'>
-			<div class='panel-heading'>
-				 Patients Assigned
-			</div>
-			<div class='panel-body'>
+                <table class='table'>
 
-				<table class='table'>
+                    <thead>
+                    <th> Name</th>
+                    <th> Username</th>
+                    <th> Actions</th>
+                    </thead>
 
-					<thead>
-						<th> Name </th>
-						<th> Username </th>
-						<th> Actions </th>
-					</thead>
+                    <tbody>
+                    {% for patient in patients %}
+                    <tr>
+                        <td> {{patient.first_name}} {{patient.last_name}}</td>
+                        <td> {{patient.username}}</td>
+                        <td>
+                            <a href='/u/patient/manage/{{patient.id}}/'>
+                                Manage Patient
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
 
-					<tbody>
-						{% for patient in patients %}
-						<tr>
-							<td> {{patient.first_name}} {{patient.last_name}} </td>
-							<td> {{patient.username}} </td>
-							<td>
-								<a href='/u/patient/manage/{{patient.id}}/'>
-									Manage Patient 
-								</a> 
-							</td>
-						</tr>
-						{% endfor %}
-					</tbody>
-				</table>
-			</div>
-		</div>
-		{% endif %}
-
-	</div>
+    </div>
 
 </div>
-
 
 
 {% endblock %}
