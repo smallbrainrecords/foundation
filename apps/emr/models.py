@@ -293,7 +293,6 @@ class Problem(MPTTModel):
     start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
     labels = models.ManyToManyField(ProblemLabel, blank=True)
     old_problem_name = models.CharField(max_length=200, blank=True, null=True)
-    inr = models.ForeignKey("Inr", related_name='inr_problem', blank=True, null=True)
     objects = ProblemManager()
 
     def __unicode__(self):
@@ -884,7 +883,7 @@ class Inr(models.Model):
     author = models.ForeignKey(UserProfile, related_name='author_inrs', blank=True, null=True)
     patient = models.ForeignKey(UserProfile, related_name="patient_inrs")
     observation = models.ForeignKey(Observation, related_name='observation_pin_inrs', blank=True, null=True)
-    # problem = models.ForeignKey(Problem, related_name='problem_pin_inrs', blank=True, null=True)
+    problem = models.ForeignKey(Problem, related_name='problem_pin_inrs', blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
     target = models.PositiveIntegerField(choices=TARGET_CHOICES)
     class Meta:
@@ -897,10 +896,10 @@ class InrValue(models.Model):
     author = models.ForeignKey(UserProfile, related_name='author_inr_values')
     inr = models.ForeignKey(Inr, related_name='inr_values')
     value = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
-    effective_datetime = models.DateTimeField(null=True, blank=True)
+    effective_datetime = models.DateField(null=True, blank=True)
     current_dose = models.TextField(null=True, blank=True)
     new_dosage = models.TextField(null=True, blank=True)
-    next_inr = models.DateTimeField(null=True, blank=True)
+    next_inr = models.DateField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     ispatient = models.BooleanField(default=False)
     class Meta:

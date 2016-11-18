@@ -27,9 +27,9 @@
                                             <th>
                                                 Date measured
                                                 <p class="input-group">
-                                                    <input type="text" class="form-control" uib-datepicker-popup ng-model="inrvalue.effective_datetime" is-open="popup2.opened" datepicker-options="dateOptions" ng-required="true" close-text="Close" />
+                                                    <input type="text" class="form-control" uib-datepicker-popup="yyyy-MM-dd" ng-model="inrvalue.effective_datetime" is-open="popup1.opened" datepicker-options="dateOptions" ng-required="true" close-text="Close" readonly="true" />
                                                     <span class="input-group-btn">
-                                                        <button type="button" class="btn btn-default" ng-click="open2()"><i class="glyphicon glyphicon-calendar"></i></button>
+                                                        <button type="button" class="btn btn-default" ng-click="open1()"><i class="glyphicon glyphicon-calendar"></i></button>
                                                     </span>
                                                 </p>
                                             </th>
@@ -56,8 +56,14 @@
                                             <th>
                                                 Next Inr
                                                 <!-- <input type="text" ng-model='inrvalue.next_inr' name=""> -->
-                                                <p class="input-group">
+                                                <!-- <p class="input-group">
                                                     <input class="form-control" type="text" ng-model='inrvalue.next_inr' name="">
+                                                </p> -->
+                                                <p class="input-group">
+                                                    <input type="text" class="form-control" uib-datepicker-popup="yyyy-MM-dd" ng-model="inrvalue.next_inr" is-open="popup2.opened" datepicker-options="dateOptions" ng-required="true" close-text="Close" readonly="true" />
+                                                    <span class="input-group-btn">
+                                                        <button type="button" class="btn btn-default" ng-click="open2()"><i class="glyphicon glyphicon-calendar"></i></button>
+                                                    </span>
                                                 </p>
                                             </th>
                                             <th><button class="btn btn-default" ng-click="saveinrvalue()">Save</button></th>
@@ -68,23 +74,35 @@
                                                 <!-- <td ng-init="value.isshow=false"> -->
                                                 <td ng-init="initvalue(value)">
                                                     <p ng-show="!value.isshow">{{value.effective_datetime}}</p>
-                                                    <input ng-show="value.isshow" type="text" ng-model='value.effective_datetime' name="">
+                                                    <!-- <input ng-show="value.isshow" type="text" ng-model='value.effective_datetime' name=""> -->
+                                                    <p ng-show="value.isshow" class="input-group">
+                                                        <input type="text" class="form-control" uib-datepicker-popup="yyyy-MM-dd" ng-model="value.effective_datetime" is-open="value.popup1" datepicker-options="dateOptions" ng-required="true" close-text="Close" readonly="true" />
+                                                        <span class="input-group-btn">
+                                                            <button type="button" class="btn btn-default" ng-click="value.popup1=true"><i class="glyphicon glyphicon-calendar"></i></button>
+                                                        </span>
+                                                    </p>
                                                 </td>
                                                 <td>
                                                     <p ng-show="!value.isshow">{{value.current_dose}}</p>
-                                                    <input ng-show="value.isshow" type="text" ng-model='value.current_dose' name="">
+                                                    <input class="form-control" ng-show="value.isshow" type="text" ng-model='value.current_dose' name="">
                                                 </td>
                                                 <td>
                                                     <p ng-show="!value.isshow">{{value.value}}</p>
-                                                    <input ng-show="value.isshow" type="number" ng-model='value.value' name="">
+                                                    <input class="form-control" ng-show="value.isshow" type="number" ng-model='value.value' name="">
                                                 </td>
                                                 <td>
                                                     <p ng-show="!value.isshow">{{value.new_dosage}}</p>
-                                                    <input ng-show="value.isshow" type="text" ng-model='value.new_dosage' name="">
+                                                    <input class="form-control" ng-show="value.isshow" type="text" ng-model='value.new_dosage' name="">
                                                 </td>
                                                 <td>
                                                     <p ng-show="!value.isshow">{{value.next_inr}}</p>
-                                                    <input ng-show="value.isshow" type="text" ng-model='value.next_inr' name="">
+                                                    <!-- <input ng-show="value.isshow" type="text" ng-model='value.next_inr' name=""> -->
+                                                    <p ng-show="value.isshow" class="input-group">
+                                                        <input type="text" class="form-control" uib-datepicker-popup="yyyy-MM-dd" ng-model="value.next_inr" is-open="value.popup2" datepicker-options="dateOptions" ng-required="true" close-text="Close" readonly="true" />
+                                                        <span class="input-group-btn">
+                                                            <button type="button" class="btn btn-default" ng-click="value.popup2=true"><i class="glyphicon glyphicon-calendar"></i></button>
+                                                        </span>
+                                                    </p>
                                                 </td>
                                                 <td>
                                                     <button ng-show="value.ispatient" class="btn btn-default smallbutton" ng-click="editinrvalue(value, value.id)">

@@ -7,7 +7,7 @@ from common.views import *
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from emr.models import PatientController, UserProfile, Inr, InrValue, InrTextNote, ObservationPinToProblem, Problem, InrValue
+from emr.models import PatientController, UserProfile, Inr, InrValue, InrTextNote, ObservationPinToProblem, Problem
 from .serializers import InrValueSerializer, InrTextNoteSerializer, InrSerializer
 from emr.operations import op_add_event
 
@@ -21,7 +21,7 @@ def get_inrs(request, patient_id, problem_id):
     resp['success'] = False
     
     if permissions_accessed(request.user, int(patient_id)):
-        inrs = Inr.objects.filter(id=problem_id)
+        inrs = Inr.objects.filter(problem_id=problem_id)
         resp['success'] = True
         resp['info'] = InrSerializer(inrs, many=True).data
     return ajax_response(resp)
@@ -41,7 +41,8 @@ def set_target(request, inr_id):
 def get_list_problem(request):
 	resp = {}
 	resp['success'] = True
-	problem = Problem.objects.filter(inr_id=request.GET['id'])
+	# problem = Problem.objects.filter(inr_id=request.GET['id'])
+	problem = Problem.objects.filter(id__in=Inr.objects.values('problem_id'))
 	resp['data'] = ProblemSerializer(problem, many=True).data
 	return ajax_response(resp)
 

@@ -32,21 +32,24 @@ function inrDirective(CollapseService, toaster, $location, $timeout, prompt, inr
                     }, true);
                     scope.inrvalue = {};
                     scope.popup2 = {};
+                    scope.popup1 = {};
                     scope.dateOptions = {
                         // dateDisabled: disabled,
                         formatYear: 'yy',
-                        maxDate: new Date(2020, 5, 22),
+                        maxDate: new Date(2050, 5, 22),
                         minDate: new Date(),
-                        startingDay: 1
-                      };
+                        startingDay: 1,
+                        'format': 'yyyy-mm-dd',                      
+                    };
                     // function disabled(data) {
                     //     var date = data.date,
                     //     mode = data.mode;
                     //     return mode === 'day' && (date.getDay() === 0 || date.getDay() === 6);
                     // }
                     // scope.inrvalue['effective_datetime'] = moment().format("YYYY-MM-DD HH:mm:ss");
-                    scope.inrvalue.effective_datetime = moment().format("YYYY-MM-DD");
-                    scope.inrvalue['next_inr'] = moment().add(1, 'month').format("YYYY-MM-DD HH:mm:ss");
+                    // console.log(moment().format("YYYY-MM-DD"))
+                    scope.inrvalue['effective_datetime'] = new Date(moment().format("YYYY-MM-DD"));
+                    scope.inrvalue['next_inr'] = new Date(moment().add(1, 'month').format("YYYY-MM-DD"));
                     if (scope.inrs.length>0){
                         inrService.getListProblem(scope.inrs[0].id).then(function(data){
                             scope.problems = data['data'];
@@ -55,14 +58,18 @@ function inrDirective(CollapseService, toaster, $location, $timeout, prompt, inr
                     scope.open2 = function() {
                         scope.popup2.opened = true;
                     };
+                    scope.open1 = function() {
+                        scope.popup1.opened = true;
+                    };
                     scope.saveinrvalue = function(){
-                        console.log(moment(scope.inrvalue['effective_datetime']).format("YYYY-MM-DD HH:mm:ss"))
                         if (typeof(scope.inrvalue['value'])==='undefined' || scope.inrvalue['value']==null || typeof(scope.inrvalue['current_dose'])==='undefined' || scope.inrvalue['current_dose']==null || typeof(scope.inrvalue['effective_datetime'])==='undefined' || scope.inrvalue['effective_datetime']==null || typeof(scope.inrvalue['new_dosage'])==='undefined' || scope.inrvalue['new_dosage']==null || typeof(scope.inrvalue['next_inr'])==='undefined' || scope.inrvalue['next_inr']==null){
                             toaster.pop('warning', 'Warning', 'Please fill all field before save!');
                             return '';
                         }
                         scope.inrvalue['inr'] = scope.inrs[0].id;
                         scope.inrvalue['author_id'] = scope.inrs[0].author.id;
+                        scope.inrvalue.effective_datetime = moment(scope.inrvalue['effective_datetime']).format("YYYY-MM-DD");
+                        scope.inrvalue.next_inr = moment(scope.inrvalue['next_inr']).format("YYYY-MM-DD");
                         inrService.saveInrValue(scope.inrvalue).then(function(data){
                             if (data['success'] == true) {
                                 toaster.pop('success', 'Done', 'Save inrvalue success!');
@@ -70,7 +77,8 @@ function inrDirective(CollapseService, toaster, $location, $timeout, prompt, inr
                                 scope.inrvalue['ispatient'] = true;
                                 scope.inrs[0].inr_values.unshift(scope.inrvalue);
                                 scope.inrvalue = {};
-                                scope.inrvalue['effective_datetime'] = moment().format("YYYY-MM-DD HH:mm:ss");
+                                scope.inrvalue['effective_datetime'] = new Date(moment().format("YYYY-MM-DD"));
+                                scope.inrvalue['next_inr'] = new Date(moment().add(1, 'month').format("YYYY-MM-DD"));
                             } else {
                                 toaster.pop('error', 'Error', 'Can\'t save inrvalue!');
                             }
@@ -79,8 +87,8 @@ function inrDirective(CollapseService, toaster, $location, $timeout, prompt, inr
                     scope.initvalue = function(value){
                         value['isshow'] = false;
                         value['value'] = parseFloat(value['value']);
-                        value['effective_datetime'] = moment(value['effective_datetime']).format("YYYY-MM-DD HH:mm:ss");
-                        value['next_inr'] = moment(value['next_inr']).format("YYYY-MM-DD HH:mm:ss");
+                        value['effective_datetime'] = moment(value['effective_datetime']).format("YYYY-MM-DD");
+                        value['next_inr'] = moment(value['next_inr']).format("YYYY-MM-DD");
                     }
                     scope.editinrvalue = function(value, id){
                         if (value.isshow){
@@ -88,6 +96,8 @@ function inrDirective(CollapseService, toaster, $location, $timeout, prompt, inr
                                 toaster.pop('warning', 'Warning', 'Please fill all field before save change!');
                                 return '';
                             }
+                            value.effective_datetime = moment(value['effective_datetime']).format("YYYY-MM-DD");
+                            value.next_inr = moment(value['next_inr']).format("YYYY-MM-DD");
                             inrService.editInrValue(value, id).then(function(data){
                                 if (data['success'] == true) {
                                     toaster.pop('success', 'Done', 'Edit inrvalue success!');
@@ -97,6 +107,8 @@ function inrDirective(CollapseService, toaster, $location, $timeout, prompt, inr
                                 }
                             });
                         }else{
+                            value.effective_datetime = new Date(moment(value['effective_datetime']).format("YYYY-MM-DD"));
+                            value.next_inr = new Date(moment(value['next_inr']).format("YYYY-MM-DD"));
                             value.isshow = !value.isshow;
                         }
                     }

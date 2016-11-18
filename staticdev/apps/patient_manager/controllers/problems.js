@@ -283,9 +283,9 @@
             };
 
             patientService.fetchProblemInfo(problem_id).then(function (data) {
-
                 $scope.problem = data['info'];
-                $scope.inr = data['info'].inr;
+                // $scope.inr = data['info'].inr;
+                $scope.inr = data['info'].id;
                 $scope.inrs = [];
                 inrService.getInrs($scope.patient_id, $scope.inr).then(function (data) {
                     if (data['success'] == true) {
