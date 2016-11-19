@@ -175,17 +175,7 @@ body {
     vertical-align: inherit;
     width: 24px; }
 
+a.btn-manage {
+  margin-bottom: 20px; }
+
 /*# sourceMappingURL=patient-profile.css.map */
-#accordion .io-box .listinrvalue .input-group{
-    width: 188px;
-    margin: 0;
-}
-
-#accordion .io-box .listinrvalue .input-group .form-control{
-  border-radius: 4px;
-}
-
-#accordion .io-box .listinrvalue th:first-child .input-group .form-control{
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
