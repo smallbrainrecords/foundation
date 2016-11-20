@@ -22,9 +22,14 @@
         charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/uploadDocumentController.js" type="text/javascript"
         charset="utf-8"></script>
+<script src="/static/apps/staff/controllers/tagDocumentController.js" type="text/javascript"
+        charset="utf-8"></script>
+
 <script src="/static/apps/staff/services/staffService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/physicianService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/services/todoService.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/staff/services/documentService.js" type="text/javascript" charset="utf-8"></script>
+
 <script src="/static/apps/staff/directives/todoDirective.js" type="text/javascript" charset="utf-8"></script>
 
 <input type='hidden' id='user_id' value='{{user.id}}'>
@@ -55,7 +60,7 @@
                 </a>
 
                 {% endif %}
-                {% if user_profile.role == 'physician' or user_profile.role == 'secretary' or user_profile.role == 'nurse' %}
+                {% if user_profile.role != 'patient'%}
                 <a class='btn btn-default btn-manage' href='/#/manage/upload_documents'>
                     Upload documents
                 </a>
