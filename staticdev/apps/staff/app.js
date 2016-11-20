@@ -4,7 +4,7 @@
 
 
     var StaffApp = angular.module('StaffApp',
-        ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize',
+        ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'ngFileUpload',
             'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate', 'cgPrompt']);
 
 
@@ -43,6 +43,10 @@
             .when('/manage/upload_documents', {
                 templateUrl: '/static/apps/staff/partials/upload_documents.html',
                 controller: 'UploadDocumentsCtrl'
+            })
+            .when('/manage/tag_document/:documentId', {
+                templateUrl: '/static/apps/staff/partials/tag_document.html',
+                controller: 'TagDocumentCtrl'
             });
 
 

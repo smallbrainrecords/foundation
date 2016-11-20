@@ -178,4 +178,17 @@ body {
 a.btn-manage {
   margin-bottom: 20px; }
 
+.drop-box {
+  cursor: pointer;
+  background: #F8F8F8;
+  border: 5px dashed #DDD;
+  height: 100px;
+  line-height: 50px;
+  text-align: center;
+  padding-top: 25px;
+  margin: 10px; }
+
+.dragover {
+  border: 5px dashed blue; }
+
 /*# sourceMappingURL=patient-profile.css.map */
