@@ -17,6 +17,39 @@
     </div><!-- End of Panel Body -->
 </div>
 
+<!--Todos list position is depend on user role-->
+
+<div class='panel panel-default' ng-if="'secretary' == active_user.role || 'nurse' == active_user.role">
+
+    <div class='panel-heading'> Todos</div>
+
+    <div class='panel-body'>
+
+        <div class='row' ng-show='permitted(["add_todo"])'>
+            <div class='col-md-12'>
+                <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
+                    <div class='form-group'>
+                        <label> Todo Name </label>
+                        <input type='text' ng-model='new_todo.name' id='todoNameInput'>
+                    </div>
+                    <button type='submit' class='btn btn-default'> Add Todo</button>
+                </form>
+            </div>
+        </div>
+
+        <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
+        <hr>
+        <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
+            <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
+            <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
+        </a>
+        <hr>
+        <div class="col-md-12" ng-show='show_accomplished_todos==true'>
+            <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+        </div>
+    </div>
+</div>
+
 <!-- Facebook like cover & profile image -->
 <div class='panel panel-default profile-section'>
     <div class='panel-body'>
@@ -107,8 +140,8 @@
             <li role="presentation" ng-class="show_homepage_tab=='data' ? 'active': ''">
                 <a href=".tab-data" role="tab" data-toggle="tab" ng-click="change_homepage_tab('data');">Data</a>
             </li>
-            <li role="presentation" 
-                ng-if="medications" 
+            <li role="presentation"
+                ng-if="medications"
                 ng-class="show_homepage_tab=='medication' ? 'active': ''">
                 <a href=".tab-medication" role="tab" data-toggle="tab" ng-click="change_homepage_tab('medication');">Medication</a>
             </li>
@@ -116,6 +149,7 @@
     </div>
 </div>
 <!-- End tabs -->
+
 <div class='row'>
     <div class='col-md-12'>
         <div class="tab-content">
@@ -315,12 +349,12 @@
                                     <!-- end tab add problem -->
                                 </div>
                                 <hr>
-                                <div class='panel panel-default' 
-                                    ng-repeat="list in problem_lists"
-                                    ng-init="list.collapse=false;list.rename=false;">
+                                <div class='panel panel-default'
+                                     ng-repeat="list in problem_lists"
+                                     ng-init="list.collapse=false;list.rename=false;">
 
                                     <div class='panel-heading' ng-click="set_collapse(list);"
-                                        ng-class="check_problem_list_controlled(list)? 'red-box' : ''">
+                                         ng-class="check_problem_list_controlled(list)? 'red-box' : ''">
                                         <span ng-show="!list.rename">
                                             {{ list.name }} <span>({{ list.problems.length }})</span>
                                             <span ng-if="check_problem_list_authenticated(list)">(not-authenticated)</span>
@@ -446,7 +480,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class='col-md-12'>
+
+                    <!--Todos list position is depend on user role-->
+                    <div class='col-md-12' ng-if="'secretary' != active.user.role || 'nurse' != active.user.role">
                         <div class='panel panel-default'>
 
                             <div class='panel-heading'> Todos</div>
@@ -478,6 +514,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class='col-md-12'>
                         <div class='panel panel-default' ng-init="encounter_collapse=false;">
 
@@ -509,6 +546,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class='col-md-12'>
                         <div class='panel panel-default' ng-init="favorites_collapse=false;">
 
@@ -552,6 +590,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class='col-md-12'>
                         <div class='panel panel-default'>
 
@@ -569,9 +608,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class='row'>
 
                     <div class='col-md-12'>
 
@@ -585,9 +621,14 @@
                         </div>
                     </div>
                 </div>
+
+                <div class='row'>
+
+                </div>
                 <hr>
             </div>
             <!-- End Problems tab -->
+
             <!-- story tab -->
             <div role="tabpanel" class="tab-pane tab-mystory"
                  ng-class="show_homepage_tab=='mystory' ? 'active': ''"
@@ -666,7 +707,8 @@
                                  ng-if="component.private==false || active_user.role=='patient' || active_user.user.id==component.author.id">
                                 <div class="col-sm-12">
                                     <div>
-                                        <b ng-hide="show_edit_my_story_tab && active_user.user.id==component.author.id">{{ component.name }}</b>
+                                        <b ng-hide="show_edit_my_story_tab && active_user.user.id==component.author.id">{{
+                                            component.name }}</b>
                                         <span ng-show="show_edit_my_story_tab && active_user.user.id==component.author.id">
                                             <b>Name: </b><input type="text" ng-model="component.name">
                                             <b>Concept ID: </b><input type="text" ng-model="component.concept_id">
@@ -679,24 +721,25 @@
                                     <div ng-repeat="entry in component.text_component_entries"
                                          ng-if="$first">
                                         <textarea class="form-control" ng-model="entry.text"
-                                                ng-change="change_component_text(component, entry, oldText)" 
-                                                ng-click="oldText = entry.text" 
-                                                ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
+                                                  ng-change="change_component_text(component, entry, oldText)"
+                                                  ng-click="oldText = entry.text"
+                                                  ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
 
                                         <p>Last edited by: {{ entry.author.username }}
                                             on {{ entry.datetime|date:'M/d/yyyy' }}
-                                            <button class="btn btn-link" ng-click="see_previous_entries()">see previous entries
+                                            <button class="btn btn-link" ng-click="see_previous_entries()">see previous
+                                                entries
                                                 ({{ component.text_component_entries.length - 1 }})
                                             </button>
                                         </p>
                                     </div>
                                     <div ng-if="component.text_component_entries.length == 0">
                                         <textarea class="form-control" ng-model="entry.text"
-                                                ng-change="change_component_text(component, entry, oldText)" 
-                                                ng-click="oldText = entry.text" 
-                                                ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
+                                                  ng-change="change_component_text(component, entry, oldText)"
+                                                  ng-click="oldText = entry.text"
+                                                  ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
                                     </div>
-                                    
+
                                     <div ng-show="show_previous_entries">
                                         <div ng-repeat="entry in component.text_component_entries"
                                              ng-if="!$first">
@@ -809,6 +852,7 @@
                 </div>
             </div>
             <!-- end story tab -->
+
             <!-- data tab -->
             <div role="tabpanel" class="tab-pane tab-data" ng-class="show_homepage_tab=='data' ? 'active': ''">
                 <div class="row">
@@ -884,7 +928,7 @@
                                                     </div>
                                                 </div>
                                                 <div ng-if="data.observation_components.length > 0">
-                                                    <canvas  ng-if="data.graph=='Line'"  class="chart chart-line"
+                                                    <canvas ng-if="data.graph=='Line'" class="chart chart-line"
                                                             chart-data="data.chartData"
                                                             chart-series="data.chartSeries"
                                                             chart-labels="data.chartLabel"></canvas>
@@ -964,8 +1008,10 @@
 
             </div>
             <!-- end data tab -->
+
             <!-- medication tab -->
-            <div role="tabpanel" class="tab-pane tab-medication" ng-class="show_homepage_tab=='medication' ? 'active': ''">
+            <div role="tabpanel" class="tab-pane tab-medication"
+                 ng-class="show_homepage_tab=='medication' ? 'active': ''">
                 <div class='row' ng-if="medications">
                     <medication ng-model="medications"></medication>
                 </div>
@@ -983,22 +1029,22 @@
             <form class="form-inline" ng-if="active_user.role=='nurse'">
                 <div class="form-group" ng-repeat="data in mostCommonData">
                     <input type='text' class='form-control'
-                        placeholder='{{data.name == component.name ? data.ph : data.ph + " " + component.name}}'
-                        ng-repeat="component in data.observation_components"
-                        ng-model="component.new_value"
-                        ng-change="add_bfdi_value(component)"
-                        ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                           placeholder='{{data.name == component.name ? data.ph : data.ph + " " + component.name}}'
+                           ng-repeat="component in data.observation_components"
+                           ng-model="component.new_value"
+                           ng-change="add_bfdi_value(component)"
+                           ng-model-options="{updateOn: 'blur', debounce: 1000}">
                 </div>
 
             </form>
             <form class="form-inline" ng-if="active_user.role=='patient'">
                 <div class="form-group" ng-repeat="data in mostCommonData">
                     <input type='text' class='form-control'
-                        placeholder='{{data.name == component.name ? data.name : data.name + " " + component.name}}'
-                        ng-repeat="component in data.observation_components"
-                        ng-model="component.new_value"
-                        ng-change="add_bfdi_value(component)"
-                        ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                           placeholder='{{data.name == component.name ? data.name : data.name + " " + component.name}}'
+                           ng-repeat="component in data.observation_components"
+                           ng-model="component.new_value"
+                           ng-change="add_bfdi_value(component)"
+                           ng-model-options="{updateOn: 'blur', debounce: 1000}">
                 </div>
             </form>
         </div>
