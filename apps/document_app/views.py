@@ -24,11 +24,20 @@ def document_list(request):
     resp = {'success': False}
 
     documents = Document.objects.all()
-    # documents_list = []
-    # for document in documents:
-    #     documents_list.append()
 
-    resp['documents'] = DocumentSerialization(documents,many=True).data
+    resp['documents'] = DocumentSerialization(documents, many=True).data
     resp['success'] = True
 
+    return ajax_response(resp)
+
+
+# TODO: Check access here
+@login_required
+def document_info(request, document_id):
+    resp = {'success': False}
+
+    document = Document.objects.filter(id=document_id).get()
+
+    resp['info'] = DocumentSerialization(document).data
+    resp['success'] = True
     return ajax_response(resp)

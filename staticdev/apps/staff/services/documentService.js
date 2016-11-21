@@ -52,14 +52,37 @@
 
 
             /**
-             * WIP
              * Get list of document user have uploaded
              */
             this.getUploadedDocument = function () {
                 return $http.get('/docs/list');
             };
 
+            /**
+             * @param documentId
+             */
             this.getDocumentInfo = function (documentId) {
+                return $http.get('/docs/info/' + documentId);
+            };
+
+            /**
+             * WIP
+             */
+            this.typeaheadPatientList = function () {
+
+            };
+
+            /**
+             * WIP
+             */
+            this.pinDocument2Todo = function () {
+
+            };
+
+            /**
+             * WIP
+             */
+            this.pinDocument2Problem = function () {
 
             };
         });

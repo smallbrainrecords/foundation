@@ -11,26 +11,37 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-6">
-            Document name: abc_xyz.pdf
+            Document name: <span>{{document.document}}</span>
         </div>
         <div class="col-md-6">
             <input type="text" class="form-control"
-                   uib-typeahead=""
-                   typeahead-on-select="pinUser()"
-                   placeholder="Search user to pin">
+                   ng-model="patient"
+                   uib-typeahead="patient for patient in patients | filter: $viewValue"
+                   typeahead-on-select="pinDocument2Problem($viewValue)"
+                   placeholder="Find user to pin">
         </div>
     </div>
     <div class="row">
         <div class="col-md-12">
             <h1>List of active todo</h1>
-
+            <ul>
+                <li ng-repeat="todo in active_todos track by $index">
+                    <span ng-bind="todo"></span>
+                    <button ng-click="pinDocument2Todo()" class="btn btn-default right">Toggle</button>
+                </li>
+            </ul>
         </div>
     </div>
 
     <div class="row">
         <div class="col-md-12">
             <h1>List of pinable problem</h1>
-
+            <ul>
+                <li ng-repeat="todo in active_probs track by $index">
+                    <span ng-bind="todo"></span>
+                    <button ng-click="pinDocument2Todo()" class="btn btn-default right">Toggle</button>
+                </li>
+            </ul>
         </div>
     </div>
 </div>
