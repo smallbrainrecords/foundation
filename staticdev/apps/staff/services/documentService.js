@@ -15,7 +15,7 @@
              * @param files
              * @param logs
              */
-            this.uploadDocument = function (files, logs) {
+            this.uploadDocument = function (files, logs, author) {
                 if (files && files.length) {
                     for (var i = 0; i < files.length; i++) {
                         logs[i] = {
@@ -26,15 +26,18 @@
                         var file = files[i];
                         if (!file.$error) {
                             Upload.upload({
-                                url: 'https://angular-file-upload-cors-srv.appspot.com/upload', // TODO: Update endpoint
+                                url: '/docs/upload_document',
                                 data: {
-                                    uid: 10,    // File owner
-                                    fileId: i,  // using to reference progress and upload status
-                                    file: file  // File itsefl
+                                    author: author,    // File owner
+                                    file: file,  // File itsefl
+                                    fileId: i  // using to reference progress and upload status
+                                },
+                                headers: {
+                                    'X-CSRFToken': $cookies.csrftoken
                                 }
                             }).then(function (resp) {
                                 logs[resp.config.data.fileId].status = "Upload success";
-                                logs[resp.config.data.fileId].documentId = resp.config.data.documentId;
+                                logs[resp.config.data.fileId].document = resp.data.document;
                             }, function (resp) {
                                 logs[resp.config.data.fileId].status = "Upload failed";
                             }, function (evt) {
@@ -53,17 +56,10 @@
              * Get list of document user have uploaded
              */
             this.getUploadedDocument = function () {
-                return [{
-                    id: 1,
-                    name: 'abcxyz.docs'
-                }, {
-                    id: 2,
-                    name: 'abcxyz.pdf'
-                }]
+                return $http.get('/docs/list');
             };
 
-
-            this.pinPatient2Document = function () {
+            this.getDocumentInfo = function (documentId) {
 
             };
         });

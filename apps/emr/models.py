@@ -35,10 +35,10 @@ COMMON_PROBLEM_TYPE_CHOICES = (
 RISK_CHOICES = (
     ('normal', 'Normal'),
     ('high', 'High'),)
-TARGET_CHOICES  = (
+TARGET_CHOICES = (
     (1, '2-3'),
     (0, '2.5-3.5')
-    )
+)
 # Observation type
 OBSERVATION_TYPES = [
     {
@@ -886,8 +886,10 @@ class Inr(models.Model):
     problem = models.ForeignKey(Problem, related_name='problem_pin_inrs', blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
     target = models.PositiveIntegerField(choices=TARGET_CHOICES)
+
     class Meta:
         ordering = ['-created_on']
+
     def __str__(self):
         return "%s" % (self.observation)
 
@@ -902,6 +904,7 @@ class InrValue(models.Model):
     next_inr = models.DateField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     ispatient = models.BooleanField(default=False)
+
     class Meta:
         ordering = ['-effective_datetime', '-created_on']
 
@@ -926,6 +929,7 @@ class Medication(models.Model):
 
     class Meta:
         ordering = ['-created_on']
+
     def __str__(self):
         return "%s" % (self.name)
 
@@ -944,3 +948,29 @@ class MedicationTextNote(models.Model):
 
     def __unicode__(self):
         return "%s" % (self.note)
+
+
+class Document(models.Model):
+    author = models.ForeignKey(UserProfile, related_name='author_document')
+    patient = models.ForeignKey(UserProfile, related_name='patient_pinned', null=True, blank=True)
+    document = models.FileField(upload_to='documents/', null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_on']
+
+    def __unicode__(self):
+        return "%s" % self.document.path
+
+    def filename(self):
+        return os.path.basename(self.document.name)
+
+    def file_extension(self):
+        name, extension = os.path.splitext(self.document.name)
+        extension = extension.replace('.', '')
+        return extension.upper()
+
+    def file_extension_lower(self):
+        name, extension = os.path.splitext(self.document.name)
+        extension = extension.replace('.', '')
+        return extension

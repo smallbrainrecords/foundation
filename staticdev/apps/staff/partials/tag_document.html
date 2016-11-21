@@ -1,17 +1,36 @@
 <center>
-	<h3>
-		<a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
-	</h3>
+    <h3>
+        <a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
+    </h3>
 </center>
 <hr>
 
-<center> <h3> Tag documents</h3> </center>
+<center><h3> Tag documents</h3></center>
 <hr>
 
 <div class="container-fluid">
-	<div class="row">
+    <div class="row">
+        <div class="col-md-6">
+            Document name: abc_xyz.pdf
+        </div>
+        <div class="col-md-6">
+            <input type="text" class="form-control"
+                   uib-typeahead=""
+                   typeahead-on-select="pinUser()"
+                   placeholder="Search user to pin">
+        </div>
+    </div>
+    <div class="row">
         <div class="col-md-12">
-          {{tagPage}}
+            <h1>List of active todo</h1>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h1>List of pinable problem</h1>
+
         </div>
     </div>
 </div>

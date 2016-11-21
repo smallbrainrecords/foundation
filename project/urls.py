@@ -87,9 +87,13 @@ urlpatterns = patterns('',
     url(r'^inr/', include('inr_app.urls')),
     url(r'^medication/', include('medication_app.urls')),
 
+    # document
+    url(r'^docs/',include('document_app.urls')),
+
     # Pain Avatars
     url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars'),
     url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', 'pain.views.add_pain_avatar'),
+
 
     # MEDIA AND STATIC FILES
     (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT, 'show_indexes': True}),

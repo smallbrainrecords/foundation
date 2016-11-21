@@ -855,10 +855,10 @@
 
             <!-- data tab -->
             <div role="tabpanel" class="tab-pane tab-data" ng-class="show_homepage_tab=='data' ? 'active': ''">
-                <div class="row">
-                    <div class='col-md-12'>
-                        <div class='panel panel-default'>
-                            <div class='panel-heading'>
+                <div class='panel panel-default'>
+                    <div class='panel-body no-padding'>
+                        <div class="row">
+                            <div class="col-md-6">
                                 <div class="btn-group btn-group-justified graph-view-mode">
                                     <label class="btn btn-default" ng-click="viewMode='Week'"
                                            ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
@@ -869,143 +869,141 @@
                                     <label class="btn btn-default" ng-click="viewMode='All'"
                                            ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
                                 </div>
+                                <ul class='ul-clean no-padding'
+                                    ui-sortable="sortableOptionsData"
+                                    ng-model="datas"
+                                    ng-if="active_user.role=='physician' || active_user.role=='patient'">
+                                    <li ng-repeat="data in datas"
+                                        ng-click='open_data(data)'>
+                                        <div class='item-box data-frame'
+                                             ng-style="{'background-color': data.color}">
+                                            <div class="row  graph-header">
+                                                <div class="col-md-6 text-left">
+                                                    <h3>{{ data.name }}</h3>
+                                                </div>
+                                                <div class="col-md-6 text-right">
+                                                    <h3>
+                                                        <span ng-bind="data.mostRecentValue"></span>
+                                                        <span ng-bind="data.observation_units[0].value_unit"></span>
+                                                    </h3>
+                                                    <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+
+                                                </div>
+                                            </div>
+                                            <div ng-if="data.observation_components.length > 0">
+                                                <canvas ng-if="data.graph=='Line'" class="chart chart-line"
+                                                        chart-data="data.chartData"
+                                                        chart-series="data.chartSeries"
+                                                        chart-labels="data.chartLabel"></canvas>
+                                                <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
+                                                        chart-data="data.chartData"
+                                                        chart-series="data.chartSeries"
+                                                        chart-labels="data.chartLabel"></canvas>
+                                            </div>
+                                    </li>
+                                </ul>
+
+                                <ul class='ul-clean'
+                                    ng-model="datas"
+                                    ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary' || active_user.role=='mid-level'">
+                                    <li ng-repeat="data in datas"
+                                        ng-click='open_data(data)'>
+                                        <div class='item-box data-frame'
+                                             ng-style="{'background-color': data.color}">
+                                            <div class="row  graph-header">
+                                                <div class="col-md-6 text-left">
+                                                    <h3>{{ data.name }}</h3>
+                                                </div>
+                                                <div class="col-md-6 text-right">
+                                                    <h3>
+                                                        <span ng-bind="data.mostRecentValue"></span>
+                                                        <span ng-bind="data.observation_units[0].value_unit"></span>
+                                                    </h3>
+                                                    <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+
+                                                </div>
+                                            </div>
+                                            <div ng-if="data.observation_components.length > 0">
+                                                <canvas ng-if="data.graph=='Line'" class="chart chart-line"
+                                                        chart-data="data.chartData"
+                                                        chart-series="data.chartSeries"
+                                                        chart-labels="data.chartLabel"></canvas>
+                                                <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
+                                                        chart-data="data.chartData"
+                                                        chart-series="data.chartSeries"
+                                                        chart-labels="data.chartLabel"></canvas>
+                                            </div>
+                                    </li>
+                                </ul>
                             </div>
+                            <div class="col-md-6">
+                                <input type="file" placeholder="Upload new document and tagging">
+                                List of document that pinned to this user
+                            </div>
+                            <div class='col-md-12'>
+                                <div class='panel panel-default'>
 
-                            <div class='panel-body no-padding'>
-                                <div>
-                                    <ul class='ul-clean no-padding'
-                                        ui-sortable="sortableOptionsData"
-                                        ng-model="datas"
-                                        ng-if="active_user.role=='physician' || active_user.role=='patient'">
-                                        <li ng-repeat="data in datas"
-                                            ng-click='open_data(data)'>
-                                            <div class='item-box data-frame'
-                                                 ng-style="{'background-color': data.color}">
-                                                <div class="row  graph-header">
-                                                    <div class="col-md-6 text-left">
-                                                        <h3>{{ data.name }}</h3>
-                                                    </div>
-                                                    <div class="col-md-6 text-right">
-                                                        <h3>
-                                                            <span ng-bind="data.mostRecentValue"></span>
-                                                            <span ng-bind="data.observation_units[0].value_unit"></span>
-                                                        </h3>
-                                                        <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+                                    <div class='panel-body'>
 
-                                                    </div>
+                                        <button class="btn btn-default"
+                                                ng-show="!show_add_new_data_type"
+                                                ng-click="toggle_add_new_data_type();">
+                                            Add new data type
+                                        </button>
+                                        <form class="form-horizontal"
+                                              ng-show="show_add_new_data_type">
+                                            <div class="form-group">
+                                                <label class="col-sm-2 control-label">Name</label>
+                                                <div class="col-sm-10">
+                                                    <input type="text" class="form-control"
+                                                           ng-model="new_data_type.name">
                                                 </div>
-                                                <div ng-if="data.observation_components.length > 0">
-                                                    <canvas ng-if="data.graph=='Line'" class="chart chart-line"
-                                                            chart-data="data.chartData"
-                                                            chart-series="data.chartSeries"
-                                                            chart-labels="data.chartLabel"></canvas>
-                                                    <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
-                                                            chart-data="data.chartData"
-                                                            chart-series="data.chartSeries"
-                                                            chart-labels="data.chartLabel"></canvas>
-                                                </div>
-                                        </li>
-                                    </ul>
+                                            </div>
 
-                                    <ul class='ul-clean'
-                                        ng-model="datas"
-                                        ng-if="active_user.role=='admin' || active_user.role=='nurse' || active_user.role=='secretary' || active_user.role=='mid-level'">
-                                        <li ng-repeat="data in datas"
-                                            ng-click='open_data(data)'>
-                                            <div class='item-box data-frame'
-                                                 ng-style="{'background-color': data.color}">
-                                                <div class="row  graph-header">
-                                                    <div class="col-md-6 text-left">
-                                                        <h3>{{ data.name }}</h3>
-                                                    </div>
-                                                    <div class="col-md-6 text-right">
-                                                        <h3>
-                                                            <span ng-bind="data.mostRecentValue"></span>
-                                                            <span ng-bind="data.observation_units[0].value_unit"></span>
-                                                        </h3>
-                                                        <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+                                            <div class="form-group">
+                                                <label class="col-sm-2 control-label">Loinc code</label>
+                                                <div class="col-sm-10">
+                                                    <input type="text" class="form-control"
+                                                           ng-model="new_data_type.code">
+                                                </div>
+                                            </div>
 
-                                                    </div>
+                                            <div class="form-group">
+                                                <label class="col-sm-2 control-label">Unit</label>
+                                                <div class="col-sm-10">
+                                                    <input type="text" class="form-control"
+                                                           ng-model="new_data_type.unit">
                                                 </div>
-                                                <div ng-if="data.observation_components.length > 0">
-                                                    <canvas ng-if="data.graph=='Line'" class="chart chart-line"
-                                                            chart-data="data.chartData"
-                                                            chart-series="data.chartSeries"
-                                                            chart-labels="data.chartLabel"></canvas>
-                                                    <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
-                                                            chart-data="data.chartData"
-                                                            chart-series="data.chartSeries"
-                                                            chart-labels="data.chartLabel"></canvas>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label class="col-sm-2 control-label">Color</label>
+                                                <div class="col-sm-10">
+                                                    <color-picker ng-model="new_data_type.color"
+                                                                  options="{format: 'hex'}"></color-picker>
                                                 </div>
-                                        </li>
-                                    </ul>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <div class="col-sm-2"></div>
+                                                <div class="col-sm-10">
+                                                    <button class="btn btn-default"
+                                                            ng-click="toggle_add_new_data_type();">
+                                                        cancel
+                                                    </button>
+                                                    <button class="btn btn-default"
+                                                            ng-click="add_new_data_type(new_data_type);">
+                                                        Save
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class='col-md-12'>
-                        <div class='panel panel-default'>
-
-                            <div class='panel-body'>
-
-                                <button class="btn btn-default"
-                                        ng-show="!show_add_new_data_type"
-                                        ng-click="toggle_add_new_data_type();">
-                                    Add new data type
-                                </button>
-                                <form class="form-horizontal"
-                                      ng-show="show_add_new_data_type">
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Name</label>
-                                        <div class="col-sm-10">
-                                            <input type="text" class="form-control" ng-model="new_data_type.name">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Loinc code</label>
-                                        <div class="col-sm-10">
-                                            <input type="text" class="form-control" ng-model="new_data_type.code">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Unit</label>
-                                        <div class="col-sm-10">
-                                            <input type="text" class="form-control" ng-model="new_data_type.unit">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Color</label>
-                                        <div class="col-sm-10">
-                                            <color-picker ng-model="new_data_type.color"
-                                                          options="{format: 'hex'}"></color-picker>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <div class="col-sm-2"></div>
-                                        <div class="col-sm-10">
-                                            <button class="btn btn-default"
-                                                    ng-click="toggle_add_new_data_type();">
-                                                cancel
-                                            </button>
-                                            <button class="btn btn-default"
-                                                    ng-click="add_new_data_type(new_data_type);">
-                                                Save
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
             <!-- end data tab -->
 

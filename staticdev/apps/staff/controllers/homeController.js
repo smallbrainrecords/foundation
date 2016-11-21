@@ -16,7 +16,9 @@
                     $scope.patients_list = data['patients_list'];
                 });
 
-                $scope.uploadedDocuments = documentService.getUploadedDocument();
+                documentService.getUploadedDocument().then(function (resp) {
+                    $scope.uploadedDocuments = resp.data.documents;
+                });
                 $scope.users = [];
                 $scope.new_list = {};
                 $scope.new_list.labels = [];
