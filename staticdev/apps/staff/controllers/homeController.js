@@ -34,7 +34,7 @@
 
                         'actor_role': $scope.active_user.role,
                         'actor_id': $scope.active_user.user.id
-                    }
+                    };
 
                     if ($scope.active_user.role == 'physician') {
                         physicianService.getUsersList(role_form).then(function (data) {
@@ -92,7 +92,7 @@
                     title: 'Add Due Date',
                     message: 'Enter due date',
                     input: true,
-                    label: 'Due Date',
+                    label: 'Due Date'
                 }).then(function (due_date) {
                     if (moment(due_date, "MM/DD/YYYY", true).isValid()) {
                         form.due_date = due_date;
@@ -168,14 +168,14 @@
                 }, function () {
                     return false;
                 });
-            }
+            };
 
             $scope.refresh_todos_physicians = function () {
                 staffService.getTodosPhysicians($scope.user_id).then(function (data) {
                     $scope.new_generated_todos_list = data['new_generated_todos_list'];
                     $scope.new_generated_physicians_list = data['new_generated_physicians_list'];
                 })
-            }
+            };
 
             $scope.orderByDate = function (item) {
                 if (item.due_date != null) {
@@ -219,7 +219,7 @@
                         });
                     }
                 }
-            }
+            };
 
 
             $scope.init();
