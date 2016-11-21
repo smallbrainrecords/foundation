@@ -14,7 +14,6 @@ from emr.operations import op_add_event
 from users_app.serializers import UserProfileSerializer
 from .serializers import ProblemSerializer
 from users_app.views import permissions_accessed
-
 @login_required
 def get_inrs(request, patient_id, problem_id):
     resp = {}
@@ -79,4 +78,17 @@ def delete_inrvalue(request, inr_id):
 		InrValue.objects.get(id = inr_id, ispatient=True).delete()
 	except:
 		resp['success'] = False 
+	return ajax_response(resp)
+
+@login_required
+@api_view(['POST'])
+def add_note(request):
+	resp = {}
+	resp['success'] = True
+	note = InrTextNote(note=request.POST['note'], inr_id=request.POST['inr_id'], author=request.user.profile)
+	try:
+		note.save()
+		resp['info'] = InrTextNoteSerializer(note).data
+	except :
+		resp['success'] = False
 	return ajax_response(resp)

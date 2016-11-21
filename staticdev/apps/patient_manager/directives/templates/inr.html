@@ -43,7 +43,7 @@
                                                 Inr
                                                 <!-- <input type="number" ng-model='inrvalue.value' name=""> -->
                                                 <p class="input-group">
-                                                    <input class="form-control" type="number" ng-model='inrvalue.value' name="">
+                                                    <input maxlength="10" class="form-control" type="number" ng-model='inrvalue.value' name="">
                                                 </p>
                                             </th>
                                             <th>
@@ -88,7 +88,7 @@
                                                 </td>
                                                 <td>
                                                     <p ng-show="!value.isshow">{{value.value}}</p>
-                                                    <input class="form-control" ng-show="value.isshow" type="number" ng-model='value.value' name="">
+                                                    <input maxlength="10" class="form-control" ng-show="value.isshow" type="number" ng-model='value.value' name="">
                                                 </td>
                                                 <td>
                                                     <p ng-show="!value.isshow">{{value.new_dosage}}</p>
@@ -171,23 +171,23 @@
                                                     <p>Last edited by: {{ note.author.user.username }} on {{ note.datetime|date:'M/d/yyyy' }}</p>
                                                 </div>
                                                 <div class='form-group'>
-                                                    <input type='submit' value='Save' class='btn btn-default' ng-click="add_note(note, oldNote);">
+                                                    <input type='submit' value='Save' class='btn btn-default' ng-click="save_note(note, oldNote, inr.inr_notes);">
                                                 </div>
                                             </div>
                                         </form>
                                         <form ng-if="inr.inr_notes.length == 0">
-                                            <div class='form-group'>
+                                            <div class='form-group' ng-init="new_note.inr_id=inr.id; new_note.note=''">
                                                 <label> Note </label>
                                                 <textarea class='form-control' 
                                                     ng-model='new_note.note'></textarea>
                                             </div>
                                             <div class='form-group'>
-                                                <input type='submit' value='Add' class='btn btn-default' ng-click="add_note(new_note);">
+                                                <input type='submit' value='Add' class='btn btn-default' ng-click="add_note(new_note, inr.inr_notes);">
                                             </div>
                                         </form>
-                                        <div ng-repeat="note in inr.inr_notes" ng-if="inr.see_note">
+                                        <div ng-repeat="note in inr.inr_notes" ng-if="inr.see_note && !$last">
                                             <p>name: {{note.author.user.first_name}} {{note.author.user.last_name}}</p>
-                                            <p>Note: {{ note.note }}</p>
+                                            <p style="white-space: pre-line;">Note: {{ note.note }}</p>
                                             <p>date: {{ note.datetime|date:'M/d/yyyy' }}</p>
                                             <hr/>
                                         </div>

@@ -40,6 +40,10 @@
 				var url = '/inr/'+id+'/delete_inrvalue';
 				return httpService.get(params, url);
 			}
+			this.addNote = function(note){
+				var url = '/inr/add_note';
+				return httpService.post(note, url);
+			}
 	});
 
 })();

@@ -132,6 +132,33 @@ function inrDirective(CollapseService, toaster, $location, $timeout, prompt, inr
                             }
                         });
                     }
+                    scope.save_note = function(note, oldnote, notes){
+                        if (note.note == '' || note.note.length < 1)
+                            return '';
+                        data = {}
+                        data['inr_id'] = note.inr;
+                        data['note'] = note.note;
+                        inrService.addNote(data).then(function (data) {
+                            if (data['success'] == true) {  
+                                toaster.pop('success', 'Done', 'Save note success!');
+                                notes.push(data['info']);
+                            } else {
+                                toaster.pop('error', 'Error', 'Save note faild!');
+                            }
+                        });
+                    }
+                    scope.add_note = function(note, notes){
+                        if (note.note == '' || note.note.length < 1)
+                            return '';
+                        inrService.addNote(note).then(function (data) {
+                            if (data['success'] == true) {  
+                                toaster.pop('success', 'Done', 'Add note success!');
+                                notes.push(data['info']);
+                            } else {
+                                toaster.pop('error', 'Error', 'Add note faild!');
+                            }
+                        });
+                    }
                 }
             }
 

@@ -8,4 +8,5 @@ urlpatterns = patterns('inr_app.views',
     url(r'^(?P<inr_id>\d+)/delete_inrvalue$', 'delete_inrvalue'),
     url(r'^get_list_problem$', 'get_list_problem'),
     url(r'^save_inrvalue$', 'save_inrvalue'),
+    url(r'^add_note$', 'add_note'),
 )
