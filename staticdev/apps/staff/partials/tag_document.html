@@ -11,7 +11,7 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-6">
-            Document name: <span>{{document.document}}</span>
+            <b>Document name: </b> <span>{{document.filename}}</span>
         </div>
         <div class="col-md-6">
             <input type="text" class="form-control"
@@ -24,19 +24,21 @@
     <div class="row">
         <div class="col-md-6">
             <h1>List of active todo</h1>
-            <ul>
+            <p ng-if="active_todos.length ==0">No active todo</p>
+            <ul ng-if="active_todos.length != 0">
                 <li ng-repeat="todo in active_todos track by $index">
                     <span ng-bind="todo.todo"></span>
-                    <button ng-click="pinDocument2Todo(todo)" class="btn btn-default right">Toggle</button>
+                    <button ng-click="pinTodo2Document(document,todo)" class="btn btn-default right">Pin</button>
                 </li>
             </ul>
         </div>
         <div class="col-md-6">
             <h1>List of pinable problem</h1>
-            <ul>
+            <p ng-if="active_probs.length ==0">No problems</p>
+            <ul ng-if="active_probs.length != 0">
                 <li ng-repeat="prob in active_probs track by $index | filter : prob.is_active">
                     <span ng-bind="prob.problem_name"></span>
-                    <button ng-click="pinDocument2Prob(prob)" class="btn btn-default right">Toggle</button>
+                    <button ng-click="pinProblem2Document(document,prob)" class="btn btn-default right">Pin</button>
                 </li>
             </ul>
         </div>

@@ -69,21 +69,59 @@
              * WIP
              */
             this.typeaheadPatientList = function () {
-
+                //TODO Implement detail here
             };
 
             /**
-             * WIP
+             *
+             * Pin any patient to a document
+             * @param document
+             * @param patient
+             * @returns {HttpPromise}
              */
-            this.pinDocument2Todo = function () {
-
+            this.pinPatient2Document = function (document, patient) {
+                return $http.post('/docs/pin/patient', {
+                    document: document.id,
+                    patient: patient.id
+                }, {
+                    headers: {
+                        'X-CSRFToken': $cookies.csrftoken
+                    }
+                });
             };
 
             /**
-             * WIP
+             * Pin any active todo to a document
+             * @param document
+             * @param todo
+             * @returns {HttpPromise}
              */
-            this.pinDocument2Problem = function () {
+            this.pinTodo2Document = function (document, todo) {
+                return $http.post('/docs/pin/todo', {
+                    document: document.id,
+                    todo: todo.id
+                }, {
+                    headers: {
+                        'X-CSRFToken': $cookies.csrftoken
+                    }
+                });
+            };
 
+            /**
+             * Pin any problem to a document
+             * @param document
+             * @param problem
+             * @returns {HttpPromise}
+             */
+            this.pinProblem2Document = function (document, problem) {
+                return $http.post('/docs/pin/problem', {
+                    document: document.id,
+                    problem: problem.id
+                }, {
+                    headers: {
+                        'X-CSRFToken': $cookies.csrftoken
+                    }
+                });
             };
         });
 

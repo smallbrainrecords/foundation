@@ -974,3 +974,15 @@ class Document(models.Model):
         name, extension = os.path.splitext(self.document.name)
         extension = extension.replace('.', '')
         return extension
+
+
+class DocumentTodo(models.Model):
+    document = models.ForeignKey(Document)
+    todo = models.ForeignKey(ToDo)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+
+class DocumentProblem(models.Model):
+    document = models.ForeignKey(Document)
+    problem = models.ForeignKey(Problem)
+    created_on = models.DateTimeField(auto_now_add=True)

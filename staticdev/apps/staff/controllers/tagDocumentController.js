@@ -6,7 +6,7 @@
     TagDocumentCtrl.$inject = ['$scope', 'documentService', '$routeParams', 'staffService'];
 
     /**
-     *
+     * WIP: Missing status return
      * @param $scope
      * @param documentService
      * @param $routeParams
@@ -30,12 +30,41 @@
             }
         });
 
-        $scope.pinDocument2Patient = pinDocument2Patient;
+        // Status
+        $scope.pinTodo2Document = function (document, todo) {
+            documentService.pinTodo2Document(document, todo)
+                .then(function (resp) {
+                    // success full pinned to item
+                }, function (resp) {
+                    // error occurred
+                });
+        };
 
-        $scope.pinDocument2Todo = documentService.pinDocument2Todo;
-        $scope.pinDocument2Problem = documentService.pinDocument2Problem;
-        function pinDocument2Patient() {
-            //TODO Implement details here
+        // Status
+        $scope.pinProblem2Document = function (document, prob) {
+            documentService.pinProblem2Document(document, prob)
+                .then(function (resp) {
+                    // success full pinned to item
+                }, function (resp) {
+                    // error occurred
+                });
+        };
+
+        //TODO Implement details here
+        $scope.pinPatient2Document = function (document, patient) {
+            documentService.pinPatient2Document(document, patient)
+                .then(function (success) {
+                    staffService.fetchProblems(patient.id).then(function (response) {
+                        $scope.active_probs = response.problems;
+                    });
+
+                    // Fetch user's todos
+                    staffService.fetchPatientTodos(patient.id).then(function (data) {
+                        $scope.active_todos = data['pending_todos']; // aka active todo
+                    });
+                }, function (error) {
+
+                })
         }
     }
 })();

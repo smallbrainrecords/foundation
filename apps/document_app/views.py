@@ -1,6 +1,6 @@
 from common.views import *
-from document_app.serializers import DocumentSerialization
-from emr.models import Document
+from document_app.serializers import *
+from emr.models import Document, DocumentTodo, DocumentProblem, ToDo, Problem, UserProfile
 
 
 # Handle uploaded document file by file
@@ -39,5 +39,45 @@ def document_info(request, document_id):
     document = Document.objects.filter(id=document_id).get()
 
     resp['info'] = DocumentSerialization(document).data
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def pin_patient_2_document(request):
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    document_id = json_body.get('document')
+
+    # Remove related
+    Document.objects.filter(id=document_id).update(patient_id=json_body.get('patient'))
+    DocumentTodo.objects.filter(document=document_id).delete()
+    DocumentProblem.objects.filter(document=document_id).delete()
+
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def pin_todo_2_document(request):
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    document = Document.objects.filter(id=json_body.get('document')).get()
+    todo = ToDo.objects.filter(id=json_body.get('todo')).get()
+
+    DocumentTodo.objects.create(document=document, todo=todo)
+
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def pin_problem_2_document(request):
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    document = Document.objects.filter(id=json_body.get('document')).get()
+    problem = Problem.objects.filter(id=json_body.get('problem')).get()
+    DocumentProblem.objects.create(document=document, problem=problem)
+
     resp['success'] = True
     return ajax_response(resp)
