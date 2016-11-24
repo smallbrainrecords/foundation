@@ -11,11 +11,11 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-6">
-            <b>Document name: </b> <span>{{document.filename}}</span> <br>
+            <b>Document name: </b> <span ng-bind="document.filename"></span> <br>
         </div>
         <div class="col-md-6">
-
             <input type="text"
+                   ng-if="document.patient != null && document.author.id != document.patient.id"
                    class="form-control"
                    ng-model="patient"
                    uib-typeahead="patient for patient in getPatients($viewValue)"

@@ -29,7 +29,7 @@
                                 url: '/docs/upload_document',
                                 data: {
                                     author: author,    // File owner
-                                    file: file,  // File itsefl
+                                    file: file,  // File itself
                                     fileId: i  // using to reference progress and upload status
                                 },
                                 headers: {

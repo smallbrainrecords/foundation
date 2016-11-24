@@ -3,24 +3,36 @@ from document_app.serializers import *
 from emr.models import Document, DocumentTodo, DocumentProblem, ToDo, Problem, UserProfile
 
 
-# Handle uploaded document file by file
+#
 @login_required
 def upload_document(request):
+    """
+    Handle single document file uploaded
+    :param request:
+    :return:
+    """
     resp = {'success': False}
 
     document = request.FILES['file']
+    author = request.POST.get('author', None)
+    patient = request.POST.get('patient', None)
 
-    documentDAO = Document.objects.create(author=request.user.profile, document=document)
-    documentDAO.save()
+    document_dao = Document.objects.create(author_id=author, document=document, patient_id=patient)
+    document_dao.save()
 
     # TODO
-    resp['document'] = documentDAO.id
+    resp['document'] = document_dao.id
     resp['success'] = True
     return ajax_response(resp)
 
 
 @login_required
 def document_list(request):
+    """
+    Handle single file upload
+    :param request:
+    :return:
+    """
     resp = {'success': False}
 
     documents = Document.objects.all()
