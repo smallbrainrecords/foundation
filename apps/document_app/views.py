@@ -81,3 +81,16 @@ def pin_problem_2_document(request):
 
     resp['success'] = True
     return ajax_response(resp)
+
+
+@login_required
+def search_patient(request):
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    items = User.objects.filter(first_name__contains=json_body.get('search_str'),
+                                last_name__contains=json_body.get('search_str'))
+
+    resp['results'] = SafeUserSerializer(items, many=True).data
+    resp['success'] = True
+    return ajax_response(resp)

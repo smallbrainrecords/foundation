@@ -11,14 +11,16 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-6">
-            <b>Document name: </b> <span>{{document.filename}}</span>
+            <b>Document name: </b> <span>{{document.filename}}</span> <br>
         </div>
         <div class="col-md-6">
-            <input type="text" class="form-control"
+
+            <input type="text"
+                   class="form-control"
                    ng-model="patient"
-                   uib-typeahead="patient for patient in patients | filter: $viewValue"
-                   typeahead-on-select="pinDocument2Problem($viewValue)"
-                   placeholder="Find user to pin">
+                   uib-typeahead="patient for patient in getPatients($viewValue)"
+                   typeahead-on-select="pinPatient2Document(document,patient)"
+                   placeholder="Type patient name to search">
         </div>
     </div>
     <div class="row">

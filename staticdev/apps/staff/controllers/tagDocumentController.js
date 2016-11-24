@@ -3,7 +3,7 @@
     angular.module('StaffApp')
         .controller('TagDocumentCtrl', TagDocumentCtrl);
 
-    TagDocumentCtrl.$inject = ['$scope', 'documentService', '$routeParams', 'staffService'];
+    TagDocumentCtrl.$inject = ['$scope', 'documentService', '$routeParams', 'staffService', '$http', '$cookies'];
 
     /**
      * WIP: Missing status return
@@ -13,7 +13,7 @@
      * @param staffService
      * @constructor
      */
-    function TagDocumentCtrl($scope, documentService, $routeParams, staffService) {
+    function TagDocumentCtrl($scope, documentService, $routeParams, staffService, $http, $cookies) {
 
         documentService.getDocumentInfo($routeParams.documentId).then(function (resp) {
             $scope.document = resp.data.info;
@@ -29,6 +29,20 @@
                 });
             }
         });
+
+        $scope.getPatients = function (viewValue) {
+            return $http.post('/docs/search_patient', {
+                search_str: viewValue
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.csrftoken
+                }
+            }).then(function (response) {
+                return response.data.results.map(function (item) {
+                    return item.first_name + " " + item.last_name;
+                });
+            });
+        };
 
         // Status
         $scope.pinTodo2Document = function (document, todo) {
@@ -65,6 +79,8 @@
                 }, function (error) {
 
                 })
-        }
+        };
+
+        $scope.patients = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Dakota', 'North Carolina', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
     }
 })();
