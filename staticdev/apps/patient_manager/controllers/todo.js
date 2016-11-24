@@ -20,6 +20,7 @@
                 $scope.todo = data['info'];
                 $scope.comments = data['comments'];
                 $scope.attachments = data['attachments'];
+                $scope.documents = data['documents'];
                 $scope.related_encounters = data['related_encounters'];
                 $scope.activities = data['activities'];
                 if (data['activities'].length) {
