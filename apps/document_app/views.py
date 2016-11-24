@@ -94,3 +94,14 @@ def search_patient(request):
     resp['results'] = SafeUserSerializer(items, many=True).data
     resp['success'] = True
     return ajax_response(resp)
+
+
+@login_required
+def get_patient_document(request, patient_id):
+    resp = {'success': False}
+
+    items = Document.objects.filter(patient_id=patient_id)
+
+    resp['info'] = DocumentSerialization(items, many=True).data
+    resp['success'] = True
+    return ajax_response(resp)

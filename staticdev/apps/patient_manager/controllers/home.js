@@ -1331,6 +1331,15 @@
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
             });
+
+            // Documentation
+            patientService.getDocuments($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.documents = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            })
         });
     /* End of controller */
 
