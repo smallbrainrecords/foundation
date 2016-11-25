@@ -510,3 +510,8 @@ tbody button {
     background: #ddd;
     border: none;
 }
+
+.pickadate{
+    top: 0px!important;
+    left: 0px!important;
+}
