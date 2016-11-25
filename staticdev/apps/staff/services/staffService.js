@@ -29,6 +29,15 @@
 			return httpService.post(form, url);
 		};
 
+		this.fetchPatientTodos = function(patient_id){
+
+			var params = {};
+			var url = '/u/patient/'+patient_id+'/patient_todos_info';
+
+			return httpService.get(params, url);
+
+		};
+
 		this.addToDo = function(form){
 			var url = '/todo/staff/'+form.user_id+'/todos/add/new_todo';
 			return httpService.post(form, url);

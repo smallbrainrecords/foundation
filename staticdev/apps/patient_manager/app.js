@@ -3,7 +3,7 @@
     'use strict';
 
 
-    var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 'treeControl', 'chart.js',
+    var ManagerApp = angular.module('ManagerApp', ['ngRoute', 'httpModule', 'treeControl', 'chart.js','sharedModule',
         'ngCookies', 'ngDialog', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'timeLine', 'ngDraggable',
         'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate',
         'a1c', 'colon_cancers', 'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam',

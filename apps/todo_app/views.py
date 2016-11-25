@@ -1,22 +1,19 @@
-from datetime import datetime
-from django.db.models import Max
 from django.core.servers.basehttp import FileWrapper
-from django.http import Http404, HttpResponse
-from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Max
 from rest_framework.decorators import api_view
+
 from common.views import *
-
 from emr.models import UserProfile, ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRecord, \
-    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController, SharingPatient
+    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController, SharingPatient, \
+    DocumentTodo
 from emr.operations import op_add_event, op_add_todo_event
-
+from problems_app.operations import add_problem_activity
+from users_app.serializers import UserProfileSerializer
+from .operations import add_todo_activity
 from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, \
     TodoActivitySerializer, LabelSerializer, LabeledToDoListSerializer
-from users_app.serializers import UserProfileSerializer
 
-from problems_app.operations import add_problem_activity
-from .operations import add_todo_activity
+from document_app.serializers import *
 
 
 def is_patient(user):
@@ -26,6 +23,7 @@ def is_patient(user):
     except UserProfile.DoesNotExist:
         return False
 
+
 # set problem authentication to false if not physician, admin
 def set_problem_authentication_false(request, todo):
     if todo.problem:
@@ -34,6 +32,7 @@ def set_problem_authentication_false(request, todo):
         authenticated = actor_profile.role in ("physician", "admin")
         problem.authenticated = authenticated
         problem.save()
+
 
 @login_required
 def get_todo_activity(request, todo_id, last_id):
@@ -61,7 +60,8 @@ def add_patient_todo(request, patient_id):
         problem_name = new_todo.problem.problem_name
     else:
         problem_name = ''
-    summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (new_todo.id, todo_name, problem_name)
+    summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (
+        new_todo.id, todo_name, problem_name)
 
     op_add_todo_event(physician, patient, summary, new_todo)
 
@@ -143,7 +143,7 @@ def update_order(request):
         for id in id_todos:
             todo = ToDo.objects.get(id=int(id))
             if not todos_order[key]:
-                order =  ToDo.objects.filter(patient=patient).aggregate(Max('order'))
+                order = ToDo.objects.filter(patient=patient).aggregate(Max('order'))
                 if not order['order__max']:
                     order = 1
                 else:
@@ -153,7 +153,6 @@ def update_order(request):
                 todo.order = todos_order[key]
             todo.save()
             key = key + 1
-
 
         # set problem authentication
         set_problem_authentication_false(request, todo)
@@ -177,7 +176,7 @@ def update_order(request):
         for id in id_todos:
             todo = TaggedToDoOrder.objects.get(todo__id=int(id), user=user)
             if not todos_order[key]:
-                order =  TaggedToDoOrder.objects.filter(user=user).aggregate(Max('order'))
+                order = TaggedToDoOrder.objects.filter(user=user).aggregate(Max('order'))
                 if not order['order__max']:
                     order = 1
                 else:
@@ -201,7 +200,7 @@ def update_order(request):
         for id in id_todos:
             todo = ToDo.objects.get(id=int(id))
             if not todos_order[key]:
-                order =  ToDo.objects.filter(user=user).aggregate(Max('order'))
+                order = ToDo.objects.filter(user=user).aggregate(Max('order'))
                 if not order['order__max']:
                     order = 1
                 else:
@@ -246,12 +245,19 @@ def get_todo_info(request, todo_id):
         }
         attachment_todos_holder.append(attachment_dict)
 
+    # Load all document (aka Attachment)
+    documents = DocumentTodo.objects.filter(todo=todo_info)
+    document_todos_holder = []
+    for document in documents:
+        document_todos_holder.append(DocumentSerialization(document.document).data)
+
     encounter_ids = EncounterTodoRecord.objects.filter(todo=todo_info).values_list("encounter__id", flat=True)
     related_encounters = Encounter.objects.filter(id__in=encounter_ids)
 
     activities = TodoActivity.objects.filter(todo=todo_info)
 
-    sharing_patients = SharingPatient.objects.filter(shared=todo_info.patient).order_by('sharing__first_name', 'sharing__last_name')
+    sharing_patients = SharingPatient.objects.filter(shared=todo_info.patient).order_by('sharing__first_name',
+                                                                                        'sharing__last_name')
     sharing_patients_list = []
     for sharing_patient in sharing_patients:
         user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
@@ -263,6 +269,7 @@ def get_todo_info(request, todo_id):
     resp['info'] = TodoSerializer(todo_info).data
     resp['comments'] = ToDoCommentSerializer(comments, many=True).data
     resp['attachments'] = attachment_todos_holder
+    resp['documents'] = document_todos_holder
     resp['related_encounters'] = EncounterSerializer(related_encounters, many=True).data
     resp['activities'] = TodoActivitySerializer(activities, many=True).data
     resp['sharing_patients'] = sharing_patients_list
@@ -344,7 +351,7 @@ def change_todo_due_date(request, todo_id):
     if due_date:
         activity = "Changed due date of this todo to <b>%s</b>." % (request.POST.get('due_date'))
     else:
-         activity = "Removed due date of this todo."
+        activity = "Removed due date of this todo."
     add_todo_activity(todo, actor_profile, activity)
 
     resp['success'] = True
@@ -452,7 +459,8 @@ def todo_access_encounter(request, todo_id):
     patient = todo.patient
 
     if todo.problem:
-        summary = '''<a href="#/todo/%s"><b>%s</b></a> for <b>%s</b> was visited.''' % (todo.id, todo.todo, todo.problem.problem_name)
+        summary = '''<a href="#/todo/%s"><b>%s</b></a> for <b>%s</b> was visited.''' % (
+            todo.id, todo.todo, todo.problem.problem_name)
     else:
         summary = '''<a href="#/todo/%s"><b>%s</b></a> was visited.''' % (todo.id, todo.todo)
 

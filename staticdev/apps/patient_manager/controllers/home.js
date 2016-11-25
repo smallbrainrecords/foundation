@@ -4,18 +4,25 @@
 
 
     angular.module('ManagerApp')
-        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog,
-                                          dataService, toaster, $location, todoService, prompt, $timeout, CollapseService, $filter) {
+        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog, sharedService,
+                                          dataService, toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
 
 
             patientService.fetchActiveUser().then(function (data) {
+                // Logged in user profile in Django authentication system
                 $scope.active_user = data['user_profile'];
             });
 
+            // Patients are being managed
             var patient_id = $('#patient_id').val();
+            // Patients are being managed
             $scope.patient_id = patient_id;
+
+            // Current logged in id
             var user_id = $('#user_id').val();
+            // Current logged in id
             $scope.user_id = user_id;
+
             $scope.show_accomplished_todos = false;
             $scope.problem_terms = [];
             $scope.new_problem = {set: false};
@@ -1331,6 +1338,27 @@
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
             });
+
+            // Documentation
+            patientService.getDocuments($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.documents = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
+            $scope.$watch('files', function () {
+                if ($scope.files != undefined)
+                    sharedService.uploadDocument($scope.files, $scope.user_id, $scope.patient_id, $scope.fileUploadSuccess);
+            });
+
+            /**
+             *
+             */
+            $scope.fileUploadSuccess = function (resp) {
+                $window.open('/#/manage/tag_document/' + resp.data.document, '_blank');
+            }
         });
     /* End of controller */
 
