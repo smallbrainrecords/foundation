@@ -60,12 +60,15 @@ def pin_patient_2_document(request):
     resp = {'success': False}
     json_body = json.loads(request.body)
     document_id = json_body.get('document')
-
+    patient_id = json_body.get('patient')
     # Remove related
-    Document.objects.filter(id=document_id).update(patient_id=json_body.get('patient'))
+    Document.objects.filter(id=document_id).update(patient=UserProfile.objects.filter(id=patient_id).get())
     DocumentTodo.objects.filter(document=document_id).delete()
     DocumentProblem.objects.filter(document=document_id).delete()
 
+    document = Document.objects.filter(id=document_id).get()
+
+    resp['info'] = DocumentSerialization(document).data
     resp['success'] = True
     return ajax_response(resp)
 
@@ -97,13 +100,25 @@ def pin_problem_2_document(request):
 
 @login_required
 def search_patient(request):
+    """
+
+    :param request:
+    :return:
+    """
     resp = {'success': False}
+    result = []
     json_body = json.loads(request.body)
 
-    items = User.objects.filter(first_name__contains=json_body.get('search_str'),
-                                last_name__contains=json_body.get('search_str'))
+    items = UserProfile.objects.filter(role='patient')
 
-    resp['results'] = SafeUserSerializer(items, many=True).data
+    for item in items:
+        if unicode(item).__contains__(json_body.get('search_str')):
+            result.append({
+                'uid': item.id,
+                'full_name': unicode(item)
+            })
+
+    resp['results'] = result
     resp['success'] = True
     return ajax_response(resp)
 

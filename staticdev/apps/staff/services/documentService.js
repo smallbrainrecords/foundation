@@ -82,7 +82,7 @@
             this.pinPatient2Document = function (document, patient) {
                 return $http.post('/docs/pin/patient', {
                     document: document.id,
-                    patient: patient.id
+                    patient: patient.uid
                 }, {
                     headers: {
                         'X-CSRFToken': $cookies.csrftoken

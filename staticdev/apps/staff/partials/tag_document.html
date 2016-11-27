@@ -11,15 +11,15 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-6">
-            <b>Document name: </b> <span ng-bind="document.filename"></span> <br>
+            <b>Document name: </b>(<span ng-bind="document.patient.user.first_name"></span> <span ng-bind="document.patient.user.last_name"></span>) <span ng-bind="document.filename"></span> <br>
         </div>
         <div class="col-md-6">
             <input type="text"
-                   ng-if="document.patient != null && document.author.id != document.patient.id"
+                   ng-if="document.author.id != document.patient.id"
                    class="form-control"
                    ng-model="patient"
-                   uib-typeahead="patient for patient in getPatients($viewValue)"
-                   typeahead-on-select="pinPatient2Document(document,patient)"
+                   uib-typeahead="patient as patient.full_name for patient in getPatients($viewValue)"
+                   typeahead-on-select="pinPatient2Document($item, $model, $label, $event) "
                    placeholder="Type patient name to search">
         </div>
     </div>
