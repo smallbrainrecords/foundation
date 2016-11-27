@@ -126,8 +126,8 @@ def search_patient(request):
 @login_required
 def get_patient_document(request, patient_id):
     resp = {'success': False}
-
-    items = Document.objects.filter(patient_id=patient_id)
+    profile = UserProfile.objects.filter(user_id=patient_id)
+    items = Document.objects.filter(patient=profile)
 
     resp['info'] = DocumentSerialization(items, many=True).data
     resp['success'] = True
