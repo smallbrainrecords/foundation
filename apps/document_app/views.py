@@ -132,3 +132,47 @@ def get_patient_document(request, patient_id):
     resp['info'] = DocumentSerialization(items, many=True).data
     resp['success'] = True
     return ajax_response(resp)
+
+
+@login_required
+def delete_document(request):
+    """
+    A patient can delete a document that they 'attached' to a todo or uploaded.\n
+    A patient can NOT delete a document that was attached to a todo or uploaded by any other user.\n
+    A patient can NOT delete a document that was uploaded unless the patient uploaded that document himself.\n
+    A doctor, nurse, secretary, mid-level and admin may delete a document that was uploaded.\n
+    IF a document has been "attached" to a todo in the 'tagging' page then it can be deleted from a todo by a doctor or admin.\n
+    A pop up will ask "Remove this document from the todo only" or "Delete this document from the todo and the system"\n
+    If the user selects 'from the todo only' then the document will not be displayed on the todo like an attachment\n
+    but that document will still be in the document page (it will lose labels and association with that todo).\n
+    If the user selects "delete.. and the system" then the document is deleted completely.
+    :param request:
+    :return:
+    """
+
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    user = request.user  # Current logged in user
+    document_id = json_body.get('document')  # Document which will be deleted
+    del_tag_id = json_body.get('del_tag_id')  # Tagging id
+    del_tag_type = json_body.get('del_tag_type')  # Tagging type will be a problem or a todo
+    del_in_sys = json_body.get('del_in_sys')  # Flag if document is remove from the system
+
+    document = Document.objects.filter(id=document_id).get()
+    if del_tag_type == 'problem':
+        tag = DocumentProblem.objects.filter(id=del_tag_id).get()
+    else:
+        tag = DocumentTodo.objects.filter(id=del_tag_id).get()
+
+    if user.profile.role != 'patient':
+        tag.delete()
+    else:
+        if user.profile == document.author:
+            tag.delete()
+
+    if del_in_sys and ["physician", "admin"].__contains__(user.profile.role):
+        document.delete()
+
+    resp['success'] = True
+    return ajax_response(resp)
