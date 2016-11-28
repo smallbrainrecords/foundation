@@ -39,5 +39,26 @@
                 }
             }
         };
+
+        /**
+         *
+         * @param document      Id of document will be delete
+         * @param tag_id        Id of tag item will be deleted
+         * @param tag_type      Type of tagging document 'problem' or 'todo'
+         * @param del_in_sys    Flag indicate will file be deleted in system or not
+         */
+        this.deleteDocumentTag = function (document, tag_id, tag_type, del_in_sys) {
+            del_in_sys = del_in_sys == undefined ? false : del_in_sys;
+            return $http.post('/docs/delete/' + document.id, {
+                'document': document.id,
+                'del_tag_id': tag_id.id,
+                'del_tag_type': tag_type,
+                'del_in_sys': del_in_sys
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.csrftoken
+                }
+            })
+        }
     }
 })();

@@ -9,5 +9,5 @@ urlpatterns = patterns('document_app.views',
                        url(r'^pin/problem', 'pin_problem_2_document'),
                        url(r'^search_patient', 'search_patient'),
                        url(r'^(?P<patient_id>\d+)/get_pinned_document', 'get_patient_document'),
-                       url(r'^/delete/(?P<document_id>)$', 'delete_document')
+                       url(r'^delete/(?P<document_id>\d+)$', 'delete_document')
                        )
