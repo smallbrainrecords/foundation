@@ -191,4 +191,7 @@ a.btn-manage {
 .dragover {
   border: 5px dashed blue; }
 
+.btn-remove {
+  cursor: pointer; }
+
 /*# sourceMappingURL=patient-profile.css.map */

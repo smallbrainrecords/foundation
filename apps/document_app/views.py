@@ -135,7 +135,7 @@ def get_patient_document(request, patient_id):
 
 
 @login_required
-def delete_document(request):
+def delete_document(request, document_id):
     """
     A patient can delete a document that they 'attached' to a todo or uploaded.\n
     A patient can NOT delete a document that was attached to a todo or uploaded by any other user.\n
@@ -146,6 +146,7 @@ def delete_document(request):
     If the user selects 'from the todo only' then the document will not be displayed on the todo like an attachment\n
     but that document will still be in the document page (it will lose labels and association with that todo).\n
     If the user selects "delete.. and the system" then the document is deleted completely.
+    :param document_id:
     :param request:
     :return:
     """
@@ -161,9 +162,11 @@ def delete_document(request):
 
     document = Document.objects.filter(id=document_id).get()
     if del_tag_type == 'problem':
-        tag = DocumentProblem.objects.filter(id=del_tag_id).get()
+        problem = Problem.objects.filter(id=del_tag_id).get()
+        tag = DocumentProblem.objects.filter(document=document, problem=problem).get()
     else:
-        tag = DocumentTodo.objects.filter(id=del_tag_id).get()
+        todo = ToDo.objects.filter(id=del_tag_id).get()
+        tag = DocumentTodo.objects.filter(document=document, todo=todo).get()
 
     if user.profile.role != 'patient':
         tag.delete()
