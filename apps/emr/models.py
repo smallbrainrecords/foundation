@@ -564,7 +564,6 @@ class TodoActivity(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     comment = models.ForeignKey(ToDoComment, null=True, blank=True)
     attachment = models.ForeignKey(ToDoAttachment, null=True, blank=True)
-
     class Meta:
         ordering = ['-created_on']
 

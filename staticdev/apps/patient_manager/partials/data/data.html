@@ -68,7 +68,7 @@
                 <a href="#/data/{{ data.id }}/show_all_data" class="btn btn-default">Show all data</a>
                 <a href="#/data/{{ data.id }}/add_data" class="btn btn-default">Add data point</a>
                 <button class="btn btn-default" ng-click="toggle_pin_to_new_problem();"
-                        ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.id">Pin to new problem
+                        ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.id || true">Pin to new problem
                 </button>
                 <a class="btn btn-default" href="#/data/{{ data.id }}/settings">Settings</a>
             </div>
@@ -105,7 +105,7 @@
 </div>
 
 <div class='panel panel-default' ng-show="show_pin_to_new_problem"
-     ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.id">
+     ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.id || true">
     <div class='panel-heading'>
         <h3>List of current problems</h3>
     </div>
@@ -117,7 +117,7 @@
             <div class='col-md-12'>
                 <p ng-repeat="problem in problems">
                     <input type="checkbox" ng-model="problem.pin"
-                           ng-change="data_pin_to_problem(data.id, problem.id);"> {{ problem.problem_name }}
+                           ng-change="data_pin_to_problem($index, data.id, problem.id);"> {{ problem.problem_name }}
                 </p>
             </div>
         </div>
