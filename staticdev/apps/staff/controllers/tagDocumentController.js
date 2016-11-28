@@ -15,34 +15,24 @@
      */
     function TagDocumentCtrl($scope, documentService, $routeParams, staffService, $http, $cookies) {
 
+        function getPatientInfo(patientId) {
+            staffService.fetchProblems(patientId).then(function (response) {
+                $scope.active_probs = response.problems;
+            });
+            // Fetch user's todos
+            staffService.fetchPatientTodos(patientId).then(function (data) {
+                $scope.active_todos = data['pending_todos']; // aka active todo
+            });
+        }
+
         documentService.getDocumentInfo($routeParams.documentId).then(function (resp) {
             $scope.document = resp.data.info;
             if (resp.data.info.patient != null) {
-                // Fetch user's probs
-                var patientId = resp.data.info.patient.id;
-                staffService.fetchProblems(patientId).then(function (response) {
-                    $scope.active_probs = response.problems;
-                });
-                // Fetch user's todos
-                staffService.fetchPatientTodos(patientId).then(function (data) {
-                    $scope.active_todos = data['pending_todos']; // aka active todo
-                });
+                var patientId = resp.data.info.patient.user.id;
+                getPatientInfo(patientId);
             }
         });
 
-        $scope.getPatients = function (viewValue) {
-            return $http.post('/docs/search_patient', {
-                search_str: viewValue
-            }, {
-                headers: {
-                    'X-CSRFToken': $cookies.csrftoken
-                }
-            }).then(function (response) {
-                return response.data.results.map(function (item) {
-                    return item.first_name + " " + item.last_name;
-                });
-            });
-        };
 
         // Status
         $scope.pinTodo2Document = function (document, todo) {
@@ -64,23 +54,28 @@
                 });
         };
 
-        //TODO Implement details here
-        $scope.pinPatient2Document = function (document, patient) {
-            documentService.pinPatient2Document(document, patient)
-                .then(function (success) {
-                    staffService.fetchProblems(patient.id).then(function (response) {
-                        $scope.active_probs = response.problems;
-                    });
+        $scope.getPatients = function (viewValue) {
+            return $http.post('/docs/search_patient', {
+                search_str: viewValue
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.csrftoken
+                }
+            }).then(function (response) {
+                return response.data.results;
+            });
+        };
 
-                    // Fetch user's todos
-                    staffService.fetchPatientTodos(patient.id).then(function (data) {
-                        $scope.active_todos = data['pending_todos']; // aka active todo
-                    });
+        //TODO Implement details here
+        $scope.pinPatient2Document = function (item, model) {
+            documentService.pinPatient2Document($scope.document, model)
+                .then(function (resp) {
+                    $scope.document = resp.data.info;
+                    var patientId = resp.data.info.patient.user.id;
+                    getPatientInfo(patientId);
                 }, function (error) {
 
                 })
         };
-
-        $scope.patients = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Dakota', 'North Carolina', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'];
     }
 })();
