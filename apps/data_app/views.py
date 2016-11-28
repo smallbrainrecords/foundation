@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view
 
 from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationOrder, \
     PhysicianTeam, PatientController, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue, \
-    Inr
+    Inr, UserProfile
 from emr.models import OBSERVATION_TYPES
 from .serializers import ObservationValueTextNoteSerializer, ObservationComponentSerializer, \
     ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
@@ -190,24 +190,39 @@ def get_pins(request, observation_id):
 def obseration_pin_to_problem(request, patient_id):
     resp = {}
     resp['success'] = False
-    if permissions_accessed(request.user, int(patient_id)):
+    if permissions_accessed(request.user, int(patient_id)) or True:
         observation_id = request.POST.get("data_id", None)
         problem_id = request.POST.get("problem_id", None)
         observation = Observation.objects.get(id=observation_id)
 
         try:
             pin = ObservationPinToProblem.objects.get(observation_id=observation_id, problem_id=problem_id)
+            up = UserProfile.objects.get(user_id=request.user.id)
+            if up.role == 'patient' and pin.author_id != request.user.id:
+                resp['success']="notallow"
+                return ajax_response(resp)
             pin.delete()
-
-            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists():
-                if Inr.objects.filter(observation_id=observation_id, problem_id=problem_id).exists():
-                    Inr.objects.filter(observation_id=observation_id, problem_id=problem_id).delete()
+            problems=Problem.objects.filter(patient_id=patient_id)
+            optp = ObservationPinToProblem.objects.values_list('observation_id',).filter(problem__in=problems)
+            optp1 = []
+            for x in optp:
+                optp1.append(x[0])
+            oc = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
+            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(oc) < 1:
+                if Inr.objects.filter(observation_id=observation_id).exists():
+                    Inr.objects.filter(observation_id=observation_id).delete()
                     resp['remove_inr'] = True
         except ObservationPinToProblem.DoesNotExist:
-            pin = ObservationPinToProblem(author=request.user.profile, observation_id=observation_id, problem_id=problem_id)
+            problems=Problem.objects.filter(patient_id=patient_id)
+            optp = ObservationPinToProblem.objects.values_list('observation_id',).filter(problem__in=problems).distinct()
+            optp1 = []
+            for x in optp:
+                optp1.append(x[0])
+            oc = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
+            # pin = ObservationPinToProblem(author=request.user.profile, observation_id=observation_id, problem_id=problem_id)
+            pin = ObservationPinToProblem(author_id=request.user.id, observation_id=observation_id, problem_id=problem_id)
             pin.save()
-
-            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists():
+            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(oc) < 1:
                 patient_user = User.objects.get(id=patient_id)
                 inr = Inr(observation_id=observation_id, problem_id=problem_id, author=request.user.profile, patient=patient_user.profile)
                 inr.save()

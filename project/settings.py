@@ -1,6 +1,6 @@
 # Django settings for emr project.
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = True
 
 # toggle experimental features

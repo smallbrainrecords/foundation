@@ -20,7 +20,8 @@ def get_inrs(request, patient_id, problem_id):
     resp['success'] = False
     
     if permissions_accessed(request.user, int(patient_id)):
-        inrs = Inr.objects.filter(problem_id=problem_id)
+    	problems=Problem.objects.filter(patient_id=patient_id)
+        inrs = Inr.objects.filter(problem__in=problems)
         resp['success'] = True
         resp['info'] = InrSerializer(inrs, many=True).data
     return ajax_response(resp)
