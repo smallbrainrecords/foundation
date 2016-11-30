@@ -11,13 +11,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='problem',
-            name='inr',
-        ),
-        migrations.AddField(
-            model_name='inr',
-            name='problem',
-            field=models.ForeignKey(related_name='problem_pin_inrs', blank=True, to='emr.Problem', null=True),
-        ),
+        # migrations.RemoveField(
+        #     model_name='problem',
+        #     name='inr',
+        # ),
+        # migrations.AddField(
+        #     model_name='inr',
+        #     name='problem',
+        #     field=models.ForeignKey(related_name='problem_pin_inrs', blank=True, to='emr.Problem', null=True),
+        # ),
     ]
