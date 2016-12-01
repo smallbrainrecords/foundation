@@ -39,16 +39,12 @@
 }
 
 .ngdialog {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 
 .ngdialog *,
 .ngdialog *:before,
 .ngdialog *:after {
-  -webkit-box-sizing: inherit;
-  -moz-box-sizing: inherit;
   box-sizing: inherit;
 }
 
@@ -63,6 +59,13 @@
   left: 0;
 }
 
+.ngdialog.ngdialog-disabled-animation,
+.ngdialog.ngdialog-disabled-animation .ngdialog-overlay,
+.ngdialog.ngdialog-disabled-animation .ngdialog-content {
+  -webkit-animation: none!important;
+  animation: none!important;
+}
+
 .ngdialog-overlay {
   position: fixed;
   background: rgba(0, 0, 0, 0.4);
@@ -73,6 +76,10 @@
   -webkit-backface-visibility: hidden;
   -webkit-animation: ngdialog-fadein 0.5s;
   animation: ngdialog-fadein 0.5s;
+}
+
+.ngdialog-no-overlay {
+  pointer-events: none;
 }
 
 .ngdialog.ngdialog-closing .ngdialog-overlay {
@@ -86,6 +93,7 @@
   -webkit-backface-visibility: hidden;
   -webkit-animation: ngdialog-fadein 0.5s;
   animation: ngdialog-fadein 0.5s;
+  pointer-events: all;
 }
 
 .ngdialog.ngdialog-closing .ngdialog-content {
@@ -100,6 +108,7 @@
   cursor: pointer;
 }
 
+html.ngdialog-open,
 body.ngdialog-open {
   overflow: hidden;
 }

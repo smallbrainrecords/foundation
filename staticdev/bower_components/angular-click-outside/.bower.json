@@ -1,6 +1,6 @@
 {
   "name": "angular-click-outside",
-  "version": "2.2.1",
+  "version": "2.10.1",
   "main": "clickoutside.directive.js",
   "homepage": "https://github.com/IamAdamJowett/angular-click-outside",
   "authors": [
@@ -18,14 +18,13 @@
     "type": "git",
     "url": "git://github.com/IamAdamJowett/angular-click-outside"
   },
-  "_release": "2.2.1",
+  "_release": "2.10.1",
   "_resolution": {
     "type": "version",
-    "tag": "v2.2.1",
-    "commit": "e70d97c6c40ba915b187fe9a545c54b311f74037"
+    "tag": "v2.10.1",
+    "commit": "57cd76a34bc8ab6d5c9b86853f31aeb10ba284df"
   },
-  "_source": "git://github.com/IamAdamJowett/angular-click-outside.git",
-  "_target": "~2.2.1",
-  "_originalSource": "angular-click-outside",
-  "_direct": true
+  "_source": "https://github.com/IamAdamJowett/angular-click-outside.git",
+  "_target": "~2.10.1",
+  "_originalSource": "angular-click-outside"
 }

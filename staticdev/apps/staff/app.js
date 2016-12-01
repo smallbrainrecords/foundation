@@ -5,7 +5,7 @@
 
     var StaffApp = angular.module('StaffApp',
         ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'ngFileUpload',
-            'dndLists', 'ui.sortable','ui.bootstrap' ,'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate', 'cgPrompt']);
+            'dndLists', 'ui.sortable','ui.bootstrap' ,'todos', 'angular-click-outside', 'pickadate', 'cgPrompt']);
 
 
     StaffApp.config(function ($routeProvider) {

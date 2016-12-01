@@ -16,6 +16,9 @@
 *.sublime-project
 sftp-config.json
 
+# angular-seed
+/angular-seed
+
 # MISC
 /vendor
 composer.phar
@@ -26,6 +29,7 @@ _notes
 /*.lnk
 /bower_components
 /node_modules
+npm-debug.log
 
 # Brackets IDE
 .ftppass
