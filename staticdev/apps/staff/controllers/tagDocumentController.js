@@ -59,7 +59,7 @@
                 search_str: viewValue
             }, {
                 headers: {
-                    'X-CSRFToken': $cookies.csrftoken
+                    'X-CSRFToken': $cookies.get('csrftoken')
                 }
             }).then(function (response) {
                 return response.data.results;

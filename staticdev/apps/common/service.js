@@ -28,7 +28,7 @@
                                 file: file          // File itself
                             },
                             headers: {
-                                'X-CSRFToken': $cookies.csrftoken
+                                'X-CSRFToken': $cookies.get('csrftoken')
                             }
                         }).then(function (resp) {
                             callback(resp);
@@ -56,7 +56,7 @@
                 'del_in_sys': del_in_sys
             }, {
                 headers: {
-                    'X-CSRFToken': $cookies.csrftoken
+                    'X-CSRFToken': $cookies.get('csrftoken')
                 }
             })
         }

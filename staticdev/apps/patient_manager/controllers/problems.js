@@ -909,7 +909,7 @@
             };
 
             $scope.get_csrftoken = function () {
-                return $cookies.csrftoken;
+                return $cookies.get('csrftoken');
             };
 
             $scope.open_image_upload_box = function () {

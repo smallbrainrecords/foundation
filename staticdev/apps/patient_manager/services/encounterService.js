@@ -5,8 +5,7 @@
     angular.module('ManagerApp').service('encounterService',
         function ($http, $q, $cookies, httpService) {
             this.csrf_token = function () {
-                var token = $cookies.csrftoken;
-                return token;
+                return  $cookies.get('csrftoken');
             };
 
             this.updateNote = function (form) {
@@ -46,7 +45,7 @@
 
                 angular.forEach(form, function (value, key) {
                     fd.append(key, value);
-                })
+                });
 
                 fd.append('file', file);
 
@@ -80,7 +79,7 @@
 
                 angular.forEach(form, function (value, key) {
                     fd.append(key, value);
-                })
+                });
 
                 fd.append('file', file);
 

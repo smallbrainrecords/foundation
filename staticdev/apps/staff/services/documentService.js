@@ -6,7 +6,7 @@
         .service('documentService', function ($http, $q, $cookies, Upload) {
 
             this.csrf_token = function () {
-                return $cookies.csrftoken;
+                return $cookies.get('csrftoken');
             };
 
             /**
@@ -33,7 +33,7 @@
                                     fileId: i  // using to reference progress and upload status
                                 },
                                 headers: {
-                                    'X-CSRFToken': $cookies.csrftoken
+                                    'X-CSRFToken': $cookies.get('csrftoken')
                                 }
                             }).then(function (resp) {
                                 logs[resp.config.data.fileId].status = "Upload success";
@@ -85,7 +85,7 @@
                     patient: patient.uid
                 }, {
                     headers: {
-                        'X-CSRFToken': $cookies.csrftoken
+                        'X-CSRFToken': $cookies.get('csrftoken')
                     }
                 });
             };
@@ -102,7 +102,7 @@
                     todo: todo.id
                 }, {
                     headers: {
-                        'X-CSRFToken': $cookies.csrftoken
+                        'X-CSRFToken': $cookies.get('csrftoken')
                     }
                 });
             };
@@ -119,7 +119,7 @@
                     problem: problem.id
                 }, {
                     headers: {
-                        'X-CSRFToken': $cookies.csrftoken
+                        'X-CSRFToken': $cookies.get('csrftoken')
                     }
                 });
             };

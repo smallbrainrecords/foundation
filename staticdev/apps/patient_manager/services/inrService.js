@@ -6,7 +6,7 @@
 		function($http, $q, $cookies, httpService){
 
 			this.csrf_token = function(){
-				var token = $cookies.csrftoken;
+				var token = $cookies.get('csrftoken');
 				return token;
 			};
 
