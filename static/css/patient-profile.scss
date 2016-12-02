@@ -240,7 +240,7 @@ body {
   padding: 0 !important;
 }
 
-.no-margin{
+.no-margin {
   margin: 0 !important;
 }
 
@@ -253,7 +253,7 @@ body {
     cursor: pointer;
     font-weight: 700;
   }
-  span{
+  span {
     padding-left: 10px;
   }
   .profileThumb {
@@ -266,3 +266,30 @@ body {
 
 }
 
+#problem-header {
+
+  z-index: 999;
+  width: 1200px;
+  margin: 0 auto;
+  border-bottom: 1px solid #ccc;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+
+#problem-header.affix {
+  top: 50px;
+}
+
+.problem-controlled {
+  background-color: green;
+  color: white;
+}
+
+.problem-uncontrolled {
+  background-color: red;
+  color: white;
+}
+
+.panel-heading{
+  cursor: pointer;
+}

@@ -4,8 +4,8 @@
 
 
     angular.module('ManagerApp')
-        .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService,
-                                              $filter, ngDialog, toaster, todoService, prompt, $cookies, $location, 
+        .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
+                                              $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
                                               dataService, medicationService, inrService) {
 
 
@@ -120,27 +120,27 @@
                             data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
 
                             // TODO: Manipulate DOM manually and inside JS code. Need to refine this
-                        if (data.name == 'weight') {
-                            // $scope.vitals.weight = data;
-                            var dom = '<a href="#/data/' + data.id + '">W:' + data.mostRecentValue + '</a>';
-                            $("#vitals_weight").html(dom);
-                        }
-                        if (data.name == 'body temperature') {
-                            // $scope.vitals.body_temperature = data;
-                            var dom = '<a href="#/data/' + data.id + '">T:' + data.mostRecentValue + '</a>';
-                            $("#vitals_body_temperature").html(dom);
-                        }
+                            if (data.name == 'weight') {
+                                // $scope.vitals.weight = data;
+                                var dom = '<a href="#/data/' + data.id + '">W:' + data.mostRecentValue + '</a>';
+                                $("#vitals_weight").html(dom);
+                            }
+                            if (data.name == 'body temperature') {
+                                // $scope.vitals.body_temperature = data;
+                                var dom = '<a href="#/data/' + data.id + '">T:' + data.mostRecentValue + '</a>';
+                                $("#vitals_body_temperature").html(dom);
+                            }
 
-                        if (data.name == 'blood pressure') {
-                            // $scope.vitals.blood_pressure = data;
-                            var dom = '<a href="#/data/' + data.id + '">BP:' + data.mostRecentValue + '</a>';
-                            $("#vitals_blood_pressure").html(dom);
-                        }
-                        if (data.name == 'heart rate') {
-                            // $scope.vitals.heart_rate = data;
-                            var dom = '<a href="#/data/' + data.id + '">P:' + data.mostRecentValue + '</a>';
-                            $("#vitals_heart_rate ").html(dom);
-                        }
+                            if (data.name == 'blood pressure') {
+                                // $scope.vitals.blood_pressure = data;
+                                var dom = '<a href="#/data/' + data.id + '">BP:' + data.mostRecentValue + '</a>';
+                                $("#vitals_blood_pressure").html(dom);
+                            }
+                            if (data.name == 'heart rate') {
+                                // $scope.vitals.heart_rate = data;
+                                var dom = '<a href="#/data/' + data.id + '">P:' + data.mostRecentValue + '</a>';
+                                $("#vitals_heart_rate ").html(dom);
+                            }
                         });
 
                     } else {
@@ -318,9 +318,9 @@
                 $scope.physician_notes = data['physician_notes'];
 
                 $scope.problem_goals = data['problem_goals'];
-                $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'],'accomplished');
+                $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'], 'accomplished');
                 $scope.problem_todos = data['problem_todos'];
-                $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'],'accomplished');
+                $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'], 'accomplished');
 
                 $scope.todos_ready = true;
 
@@ -396,7 +396,7 @@
             });
 
             // delete problem
-            $scope.delete_problem = function() {
+            $scope.delete_problem = function () {
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a problem is forever. There is no undo."
@@ -740,7 +740,7 @@
                 form.problem_id = $scope.problem.id;
                 form.start_date = $scope.problem.start_date;
 
-                if(!moment(form.start_date, "MM/DD/YYYY", true).isValid()) {
+                if (!moment(form.start_date, "MM/DD/YYYY", true).isValid()) {
                     toaster.pop('error', 'Error', 'Please enter a valid date!');
                     return false;
                 }
@@ -855,22 +855,22 @@
                     message: 'Enter due date',
                     input: true,
                     label: 'Due Date',
-                }).then(function(due_date){
-                    if(moment(due_date, "MM/DD/YYYY", true).isValid()) {
+                }).then(function (due_date) {
+                    if (moment(due_date, "MM/DD/YYYY", true).isValid()) {
                         form.due_date = due_date;
-                    } else if(moment(due_date, "M/D/YYYY", true).isValid()) {
+                    } else if (moment(due_date, "M/D/YYYY", true).isValid()) {
                         form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
-                    } else if(moment(due_date, "MM/YYYY", true).isValid()) {
+                    } else if (moment(due_date, "MM/YYYY", true).isValid()) {
                         form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
-                    } else if(moment(due_date, "M/YYYY", true).isValid()) {
+                    } else if (moment(due_date, "M/YYYY", true).isValid()) {
                         form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
-                    } else if(moment(due_date, "MM/DD/YY", true).isValid()) {
+                    } else if (moment(due_date, "MM/DD/YY", true).isValid()) {
                         form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
-                    } else if(moment(due_date, "M/D/YY", true).isValid()) {
+                    } else if (moment(due_date, "M/D/YY", true).isValid()) {
                         form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
-                    } else if(moment(due_date, "MM/YY", true).isValid()) {
+                    } else if (moment(due_date, "MM/YY", true).isValid()) {
                         form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
-                    } else if(moment(due_date, "M/YY", true).isValid()) {
+                    } else if (moment(due_date, "M/YY", true).isValid()) {
                         form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
                     } else {
                         toaster.pop('error', 'Error', 'Please enter a valid date!');
@@ -1150,9 +1150,9 @@
                         toaster.pop('success', 'Done', 'Pinned data!');
                         if (data.inr)
                             $scope.inrs.push(data.inr);
-                        else if (data.remove_inr) 
+                        else if (data.remove_inr)
                             $scope.inrs = [];
-                        
+
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
                     } else {
@@ -1162,13 +1162,13 @@
             };
 
             /*
-            *   medication
-            */
+             *   medication
+             */
             $scope.medications = [];
             patientService.getMedications($scope.patient_id).then(function (data) {
                 if (data['success'] == true) {
                     $scope.medications = data['info'];
-                    $scope.hasPinnedMedication= false;
+                    $scope.hasPinnedMedication = false;
                     problemService.fetchMedicationPinToProblem($scope.problem_id).then(function (data) {
                         $scope.medication_pins = data['pins'];
                         angular.forEach($scope.medications, function (medication, key) {
@@ -1188,7 +1188,7 @@
                 }
             });
 
-            $scope.open_medication = function(medication) {
+            $scope.open_medication = function (medication) {
                 $location.url('/medication/' + medication.id);
             };
 
@@ -1210,7 +1210,7 @@
                     if (data['success'] == true) {
                         var is_pin = false;
                         angular.forEach($scope.medications, function (medication, key) {
-                            if (medication.pin) 
+                            if (medication.pin)
                                 is_pin = true;
                             $scope.hasPinnedMedication = is_pin;
                         });
@@ -1223,12 +1223,11 @@
                 });
             };
 
-            /*
-            *   medication
-            */
-
+            // Get list of document pinned to this problem either directly or via pinned todo.
+            // Refers: https://trello.com/c/nMpto5LO
+            sharedService.getDocumentByProblem($scope.problem_id).then(function (response) {
+                $scope.pinned_document = response.data.documents;
+            })
         });
     /* End of controller */
-
-
 })();
