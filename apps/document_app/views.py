@@ -1,9 +1,13 @@
+from django.db.models import Prefetch
+
 from common.views import *
 from document_app.serializers import *
 from emr.models import Document, DocumentTodo, DocumentProblem, ToDo, Problem, UserProfile
 
-
 #
+from problems_app.serializers import ProblemInfoSerializer
+
+
 @login_required
 def upload_document(request):
     """
@@ -177,5 +181,40 @@ def delete_document(request, document_id):
     if del_in_sys and ["physician", "admin"].__contains__(user.profile.role):
         document.delete()
 
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def document_list_by_problem(request, problem_id):
+    """
+
+    :param request:
+    :param problem_id:
+    :return:
+    """
+    resp = {'success': False}
+
+    # Loading problem info
+    problem_info = Problem.objects.prefetch_related(
+        Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
+    ).get(id=problem_id)
+
+    # Loading document pinned directly to problem
+    document_probs = DocumentProblem.objects.filter(problem=problem_info)
+    document_probs_serialized = DocumentProblemSerialization(document_probs, many=True).data
+    document_probs_list = [doc['document'] for doc in document_probs_serialized]
+    document_probs_pk = [doc['id'] for doc in
+                         document_probs_list]  # Used for remove duplicated document also pinned to the todo
+
+    # Loading document pinned via todo (which is pinned to problem), remove duplicated document already pinned problem.
+    # TODO: Two pinned todos both are pinned same documentation filtering
+    problem_serialized = ProblemInfoSerializer(problem_info).data
+    todos_pk = [todo['id'] for todo in problem_serialized['problem_todos']]
+    document_todos = DocumentTodo.objects.filter(todo_id__in=todos_pk).exclude(document_id__in=document_probs_pk)
+    document_todos_list = [doc['document'] for doc in DocumentTodoSerialization(document_todos, many=True).data]
+
+    # Need remove duplicated and sorted by creation date
+    resp['documents'] = document_probs_list + document_todos_list
     resp['success'] = True
     return ajax_response(resp)

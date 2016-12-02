@@ -1,13 +1,13 @@
 (function () {
 
     'use strict';
-    angular.module('sharedModule', ['ngFileUpload'])
+    angular.module('sharedModule', ['ngFileUpload', 'httpModule'])
         .service('sharedService', sharedService);
 
-    sharedService.$inject = ['$http', '$cookies', 'Upload'];
+    sharedService.$inject = ['$http', '$cookies', 'Upload', 'httpService'];
 
 
-    function sharedService($http, $cookies, Upload) {
+    function sharedService($http, $cookies, Upload, httpService) {
         /**
          * Upload multiple documentation
          * @param files
@@ -59,6 +59,14 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             })
+        };
+
+        /**
+         *
+         * @param problem_id
+         */
+        this.getDocumentByProblem = function (problem_id) {
+            return $http.get('/docs/problem/' + problem_id);
         }
     }
 })();

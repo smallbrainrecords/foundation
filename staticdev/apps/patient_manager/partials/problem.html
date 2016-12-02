@@ -1,40 +1,7 @@
-<style type='text/css'>
-
-    #problem-header {
-
-        z-index: 999;
-        width: 1200px;
-        margin: 0 auto;
-        border-bottom: 1px solid #ccc;
-        padding-top: 7px;
-        padding-bottom: 7px;
-    }
-
-    #problem-header.affix {
-        top: 50px;
-    }
-
-    .problem-controlled {
-        background-color: green;
-        color: white;
-    }
-
-    .problem-uncontrolled {
-        background-color: red;
-        color: white;
-    }
-</style>
+<toaster-container></toaster-container>
 <a href='#/'><b> Manage Patient </b></a>
-
 <div ng-if="!checkSharedProblem(problem, sharing_patients) && !loading">You can not access this page</div>
 <div ng-if="checkSharedProblem(problem, sharing_patients)">
-
-    <!--<span class='text-default'>-->
-    <!--<i class='glyphicon glyphicon-menu-right'></i>-->
-    <!--</span>-->
-    <!--<span class='text-muted'><b>  Problem: {{ problem.problem_name }} <span ng-if="problem && !problem.authenticated">(not authenticated)</span></b></span>-->
-    <!--<hr>-->
-
     <div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100'
          ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'
          ng-init="edit_problem=false;">
@@ -245,7 +212,6 @@
 
     <hr>
 
-    <toaster-container></toaster-container>
 
     <div class='row'>
 
@@ -864,11 +830,23 @@
         </div>
     </div>
 
-    <script type='text/javascript'>
-        /* To BE REPLACED BY ANGULARJS DIRECTIVE */
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <p>List of pinned documents</p>
+                </div>
+                <div class="panel-body">
+                    <ul class="ul-clean no-padding">
+                        <li ng-repeat="doc in pinned_document track by $index">
+                            <p ng-bind="doc.filename"></p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
-
-    </script>
 
     <script type='text/javascript'>
 

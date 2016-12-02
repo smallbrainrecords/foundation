@@ -175,6 +175,7 @@ body {
     vertical-align: inherit;
     width: 24px; }
 
+<<<<<<< HEAD
 a.btn-manage {
   margin-bottom: 20px; }
 
@@ -192,6 +193,28 @@ a.btn-manage {
   border: 5px dashed blue; }
 
 .btn-remove {
+=======
+#problem-header {
+  z-index: 999;
+  width: 1200px;
+  margin: 0 auto;
+  border-bottom: 1px solid #ccc;
+  padding-top: 7px;
+  padding-bottom: 7px; }
+
+#problem-header.affix {
+  top: 50px; }
+
+.problem-controlled {
+  background-color: green;
+  color: white; }
+
+.problem-uncontrolled {
+  background-color: red;
+  color: white; }
+
+.panel-heading {
+>>>>>>> 45c2c2f45313e3331ad55abfdbdb6e04dcc488dc
   cursor: pointer; }
 
 /*# sourceMappingURL=patient-profile.css.map */
