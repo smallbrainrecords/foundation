@@ -95,16 +95,18 @@
                 $scope.show_pin_to_new_problem = !$scope.show_pin_to_new_problem;
             };
 
-            $scope.data_pin_to_problem = function (data_id, problem_id) {
+            $scope.data_pin_to_problem = function (index, data_id, problem_id) {
                 var form = {};
                 form.data_id = data_id;
                 form.problem_id = problem_id;
-
                 dataService.dataPinToProblem($scope.patient_id, form).then(function (data) {
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Pinned problem!');
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    } else if(data['success']=="notallow"){
+                        toaster.pop('error', 'Error', 'You can\'t  unpin this data!');
+                        $scope.problems[index].pin = true;
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }

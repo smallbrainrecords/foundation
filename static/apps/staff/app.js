@@ -1,14 +1,14 @@
-(function(){
+(function () {
 
-	'use strict';
-
-
-	var StaffApp = angular.module( 'StaffApp', 
-        ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize',
-        'dndLists', 'ui.sortable', 'todos', 'angular-click-outside', 'mgcrea.ngStrap', 'pickadate', 'cgPrompt']);
+    'use strict';
 
 
-    StaffApp.config(function($routeProvider) {
+    var StaffApp = angular.module('StaffApp',
+        ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster', 'ngAnimate', 'ngSanitize', 'ngFileUpload',
+            'dndLists', 'ui.sortable','ui.bootstrap' ,'todos', 'angular-click-outside', 'pickadate', 'cgPrompt']);
+
+
+    StaffApp.config(function ($routeProvider) {
 
         $routeProvider
             .when('/', {
@@ -39,10 +39,15 @@
 
                 templateUrl: '/static/apps/staff/partials/manage_common_problems.html',
                 controller: 'ManageCommonProblemCtrl'
+            })
+            .when('/manage/upload_documents', {
+                templateUrl: '/static/apps/staff/partials/upload_documents.html',
+                controller: 'UploadDocumentsCtrl'
+            })
+            .when('/manage/tag_document/:documentId', {
+                templateUrl: '/static/apps/staff/partials/tag_document.html',
+                controller: 'TagDocumentCtrl'
             });
-
-
     });
-
 
 })();
