@@ -12,10 +12,10 @@ COMPRESS_ENABLED = False
 
 SNOMEDCT = {
         'snomedct': {
-            'ssl': {'key':'/home/kevin_perdue/client-key.pem','cert':'/home/kevin_perdue/client-cert.pem','ca':'/home/kevin_perdue/server-ca.pem'},
-            'host':'104.198.68.134',
-            'user':'smallbrain_app',
-            'passwd':'Waukap00k@-21-6',
+            'ssl': {'key':'/path/to/key','cert':'/path/to/cert','ca':'/path/to/ca'},
+            'host':'host',
+            'user':'user',
+            'passwd':'passwd',
             'db':'snomedct',
          }
 }
@@ -23,12 +23,12 @@ SNOMEDCT = {
 DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-            'NAME': 'vestalbeast',                      # Or path to database file if using sqlite3.
-            'USER': 'smallbrain_app',                      # Not used with sqlite3.
-            'PASSWORD': 'Waukap00k@-21-6',                  # Not used with sqlite3.
-            'HOST': '104.198.68.134',                      # Set to empty string for localhost. Not used with sqlite3.
-            'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
-            'OPTIONS': {'ssl':{'key':'/home/kevin_perdue/client-key.pem','cert':'/home/kevin_perdue/client-cert.pem','ca':'/home/kevin_perdue/server-ca.pem'}},
+            'NAME': 'NAME',                      # Or path to database file if using sqlite3.
+            'USER': 'USER',                      # Not used with sqlite3.
+            'PASSWORD': 'PASSWORD',                  # Not used with sqlite3.
+            'HOST': 'HOST',                      # Set to empty string for localhost. Not used with sqlite3.
+            'PORT': 'PORT',                      # Set to empty string for default. Not used with sqlite3.
+            'OPTIONS': {'ssl':{'key':'/path/to/key','cert':'/path/to/cert','ca':'/path/to/ca'}},
         }
     }
 
