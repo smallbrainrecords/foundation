@@ -1,0 +1,48 @@
+<center>
+    <h3>
+        <a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
+    </h3>
+</center>
+<hr>
+
+<center><h3> Tag documents</h3></center>
+<hr>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6">
+            <b>Document name: </b>(<span ng-bind="document.patient.user.first_name"></span> <span ng-bind="document.patient.user.last_name"></span>) <span ng-bind="document.filename"></span> <br>
+        </div>
+        <div class="col-md-6">
+            <input type="text"
+                   ng-if="document.author.id != document.patient.id"
+                   class="form-control"
+                   ng-model="patient"
+                   uib-typeahead="patient as patient.full_name for patient in getPatients($viewValue)"
+                   typeahead-on-select="pinPatient2Document($item, $model, $label, $event) "
+                   placeholder="Type patient name to search">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <h1>List of active todo</h1>
+            <p ng-if="active_todos.length ==0">No active todo</p>
+            <ul ng-if="active_todos.length != 0">
+                <li ng-repeat="todo in active_todos track by $index">
+                    <span ng-bind="todo.todo"></span>
+                    <button ng-click="pinTodo2Document(document,todo)" class="btn btn-default right">Pin</button>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h1>List of pinable problem</h1>
+            <p ng-if="active_probs.length ==0">No problems</p>
+            <ul ng-if="active_probs.length != 0">
+                <li ng-repeat="prob in active_probs track by $index | filter : prob.is_active">
+                    <span ng-bind="prob.problem_name"></span>
+                    <button ng-click="pinProblem2Document(document,prob)" class="btn btn-default right">Pin</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
