@@ -15,6 +15,7 @@ class DocumentSerialization(serializers.ModelSerializer):
             'id',
             'author',
             'filename',
+            'file_mime_type',
             'patient',
             'document',
             'created_on'

@@ -1,3 +1,4 @@
+import mimetypes
 import os
 import ast
 from django.db import models
@@ -564,6 +565,7 @@ class TodoActivity(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     comment = models.ForeignKey(ToDoComment, null=True, blank=True)
     attachment = models.ForeignKey(ToDoAttachment, null=True, blank=True)
+
     class Meta:
         ordering = ['-created_on']
 
@@ -973,6 +975,10 @@ class Document(models.Model):
         name, extension = os.path.splitext(self.document.name)
         extension = extension.replace('.', '')
         return extension
+
+    def file_mime_type(self):
+        mime = mimetypes.guess_type(self.document.path)
+        return mime
 
 
 class DocumentTodo(models.Model):
