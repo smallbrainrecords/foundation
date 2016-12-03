@@ -4,15 +4,12 @@
     </h3>
 </center>
 <hr>
-
-<center><h3> Tag documents</h3></center>
-<hr>
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-6">
-            <b>Document name: </b>(<span ng-bind="document.patient.user.first_name"></span> <span
-                ng-bind="document.patient.user.last_name"></span>) <span ng-bind="document.filename"></span> <br>
+            <b>Document name: </b><span ng-bind="document.filename"></span> (<span
+                ng-bind="document.patient.user.first_name"></span> <span
+                ng-bind="document.patient.user.last_name"></span>) <br>
         </div>
         <div class="col-md-6">
             <input type="text"
@@ -25,6 +22,15 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col-md-12">
+            <div ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list">
+                <a class="todo-label" ng-class="label.css_class" ng-bind="label.name"
+                   ng-click="add_label_to_document(document, label)">
+                </a>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-12">
             <view-file uri="document.document"

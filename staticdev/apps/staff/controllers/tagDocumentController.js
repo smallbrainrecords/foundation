@@ -27,6 +27,8 @@
 
         documentService.getDocumentInfo($routeParams.documentId).then(function (resp) {
             $scope.document = resp.data.info;
+            $scope.labels = resp.data.labels;
+
             if (resp.data.info.patient != null) {
                 var patientId = resp.data.info.patient.user.id;
                 getPatientInfo(patientId);
@@ -77,5 +79,15 @@
 
                 })
         };
+
+
+        /**
+         * TODO: Attach a label to current document
+         * @param document
+         * @param label
+         */
+        $scope.add_label_to_document = function (document, label) {
+
+        }
     }
 })();
