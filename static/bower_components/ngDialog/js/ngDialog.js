@@ -7,7 +7,12 @@
 (function (root, factory) {
     if (typeof module !== 'undefined' && module.exports) {
         // CommonJS
-        module.exports = factory(require('angular'));
+        if (typeof angular === 'undefined') {
+            factory(require('angular'));
+        } else {
+            factory(angular);
+        }
+        module.exports = 'ngDialog';
     } else if (typeof define === 'function' && define.amd) {
         // AMD
         define(['angular'], factory);
@@ -26,14 +31,19 @@
     var animationEndSupport = isDef(style.animation) || isDef(style.WebkitAnimation) || isDef(style.MozAnimation) || isDef(style.MsAnimation) || isDef(style.OAnimation);
     var animationEndEvent = 'animationend webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend';
     var focusableElementSelector = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, *[tabindex], *[contenteditable]';
-    var forceBodyReload = false;
+    var disabledAnimationClass = 'ngdialog-disabled-animation';
+    var forceElementsReload = { html: false, body: false };
     var scopes = {};
     var openIdStack = [];
     var keydownIsBound = false;
+    var openOnePerName = false;
+
 
     m.provider('ngDialog', function () {
         var defaults = this.defaults = {
             className: 'ngdialog-theme-default',
+            appendClassName: '',
+            disableAnimation: false,
             plain: false,
             showClose: true,
             closeByDocument: true,
@@ -50,27 +60,33 @@
             ariaLabelledById: null,
             ariaLabelledBySelector: null,
             ariaDescribedById: null,
-            ariaDescribedBySelector: null
+            ariaDescribedBySelector: null,
+            bodyClassName: 'ngdialog-open',
+            width: null,
+            height: null
+        };
+
+        this.setForceHtmlReload = function (_useIt) {
+            forceElementsReload.html = _useIt || false;
         };
 
         this.setForceBodyReload = function (_useIt) {
-            forceBodyReload = _useIt || false;
+            forceElementsReload.body = _useIt || false;
         };
 
         this.setDefaults = function (newDefaults) {
             angular.extend(defaults, newDefaults);
         };
 
+        this.setOpenOnePerName = function (isOpenOne) {
+            openOnePerName = isOpenOne || false;
+        };
+
         var globalID = 0, dialogsCount = 0, closeByDocumentHandler, defers = {};
 
         this.$get = ['$document', '$templateCache', '$compile', '$q', '$http', '$rootScope', '$timeout', '$window', '$controller', '$injector',
             function ($document, $templateCache, $compile, $q, $http, $rootScope, $timeout, $window, $controller, $injector) {
-                var $body = $document.find('body');
-                if (forceBodyReload) {
-                    $rootScope.$on('$locationChangeSuccess', function () {
-                        $body = $document.find('body');
-                    });
-                }
+                var $elements = [];
 
                 var privateMethods = {
                     onDocumentKeydown: function (event) {
@@ -86,38 +102,41 @@
                             $dialog.on('keydown', privateMethods.onTrapFocusKeydown);
 
                             // Catch rogue changes (eg. after unfocusing everything by clicking a non-focusable element)
-                            $body.on('keydown', privateMethods.onTrapFocusKeydown);
+                            $elements.body.on('keydown', privateMethods.onTrapFocusKeydown);
                         }
                     },
 
                     deactivate: function ($dialog) {
                         $dialog.off('keydown', privateMethods.onTrapFocusKeydown);
-                        $body.off('keydown', privateMethods.onTrapFocusKeydown);
+                        $elements.body.off('keydown', privateMethods.onTrapFocusKeydown);
                     },
 
-                    deactivateAll: function () {
-                        angular.forEach(function(el) {
+                    deactivateAll: function (els) {
+                        angular.forEach(els,function(el) {
                             var $dialog = angular.element(el);
                             privateMethods.deactivate($dialog);
                         });
                     },
 
                     setBodyPadding: function (width) {
-                        var originalBodyPadding = parseInt(($body.css('padding-right') || 0), 10);
-                        $body.css('padding-right', (originalBodyPadding + width) + 'px');
-                        $body.data('ng-dialog-original-padding', originalBodyPadding);
+                        var originalBodyPadding = parseInt(($elements.body.css('padding-right') || 0), 10);
+                        $elements.body.css('padding-right', (originalBodyPadding + width) + 'px');
+                        $elements.body.data('ng-dialog-original-padding', originalBodyPadding);
+                        $rootScope.$broadcast('ngDialog.setPadding', width);
                     },
 
                     resetBodyPadding: function () {
-                        var originalBodyPadding = $body.data('ng-dialog-original-padding');
+                        var originalBodyPadding = $elements.body.data('ng-dialog-original-padding');
                         if (originalBodyPadding) {
-                            $body.css('padding-right', originalBodyPadding + 'px');
+                            $elements.body.css('padding-right', originalBodyPadding + 'px');
                         } else {
-                            $body.css('padding-right', '');
+                            $elements.body.css('padding-right', '');
                         }
+                        $rootScope.$broadcast('ngDialog.setPadding', 0);
                     },
 
                     performCloseDialog: function ($dialog, value) {
+                        var options = $dialog.data('$ngDialogOptions');
                         var id = $dialog.attr('id');
                         var scope = scopes[id];
 
@@ -136,7 +155,7 @@
                         }
 
                         if (dialogsCount === 1) {
-                            $body.unbind('keydown');
+                            $elements.body.unbind('keydown', privateMethods.onDocumentKeydown);
                         }
 
                         if (!$dialog.hasClass('ngdialog-closing')){
@@ -144,30 +163,20 @@
                         }
 
                         var previousFocus = $dialog.data('$ngDialogPreviousFocus');
-                        if (previousFocus) {
+                        if (previousFocus && previousFocus.focus) {
                             previousFocus.focus();
                         }
 
-                        $rootScope.$broadcast('ngDialog.closing', $dialog);
+                        $rootScope.$broadcast('ngDialog.closing', $dialog, value);
                         dialogsCount = dialogsCount < 0 ? 0 : dialogsCount;
-                        if (animationEndSupport) {
+                        if (animationEndSupport && !options.disableAnimation) {
                             scope.$destroy();
                             $dialog.unbind(animationEndEvent).bind(animationEndEvent, function () {
-                                $dialog.remove();
-                                if (dialogsCount === 0) {
-                                    $body.removeClass('ngdialog-open');
-                                    privateMethods.resetBodyPadding();
-                                }
-                                $rootScope.$broadcast('ngDialog.closed', $dialog);
+                                privateMethods.closeDialogElement($dialog, value);
                             }).addClass('ngdialog-closing');
                         } else {
                             scope.$destroy();
-                            $dialog.remove();
-                            if (dialogsCount === 0) {
-                                $body.removeClass('ngdialog-open');
-                                privateMethods.resetBodyPadding();
-                            }
-                            $rootScope.$broadcast('ngDialog.closed', $dialog);
+                            privateMethods.closeDialogElement($dialog, value);
                         }
                         if (defers[id]) {
                             defers[id].resolve({
@@ -183,9 +192,20 @@
                         }
                         openIdStack.splice(openIdStack.indexOf(id), 1);
                         if (!openIdStack.length) {
-                            $body.unbind('keydown', privateMethods.onDocumentKeydown);
+                            $elements.body.unbind('keydown', privateMethods.onDocumentKeydown);
                             keydownIsBound = false;
                         }
+                    },
+
+                    closeDialogElement: function($dialog, value) {
+                        var options = $dialog.data('$ngDialogOptions');
+                        $dialog.remove();
+                        if (dialogsCount === 0) {
+                            $elements.html.removeClass(options.bodyClassName);
+                            $elements.body.removeClass(options.bodyClassName);
+                            privateMethods.resetBodyPadding();
+                        }
+                        $rootScope.$broadcast('ngDialog.closed', $dialog, value);
                     },
 
                     closeDialog: function ($dialog, value) {
@@ -199,16 +219,20 @@
                                 if (preCloseCallbackResult.closePromise) {
                                     preCloseCallbackResult.closePromise.then(function () {
                                         privateMethods.performCloseDialog($dialog, value);
+                                    }, function () {
+                                        return false;
                                     });
                                 } else {
                                     preCloseCallbackResult.then(function () {
                                         privateMethods.performCloseDialog($dialog, value);
                                     }, function () {
-                                        return;
+                                        return false;
                                     });
                                 }
                             } else if (preCloseCallbackResult !== false) {
                                 privateMethods.performCloseDialog($dialog, value);
+                            } else {
+                                return false;
                             }
                         } else {
                             privateMethods.performCloseDialog($dialog, value);
@@ -241,7 +265,7 @@
                         var focusableElements = privateMethods.getFocusableElements($dialog);
 
                         if (focusableElements.length === 0) {
-                            if (document.activeElement) {
+                            if (document.activeElement && document.activeElement.blur) {
                                 document.activeElement.blur();
                             }
                             return;
@@ -311,7 +335,24 @@
 
                         var rawElements = dialogEl.querySelectorAll(focusableElementSelector);
 
-                        return privateMethods.filterVisibleElements(rawElements);
+                        // Ignore untabbable elements, ie. those with tabindex = -1
+                        var tabbableElements = privateMethods.filterTabbableElements(rawElements);
+
+                        return privateMethods.filterVisibleElements(tabbableElements);
+                    },
+
+                    filterTabbableElements: function (els) {
+                        var tabbableFocusableElements = [];
+
+                        for (var i = 0; i < els.length; i++) {
+                            var el = els[i];
+
+                            if ($el(el).attr('tabindex') !== '-1') {
+                                tabbableFocusableElements.push(el);
+                            }
+                        }
+
+                        return tabbableFocusableElements;
                     },
 
                     filterVisibleElements: function (els) {
@@ -391,10 +432,28 @@
 
                             return generatedId;
                         }
+                    },
+
+                    detectUIRouter: function() {
+                        //Detect if ui-router module is installed if not return false
+                        try {
+                            angular.module('ui.router');
+                            return true;
+                        } catch(err) {
+                            return false;
+                        }
+                    },
+
+                    getRouterLocationEventName: function() {
+                        if(privateMethods.detectUIRouter()) {
+                            return '$stateChangeStart';
+                        }
+                        return '$locationChangeStart';
                     }
                 };
 
                 var publicMethods = {
+                    __PRIVATE__: privateMethods,
 
                     /*
                      * @param {Object} options:
@@ -404,20 +463,37 @@
                      * - controller {String}
                      * - controllerAs {String}
                      * - className {String} - dialog theme class
+                     * - appendClassName {String} - dialog theme class to be appended to defaults
+                     * - disableAnimation {Boolean} - set to true to disable animation
                      * - showClose {Boolean} - show close button, default true
                      * - closeByEscape {Boolean} - default true
                      * - closeByDocument {Boolean} - default true
                      * - preCloseCallback {String|Function} - user supplied function name/function called before closing dialog (if set)
-                     *
+                     * - bodyClassName {String} - class added to body at open dialog
                      * @return {Object} dialog
                      */
                     open: function (opts) {
+                        var dialogID = null;
+                        opts = opts || {};
+                        if (openOnePerName && opts.name) {
+                            dialogID = opts.name.toLowerCase().replace(/\s/g, '-') + '-dialog';
+                            if (this.isOpen(dialogID)) {
+                                return;
+                            }
+                        }
                         var options = angular.copy(defaults);
                         var localID = ++globalID;
-                        var dialogID = 'ngdialog' + localID;
+                        dialogID = dialogID || 'ngdialog' + localID;
                         openIdStack.push(dialogID);
 
-                        opts = opts || {};
+                        // Merge opts.data with predefined via setDefaults
+                        if (typeof options.data !== 'undefined') {
+                            if (typeof opts.data === 'undefined') {
+                                opts.data = {};
+                            }
+                            opts.data = angular.merge(angular.copy(options.data), opts.data);
+                        }
+
                         angular.extend(options, opts);
 
                         var defer;
@@ -426,7 +502,7 @@
                         var scope;
                         scopes[dialogID] = scope = angular.isObject(options.scope) ? options.scope.$new() : $rootScope.$new();
 
-                        var $dialog, $dialogParent;
+                        var $dialog, $dialogParent, $dialogContent;
 
                         var resolve = angular.extend({}, options.resolve);
 
@@ -441,51 +517,63 @@
                             var template = setup.template,
                                 locals = setup.locals;
 
-                            $templateCache.put(options.template || options.templateUrl, template);
-
                             if (options.showClose) {
                                 template += '<div class="ngdialog-close"></div>';
                             }
 
-                            $dialog = $el('<div id="ngdialog' + localID + '" class="ngdialog"></div>');
+                            var hasOverlayClass = options.overlay ? '' : ' ngdialog-no-overlay';
+                            $dialog = $el('<div id="' + dialogID + '" class="ngdialog' + hasOverlayClass + '"></div>');
                             $dialog.html((options.overlay ?
                                 '<div class="ngdialog-overlay"></div><div class="ngdialog-content" role="document">' + template + '</div>' :
                                 '<div class="ngdialog-content" role="document">' + template + '</div>'));
 
                             $dialog.data('$ngDialogOptions', options);
 
+                            scope.ngDialogId = dialogID;
+
                             if (options.data && angular.isString(options.data)) {
                                 var firstLetter = options.data.replace(/^\s*/, '')[0];
-                                scope.ngDialogData = (firstLetter === '{' || firstLetter === '[') ? angular.fromJson(options.data) : options.data;
+                                scope.ngDialogData = (firstLetter === '{' || firstLetter === '[') ? angular.fromJson(options.data) : new String(options.data);
+                                scope.ngDialogData.ngDialogId = dialogID;
                             } else if (options.data && angular.isObject(options.data)) {
                                 scope.ngDialogData = options.data;
-                            }
-
-                            if (options.controller && (angular.isString(options.controller) || angular.isArray(options.controller) || angular.isFunction(options.controller))) {
-
-                                var ctrl = options.controller;
-                                if (options.controllerAs && angular.isString(options.controllerAs)) {
-                                    ctrl += ' as ' + options.controllerAs;
-                                }
-
-                                var controllerInstance = $controller(ctrl, angular.extend(
-                                    locals,
-                                    {
-                                        $scope: scope,
-                                        $element: $dialog
-                                    }
-                                ));
-                                $dialog.data('$ngDialogControllerController', controllerInstance);
+                                scope.ngDialogData.ngDialogId = dialogID;
                             }
 
                             if (options.className) {
                                 $dialog.addClass(options.className);
                             }
 
+                            if (options.appendClassName) {
+                                $dialog.addClass(options.appendClassName);
+                            }
+
+                            if (options.width) {
+                                $dialogContent = $dialog[0].querySelector('.ngdialog-content');
+                                if (angular.isString(options.width)) {
+                                    $dialogContent.style.width = options.width;
+                                } else {
+                                    $dialogContent.style.width = options.width + 'px';
+                                }
+                            }
+
+                            if (options.height) {
+                                $dialogContent = $dialog[0].querySelector('.ngdialog-content');
+                                if (angular.isString(options.height)) {
+                                    $dialogContent.style.height = options.height;
+                                } else {
+                                    $dialogContent.style.height = options.height + 'px';
+                                }
+                            }
+
+                            if (options.disableAnimation) {
+                                $dialog.addClass(disabledAnimationClass);
+                            }
+
                             if (options.appendTo && angular.isString(options.appendTo)) {
                                 $dialogParent = angular.element(document.querySelector(options.appendTo));
                             } else {
-                                $dialogParent = $body;
+                                $dialogParent = $elements.body;
                             }
 
                             privateMethods.applyAriaAttributes($dialog, options);
@@ -516,14 +604,44 @@
                                 privateMethods.closeDialog($dialog, value);
                             };
 
+                            if (options.controller && (angular.isString(options.controller) || angular.isArray(options.controller) || angular.isFunction(options.controller))) {
+
+                                var label;
+
+                                if (options.controllerAs && angular.isString(options.controllerAs)) {
+                                    label = options.controllerAs;
+                                }
+
+                                var controllerInstance = $controller(options.controller, angular.extend(
+                                    locals,
+                                    {
+                                        $scope: scope,
+                                        $element: $dialog
+                                    }),
+                                    true,
+                                    label
+                                );
+
+                                if(options.bindToController) {
+                                    angular.extend(controllerInstance.instance, {ngDialogId: scope.ngDialogId, ngDialogData: scope.ngDialogData, closeThisDialog: scope.closeThisDialog, confirm: scope.confirm});
+                                }
+
+                                if(typeof controllerInstance === 'function'){
+                                    $dialog.data('$ngDialogControllerController', controllerInstance());
+                                } else {
+                                    $dialog.data('$ngDialogControllerController', controllerInstance);
+                                }
+                            }
+
                             $timeout(function () {
                                 var $activeDialogs = document.querySelectorAll('.ngdialog');
                                 privateMethods.deactivateAll($activeDialogs);
 
                                 $compile($dialog)(scope);
-                                var widthDiffs = $window.innerWidth - $body.prop('clientWidth');
-                                $body.addClass('ngdialog-open');
-                                var scrollBarWidth = widthDiffs - ($window.innerWidth - $body.prop('clientWidth'));
+                                var widthDiffs = $window.innerWidth - $elements.body.prop('clientWidth');
+                                $elements.html.addClass(options.bodyClassName);
+                                $elements.body.addClass(options.bodyClassName);
+                                var scrollBarWidth = widthDiffs - ($window.innerWidth - $elements.body.prop('clientWidth'));
                                 if (scrollBarWidth > 0) {
                                     privateMethods.setBodyPadding(scrollBarWidth);
                                 }
@@ -543,13 +661,15 @@
                             });
 
                             if (!keydownIsBound) {
-                                $body.bind('keydown', privateMethods.onDocumentKeydown);
+                                $elements.body.bind('keydown', privateMethods.onDocumentKeydown);
                                 keydownIsBound = true;
                             }
 
                             if (options.closeByNavigation) {
-                                $rootScope.$on('$locationChangeSuccess', function () {
-                                    privateMethods.closeDialog($dialog);
+                                var eventName = privateMethods.getRouterLocationEventName();
+                                $rootScope.$on(eventName, function ($event) {
+                                    if (privateMethods.closeDialog($dialog) === false)
+                                        $event.preventDefault();
                                 });
                             }
 
@@ -587,7 +707,9 @@
                         };
 
                         function loadTemplateUrl (tmpl, config) {
+                            $rootScope.$broadcast('ngDialog.templateLoading', tmpl);
                             return $http.get(tmpl, (config || {})).then(function(res) {
+                                $rootScope.$broadcast('ngDialog.templateLoaded', tmpl);
                                 return res.data || '';
                             });
                         }
@@ -605,7 +727,7 @@
                                 return loadTemplateUrl(tmpl, {cache: false});
                             }
 
-                            return $templateCache.get(tmpl) || loadTemplateUrl(tmpl, {cache: true});
+                            return loadTemplateUrl(tmpl, {cache: $templateCache});
                         }
                     },
 
@@ -618,20 +740,29 @@
                      * - controller {String}
                      * - controllerAs {String}
                      * - className {String} - dialog theme class
+                     * - appendClassName {String} - dialog theme class to be appended to defaults
                      * - showClose {Boolean} - show close button, default true
                      * - closeByEscape {Boolean} - default false
                      * - closeByDocument {Boolean} - default false
                      * - preCloseCallback {String|Function} - user supplied function name/function called before closing dialog (if set); not called on confirm
+                     * - bodyClassName {String} - class added to body at open dialog
                      *
                      * @return {Object} dialog
                      */
                     openConfirm: function (opts) {
                         var defer = $q.defer();
+                        var options = angular.copy(defaults);
 
-                        var options = {
-                            closeByEscape: false,
-                            closeByDocument: false
-                        };
+                        opts = opts || {};
+
+                        // Merge opts.data with predefined via setDefaults
+                        if (typeof options.data !== 'undefined') {
+                            if (typeof opts.data === 'undefined') {
+                                opts.data = {};
+                            }
+                            opts.data = angular.merge(angular.copy(options.data), opts.data);
+                        }
+
                         angular.extend(options, opts);
 
                         options.scope = angular.isObject(options.scope) ? options.scope.$new() : $rootScope.$new();
@@ -642,14 +773,15 @@
                         };
 
                         var openResult = publicMethods.open(options);
-                        openResult.closePromise.then(function (data) {
-                            if (data) {
-                                return defer.reject(data.value);
-                            }
-                            return defer.reject();
-                        });
-
-                        return defer.promise;
+                        if (openResult) {
+                            openResult.closePromise.then(function (data) {
+                                if (data) {
+                                    return defer.reject(data.value);
+                                }
+                                return defer.reject();
+                            });
+                            return defer.promise;
+                        }
                     },
 
                     isOpen: function(id) {
@@ -671,8 +803,10 @@
                                 var topDialogId = openIdStack[openIdStack.length - 1];
                                 $dialog = $el(document.getElementById(topDialogId));
                                 if ($dialog.data('$ngDialogOptions').closeByEscape) {
-                                    privateMethods.closeDialog($dialog, value);
+                                    privateMethods.closeDialog($dialog, '$escape');
                                 }
+                            } else {
+                                publicMethods.closeAll(value);
                             }
                         }
 
@@ -689,10 +823,27 @@
                         }
                     },
 
+                    getOpenDialogs: function() {
+                        return openIdStack;
+                    },
+
                     getDefaults: function () {
                         return defaults;
                     }
                 };
+
+                angular.forEach(
+                    ['html', 'body'],
+                    function(elementName) {
+                        $elements[elementName] = $document.find(elementName);
+                        if (forceElementsReload[elementName]) {
+                            var eventName = privateMethods.getRouterLocationEventName();
+                            $rootScope.$on(eventName, function () {
+                                $elements[elementName] = $document.find(elementName);
+                            });
+                        }
+                    }
+                );
 
                 return publicMethods;
             }];
@@ -716,14 +867,18 @@
                     ngDialog.open({
                         template: attrs.ngDialog,
                         className: attrs.ngDialogClass || defaults.className,
+                        appendClassName: attrs.ngDialogAppendClass,
                         controller: attrs.ngDialogController,
                         controllerAs: attrs.ngDialogControllerAs,
+                        bindToController: attrs.ngDialogBindToController,
                         scope: ngDialogScope,
                         data: attrs.ngDialogData,
                         showClose: attrs.ngDialogShowClose === 'false' ? false : (attrs.ngDialogShowClose === 'true' ? true : defaults.showClose),
                         closeByDocument: attrs.ngDialogCloseByDocument === 'false' ? false : (attrs.ngDialogCloseByDocument === 'true' ? true : defaults.closeByDocument),
                         closeByEscape: attrs.ngDialogCloseByEscape === 'false' ? false : (attrs.ngDialogCloseByEscape === 'true' ? true : defaults.closeByEscape),
-                        preCloseCallback: attrs.ngDialogPreCloseCallback || defaults.preCloseCallback
+                        overlay: attrs.ngDialogOverlay === 'false' ? false : (attrs.ngDialogOverlay === 'true' ? true : defaults.overlay),
+                        preCloseCallback: attrs.ngDialogPreCloseCallback || defaults.preCloseCallback,
+                        bodyClassName: attrs.ngDialogBodyClass || defaults.bodyClassName
                     });
                 });
             }

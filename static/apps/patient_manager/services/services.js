@@ -1,375 +1,403 @@
-(function(){
+(function () {
 
-	'use strict';
+    'use strict';
 
 
-	angular.module('ManagerApp').service('patientService',
-		function($http, $q, $cookies){
+    angular.module('ManagerApp').service('patientService',
+        function ($http, $q, $cookies, httpService) {
 
 
+            this.csrf_token = function () {
 
-		this.csrf_token = function(){
+                var token = $cookies.get('csrftoken');
+                return token;
+            };
 
-			var token = $cookies.csrftoken;
-			return token;
-		};
+            this.fetchPatientInfo = function (patient_id) {
 
-		this.fetchPatientInfo = function(patient_id){
+                var params = {};
+                var url = '/u/patient/' + patient_id + '/info';
 
-			var deferred = $q.defer();
+                return httpService.get(params, url);
 
-			$http({
-				"method":"GET",
-				"url" : "/u/patient/"+patient_id+"/info",
-			}).success(function(data){
+            };
 
-				deferred.resolve(data);
+            this.fetchTimeLineProblem = function (patient_id) {
 
-			}).error(function(data){
+                var params = {};
+                var url = '/u/patient/' + patient_id + '/timelineinfo';
 
-				deferred.resolve(data);
-			})
+                return httpService.get(params, url);
 
-			return deferred.promise;
-		};
+            };
 
+            this.fetchPatientTodos = function (patient_id) {
 
-		this.fetchProblemInfo = function(problem_id){
+                var params = {};
+                var url = '/u/patient/' + patient_id + '/patient_todos_info';
 
-			var deferred = $q.defer();
+                return httpService.get(params, url);
 
-			$http({
-				"method":"GET",
-				"url" : "/p/problem/"+problem_id+"/info",
-			}).success(function(data){
+            };
 
-				deferred.resolve(data);
 
-			}).error(function(data){
+            this.fetchProblemInfo = function (problem_id) {
 
-				deferred.resolve(data);
-			})
+                var url = "/p/problem/" + problem_id + "/info";
+                var params = {};
 
-			return deferred.promise;
-		};
+                return httpService.get(params, url);
 
+            };
 
-		this.fetchGoalInfo = function(goal_id){
-			var deferred = $q.defer();
 
-			$http({
-				"method":"GET",
-				"url" : "/g/goal/"+goal_id+"/info",
-			}).success(function(data){
+            this.fetchGoalInfo = function (goal_id) {
 
-				deferred.resolve(data);
+                var url = "/g/goal/" + goal_id + "/info";
+                var params = {};
 
-			}).error(function(data){
+                return httpService.get(params, url);
+            };
 
-				deferred.resolve(data);
-			})
 
-			return deferred.promise;
-		};
+            this.fetchEncounterInfo = function (encounter_id) {
 
+                var url = "/enc/encounter/" + encounter_id + "/info";
+                var params = {};
 
-		this.fetchEncounterInfo = function(encounter_id){
-			var deferred = $q.defer();
+                return httpService.get(params, url);
 
-			$http({
-				"method":"GET",
-				"url" : "/enc/encounter/"+encounter_id+"/info",
-			}).success(function(data){
 
-				deferred.resolve(data);
+            };
 
-			}).error(function(data){
 
-				deferred.resolve(data);
-			})
+            this.getEncounterStatus = function (patient_id) {
 
-			return deferred.promise;
-		};
+                var url = "/enc/patient/" + patient_id + "/encounter/status";
+                var params = {};
 
+                return httpService.get(params, url);
 
 
-		this.getEncounterStatus = function(patient_id){
+            };
 
-			var deferred = $q.defer();
+            this.startNewEncounter = function (patient_id) {
 
-			$http({
-				"method":"GET",
-				"url" : "/enc/patient/"+patient_id+"/encounter/status",
-			}).success(function(data){
 
-				deferred.resolve(data);
+                var url = '/enc/patient/' + patient_id + '/encounter/start';
+                var form = {'patient_id': patient_id};
 
-			}).error(function(data){
+                return httpService.post(form, url);
 
-				deferred.resolve(data);
-			})
 
-			return deferred.promise;
+            };
 
-		};
 
-		this.startNewEncounter = function(patient_id){
+            this.stopEncounter = function (encounter_id) {
 
-		var deferred = $q.defer();
+                var url = "/enc/encounter/" + encounter_id + "/stop";
+                var params = {};
 
+                return httpService.get(params, url);
 
-		var data = {
-			'patient_id':patient_id,
-			'csrfmiddlewaretoken':this.csrf_token()
-		}
 
-		$http({
+            };
 
-			'method':'POST',
-			'url' : '/enc/patient/'+patient_id+'/encounter/start',
-			'data' : $.param(data),
-			'headers':
-			{
-				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-			}
-		}).success(function(data){
 
-			deferred.resolve(data);
+            this.addEventSummary = function (form) {
 
-		}).error(function(data){
-			deferred.resolve(data);
-		});
+                var url = '/enc/encounter/add/event_summary';
 
-		return deferred.promise;
+                return httpService.post(form, url);
 
-		};
+            };
 
 
-		this.stopEncounter = function(encounter_id){
+            this.fetchPainAvatars = function (patient_id) {
 
-					var deferred = $q.defer();
+                var url = "/patient/" + patient_id + "/pain_avatars";
+                var params = {};
 
-			$http({
-				"method":"GET",
-				"url" : "/enc/encounter/"+encounter_id+"/stop",
-			}).success(function(data){
+                return httpService.get(params, url);
 
-				deferred.resolve(data);
 
-			}).error(function(data){
+            };
 
-				deferred.resolve(data);
-			})
 
-			return deferred.promise;
+            this.listTerms = function (query) {
 
+                var params = {'query': query};
+                var url = "/list_terms/";
 
-		};
+                return httpService.get(params, url);
 
 
-		this.addEventSummary = function(form){
+            };
 
 
-		var deferred = $q.defer();
+            this.addGoal = function (form) {
 
+                var url = '/g/patient/' + form.patient_id + '/goals/add/new_goal';
 
-		form.csrfmiddlewaretoken = this.csrf_token();
-		
+                return httpService.post(form, url);
 
-		$http({
+            };
 
-			'method':'POST',
-			'url' : '/enc/encounter/add/event_summary',
-			'data' : $.param(form),
-			'headers':
-			{
-				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-			}
-		}).success(function(data){
 
-			deferred.resolve(data);
+            this.addToDo = function (form) {
 
-		}).error(function(data){
-			deferred.resolve(data);
-		});
+                var url = '/todo/patient/' + form.patient_id + '/todos/add/new_todo';
 
-		return deferred.promise;
+                return httpService.post(form, url);
 
 
-		};
+            };
 
 
-		this.fetchPainAvatars = function(patient_id){
+            this.addProblem = function (form) {
 
-			var deferred = $q.defer();
+                var url = '/p/patient/' + form.patient_id + '/problems/add/new_problem';
 
-			$http({
-				"method":"GET",
-				"url" : "/patient/"+patient_id+"/pain_avatars",
-			}).success(function(data){
+                return httpService.post(form, url);
 
-				deferred.resolve(data);
 
-			}).error(function(data){
+            };
 
-				deferred.resolve(data);
-			})
 
-			return deferred.promise;
+            this.updatePatientSummary = function (form) {
 
+                var url = '/u/patient/' + form.patient_id + '/profile/update_summary';
 
-		};
+                return httpService.post(form, url);
 
+            };
 
-		this.listTerms = function(query){
 
-			var data = {'query':query};
+            this.updateTodoStatus = function (form) {
 
-			var deferred = $q.defer();
+                var url = '/todo/todo/' + form.id + '/update/';
 
-			$http({
-				"method":"GET",
-				"url" : "/list_terms/",
-				'params':data
-			}).success(function(data){
+                return httpService.post(form, url);
 
-				deferred.resolve(data);
 
-			}).error(function(data){
+            };
 
-				deferred.resolve(data);
-			})
 
-			return deferred.promise;
+            this.fetchActiveUser = function () {
 
-		};
+                var url = '/u/active/user/';
+                var params = {};
 
+                return httpService.get(params, url);
 
-		this.addGoal = function(form){
+            };
 
 
-			var deferred = $q.defer();
+            this.updatePatientPassword = function (form) {
 
+                var url = '/u/patient/' + form.patient_id + '/profile/update_password';
 
-			//form.csrfmiddlewaretoken = this.csrf_token();
-		
+                return httpService.post(form, url);
 
-		$http({
+            };
 
-			'method':'POST',
-			'url' : '/g/patient/'+form.patient_id+'/goals/add/new_goal',
-			'data' : $.param(form),
-			'headers':
-			{
-				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-			}
-		}).success(function(data){
+            this.updateBasicProfile = function (form) {
+                var url = '/u/patient/' + form.user_id + '/update/basic';
+                return httpService.post(form, url);
+            };
 
-			deferred.resolve(data);
+            this.updateProfile = function (form, files) {
 
-		}).error(function(data){
-			deferred.resolve(data);
-		});
 
-		return deferred.promise;
+                var deferred = $q.defer();
 
+                var uploadUrl = '/u/patient/' + form.user_id + '/update/profile';
 
+                var fd = new FormData();
 
-		};
+                fd.append('csrfmiddlewaretoken', this.csrf_token());
 
+                angular.forEach(form, function (value, key) {
+                    fd.append(key, value);
+                });
 
-		this.addToDo = function(form){
+                angular.forEach(files, function (value, key) {
+                    fd.append(key, value);
+                });
 
 
-			var deferred = $q.defer();
+                $http.post(uploadUrl, fd, {
+                    transformRequest: angular.identity,
+                    headers: {'Content-Type': undefined, 'X-CSRFToken': this.csrf_token()}
+                })
+                    .success(function (data) {
+                        deferred.resolve(data);
+                    })
+                    .error(function (data) {
+                        deferred.resolve(data);
 
+                    });
 
-			//form.csrfmiddlewaretoken = this.csrf_token();
-		
+                return deferred.promise;
+            };
 
-		$http({
+            this.updateEmail = function (form) {
+                var url = '/u/patient/' + form.user_id + '/update/email';
+                return httpService.post(form, url);
+            };
 
-			'method':'POST',
-			'url' : '/todo/patient/'+form.patient_id+'/todos/add/new_todo',
-			'data' : $.param(form),
-			'headers':
-			{
-				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-			}
-		}).success(function(data){
+            this.updateTodoOrder = function (form) {
+                var url = '/todo/todo/updateOrder/';
+                return httpService.postJson(form, url);
+            };
 
-			deferred.resolve(data);
+            this.updateProblemOrder = function (form) {
+                var url = '/p/problem/updateOrder/';
+                return httpService.postJson(form, url);
+            };
 
-		}).error(function(data){
-			deferred.resolve(data);
-		});
+            this.updatePatientNote = function (form) {
 
-		return deferred.promise;
+                var url = '/u/patient/' + form.patient_id + '/profile/update_note';
 
+                return httpService.post(form, url);
 
+            };
 
-		};
+            this.getPatientsList = function () {
+                var form = {};
+                var url = '/u/patients/';
+                return httpService.post(form, url);
+            };
 
+            this.getSharingPatients = function (patient_id) {
+                var form = {};
+                var url = '/u/sharing_patients/' + patient_id;
+                return httpService.post(form, url);
+            };
 
-		this.addProblem = function(form){
+            this.addSharingPatient = function (form) {
+                var url = '/u/patient/add_sharing_patient/' + form.patient_id + '/' + form.sharing_patient_id;
+                return httpService.post(form, url);
+            };
 
+            this.removeSharingPatient = function (patient_id, sharing_patient_id) {
+                var form = {};
+                var url = '/u/patient/remove_sharing_patient/' + patient_id + '/' + sharing_patient_id;
+                return httpService.post(form, url);
+            };
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-		
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problems/add/new_problem',
-				'data' : $.param(form),
-				'headers':
-					{
-						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-					}
-				}).success(function(data){
-					deferred.resolve(data);
-				}).error(function(data){
-					deferred.resolve(data);
-				});
+            this.changeSharingMyStory = function (patient_id, sharing_patient_id) {
+                var form = {};
+                var url = '/u/patient/change_sharing_my_story/' + patient_id + '/' + sharing_patient_id;
+                return httpService.post(form, url);
+            };
 
-			return deferred.promise;
+            this.getUserInfo = function (user_id) {
 
-		};
+                var params = {};
+                var url = '/u/user_info/' + user_id + '/info/';
+                return httpService.get(params, url);
 
+            };
 
-		this.updatePatientSummary = function(form){
+            this.addCommonProblem = function (form) {
+                var url = '/p/patient/' + form.patient_id + '/problems/add/new_common_problem';
 
+                return httpService.post(form, url);
+            };
 
-			var deferred = $q.defer();
+            this.getMyStory = function (patient_id) {
+                var params = {};
+                var url = '/my_story/' + patient_id + '/get_my_story';
+                return httpService.get(params, url);
+            };
 
+            this.addMyStoryTab = function (form) {
+                var url = '/my_story/' + form.patient_id + '/add_tab';
 
-			//form.csrfmiddlewaretoken = this.csrf_token();
-		
+                return httpService.post(form, url);
+            };
 
-		$http({
+            this.addMyStoryText = function (form) {
+                var url = '/my_story/' + form.patient_id + '/' + form.tab_id + '/add_text';
 
-			'method':'POST',
-			'url' : '/u/patient/'+form.patient_id+'/profile/update_summary',
-			'data' : $.param(form),
-			'headers':
-			{
-				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-			}
-		}).success(function(data){
+                return httpService.post(form, url);
+            };
 
-			deferred.resolve(data);
+            this.getDatas = function (patient_id) {
+                var params = {};
+                var url = '/data/' + patient_id + '/get_datas';
+                return httpService.get(params, url);
+            };
 
-		}).error(function(data){
-			deferred.resolve(data);
-		});
+            this.addNewDataType = function (form) {
+                var url = '/data/' + form.patient_id + '/add_new_data_type';
 
-		return deferred.promise;
+                return httpService.post(form, url);
+            };
 
+            this.updateDataOrder = function (form) {
+                var url = '/data/updateOrder';
+                return httpService.postJson(form, url);
+            };
 
+            this.trackDataClickEvent = function (form) {
+                var url = '/data/track/click';
+                return httpService.post(form, url);
+            };
 
-		};
+            this.deleteMyStoryTab = function (patient_id, tab_id) {
+                var form = {};
+                var url = '/my_story/' + patient_id + '/delete_tab/' + tab_id;
 
+                return httpService.post(form, url);
+            };
 
-		});
+            this.saveMyStoryTab = function (form) {
+                var url = '/my_story/' + form.patient_id + '/save_tab/' + form.tab_id;
+                return httpService.post(form, url);
+            };
 
+            this.deleteMyStoryText = function (patient_id, component_id) {
+                var form = {};
+                var url = '/my_story/' + patient_id + '/delete_text_component/' + component_id;
+
+                return httpService.post(form, url);
+            };
+
+            this.saveMyStoryText = function (form) {
+                var url = '/my_story/' + form.patient_id + '/save_text_component/' + form.component_id;
+                return httpService.post(form, url);
+            };
+
+            this.saveMyStoryTextEntry = function (form) {
+                var url = '/my_story/' + form.patient_id + '/save_text_component_entry/' + form.component_id;
+                return httpService.post(form, url);
+            };
+
+            this.trackTabClickEvent = function (form) {
+                var url = '/my_story/track/click';
+                return httpService.post(form, url);
+            };
+
+            this.getMedications = function (patient_id) {
+                var params = {};
+                var url = '/medication/' + patient_id + '/get_medications';
+                return httpService.get(params, url);
+            };
+
+
+            /**
+             * Get list of document(s) which have ben pinned to this patient
+             * by either clinical staff or patient them self
+             * @param patient_id
+             */
+            this.getDocuments = function (patient_id) {
+                var params = {};
+                var url = '/docs/' + patient_id + '/get_pinned_document';
+                return httpService.post(params, url);
+            }
+        });
 
 })();

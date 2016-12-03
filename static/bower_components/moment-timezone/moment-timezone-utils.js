@@ -1,6 +1,6 @@
 //! moment-timezone-utils.js
-//! version : 0.5.5
-//! author : Tim Wood
+//! version : 0.5.10
+//! Copyright (c) JS Foundation and other contributors
 //! license : MIT
 //! github.com/moment/moment-timezone
 
@@ -9,7 +9,7 @@
 
 	/*global define*/
 	if (typeof define === 'function' && define.amd) {
-		define(['../bower_components/moment/moment'], factory);                 // AMD
+		define(['moment'], factory);                 // AMD
 	} else if (typeof module === 'object' && module.exports) {
 		module.exports = factory(require('./'));     // Node
 	} else {

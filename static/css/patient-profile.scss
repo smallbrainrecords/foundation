@@ -263,9 +263,31 @@ body {
     vertical-align: inherit;
     width: 24px;
   }
-
 }
 
+a.btn-manage {
+  margin-bottom: 20px;
+}
+
+.drop-box {
+  cursor: pointer;
+  background: #F8F8F8;
+  border: 5px dashed #DDD;
+  //width: 200px;
+  height: 100px;
+  line-height: 50px;
+  text-align: center;
+  padding-top: 25px;
+  margin: 10px;
+}
+
+.dragover {
+  border: 5px dashed blue;
+}
+
+<<<<<<< HEAD
+.btn-remove {
+=======
 #problem-header {
 
   z-index: 999;
@@ -291,5 +313,6 @@ body {
 }
 
 .panel-heading{
+>>>>>>> 45c2c2f45313e3331ad55abfdbdb6e04dcc488dc
   cursor: pointer;
 }

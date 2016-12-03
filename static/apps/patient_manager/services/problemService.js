@@ -3,240 +3,229 @@
 	'use strict';
 
 	angular.module('ManagerApp').service('problemService',
-		function($http, $q, $cookies){
+		function($http, $q, $cookies, httpService){
 
 
-		this.csrf_token = function(){
-
-			var token = $cookies.csrftoken;
-			return token;
-		};
 
 
 		this.updateProblemStatus = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/update_status',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
+			var url = '/p/problem/'+form.problem_id+'/update_status';
+			return httpService.post(form, url);
 
 		};
+
+
+		this.trackProblemClickEvent = function(problem_id){
+			var form = {};
+			var url = '/p/problem/'+problem_id+'/track/click/';
+			return httpService.post(form, url);
+
+		};
+
 
 
 		this.updateStartDate = function(form){
 
-			
-
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/update_start_date',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/update_start_date';
+			return httpService.post(form, url);
 
 		};
 
 
-		this.addPatientNote = function(form){
+		this.addWikiNote = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_patient_note',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/add_wiki_note';
+			return httpService.post(form, url);
 
 		};
 
-		this.addPhysicianNote = function(form){
+		this.addHistoryNote = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_physician_note',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/add_history_note';
+			return httpService.post(form, url);
 
 		};
 
 		this.addGoal = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_goal',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/add_goal';
+			return httpService.post(form, url);
 
 		};
 
 
 		this.addTodo = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/patient/'+form.patient_id+'/problem/'+form.problem_id+'/add_todo',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
+			var url = '/p/problem/'+form.problem_id+'/add_todo';
+			return httpService.post(form, url);
 
 		};
+
 
 		this.deleteProblemImage = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/problem/'+form.problem_id+'/image/'+form.image_id+'/delete/',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
-
+			var url = '/p/problem/'+form.problem_id+'/image/'+form.image_id+'/delete/';
+			return httpService.post(form, url);
 		};
 
-		this.unRelateProblem = function(form){
-
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/problem/'+form.problem_id+'/unrelate/'+form.relationship_id+'/',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
-
-		};
 
 		this.relateProblem = function(form){
 
-			var deferred = $q.defer();
-			//form.csrfmiddlewaretoken = this.csrf_token();
-
-			$http({
-				'method':'POST',
-				'url' : '/p/problem/'+form.problem_id+'/relate/'+form.target_problem_id+'/',
-				'data' : $.param(form),
-				'headers':
-				{
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-				}
-			}).success(function(data){
-				deferred.resolve(data);
-			}).error(function(data){
-				deferred.resolve(data);
-			});
-
-			return deferred.promise;
-
-
+			var url = '/p/problem/relate/';
+			return httpService.post(form, url);
 
 		};
 
+		this.getProblemActivity = function(problem_id, last_id){
+			var params = {};
+			var url ='/p/problem/' + problem_id + '/' + last_id+ '/activity/';
+			return httpService.get(params, url);
+		};
 
+		this.updateByPTW = function(form){
 
-		});
+			var url = '/p/problem/update_by_ptw/';
+			return httpService.postJson(form, url);
+
+		};
+
+		this.updateStateToPTW = function(form){
+
+			var url = '/p/problem/update_state_to_ptw/';
+			return httpService.postJson(form, url);
+
+		};
+
+		this.changeProblemName = function(form){
+
+			var url = '/p/problem/'+form.problem_id+'/change_name';
+
+			return httpService.post(form, url);
+		};
+
+		this.saveCreateLabel = function(problem_id, form) {
+			var url = '/p/problem/newLabel/'+problem_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.fetchLabels = function(patient_id, user_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + user_id + '/getlabels';
+			return httpService.get(params, url);
+		};
+
+		this.saveEditLabel = function(form, patient_id, user_id) {
+			var url = '/p/problem/saveEditLabel/' + form.id + '/' + patient_id + '/' + user_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.addProblemLabel = function(id, problem_id) {
+			var form = {};
+			var url = '/p/problem/'+id+'/'+problem_id+'/addLabel';
+
+			return httpService.post(form, url);
+		};
+
+		this.removeProblemLabel = function(id, problem_id) {
+			var form = {};
+			var url = '/p/problem/removeLabel/'+id+'/'+problem_id;
+
+			return httpService.post(form, url);
+		};
+
+		this.deleteLabel  = function(form) {
+			var url = '/p/problem/deleteLabel/'+form.id;
+
+			return httpService.post(form, url);
+		};
+
+		this.addProblemList = function(form){
+			var url = '/p/problem/'+form.patient_id+ '/' +form.user_id+'/new_list';
+			return httpService.postJson(form, url);
+		};
+
+		this.fetchLabeledProblemList = function(patient_id, user_id){
+			var params = {};
+			var url ='/p/problem/'+patient_id+ '/' +user_id+'/getLabeledProblemLists';
+			return httpService.get(params, url);
+		};
+
+		this.deleteProblemList = function(form){
+			var url = '/p/problem/'+form.id+'/deleteProblemList';
+			return httpService.post(form, url);
+		};
+
+		this.renameProblemList = function(form){
+			var url = '/p/problem/'+form.id+'/renameProblemList';
+			return httpService.post(form, url);
+		};
+
+		this.fetchProblems = function(patient_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/getproblems';
+			return httpService.get(params, url);
+		};
+
+		this.fetchSharingProblems = function(patient_id, sharing_patient_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/get_sharing_problems';
+			return httpService.get(params, url);
+		};
+
+		this.removeSharingProblems = function(patient_id, sharing_patient_id, problem_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/remove_sharing_problems';
+			return httpService.post(params, url);
+		};
+
+		this.addSharingProblems = function(patient_id, sharing_patient_id, problem_id){
+			var params = {};
+			var url ='/p/problem/' + patient_id + '/' + sharing_patient_id + '/' + problem_id + '/add_sharing_problems';
+			return httpService.post(params, url);
+		};
+
+		this.updateProblemListNote = function(form){
+			var url = '/p/problem/'+form.list_id+'/update_problem_list_note';
+
+			return httpService.post(form, url);
+		};
+
+		this.fetchA1c = function(problem_id){
+			var url = "/p/problem/"+problem_id+"/a1c";
+			var params = {};
+
+			return httpService.get(params, url);
+		};
+
+		this.fetchColonCancerss = function(problem_id){
+			var url = "/p/problem/"+problem_id+"/colon_cancers";
+			var params = {};
+
+			return httpService.get(params, url);
+		};
+
+		this.fetchPinToProblem = function(problem_id){
+			var url = "/p/problem/"+problem_id+"/get_data_pins";
+			var params = {};
+
+			return httpService.get(params, url);
+		};
+
+		this.fetchMedicationPinToProblem = function(problem_id){
+			var url = "/p/problem/"+problem_id+"/get_medication_pins";
+			var params = {};
+
+			return httpService.get(params, url);
+		};
+
+		this.deleteProblem = function(form){
+			var url = '/p/problem/'+form.problem_id+'/delete';
+			return httpService.post(form, url);
+		};
+});
 
 
 

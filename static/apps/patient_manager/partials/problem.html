@@ -1,349 +1,880 @@
+<style type='text/css'>
 
-<a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
+    #problem-header {
 
-<hr>
+        z-index: 999;
+        width: 1200px;
+        margin: 0 auto;
+        border-bottom: 1px solid #ccc;
+        padding-top: 7px;
+        padding-bottom: 7px;
+    }
 
-<h4>  Problem : {{problem.problem_name}} </h4>
+    #problem-header.affix {
+        top: 50px;
+    }
 
-<hr>
+    .problem-controlled {
+        background-color: green;
+        color: white;
+    }
 
-<toaster-container></toaster-container>
+    .problem-uncontrolled {
+        background-color: red;
+        color: white;
+    }
+</style>
+<a href='#/'><b> Manage Patient </b></a>
 
-<div class='row'>
+<div ng-if="!checkSharedProblem(problem, sharing_patients) && !loading">You can not access this page</div>
+<div ng-if="checkSharedProblem(problem, sharing_patients)">
 
-	<div class='col-md-8'>
+    <!--<span class='text-default'>-->
+    <!--<i class='glyphicon glyphicon-menu-right'></i>-->
+    <!--</span>-->
+    <!--<span class='text-muted'><b>  Problem: {{ problem.problem_name }} <span ng-if="problem && !problem.authenticated">(not authenticated)</span></b></span>-->
+    <!--<hr>-->
+
+    <div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100'
+         ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'
+         ng-init="edit_problem=false;">
+        <div class="col-md-6">
+            <div class="todo">
+                <h4 ng-show="!edit_problem">
+                    Problem : {{ problem.problem_name }}
+                    <span ng-if="problem && !problem.authenticated">(not authenticated)</span>
+                    <!-- begin label -->
+                    <span class="quick-card-editor-label">
+					<a ng-repeat="label in problem.labels" href class="todo-label" ng-class="label.css_class"
+                       ng-if="label.author.id==user_id"></a>
+				</span>
+                    <!-- end label -->
+                    <!-- begin sharing patients -->
+                    <span ng-repeat="p in sharing_patients"
+                          ng-if="isInArray(p.problems, problem.id)">
+					<img ng-src="{{ p.portrait_image }}" class='tiny-img' title="{{ p.user.first_name }}">
+				</span>
+                    <!-- end sharing patients -->
+                    <a href class="btn-custom" ng-click="edit_problem=!edit_problem"><i class="fa fa-pencil"></i></a>
+                </h4>
+
+                <!-- begin change item -->
+                <div class="quick-card-editor" id="main-menu" ng-show='edit_problem'>
+
+                    <!-- show label and text in edit mode -->
+                    <div class="quick-card-editor-text">
+                        <div class='row' ng-show='permitted(["change_problem_name"])'>
+                            <div class='col-md-12'>
+
+                                <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
+                                       placeholder='Search Problem....'
+                                       ng-change="problem_name_changed(problem_term);"
+                                       ng-model-options="{ updateOn: 'default blur', debounce: { default: 1000, blur: 500 } }">
+                                <button class='btn btn-sm btn-default' ng-click='change_new_problem_name(problem_term)'>
+                                    Change Problem
+                                </button>
+
+                                <div ng-show='new_problem.set==true'>
+                                    <hr>
+                                    <label> {{ new_problem.code }} </label>
+                                    {{ new_problem.term }} <br>
+                                    <button class='btn btn-sm btn-default' ng-click='change_problem_name()'>
+                                        Change Problem
+                                    </button>
+                                    <button class='btn btn-sm btn-default' ng-click='unset_new_problem()'>
+                                        Cancel
+                                    </button>
+                                    <hr>
+                                </div>
+
+                            </div>
+                            <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
+                                <div ng-repeat='problem_term in problem_terms' style='margin-top:12px;'>
+                                    <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
+                                            ng-click='set_new_problem(problem_term)'>
+                                        {{ problem_term.term }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end show label and text in edit mode -->
+
+                    <div class="quick-card-editor-card">
+
+                        <!-- begin buttons -->
+                        <div class="quick-card-editor-buttons">
+                            <a href ng-click="edit_problem=!edit_problem; $event.stopPropagation();"><i
+                                    class="fa fa-close"></i></a>
+                            <a href ng-click="open_change_problem_label();"><i class="fa fa-tags"></i>Edit label</a>
+                            <a href ng-click="open_create_label_problems_list();"
+                               ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'"><i
+                                    class="fa fa-tags"></i>Create problems list</a>
+                            <a href ng-click="open_change_data();"><i class="fa fa-tags"></i>Change Data</a>
+                            <a href ng-click="open_change_medication();"><i class="fa fa-tags"></i>Change Medication</a>
+                            <a href ng-click="delete_problem();"
+                               ng-if="(active_user.role=='physician' || active_user.role=='admin' || active_user.role=='mid-level') && encounter_flag"><i
+                                    class="fa fa-tags"></i>Delete problem</a>
+                        </div>
+                        <!-- end buttons -->
+                        <!-- begin change label -->
+                        <div ng-if="change_problem_label" class="quick-card-editor-lv2">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_change_problem_label(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <div ng-repeat="label in problem_labels">
+                                <a href class="todo-label" ng-class="label.css_class"
+                                   ng-click="changeProblemLabel(problem, label)">
+                                    {{ label.name }}
+                                    <i class="fa fa-check" ng-repeat="l in problem.labels" ng-if="l.id==label.id"></i>
+                                </a>
+                                <!-- begin edit label -->
+                                <a href class="todo-label-edit" ng-click="editProblemLabel(label)"
+                                   ng-if="user_id==label.author.id"><i class="fa fa-pencil"></i></a>
+
+                                <div ng-if="label.edit_label"
+                                     class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
+                                    <div class="quick-card-editor-lv2-header">
+                                        <a href ng-click="editProblemLabel(label); $event.stopPropagation();"><i
+                                                class="fa fa-close"></i></a>
+                                    </div>
+                                    <input type="text" ng-model="label.name">
+                                    <a ng-repeat="component in problem_labels_component" href class="todo-label"
+                                       ng-class="component.css_class"
+                                       ng-click="selectEditProblemLabelComponent(label, component)">
+                                        <i class="fa fa-check" ng-if="component.css_class==label.css_class"></i>
+                                    </a>
+                                    <a href ng-click="saveEditProblemLabel(label)">Save</a>
+                                    <a href class="btn btn-danger" ng-click="deleteEditProblemLabel(label)">Delete</a>
+                                </div>
+                                <!-- end edit label -->
+
+                            </div>
+                            <a href ng-click="open_create_problem_label();"><i class="fa fa-tags"></i>Create new
+                                label</a>
+                        </div>
+
+                        <div ng-if="create_problem_label" class="quick-card-editor-lv2 quick-card-editor-lv3">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_create_problem_label(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <input type="text" ng-model="problem_label_component.name">
+                            <a ng-repeat="component in problem_labels_component" href class="todo-label"
+                               ng-class="component.css_class" ng-click="selectProblemLabelComponent(component)">
+                                <i class="fa fa-check"
+                                   ng-if="component.css_class==problem_label_component.css_class"></i>
+                            </a>
+                            <a href ng-click="saveCreateProblemLabel(problem)">Save</a>
+                        </div>
+                        <!-- end change label -->
+                        <!-- begin create label problems list -->
+                        <div ng-if="create_label_problems_list" class="quick-card-editor-lv2">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_create_label_problems_list(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+
+                            <form class='form-inline' role='form' ng-submit='add_problem_list(new_list)'>
+                                <div class='form-group'>
+                                    <input type='text' ng-model='new_list.name'>
+                                    <div ng-repeat="label in problem_labels">
+                                        <a href class="todo-label" ng-class="label.css_class"
+                                           ng-click="add_new_list_label(new_list, label)">
+                                            {{ label.name }}
+                                            <i class="fa fa-check" ng-repeat="l in new_list.labels"
+                                               ng-if="l.id==label.id"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <br>
+                                <button type='submit' class='btn btn-default'> Add List</button>
+                            </form>
+                        </div>
+                        <!-- end create label problems list -->
+                        <!-- begin change data -->
+                        <div ng-if="change_pinned_data" class="quick-card-editor-lv2" style="color: black;">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_change_data(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <p ng-repeat="data in datas">
+                                <input type="checkbox"
+                                       ng-model="data.pin"
+                                       ng-change="data_pin_to_problem(data.id, problem.id);"
+                                       ng-disabled="active_user.role == 'patient' && active_user.id != data.pin_author && data.pin_author != null">
+                                {{ data.name }}
+                            </p>
+                        </div>
+                        <!-- end change data -->
+                        <!-- begin change medication -->
+                        <div ng-if="change_pinned_medication" class="quick-card-editor-lv2" style="color: black;">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="close_change_medication(); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <p ng-repeat="medication in medications">
+                                <input type="checkbox"
+                                       ng-model="medication.pin"
+                                       ng-change="medication_pin_to_problem(medication, problem.id);"
+                                       ng-disabled="active_user.role == 'patient' && (active_user.id != medication.pin_author || medication.pin_author != null)">
+                                {{ medication.name }}
+                            </p>
+                        </div>
+                        <!-- end change medication -->
+                    </div>
+                </div>
+                <!-- end change item -->
+            </div>
+        </div>
+        <div class='col-md-6 text-right'>
+            <form class='form form-inline'>
+                <div class='form-group'>
+                    <label for="start_date">Problem start date</label>
+                    <input type='text' class='form-control' ng-model='problem.start_date' id="start_date">
+                </div>
+                <div class='form-group'>
+                    <button ng-click='update_start_date()' class='btn btn-default'
+                            ng-show='permitted(["modify_problem"])'> Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <hr>
+
+    <toaster-container></toaster-container>
+
+    <div class='row'>
+
+        <div class='col-md-12'>
+
+            <div class='panel panel-default'>
+
+                <div class='panel-heading'>Status</div>
+
+                <div class='panel-body'>
+                    <div class='row'>
+                        <div class='col-md-4'>
+                            <label><input type='checkbox' ng-model='problem.is_controlled'
+                                          ng-disabled='!permitted(["set_problem_controlled"])'>
+                                Is controlled</label>
+                        </div>
+                        <div class='col-md-4'>
+                            <input type='checkbox' ng-model='problem.authenticated'
+                                   ng-disabled='!permitted(["set_problem_authenticated"])'>
+                            Is authenticated
+                        </div>
+                        <div class='col-md-4'>
+                            <input type='checkbox' ng-model='problem.is_active'
+                                   ng-disabled='!permitted(["set_problem_active"])'>
+                            Is active
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class='panel panel-default'>
+
+                <div class='panel-heading'> Todos</div>
 
 
-<div class='panel panel-default'>
-
-	<div class='panel-heading'>Status</div>
-
-	<div class='panel-body'>
+                <div class='panel-body'>
 
 
-<div class='row'>
-	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_controlled'> 
-		Is controlled
-	</div>
-	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.authenticated'>
-		Is authenticated
-	</div>
-	<div class='col-md-4'>
-		<input type='checkbox' ng-model='problem.is_active'>
-		Is active
-	</div>
+                    <div class='row'>
+
+                        <div class='col-md-12'>
+
+                            <form class='form-inline' ng-submit='add_todo(todo_form)'>
+
+                                <div class='form-group'>
+                                    <label> Add </label>
+                                    <input type='text' class='form-control' ng-model='todo_form.name'
+                                           id='todoNameInput'>
+                                </div>
+
+                                <div class='form-group'>
+                                    <input type='submit' value='Submit' class='btn btn-default'>
+                                </div>
+
+
+                            </form>
+
+                            <hr>
+
+                            <ul class='list-group'>
+                                <li ng-show='!problem_todos.length'> No Todos</li>
+                            </ul>
+                            <todo ng-model="problem_todos" accomplished="false" show-problem="false"></todo>
+
+                            <hr>
+                            <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
+                                <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
+                                <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
+                            </a>
+                            <hr>
+                            <div ng-if='show_accomplished_todos==true'>
+                                <ul class='list-group'>
+                                    <li ng-show='!problem_todos.length'> No Todos</li>
+                                </ul>
+                                <todo ng-model="problem_todos" accomplished="true" show-problem="false"></todo>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+        </div>
+        <div class="col-md-6">
+            <div class='panel panel-default'>
+
+                <div class='panel-heading'>Notes</div>
+
+                <div class='panel-body'>
+
+                    <div class='row'>
+
+                        <div class='col-md-12'>
+
+                            <form class='form' ng-submit='add_wiki_note(wiki_note_form)'>
+
+                                <div class='form-group'>
+                                <textarea ng-model='wiki_note_form.note' class='form-control' style='height:75px;'
+                                          auto-focus
+                                          required></textarea>
+                                </div>
+                                <div class='form-group'>
+                                    <button type='submit' class='btn btn-default'>
+                                        Add
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <div class='row'>
+
+                        <div class='col-md-6'>
+                            <b> Patient Notes </b>
+
+                            <hr>
+
+                            <ul class='list-group'>
+
+                                <li ng-show='!patient_wiki_notes.length' class='list-group-item'> No Notes</li>
+                                <li ng-repeat='note in patient_wiki_notes' class='list-group-item' ng-show="$first">
+                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
+                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class='col-md-6'>
+                            <b> Physician Notes </b>
+
+                            <hr>
+
+                            <ul class='list-group'>
+
+                                <li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes</li>
+                                <li ng-repeat='note in physician_wiki_notes' class='list-group-item' ng-show="$first">
+                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
+                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class='row'>
+                        <div class='col-md-12'>
+                            <button class='btn btn-link' ng-click='toggle_other_notes()'>
+                                <span ng-show='show_other_notes'>Hide Other Notes </span>
+                                <span ng-show='!show_other_notes'> Show Other Notes ({{ other_wiki_notes.length }}) </span>
+                            </button>
+
+                            <ul class='list-group' ng-show='show_other_notes==true'>
+
+                                <li ng-show='!other_wiki_notes.length' class='list-group-item'> No Notes</li>
+                                <li ng-repeat='note in other_wiki_notes' class='list-group-item'>
+                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
+                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+                                </li>
+                            </ul>
+
+                        </div>
+                        <div class='col-md-12'>
+                            <button class='btn btn-link' ng-click='toggle_physician_notes()'>
+                                <span ng-show='show_physician_notes'>Hide Other Physician Notes </span>
+                                <span ng-show='!show_physician_notes'> Show Other Physician Notes ({{ physician_wiki_notes.length }}) </span>
+                            </button>
+
+                            <ul class='list-group' ng-show='show_physician_notes==true'>
+                                <li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes</li>
+                                <li ng-repeat='note in physician_wiki_notes' class='list-group-item'>
+                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
+                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+                                </li>
+                            </ul>
+
+
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class='row' ng-if="a1c">
+        <a1c ng-model="a1c"></a1c>
+    </div>
+
+    <div class='row' ng-if="colon_cancers.length > 0">
+        <div ng-repeat="colon_cancer in colon_cancers">
+            <colon-cancer ng-model="colon_cancer"></colon-cancer>
+            <br>
+        </div>
+    </div>
+
+    <div class='row' ng-if="inrs.length > 0">
+        <div ng-repeat="inr in inrs">
+            <inr ng-model="inr"></inr>
+            <br>
+        </div>
+    </div>
+
+    <div class='panel panel-default' ng-show="problem.old_problem_name">
+        <div class='panel-body'>
+            This problem was previously named "{{ problem.old_problem_name }}"
+        </div>
+    </div>
+
+    <div class="row">
+        <!--hasPinnedGraph == true &&  medications.length > 0 == true col-md-6-->
+        <!--hasPinnedGraph == true &&  medications.length > 0 != true col-md-12-->
+        <!--hasPinnedGraph == false &&  medications.length > 0 == true col-md-12-->
+        <!--hasPinnedGraph == false &&  medications.length > 0 != true hide-->
+        <!--col-md-6 | col-md-12-->
+        <div ng-if="hasPinnedGraph" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-12'">
+            <div class='panel panel-default'>
+                <div class="panel-header">
+                    <div class="btn-group btn-group-justified graph-view-mode">
+                        <label class="btn btn-default" ng-click="changeView('Week')"
+                               ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
+                        <label class="btn btn-default" ng-click="changeView('Month')"
+                               ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
+                        <label class="btn btn-default" ng-click="changeView('Year')"
+                               ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
+                        <label class="btn btn-default" ng-click="changeView('All')"
+                               ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
+                    </div>
+                </div>
+                <div class='panel-body no-padding'>
+                    <div>
+                        <ul class='ul-clean no-padding'>
+                            <li ng-repeat="data in datas"
+                                ng-click='open_data(data)'
+                                ng-show="data.pin">
+                                <div class='item-box data-frame'
+                                     ng-style="{'background-color': data.color}">
+                                    <div class="row graph-header">
+                                        <div class="col-md-6 text-left">
+                                            <h3>{{ data.name }}</h3>
+                                        </div>
+                                        <div class="col-md-6 text-right">
+                                            <h3>
+                                                            <span
+                                                                    ng-bind="data.mostRecentValue"></span>
+                                                <span ng-bind="data.observation_units[0].value_unit"></span>
+                                            </h3>
+                                            <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+
+                                        </div>
+                                    </div>
+                                    <div ng-if="data.observation_components.length > 0">
+                                        <canvas ng-if="data.graph=='Line'" class="chart chart-line"
+                                                chart-data="data.chartData"
+                                                chart-series="data.chartSeries"
+                                                chart-labels="data.chartLabel"></canvas>
+                                        <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
+                                                chart-data="data.chartData"
+                                                chart-series="data.chartSeries"
+                                                chart-labels="data.chartLabel"></canvas>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div ng-if="hasPinnedMedication" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-12'">
+            <div class='panel panel-default'>
+                <div class='panel-heading'> Medications</div>
+                <div class='panel-body'>
+                    <div class="row">
+                        <div class='col-md-12'>
+                            <table class="table table-striped">
+                                <thead>
+                                <th>Medication</th>
+                                <th>Note</th>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat='medication in medications'
+                                    ng-show='medication.current && medication.pin'>
+                                    <td>
+                                        <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                    </td>
+                                    <td>
+                                <span ng-repeat="note in medication.medication_notes"
+                                      ng-if="$last">{{ note.note }}</span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr ng-init="show_inactive_medications=false;">
+                    <a class='btn btn-default btn-md' ng-click='show_inactive_medications=!show_inactive_medications;'>
+                        <span ng-if='show_inactive_medications==false'>Show inactive medications </span>
+                        <span ng-if='show_inactive_medications==true'>Hide inactive medications </span>
+                    </a>
+                    <hr>
+
+                    <div class="row" ng-show="show_inactive_medications">
+                        <div class='col-md-12'>
+                            <table class="table table-striped">
+                                <thead>
+                                <th>Medication</th>
+                                <th>Note</th>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat='medication in medications'
+                                    ng-show='!medication.current && medication.pin'>
+                                    <td>
+                                        <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                    </td>
+                                    <td>
+                                <span ng-repeat="note in medication.medication_notes"
+                                      ng-if="$last">{{ note.note }}</span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class='panel panel-default'>
+
+        <div class='panel-heading'> Problem History</div>
+        <div class='panel-body'>
+
+            <form class='form' ng-submit='add_history_note(history_note_form)'>
+
+                <div class='form-group'>
+                    <textarea ng-model='history_note_form.note' class='form-control ' style='height:125px;'
+                              required></textarea>
+                </div>
+                <div class='form-group'>
+                    <button type='submit' class='btn btn-default' ng-show="permitted(['modify_problem'])">
+                        Update
+                    </button>
+                </div>
+            </form>
+
+            <span class='text-muted'> <i> Last updated by {{ history_note.author.user.first_name }}
+				{{ history_note.author.user.last_name }} @{{ history_note.author.user.username }} -
+				{{ history_note.author.role }} </i>
+			</span>
+        </div>
+
+    </div>
+
+
+    <div class='panel panel-default'>
+
+        <div class='panel-heading'> Goals</div>
+
+
+        <div class='panel-body'>
+
+
+            <div class='row'>
+
+                <div class='col-md-12'>
+
+                    <form class='form-inline' ng-submit='add_goal(goal_form)' ng-show='permitted(["add_goal"])'>
+
+                        <div class='form-group'>
+                            <label> Add </label>
+                            <input type='text' class='form-control' ng-model='goal_form.name' id='goalNameInput'>
+                        </div>
+
+                        <div class='form-group'>
+                            <input type='submit' value='Submit' class='btn btn-default'>
+                        </div>
+                        <hr>
+                    </form>
+
+
+                    <ul class='list-group'>
+                        <li ng-show='!problem_goals.length'> No Goals</li>
+                        <li ng-repeat='goal in problem_goals' class='list-group-item'
+                            ng-class='goal.is_controlled==true ? "green-box" : "red-box" '
+                            ng-show='goal.accomplished==false'>
+                            <a class='btn btn-default' href='#/goal/{{ goal.id }}'> View </a>
+                            {{ goal.goal }}
+                        </li>
+                    </ul>
+
+                    <hr>
+                    <a class='btn btn-default btn-md' ng-click='toggle_accomplished_goals()'>
+                        <span ng-if='show_accomplished_goals==false'>Show accomplished Goals </span>
+                        <span ng-if='show_accomplished_goals==true'>Hide accomplished Goals </span>
+                    </a>
+                    <hr>
+
+                    <ul class='list-group' ng-if='show_accomplished_goals==true'>
+                        <li ng-show='!problem_goals.length'> No Goals</li>
+                        <li ng-repeat='goal in problem_goals' class='list-group-item'
+                            ng-class='goal.is_controlled==true ? "green-box" : "red-box" '
+                            ng-show='goal.accomplished==true'>
+                            <a class='btn btn-default' href='#/goal/{{ goal.id }}'> View </a>
+                            {{ goal.goal }}
+                        </li>
+                    </ul>
+
+
+                </div>
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <div class='panel panel-default'>
+        <div class='panel-heading'>
+            Images
+            <span ng-show='permitted(["add_problem_image"])'>
+				<button class='btn btn-sm btn-default' ng-click='open_image_upload_box()'> Upload </button>
+			</span>
+        </div>
+
+        <div class='panel-body' ng-show="problem_images.length > 0">
+
+            <div class='row'>
+
+                <div class='col-md-2' ng-repeat='image in problem_images'>
+
+                    <center>
+                        <img ng-src='{{ image.image }}' class='thumbnail small-img' ng-click='open_image_box(image)'>
+                        <br>
+
+                        <a href="{{ image.image }}" target="_blank" class='btn btn-sm btn-default'>View</a>
+
+                        <!-- <button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button> -->
+                        <button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)'
+                                ng-show='permitted(["delete_problem_image"])'>
+                            Delete
+                        </button>
+                        <hr>
+                    </center>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Relationships -->
+
+    <div class='panel panel-default'>
+
+        <div class='panel-heading'> Relationships</div>
+
+        <div class='panel-body' style='padding:20px;'>
+
+            <div class='row'>
+                <div class='col-md-4'>
+
+                    <h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i></h4>
+                    <div class='row no-margin'
+                         ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effecting: true}'>
+
+                        <!--Only show if edit mode is enabled-->
+                        <input ng-if="editMode" type='checkbox' ng-model='eff_problem.effecting'
+                               ng-change='change_effecting_problem(eff_problem, problem)'
+                               ng-disabled='!permitted(["relate_problem"])'>
+
+                        <span ng-if='eff_problem.effecting==true' style='font-size:14px; font-weight:bold'>
+							<a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
+						</span>
+                        <span ng-if='eff_problem.effecting!=true'>
+							{{ eff_problem.problem_name }}
+						</span>
+
+                    </div>
+
+                </div>
+
+                <div class='col-md-4 text-center'>
+                    <h3> {{ problem.problem_name }} </h3>
+                </div>
+
+                <div class='col-md-4'>
+
+                    <h4><i class='glyphicon glyphicon-arrow-right'></i> EffectedProblems </h4>
+                    <div class='row no-margin'
+                         ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effected: true}'>
+                        <!--Only show if edit mode is enabled-->
+                        <input ng-if="editMode" type='checkbox' ng-model='eff_problem.effected'
+                               ng-change='change_effected_problem(problem, eff_problem)'
+                               ng-disabled='!permitted(["relate_problem"])'>
+
+                        <span ng-if='eff_problem.effected==true' style='font-size:14px; font-weight:bold'>
+							<a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
+						</span>
+                        <span ng-if='eff_problem.effected!=true'>
+							{{ eff_problem.problem_name }}
+						</span>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+        <div class="panel-footer text-right">
+            <button class="btn btn-default" ng-click="editMode=!editMode" ng-init="editMode=false">{{editMode
+                ?'Save':'Edit'}}
+            </button>
+        </div>
+    </div>
+
+    <div class='row'>
+
+        <div class='col-md-12'>
+
+            <div class='panel panel-default'>
+
+                <div class='panel-heading'> Problems</div>
+
+                <div class='panel-body'>
+                    <problem-timeline ng-model="timeline"></problem-timeline>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr>
+
+    <div class='row' ng-init="problem_activity_collapse=false;problem_activity_see_all=false;">
+        <div class='col-md-12'>
+            <div class='panel panel-default'>
+                <div class='panel-heading' ng-click="problem_activity_collapse=!problem_activity_collapse;">
+                    <i class="fa fa-caret-down" aria-hidden="true" ng-if="problem_activity_collapse"></i>
+                    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!problem_activity_collapse"></i>
+                    Problem activity
+                    <button ng-show="problem_activity_collapse" class="btn btn-default"
+                            ng-click="problem_activity_see_all=!problem_activity_see_all; $event.stopPropagation();">See
+                        all
+                    </button>
+                </div>
+                <div class='panel-body' style='max-height:375px; overflow:auto;' ng-show="problem_activity_collapse">
+                    <div ng-repeat='activity in activities' class='row activity-item'
+                         style='margin-bottom:4px; border-top:1px solid #ccc;'
+                         ng-show="problem_activity_see_all || activity.is_input_type || activity.is_output_type">
+                        <div class='col-md-3'>
+                            <b>{{ activity.author.user.first_name }} {{ activity.author.user.last_name }}
+                                - {{ activity.author.role }} </b>
+                        </div>
+                        <div class='col-md-7'>
+                            <span ng-if="activity.is_input_type"><i class="fa fa-caret-right"
+                                                                    aria-hidden="true"></i></span>
+                            <span ng-if="activity.is_output_type"><i class="fa fa-caret-left"
+                                                                     aria-hidden="true"></i></span>
+                            <span ng-bind-html='activity.activity'></span>
+                        </div>
+                        <div class='col-md-2'>
+                            {{ activity.created_on | date }}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class='row' ng-init="encounter_collapse=false;">
+        <div class='col-md-12'>
+            <div class='panel panel-default'>
+                <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
+                    <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+                    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+                    Related Encounters ({{related_encounters.length}})
+                </div>
+                <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'
+                     ng-show="encounter_collapse">
+                    <div ng-repeat='encounter in related_encounters' class='row'
+                         style='margin-bottom:4px; border-top:1px solid #ccc;'>
+                        <div class='col-md-12'>
+                            <a href='#/encounter/{{ encounter.id }}'>
+                                Ref ID: {{ encounter.id }} on {{ encounter.starttime|date }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type='text/javascript'>
+        /* To BE REPLACED BY ANGULARJS DIRECTIVE */
+
+
+    </script>
+
+    <script type='text/javascript'>
+
+        $(document).ready(function () {
+            $("#start_date").datepicker({dateFormat: 'mm/dd/yy'});
+
+        });
+    </script>
 </div>
-
-
-
-	</div>
-
-</div>
-
-
-
-	</div>
-	<div class='col-md-4'>
-
-<div class='panel panel-default'>
-
-	<div class='panel-heading'>Start Date</div>
-
-	<div class='panel-body'>
-
-		<form class='form form-inline' >
-
-			<div class='form-group'>
-				<input type='text' class='form-control' ng-model='problem.start_date'>
-
-			</div>
-			<div class='form-group'>
-				<button ng-click='update_start_date()' class='btn btn-default' > Update </button>
-			</div>	
-		</form>
-
-	</div>
-
-
-	</div>
-
-</div>
-
-</div>
-
-
-
-
-
-<div class='panel panel-default'>
-
-	<div class='panel-heading'>Notes</div>
-
-	<div class='panel-body'>
-
-
-<div class='row'>
-
-	<div class='col-md-6'>
-		<b> Patient Notes </b> 
-
-		<form class='form-inline' ng-submit='add_patient_note(patient_note_form)'>
-
-		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='patient_note_form.note'></textarea>
-
-		<button class='btn btn-default btn-lg' type='submit'> Add </button>
-
-		</form>
-
-		<hr>
-
-		<ul class='list-group'>
-
-			<li ng-show='!patient_notes.length'> No Notes </li>
-			<li ng-repeat='note in patient_notes' class='list-group-item'>
-				{{note.note}}
-			</li>
-		</ul>
-	</div>
-
-	<div class='col-md-6'>
-		<b> Physician Notes </b>
-
-		<form class='form-inline' ng-submit='add_physician_note(physician_note_form)'>
-
-		<textarea class='form-control note-box' style='width: 450px; height: 80px;' ng-model='physician_note_form.note'></textarea>
-
-		<button class='btn btn-default btn-lg' type='submit'> Add </button>
-
-		</form>
-
-		<hr>
-
-		<ul class='list-group'>
-
-			<li ng-show='!physician_notes.length'> No Notes </li>
-			<li ng-repeat='note in physician_notes' class='list-group-item'>
-				{{note.note}}
-			</li>
-		</ul>
-	</div>
-</div>
-
-
-	</div>
-
-</div>
-
-
-
-
-
-<div class='panel panel-default'>
-
-	<div class='panel-heading'> Goals and Todos </div>
-
-
-	<div class='panel-body'>
-
-
-<div class='row'>
-
-	<div class='col-md-6'>
-
-		<b> Goals </b>
-		<hr>
-		<form class='form-inline' ng-submit='add_goal(goal_form)'>
-
-			<div class='form-group'>
-				<label> Add </label>
-				<input type='text' class='form-control' ng-model='goal_form.name'>
-			</div>
-
-			<div class='form-group'>
-				<input type='submit' value='Submit' class='btn btn-default'>
-			</div>
-
-		</form>
-
-		<hr>
-
-		<ul class='list-group'>
-			<li ng-show='!problem_goals.length'> No Goals </li>
-			<li ng-repeat='goal in problem_goals' class='list-group-item'>
-				{{goal.goal}}
-			</li>
-		</ul>
-
-
-
-	</div>
-
-	<div class='col-md-6'>
-
-		<b> Todo </b>
-		<hr>
-		<form class='form-inline' ng-submit='add_todo(todo_form)'>
-
-			<div class='form-group'>
-				<label> Add </label>
-				<input type='text' class='form-control' ng-model='todo_form.name'>
-			</div>
-
-			<div class='form-group'>
-				<input type='submit' value='Submit' class='btn btn-default'>
-			</div>
-
-
-		</form>
-
-		<hr>
-
-		<ul class='list-group'>
-			<li ng-show='!problem_todos.length'> No Todos </li>
-			<li ng-repeat='todo in problem_todos' class='list-group-item'>
-				{{todo.todo}}
-			</li>
-		</ul>
-
-	</div>
-
-
-</div>
-
-
-
-
-	</div>
-
-
-</div>
-
-
-<div class='panel panel-default'>
-
-
-	<div class='panel-heading'> Images </div>
-
-	<div class='panel-body'>
-
-		<form class='form-inline' action='{{image_upload_url()}}' method='POST' enctype='multipart/form-data' id='uploadProblemImageFrm'>
-			<label for="file">File:</label>
-			<input type="file" name="file" id="file">
-			<input type="submit" name="submit" value="Upload">
-		</form>
-
-		<hr>
-
-		<div class='row'>
-
-			<div class='col-md-4' ng-repeat='image in problem_images'>
-
-				<center>
-					<img src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
-					<br>
-					
-					<button class='btn btn-sm btn-default' ng-click='open_image_box(image)'> View </button>
-					<button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)'>
-						Delete 
-					</button>
-					<hr>
-				</center>
-			</div>
-
-		</div>
-
-	</div>
-
-</div>
-
-
-<!-- Relationships -->
-
-<div class='panel panel-default'>
-
-	<div class='panel-heading'> Relationships </div>
-
-	<div class='panel-body'>
-
-		<center> <h3> Relationship of {{problem.problem_name}} with other patient's problems. </h3></center>
-
-		<hr>
-
-		<div class='row'>
-
-			<div class='col-md-6'>
-
-				<h4> Related Problems </h4>
-		<ul class='list-group' >
-			<li ng-show='problem_relations.length<1'class='list-group-item'>
-				<center>
-					No related problems found ! 
-				</center>
-			</li>
-			<li ng-repeat='relationship in problem_relationships' class='list-group-item box50'>
-				{{relationship.target.problem_name}}
-				<button class='btn btn-sm btn-default pull-right' ng-click='unrelate(relationship)'> Unrelate </button>
-			</li>
-
-		</ul>
-
-
-			</div>
-
-			<div class='col-md-6'>
-
-				<h4> Not Related Problems </h4>
-		<ul class='list-group' >
-
-			<li ng-show='not_related_problems.length<1' class='list-group-item'>
-				<center>
-					No non-related problems found ! 
-				</center>
-			</li>
-
-
-			<li ng-repeat='problem in not_related_problems' class='list-group-item box50'>
-				{{problem.problem_name}}
-				<button class='btn btn-sm btn-default pull-right' ng-click='relate_problem(problem)'> Relate </button>
-
-			</li>
-		</ul>
-
-
-			</div>
-
-		</div>
-
-
-	</div>
-
-</div>
-
-
-<script type='text/javascript'>
-/* To BE REPLACED BY ANGULARJS DIRECTIVE */
-
-var options = {
-	success: function(data){
-		if(data['success']==true){
-			alert("Uploaded Image!");
-			location.reload();
-		}else{
-			alert("Something went wrong!");
-		}
-	}
-};
-
-$('#uploadProblemImageFrm').ajaxForm(options);
-
-</script>
-
-
-
-
-
-
-
-

@@ -9,9 +9,7 @@
 
 
             this.csrf_token = function () {
-
-                var token = $cookies.csrftoken;
-                return token;
+                return $cookies.get('csrftoken');
             };
 
 
