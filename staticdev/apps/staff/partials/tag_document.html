@@ -4,7 +4,7 @@
     </h3>
 </center>
 <hr>
-<div class="container-fluid">
+<div class="container-fluid" id="document-tag-page">
     <div class="row">
         <div class="col-md-6">
             <b>Document name: </b><span ng-bind="document.filename"></span> (<span
@@ -24,9 +24,12 @@
 
     <div class="row">
         <div class="col-md-12">
-            <div ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list">
-                <a class="todo-label" ng-class="label.css_class" ng-bind="label.name"
-                   ng-click="add_label_to_document(document, label)">
+            <div ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list"
+                 ng-class="label.is_pinned ? '' :''">
+                <a class="todo-label" ng-class="label.css_class"
+                   ng-click="label.is_pinned ? remove_document_label(document,label) :add_label_to_document(document, label)">
+                    <span ng-bind="label.name"></span>
+                    <i class="fa fa-check ng-scope" ng-if="label.is_pinned"></i>
                 </a>
             </div>
         </div>

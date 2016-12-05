@@ -288,3 +288,14 @@ a.btn-manage {
 .btn-remove {
   cursor: pointer;
 }
+
+// Document tagging page
+#document-tag-page {
+  .labeled-list {
+    display: inline-block;
+  }
+}
+
+.panel-heading {
+  cursor: pointer;
+}

@@ -194,4 +194,10 @@ a.btn-manage {
 .btn-remove {
   cursor: pointer; }
 
+#document-tag-page .labeled-list {
+  display: inline-block; }
+
+.panel-heading {
+  cursor: pointer; }
+
 /*# sourceMappingURL=patient-profile.css.map */
