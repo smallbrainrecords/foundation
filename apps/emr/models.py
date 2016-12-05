@@ -955,6 +955,7 @@ class Document(models.Model):
     author = models.ForeignKey(UserProfile, related_name='author_document')
     patient = models.ForeignKey(UserProfile, related_name='patient_pinned', null=True, blank=True)
     document = models.FileField(upload_to='documents/', null=True)
+    labels = models.ManyToManyField(Label)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:

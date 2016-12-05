@@ -221,3 +221,41 @@ def document_list_by_problem(request, problem_id):
     resp['documents'] = document_probs_list + document_todos_list
     resp['success'] = True
     return ajax_response(resp)
+
+
+@login_required
+def pin_label_2_document(request):
+    """
+    Pin a label to a document
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    document_id = json_body.get('document')
+    document = Document.objects.get(id=document_id)
+    label_id = json_body.get('label')
+    label = Label.objects.get(id=label_id)
+    document.labels.add(label)
+
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def remove_document_label(request):
+    """
+    Pin a label to a document
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    document_id = json_body.get('document')
+    document = Document.objects.get(id=document_id)
+    label_id = json_body.get('label')
+    label = Label.objects.get(id=label_id)
+    document.labels.remove(label)
+
+    resp['success'] = True
+    return ajax_response(resp)

@@ -1,23 +1,25 @@
 from rest_framework import serializers
 from emr.models import Document, DocumentProblem, DocumentTodo
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
-from todo_app.serializers import TodoSerializer
+from todo_app.serializers import TodoSerializer, LabelSerializer
 from problems_app.serializers import ProblemSerializer
 
 
 class DocumentSerialization(serializers.ModelSerializer):
     author = UserProfileSerializer()
     patient = UserProfileSerializer()
+    labels = LabelSerializer(many=True)
 
     class Meta:
         model = Document
         fields = (
             'id',
             'author',
-            'filename',
-            'file_mime_type',
             'patient',
             'document',
+            'labels',
+            'filename',
+            'file_mime_type',
             'created_on'
         )
 
