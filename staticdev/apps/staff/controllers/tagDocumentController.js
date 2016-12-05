@@ -3,7 +3,7 @@
     angular.module('StaffApp')
         .controller('TagDocumentCtrl', TagDocumentCtrl);
 
-    TagDocumentCtrl.$inject = ['$scope', 'documentService', '$routeParams', 'staffService', 'toaster', '$cookies', 'sharedService'];
+    TagDocumentCtrl.$inject = ['$scope', 'documentService', '$routeParams', 'staffService', '$http', 'toaster', '$cookies', 'sharedService'];
 
     /**
      * WIP: Missing status return
@@ -13,7 +13,7 @@
      * @param staffService
      * @constructor
      */
-    function TagDocumentCtrl($scope, documentService, $routeParams, staffService, toaster, $cookies, sharedService) {
+    function TagDocumentCtrl($scope, documentService, $routeParams, staffService, $http, toaster, $cookies, sharedService) {
 
         function getPatientInfo(patientId) {
             staffService.fetchProblems(patientId).then(function (response) {
