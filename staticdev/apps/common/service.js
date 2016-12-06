@@ -74,7 +74,7 @@
          * @param document
          * @param label
          */
-        this.add_label_2_document = function (document, label) {
+        this.pinLabelToDocument = function (document, label) {
             return $http.post('/docs/pin/label', {
                 document: document.id,
                 label: label.id
@@ -90,7 +90,7 @@
          * @param document
          * @param label
          */
-        this.remove_document_label = function (document, label) {
+        this.unpinDocumentLabel = function (document, label) {
             return $http.post('/docs/remove/label', {
                 document: document.id,
                 label: label.id
@@ -99,6 +99,38 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        }
+        };
+
+        /**
+         * Remove an pinned problem in document
+         * @param document
+         * @param problem
+         */
+        this.unpinDocumentProblem = function (document, problem) {
+            return $http.post('/docs/unpin/problem', {
+                document: document.id,
+                problem: problem.id
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        };
+
+        /**
+         * Remove an pinned todo in document
+         * @param document
+         * @param todo
+         */
+        this.unpinDocumentTodo = function (document, todo) {
+            return $http.post('/docs/unpin/todo', {
+                document: document.id,
+                todo: todo.id
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        };
     }
 })();

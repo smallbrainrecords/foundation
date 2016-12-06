@@ -65,12 +65,6 @@
                 return $http.get('/docs/info/' + documentId);
             };
 
-            /**
-             * WIP
-             */
-            this.typeaheadPatientList = function () {
-                //TODO Implement detail here
-            };
 
             /**
              *

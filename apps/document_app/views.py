@@ -288,3 +288,35 @@ def remove_document_label(request):
 
     resp['success'] = True
     return ajax_response(resp)
+
+
+@login_required
+def unpin_document_todo(request):
+    """
+
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    DocumentTodo.objects.filter(document_id=json_body.get('document')).filter(todo_id=json_body.get('todo')).delete()
+
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def unpin_document_problem(request):
+    """
+
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    DocumentTodo.objects.filter(document_id=json_body.get('document')).filter(todo_id=json_body.get('problem')).delete()
+
+    resp['success'] = True
+    return ajax_response(resp)

@@ -27,7 +27,7 @@
             <div ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list"
                  ng-class="label.is_pinned ? '' :''">
                 <a class="todo-label" ng-class="label.css_class"
-                   ng-click="label.is_pinned ? remove_document_label(document,label) :add_label_to_document(document, label)">
+                   ng-click="label.is_pinned ? unpinDocumentLabel(document,label) :pinLabelToDocument(document, label)">
                     <span ng-bind="label.name"></span>
                     <i class="fa fa-check ng-scope" ng-if="label.is_pinned"></i>
                 </a>
@@ -52,8 +52,10 @@
             <ul class="ul-clean no-padding">
                 <li ng-repeat="todo in active_todos track by $index">
                     <div class="item-box flex-container">
-                        <button ng-click="pinTodo2Document(document,todo)"
-                                class="btn btn-default dube-btn-pin-unpin flex-item pull-left">Pin
+                        <button ng-click="todo.is_pinned ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo)"
+                                ng-class="todo.is_pinned ? 'btn-danger':'btn-primary'"
+                                class="btn dube-btn-pin-unpin flex-item pull-left">
+                            <span ng-bind="todo.is_pinned ? 'Un pin' : 'Pin'"></span>
                         </button>
                         <span ng-bind="todo.todo" class="flex-item"></span>
                     </div>
@@ -73,8 +75,10 @@
                     <div class="item-box flex-container"
                          ng-show="problem.is_active"
                          ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
-                        <button ng-click="pinProblem2Document(document,problem)"
-                                class="btn btn-default dube-btn-pin-unpin pull-left flex-item">Pin
+                        <button ng-click="problem.is_pinned ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem)"
+                                ng-class="problem.is_pinned ? 'btn-danger':'btn-primary'"
+                                class="btn dube-btn-pin-unpin pull-left flex-item">
+                            <span ng-bind="problem.is_pinned ? 'Un pin' : 'Pin'"></span>
                         </button>
                         <span ng-bind="problem.problem_name" class="flex-item"></span>
                     </div>

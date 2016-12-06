@@ -201,6 +201,8 @@ a.btn-manage {
   display: inline-block; }
 #document-tag-page .dube-btn-pin-unpin {
   margin-right: 20px; }
+#document-tag-page .todo-label {
+  cursor: pointer; }
 
 .flex-container {
   display: flex; }

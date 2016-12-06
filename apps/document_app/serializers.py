@@ -9,6 +9,8 @@ class DocumentSerialization(serializers.ModelSerializer):
     author = UserProfileSerializer()
     patient = UserProfileSerializer()
     labels = LabelSerializer(many=True)
+    todos = TodoSerializer(many=True)
+    problems = ProblemSerializer(many=True)
 
     class Meta:
         model = Document
@@ -18,6 +20,8 @@ class DocumentSerialization(serializers.ModelSerializer):
             'patient',
             'document',
             'labels',
+            'todos',
+            'problems',
             'filename',
             'file_mime_type',
             'created_on'
@@ -27,22 +31,26 @@ class DocumentSerialization(serializers.ModelSerializer):
 class DocumentTodoSerialization(serializers.ModelSerializer):
     document = DocumentSerialization()
     todo = TodoSerializer()
+    author = UserProfileSerializer()
 
     class Meta:
         model = DocumentTodo
         fields = (
             'document',
-            'todo'
+            'todo',
+            'author',
         )
 
 
 class DocumentProblemSerialization(serializers.ModelSerializer):
     document = DocumentSerialization()
     problem = ProblemSerializer()
+    author = UserProfileSerializer()
 
     class Meta:
         model = DocumentProblem
         fields = (
             'document',
-            'problem'
+            'problem',
+            'author',
         )
