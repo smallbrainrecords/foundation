@@ -4,14 +4,12 @@
     </h3>
 </center>
 <hr>
-
-<center><h3> Tag documents</h3></center>
-<hr>
-
-<div class="container-fluid">
+<div class="container-fluid" id="document-tag-page">
     <div class="row">
         <div class="col-md-6">
-            <b>Document name: </b>(<span ng-bind="document.patient.user.first_name"></span> <span ng-bind="document.patient.user.last_name"></span>) <span ng-bind="document.filename"></span> <br>
+            <b>Document name: </b><span ng-bind="document.filename"></span> (<span
+                ng-bind="document.patient.user.first_name"></span> <span
+                ng-bind="document.patient.user.last_name"></span>) <br>
         </div>
         <div class="col-md-6">
             <input type="text"
@@ -23,24 +21,63 @@
                    placeholder="Type patient name to search">
         </div>
     </div>
+
     <div class="row">
-        <div class="col-md-6">
-            <h1>List of active todo</h1>
-            <p ng-if="active_todos.length ==0">No active todo</p>
-            <ul ng-if="active_todos.length != 0">
+        <div class="col-md-12">
+            <div ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list"
+                 ng-class="label.is_pinned ? '' :''">
+                <a class="todo-label" ng-class="label.css_class"
+                   ng-click="label.is_pinned ? remove_document_label(document,label) :add_label_to_document(document, label)">
+                    <span ng-bind="label.name"></span>
+                    <i class="fa fa-check ng-scope" ng-if="label.is_pinned"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <view-file uri="document.document"
+                       content-type="document.file_mime_type[0]"
+                       controls="false"
+                       allow-modal="false"></view-file>
+        </div>
+    </div>
+
+    <!-- List of all active todo the document can associated to-->
+    <div class="panel panel-default" ng-if="active_todos.length != 0">
+        <div class="panel-heading">
+            <p>List of active todo</p>
+        </div>
+        <div class="panel-body">
+            <ul class="ul-clean no-padding">
                 <li ng-repeat="todo in active_todos track by $index">
-                    <span ng-bind="todo.todo"></span>
-                    <button ng-click="pinTodo2Document(document,todo)" class="btn btn-default right">Pin</button>
+                    <div class="item-box flex-container">
+                        <button ng-click="pinTodo2Document(document,todo)"
+                                class="btn btn-default dube-btn-pin-unpin flex-item pull-left">Pin
+                        </button>
+                        <span ng-bind="todo.todo" class="flex-item"></span>
+                    </div>
                 </li>
             </ul>
         </div>
-        <div class="col-md-6">
-            <h1>List of pinable problem</h1>
-            <p ng-if="active_probs.length ==0">No problems</p>
-            <ul ng-if="active_probs.length != 0">
-                <li ng-repeat="prob in active_probs track by $index | filter : prob.is_active">
-                    <span ng-bind="prob.problem_name"></span>
-                    <button ng-click="pinProblem2Document(document,prob)" class="btn btn-default right">Pin</button>
+    </div>
+
+    <!-- List of all problem(shared problem) of current patient which has be pinned to this documentation-->
+    <div class="panel panel-default" ng-if="active_probs.length != 0">
+        <div class="panel-heading">
+            <p>List of pinable problem</p>
+        </div>
+        <div class="panel-body">
+            <ul class="ul-clean no-padding">
+                <li ng-repeat="problem in active_probs track by $index">
+                    <div class="item-box flex-container"
+                         ng-show="problem.is_active"
+                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                        <button ng-click="pinProblem2Document(document,problem)"
+                                class="btn btn-default dube-btn-pin-unpin pull-left flex-item">Pin
+                        </button>
+                        <span ng-bind="problem.problem_name" class="flex-item"></span>
+                    </div>
                 </li>
             </ul>
         </div>

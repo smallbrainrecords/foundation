@@ -67,6 +67,38 @@
          */
         this.getDocumentByProblem = function (problem_id) {
             return $http.get('/docs/problem/' + problem_id);
+        };
+
+        /**
+         * Add a label to document
+         * @param document
+         * @param label
+         */
+        this.add_label_2_document = function (document, label) {
+            return $http.post('/docs/pin/label', {
+                document: document.id,
+                label: label.id
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        };
+
+        /**
+         * Remove a label in document
+         * @param document
+         * @param label
+         */
+        this.remove_document_label = function (document, label) {
+            return $http.post('/docs/remove/label', {
+                document: document.id,
+                label: label.id
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
         }
     }
 })();

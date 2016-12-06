@@ -1,3 +1,4 @@
+import mimetypes
 import os
 import ast
 from django.db import models
@@ -564,6 +565,7 @@ class TodoActivity(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     comment = models.ForeignKey(ToDoComment, null=True, blank=True)
     attachment = models.ForeignKey(ToDoAttachment, null=True, blank=True)
+
     class Meta:
         ordering = ['-created_on']
 
@@ -953,6 +955,10 @@ class Document(models.Model):
     author = models.ForeignKey(UserProfile, related_name='author_document')
     patient = models.ForeignKey(UserProfile, related_name='patient_pinned', null=True, blank=True)
     document = models.FileField(upload_to='documents/', null=True)
+    labels = models.ManyToManyField(Label, blank=True)
+    todos = models.ManyToManyField(ToDo, blank=True, through="DocumentTodo")
+    problems = models.ManyToManyField(Problem, blank=True, through="DocumentProblem")
+
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -974,14 +980,20 @@ class Document(models.Model):
         extension = extension.replace('.', '')
         return extension
 
+    def file_mime_type(self):
+        mime = mimetypes.guess_type(self.document.path)
+        return mime
+
 
 class DocumentTodo(models.Model):
     document = models.ForeignKey(Document)
     todo = models.ForeignKey(ToDo)
+    author = models.ForeignKey(UserProfile)  # User who attach document to the todo
     created_on = models.DateTimeField(auto_now_add=True)
 
 
 class DocumentProblem(models.Model):
     document = models.ForeignKey(Document)
     problem = models.ForeignKey(Problem)
+    author = models.ForeignKey(UserProfile)  # User who attach document to the problem
     created_on = models.DateTimeField(auto_now_add=True)

@@ -1,6 +1,9 @@
 body {
   padding-top: 70px; }
 
+#dvmain {
+  min-height: 550px; }
+
 .profile-section {
   position: relative;
   height: 315px;
@@ -192,6 +195,19 @@ a.btn-manage {
   border: 5px dashed blue; }
 
 .btn-remove {
+  cursor: pointer; }
+
+#document-tag-page .labeled-list {
+  display: inline-block; }
+#document-tag-page .dube-btn-pin-unpin {
+  margin-right: 20px; }
+
+.flex-container {
+  display: flex; }
+  .flex-container .flex-item {
+    align-self: center; }
+
+.panel-heading {
   cursor: pointer; }
 
 /*# sourceMappingURL=patient-profile.css.map */
