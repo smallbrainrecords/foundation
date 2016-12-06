@@ -1,0 +1,50 @@
+import os
+
+BASE_DIR  = os.getcwd()
+
+
+
+PROBLEMS_PATH = os.path.join(BASE_DIR, 'static/js/problems')
+
+COMPRESS_ENABLED = False
+
+# SECRET_KEY
+with open('/path/to/secret_key.txt') as f:
+    SECRET_KEY = f.read().strip()
+
+
+with open('/path/to/db_pass.txt') as f:
+    db_pass = f.read().strip()
+
+SNOMEDCT = {
+        'snomedct': {
+            'ssl': {'key':'/path/to/key','cert':'/path/to/cert','ca':'/path/to/ca'},
+            'host':'',
+            'user':'',
+            'passwd':db_pass,
+            'db':'snomedct',
+         }
+}
+
+DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+            'NAME': '',                      # Or path to database file if using sqlite3.
+            'USER': '',                      # Not used with sqlite3.
+            'PASSWORD': db_pass,                  # Not used with sqlite3.
+            'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+            'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+            'OPTIONS': {'ssl':{'key':'/path/to/key','cert':'/path/to/cert','ca':'/path/to/ca'}},
+        }
+    }
+
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+#             'NAME': 'sbtest',                      # Or path to database file if using sqlite3.
+#             'USER': 'root',                      # Not used with sqlite3.
+#             'PASSWORD': 'Volatile0',                  # Not used with sqlite3.
+#             'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+#             'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+#         }
+#     }
