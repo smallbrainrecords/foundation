@@ -11,6 +11,10 @@
      * @param documentService
      * @param $routeParams
      * @param staffService
+     * @param $http
+     * @param toaster
+     * @param $cookies
+     * @param sharedService
      * @constructor
      */
     function TagDocumentCtrl($scope, documentService, $routeParams, staffService, $http, toaster, $cookies, sharedService) {
@@ -45,8 +49,12 @@
         // Status
         $scope.pinTodo2Document = function (document, todo) {
             documentService.pinTodo2Document(document, todo)
-                .then(function (resp) {
-                    // success full pinned to item
+                .then(function (response) {
+                    if (response.data.success) {
+                        toaster.pop('success', 'Done', 'Added todo to document')
+                    } else {
+                        toaster.pop('error', 'Warning', 'Something went wrong!');
+                    }
                 }, function (resp) {
                     // error occurred
                 });
@@ -55,9 +63,13 @@
         // Status
         $scope.pinProblem2Document = function (document, prob) {
             documentService.pinProblem2Document(document, prob)
-                .then(function (resp) {
-                    // success full pinned to item
-                }, function (resp) {
+                .then(function (response) {
+                    if (response.data.success) {
+                        toaster.pop('success', 'Done', 'Document is pinned to problem')
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong!');
+                    }
+                }, function (response) {
                     // error occurred
                 });
         };
@@ -78,11 +90,16 @@
         $scope.pinPatient2Document = function (item, model) {
             documentService.pinPatient2Document($scope.document, model)
                 .then(function (resp) {
-                    $scope.document = resp.data.info;
-                    var patientId = resp.data.info.patient.user.id;
-                    getPatientInfo(patientId);
+                    if (response.data.success) {
+                        toaster.pop('success', 'Done', 'Added label to document')
+                        $scope.document = resp.data.info;
+                        var patientId = resp.data.info.patient.user.id;
+                        getPatientInfo(patientId);
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong!');
+                    }
                 }, function (error) {
-
+                    toaster.pop('error', 'Error', 'Something went wrong!');
                 })
         };
 
@@ -94,10 +111,10 @@
         $scope.add_label_to_document = function (document, label) {
             sharedService.add_label_2_document(document, label).then(function (response) {
                 if (response.data.success) {
-                    toaster.pop('success', 'Done', 'Added label to document')
+                    toaster.pop('success', 'Done', 'Added label to document');
                     label.is_pinned = true;
                 } else {
-                    toaster.pop('error', 'Warning', 'Something went wrong!');
+                    toaster.pop('error', 'Error', 'Something went wrong!');
                 }
             });
         };
@@ -113,7 +130,7 @@
                     toaster.pop('success', 'Done', "Removed document's label")
                     label.is_pinned = false;
                 } else {
-                    toaster.pop('error', 'Warning', 'Something went wrong!');
+                    toaster.pop('error', 'Error', 'Something went wrong!');
                 }
             });
         };

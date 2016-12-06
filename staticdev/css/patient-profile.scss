@@ -2,6 +2,10 @@ body {
   padding-top: 70px;
 }
 
+#dvmain {
+  min-height: 550px;
+}
+ 
 .profile-section {
   position: relative;
   //width: 851px;
@@ -294,8 +298,21 @@ a.btn-manage {
   .labeled-list {
     display: inline-block;
   }
+
+  .dube-btn-pin-unpin {
+    margin-right: 20px;
+  }
+}
+
+.flex-container {
+  display: flex;
+
+  .flex-item {
+    align-self: center;
+  }
 }
 
 .panel-heading {
   cursor: pointer;
 }
+
