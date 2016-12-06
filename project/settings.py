@@ -103,7 +103,10 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'p3%wq49-jg0ovn-#50#9-zpwn4-et_b_p7ho1k*v9)(q34+7hr'
+
+# SECRET_KEY = ''
+# with open('/home/secret_key.txt') as f:
+#    SECRET_KEY = f.read().strip()
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -214,10 +217,12 @@ SNOMEDCT = {}
 
 
 PROBLEMS_PATH = '/root/core/static/js/problems/'
+
 # ALLOWED_HOSTS = [
 #     '192.210.207.188', # Allow domain and subdomains
 #     '146.148.52.187',
-# ]
+#     'andromedahealth.com',
+#     ]
 ALLOWED_HOSTS = ['*']
 
 try:
