@@ -50,6 +50,12 @@ def document_list(request):
 # TODO: Check access here
 @login_required
 def document_info(request, document_id):
+    """
+
+    :param request:
+    :param document_id:
+    :return:
+    """
     resp = {'success': False}
 
     document = Document.objects.filter(id=document_id).get()
@@ -64,6 +70,11 @@ def document_info(request, document_id):
 
 @login_required
 def pin_patient_2_document(request):
+    """
+
+    :param request:
+    :return:
+    """
     resp = {'success': False}
     json_body = json.loads(request.body)
     document_id = json_body.get('document')
@@ -82,12 +93,17 @@ def pin_patient_2_document(request):
 
 @login_required
 def pin_todo_2_document(request):
+    """
+
+    :param request:
+    :return:
+    """
     resp = {'success': False}
     json_body = json.loads(request.body)
     document = Document.objects.filter(id=json_body.get('document')).get()
     todo = ToDo.objects.filter(id=json_body.get('todo')).get()
 
-    DocumentTodo.objects.create(document=document, todo=todo)
+    DocumentTodo.objects.create(document=document, todo=todo, author=request.user.profile)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -95,11 +111,18 @@ def pin_todo_2_document(request):
 
 @login_required
 def pin_problem_2_document(request):
+    """
+
+    :param request:
+    :return:
+    """
+
     resp = {'success': False}
     json_body = json.loads(request.body)
     document = Document.objects.filter(id=json_body.get('document')).get()
     problem = Problem.objects.filter(id=json_body.get('problem')).get()
-    DocumentProblem.objects.create(document=document, problem=problem)
+
+    DocumentProblem.objects.create(document=document, problem=problem, author=request.user.profile)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -132,6 +155,12 @@ def search_patient(request):
 
 @login_required
 def get_patient_document(request, patient_id):
+    """
+
+    :param request:
+    :param patient_id:
+    :return:
+    """
     resp = {'success': False}
     profile = UserProfile.objects.filter(user_id=patient_id)
     items = Document.objects.filter(patient=profile)
