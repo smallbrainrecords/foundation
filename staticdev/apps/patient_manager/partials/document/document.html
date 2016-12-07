@@ -12,13 +12,12 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
             <h3 ng-bind="document.filename"></h3>
             <!--Labels-->
         </div>
-        <div class="col-md-4">
-            <button class="btn btn-primary">Pin problem</button>
-            <button class="btn btn-danger">Delete document</button>
+        <div class="col-xs-4  col-sm-4  col-md-4  col-lg-4 text-right">
+            <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete document</button>
         </div>
         <div class="col-md-12">
             <div ng-repeat="label in document.labels track by $index" class="quick-card-editor-label labeled-list"
@@ -39,7 +38,6 @@
         </div>
         <div class="panel-body">
             <todo ng-model="document.todos" accomplished="false" show-problem="true"></todo>
-            <hr>
         </div>
     </div>
 

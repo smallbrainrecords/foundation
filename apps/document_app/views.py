@@ -324,3 +324,20 @@ def unpin_document_problem(request):
 
     resp['success'] = True
     return ajax_response(resp)
+
+
+@login_required
+def remove_document(request, document_id):
+    """
+
+    :param document_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+
+    document = Document.objects.filter(id=document_id).get()
+    document.delete()
+
+    resp['success'] = True
+    return ajax_response(resp)
