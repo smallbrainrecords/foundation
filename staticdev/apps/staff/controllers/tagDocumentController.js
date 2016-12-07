@@ -130,12 +130,11 @@
         //TODO Implement details here
         $scope.pinPatient2Document = function (item, model) {
             documentService.pinPatient2Document($scope.document, model)
-                .then(function (resp) {
+                .then(function (response) {
                     if (response.data.success) {
-                        toaster.pop('success', 'Done', 'Added label to document');
-                        $scope.document = resp.data.info;
-                        var patientId = resp.data.info.patient.user.id;
-                        getPatientInfo(patientId);
+                        toaster.pop('success', 'Done', 'Added label to document. Loading patient todo and patient');
+                        $scope.document = response.data.info;
+                        getPatientInfo(response.data.info.patient.user.id);
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong!');
                     }
