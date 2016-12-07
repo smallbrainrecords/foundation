@@ -131,22 +131,25 @@ def pin_problem_2_document(request):
 @login_required
 def search_patient(request):
     """
-
+    Type ahead result to search patient
     :param request:
     :return:
     """
     resp = {'success': False}
     result = []
     json_body = json.loads(request.body)
+    search_str = json_body.get('search_str')
 
-    items = UserProfile.objects.filter(role='patient')
+    items = UserProfile.objects.filter(role='patient').filter(
+        Q(user__first_name__icontains=search_str)
+        | Q(user__last_name__icontains=search_str)
+    )
 
     for item in items:
-        if unicode(item).__contains__(json_body.get('search_str')):
-            result.append({
-                'uid': item.id,
-                'full_name': unicode(item)
-            })
+        result.append({
+            'uid': item.id,
+            'full_name': unicode(item)
+        })
 
     resp['results'] = result
     resp['success'] = True
