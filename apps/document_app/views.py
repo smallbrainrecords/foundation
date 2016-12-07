@@ -207,13 +207,14 @@ def delete_document(request, document_id):
         todo = ToDo.objects.filter(id=del_tag_id).get()
         tag = DocumentTodo.objects.filter(document=document, todo=todo).get()
 
-    if user.profile.role != 'patient':
+    if user.profile.role != 'patient':  # Other user not patient can delete the tag without hassle
         tag.delete()
     else:
-        if user.profile == document.author:
+        # Patient can only delete tag if they document owner or tag author
+        if user.profile == document.author or user.profile == tag.author:
             tag.delete()
 
-    if del_in_sys and ["physician", "admin"].__contains__(user.profile.role):
+    if del_in_sys and ["physician", "admin"].__contains__(user.profile.role):  # delete document in system
         document.delete()
 
     resp['success'] = True
