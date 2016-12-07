@@ -1,0 +1,64 @@
+<div class='panel panel-default'>
+    <div class='panel-body'>
+        <div class='row'>
+            <div class='col-md-12'>
+                <a href='#/'><b> Back to home page </b></a>
+            </div>
+        </div>
+    </div><!-- End of Panel Body -->
+</div>
+
+<hr>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <h3 ng-bind="document.filename"></h3>
+            <!--Labels-->
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-primary">Pin problem</button>
+            <button class="btn btn-danger">Delete document</button>
+        </div>
+        <div class="col-md-12">
+            <div ng-repeat="label in document.labels track by $index" class="quick-card-editor-label labeled-list"
+                 ng-class="label.is_pinned ? '' :''">
+                <a class="todo-label" ng-class="label.css_class"
+                   ng-click="label.is_pinned ? unpinDocumentLabel(document,label) :pinLabelToDocument(document, label)">
+                    <span ng-bind="label.name"></span>
+                    <i class="fa fa-check ng-scope" ng-if="label.is_pinned"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!--Pinned todo-->
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <p>List of pinned todo</p>
+        </div>
+        <div class="panel-body">
+            <todo ng-model="document.todos" accomplished="false" show-problem="true"></todo>
+            <hr>
+        </div>
+    </div>
+
+    <!--Pinned problem-->
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <p>List of pinned problem</p>
+        </div>
+        <div class="panel-body">
+            <ul class='ul-clean no-padding'>
+                <li ng-repeat='problem in document.problems'>
+                    <div class='item-box'
+                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '
+                         ng-click="open_problem(problem);">
+                        <span ng-bind="problem.problem_name "></span> <span
+                            ng-show="problem.authenticated==false">(not authenticated)</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

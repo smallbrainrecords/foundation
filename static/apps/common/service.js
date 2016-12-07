@@ -1,13 +1,13 @@
 (function () {
 
     'use strict';
-    angular.module('sharedModule', ['ngFileUpload'])
+    angular.module('sharedModule', ['ngFileUpload', 'httpModule'])
         .service('sharedService', sharedService);
 
-    sharedService.$inject = ['$http', '$cookies', 'Upload'];
+    sharedService.$inject = ['$http', '$cookies', 'Upload', 'httpService'];
 
 
-    function sharedService($http, $cookies, Upload) {
+    function sharedService($http, $cookies, Upload, httpService) {
         /**
          * Upload multiple documentation
          * @param files
@@ -59,6 +59,86 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             })
-        }
+        };
+
+        /**
+         *
+         * @param problem_id
+         */
+        this.getDocumentByProblem = function (problem_id) {
+            return $http.get('/docs/problem/' + problem_id);
+        };
+
+        /**
+         * Add a label to document
+         * @param document
+         * @param label
+         */
+        this.pinLabelToDocument = function (document, label) {
+            return $http.post('/docs/pin/label', {
+                document: document.id,
+                label: label.id
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        };
+
+        /**
+         * Remove a label in document
+         * @param document
+         * @param label
+         */
+        this.unpinDocumentLabel = function (document, label) {
+            return $http.post('/docs/remove/label', {
+                document: document.id,
+                label: label.id
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        };
+
+        /**
+         * Remove an pinned problem in document
+         * @param document
+         * @param problem
+         */
+        this.unpinDocumentProblem = function (document, problem) {
+            return $http.post('/docs/unpin/problem', {
+                document: document.id,
+                problem: problem.id
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        };
+
+        /**
+         * Remove an pinned todo in document
+         * @param document
+         * @param todo
+         */
+        this.unpinDocumentTodo = function (document, todo) {
+            return $http.post('/docs/unpin/todo', {
+                document: document.id,
+                todo: todo.id
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        };
+
+        /**
+         *
+         * @param documentId
+         */
+        this.getDocumentInfo = function (documentId) {
+            return $http.get('/docs/info/' + documentId);
+        };
     }
 })();

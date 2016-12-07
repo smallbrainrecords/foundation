@@ -2,6 +2,10 @@ body {
   padding-top: 70px;
 }
 
+#dvmain {
+  min-height: 550px;
+}
+
 .profile-section {
   position: relative;
   //width: 851px;
@@ -285,34 +289,37 @@ a.btn-manage {
   border: 5px dashed blue;
 }
 
-<<<<<<< HEAD
 .btn-remove {
-=======
-#problem-header {
-
-  z-index: 999;
-  width: 1200px;
-  margin: 0 auto;
-  border-bottom: 1px solid #ccc;
-  padding-top: 7px;
-  padding-bottom: 7px;
+  cursor: pointer;
 }
 
-#problem-header.affix {
-  top: 50px;
+// Document tagging page
+#document-tag-page {
+  .labeled-list {
+    display: inline-block;
+  }
+
+  .dube-btn-pin-unpin {
+    margin-right: 20px;
+  }
+
+  .todo-label {
+    cursor: pointer;
+  }
 }
 
-.problem-controlled {
-  background-color: green;
-  color: white;
+.flex-container {
+  display: flex;
+
+  .flex-item {
+    align-self: center;
+  }
+}
+
+.panel-heading {
+  cursor: pointer;
 }
 
 .problem-uncontrolled {
-  background-color: red;
-  color: white;
-}
-
-.panel-heading{
->>>>>>> 45c2c2f45313e3331ad55abfdbdb6e04dcc488dc
-  cursor: pointer;
+  z-index: 1000;
 }

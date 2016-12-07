@@ -1,6 +1,9 @@
 body {
   padding-top: 70px; }
 
+#dvmain {
+  min-height: 550px; }
+
 .profile-section {
   position: relative;
   height: 315px;
@@ -175,7 +178,6 @@ body {
     vertical-align: inherit;
     width: 24px; }
 
-<<<<<<< HEAD
 a.btn-manage {
   margin-bottom: 20px; }
 
@@ -193,28 +195,24 @@ a.btn-manage {
   border: 5px dashed blue; }
 
 .btn-remove {
-=======
-#problem-header {
-  z-index: 999;
-  width: 1200px;
-  margin: 0 auto;
-  border-bottom: 1px solid #ccc;
-  padding-top: 7px;
-  padding-bottom: 7px; }
+  cursor: pointer; }
 
-#problem-header.affix {
-  top: 50px; }
+#document-tag-page .labeled-list {
+  display: inline-block; }
+#document-tag-page .dube-btn-pin-unpin {
+  margin-right: 20px; }
+#document-tag-page .todo-label {
+  cursor: pointer; }
 
-.problem-controlled {
-  background-color: green;
-  color: white; }
-
-.problem-uncontrolled {
-  background-color: red;
-  color: white; }
+.flex-container {
+  display: flex; }
+  .flex-container .flex-item {
+    align-self: center; }
 
 .panel-heading {
->>>>>>> 45c2c2f45313e3331ad55abfdbdb6e04dcc488dc
   cursor: pointer; }
+
+.problem-uncontrolled {
+  z-index: 1000; }
 
 /*# sourceMappingURL=patient-profile.css.map */
