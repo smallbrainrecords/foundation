@@ -212,4 +212,7 @@ a.btn-manage {
 .panel-heading {
   cursor: pointer; }
 
+.problem-uncontrolled {
+  z-index: 1000; }
+
 /*# sourceMappingURL=patient-profile.css.map */

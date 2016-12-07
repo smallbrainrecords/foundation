@@ -132,5 +132,13 @@
                 }
             });
         };
+
+        /**
+         *
+         * @param documentId
+         */
+        this.getDocumentInfo = function (documentId) {
+            return $http.get('/docs/info/' + documentId);
+        };
     }
 })();

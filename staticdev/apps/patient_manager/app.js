@@ -123,6 +123,10 @@
             .when('/medication/:medication_id', {
                 templateUrl: '/static/apps/patient_manager/partials/medication/medication.html',
                 controller: 'MedicationCtrl'
+            })
+            .when('/document/:documentId', {
+                templateUrl: '/static/apps/patient_manager/partials/document/document.html',
+                controller: 'ViewDocumentCtrl'
             });
 
     });
