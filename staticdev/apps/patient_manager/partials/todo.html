@@ -159,7 +159,11 @@
                     <p>Document:</p>
                     <div ng-repeat="document in documents" class="document">
                         <p ng-bind="document.filename"></p>
-                        <p>Added: <span ng-bind="document.created_on | date : 'short'"></span></p>
+                        <p>Added: <span ng-bind="document.created_on | date : 'yyyy-MM-dd'"></span></p>
+                        <a href="{{document.document}}" download>
+                            <i class="fa fa-download"></i>
+                            Download
+                        </a>
                         <a ng-click="deleteDocumentTag(document,todo)" class="btn-remove">
                             <i class="fa fa-remove"></i>
                             Delete
