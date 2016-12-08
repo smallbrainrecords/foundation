@@ -321,5 +321,23 @@ a.btn-manage {
 }
 
 .problem-uncontrolled {
-  z-index: 1000;
+  z-index: 2000;
+  margin: 0;
 }
+
+@media (min-width: 1200px) {
+  .problem-uncontrolled {
+    min-width: 1140px;
+  }
+}
+@media (min-width: 768px) {
+  .problem-uncontrolled {
+    width: 720px;
+  }
+}
+@media (min-width: 992px) {
+  .problem-uncontrolled {
+    width: 940px;
+  }
+}
+
