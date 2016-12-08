@@ -330,14 +330,26 @@ a.btn-manage {
     min-width: 1140px;
   }
 }
+
 @media (min-width: 768px) {
   .problem-uncontrolled {
     width: 720px;
   }
 }
+
 @media (min-width: 992px) {
   .problem-uncontrolled {
     width: 940px;
   }
 }
 
+#view_document_page {
+  .uploaded_document {
+    .document_icon {
+      margin-right: 10px;
+    }
+    .document_uploaded_date {
+
+    }
+  }
+}

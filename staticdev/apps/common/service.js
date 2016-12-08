@@ -153,5 +153,12 @@
                 }
             });
         };
+
+        /**
+         * Get list of document user have uploaded
+         */
+        this.getUploadedDocument = function () {
+            return $http.get('/docs/list');
+        };
     }
 })();

@@ -225,5 +225,7 @@ a.btn-manage {
 @media (min-width: 992px) {
   .problem-uncontrolled {
     width: 940px; } }
+#view_document_page .uploaded_document .document_icon {
+  margin-right: 10px; }
 
 /*# sourceMappingURL=patient-profile.css.map */

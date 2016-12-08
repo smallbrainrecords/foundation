@@ -10,7 +10,7 @@
 
 <hr>
 
-<div class="container-fluid">
+<div class="container-fluid" id="view_document_page">
     <div class="row">
         <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
             <h3 ng-bind="document.filename"></h3>
@@ -54,6 +54,26 @@
                          ng-click="open_problem(problem);">
                         <span ng-bind="problem.problem_name "></span> <span
                             ng-show="problem.authenticated==false">(not authenticated)</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!--Uploaded document-->
+    <div class="panel panel-default uploaded_document">
+        <div class="panel-heading">
+            <p>List of uploaded document</p>
+        </div>
+        <div class="panel-body">
+            <ul class="ul-clean no-padding">
+                <li ng-repeat="document in uploadedDocuments track by $index">
+                    <div>
+                        <i class="fa fa-file-o flex-item document_icon"></i>
+                        <a href="#/document/{{document.id}}" class="flex-item document_name"
+                           ng-bind="document.filename"></a>
+                        <span class="flex-item document_uploaded_date pull-right"
+                              ng-bind="document.created_on | date:'yyyy-MM-dd'"></span>
                     </div>
                 </li>
             </ul>
