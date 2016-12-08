@@ -830,23 +830,25 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <p>List of pinned documents</p>
-                </div>
-                <div class="panel-body">
-                    <ul class="ul-clean no-padding">
-                        <li ng-repeat="doc in pinned_document track by $index">
-                            <p ng-bind="doc.filename"></p>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+     <!--Uploaded document-->
+    <div class="panel panel-default uploaded_document">
+        <div class="panel-heading">
+            <p>Pinned document</p>
+        </div>
+        <div class="panel-body">
+            <ul class="ul-clean no-padding">
+                <li ng-repeat="document in pinned_document track by $index">
+                    <div>
+                        <i class="fa fa-file-o flex-item document_icon"></i>
+                        <a href="#/document/{{document.id}}" class="flex-item document_name"
+                           ng-bind="document.filename"></a>
+                        <span class="flex-item document_uploaded_date pull-right"
+                              ng-bind="document.created_on | date:'yyyy-MM-dd'"></span>
+                    </div>
+                </li>
+            </ul>
         </div>
     </div>
-
 
     <script type='text/javascript'>
 

@@ -59,24 +59,4 @@
             </ul>
         </div>
     </div>
-
-    <!--Uploaded document-->
-    <div class="panel panel-default uploaded_document">
-        <div class="panel-heading">
-            <p>List of uploaded document</p>
-        </div>
-        <div class="panel-body">
-            <ul class="ul-clean no-padding">
-                <li ng-repeat="document in uploadedDocuments track by $index">
-                    <div>
-                        <i class="fa fa-file-o flex-item document_icon"></i>
-                        <a href="#/document/{{document.id}}" class="flex-item document_name"
-                           ng-bind="document.filename"></a>
-                        <span class="flex-item document_uploaded_date pull-right"
-                              ng-bind="document.created_on | date:'yyyy-MM-dd'"></span>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </div>
 </div>
