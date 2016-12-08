@@ -17,21 +17,35 @@
      */
     function ViewDocumentCtrl($scope, sharedService, $routeParams, patientService, $location, toaster) {
 
-        // Properties definition
+        // PROPERTIES DEFINITION
 
         $scope.patient_id = $('#patient_id').val();     // Patients are being managed
 
         $scope.user_id = $('#user_id').val();           // Current logged in id
 
+        // INITIALIZE DATA FOR THIS PAGE.(Note: It's should be right after property definition due to some method in controller can use the initialized data)
+        sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
+            $scope.document = resp.data.info;
+            $scope.todos_ready = true; // TODO: Should be removed
+        });
 
-        // Methods definition
+        sharedService.getUploadedDocument().then(function (response) {
+            $scope.uploadedDocuments = response.data.documents;
+        });
+
+        patientService.fetchActiveUser().then(function (data) {
+            $scope.active_user = data['user_profile'];
+        });
+
+        // METHODS DEFINITION(Only dedicate to service/factory todo business flow)
 
         $scope.open_problem = function (problem) {
             $location.path('/problem/' + problem.id);
         };
 
+        // TODO: DRY this method, should move to shared service.
         $scope.checkSharedProblem = function (problem, sharing_patients) {
-            if ($scope.patient_id == $scope.user_id || ($scope.active_user.hasOwnProperty('roel') && $scope.active_user.role != 'patient')) {
+            if ($scope.patient_id == $scope.user_id || ($scope.active_user.hasOwnProperty('role') && $scope.active_user.role != 'patient')) {
                 return true;
             } else {
                 var is_existed = false;
@@ -40,7 +54,6 @@
                         is_existed = $scope.isInArray(value.problems, problem.id);
                     }
                 });
-
                 return is_existed;
             }
         };
@@ -61,25 +74,5 @@
                 }
             })
         };
-
-        // Initialize data for this page
-
-        sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
-            $scope.document = resp.data.info;
-            $scope.todos_ready = true; // Should be removed
-        });
-
-
-        sharedService.getUploadedDocument().then(function (response) {
-            $scope.uploadedDocuments  = response.data.documents;
-        });
-
-
-        patientService.fetchActiveUser().then(function (data) {
-            // Logged in user profile in Django authentication system
-            $scope.active_user = data['user_profile'];
-        });
     }
-
-
 })();
