@@ -637,6 +637,7 @@
                 <br>
                 <div class="row my-story">
                     <div class="col-sm-3 my-story-left">
+                        <!--Available tabs-->
                         <div>
                             <ul class='ul-clean my-story-list' style="padding-left: 0;">
                                 <li ng-repeat="tab in my_story_tabs"
@@ -656,50 +657,68 @@
                                 </li>
                             </ul>
                         </div>
-                        <button class="btn btn-default"
-                                ng-click="toggle_add_my_story_tab();"
-                                ng-show="!show_add_my_story_tab"
-                                ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin'">
-                            Add Tab
-                        </button>
-                        <form ng-show="show_add_my_story_tab">
-                            <div class="form-group">
-                                <input type="text" name="new-tab" ng-model="new_tab.name">
+
+                        <!--Inline form-->
+                        <div class="row">
+                            <div class="col-md-12 text-right">
+                                <button class="btn btn-default"
+                                        ng-click="toggle_add_my_story_tab();"
+                                        ng-show="!show_add_my_story_tab"
+                                        ng-if="enableMyStoryEdit && (active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin')">
+                                    Add Tab
+                                </button>
+                                <button ng-click="enableMyStoryEdit = !enableMyStoryEdit"
+                                        class="btn btn-default">Edit
+                                </button>
                             </div>
-                            <div ng-if="active_user.role=='physician' || active_user.role=='admin'">
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" ng-value="true" checked ng-model="new_tab.all_patients">
-                                        All patients
-                                    </label>
-                                </div>
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" ng-value="" ng-model="new_tab.all_patients">
-                                        Only current patient
-                                    </label>
-                                </div>
+
+                            <!--Adding new tab form-->
+                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12" ng-if="enableMyStoryEdit">
+                                <form ng-show="show_add_my_story_tab" class="form">
+                                    <div class="form-group">
+                                        <input type="text" name="new-tab" ng-model="new_tab.name" class="form-control">
+                                    </div>
+                                    <div ng-if="active_user.role=='physician' || active_user.role=='admin'">
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" ng-value="true" checked
+                                                       ng-model="new_tab.all_patients">
+                                                All patients
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" ng-value="" ng-model="new_tab.all_patients">
+                                                Only current patient
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div ng-if="active_user.role=='patient'">
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" ng-value="true" checked ng-model="new_tab.private">
+                                                keep it private
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" ng-value="" ng-model="new_tab.private">
+                                                share with doctor
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group text-right">
+                                        <button class="btn btn-primary" ng-click="add_my_story_tab(new_tab);">Save
+                                        </button>
+                                        <button class="btn btn-danger" ng-click="toggle_add_my_story_tab();">Cancel
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                            <div ng-if="active_user.role=='patient'">
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" ng-value="true" checked ng-model="new_tab.private">
-                                        keep it private
-                                    </label>
-                                </div>
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" ng-value="" ng-model="new_tab.private">
-                                        share with doctor
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <button class="btn btn-default" ng-click="toggle_add_my_story_tab();">cancel</button>
-                                <button class="btn btn-default" ng-click="add_my_story_tab(new_tab);">Save</button>
-                            </div>
-                        </form>
+
+                        </div>
                     </div>
+
                     <div class="col-sm-9 my-story-right">
                         <div ng-show="selected_tab">
                             <div class="row"
@@ -752,7 +771,7 @@
                                 <br>
                             </div>
                             <br>
-                            <div class="row">
+                            <div class="row" ng-if="enableMyStoryEdit">
                                 <div class="col-sm-6">
                                     <button class="btn btn-default"
                                             ng-click="toggle_add_my_story_text();"
@@ -856,7 +875,7 @@
             <!-- data tab -->
             <div role="tabpanel" class="tab-pane tab-data" ng-class="show_homepage_tab=='data' ? 'active': ''">
                 <div class='panel panel-default'>
-                    <div class='panel-body no-padding'>
+                    <div class='panel-body'>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="btn-group btn-group-justified graph-view-mode">
@@ -900,6 +919,7 @@
                                                         chart-series="data.chartSeries"
                                                         chart-labels="data.chartLabel"></canvas>
                                             </div>
+                                        </div>
                                     </li>
                                 </ul>
 
@@ -920,7 +940,6 @@
                                                         <span ng-bind="data.observation_units[0].value_unit"></span>
                                                     </h3>
                                                     <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
-
                                                 </div>
                                             </div>
                                             <div ng-if="data.observation_components.length > 0">
@@ -933,6 +952,7 @@
                                                         chart-series="data.chartSeries"
                                                         chart-labels="data.chartLabel"></canvas>
                                             </div>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>
@@ -942,13 +962,19 @@
                                     files
                                 </div>
                                 <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
-                                <h1>
+                                <h3>
                                     Pinned documents
-                                </h1>
-                                <ul>
-                                    <!--WIP: need to be sorted by order-->
+                                </h3>
+                                <ul class="ul-clean no-padding">
                                     <li ng-repeat="document in documents track by $index">
-                                        <a href="#/document/{{document.id}}" target="_blank">{{document.filename}}</a>
+                                        <div>
+                                            <i class="fa fa-file-o flex-item document_icon"></i>
+                                            <a href="#/document/{{document.id}}" class="flex-item document_name"
+                                               target="_blank"
+                                               ng-bind="document.filename"></a>
+                                            <span class="flex-item document_uploaded_date pull-right"
+                                                  ng-bind="document.created_on | date:'yyyy-MM-dd'"></span>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>

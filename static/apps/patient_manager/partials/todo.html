@@ -154,19 +154,40 @@
                     </div>
                 </div>
                 <!-- end attachments -->
-                <!-- begin attachments -->
-                <div class="todo-component" ng-if="documents.length > 0">
-                    <p>Document:</p>
-                    <div ng-repeat="document in documents" class="document">
-                        <p ng-bind="document.filename"></p>
-                        <p>Added: <span ng-bind="document.created_on | date : 'short'"></span></p>
-                        <a ng-click="deleteDocumentTag(document,todo)" class="btn-remove">
-                            <i class="fa fa-remove"></i>
-                            Delete
-                        </a>
+
+                <!-- begin document -->
+                <div class="panel panel-default uploaded_document">
+                    <div class="panel-heading">
+                        <p>Pinned documents</p>
+                    </div>
+                    <div class="panel-body">
+                        <ul class="ul-clean no-padding">
+                            <li ng-repeat="document in documents track by $index">
+                                <div>
+                                    <i class="fa fa-file-o flex-item document_icon"></i>
+                                    <a href="#/document/{{document.id}}" class="flex-item document_name"
+                                       ng-bind="document.filename"></a>
+                                    <div class="pull-right flex-item ">
+
+                                        <span class="document_uploaded_date"
+                                              ng-bind="document.created_on | date:'yyyy-MM-dd'"></span>
+
+                                        <a href="{{document.document}}" download>
+                                            <i class="fa fa-download"></i>
+                                            Download
+                                        </a>
+                                        <a ng-click="deleteDocumentTag(document,todo)" class="btn-remove">
+                                            <i class="fa fa-remove"></i>
+                                            Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-                <!-- end attachments -->
+                <!-- end documents -->
+
                 <!-- begin encounters -->
                 <div class='row todo-component' ng-if="related_encounters.length > 0">
                     <div class='col-md-12'>

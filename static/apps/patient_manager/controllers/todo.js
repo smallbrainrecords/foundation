@@ -424,7 +424,7 @@
 
             // check sharing problem
             $scope.checkSharedProblem = function (problem, sharing_patients) {
-                if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
+                if ($scope.patient_id == $scope.user_id || ($scope.active_user.hasOwnProperty('role') && $scope.active_user.role != 'patient')) {
                     return true;
                 } else {
                     var is_existed = false;

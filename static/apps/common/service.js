@@ -140,5 +140,25 @@
         this.getDocumentInfo = function (documentId) {
             return $http.get('/docs/info/' + documentId);
         };
+
+
+        /**
+         *
+         * @param document
+         */
+        this.removeDocument = function (document) {
+            return $http.post('/docs/remove/' + document.id, null, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        };
+
+        /**
+         * Get list of document user have uploaded
+         */
+        this.getUploadedDocument = function () {
+            return $http.get('/docs/list');
+        };
     }
 })();
