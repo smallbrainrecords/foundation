@@ -323,6 +323,9 @@ a.btn-manage {
 .problem-uncontrolled {
   z-index: 2000;
   margin: 0;
+  &.affix {
+    top: 50px;
+  }
 }
 
 @media (min-width: 1200px) {
@@ -331,15 +334,21 @@ a.btn-manage {
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 992px) {
   .problem-uncontrolled {
-    width: 720px;
+    min-width: 940px;
   }
 }
 
-@media (min-width: 992px) {
+@media (min-width: 768px) {
   .problem-uncontrolled {
-    width: 940px;
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 768px) {
+  .problem-uncontrolled {
+    max-width: 720px;
   }
 }
 
