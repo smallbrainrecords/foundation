@@ -637,6 +637,7 @@
                 <br>
                 <div class="row my-story">
                     <div class="col-sm-3 my-story-left">
+                        <!--Available tabs-->
                         <div>
                             <ul class='ul-clean my-story-list' style="padding-left: 0;">
                                 <li ng-repeat="tab in my_story_tabs"
@@ -656,50 +657,68 @@
                                 </li>
                             </ul>
                         </div>
-                        <button class="btn btn-default"
-                                ng-click="toggle_add_my_story_tab();"
-                                ng-show="!show_add_my_story_tab"
-                                ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin'">
-                            Add Tab
-                        </button>
-                        <form ng-show="show_add_my_story_tab">
-                            <div class="form-group">
-                                <input type="text" name="new-tab" ng-model="new_tab.name">
+
+                        <!--Inline form-->
+                        <div class="row">
+                            <div class="col-md-12 text-right">
+                                <button class="btn btn-default"
+                                        ng-click="toggle_add_my_story_tab();"
+                                        ng-show="!show_add_my_story_tab"
+                                        ng-if="enableMyStoryEdit && (active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin')">
+                                    Add Tab
+                                </button>
+                                <button ng-click="enableMyStoryEdit = !enableMyStoryEdit"
+                                        class="btn btn-default">Edit
+                                </button>
                             </div>
-                            <div ng-if="active_user.role=='physician' || active_user.role=='admin'">
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" ng-value="true" checked ng-model="new_tab.all_patients">
-                                        All patients
-                                    </label>
-                                </div>
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" ng-value="" ng-model="new_tab.all_patients">
-                                        Only current patient
-                                    </label>
-                                </div>
+
+                            <!--Adding new tab form-->
+                            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12" ng-if="enableMyStoryEdit">
+                                <form ng-show="show_add_my_story_tab" class="form">
+                                    <div class="form-group">
+                                        <input type="text" name="new-tab" ng-model="new_tab.name" class="form-control">
+                                    </div>
+                                    <div ng-if="active_user.role=='physician' || active_user.role=='admin'">
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" ng-value="true" checked
+                                                       ng-model="new_tab.all_patients">
+                                                All patients
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" ng-value="" ng-model="new_tab.all_patients">
+                                                Only current patient
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div ng-if="active_user.role=='patient'">
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" ng-value="true" checked ng-model="new_tab.private">
+                                                keep it private
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio" ng-value="" ng-model="new_tab.private">
+                                                share with doctor
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group text-right">
+                                        <button class="btn btn-primary" ng-click="add_my_story_tab(new_tab);">Save
+                                        </button>
+                                        <button class="btn btn-danger" ng-click="toggle_add_my_story_tab();">Cancel
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                            <div ng-if="active_user.role=='patient'">
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" ng-value="true" checked ng-model="new_tab.private">
-                                        keep it private
-                                    </label>
-                                </div>
-                                <div class="radio">
-                                    <label>
-                                        <input type="radio" ng-value="" ng-model="new_tab.private">
-                                        share with doctor
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <button class="btn btn-default" ng-click="toggle_add_my_story_tab();">cancel</button>
-                                <button class="btn btn-default" ng-click="add_my_story_tab(new_tab);">Save</button>
-                            </div>
-                        </form>
+
+                        </div>
                     </div>
+
                     <div class="col-sm-9 my-story-right">
                         <div ng-show="selected_tab">
                             <div class="row"
@@ -752,7 +771,7 @@
                                 <br>
                             </div>
                             <br>
-                            <div class="row">
+                            <div class="row" ng-if="enableMyStoryEdit">
                                 <div class="col-sm-6">
                                     <button class="btn btn-default"
                                             ng-click="toggle_add_my_story_text();"
@@ -900,7 +919,7 @@
                                                         chart-series="data.chartSeries"
                                                         chart-labels="data.chartLabel"></canvas>
                                             </div>
-                                            </div>
+                                        </div>
                                     </li>
                                 </ul>
 
