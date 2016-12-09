@@ -7,7 +7,9 @@ TEMPLATE_DEBUG = True
 VOICE_CONTROL = False
 SYNCING = False
 
-import os, sys; os.environ['LANG'] = 'en_US.UTF-8'
+import os, sys;
+
+os.environ['LANG'] = 'en_US.UTF-8'
 # BASE_DIR = os.getcwd()
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -98,7 +100,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
     'compressor.finders.CompressorFinder',
 )
 
@@ -112,7 +114,7 @@ STATICFILES_FINDERS = (
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    #     'django.template.loaders.eggs.Loader',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -171,18 +173,21 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 LOGIN_REDIRECT_URL = '/'
- 
-GOOGLE_OAUTH2_CLIENT_ID = '574847173199-vnvlnuvr5n5vuasvb28moqp1i80eqbsl.apps.googleusercontent.com' 
+
+GOOGLE_OAUTH2_CLIENT_ID = '574847173199-vnvlnuvr5n5vuasvb28moqp1i80eqbsl.apps.googleusercontent.com'
 GOOGLE_OAUTH2_CLIENT_SECRET = 'faqH3LrYNErmcirkXleeCvMn'
 GOOGLE_WHITE_LISTED_DOMAINS = []
 SOCIAL_AUTH_USER_MODEL = 'auth.User'
-SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 1800
+SESSION_SAVE_EVERY_REQUEST = True
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
-#LOGIN_URL          = '/login/google-oauth2/'
-LOGIN_URL          = '/u/login/'
+# LOGIN_URL          = '/login/google-oauth2/'
+LOGIN_URL = '/u/login/'
 LOGIN_REDIRECT_URL = '/'
-LOGIN_ERROR_URL    = '/login-error/'
+LOGIN_ERROR_URL = '/login-error/'
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -215,7 +220,6 @@ LOGGING = {
 
 SNOMEDCT = {}
 
-
 PROBLEMS_PATH = '/root/core/static/js/problems/'
 
 # ALLOWED_HOSTS = [
@@ -229,4 +233,3 @@ try:
     from local_settings import *
 except ImportError as e:
     pass
-
