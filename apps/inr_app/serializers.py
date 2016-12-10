@@ -1,9 +1,8 @@
 from rest_framework import serializers
 
 from emr.models import Inr, InrValue, InrTextNote, Problem
-
-from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 from todo_app.serializers import TodoSerializer
+from users_app.serializers import UserProfileSerializer
 
 
 class InrValueSerializer(serializers.ModelSerializer):
@@ -23,7 +22,7 @@ class InrValueSerializer(serializers.ModelSerializer):
             'next_inr',
             'ispatient',
             'created_on',
-            )
+        )
 
 
 class InrTextNoteSerializer(serializers.ModelSerializer):
@@ -37,7 +36,8 @@ class InrTextNoteSerializer(serializers.ModelSerializer):
             'note',
             'inr',
             'datetime',
-            )
+        )
+
 
 class ProblemSerializer(serializers.ModelSerializer):
     # author = UserProfileSerializer()
@@ -46,7 +46,8 @@ class ProblemSerializer(serializers.ModelSerializer):
         model = Problem
         fields = (
             'problem_name',
-            )
+        )
+
 
 # class InrValueSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -66,6 +67,7 @@ class InrSerializer(serializers.ModelSerializer):
     inr_values = InrValueSerializer(many=True, read_only=True)
     inr_notes = InrTextNoteSerializer(many=True, read_only=True)
     inr_todos = TodoSerializer(many=True, read_only=True)
+
     class Meta:
         model = Inr
 
@@ -79,4 +81,4 @@ class InrSerializer(serializers.ModelSerializer):
             'inr_notes',
             'inr_todos',
             'target',
-            )
+        )

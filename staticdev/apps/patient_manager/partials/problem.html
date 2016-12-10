@@ -427,10 +427,10 @@
         </div>
     </div>
 
-    <div class='row' ng-if="inrs.length > 0">
-        <div ng-repeat="inr in inrs">
-            <inr ng-model="inr"></inr>
-            <br>
+    <!-- Problem's INR widget -->
+    <div class='row'>
+        <div class="col-md-12 no-padding">
+            <inr ng-if="inr!= null" ng-model="inr"></inr>
         </div>
     </div>
 
@@ -830,7 +830,7 @@
         </div>
     </div>
 
-     <!--Uploaded document-->
+    <!--Uploaded document-->
     <div class="panel panel-default uploaded_document">
         <div class="panel-heading">
             <p>Pinned document</p>

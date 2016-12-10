@@ -14,7 +14,7 @@
             var user_id = $('#user_id').val();
             $scope.user_id = user_id;
             var problem_id = $routeParams.problem_id;
-
+            $scope.inr = null;
             $scope.problem_id = problem_id;
             $scope.show_accomplished_todos = false;
             $scope.show_accomplished_goals = false;
@@ -285,15 +285,19 @@
             patientService.fetchProblemInfo(problem_id).then(function (data) {
                 $scope.problem = data['info'];
                 // $scope.inr = data['info'].inr;
-                $scope.inr = data['info'].id;
-                $scope.inrs = [];
-                inrService.getInrs($scope.patient_id, $scope.inr).then(function (data) {
+                // $scope.inr = data['info'].id;
+
+
+
+                // Loading INR widget
+                inrService.getInrs($scope.patient_id, $scope.problem.id).then(function (data) {
                     if (data['success'] == true) {
-                        $scope.inrs = data['info'];
+                        $scope.inr = data['info'];
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
                 });
+
                 // problem timeline
                 if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {
                     var timeline_problems = parseTimelineWithSegment($scope.problem);
