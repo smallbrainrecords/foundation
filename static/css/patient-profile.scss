@@ -320,6 +320,15 @@ a.btn-manage {
   cursor: pointer;
 }
 
+.problem-controlled {
+  background: #DFF0D8;
+  z-index: 2000;
+  margin: 0;
+  &.affix-top, &.affix {
+    top: 50px;
+  }
+}
+
 .problem-uncontrolled {
   z-index: 2000;
   margin: 0;
@@ -329,25 +338,25 @@ a.btn-manage {
 }
 
 @media (max-width: 768px) {
-  .problem-uncontrolled {
+  .problem-uncontrolled, .problem-controlled {
     max-width: 720px;
   }
 }
 
 @media (min-width: 768px) {
-  .problem-uncontrolled {
+  .problem-uncontrolled, .problem-controlled {
     min-width: 720px;
   }
 }
 
 @media (min-width: 992px) {
-  .problem-uncontrolled {
+  .problem-uncontrolled, .problem-controlled {
     min-width: 940px;
   }
 }
 
 @media (min-width: 1200px) {
-  .problem-uncontrolled {
+  .problem-uncontrolled, .problem-controlled {
     min-width: 1140px;
   }
 }
