@@ -29,7 +29,7 @@
          * @param numberOfRow
          */
         this.getINRs = function (patientId, numberOfRow) {
-            return $http.get('/inr' + patientId + '/inrs/', {
+            return $http.get('/inr/' + patientId + '/inrs/', {
                 row: numberOfRow
             });
         };

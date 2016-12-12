@@ -1,10 +1,40 @@
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Inr, InrValue, InrTextNote, Problem
+from emr.models import Inr, InrValue, InrTextNote, Problem, UserProfile
 from users_app.views import permissions_accessed
 from .serializers import InrTextNoteSerializer, InrSerializer
 from .serializers import ProblemSerializer
+
+
+@login_required
+def get_inr_target(request, patient_id):
+    """
+    Get patient INR target goal
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    user_profile = UserProfile.objects.filter(user_id=patient_id).get()
+
+    resp['target'] = user_profile.inr_target
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def set_inr_target(request, patient_id):
+    """
+
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    UserProfile.objects.filter(user_id=patient_id).update(inr_target=int(json_body.get('value')));
+
+    resp['success'] = True
+    return ajax_response(resp)
 
 
 @login_required

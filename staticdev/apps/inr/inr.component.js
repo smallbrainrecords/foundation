@@ -73,7 +73,7 @@
             function initData() {
                 // Get current target INR setting.
                 inrService.getINRTarget(scope.patientId).then(function (response) {
-                    scope.inrTarget = response.data;
+                    scope.inrTarget = response.data.target;
                 });
 
                 // Load INR table(5 latest table value is loaded)

@@ -174,6 +174,7 @@ class UserProfile(models.Model):
     phone_number = models.CharField(max_length=20, blank=True)
     note = models.TextField(null=True, blank=True)
     active_reason = models.TextField(null=True, blank=True)
+    inr_target = models.PositiveIntegerField(choices=TARGET_CHOICES, default=1)
 
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
@@ -886,7 +887,6 @@ class Inr(models.Model):
     observation = models.ForeignKey(Observation, related_name='observation_pin_inrs', blank=True, null=True)
     problem = models.ForeignKey(Problem, related_name='problem_pin_inrs', blank=True, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
-    target = models.PositiveIntegerField(choices=TARGET_CHOICES)
 
     class Meta:
         ordering = ['-created_on']

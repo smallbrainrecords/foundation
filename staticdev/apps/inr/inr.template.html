@@ -12,9 +12,10 @@
 
                 <!--Target INR-->
                 <div>
-                    <span class="target-inr-label">Target inr:</span>
-                    <label> <input type="radio" ng-model="inrTarget" value="1" ng-change="updateTargetINR()">2-3</label>
-                    <label> <input type="radio" ng-model="inrTarget" value="0"
+                    <span class="target-inr-label">Target INR:</span>
+                    <label> <input type="radio" ng-model="inrTarget" ng-value="1"
+                                   ng-change="updateTargetINR()">2-3</label>
+                    <label> <input type="radio" ng-model="inrTarget" ng-value="0"
                                    ng-change="updateTargetINR()">2.5-3.5</label>
                 </div>
 
