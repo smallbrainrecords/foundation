@@ -31,6 +31,7 @@
     "angular-color-picker": "angularjs-color-picker#^2.7.1",
     "angular-prompt": "~1.2.0",
     "AngularJS-Toaster": "angularjs-toaster#^2.1.0",
-    "view-file-ng": "^0.1.1"
+    "view-file-ng": "^0.1.1",
+    "angular-hotkeys": "chieffancypants/angular-hotkeys#^1.7.0"
   }
 }
