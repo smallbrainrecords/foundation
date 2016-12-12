@@ -1,7 +1,8 @@
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Inr, InrValue, InrTextNote, Problem, UserProfile, Medication
+from emr.models import Inr, InrValue, InrTextNote, Problem, UserProfile, Medication, Observation, ObservationComponent, \
+    ObservationPinToProblem
 from medication_app.serializers import MedicationSerializer
 from users_app.views import permissions_accessed
 from .serializers import InrTextNoteSerializer, InrSerializer
@@ -12,6 +13,7 @@ from .serializers import ProblemSerializer
 def get_inr_target(request, patient_id):
     """
     Get patient INR target goal
+    :param patient_id:
     :param request:
     :return:
     """
@@ -41,13 +43,23 @@ def set_inr_target(request, patient_id):
 @login_required
 def get_problems(request, patient_id):
     """
-
+    Get all problems, whether this INR widget is pinned to
+    Refer: https://trello.com/c/RzwrZPgU
+    :param patient_id:
     :param request:
     :return:
     """
     resp = {'success': False}
 
-    resp['problems'] = True
+    # Find the observation component have LOINC code: 6301-6 -> reserve get observation -> get pinned problem
+    # Each user should not have more than one(zero or one) observation which have LOINC code above
+    observation_component = ObservationComponent.objects.filter(component_code='6301-6',
+                                                                observation__subject_id=patient_id).get()
+
+    observation_pin = ObservationPinToProblem.objects.filter(observation_id=observation_component.observation_id)
+    problems = [observation_pin.problem for observation_pin in observation_pin]
+
+    resp['problems'] = ProblemSerializer(problems, many=True).data
     resp['success'] = True
     return ajax_response(resp)
 
@@ -57,6 +69,7 @@ def get_medications(request, patient_id):
     """
     Get all patient's medications in following set:  {375383004, 375379004, 375378007, 319735007, 375374009, 319734006, 375380001, 375375005, 319733000, 319736008}
     Refer: https://trello.com/c/Cts0FOSj
+    :param patient_id:
     :param request:
     :return:
     """
