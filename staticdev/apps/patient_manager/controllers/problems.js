@@ -14,7 +14,7 @@
             var user_id = $('#user_id').val();
             $scope.user_id = user_id;
             var problem_id = $routeParams.problem_id;
-            $scope.inr = null;
+            $scope.inrWidgetExist = false;
             $scope.problem_id = problem_id;
             $scope.show_accomplished_todos = false;
             $scope.show_accomplished_goals = false;
@@ -98,6 +98,13 @@
                                 }
                             });
                             data.pin = is_pin;
+
+                            // Determine if the data is pinned. Ignore if already found one
+                            // Refer https://trello.com/c/ViCG6rzS
+                            if (data.pin & !$scope.inrWidgetExist) {
+                                var component_code = _.pluck(data.observation_components, 'component_code');
+                                $scope.inrWidgetExist = _.contains(component_code, '6301-6');
+                            }
 
                             // Default graph type
                             if (data.graph == null || data.graph == undefined)
@@ -288,15 +295,14 @@
                 // $scope.inr = data['info'].id;
 
 
-
-                // Loading INR widget
-                inrService.getInrs($scope.patient_id, $scope.problem.id).then(function (data) {
-                    if (data['success'] == true) {
-                        $scope.inr = data['info'];
-                    } else {
-                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                    }
-                });
+                // TODO: Temporary disabled. Loading INR widget
+                // inrService.getInrs($scope.patient_id, $scope.problem.id).then(function (data) {
+                //     if (data['success'] == true) {
+                //         $scope.inr = data['info'];
+                //     } else {
+                //         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                //     }
+                // });
 
                 // problem timeline
                 if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {

@@ -428,11 +428,7 @@
     </div>
 
     <!-- Problem's INR widget -->
-    <div class='row'>
-        <div class="col-md-12 no-padding">
-            <inr ng-if="inr!= null" ng-model="inr"></inr>
-        </div>
-    </div>
+    <inr ng-if="inrWidgetExist"></inr>
 
     <div class='panel panel-default' ng-show="problem.old_problem_name">
         <div class='panel-body'>

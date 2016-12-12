@@ -1,0 +1,220 @@
+<div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="headingOne" ng-click="inrCollapsed =!inrCollapsed ">
+        <i class="fa fa-caret-right" aria-hidden="true"
+           ng-class="inrCollapsed ? 'fa-caret-right':'fa-caret-down'"></i>
+        <span>INR</span>
+    </div>
+
+    <div class="panel-body">
+        <div class="row">
+            <!--Left widget-->
+            <div class='col-xs-12 col-sm-12 col-md-8 col-lg-8'>
+
+                <!--Target INR-->
+                <div>
+                    <span class="target-inr-label">Target inr:</span>
+                    <label> <input type="radio" ng-model="inrTarget" value="1" ng-change="updateTargetINR()">2-3</label>
+                    <label> <input type="radio" ng-model="inrTarget" value="0"
+                                   ng-change="updateTargetINR()">2.5-3.5</label>
+                </div>
+
+                <!--INR table-->
+                <table class="table table-striped list-inr-value">
+                    <thead>
+                    <tr>
+                        <th>
+                            Date measured
+                        </th>
+                        <th>
+                            Current dose
+                        </th>
+                        <th>
+                            INR
+                        </th>
+                        <th>
+                            New dosage
+                        </th>
+                        <th>Next INR</th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th>
+                            <p class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       title="Date measured"
+                                       uib-datepicker-popup="{{format}}"
+                                       ng-model="inrInstance.date_measured"
+                                       is-open="dateMeasuredIsOpened"
+                                       datepicker-options="dateMeasuredDateOptions"
+                                       datepicker-append-to-body="true"
+                                       show-button-bar="false"
+                                       ng-required="true"
+                                       close-text="Close"
+                                       alt-input-formats="altInputFormats"/>
+                                <span class="input-group-btn"><button type="button" class="btn btn-default"
+                                                                      ng-click="dateMeasuredIsOpened=true">
+                                    <i class="glyphicon glyphicon-calendar"></i></button>
+                                </span>
+                            </p>
+
+                        </th>
+                        <th>
+                            <p class="input-group">
+
+                                <input class="form-control" type="text" ng-model='inrInstance.current_dose'
+                                       name="current-dose" title="Current dose">
+                            </p>
+                        </th>
+                        <th>
+                            <p class="input-group">
+                                <input maxlength="10" class="form-control" ng-model='inrInstance.value' title="INR"
+                                       title="Next INR"></p>
+                        </th>
+                        <th>
+                            <p class="input-group">
+
+                                <input class="form-control" type="text" ng-model='inrInstance.new_dosage'
+                                       name="new_dosage"
+                                       title="New dosage"></p>
+                        </th>
+                        <th>
+                            <p class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       title="Date measured"
+                                       ng-model="inrInstance.next_inr"
+                                       uib-datepicker-popup="{{format}}"
+
+                                       is-open="nextINRIsOpened"
+                                       datepicker-options="nextINRDateOptions"
+                                       datepicker-append-to-body="true"
+                                       show-button-bar="false"
+                                       ng-required="true"
+                                       close-text="Close"
+                                       alt-input-formats="altInputFormats"/>
+                                <span class="input-group-btn"><button type="button" class="btn btn-default"
+                                                                      ng-click="nextINRIsOpened=true">
+                                    <i class="glyphicon glyphicon-calendar"></i></button>
+                                </span>
+                            </p>
+                        </th>
+                        <th>
+                            <p class="input-group">
+                                <button class="btn btn-default" ng-click="addINR()">Save</button>
+                            </p>
+                        </th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr ng-repeat='inr in inrs track by $index'>
+                        <td>
+                            <span ng-class="inr.date_measured | date :'mm/dd/yyyy'"></span>
+                        </td>
+                        <td>
+                            <input class="form-control" type="text" title="Current dose" ng-model='inr.current_dose'
+                                   name="current-dose">
+                        </td>
+                        <td>
+                            <input maxlength="10" class="form-control" type="text" title="INR" ng-model='value.value'
+                                   name="inr">
+                        </td>
+                        <td>
+                            <input class="form-control" type="text" ng-model='inr.new_dosage' name="new-dosage"
+                                   title="New dosage">
+                        </td>
+                        <td>
+                            <span ng-bind="inr.next_inr | date :'mm/dd/yyyy'"></span>
+                        </td>
+                        <td>
+                            <a ng-click="editINR(inr)">Edit</a>
+
+                            <a ng-click="deleteINR(inr)">Delete</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td>
+                            <button class="btn btn-default" ng-click="showAllINRTable()">See all</button>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+
+                <!-- Related problem & Warfarin tabets-->
+                <div class="io-box">
+                    <p>Related problems:</p>
+                    <ul class="ul-clean no-padding">
+                        <li ng-repeat="problem in problems">
+                            <span ng-bind="problem.problem_name"></span>
+                        </li>
+                    </ul>
+                    <p>Warfarin Tablets:</p>
+                    <ul class="ul-clean no-padding">
+                        <li ng-repeat="medication in medications track by $index">
+                            <span ng-bind="medication"></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!--Right widget -->
+            <div class='col-xs-12 col-sm-12 col-md-4 col-lg-4'>
+                <!--Orders-->
+                <div class="io-box">
+                    <p>Orders:</p>
+                    <!-- Generated orders by this widget-->
+                    <todo ng-model="inr.orders" accomplished="false" show-problem="false"></todo>
+
+                    <!--Adding new todo-->
+                    <p>
+                        <a href class='btn btn-default' ng-click="orderInstance.due_date=1">Repeat inr in 1
+                            month</a>
+                    </p>
+                    <p>
+                        <a href class='btn btn-default' ng-click="orderInstance.due_date=1">Repeat inr in 1
+                            week</a>
+                    </p>
+                    <p>
+                        <a href class='btn btn-default' ng-click="orderInstance.due_date=1">Repeat inr in 2
+                            weeks</a>
+                    </p>
+                    <p>
+                        Add todo: <input type="text" name="todo_name" title="Todo name"
+                                         ng-model="orderInstance.name">
+                    </p>
+                </div>
+
+                <!-- Notes -->
+                <div class="io-box">
+                    <!--Latest note information-->
+                    <textarea name="note" id="note" ng-model="noteInstance.note" title="Note" msd-elastic
+                              style="width: 100%"></textarea>
+                    <p>Last updated by <span ng-bind="noteInstance.author.user.first_name"></span><span
+                            ng-bind="noteInstance.author.user.last_name"></span> on <span
+                            ng-bind=" noteInstance.datetime|date:'M/d/yyyy'"></span></p>
+
+                    <div>
+                        <button class="btn btn-default" ng-click="showAllNotes(0)">See old notes (<span
+                                ng-bind="totalNote"></span>)
+                        </button>
+                    </div>
+
+                    <!--Entry note history-->
+                    <div ng-repeat="note in nodeHistories track by $index">
+                        <p>Name: <span ng-bind="note.author.user.first_name"></span><span
+                                ng-bind="note.author.user.last_name"></span></p>
+                        <p style="white-space: pre-line;">Note: {{ note.note }}</p>
+                        <p>Date: {{ note.datetime|date:'M/d/yyyy' }}</p>
+                        <hr/>
+                    </div>
+
+                    <!--</div>-->
+                    <!--</div>-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
