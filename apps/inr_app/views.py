@@ -1,7 +1,8 @@
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Inr, InrValue, InrTextNote, Problem, UserProfile
+from emr.models import Inr, InrValue, InrTextNote, Problem, UserProfile, Medication
+from medication_app.serializers import MedicationSerializer
 from users_app.views import permissions_accessed
 from .serializers import InrTextNoteSerializer, InrSerializer
 from .serializers import ProblemSerializer
@@ -25,7 +26,7 @@ def get_inr_target(request, patient_id):
 @login_required
 def set_inr_target(request, patient_id):
     """
-
+    Set patient INR widget
     :param request:
     :return:
     """
@@ -33,6 +34,38 @@ def set_inr_target(request, patient_id):
     json_body = json.loads(request.body)
     UserProfile.objects.filter(user_id=patient_id).update(inr_target=int(json_body.get('value')));
 
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def get_problems(request, patient_id):
+    """
+
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+
+    resp['problems'] = True
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def get_medications(request, patient_id):
+    """
+    Get all patient's medications in following set:  {375383004, 375379004, 375378007, 319735007, 375374009, 319734006, 375380001, 375375005, 319733000, 319736008}
+    Refer: https://trello.com/c/Cts0FOSj
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    medications = Medication.objects.filter(patient_id=patient_id,
+                                            concept_id__in={375383004, 375379004, 375378007, 319735007, 375374009,
+                                                            319734006, 375380001, 375375005, 319733000, 319736008})
+
+    resp['medications'] = MedicationSerializer(medications, many=True).data
     resp['success'] = True
     return ajax_response(resp)
 

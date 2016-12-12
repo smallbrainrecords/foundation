@@ -80,12 +80,12 @@
                 scope.loadINRs(5);
 
                 // Load related problem
-                inrService.getProblems().then(function (response) {
+                inrService.getProblems(scope.patientId).then(function (response) {
                     scope.problems = response.data.problems;
                 });
 
                 // Load related medicine
-                inrService.getMedications().then(function (response) {
+                inrService.getMedications(scope.patientId).then(function (response) {
                     scope.medications = response.data.medications;
                 });
 

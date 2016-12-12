@@ -95,7 +95,7 @@
          * @param patientId
          */
         this.getProblems = function (patientId) {
-            return $http.get('/inr/problems');
+            return $http.get('/inr/' + patientId + '/problems');
         };
 
         /**
@@ -106,7 +106,7 @@
          * @param patientId
          */
         this.getMedications = function (patientId) {
-            return $http.get('/inr/medications');
+            return $http.get('/inr/' + patientId + '/medications');
         };
 
         /**

@@ -153,11 +153,28 @@
                         </li>
                     </ul>
                     <p>Warfarin Tablets:</p>
-                    <ul class="ul-clean no-padding">
-                        <li ng-repeat="medication in medications track by $index">
-                            <span ng-bind="medication"></span>
-                        </li>
-                    </ul>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+
+                            <th>Medication</th>
+                            <th>Note</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="medication in medications track by $index">
+                            <td>
+                                <a class="cursor-pointer" ng-href='#/medication/{{medication.id}}'
+                                   ng-bind="medication.name"></a>
+                            </td>
+                            <td>
+                                <div ng-repeat="note in medication.medication_notes track by $index">
+                                    <span ng-if="$last" ng-bind="note.note"></span>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
