@@ -427,12 +427,8 @@
         </div>
     </div>
 
-    <div class='row' ng-if="inrs.length > 0">
-        <div ng-repeat="inr in inrs">
-            <inr ng-model="inr"></inr>
-            <br>
-        </div>
-    </div>
+    <!-- Problem's INR widget -->
+    <inr ng-if="inrWidgetExist"></inr>
 
     <div class='panel panel-default' ng-show="problem.old_problem_name">
         <div class='panel-body'>
@@ -830,7 +826,7 @@
         </div>
     </div>
 
-     <!--Uploaded document-->
+    <!--Uploaded document-->
     <div class="panel panel-default uploaded_document">
         <div class="panel-heading">
             <p>Pinned document</p>
