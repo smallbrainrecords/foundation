@@ -911,8 +911,8 @@ class InrValue(models.Model):
 
 
 class InrTextNote(models.Model):
-    inr = models.ForeignKey(Inr, related_name='inr_notes')
-    author = models.ForeignKey(UserProfile)
+    author = models.ForeignKey(UserProfile, related_name="author_note")
+    patient = models.ForeignKey(UserProfile, related_name="patient_note")
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)
 

@@ -5,6 +5,10 @@ urlpatterns = patterns('inr_app.views',
                        url(r'^(?P<patient_id>\d+)/target/set$', 'set_inr_target'),
                        url(r'^(?P<patient_id>\d+)/problems', 'get_problems'),
                        url(r'^(?P<patient_id>\d+)/medications', 'get_medications'),
+                       url(r'^(?P<patient_id>\d+)/notes', 'get_inr_note'),
+                       url(r'^(?P<patient_id>\d+)/note/add', 'add_note'),
+
+                       # Deprecated
                        url(r'^(?P<patient_id>\d+)/(?P<problem_id>\d+)/get_inrs$', 'get_inrs'),
                        url(r'^(?P<inr_id>\d+)/edit_inrvalue$', 'edit_inrvalue'),
                        url(r'^(?P<inr_id>\d+)/delete_inrvalue$', 'delete_inrvalue'),

@@ -210,24 +210,26 @@
                 <div class="io-box">
                     <!--Latest note information-->
                     <textarea name="note" id="note" ng-model="noteInstance.note" title="Note" msd-elastic
+                              ng-model-options="{updateOn: 'blur',debounce: 500}"
+                              ng-change="updateNote()"
                               style="width: 100%"></textarea>
-                    <p>Last updated by <span ng-bind="noteInstance.author.user.first_name"></span><span
+                    <p>Last updated by <span ng-bind="noteInstance.author.user.first_name"></span> <span
                             ng-bind="noteInstance.author.user.last_name"></span> on <span
                             ng-bind=" noteInstance.datetime|date:'M/d/yyyy'"></span></p>
 
                     <div>
-                        <button class="btn btn-default" ng-click="showAllNotes(0)">See old notes (<span
+                        <button class="btn btn-default" ng-click="showNoteHistory ? hideAllNotes() :showAllNotes(0)">
+                            <span ng-bind="showNoteHistory ? 'Hide old notes':'See old notes '"></span> (<span
                                 ng-bind="totalNote"></span>)
                         </button>
                     </div>
 
-                    <!--Entry note history-->
-                    <div ng-repeat="note in nodeHistories track by $index">
+                    <!--Entry note history -->
+                    <div ng-repeat="note in noteHistories track by $index" class="io-box" ng-if="showNoteHistory">
                         <p>Name: <span ng-bind="note.author.user.first_name"></span><span
-                                ng-bind="note.author.user.last_name"></span></p>
+                                ng-bind="note.author.user.last_name"> </span></p>
                         <p style="white-space: pre-line;">Note: {{ note.note }}</p>
-                        <p>Date: {{ note.datetime|date:'M/d/yyyy' }}</p>
-                        <hr/>
+                        <span>Date: {{ note.datetime|date:'M/d/yyyy' }}</span>
                     </div>
 
                     <!--</div>-->

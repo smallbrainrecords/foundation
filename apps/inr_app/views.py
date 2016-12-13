@@ -84,6 +84,53 @@ def get_medications(request, patient_id):
 
 
 @login_required
+def get_inr_note(request, patient_id):
+    """
+
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    row = json_body.get('row')
+
+    text_note_query_set = InrTextNote.objects.filter(patient_id=patient_id).order_by('-datetime')
+
+    if 0 == row:
+        resp['notes'] = InrTextNoteSerializer(text_note_query_set, many=True).data
+    else:
+        resp['note'] = InrTextNoteSerializer(text_note_query_set.first()).data
+
+    resp['total'] = text_note_query_set.count()
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def add_note(request, patient_id):
+    """
+    Adding new note to INR widget
+    Return newly added item & new total count
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    note = InrTextNote(note=json_body.get('note'), author=request.user.profile, patient_id=patient_id)
+    note.save()
+
+    resp['note'] = InrTextNoteSerializer(note).data
+    resp['total'] = InrTextNote.objects.filter(patient_id=patient_id).count()
+    resp['success'] = True
+
+    return ajax_response(resp)
+
+
+# DEPRECATED ITEMS. UNUSED OR WILL BE REMOVED
+
+@login_required
 def get_inrs(request, patient_id, problem_id):
     """
     Get the INR widget which is pinned to the problem(sharing problem is filtered through patient)
@@ -166,20 +213,6 @@ def delete_inrvalue(request, inr_id):
     resp['success'] = True
     try:
         InrValue.objects.get(id=inr_id, ispatient=True).delete()
-    except:
-        resp['success'] = False
-    return ajax_response(resp)
-
-
-@login_required
-@api_view(['POST'])
-def add_note(request):
-    resp = {}
-    resp['success'] = True
-    note = InrTextNote(note=request.POST['note'], inr_id=request.POST['inr_id'], author=request.user.profile)
-    try:
-        note.save()
-        resp['info'] = InrTextNoteSerializer(note).data
     except:
         resp['success'] = False
     return ajax_response(resp)

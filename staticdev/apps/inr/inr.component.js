@@ -38,7 +38,7 @@
             };
 
             scope.nextINRIsOpened = false;
-
+            scope.showNoteHistory = false;
             scope.inrInstance = {};                             // This is initialized value for adding new INR item
             scope.orderInstance = {};                           //
             scope.noteInstance = {};                            //
@@ -50,7 +50,7 @@
             scope.medications = [];                             // Data for medication list
             scope.problems = [];                                // Data for problem list
             scope.orders = [];                                // Data for problem list
-            scope.nodeHistories = [];
+            scope.noteHistories = [];
 
             // Method definition (aka widget's behaviour)
             scope.updateTargetINR = updateTargetINR;
@@ -62,7 +62,7 @@
             scope.addOrder = addOrder;
             scope.updateNote = updateNote;
             scope.showAllNotes = showAllNotes;
-
+            scope.hideAllNotes = hideAllNotes;
 
             // Bootstrap load the widget's data
             initData();
@@ -95,9 +95,9 @@
                 });
 
                 // Load quick glance of text note was added to this INR widget(latest text note info & Total count of text note added)
-                inrService.loadNotes(1).then(function (response) {
+                inrService.loadNotes(scope.patientId, 1).then(function (response) {
                     scope.noteInstance = response.data.note;
-                    scope.totalNote = response.totalNote;
+                    scope.totalNote = response.data.total;
                 });
             }
 
@@ -250,7 +250,7 @@
                     if (response.data.success) {
                         toaster.pop('success', 'Done', 'Update note success');
                         scope.noteInstance = response.data.note;
-                        scope.totalNote = response.totalNote;
+                        scope.totalNote = response.data.total;
                     } else {
                         toaster.pop('error', 'Error', 'Update note failed!');
                     }
@@ -265,12 +265,15 @@
              * Loading all old note history
              */
             function showAllNotes() {
+                // Toggle flag
+                scope.showNoteHistory = true;
+
+                // Load all notes
                 inrService.loadNotes(scope.patientId, 0).then(showAllNoteSuccess, showAllNoteFailed);
 
                 function showAllNoteSuccess(response) {
                     if (response.data.success) {
-                        // toaster.pop('success', 'Done', 'Msg when success'); // TODO: This one is redundant becuz the UI is response
-                        scope.noteHistories = scope.data.notes;
+                        scope.noteHistories = response.data.notes;
                     } else {
                         toaster.pop('error', 'Error', 'Loading note history failed!');
                     }
@@ -282,152 +285,10 @@
                 }
             }
 
-            // scope.$watch('inr', function (newVal, oldVal) {
-            //     if (newVal) {
-            //         scope.inr = scope.$eval(attr.ngModel);
-            //         scope.medication_terms = [];
-            //         scope.manual_medication = {};
-            //         scope.new_medication = {set: false};
-            //         // Using for collape /uncollape the widget only
-            //         scope.open_inr = function () {
-            //             if (!scope.show_inr_collapse) {
-            //                 CollapseService.ChangeInrCollapse();
-            //                 scope.show_inr_collapse = CollapseService.show_inr_collapse;
-            //             }
-            //             else {
-            //                 CollapseService.ChangeInrCollapse();
-            //                 scope.show_inr_collapse = CollapseService.show_inr_collapse;
-            //             }
-            //         };
-            //
-            //     }
-            // }, true);
-            //
-            // // function disabled(data) {
-            // //     var date = data.date,
-            // //     mode = data.mode;
-            // //     return mode === 'day' && (date.getDay() === 0 || date.getDay() === 6);
-            // // }
-            // // scope.inrvalue['effective_datetime'] = moment().format("YYYY-MM-DD HH:mm:ss");
-            // // console.log(moment().format("YYYY-MM-DD"))
-            // scope.inrvalue['effective_datetime'] = moment().format("YYYY-MM-DD");
-            // scope.inrvalue['next_inr'] = moment().add(1, 'month').format("YYYY-MM-DD");
-            // // if (scope.inrs.length > 0) {
-            // inrService.getListProblem(scope.inr.id).then(function (data) {
-            //     scope.problems = data['data'];
-            // });
-            // // }
-            // scope.open2 = function () {
-            //     scope.popup2.opened = true;
-            // };
-            // scope.open1 = function () {
-            //     scope.popup1.opened = true;
-            // };
-            // scope.saveinrvalue = function () {
-            //     if (typeof(scope.inrvalue['value']) === 'undefined' || scope.inrvalue['value'] == null || typeof(scope.inrvalue['current_dose']) === 'undefined' || scope.inrvalue['current_dose'] == null || typeof(scope.inrvalue['effective_datetime']) === 'undefined' || scope.inrvalue['effective_datetime'] == null || typeof(scope.inrvalue['new_dosage']) === 'undefined' || scope.inrvalue['new_dosage'] == null || typeof(scope.inrvalue['next_inr']) === 'undefined' || scope.inrvalue['next_inr'] == null) {
-            //         toaster.pop('warning', 'Warning', 'Please fill all field before save!');
-            //         return '';
-            //     }
-            //     scope.inrvalue['inr'] = scope.inrs[0].id;
-            //     scope.inrvalue['author_id'] = scope.inrs[0].author.id;
-            //     scope.inrvalue.effective_datetime = moment(scope.inrvalue['effective_datetime']).format("YYYY-MM-DD");
-            //     scope.inrvalue.next_inr = moment(scope.inrvalue['next_inr']).format("YYYY-MM-DD");
-            //     inrService.saveInrValue(scope.inrvalue).then(function (data) {
-            //         if (data['success'] == true) {
-            //             toaster.pop('success', 'Done', 'Save inrvalue success!');
-            //             scope.inrvalue['id'] = data['id'];
-            //             scope.inrvalue['ispatient'] = true;
-            //             scope.inrs[0].inr_values.unshift(scope.inrvalue);
-            //             scope.inrvalue = {};
-            //             scope.inrvalue['effective_datetime'] = moment().format("YYYY-MM-DD");
-            //             scope.inrvalue['next_inr'] = moment().add(1, 'month').format("YYYY-MM-DD");
-            //         } else {
-            //             toaster.pop('error', 'Error', 'Can\'t save inrvalue!');
-            //         }
-            //     });
-            // };
-            // scope.initvalue = function (value) {
-            //     value['isshow'] = false;
-            //     value['value'] = parseFloat(value['value']);
-            //     value['effective_datetime'] = moment(value['effective_datetime']).format("YYYY-MM-DD");
-            //     value['next_inr'] = moment(value['next_inr']).format("YYYY-MM-DD");
-            // };
-            // scope.editinrvalue = function (value, id) {
-            //     if (value.isshow) {
-            //         if (typeof(value['value']) === 'undefined' || value['value'] == "" || typeof(value['current_dose']) === 'undefined' || value['current_dose'] == "" || typeof(value['effective_datetime']) === 'undefined' || value['effective_datetime'] == "" || typeof(value['new_dosage']) === 'undefined' || value['new_dosage'] == "" || typeof(value['next_inr']) === 'undefined' || value['next_inr'] == "") {
-            //             toaster.pop('warning', 'Warning', 'Please fill all field before save change!');
-            //             return '';
-            //         }
-            //         value.effective_datetime = moment(value['effective_datetime']).format("YYYY-MM-DD");
-            //         value.next_inr = moment(value['next_inr']).format("YYYY-MM-DD");
-            //         inrService.editInrValue(value, id).then(function (data) {
-            //             if (data['success'] == true) {
-            //                 toaster.pop('success', 'Done', 'Edit inrvalue success!');
-            //                 value.isshow = !value.isshow;
-            //             } else {
-            //                 toaster.pop('error', 'Error', 'Can\'t edit Inrvalue!');
-            //             }
-            //         });
-            //     } else {
-            //         value.effective_datetime = moment(value['effective_datetime']).format("YYYY-MM-DD");
-            //         value.next_inr = moment(value['next_inr']).format("YYYY-MM-DD");
-            //         value.isshow = !value.isshow;
-            //     }
-            // };
-            // scope.deleteinrvalue = function (id, index, datas) {
-            //     inrService.deleteInrValue(id).then(function (data) {
-            //         if (data['success'] == true) {
-            //             toaster.pop('success', 'Done', 'Delete inrvalue success!');
-            //             datas.splice(index, 1);
-            //         } else {
-            //             toaster.pop('error', 'Error', 'Can\'t delete Inrvalue!');
-            //         }
-            //     });
-            // };
-            // scope.checkradio = function (a) {
-            //     scope.inr.target = parseInt(a.target);
-            //     inrService.setTargetforInr(a.id, a.target).then(function (data) {
-            //         if (data['success'] == true) {
-            //             toaster.pop('success', 'Done', 'Set target success!');
-            //         } else {
-            //             toaster.pop('error', 'Error', 'Can\'t set target , we are fixing it asap!');
-            //         }
-            //     });
-            // };
-            // scope.save_note = function (note, oldnote, notes) {
-            //     if (note.note == '' || note.note.length < 1)
-            //         return '';
-            //     data = {};
-            //     data['inr_id'] = note.inr;
-            //     data['note'] = note.note;
-            //     inrService.addNote(data).then(function (data) {
-            //         if (data['success'] == true) {
-            //             toaster.pop('success', 'Done', 'Save note success!');
-            //             notes.push(data['info']);
-            //         } else {
-            //             toaster.pop('error', 'Error', 'Save note faild!');
-            //         }
-            //     });
-            // };
-            // scope.add_note = function (note, notes) {
-            //     if (note.note == '' || note.note.length < 1)
-            //         return '';
-            //     inrService.addNote(note).then(function (data) {
-            //         if (data['success'] == true) {
-            //             toaster.pop('success', 'Done', 'Add note success!');
-            //             notes.push(data['info']);
-            //         } else {
-            //             toaster.pop('error', 'Error', 'Add note faild!');
-            //         }
-            //     });
-            // }
+            function hideAllNotes() {
+                scope.showNoteHistory = false;
 
-            // Watcher(s)
-            // scope.$on('inrTarget', function (newVal, oldVal) {
-            //     if (newVal != oldVal) {
-            //         scope.updateTargetINR();
-            //     }
-            // })
+            }
         }
     }
 })();

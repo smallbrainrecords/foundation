@@ -27,6 +27,7 @@ class InrValueSerializer(serializers.ModelSerializer):
 
 class InrTextNoteSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer()
+    patient = UserProfileSerializer()
 
     class Meta:
         model = InrTextNote
@@ -34,8 +35,8 @@ class InrTextNoteSerializer(serializers.ModelSerializer):
             'id',
             'author',
             'note',
-            'inr',
             'datetime',
+            'patient',
         )
 
 
