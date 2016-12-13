@@ -1,9 +1,12 @@
+from struct import pack
+
 from rest_framework.decorators import api_view
 
 from common.views import *
 from emr.models import Inr, InrValue, InrTextNote, Problem, UserProfile, Medication, Observation, ObservationComponent, \
-    ObservationPinToProblem
+    ObservationPinToProblem, BELONG_TO, ToDo
 from medication_app.serializers import MedicationSerializer
+from todo_app.serializers import TodoSerializer
 from users_app.views import permissions_accessed
 from .serializers import InrTextNoteSerializer, InrSerializer
 from .serializers import ProblemSerializer
@@ -34,7 +37,7 @@ def set_inr_target(request, patient_id):
     """
     resp = {'success': False}
     json_body = json.loads(request.body)
-    UserProfile.objects.filter(user_id=patient_id).update(inr_target=int(json_body.get('value')));
+    UserProfile.objects.filter(user_id=patient_id).update(inr_target=int(json_body.get('value')))
 
     resp['success'] = True
     return ajax_response(resp)
@@ -125,6 +128,48 @@ def add_note(request, patient_id):
     resp['total'] = InrTextNote.objects.filter(patient_id=patient_id).count()
     resp['success'] = True
 
+    return ajax_response(resp)
+
+
+@login_required
+def get_orders(request, patient_id):
+    """
+    Get all orders(aka todo) which is generated in this widget
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    orders = ToDo.objects.filter(patient_id=patient_id).filter(accomplished=False).filter(created_at=1)
+
+    resp['orders'] = TodoSerializer(orders, many=True).data
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def add_order(request, patient_id):
+    """
+
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    todo = json_body.get('todo')
+    due_date = json_body.get('due_date')
+    # problem_id = json_body.get('problem_id')
+    user_profile = UserProfile.objects.filter(id=patient_id).get()
+
+    todo = ToDo(todo=todo, due_date=datetime.strptime(due_date, '%Y-%m-%d').date(),
+                user=request.user,
+                patient=user_profile.user,
+                accomplished=False, created_at=1)
+    todo.save()
+
+    resp['order'] = TodoSerializer(todo).data
+    resp['success'] = True
     return ajax_response(resp)
 
 

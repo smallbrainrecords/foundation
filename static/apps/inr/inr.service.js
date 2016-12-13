@@ -123,7 +123,7 @@
          * @param orderObj
          */
         this.addOrder = function (patientId, orderObj) {
-            return $http.post('/inr/' + patientId + '/orders/add', orderObj, {
+            return $http.post('/inr/' + patientId + '/order/add', orderObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }

@@ -36,10 +36,19 @@ COMMON_PROBLEM_TYPE_CHOICES = (
 RISK_CHOICES = (
     ('normal', 'Normal'),
     ('high', 'High'),)
+
+# Patient target INR goal(used within INR widget)
 TARGET_CHOICES = (
     (1, '2-3'),
     (0, '2.5-3.5')
 )
+
+# Place where the item(Todo, Note, Value...) is generated
+BELONG_TO = (
+    (0, ''),
+    (1, 'inr_widget')
+)
+
 # Observation type
 OBSERVATION_TYPES = [
     {
@@ -399,7 +408,6 @@ class ToDo(models.Model):
     problem = models.ForeignKey(Problem, null=True, blank=True)
     a1c = models.ForeignKey("AOneC", null=True, blank=True, related_name="a1c_todos")
     colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos")
-    inr = models.ForeignKey("Inr", null=True, blank=True, related_name="inr_todos")
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
@@ -407,6 +415,7 @@ class ToDo(models.Model):
     order = models.BigIntegerField(null=True, blank=True)
     members = models.ManyToManyField(UserProfile, blank=True)
     labels = models.ManyToManyField(Label, blank=True)
+    created_at = models.PositiveIntegerField(choices=BELONG_TO, default=0)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     objects = TodoManager()
