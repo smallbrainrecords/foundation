@@ -1,18 +1,11 @@
-from datetime import datetime
-from django.db.models import Max
-from django.core.servers.basehttp import FileWrapper
-from django.http import Http404, HttpResponse
-from django.db.models import Q
-from common.views import *
 from rest_framework.decorators import api_view
 
-from emr.models import Medication, MedicationTextNote, PatientController, UserProfile, MedicationPinToProblem
-from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
-from emr.operations import op_add_event
+from common.views import *
+from emr.models import Medication, MedicationTextNote, MedicationPinToProblem
 from emr.mysnomedct import SnomedctConnector
-
-from users_app.serializers import UserProfileSerializer
 from users_app.views import permissions_accessed
+from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
+
 
 @login_required
 def list_terms(request):
@@ -31,30 +24,30 @@ def list_terms(request):
 
 @login_required
 def get_medications(request, patient_id):
-    resp = {}
-    resp['success'] = False
-    
+    resp = {'success': False}
+
     if permissions_accessed(request.user, int(patient_id)):
-        medications = Medication.objects.filter(patient__user__id=patient_id, concept_id__in = [375383004, 375379004, 375378007, 319735007, 375374009, 319734006, 375380001, 375375005, 319733000, 319736008])
-            
+        medications = Medication.objects.filter(patient__user__id=patient_id)
+
         resp['success'] = True
         resp['info'] = MedicationSerializer(medications, many=True).data
     return ajax_response(resp)
 
+
 @login_required
 def get_medication(request, patient_id, medication_id):
-    resp = {}
-    resp['success'] = False
-    
+    resp = {'success': False}
+
     if permissions_accessed(request.user, int(patient_id)):
         try:
             medication = Medication.objects.get(id=medication_id)
         except Medication.DoesNotExist:
             pass
-            
+
         resp['success'] = True
         resp['info'] = MedicationSerializer(medication).data
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -75,6 +68,7 @@ def add_medication(request, patient_id):
 
     return ajax_response(resp)
 
+
 @login_required
 @api_view(["POST"])
 def add_medication_note(request, patient_id, medication_id):
@@ -94,6 +88,7 @@ def add_medication_note(request, patient_id, medication_id):
 
     return ajax_response(resp)
 
+
 @login_required
 def edit_note(request, note_id):
     note = MedicationTextNote.objects.get(id=note_id)
@@ -105,12 +100,14 @@ def edit_note(request, note_id):
     resp['success'] = True
     return ajax_response(resp)
 
+
 @login_required
 def delete_note(request, note_id):
     MedicationTextNote.objects.get(id=note_id).delete()
     resp = {}
     resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 def get_pins(request, medication_id):
@@ -135,13 +132,14 @@ def pin_to_problem(request, patient_id):
             pin.delete();
         except MedicationPinToProblem.DoesNotExist:
             pin = MedicationPinToProblem(author=request.user.profile, medication_id=medication_id,
-                                          problem_id=problem_id)
+                                         problem_id=problem_id)
             pin.save()
 
         resp['pin'] = MedicationPinToProblemSerializer(pin).data
         resp['success'] = True
 
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
