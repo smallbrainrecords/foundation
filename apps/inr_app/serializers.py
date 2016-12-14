@@ -1,28 +1,29 @@
 from rest_framework import serializers
 
-from emr.models import Inr, InrValue, InrTextNote, Problem
+from emr.models import Inr, InrTextNote, Problem
+from data_app.serializers import ObservationValueSerializer
 from todo_app.serializers import TodoSerializer
 from users_app.serializers import UserProfileSerializer
 
 
-class InrValueSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
-
-    class Meta:
-        model = InrValue
-
-        fields = (
-            'id',
-            'inr',
-            'author',
-            'value',
-            'effective_datetime',
-            'current_dose',
-            'new_dosage',
-            'next_inr',
-            'ispatient',
-            'created_on',
-        )
+# class InrValueSerializer(serializers.ModelSerializer):
+#     author = UserProfileSerializer()
+#
+#     class Meta:
+#         model = InrValue
+#
+#         fields = (
+#             'id',
+#             'inr',
+#             'author',
+#             'value',
+#             'effective_datetime',
+#             'current_dose',
+#             'new_dosage',
+#             'next_inr',
+#             'ispatient',
+#             'created_on',
+#         )
 
 
 class InrTextNoteSerializer(serializers.ModelSerializer):
@@ -64,10 +65,7 @@ class ProblemSerializer(serializers.ModelSerializer):
 
 class InrSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer()
-    patient = UserProfileSerializer()
-    inr_values = InrValueSerializer(many=True, read_only=True)
-    inr_notes = InrTextNoteSerializer(many=True, read_only=True)
-    inr_todos = TodoSerializer(many=True, read_only=True)
+    observation_value = ObservationValueSerializer()
 
     class Meta:
         model = Inr
@@ -75,11 +73,9 @@ class InrSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'author',
-            'patient',
-            'observation',
+            'observation_value',
+            'current_dose',
+            'new_dosage',
+            'next_inr',
             'created_on',
-            'inr_values',
-            'inr_notes',
-            'inr_todos',
-            'target',
         )

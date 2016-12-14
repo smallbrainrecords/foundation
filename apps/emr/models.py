@@ -887,36 +887,32 @@ class MyStoryTextComponentEntry(models.Model):
         ordering = ['-datetime']
 
     def __unicode__(self):
-        return "%s" % (self.text)
+        return "%s" % self.text
 
 
 class Inr(models.Model):
-    author = models.ForeignKey(UserProfile, related_name='author_inrs', blank=True, null=True)
-    patient = models.ForeignKey(UserProfile, related_name="patient_inrs")
-    observation = models.ForeignKey(Observation, related_name='observation_pin_inrs', blank=True, null=True)
-    problem = models.ForeignKey(Problem, related_name='problem_pin_inrs', blank=True, null=True)
-    created_on = models.DateTimeField(auto_now_add=True)
+    """
+    Medication dosage for each observation value. Can be extended later
+    One data point(ObservationValue) that can be entered and viewed in more than one way.
+    This is a common function for widgets and will need to be included in public API.
+    """
+    author = models.ForeignKey(UserProfile, related_name='author_inr', blank=True,
+                               null=True)  # Medication dosage author
+
+    patient = models.ForeignKey(UserProfile, related_name="patient_inr",
+                                null=True)  # Can be in duplication with patient in observation value becuz this in one-2-on relationship
+    observation_value = models.OneToOneField(ObservationValue,
+                                             null=True)  # Measured date & value is referred to observation data
+    current_dose = models.TextField(null=True, blank=True)
+    new_dosage = models.TextField(null=True, blank=True)
+    next_inr = models.DateField(null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)  # Medication dosage created
 
     class Meta:
         ordering = ['-created_on']
 
     def __str__(self):
-        return "%s" % (self.observation)
-
-
-class InrValue(models.Model):
-    author = models.ForeignKey(UserProfile, related_name='author_inr_values')
-    inr = models.ForeignKey(Inr, related_name='inr_values')
-    value = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
-    effective_datetime = models.DateField(null=True, blank=True)
-    current_dose = models.TextField(null=True, blank=True)
-    new_dosage = models.TextField(null=True, blank=True)
-    next_inr = models.DateField(null=True, blank=True)
-    created_on = models.DateTimeField(auto_now_add=True)
-    ispatient = models.BooleanField(default=False)
-
-    class Meta:
-        ordering = ['-effective_datetime', '-created_on']
+        return "%s" % self.observation
 
 
 class InrTextNote(models.Model):

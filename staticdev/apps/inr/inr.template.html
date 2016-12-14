@@ -86,7 +86,6 @@
                                        title="Date measured"
                                        ng-model="inrInstance.next_inr"
                                        uib-datepicker-popup="{{format}}"
-
                                        is-open="nextINRIsOpened"
                                        datepicker-options="nextINRDateOptions"
                                        datepicker-append-to-body="true"
@@ -111,14 +110,15 @@
                     <tbody>
                     <tr ng-repeat='inr in inrs track by $index'>
                         <td>
-                            <span ng-class="inr.date_measured | date :'mm/dd/yyyy'"></span>
+                            <span ng-bind="inr.date | date :'mm/dd/yyyy'"></span>
                         </td>
                         <td>
                             <input class="form-control" type="text" title="Current dose" ng-model='inr.current_dose'
                                    name="current-dose">
                         </td>
                         <td>
-                            <input maxlength="10" class="form-control" type="text" title="INR" ng-model='value.value'
+                            <input maxlength="10" class="form-control" type="text" title="INR"
+                                   ng-model='inr.value_quantity'
                                    name="inr">
                         </td>
                         <td>
@@ -129,9 +129,15 @@
                             <span ng-bind="inr.next_inr | date :'mm/dd/yyyy'"></span>
                         </td>
                         <td>
-                            <a ng-click="editINR(inr)">Edit</a>
+                            <div class="init-btn-group" ng-if="!editEnabled">
+                                <a ng-click="editEnabled=true">Edit</a>
+                                <a ng-click="deleteINR(inr)">Delete</a>
+                            </div>
+                            <div class="edit-group" ng-if="editEnabled">
+                                <a ng-click="editINR(inr)">Save</a>
+                                <a ng-click="editEnabled=false">Cancel</a>
+                            </div>
 
-                            <a ng-click="deleteINR(inr)">Delete</a>
                         </td>
                     </tr>
                     </tbody>

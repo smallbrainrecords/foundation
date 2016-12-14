@@ -29,8 +29,12 @@
          * @param numberOfRow
          */
         this.getINRs = function (patientId, numberOfRow) {
-            return $http.get('/inr/' + patientId + '/inrs/', {
+            return $http.post('/inr/' + patientId + '/inrs/', {
                 row: numberOfRow
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
             });
         };
 
