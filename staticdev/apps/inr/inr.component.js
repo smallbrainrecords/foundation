@@ -16,14 +16,14 @@
 
         function linkFn(scope, element, attr, model) {
             // Properties definition
-            scope.altInputFormats = ['m/d/yy'];
-            scope.format = 'mm/dd/yyyy';
+            scope.altInputFormats = ['M/d/yy'];
+            scope.format = 'MM/dd/yyyy';
 
             scope.dateMeasuredDateOptions = {
                 initDate: new Date(),
                 maxDate: new Date(2100, 5, 22),
                 startingDay: 1,
-                format: 'mm/dd/yyyy',
+                format: 'MM/dd/yyyy',
                 showWeeks: false
             };
 
@@ -33,13 +33,16 @@
                 initDate: new Date(),
                 maxDate: new Date(2100, 5, 22),
                 startingDay: 1,
-                format: 'mm/dd/yyyy',
+                format: 'MM/dd/yyyy',
                 showWeeks: false
             };
 
             scope.nextINRIsOpened = false;
             scope.showNoteHistory = false;
-            scope.inrInstance = {};                             // This is initialized value for adding new INR item
+            scope.inrInstance = {
+                date_measured: new Date(),
+                next_inr: (new Date()).setMonth((new Date()).getMonth() + 1)
+            };                             // This is initialized value for adding new INR item
             scope.orderInstance = {};                           //
             scope.noteInstance = {};                            //
             scope.totalNote = 0;
