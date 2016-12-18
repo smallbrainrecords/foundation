@@ -1,7 +1,8 @@
 (function () {
     "use strict";
 
-    angular.module('inr', ['ui.bootstrap', 'sharedModule', 'httpModule', 'ngDialog', 'toaster', 'monospaced.elastic'])
+    angular.module('inr', ['ui.bootstrap', 'sharedModule', 'xeditable',
+        'httpModule', 'ngDialog', 'toaster', 'monospaced.elastic'])
         .directive('inr', INR);
 
     INR.$inject = ['CollapseService', 'toaster', '$location', '$timeout', '$filter', 'inrService'];
@@ -17,8 +18,8 @@
         function linkFn(scope, element, attr, model) {
             // Properties definition
             scope.altInputFormats = ['M/d/yy'];
+            scope.editEnabled = [];
             scope.format = 'MM/dd/yyyy';
-
             scope.dateMeasuredDateOptions = {
                 initDate: new Date(),
                 maxDate: new Date(2100, 5, 22),
@@ -26,9 +27,7 @@
                 format: 'MM/dd/yyyy',
                 showWeeks: false
             };
-
             scope.dateMeasuredIsOpened = false;
-
             scope.nextINRDateOptions = {
                 initDate: new Date(),
                 maxDate: new Date(2100, 5, 22),
@@ -36,13 +35,13 @@
                 format: 'MM/dd/yyyy',
                 showWeeks: false
             };
-
             scope.nextINRIsOpened = false;
             scope.showNoteHistory = false;
+            var now = new Date();
             scope.inrInstance = {
-                date_measured: new Date(),
-                next_inr: (new Date()).setMonth((new Date()).getMonth() + 1)
-            };                             // This is initialized value for adding new INR item
+                date_measured: now, // current date
+                next_inr: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())// one month later current date
+            };
             scope.orderInstance = {};                           //
             scope.noteInstance = {};                            //
             scope.totalNote = 0;
@@ -136,6 +135,9 @@
                     if (response.data.success) {
                         toaster.pop('success', 'Done', 'Load INR table success');
                         scope.inrs = response.data.inrs;
+                        scope.inrInstance.current_dose = _.first(response.data.inrs).current_dose;
+                        scope.inrInstance.inr_value = _.first(response.data.inrs).inr_value;
+                        scope.inrInstance.new_dosage = _.first(response.data.inrs).new_dosage;
                     } else {
                         toaster.pop('error', 'Error', 'Load INR table failed!');
                     }
@@ -153,13 +155,14 @@
             function addINR() {
                 inrService.addINR(scope.patientId, scope.inrInstance).then(addINRSuccess, addINRError);
 
-                function addINRSuccess() {
+                function addINRSuccess(response) {
                     if (response.data.success) {
                         toaster.pop('success', 'Done', 'Add new INR success');
 
-                        scope.inrInstance = {};
+                        scope.inrs.unshift(response.data.inr);
 
-                        scope.inrs.push(scope.inrInstance);
+                        // Should not change becuz it will prepopulated data
+                        // scope.inrInstance = {};
                     } else {
                         toaster.pop('error', 'Error', 'Add INR failed');
                     }
@@ -183,7 +186,8 @@
                         toaster.pop('success', 'Done', 'Msg when success');
 
                         // TODO Update INR row from INR table;
-                        // scope.inrs
+                        var index = scope.inrs.indexOf(inr);
+                        scope.editEnabled[index] = false;
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong!');
                     }
@@ -205,7 +209,9 @@
                     if (response.data.success) {
                         toaster.pop('success', 'Done', 'INR value deleted successfully');
 
-                        // TODO Remove INR row from INR table;
+                        var index = scope.inrs.indexOf(inr);
+                        scope.inrs.splice(index, 1);
+
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong!');
                     }

@@ -901,7 +901,7 @@ class Inr(models.Model):
 
     patient = models.ForeignKey(UserProfile, related_name="patient_inr",
                                 null=True)  # Can be in duplication with patient in observation value becuz this in one-2-on relationship
-    observation_value = models.OneToOneField(ObservationValue,
+    observation_value = models.OneToOneField(ObservationValue, related_name="inr",
                                              null=True)  # Measured date & value is referred to observation data
     current_dose = models.TextField(null=True, blank=True)
     new_dosage = models.TextField(null=True, blank=True)

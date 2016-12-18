@@ -59,7 +59,11 @@
          * @param inrObj
          */
         this.addINR = function (patientId, inrObj) {
-            return $http.post('/inr/' + patientId + '/add', inrObj, {
+            // Modify resources
+            // inrObj.date_measured = inrObj.date_measured.getTime();
+            // inrObj.next_inr = inrObj.next_inr.getTime();
+
+            return $http.post('/inr/' + patientId + '/inr/add', inrObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
@@ -73,7 +77,11 @@
          * @param inrObj
          */
         this.updateINR = function (patientId, inrObj) {
-            return $http.post('/inr/' + patientId + '/update', inrObj, {
+            // Modify resources
+            // inrObj.date_measured = inrObj.date_measured.getTime();
+            // inrObj.next_inr = inrObj.next_inr.getTime();
+
+            return $http.post('/inr/' + patientId + '/inr/update', inrObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
@@ -86,7 +94,7 @@
          * @param inrObj
          */
         this.deleteINR = function (patientId, inrObj) {
-            return $http.post('/inr/' + patientId + '/delete', inrObj, {
+            return $http.post('/inr/' + patientId + '/inr/delete', inrObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }

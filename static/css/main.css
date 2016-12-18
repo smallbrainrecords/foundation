@@ -350,13 +350,13 @@ button {
     border: 0px;
 }
 
-tbody {
-    height: 180px;
-}
+/*tbody {*/
+    /*height: 180px;*/
+/*}*/
 
-tbody button {
-    padding: 6px;
-}
+/*tbody button {*/
+    /*padding: 6px;*/
+/*}*/
 
 /*&*/
 /*.datepicker-mode-1,*/
@@ -364,9 +364,9 @@ tbody button {
 /*&*/
 /*.datepicker-mode-2 {*/
 
-tbody button {
-    height: 65px;
-}
+/*tbody button {*/
+    /*height: 65px;*/
+/*}*/
 
 /*}*/
 /*}*/

@@ -1,4 +1,4 @@
-<div class="panel panel-default">
+<div class="panel panel-default inr-component">
     <div class="panel-heading" role="tab" id="headingOne" ng-click="inrCollapsed =!inrCollapsed ">
         <i class="fa fa-caret-right" aria-hidden="true"
            ng-class="inrCollapsed ? 'fa-caret-right':'fa-caret-down'"></i>
@@ -60,21 +60,20 @@
                             </p>
 
                         </th>
-                        <th>
+                        <th style="width: 90px">
                             <p class="input-group">
 
                                 <input class="form-control" type="text" ng-model='inrInstance.current_dose'
                                        name="current-dose" title="Current dose">
                             </p>
                         </th>
-                        <th>
+                        <th style="width: 90px">
                             <p class="input-group">
-                                <input maxlength="10" class="form-control" ng-model='inrInstance.value' title="INR"
-                                       title="Next INR"></p>
+                                <input maxlength="10" class="form-control" ng-model='inrInstance.inr_value' title="INR"
+                                       title="INR"></p>
                         </th>
-                        <th>
+                        <th style="width: 90px">
                             <p class="input-group">
-
                                 <input class="form-control" type="text" ng-model='inrInstance.new_dosage'
                                        name="new_dosage"
                                        title="New dosage"></p>
@@ -99,7 +98,7 @@
                                 </span>
                             </p>
                         </th>
-                        <th>
+                        <th style="width: 150px">
                             <p class="input-group">
                                 <button class="btn btn-default" ng-click="addINR()">Save</button>
                             </p>
@@ -110,40 +109,60 @@
                     <tbody>
                     <tr ng-repeat='inr in inrs track by $index'>
                         <td>
-                            <span ng-bind="inr.date | date :'mm/dd/yyyy'"></span>
+                            <!-- disable edit this field-->
+                            <span ng-bind="inr.date_measured" ng-if="!editEnabled[$index]"></span>
                         </td>
                         <td>
                             <input class="form-control" type="text" title="Current dose" ng-model='inr.current_dose'
+                                   ng-if="editEnabled[$index]"
                                    name="current-dose">
+                            <span ng-bind="inr.current_dose" ng-if="!editEnabled[$index]"></span>
                         </td>
                         <td>
-                            <input maxlength="10" class="form-control" type="text" title="INR"
-                                   ng-model='inr.value_quantity'
+                            <!--Edit field-->
+                            <input ng-if="editEnabled[$index]"
+                                   class="form-control"
+                                   type="text"
+                                   title="INR"
+                                   ng-model='inr.inr_value'
                                    name="inr">
-                        </td>
-                        <td>
-                            <input class="form-control" type="text" ng-model='inr.new_dosage' name="new-dosage"
-                                   title="New dosage">
-                        </td>
-                        <td>
-                            <span ng-bind="inr.next_inr | date :'mm/dd/yyyy'"></span>
-                        </td>
-                        <td>
-                            <div class="init-btn-group" ng-if="!editEnabled">
-                                <a ng-click="editEnabled=true">Edit</a>
-                                <a ng-click="deleteINR(inr)">Delete</a>
-                            </div>
-                            <div class="edit-group" ng-if="editEnabled">
-                                <a ng-click="editINR(inr)">Save</a>
-                                <a ng-click="editEnabled=false">Cancel</a>
-                            </div>
 
+                            <!-- Display field-->
+                            <span ng-bind="inr.inr_value" ng-if="!editEnabled[$index]"></span>
+
+                        </td>
+                        <td>
+                            <!--Edit field-->
+                            <input class="form-control" type="text" ng-model='inr.new_dosage' name="new-dosage"
+                                   ng-if="editEnabled[$index]"
+                                   title="New dosage">
+
+                            <!-- Display field-->
+                            <span ng-bind="inr.new_dosage" ng-if="!editEnabled[$index]"></span>
+                        </td>
+                        <td>
+                            <!--Edit field-->
+
+
+                            <!--Display field-->
+                            <span ng-bind="inr.next_inr | date :'mm/dd/yyyy'" ng-if="!editEnabled[$index]"></span>
+                        </td>
+                        <td>
+                            <div class="init-btn-group" ng-init="!editEnabled[$index]"
+                                 ng-if="editEnabled[$index] != true">
+                                <button class="btn btn-default" ng-click="editEnabled[$index]=true">Edit</button>
+                                <button class="btn btn-danger" ng-click="deleteINR(inr)">Delete</button>
+                            </div>
+                            <div class="edit-group" ng-if="editEnabled[$index]">
+                                <button class="btn btn-primary" ng-click="editINR(inr)">Save</button>
+                                <button class="btn btn-danger" ng-click="editEnabled[$index]=false">Cancel</button>
+                            </div>
                         </td>
                     </tr>
                     </tbody>
                     <tfoot>
                     <tr>
-                        <td>
+                        <td colspan="6">
                             <button class="btn btn-default" ng-click="showAllINRTable()">See all</button>
                         </td>
                     </tr>
@@ -220,12 +239,21 @@
                             weeks
                         </button>
                     </p>
-                    <p>
-                        Add todo: <input type="text" name="todo_name"
-                                         placeholder="Enter todo here"
-                                         title="Todo name"
-                                         ng-model="orderInstance.todo">
-                    </p>
+                    <div class="row">
+                        <div class="col-xs-4 col-sm-4 col-md-4 col-log-4">
+                            Add todo:
+
+                        </div>
+                        <div class="col-xs-8 col-sm-8 col-md-8 col-log-8">
+                            <input type="text" name="todo_name"
+                                   placeholder="Enter todo here"
+                                   class="form-control"
+                                   title="Todo name"
+                                   ng-model="orderInstance.todo">
+
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Notes -->

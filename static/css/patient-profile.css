@@ -4,6 +4,9 @@ body {
 #dvmain {
   min-height: 550px; }
 
+.uib-datepicker:active, .uib-datepicker:focus, .uib-datepicker:hover, .uib-datepicker:visited {
+  outline: none !important; }
+
 .profile-section {
   position: relative;
   height: 315px;
@@ -239,5 +242,8 @@ a.btn-manage {
     min-width: 1140px; } }
 #view_document_page .uploaded_document .document_icon {
   margin-right: 10px; }
+
+.inr-component a {
+  cursor: pointer; }
 
 /*# sourceMappingURL=patient-profile.css.map */

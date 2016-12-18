@@ -16,3 +16,4 @@ six==1.9.0
 uWSGI==2.0.10
 wsgiref==0.1.2
 django-cronjobs==0.2.3
+python-dateutil==2.6.0

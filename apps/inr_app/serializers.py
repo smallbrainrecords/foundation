@@ -1,29 +1,9 @@
+from datetime import datetime
+
 from rest_framework import serializers
 
-from emr.models import Inr, InrTextNote, Problem
-from data_app.serializers import ObservationValueSerializer
-from todo_app.serializers import TodoSerializer
+from emr.models import InrTextNote, Problem, ObservationValue
 from users_app.serializers import UserProfileSerializer
-
-
-# class InrValueSerializer(serializers.ModelSerializer):
-#     author = UserProfileSerializer()
-#
-#     class Meta:
-#         model = InrValue
-#
-#         fields = (
-#             'id',
-#             'inr',
-#             'author',
-#             'value',
-#             'effective_datetime',
-#             'current_dose',
-#             'new_dosage',
-#             'next_inr',
-#             'ispatient',
-#             'created_on',
-#         )
 
 
 class InrTextNoteSerializer(serializers.ModelSerializer):
@@ -42,8 +22,6 @@ class InrTextNoteSerializer(serializers.ModelSerializer):
 
 
 class ProblemSerializer(serializers.ModelSerializer):
-    # author = UserProfileSerializer()
-
     class Meta:
         model = Problem
         fields = (
@@ -51,31 +29,55 @@ class ProblemSerializer(serializers.ModelSerializer):
         )
 
 
-# class InrValueSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Problem
-#         fields = (
-#             'id',
-#             'value',
-#             'effective_datetime',
-#             'current_dose',
-#             'new_dosage',
-#             'next_inr',
-#             )
-
 class InrSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
-    observation_value = ObservationValueSerializer()
+    date_measured = serializers.SerializerMethodField()
+    current_dose = serializers.SerializerMethodField()
+    inr_value = serializers.SerializerMethodField()
+    new_dosage = serializers.SerializerMethodField()
+    next_inr = serializers.SerializerMethodField()
 
     class Meta:
-        model = Inr
+        model = ObservationValue
 
         fields = (
             'id',
-            'author',
-            'observation_value',
+            'date_measured',
             'current_dose',
+            'inr_value',
             'new_dosage',
-            'next_inr',
-            'created_on',
+            'next_inr'
         )
+
+    def get_date_measured(self, obj):
+        """
+
+        :param obj:
+        :return:
+        """
+        return obj.effective_datetime.strftime('%m/%d/%Y')
+
+    def get_current_dose(self, obj):
+        """
+        TODO: What is self
+        :param obj:
+        :return:
+        """
+        if hasattr(obj, 'inr') and obj.inr is not None:
+            return obj.inr.current_dose
+        else:
+            return 0
+
+    def get_inr_value(self, obj):
+        return "%g" % obj.value_quantity
+
+    def get_new_dosage(self, obj):
+        if hasattr(obj, 'inr') and obj.inr is not None:
+            return obj.inr.new_dosage
+        else:
+            return 0
+
+    def get_next_inr(self, obj):
+        if hasattr(obj, 'inr') and obj.inr is not None:
+            return obj.inr.next_inr.strftime('%m/%d/%Y')
+        else:
+            return datetime.today().strftime('%m/%d/%Y')

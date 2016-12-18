@@ -1,12 +1,10 @@
-from rest_framework.decorators import api_view
+import dateutil.parser
 
 from common.views import *
-from data_app.serializers import ObservationValueSerializer
-from emr.models import Inr, InrTextNote, Problem, UserProfile, Medication, ObservationComponent, \
+from emr.models import Inr, InrTextNote, UserProfile, Medication, ObservationComponent, \
     ObservationPinToProblem, ToDo, ObservationValue
 from medication_app.serializers import MedicationSerializer
 from todo_app.serializers import TodoSerializer
-from users_app.views import permissions_accessed
 from .serializers import InrTextNoteSerializer, InrSerializer
 from .serializers import ProblemSerializer
 
@@ -187,9 +185,110 @@ def get_inr_table(request, patient_id):
     observation_value = ObservationValue.objects.filter(component__component_code='6301-6').order_by('-created_on')
 
     if 0 == row:
-        resp['inrs'] = ObservationValueSerializer(observation_value, many=True).data
+        resp['inrs'] = InrSerializer(observation_value, many=True).data
     else:
-        resp['inrs'] = ObservationValueSerializer(observation_value[:int(row)], many=True).data
+        resp['inrs'] = InrSerializer(observation_value[:int(row)], many=True).data
 
     resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def add_inr(request, patient_id):
+    """
+    TODO: Normalize all datetime params. is it should be timestamp only
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    date_measured = json_body.get('date_measured')
+    current_dose = json_body.get('current_dose')
+    inr_value = json_body.get('inr_value')
+    new_dosage = json_body.get('new_dosage')
+    next_inr = json_body.get('next_inr')  # Date time value
+
+    # Client shouldn't know about the patient based's component id -> This one should be loading in server-side
+    # Is there any duplicated observation component code per patient?
+    observation_component = ObservationComponent.objects.filter(observation__subject_id=patient_id).filter(
+        component_code='6301-6').get()
+
+    # 1st add observation value first
+    observation_value = ObservationValue(author=request.user.profile, component_id=observation_component.id,
+                                         effective_datetime=dateutil.parser.parse(date_measured),
+                                         value_quantity=inr_value)
+    observation_value.save()
+
+    # 2nd add dosage
+    dosage = Inr(observation_value=observation_value, patient_id=patient_id, author=request.user.profile,
+                 current_dose=current_dose, new_dosage=new_dosage,
+                 next_inr=dateutil.parser.parse(next_inr))
+    dosage.save()
+
+    # Fetch data from DB to get
+    resp['inr'] = InrSerializer(ObservationValue.objects.filter(id=observation_value.id).get()).data
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def update_inr(request, patient_id):
+    """
+    TODO: Edit authorization
+    :param request:
+    :param patient_id:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    observation_value_id = json_body.get('id')
+    date_measured = json_body.get('date_measured')
+    current_dose = json_body.get('current_dose')
+    inr_value = json_body.get('inr_value')
+    new_dosage = json_body.get('new_dosage')
+    next_inr = json_body.get('next_inr')  # Date time value
+
+    # 1st update observation value first
+    # Update primary info
+    observation_value = ObservationValue.objects.select_related('inr').filter(id=observation_value_id)
+    observation_value.update(effective_datetime=dateutil.parser.parse(date_measured), value_quantity=inr_value)
+
+    # Update dosage info
+    # Case item INR is not created through the INR widget.
+    inr, created = Inr.objects.get_or_create(observation_value=observation_value.get())
+
+    # If inr is newly created then assign it author & patient
+    if created:
+        inr.author = request.user.profile
+        inr.patient_id = patient_id
+
+    inr.current_dose = current_dose
+    inr.new_dosage = new_dosage
+    inr.next_inr = dateutil.parser.parse(next_inr)
+    inr.save()
+
+    # Fetch data from DB to get
+    resp['inr'] = InrSerializer(observation_value.get()).data
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def delete_inr(request, patient_id):
+    """
+    TODO: Delete authorization
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    observation_value_id = json_body.get('id')
+    ObservationValue.objects.filter(id=observation_value_id).delete()
+
+    resp = {'success': True}
     return ajax_response(resp)
