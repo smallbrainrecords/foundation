@@ -251,13 +251,14 @@ body {
   span {
     padding-left: 10px;
   }
-  .profileThumb {
-    border-radius: 2px;
-    height: 24px;
-    margin: 2px -2px 0 -8px;
-    vertical-align: inherit;
-    width: 24px;
-  }
+}
+
+.profileThumb {
+  border-radius: 2px;
+  height: 24px;
+  margin: 2px -2px 0 -8px;
+  vertical-align: inherit;
+  width: 24px;
 }
 
 a.btn-manage {
@@ -367,4 +368,30 @@ a.btn-manage {
   a {
     cursor: pointer;
   }
+}
+
+inr-bfdi {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  min-height: 60px;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  #result-set {
+    border-bottom: 2px solid #808080;
+  }
+
+  .flex-item {
+    margin: 0 10px;
+  }
+}
+
+.patient-match-result {
+  padding: 10px;
+
 }

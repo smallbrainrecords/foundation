@@ -169,5 +169,19 @@
                 }
             });
         };
+
+        /**
+         *
+         * @param viewValue
+         */
+        this.findPatient = function (viewValue) {
+            return $http.post('/inr/patients', {
+                search_str: viewValue
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        }
     }
 })();

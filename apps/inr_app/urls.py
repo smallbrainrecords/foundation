@@ -13,5 +13,6 @@ urlpatterns = patterns('inr_app.views',
                        url(r'^(?P<patient_id>\d+)/orders', 'get_orders'),
                        url(r'^(?P<patient_id>\d+)/order/add', 'add_order'),
                        url(r'^(?P<patient_id>\d+)/notes', 'get_inr_note'),
-                       url(r'^(?P<patient_id>\d+)/note/add', 'add_note')
+                       url(r'^(?P<patient_id>\d+)/note/add', 'add_note'),
+                       url(r'^patients', 'find_patient')
                        )

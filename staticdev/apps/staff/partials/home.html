@@ -209,7 +209,6 @@
     </div>
 </div>
 
-
 <div class='panel panel-default' ng-init="show_accomplished_tagged_todos=false">
 
     <div class='panel-heading'> Tagged Todos</div>
@@ -227,7 +226,6 @@
         </div>
     </div>
 </div>
-
 
 <div ng-if="active_user.role=='physician'" class="physician-view">
     <div class='panel panel-default'>
@@ -368,3 +366,8 @@
         </div>
     </div>
 </div>
+
+<!--INR quick entry frame-->
+<inr-bfdi  ng-if="active_user.role=='nurse'" >
+
+</inr-bfdi>

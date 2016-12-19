@@ -174,12 +174,13 @@ body {
     font-weight: 700; }
   .headerWrap span {
     padding-left: 10px; }
-  .headerWrap .profileThumb {
-    border-radius: 2px;
-    height: 24px;
-    margin: 2px -2px 0 -8px;
-    vertical-align: inherit;
-    width: 24px; }
+
+.profileThumb {
+  border-radius: 2px;
+  height: 24px;
+  margin: 2px -2px 0 -8px;
+  vertical-align: inherit;
+  width: 24px; }
 
 a.btn-manage {
   margin-bottom: 20px; }
@@ -245,5 +246,25 @@ a.btn-manage {
 
 .inr-component a {
   cursor: pointer; }
+
+inr-bfdi {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  min-height: 60px;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden; }
+  inr-bfdi #result-set {
+    border-bottom: 2px solid #808080; }
+  inr-bfdi .flex-item {
+    margin: 0 10px; }
+
+.patient-match-result {
+  padding: 10px; }
 
 /*# sourceMappingURL=patient-profile.css.map */

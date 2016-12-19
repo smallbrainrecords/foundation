@@ -82,7 +82,7 @@
                             <p class="input-group">
                                 <input type="text"
                                        class="form-control"
-                                       title="Date measured"
+                                       title="Next INR"
                                        ng-model="inrInstance.next_inr"
                                        uib-datepicker-popup="{{format}}"
                                        is-open="nextINRIsOpened"
@@ -109,8 +109,27 @@
                     <tbody>
                     <tr ng-repeat='inr in inrs track by $index'>
                         <td>
+                            <p class="input-group" ng-if="editEnabled[$index]">
+                                <input type="text"
+                                       class="form-control"
+                                       title="Date measured"
+                                       uib-datepicker-popup="{{format}}"
+                                       date-parser
+                                       ng-model="inr.date_measured"
+                                       is-open="dateMeasuredIsOpened"
+                                       datepicker-options="dateMeasuredDateOptions"
+                                       datepicker-append-to-body="true"
+                                       show-button-bar="false"
+                                       ng-required="true"
+                                       close-text="Close"
+                                       alt-input-formats="altInputFormats"/>
+                                <span class="input-group-btn"><button type="button" class="btn btn-default"
+                                                                      ng-click="dateMeasuredIsOpened=true">
+                                    <i class="glyphicon glyphicon-calendar"></i></button>
+                                </span>
+                            </p>
                             <!-- disable edit this field-->
-                            <span ng-bind="inr.date_measured" ng-if="!editEnabled[$index]"></span>
+                            <span ng-bind="inr.date_measured | date :'MM/dd/yyyy'" ng-if="!editEnabled[$index]"></span>
                         </td>
                         <td>
                             <input class="form-control" type="text" title="Current dose" ng-model='inr.current_dose'
@@ -143,9 +162,27 @@
                         <td>
                             <!--Edit field-->
 
+                            <p class="input-group" ng-if="editEnabled[$index]">
+                                <input type="text"
+                                       class="form-control"
+                                       title="Next INR"
+                                       ng-model="inr.next_inr"
+                                       uib-datepicker-popup="{{format}}"
+                                       is-open="nextINRIsOpened"
+                                       datepicker-options="nextINRDateOptions"
+                                       datepicker-append-to-body="true"
+                                       show-button-bar="false"
+                                       ng-required="true"
+                                       close-text="Close"
+                                       alt-input-formats="altInputFormats"/>
+                                <span class="input-group-btn"><button type="button" class="btn btn-default"
+                                                                      ng-click="nextINRIsOpened=true">
+                                    <i class="glyphicon glyphicon-calendar"></i></button>
+                                </span>
+                            </p>
 
                             <!--Display field-->
-                            <span ng-bind="inr.next_inr | date :'mm/dd/yyyy'" ng-if="!editEnabled[$index]"></span>
+                            <span ng-bind="inr.next_inr | date :'MM/dd/yyyy'" ng-if="!editEnabled[$index]"></span>
                         </td>
                         <td>
                             <div class="init-btn-group" ng-init="!editEnabled[$index]"

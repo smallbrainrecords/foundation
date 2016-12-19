@@ -5,7 +5,7 @@ from emr.models import Inr, InrTextNote, UserProfile, Medication, ObservationCom
     ObservationPinToProblem, ToDo, ObservationValue
 from medication_app.serializers import MedicationSerializer
 from todo_app.serializers import TodoSerializer
-from .serializers import InrTextNoteSerializer, InrSerializer
+from .serializers import InrTextNoteSerializer, InrSerializer, INRPatientSerializer
 from .serializers import ProblemSerializer
 
 
@@ -182,7 +182,8 @@ def get_inr_table(request, patient_id):
     json_body = json.loads(request.body)
     row = json_body.get('row')
 
-    observation_value = ObservationValue.objects.filter(component__component_code='6301-6').order_by('-created_on')
+    observation_value = ObservationValue.objects.filter(component__component_code='6301-6')\
+        .filter(component__observation__subject_id=patient_id).order_by('-created_on')
 
     if 0 == row:
         resp['inrs'] = InrSerializer(observation_value, many=True).data
@@ -291,4 +292,24 @@ def delete_inr(request, patient_id):
     ObservationValue.objects.filter(id=observation_value_id).delete()
 
     resp = {'success': True}
+    return ajax_response(resp)
+
+
+@login_required
+def find_patient(request):
+    """
+
+    :param request:
+    :return:
+    """
+    resp = {}
+    json_body = json.loads(request.body)
+    search_str = json_body.get('search_str')
+
+    patients = UserProfile.objects.filter(role='patient').filter(
+        Q(user__first_name__icontains=search_str)
+        | Q(user__last_name__icontains=search_str)
+    )
+
+    resp['patients'] = INRPatientSerializer(patients, many=True).data
     return ajax_response(resp)

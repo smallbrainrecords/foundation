@@ -4,7 +4,7 @@
 
 
     var StaffApp = angular.module('StaffApp',
-        ['ngRoute', 'ngCookies', 'ngDialog', 'sharedModule', 'httpModule', 'myTools',
+        ['ngRoute', 'ngCookies', 'ngDialog', 'sharedModule', 'httpModule', 'myTools','inr',
             'toaster', 'ngAnimate', 'ngSanitize', 'ngFileUpload', 'dndLists', 'ui.sortable',
             'ui.bootstrap', 'todos', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file']);
 
