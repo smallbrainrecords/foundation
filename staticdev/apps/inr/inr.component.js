@@ -1,13 +1,13 @@
 (function () {
     "use strict";
 
-    angular.module('inr', ['ui.bootstrap', 'sharedModule', 'xeditable',
+    angular.module('inr', ['ui.bootstrap', 'sharedModule', 'xeditable', 'angular-spinkit',
         'httpModule', 'ngDialog', 'toaster', 'monospaced.elastic'])
         .directive('inr', INR);
 
-    INR.$inject = ['CollapseService', 'toaster', '$location', '$timeout', '$filter', 'inrService'];
+    INR.$inject = ['uibDateParser', 'toaster', '$location', '$timeout', '$filter', 'inrService'];
 
-    function INR(CollapseService, toaster, $location, $timeout, $filter, inrService) {
+    function INR(uibDateParser, toaster, $location, $timeout, $filter, inrService) {
         return {
             restrict: 'E',
             templateUrl: '/static/apps/inr/inr.template.html',
@@ -133,8 +133,12 @@
 
                 function getINRsSuccess(response) {
                     if (response.data.success) {
-                        toaster.pop('success', 'Done', 'Load INR table success');
                         scope.inrs = response.data.inrs;
+                        _.map(scope.inrs, function (item, key) {
+                            item.date_measured = uibDateParser.parse(item.date_measured, 'MM/dd/yyyy');
+                            item.next_inr = uibDateParser.parse(item.next_inr, 'MM/dd/yyyy');
+                        });
+
                         scope.inrInstance.current_dose = _.first(response.data.inrs).current_dose;
                         scope.inrInstance.inr_value = _.first(response.data.inrs).inr_value;
                         scope.inrInstance.new_dosage = _.first(response.data.inrs).new_dosage;
