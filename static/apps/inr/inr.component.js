@@ -16,6 +16,8 @@
         };
 
         function linkFn(scope, element, attr, model) {
+            var now = new Date();
+
             // Properties definition
             scope.altInputFormats = ['M/d/yy'];
             scope.editEnabled = [];
@@ -37,12 +39,11 @@
             };
             scope.nextINRIsOpened = false;
             scope.showNoteHistory = false;
-            var now = new Date();
             scope.inrInstance = {
                 date_measured: now, // current date
                 next_inr: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())// one month later current date
             };
-            scope.orderInstance = {};                           //
+            scope.todoName = "";                           //
             scope.noteInstance = {};                            //
             scope.totalNote = 0;
             scope.patientId = $('#patient_id').val();           // TODO: Need to be make an other way to retrieve patient ID
@@ -234,30 +235,40 @@
             }
 
 
-            /**
+            /***
              *
+             * @param title: todo name
+             * @param repeat: 1 - 1 month, 2 - 1 week, 3- 2 weeks
              */
-            function addOrder(repeat) {
-                var due_date = new Date();
+            function addOrder(title, repeat) {
+                // Manipulate due date before submmiting
+                var now = new Date();
                 switch (repeat) {
                     case 1: // Repeat 1 month
-                        scope.orderInstance.due_date = $filter('date')(due_date.setMonth(due_date.getMonth() + 1), 'yyyy-MM-dd');
+                        var due_date = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
                         break;
                     case 2: // Repeat 1 week
-                        scope.orderInstance.due_date = $filter('date')(due_date.setDate(due_date.getDate() + 7), 'yyyy-MM-dd');
+                        var due_date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
                         break;
                     case 3: // Repeat 2 weeks
-                        scope.orderInstance.due_date = $filter('date')(due_date.setDate(due_date.getDate() + 14), 'yyyy-MM-dd');
+                        var due_date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
                         break;
                 }
 
-                inrService.addOrder(scope.patientId, scope.orderInstance).then(addOrderSuccess, addOrderFailed);
+                if (due_date != null) {
+                    due_date = $filter('date')(due_date, 'yyyy-MM-dd');
+                }
+
+                inrService.addOrder(scope.patientId, {
+                    'todo': title,
+                    'due_date': due_date
+                }).then(addOrderSuccess, addOrderFailed);
 
                 function addOrderSuccess(response) {
                     if (response.data.success) {
                         toaster.pop('success', 'Done', 'Add new order success');
                         scope.orders.push(response.data.order);
-                        scope.orderInstance = {};
+                        scope.todoName = "";
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong!');
                     }

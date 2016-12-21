@@ -253,41 +253,33 @@
                     <hr>
                     <!--Adding new todo-->
                     <p>
-                        <button class='btn btn-default'
-                                ng-disabled=" !orderInstance.hasOwnProperty('todo') || ''== orderInstance.todo"
-                                ng-click="addOrder(1)">
-                            Repeat inr in 1
-                            month
+                        <button class='btn btn-default btn-block'
+                                ng-click="addOrder('INR test',1)">
+                            Repeat INR in 1 month
                         </button>
                     </p>
                     <p>
-                        <button class='btn btn-default'
-                                ng-disabled="!orderInstance.hasOwnProperty('todo') ||  ''== orderInstance.todo"
-                                ng-click="addOrder(2)">
-                            Repeat inr in 1
-                            week
+                        <button class='btn btn-default btn-block'
+                                ng-click="addOrder('INR test',2)">
+                            Repeat INR in 1 week
                         </button>
                     </p>
                     <p>
-                        <button class='btn btn-default'
-                                ng-disabled="!orderInstance.hasOwnProperty('todo') || ''== orderInstance.todo"
-                                ng-click="addOrder(3)">
-                            Repeat inr in 2
-                            weeks
+                        <button class='btn btn-default btn-block'
+                                ng-click="addOrder('INR test',3)">
+                            Repeat INR in 2 weeks
                         </button>
                     </p>
                     <div class="row">
-                        <div class="col-xs-4 col-sm-4 col-md-4 col-log-4">
-                            Add todo:
-
-                        </div>
                         <div class="col-xs-8 col-sm-8 col-md-8 col-log-8">
                             <input type="text" name="todo_name"
                                    placeholder="Enter todo here"
                                    class="form-control"
                                    title="Todo name"
-                                   ng-model="orderInstance.todo">
-
+                                   ng-model="todoName">
+                        </div>
+                        <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                            <button ng-click="addOrder(todoName,null)" class="btn btn-primary">Add todo</button>
                         </div>
                     </div>
 

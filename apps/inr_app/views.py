@@ -156,13 +156,13 @@ def add_order(request, patient_id):
     json_body = json.loads(request.body)
     todo = json_body.get('todo')
     due_date = json_body.get('due_date')
-    # problem_id = json_body.get('problem_id')
     user_profile = UserProfile.objects.filter(id=patient_id).get()
 
-    todo = ToDo(todo=todo, due_date=datetime.strptime(due_date, '%Y-%m-%d').date(),
-                user=request.user,
+    todo = ToDo(todo=todo, user=request.user,
                 patient=user_profile.user,
                 accomplished=False, created_at=1)
+    if due_date is not None:
+        todo.due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
     todo.save()
 
     resp['order'] = TodoSerializer(todo).data
@@ -182,7 +182,7 @@ def get_inr_table(request, patient_id):
     json_body = json.loads(request.body)
     row = json_body.get('row')
 
-    observation_value = ObservationValue.objects.filter(component__component_code='6301-6')\
+    observation_value = ObservationValue.objects.filter(component__component_code='6301-6') \
         .filter(component__observation__subject_id=patient_id).order_by('-created_on')
 
     if 0 == row:
