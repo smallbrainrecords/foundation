@@ -121,15 +121,14 @@ def get_pins(request, medication_id):
 @login_required
 @api_view(["POST"])
 def pin_to_problem(request, patient_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         medication_id = request.POST.get("medication_id", None)
         problem_id = request.POST.get("problem_id", None)
 
         try:
             pin = MedicationPinToProblem.objects.get(medication_id=medication_id, problem_id=problem_id)
-            pin.delete();
+            pin.delete()
         except MedicationPinToProblem.DoesNotExist:
             pin = MedicationPinToProblem(author=request.user.profile, medication_id=medication_id,
                                          problem_id=problem_id)
@@ -144,9 +143,16 @@ def pin_to_problem(request, patient_id):
 @login_required
 @api_view(["POST"])
 def change_active_medication(request, patient_id, medication_id):
-    resp = {}
-    resp['success'] = False
-    if permissions_accessed(request.user, int(patient_id)):
+    """
+    Only nurse can change the active & inactive status
+    https://trello.com/c/4qYulhv7
+    :param request:
+    :param patient_id:
+    :param medication_id:
+    :return:
+    """
+    resp = {'success': False}
+    if request.user.profile.role == 'nurse':
         medication = Medication.objects.get(id=medication_id)
         medication.current = not medication.current
         medication.save()
