@@ -5,9 +5,9 @@
         'httpModule', 'ngDialog', 'toaster', 'monospaced.elastic'])
         .directive('inr', INR);
 
-    INR.$inject = ['uibDateParser', 'toaster', '$location', '$timeout', '$filter', 'inrService'];
+    INR.$inject = ['uibDateParser', 'toaster', 'ngDialog', '$timeout', '$filter', 'inrService'];
 
-    function INR(uibDateParser, toaster, $location, $timeout, $filter, inrService) {
+    function INR(uibDateParser, toaster, ngDialog, $timeout, $filter, inrService) {
         return {
             restrict: 'E',
             templateUrl: '/static/apps/inr/inr.template.html',
@@ -208,7 +208,19 @@
              * @param inr
              */
             function deleteINR(inr) {
-                inrService.deleteINR(scope.patientId, inr).then(deleteINRSuccess, deleteINRFailed);
+                // Ask for confirmation
+                ngDialog.openConfirm({
+                    template: '<p>This is a permanent deletion, click "Yes" to continue "No" to cancel</p>\
+                    <div class="ngdialog-buttons">\
+                        <button type="button" class="ngdialog-button ngdialog-button-primary" ng-click="confirm(1)">Yes</button>\
+                        <button type="button" class="ngdialog-button ngdialog-button-secondary" ng-click="confirm(0)">No</button>\
+                    </div>',
+                    plain: true,
+                    showClose: false
+                }).then(function (response) {
+                    if (response == 1)
+                        inrService.deleteINR(scope.patientId, inr).then(deleteINRSuccess, deleteINRFailed);
+                });
 
                 function deleteINRSuccess(response) {
                     if (response.data.success) {
