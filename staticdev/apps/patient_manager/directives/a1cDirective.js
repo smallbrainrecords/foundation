@@ -1,6 +1,6 @@
 var a1c = angular.module('a1c', []);
 
-a1c.directive('a1c', ['CollapseService', 'a1cService', 'toaster', '$location', '$timeout', 'problemService', 'prompt', 'todoService']);
+a1c.directive('a1c', ['CollapseService', 'a1cService', 'toaster', '$location', '$timeout', 'problemService', 'prompt', 'todoService', a1cDirective]);
 
 function a1cDirective(CollapseService, a1cService, toaster, $location, $timeout, problemService, prompt, todoService) {
 
