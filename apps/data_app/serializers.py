@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from datetime import datetime, timedelta
 
-from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationPinToProblem, ObservationUnit, ObservationValue
+from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationPinToProblem, \
+    ObservationUnit, ObservationValue
+from users_app.serializers import UserProfileSerializer
 
-from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
 class ObservationValueTextNoteSerializer(serializers.ModelSerializer):
     author = UserProfileSerializer()
@@ -15,11 +15,10 @@ class ObservationValueTextNoteSerializer(serializers.ModelSerializer):
             'author',
             'note',
             'datetime',
-            )
+        )
 
 
 class ObservationUnitSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ObservationUnit
         fields = (
@@ -27,7 +26,7 @@ class ObservationUnitSerializer(serializers.ModelSerializer):
             'observation',
             'value_unit',
             'is_used',
-            )
+        )
 
 
 class ObservationValueSerializer(serializers.ModelSerializer):
@@ -35,6 +34,7 @@ class ObservationValueSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
     time = serializers.SerializerMethodField()
     observation = serializers.SerializerMethodField()
+    value_quantity = serializers.SerializerMethodField()
     observation_value_notes = ObservationValueTextNoteSerializer(many=True, read_only=True)
 
     class Meta:
@@ -50,7 +50,7 @@ class ObservationValueSerializer(serializers.ModelSerializer):
             'time',
             'observation',
             'observation_value_notes',
-            )
+        )
 
     def get_date(self, obj):
         if not obj.effective_datetime:
@@ -64,6 +64,9 @@ class ObservationValueSerializer(serializers.ModelSerializer):
 
     def get_observation(self, obj):
         return obj.component.observation.id
+
+    def get_value_quantity(self, obj):
+        return "%g" % float(obj.value_quantity)
 
 
 class ObservationComponentSerializer(serializers.ModelSerializer):
@@ -86,7 +89,7 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
             'time',
             'observation_component_values',
             'component_code',
-            )
+        )
 
     def get_date(self, obj):
         if not obj.effective_datetime:
@@ -139,4 +142,4 @@ class ObservationPinToProblemSerializer(serializers.ModelSerializer):
             'author',
             'observation',
             'problem',
-            )
+        )

@@ -1,22 +1,14 @@
-from datetime import datetime
-from django.db.models import Max
-from django.core.servers.basehttp import FileWrapper
-from django.http import Http404, HttpResponse
-from django.db.models import Q
-from common.views import *
 from rest_framework.decorators import api_view
 
-from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationOrder, \
-    PhysicianTeam, PatientController, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue, \
-    Inr, UserProfile
+from common.views import *
 from emr.models import OBSERVATION_TYPES
-from .serializers import ObservationValueTextNoteSerializer, ObservationComponentSerializer, \
-    ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
+from emr.models import Observation, ObservationComponent, ObservationOrder, \
+    PhysicianTeam, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue, \
+    Inr, UserProfile
 from emr.operations import op_add_event
-
-from users_app.serializers import UserProfileSerializer
-from users_app.views import permissions_accessed
 from inr_app.serializers import InrSerializer
+from users_app.views import permissions_accessed
+from .serializers import ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
 
 
 @login_required
@@ -199,32 +191,37 @@ def obseration_pin_to_problem(request, patient_id):
             pin = ObservationPinToProblem.objects.get(observation_id=observation_id, problem_id=problem_id)
             up = UserProfile.objects.get(user_id=request.user.id)
             if up.role == 'patient' and pin.author_id != request.user.id:
-                resp['success']="notallow"
+                resp['success'] = "notallow"
                 return ajax_response(resp)
             pin.delete()
-            problems=Problem.objects.filter(patient_id=patient_id)
-            optp = ObservationPinToProblem.objects.values_list('observation_id',).filter(problem__in=problems)
+            problems = Problem.objects.filter(patient_id=patient_id)
+            optp = ObservationPinToProblem.objects.values_list('observation_id', ).filter(problem__in=problems)
             optp1 = []
             for x in optp:
                 optp1.append(x[0])
             oc = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
-            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(oc) < 1:
+            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(
+                    oc) < 1:
                 if Inr.objects.filter(observation_id=observation_id).exists():
                     Inr.objects.filter(observation_id=observation_id).delete()
                     resp['remove_inr'] = True
         except ObservationPinToProblem.DoesNotExist:
-            problems=Problem.objects.filter(patient_id=patient_id)
-            optp = ObservationPinToProblem.objects.values_list('observation_id',).filter(problem__in=problems).distinct()
+            problems = Problem.objects.filter(patient_id=patient_id)
+            optp = ObservationPinToProblem.objects.values_list('observation_id', ).filter(
+                problem__in=problems).distinct()
             optp1 = []
             for x in optp:
                 optp1.append(x[0])
             oc = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
             # pin = ObservationPinToProblem(author=request.user.profile, observation_id=observation_id, problem_id=problem_id)
-            pin = ObservationPinToProblem(author_id=request.user.id, observation_id=observation_id, problem_id=problem_id)
+            pin = ObservationPinToProblem(author_id=request.user.id, observation_id=observation_id,
+                                          problem_id=problem_id)
             pin.save()
-            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(oc) < 1:
+            if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(
+                    oc) < 1:
                 patient_user = User.objects.get(id=patient_id)
-                inr = Inr(observation_id=observation_id, problem_id=problem_id, author=request.user.profile, patient=patient_user.profile)
+                inr = Inr(observation_id=observation_id, problem_id=problem_id, author=request.user.profile,
+                          patient=patient_user.profile)
                 inr.save()
                 resp['inr'] = InrSerializer(inr).data
 
@@ -361,6 +358,7 @@ def delete_data(request, patient_id, observation_id):
             resp['success'] = True
 
     return ajax_response(resp)
+
 
 # TODO: AnhDN Check this working flow
 @login_required
