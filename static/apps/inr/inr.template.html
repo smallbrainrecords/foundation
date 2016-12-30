@@ -1,11 +1,11 @@
 <div class="panel panel-default inr-component">
     <div class="panel-heading" role="tab" id="headingOne" ng-click="inrCollapsed =!inrCollapsed ">
         <i class="fa fa-caret-right" aria-hidden="true"
-           ng-class="inrCollapsed ? 'fa-caret-right':'fa-caret-down'"></i>
+           ng-class="inrCollapsed ? 'fa-caret-down':'fa-caret-right'"></i>
         <span>INR</span>
     </div>
 
-    <div class="panel-body">
+    <div class="panel-body" ng-if="inrCollapsed">
         <div class="row">
             <!--Left widget-->
             <div class='col-xs-12 col-sm-12 col-md-8 col-lg-8'>
