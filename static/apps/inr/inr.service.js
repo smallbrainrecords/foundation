@@ -123,10 +123,11 @@
 
         /**
          * Get all order related(generated) to this INR widget
+         * Should be filtered by problem
          * @param patientId
          */
-        this.getOrders = function (patientId) {
-            return $http.get('/inr/' + patientId + '/orders');
+        this.getOrders = function (patientId, problemId) {
+            return $http.get('/inr/' + patientId + '/' + problemId + '/orders');
         };
 
         /**

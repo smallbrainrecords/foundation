@@ -248,8 +248,7 @@
                     <p>Orders:</p>
 
                     <!-- Generated orders by this widget-->
-                    <todo ng-model="orders" accomplished="false" show-problem="false"></todo>
-
+                    <todo ng-model="orders" accomplished="false" show-problem="false" ng-if="orders.length != 0"></todo>
                     <hr>
                     <!--Adding new todo-->
                     <p>

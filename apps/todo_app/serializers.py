@@ -76,6 +76,7 @@ class TodoSerializer(serializers.ModelSerializer):
             'attachments',
             'members',
             'document_set',
+            'created_at',
             'created_on',
             )
 

@@ -129,15 +129,17 @@ def add_note(request, patient_id):
 
 
 @login_required
-def get_orders(request, patient_id):
+def get_orders(request, patient_id, problem_id):
     """
     Get all orders(aka todo) which is generated in this widget
+    :param problem_id:
     :param patient_id:
     :param request:
     :return:
     """
     resp = {'success': False}
-    orders = ToDo.objects.filter(patient_id=patient_id).filter(accomplished=False).filter(created_at=1)
+    orders = ToDo.objects.filter(patient_id=patient_id).filter(problem_id=problem_id).filter(accomplished=False).filter(
+        created_at=1)
 
     resp['orders'] = TodoSerializer(orders, many=True).data
     resp['success'] = True
@@ -156,11 +158,14 @@ def add_order(request, patient_id):
     json_body = json.loads(request.body)
     todo = json_body.get('todo')
     due_date = json_body.get('due_date')
+    problem_id = json_body.get('problem_id')
     user_profile = UserProfile.objects.filter(id=patient_id).get()
 
     todo = ToDo(todo=todo, user=request.user,
                 patient=user_profile.user,
-                accomplished=False, created_at=1)
+                problem_id=problem_id,
+                created_at=1,
+                accomplished=False)
     if due_date is not None:
         todo.due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
     todo.save()
