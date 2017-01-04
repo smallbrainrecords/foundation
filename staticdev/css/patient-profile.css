@@ -267,4 +267,14 @@ inr-bfdi {
 .patient-match-result {
   padding: 10px; }
 
+.tab-problems .nav.nav-tabs {
+  width: 395px;
+  margin-left: auto;
+  margin-right: auto;
+  border-bottom: none; }
+  .tab-problems .nav.nav-tabs li.active a {
+    background: #808080;
+    border-radius: 5px;
+    color: white; }
+
 /*# sourceMappingURL=patient-profile.css.map */

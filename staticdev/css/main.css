@@ -468,6 +468,7 @@ tbody button {
     border-right: 1px solid #ddd;
     background: none !important;
     border-radius: 0;
+    cursor: pointer;
 }
 
 .home-page-tabs .nav-pills > li.active > a,

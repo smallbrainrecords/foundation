@@ -12,7 +12,7 @@
             'ui.bootstrap', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file']);
 
 
-    StaffApp.config(function ($routeProvider, hotkeysProvider) {
+    StaffApp.config(function ($routeProvider) {
 
         $routeProvider
             .when('/', {

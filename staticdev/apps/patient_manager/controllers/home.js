@@ -34,6 +34,7 @@
             $scope.new_text.private = true;
             $scope.new_text.all_patients = true;
             $scope.show_edit_my_story_tab = false;
+            $scope.innerProblemTabSetActive = 0;
 
             // Hot key configuration
             hotkeys.add({
@@ -73,7 +74,16 @@
                 description: 'Add new problem',
                 callback: function () {
                     $scope.show_homepage_tab = 'problems';
-                    $scope.show_homepage_tab = 'problems';
+                    $scope.innerProblemTabSetActive = 2;
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+shift+m',
+                description: 'Add new medication',
+                callback: function () {
+                    $scope.show_homepage_tab = 'medication';
+                    $('medication input[type=text]').focus()
                 }
             });
 

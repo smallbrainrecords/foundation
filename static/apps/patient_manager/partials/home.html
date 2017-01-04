@@ -1,5 +1,4 @@
 <toaster-container></toaster-container>
-<p style='padding-bottom:40px;'></p>
 
 <div class='panel panel-default' ng-if="active_user.role!='patient'">
     <div class='panel-heading'>Note (office users only)</div>
@@ -18,7 +17,6 @@
 </div>
 
 <!--Todos list position is depend on user role-->
-
 <div class='panel panel-default' ng-if="'secretary' == active_user.role || 'nurse' == active_user.role">
 
     <div class='panel-heading'> Todos</div>
@@ -123,9 +121,8 @@
         </div>
     </div><!-- End of Panel Body -->
 </div>
-<hr class="hide">
 
-<!-- Begin tabs -->
+<!-- Begin tabs selection-->
 <div class='row'>
     <div class='col-md-12 text-center home-page-tabs'>
         <ul class="nav nav-pills" role="tablist">
@@ -147,7 +144,7 @@
         </ul>
     </div>
 </div>
-<!-- End tabs -->
+<!-- End tabs selection-->
 
 <div class='row'>
     <div class='col-md-12'>
@@ -155,36 +152,14 @@
             <!-- Problems tab -->
             <div role="tabpanel" class="tab-pane tab-problems" ng-class="show_homepage_tab=='problems' ? 'active': ''">
                 <div class='row'>
+
                     <div class='col-md-12'>
                         <div class='panel panel-default'>
                             <div class='panel-heading'> Problems</div>
-
                             <div class='panel-body'>
 
-                                <div class='row'>
-                                    <div class='col-md-6 col-md-offset-4'>
-                                        <ul class="nav nav-pills" role="tablist">
-                                            <li role="presentation" class="active">
-                                                <a href=".tab-active-problem" aria-controls="home" role="tab"
-                                                   data-toggle="tab">Active
-                                                    Problems</a>
-                                            </li>
-                                            <li role="presentation">
-                                                <a href=".tab-inactive-problem" aria-controls="profile" role="tab"
-                                                   data-toggle="tab">Inactive
-                                                    Problems</a>
-                                            </li>
-                                            <li role="presentation">
-                                                <a href=".tab-add-problem" aria-controls="profile" role="tab"
-                                                   data-toggle="tab">Add
-                                                    Problem</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-
-                                <div class="tab-content problem-tabs">
-                                    <div role="tabpanel" class="tab-pane active tab-active-problem">
+                                <uib-tabset active="innerProblemTabSetActive">
+                                    <uib-tab index="0" heading="Active Problems">
                                         <div>
                                             <ul class='ul-clean no-padding' ui-sortable="sortableOptionsProblem"
                                                 ng-model="problems"
@@ -233,8 +208,8 @@
                                                 </li>
                                             </ul>
                                         </div>
-                                    </div>
-                                    <div role="tabpanel" class="tab-pane tab-inactive-problem">
+                                    </uib-tab>
+                                    <uib-tab index="1" heading="Inactive Problems">
                                         <div style='max-height:375px; overflow-y:auto;'>
                                             <ul class='ul-clean no-padding' ui-sortable="sortableOptionsProblem"
                                                 ng-model="problems"
@@ -278,11 +253,9 @@
                                                 </li>
                                             </ul>
                                         </div>
-                                    </div>
-                                    <!-- end inactive problem tab -->
-                                    <!-- add problem tab -->
-                                    <div role="tabpanel" class="tab-pane tab-add-problem">
-                                        <div class='row' ng-show='permitted(["add_problem"])'>
+                                    </uib-tab>
+                                    <uib-tab index="2" heading="Add Problem">
+                                        <div class='row' ng-if='permitted(["add_problem"])'>
                                             <div class='col-md-12'>
                                                 <br>
                                                 <div ng-if="active_user.role=='physician' || active_user.role=='mid-level'">
@@ -344,12 +317,12 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <!-- end tab add problem -->
-                                </div>
+                                    </uib-tab>
+                                </uib-tabset>
+
                                 <hr>
-                                <div class='panel panel-default'
-                                     ng-repeat="list in problem_lists"
+                                <!-- Start problem section-->
+                                <div class='panel panel-default' ng-repeat="list in problem_lists track by $index"
                                      ng-init="list.collapse=false;list.rename=false;">
 
                                     <div class='panel-heading' ng-click="set_collapse(list);"
@@ -389,12 +362,12 @@
                                         <problem ng-model="list.problems" is-list="list.id"></problem>
                                     </div>
                                 </div>
-
+                                <!--End problem list-->
                             </div>
                         </div>
-
                     </div>
 
+                    <!--Start goal section-->
                     <div class='col-md-12'>
                         <div class='panel panel-default'>
 
@@ -479,6 +452,7 @@
                             </div>
                         </div>
                     </div>
+                    <!--End goal section-->
 
                     <!--Todos list position is depend on user role-->
                     <div class='col-md-12' ng-if="'secretary' != active.user.role || 'nurse' != active.user.role">
@@ -513,7 +487,9 @@
                             </div>
                         </div>
                     </div>
+                    <!--End todo list section-->
 
+                    <!--Start encounter section-->
                     <div class='col-md-12'>
                         <div class='panel panel-default' ng-init="encounter_collapse=false;">
 
@@ -545,6 +521,7 @@
                             </div>
                         </div>
                     </div>
+                    <!--End encounter section-->
 
                     <div class='col-md-12'>
                         <div class='panel panel-default' ng-init="favorites_collapse=false;">
@@ -621,9 +598,6 @@
                     </div>
                 </div>
 
-                <div class='row'>
-
-                </div>
                 <hr>
             </div>
             <!-- End Problems tab -->
@@ -1056,6 +1030,7 @@
     </div>
 </div>
 
+<!--bdfi-->
 <div class='bottom-bar'
      ng-show="active_user.role=='patient' || active_user.role=='nurse'">
     <div class='row'>
@@ -1085,10 +1060,3 @@
         </div>
     </div>
 </div>
-
-
-<script type='text/javascript'>
-    $(document).ready(function () {
-        $("#due_date").datepicker({dateFormat: 'yy-mm-dd'});
-    });
-</script>
