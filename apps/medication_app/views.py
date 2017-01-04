@@ -52,8 +52,7 @@ def get_medication(request, patient_id, medication_id):
 @login_required
 @api_view(["POST"])
 def add_medication(request, patient_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         patient_user = User.objects.get(id=patient_id)
         medication = Medication()
@@ -61,6 +60,7 @@ def add_medication(request, patient_id):
         medication.patient = patient_user.profile
         medication.name = request.POST.get("name", None)
         medication.concept_id = request.POST.get("concept_id", None)
+        medication.search_str = request.POST.get("search_str", "")
         medication.save()
 
         resp['medication'] = MedicationSerializer(medication).data
@@ -72,8 +72,7 @@ def add_medication(request, patient_id):
 @login_required
 @api_view(["POST"])
 def add_medication_note(request, patient_id, medication_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         medication = Medication.objects.get(id=medication_id)
 
@@ -95,26 +94,21 @@ def edit_note(request, note_id):
     note.note = request.POST.get('note')
     note.save()
 
-    resp = {}
-    resp['note'] = MedicationTextNoteSerializer(note).data
-    resp['success'] = True
+    resp = {'note': MedicationTextNoteSerializer(note).data, 'success': True}
     return ajax_response(resp)
 
 
 @login_required
 def delete_note(request, note_id):
     MedicationTextNote.objects.get(id=note_id).delete()
-    resp = {}
-    resp['success'] = True
+    resp = {'success': True}
     return ajax_response(resp)
 
 
 @login_required
 def get_pins(request, medication_id):
     pins = MedicationPinToProblem.objects.filter(medication_id=medication_id)
-    resp = {}
-    resp['success'] = True
-    resp['pins'] = MedicationPinToProblemSerializer(pins, many=True).data
+    resp = {'success': True, 'pins': MedicationPinToProblemSerializer(pins, many=True).data}
     return ajax_response(resp)
 
 
@@ -160,4 +154,32 @@ def change_active_medication(request, patient_id, medication_id):
         resp['medication'] = MedicationSerializer(medication).data
         resp['success'] = True
 
+    return ajax_response(resp)
+
+
+@login_required
+def change_dosage(request, patient_id, medication_id):
+    """
+
+    :param medication_id:
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    # TODO: Permission checking
+
+    medication = Medication.objects.get(id=medication_id)
+    medication.name = json_body.get('name')  # 'name' is required request parameter
+    medication.search_str = json_body.get('search_str')  # 'search_str' is required request parameter
+    medication.concept_id = json_body.get('concept_id', None)
+
+    medication.save()
+
+    # TODO: Save change to django-reversion model history
+
+    resp['medication'] = MedicationSerializer(medication).data
+    resp['success'] = True
     return ajax_response(resp)

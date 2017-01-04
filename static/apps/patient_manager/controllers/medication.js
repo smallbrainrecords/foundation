@@ -5,11 +5,14 @@
 
     angular.module('ManagerApp')
         .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, patientService, $filter, medicationService, prompt) {
-
-            var patient_id = $('#patient_id').val();
-            $scope.patient_id = patient_id;
+            // Properties
+            $scope.patient_id = $('#patient_id').val();
+            $scope.showMedicationSearch = false;
+            $scope.show_medication_history = false;
             $scope.medication_id = $routeParams.medication_id;
-            
+
+
+            // Method definition
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
             });
@@ -18,39 +21,39 @@
                 $scope.medication = data['info'];
             });
 
-            $scope.dosage_increase = function() {
+            $scope.dosage_increase = function () {
                 if ($scope.medication.concept_id == null) {
                     prompt({
                         "message": "This is largest dosage form"
-                    }).then(function(result){
+                    }).then(function (result) {
                         return false;
-                    },function(){
+                    }, function () {
                         return false;
                     });
                 }
             };
 
-            $scope.dosage_decrease = function() {
+            $scope.dosage_decrease = function () {
                 if ($scope.medication.concept_id == null) {
                     prompt({
                         "message": "This is smallest dosage form"
-                    }).then(function(result){
+                    }).then(function (result) {
                         return false;
-                    },function(){
+                    }, function () {
                         return false;
                     });
                 }
             };
 
-            $scope.see_medication_history = function() {
+            $scope.see_medication_history = function () {
                 $scope.medication.show_medication_history = !$scope.medication.show_medication_history;
             };
 
-            $scope.add_note = function(form, oldNote) {
+            $scope.add_note = function (form, oldNote) {
                 if (form.note == '') return;
                 form.medication_id = $scope.medication.id;
                 form.patient_id = $scope.patient_id;
-                medicationService.addMedicationNote(form).then(function(data) {
+                medicationService.addMedicationNote(form).then(function (data) {
                     $scope.medication.medication_notes.push(data['note']);
                     if (typeof oldNote !== 'undefined')
                         form.note = oldNote;
@@ -58,28 +61,28 @@
                 });
             };
 
-            $scope.edit_note = function(note) {
+            $scope.edit_note = function (note) {
                 note.show_edit_note = !note.show_edit_note;
             };
 
-            $scope.save_note = function(note) {
-                medicationService.editNote(note).then(function(data) {
+            $scope.save_note = function (note) {
+                medicationService.editNote(note).then(function (data) {
                     note.show_edit_note = false;
                     toaster.pop('success', 'Done', 'Edited note successfully');
                 });
             };
 
-            $scope.delete_note = function(note) {
+            $scope.delete_note = function (note) {
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
-                }).then(function(result){
-                    medicationService.deleteNote(note).then(function(data){
+                }).then(function (result) {
+                    medicationService.deleteNote(note).then(function (data) {
                         var index = $scope.medication.medication_notes.indexOf(note);
                         $scope.medication.medication_notes.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted note successfully');
                     });
-                },function(){
+                }, function () {
                     return false;
                 });
             };
@@ -138,11 +141,30 @@
                 $location.path('/problem/' + problem.id);
             };
 
-            $scope.change_active_medication = function() {
-                medicationService.changeActiveMedication($scope.patient_id, $scope.medication_id).then(function(data) {
+            $scope.change_active_medication = function () {
+                medicationService.changeActiveMedication($scope.patient_id, $scope.medication_id).then(function (data) {
                     toaster.pop('success', 'Done', 'Changed successfully!');
                 });
             };
+
+
+            /**
+             * Change new dosage
+             * @param medication
+             */
+            $scope.changeDosage = function (medication) {
+                medicationService.changeDosage($scope.patient_id, $scope.medication.id, medication)
+                    .then(function (response) {
+                        if (response.data.success) {
+                            toaster.pop('success', 'Done', 'Changed successfully!');
+                            $scope.medication = response.data.medication;
+                            $scope.showMedicationSearch = false;
+                        } else {
+                            toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+
+                        }
+                    });
+            }
 
         });
     /* End of controller */

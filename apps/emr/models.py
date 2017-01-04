@@ -931,6 +931,8 @@ class Medication(models.Model):
     name = models.TextField(null=True, blank=True)
     concept_id = models.CharField(max_length=20, blank=True, null=True)
     current = models.BooleanField(default=True)
+    # Store original medication search string for change dosage function
+    search_str = models.TextField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -35,6 +35,7 @@ class MedicationSerializer(serializers.ModelSerializer):
             'name',
             'concept_id',
             'current',
+            'search_str',
             'created_on',
             )
 

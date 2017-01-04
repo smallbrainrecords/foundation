@@ -4,8 +4,6 @@ medication.directive('medication', ['CollapseService', 'toaster', '$location', '
 
 function medicationDirective(CollapseService, toaster, $location, $timeout, prompt, medicationService) {
 
-    var medicationObj = {};
-
     return {
         restrict: 'E',
         templateUrl: '/static/apps/patient_manager/directives/templates/medication.html',
@@ -45,6 +43,7 @@ function medicationDirective(CollapseService, toaster, $location, $timeout, prom
 
             scope.add_medication = function (form) {
                 if (form.name == '') return;
+                form.search_str = scope.manual_medication.name;
                 form.patient_id = scope.patient_id;
                 medicationService.addMedication(form).then(function (data) {
                     scope.medications.push(data['medication']);
@@ -63,4 +62,4 @@ function medicationDirective(CollapseService, toaster, $location, $timeout, prom
         }
     }
 
-};
+}
