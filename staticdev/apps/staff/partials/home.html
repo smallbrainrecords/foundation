@@ -8,10 +8,12 @@
 
         <table class='table'>
             <thead>
-            <th> Name</th>
-            <th> Active uncontrolled problems</th>
-            <th> Todos</th>
-            <th> Multiply</th>
+            <tr>
+                <th> Name</th>
+                <th> Active uncontrolled problems</th>
+                <th> Todos</th>
+                <th> Multiply</th>
+            </tr>
             </thead>
             <tbody>
             <tr ng-repeat='patient in patients_list' ng-show="$index < 10 || show_all">
@@ -139,7 +141,7 @@
         <form class='form-inline' role='form' ng-submit='add_todo_list(new_list)'>
             <div class='form-group'>
                 <label> Labeled Todos Lists Name </label>
-                <input type='text' ng-model='new_list.name'>
+                <input type='text' class="form-control" title="Label name" ng-model='new_list.name'>
                 <br>
                 <div class="quick-card-editor-label labeled-list">
                     <div ng-repeat="label in labels">
@@ -200,7 +202,7 @@
         <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
             <div class='form-group'>
                 <label> Todo Name </label>
-                <input type='text' ng-model='new_todo.name' id='todoNameInput'>
+                <input type='text' ng-model='new_todo.name' title="Todo name" class="form-control" id='todoNameInput'>
             </div>
 
             <button type='submit' class='btn btn-default'> Add Todo</button>
@@ -368,6 +370,6 @@
 </div>
 
 <!--INR quick entry frame-->
-<inr-bfdi  ng-if="active_user.role=='nurse'" >
+<inr-bfdi ng-if="active_user.role=='nurse'">
 
 </inr-bfdi>
