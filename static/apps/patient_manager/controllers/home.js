@@ -35,6 +35,7 @@
             $scope.new_text.all_patients = true;
             $scope.show_edit_my_story_tab = false;
             $scope.innerProblemTabSetActive = 0;
+            $scope.favorites_collapse = false;
 
             // Hot key configuration
             hotkeys.add({

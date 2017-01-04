@@ -523,23 +523,24 @@
                     </div>
                     <!--End encounter section-->
 
-                    <div class='col-md-12'>
-                        <div class='panel panel-default' ng-init="favorites_collapse=false;">
-
+                    <!--Start encounter favorite-->
+                    <div class='col-md-12' ng-if='favorites.length>0'>
+                        <div class='panel panel-default'>
                             <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
-                                <i class="fa fa-caret-down" aria-hidden="true" ng-if="favorites_collapse"></i>
-                                <i class="fa fa-caret-right" aria-hidden="true" ng-if="!favorites_collapse"></i>
-                                Favorites
+                                <i class="fa fa-caret-down" aria-hidden="true"
+                                   ng-class="favorites_collapse?'fa-caret-down':'fa-caret-right'"></i> Favorites
                             </div>
 
                             <div class='panel-body' style='max-height:325px; overflow:auto'
                                  ng-show="favorites_collapse">
-                                <table class='table' ng-if='favorites.length>0'>
+                                <table class='table'>
                                     <thead>
-                                    <th>Name</th>
+                                    <tr>
+                                        <th>Name</th>
+                                    </tr>
                                     </thead>
                                     <tbody>
-                                    <tr ng-repeat='event in favorites' ng-init="event.is_named=false;">
+                                    <tr ng-repeat='event in favorites track by $index' ng-init="event.is_named=false;">
                                         <td>
                                                 <span ng-if="event.is_favorite">
                                                     <span ng-if="event.is_named">
@@ -566,6 +567,7 @@
                             </div>
                         </div>
                     </div>
+                    <!--End encounter favorite-->
 
                     <div class='col-md-12'>
                         <div class='panel panel-default'>
