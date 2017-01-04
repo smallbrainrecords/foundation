@@ -16,7 +16,6 @@
             };
 
             this.getPatientsList = function () {
-                console.log($cookies);
                 var form = {};
                 var url = '/u/patients/';
                 return httpService.post(form, url);

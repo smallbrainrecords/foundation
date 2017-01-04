@@ -4,25 +4,12 @@
 
 
     angular.module('ManagerApp')
-        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService, ngDialog, sharedService,
-                                          dataService, toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
+        .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService,
+                                          ngDialog, sharedService, dataService, toaster, $location, todoService,
+                                          prompt, $timeout, CollapseService, $filter, $window, hotkeys) {
 
-
-            patientService.fetchActiveUser().then(function (data) {
-                // Logged in user profile in Django authentication system
-                $scope.active_user = data['user_profile'];
-            });
-
-            // Patients are being managed
-            var patient_id = $('#patient_id').val();
-            // Patients are being managed
-            $scope.patient_id = patient_id;
-
-            // Current logged in id
-            var user_id = $('#user_id').val();
-            // Current logged in id
-            $scope.user_id = user_id;
-
+            $scope.patient_id = $('#patient_id').val(); // Patients are being managed
+            $scope.user_id = $('#user_id').val(); // Current logged in id
             $scope.show_accomplished_todos = false;
             $scope.problem_terms = [];
             $scope.new_problem = {set: false};
@@ -30,6 +17,65 @@
             $scope.new_list.labels = [];
             $scope.problem_lists = [];
             $scope.is_home = true;
+            $scope.viewMode = 'Year';
+            $scope.show_homepage_tab = CollapseService.show_homepage_tab;
+            $scope.my_story_tabs = [];
+            $scope.selected_tab = null;
+            $scope.new_data_type = {};
+            $scope.show_add_new_data_type = false;
+            $scope.datas = [];
+            $scope.show_previous_entries = false;
+            $scope.show_add_my_story_tab = false;
+            $scope.new_tab = {};
+            $scope.new_tab.private = true;
+            $scope.new_tab.all_patients = true;
+            $scope.show_add_my_story_text = false;
+            $scope.new_text = {};
+            $scope.new_text.private = true;
+            $scope.new_text.all_patients = true;
+            $scope.show_edit_my_story_tab = false;
+
+            // Hot key configuration
+            hotkeys.add({
+                combo: 'ctrl+p',
+                description: 'Go to Problem tab',
+                callback: function () {
+                    $scope.show_homepage_tab = 'problems';
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+s',
+                description: 'Go to My story tab',
+                callback: function () {
+                    $scope.show_homepage_tab = 'mystory';
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+d',
+                description: 'Go to Data tab',
+                callback: function () {
+                    $scope.show_homepage_tab = 'data';
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+m',
+                description: 'Go to Medication tab',
+                callback: function () {
+                    $scope.show_homepage_tab = 'medication';
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+shift+p',
+                description: 'Add new problem',
+                callback: function () {
+                    $scope.show_homepage_tab = 'problems';
+                    $scope.show_homepage_tab = 'problems';
+                }
+            });
 
             /**
              * Default graph view mode: Year
@@ -37,7 +83,6 @@
              * Week - Month - Year - All
              * @type {string}
              */
-            $scope.viewMode = 'Year';
             $scope.$watch("viewMode", function (newVal, oldVal) {
                 if (newVal != oldVal) {
                     angular.forEach($scope.datas, function (data, key) {
@@ -60,6 +105,41 @@
                 }
             });
 
+            $scope.$watch('files', function () {
+                if ($scope.files != undefined)
+                    sharedService.uploadDocument($scope.files, $scope.user_id, $scope.patient_id, $scope.fileUploadSuccess);
+            });
+
+            $scope.$on('portrait_image_updated', function (event, args) {
+                $scope.patient_info = args.data;
+            });
+
+            //INITIALIZE DATA
+            patientService.fetchActiveUser().then(function (data) {
+                // Logged in user profile in Django authentication system
+                $scope.active_user = data['user_profile'];
+            });
+
+            /*
+             *   medication
+             */
+            patientService.getMedications($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.medications = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
+            // Documentation
+            patientService.getDocuments($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.documents = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
             todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                 $scope.members = data['members'];
             });
@@ -77,173 +157,14 @@
                 $scope.problems_ready = true;
             });
 
-            patientService.fetchPatientTodos(patient_id).then(function (data) {
+            patientService.fetchPatientTodos($scope.patient_id).then(function (data) {
                 $scope.pending_todos = data['pending_todos'];
                 $scope.accomplished_todos = data['accomplished_todos'];
                 $scope.problem_todos = data['problem_todos'];
                 $scope.todos_ready = true;
             });
 
-            function convertDateTime(problem) {
-                if (problem.start_date) {
-                    var dateTime = problem.start_date;
-                    var date = dateTime.split("/");
-                    var yyyy = date[2];
-                    var mm = date[0];
-                    var dd = date[1];
-
-                    if (problem.start_time) {
-                        return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
-                    }
-
-                    return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
-                }
-                return '30/11/1970 00:00:00';
-            }
-
-            function convertDateTimeBirthday(dateTime) {
-                if (dateTime) {
-                    var date = dateTime.split("/");
-                    var yyyy = date[2];
-                    var mm = date[0];
-                    var dd = date[1];
-
-                    return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
-                }
-                return '30/11/1970 00:00:00';
-            }
-
-            function getTimelineWidgetState(problem) {
-                if (problem.is_active) {
-                    if (problem.is_controlled) {
-                        return 'controlled';
-                    }
-                    return 'uncontrolled';
-                }
-                return 'inactive';
-            }
-
-            function parseTimelineWithoutSegment(problem) {
-                var state = getTimelineWidgetState(problem);
-
-                var timeline_problem = {
-                    'name': problem.problem_name,
-                    'id': problem.id,
-                    events: [
-                        {
-                            event_id: new Date().getTime(),
-                            startTime: convertDateTime(problem),
-                            state: state
-                        },
-                    ]
-                };
-
-                return timeline_problem;
-            }
-
-            // function parseTimelineWithSegment(problem) {
-            //     var events = [];
-            //     var event;
-
-            //     angular.forEach(problem.problem_segment, function (value) {
-            //         event = {};
-            //         event['event_id'] = value.event_id;
-            //         event['startTime'] = convertDateTime(value);
-            //         event['state'] = getTimelineWidgetState(value);
-            //         events.push(event);
-            //     });
-
-            //     events.push({
-            //         event_id: new Date().getTime(),
-            //         startTime: convertDateTime(problem),
-            //         state: getTimelineWidgetState(problem)
-            //     });
-
-            //     var timeline_problem = {
-            //         'name': problem.problem_name,
-            //         'id': problem.id,
-            //         events: events
-            //     };
-
-            //     return timeline_problem;
-            // }
-
-            function parseTimelineWithSegment(problem) {
-                var events = [];
-                var event;
-                var temp;
-
-                angular.forEach(problem.problem_segment, function (value, key) {
-                    event = {};
-                    event['event_id'] = value.event_id;
-                    event['state'] = getTimelineWidgetState(value);
-
-                    if (key == 0) {
-                        event['startTime'] = convertDateTime(problem);
-                    } else {
-                        event['startTime'] = convertDateTime(temp);
-                    }
-                    temp = value;
-                    events.push(event);
-                });
-
-                if (temp) {
-                    events.push({
-                        event_id: new Date().getTime(),
-                        startTime: convertDateTime(temp),
-                        state: getTimelineWidgetState(problem)
-                    });
-                }
-
-                var timeline_problem = {
-                    'name': problem.problem_name,
-                    'id': problem.id,
-                    events: events
-                };
-
-                return timeline_problem;
-            }
-
-            $scope.timelineSave = function (newData) {
-                var form = {};
-
-                form.patient_id = $scope.patient_id;
-                form.timeline_data = newData;
-
-                problemService.updateByPTW(form).then(function (data) {
-
-                    toaster.pop('success', 'Done', 'Updated Problems');
-                });
-            };
-
-            $scope.fetchTimeLineProblem = function (data) {
-
-                patientService.fetchTimeLineProblem(patient_id).then(function (data2) {
-                    var timeline_problems = [];
-                    angular.forEach(data2['timeline_problems'], function (value, key) {
-
-                        if (value.problem_segment.length !== undefined && value.problem_segment.length > 0) {
-                            var timeline_problem = parseTimelineWithSegment(value);
-                        } else {
-                            var timeline_problem = parseTimelineWithoutSegment(value);
-                        }
-
-                        if ($scope.checkSharedProblem(timeline_problem, $scope.sharing_patients))
-                            timeline_problems.push(timeline_problem);
-                    });
-
-                    $scope.timeline = {
-                        Name: data['info']['user']['first_name'] + data['info']['user']['last_name'],
-                        birthday: convertDateTimeBirthday(data['info']['date_of_birth']),
-                        problems: timeline_problems
-                    };
-
-                    $scope.timeline_ready = true;
-                    $scope.timeline_changed = [{changing: new Date().getTime()}];
-                });
-            };
-
-            patientService.fetchPatientInfo(patient_id).then(function (data) {
+            patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
                 $scope.patient_info = data['info'];
                 $scope.problems = data['problems'];
                 $scope.inactive_problems = data['inactive_problems'];
@@ -299,10 +220,201 @@
                 }
             });
 
-
-            patientService.fetchPainAvatars(patient_id).then(function (data) {
+            patientService.fetchPainAvatars($scope.patient_id).then(function (data) {
                 $scope.pain_avatars = data['pain_avatars'];
             });
+
+            patientService.getMyStory($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.my_story_tabs = data['info'];
+                    $scope.selected_tab = $scope.my_story_tabs[0];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
+            patientService.getDatas($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.datas = data['info'];
+
+                    // TODO: DRY
+                    angular.forEach($scope.datas, function (data, key) {
+                        // Default graph type
+                        if (data.graph == null || data.graph == undefined)
+                            data.graph = 'Line';
+
+                        // Temporary data using for generate graph
+                        var tmpData = angular.copy(data);
+                        // Sorting before processing
+                        _.map(tmpData.observation_components, function (item, key) {
+                            item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                            // Sorting before generating
+                            item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                        });
+                        data.chartData = dataService.generateChartData(tmpData);
+                        data.chartLabel = dataService.generateChartLabel(tmpData);
+
+                        data.chartSeries = dataService.generateChartSeries(tmpData);
+                        data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
+
+                        // TODO: Manipulate DOM manually and inside JS code. Need to refine this
+                        if (data.name == 'weight') {
+                            // $scope.vitals.weight = data;
+                            var dom = '<a href="#/data/' + data.id + '">W:' + data.mostRecentValue + '</a>';
+                            $("#vitals_weight").html(dom);
+                        }
+                        if (data.name == 'body temperature') {
+                            // $scope.vitals.body_temperature = data;
+                            var dom = '<a href="#/data/' + data.id + '">T:' + data.mostRecentValue + '</a>';
+                            $("#vitals_body_temperature").html(dom);
+                        }
+
+                        if (data.name == 'blood pressure') {
+                            // $scope.vitals.blood_pressure = data;
+                            var dom = '<a href="#/data/' + data.id + '">BP:' + data.mostRecentValue + '</a>';
+                            $("#vitals_blood_pressure").html(dom);
+                        }
+                        if (data.name == 'heart rate') {
+                            // $scope.vitals.heart_rate = data;
+                            var dom = '<a href="#/data/' + data.id + '">P:' + data.mostRecentValue + '</a>';
+                            $("#vitals_heart_rate ").html(dom);
+                        }
+                    });
+
+                    if ($scope.active_user) {
+                        if ($scope.active_user.role == 'patient') {
+                            $scope.mostCommonData = dataService.generateMostCommonData($scope.datas);
+                        }
+
+                        if ($scope.active_user.role == 'nurse') {
+                            $scope.mostCommonData = [];
+                            angular.forEach($scope.datas, function (data, key) {
+                                if (data.name == 'weight') {
+                                    data.ph = 'W'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                if (data.name == 'body temperature') {
+                                    data.ph = 'T'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                if (data.name == 'respiratory rate') {
+                                    data.ph = 'RR'
+                                    $scope.mostCommonData.push(data);
+                                }
+
+                                if (data.name == 'blood pressure') {
+                                    data.ph = 'BP'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                if (data.name == 'heart rate') {
+                                    data.ph = 'pulse'
+                                    $scope.mostCommonData.push(data);
+                                }
+                                angular.forEach(data.observation_components, function (component, component_key) {
+                                    if (component.component_code == '6301-6') {
+                                        data.ph = 'INR'
+                                        $scope.mostCommonData.push(data);
+                                    }
+                                });
+                            });
+                        }
+                    }
+
+                    var tmpListData = $scope.datas;
+                    $scope.sortingLogData = [];
+                    $scope.sortedData = false;
+                    $scope.draggedData = false;
+                    $scope.sortableOptionsData = {
+                        update: function (e, ui) {
+                            $scope.sortedData = true;
+                        },
+                        start: function () {
+                            $scope.draggedData = true;
+                        },
+                        stop: function (e, ui) {
+                            // this callback has the changed model
+                            if ($scope.sortedData) {
+                                $scope.sortingLogData = [];
+                                tmpListData.map(function (i) {
+                                    $scope.sortingLogData.push(i.id);
+                                });
+                                var form = {};
+
+                                form.datas = $scope.sortingLogData;
+                                form.patient_id = $scope.patient_id;
+
+                                patientService.updateDataOrder(form).then(function (data) {
+                                    toaster.pop('success', 'Done', 'Updated Data Order');
+                                });
+                            }
+                            $scope.sortedData = false;
+                            $timeout(function () {
+                                $scope.draggedData = false;
+                            }, 100);
+                        }
+                    };
+
+                    /*
+                     * open data page
+                     */
+                    $scope.open_data = function (data) {
+                        if (!$scope.draggedData) {
+                            var form = {};
+                            form.patient_id = $scope.patient_id;
+                            form.observation_id = data.id;
+                            patientService.trackDataClickEvent(form).then(function (data) {
+
+                            });
+                            $location.path('/data/' + data.id);
+                        }
+                    };
+
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
+            // METHOD DEFINITION
+
+            $scope.timelineSave = function (newData) {
+                var form = {};
+
+                form.patient_id = $scope.patient_id;
+                form.timeline_data = newData;
+
+                problemService.updateByPTW(form).then(function (data) {
+
+                    toaster.pop('success', 'Done', 'Updated Problems');
+                });
+            };
+
+            $scope.fetchTimeLineProblem = function (data) {
+
+                patientService.fetchTimeLineProblem($scope.patient_id).then(function (data2) {
+                    var timeline_problems = [];
+                    angular.forEach(data2['timeline_problems'], function (value, key) {
+
+                        if (value.problem_segment.length !== undefined && value.problem_segment.length > 0) {
+                            var timeline_problem = parseTimelineWithSegment(value);
+                        } else {
+                            var timeline_problem = parseTimelineWithoutSegment(value);
+                        }
+
+                        if ($scope.checkSharedProblem(timeline_problem, $scope.sharing_patients))
+                            timeline_problems.push(timeline_problem);
+                    });
+
+                    $scope.timeline = {
+                        Name: data['info']['user']['first_name'] + data['info']['user']['last_name'],
+                        birthday: convertDateTimeBirthday(data['info']['date_of_birth']),
+                        problems: timeline_problems
+                    };
+
+                    $scope.timeline_ready = true;
+                    $scope.timeline_changed = [{changing: new Date().getTime()}];
+                });
+            };
 
             $scope.update_patient_summary = function () {
 
@@ -317,11 +429,11 @@
 
             };
 
-
             $scope.toggle_accomplished_todos = function () {
 
                 var flag = $scope.show_accomplished_todos;
 
+                // TODO: Refactor/Simplify block code later
                 if (flag == true) {
                     flag = false;
                 } else {
@@ -330,7 +442,6 @@
 
                 $scope.show_accomplished_todos = flag;
             };
-
 
             $scope.add_goal = function (form) {
 
@@ -348,7 +459,6 @@
                 });
 
             };
-
 
             $scope.add_todo = function (form) {
 
@@ -403,7 +513,6 @@
                 });
             };
 
-
             $scope.$watch('problem_term', function (newVal, oldVal) {
 
                 if (newVal == undefined) {
@@ -420,7 +529,6 @@
                 }
             });
 
-
             $scope.set_new_problem = function (problem) {
 
                 $scope.new_problem.set = true;
@@ -431,11 +539,8 @@
 
             };
 
-
             $scope.unset_new_problem = function () {
-
                 $scope.new_problem.set = false;
-
             };
 
 
@@ -735,59 +840,6 @@
                 });
             };
 
-            function copyToClipboard(text) {
-                var $temp = $("<textarea/>");
-                $("body").append($temp);
-                $temp.val(text).select();
-                document.execCommand("copy");
-                $temp.remove();
-            }
-
-            $(window).keydown(function (event) {
-                if (event.ctrlKey && event.keyCode == 67 && $location.path() == '/') {
-                    var text = '';
-
-                    // encounter copy
-                    if ($scope.most_recent_encounter_summaries.length > 0) {
-                        text += "All the encounter summaries from the most recent encounter: \r\n";
-                        angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
-                            var container = $("<div/>");
-                            container.append(value);
-
-                            text += container.text() + '\r\n';
-                        });
-                        text += '\r\n';
-                    }
-
-                    if ($scope.most_recent_encounter_related_problems.length > 0) {
-                        text += "List of related problems : \r\n";
-                        angular.forEach($scope.most_recent_encounter_related_problems, function (value, key) {
-                            text += value.problem_name + '\r\n';
-                        });
-                        text += '\r\n';
-                    }
-
-                    if ($scope.pending_todos.length > 0) {
-                        text += "List of all active todos : \r\n";
-                        angular.forEach($scope.pending_todos, function (value, key) {
-                            text += value.todo + '\r\n';
-                        });
-                    }
-
-                    copyToClipboard(text);
-                    event.preventDefault();
-                }
-
-                if (event.ctrlKey && event.keyCode == 68 && $location.path() == '/') {
-                    event.preventDefault();
-                    $scope.change_homepage_tab('data');
-                }
-
-                if (event.ctrlKey && event.keyCode == 83 && $location.path() == '/') {
-                    event.preventDefault();
-                    $scope.change_homepage_tab('mystory');
-                }
-            });
 
             /**
              * Callback when user choose new cover image from computer
@@ -832,9 +884,6 @@
                 alert("Function under-construction we will update asap");
             };
 
-            $scope.$on('portrait_image_updated', function (event, args) {
-                $scope.patient_info = args.data;
-            });
 
             /**
              * Update profile picture handler
@@ -851,7 +900,7 @@
             /*
              *   handle cache homepage tabs
              */
-            $scope.show_homepage_tab = CollapseService.show_homepage_tab;
+
             $scope.change_homepage_tab = function (tab) {
                 CollapseService.ChangeHomepageTab(tab);
                 $scope.show_homepage_tab = CollapseService.show_homepage_tab;
@@ -870,28 +919,17 @@
             /*
              *   get my story data
              */
-            $scope.my_story_tabs = [];
-            $scope.selected_tab = null;
-            patientService.getMyStory($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
-                    $scope.my_story_tabs = data['info'];
-                    $scope.selected_tab = $scope.my_story_tabs[0];
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
+
 
             /*
              *   toggle add my story tab
              */
-            $scope.show_add_my_story_tab = false;
+
             $scope.toggle_add_my_story_tab = function () {
                 $scope.show_add_my_story_tab = !$scope.show_add_my_story_tab;
             };
 
-            $scope.new_tab = {};
-            $scope.new_tab.private = true;
-            $scope.new_tab.all_patients = true;
+
             $scope.add_my_story_tab = function (new_tab) {
                 if (new_tab.name) {
                     var form = {};
@@ -934,14 +972,12 @@
             /*
              *   toggle add my story text
              */
-            $scope.show_add_my_story_text = false;
+
             $scope.toggle_add_my_story_text = function () {
                 $scope.show_add_my_story_text = !$scope.show_add_my_story_text;
             };
 
-            $scope.new_text = {};
-            $scope.new_text.private = true;
-            $scope.new_text.all_patients = true;
+
             $scope.add_my_story_text = function (tab, new_text) {
                 var form = {};
                 form.name = new_text.name;
@@ -971,7 +1007,7 @@
             /*
              *   toggle edit my story tab
              */
-            $scope.show_edit_my_story_tab = false;
+
             $scope.edit_my_story_tab = function () {
                 $scope.show_edit_my_story_tab = !$scope.show_edit_my_story_tab;
             };
@@ -1077,7 +1113,7 @@
                 });
             };
 
-            $scope.show_previous_entries = false;
+
             $scope.see_previous_entries = function () {
                 $scope.show_previous_entries = !$scope.show_previous_entries;
             };
@@ -1098,158 +1134,8 @@
                 }
                 return false;
             };
-            /*
-             *   get data
-             */
 
-            $scope.datas = [];
-            patientService.getDatas($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
-                    $scope.datas = data['info'];
 
-                    // TODO: DRY
-                    angular.forEach($scope.datas, function (data, key) {
-                        // Default graph type
-                        if (data.graph == null || data.graph == undefined)
-                            data.graph = 'Line';
-
-                        // Temporary data using for generate graph
-                        var tmpData = angular.copy(data);
-                        // Sorting before processing
-                        _.map(tmpData.observation_components, function (item, key) {
-                            item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
-
-                            // Sorting before generating
-                            item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
-                        });
-                        data.chartData = dataService.generateChartData(tmpData);
-                        data.chartLabel = dataService.generateChartLabel(tmpData);
-
-                        data.chartSeries = dataService.generateChartSeries(tmpData);
-                        data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
-
-                        // TODO: Manipulate DOM manually and inside JS code. Need to refine this
-                        if (data.name == 'weight') {
-                            // $scope.vitals.weight = data;
-                            var dom = '<a href="#/data/' + data.id + '">W:' + data.mostRecentValue + '</a>';
-                            $("#vitals_weight").html(dom);
-                        }
-                        if (data.name == 'body temperature') {
-                            // $scope.vitals.body_temperature = data;
-                            var dom = '<a href="#/data/' + data.id + '">T:' + data.mostRecentValue + '</a>';
-                            $("#vitals_body_temperature").html(dom);
-                        }
-
-                        if (data.name == 'blood pressure') {
-                            // $scope.vitals.blood_pressure = data;
-                            var dom = '<a href="#/data/' + data.id + '">BP:' + data.mostRecentValue + '</a>';
-                            $("#vitals_blood_pressure").html(dom);
-                        }
-                        if (data.name == 'heart rate') {
-                            // $scope.vitals.heart_rate = data;
-                            var dom = '<a href="#/data/' + data.id + '">P:' + data.mostRecentValue + '</a>';
-                            $("#vitals_heart_rate ").html(dom);
-                        }
-                    });
-
-                    if ($scope.active_user) {
-                        if ($scope.active_user.role == 'patient') {
-                            $scope.mostCommonData = dataService.generateMostCommonData($scope.datas);
-                        }
-
-                        if ($scope.active_user.role == 'nurse') {
-                            $scope.mostCommonData = [];
-                            angular.forEach($scope.datas, function (data, key) {
-                                if (data.name == 'weight') {
-                                    data.ph = 'W'
-                                    $scope.mostCommonData.push(data);
-                                }
-                                if (data.name == 'body temperature') {
-                                    data.ph = 'T'
-                                    $scope.mostCommonData.push(data);
-                                }
-                                if (data.name == 'respiratory rate') {
-                                    data.ph = 'RR'
-                                    $scope.mostCommonData.push(data);
-                                }
-
-                                if (data.name == 'blood pressure') {
-                                    data.ph = 'BP'
-                                    $scope.mostCommonData.push(data);
-                                }
-                                if (data.name == 'heart rate') {
-                                    data.ph = 'pulse'
-                                    $scope.mostCommonData.push(data);
-                                }
-                                angular.forEach(data.observation_components, function (component, component_key) {
-                                    if (component.component_code == '6301-6') {
-                                        data.ph = 'INR'
-                                        $scope.mostCommonData.push(data);
-                                    }
-                                });
-                            });
-                        }
-                    }
-
-                    var tmpListData = $scope.datas;
-                    $scope.sortingLogData = [];
-                    $scope.sortedData = false;
-                    $scope.draggedData = false;
-                    $scope.sortableOptionsData = {
-                        update: function (e, ui) {
-                            $scope.sortedData = true;
-                        },
-                        start: function () {
-                            $scope.draggedData = true;
-                        },
-                        stop: function (e, ui) {
-                            // this callback has the changed model
-                            if ($scope.sortedData) {
-                                $scope.sortingLogData = [];
-                                tmpListData.map(function (i) {
-                                    $scope.sortingLogData.push(i.id);
-                                });
-                                var form = {};
-
-                                form.datas = $scope.sortingLogData;
-                                form.patient_id = $scope.patient_id;
-
-                                patientService.updateDataOrder(form).then(function (data) {
-                                    toaster.pop('success', 'Done', 'Updated Data Order');
-                                });
-                            }
-                            $scope.sortedData = false;
-                            $timeout(function () {
-                                $scope.draggedData = false;
-                            }, 100);
-                        }
-                    };
-
-                    /*
-                     * open data page
-                     */
-                    $scope.open_data = function (data) {
-                        if (!$scope.draggedData) {
-                            var form = {};
-                            form.patient_id = $scope.patient_id;
-                            form.observation_id = data.id;
-                            patientService.trackDataClickEvent(form).then(function (data) {
-
-                            });
-                            $location.path('/data/' + data.id);
-                        }
-                    };
-
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
-
-            /*
-             *   toggle add new data type
-             */
-            $scope.new_data_type = {};
-            $scope.show_add_new_data_type = false;
             $scope.toggle_add_new_data_type = function () {
                 $scope.show_add_new_data_type = !$scope.show_add_new_data_type;
             };
@@ -1328,37 +1214,157 @@
                 });
             };
 
-            /*
-             *   medication
-             */
-            patientService.getMedications($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
-                    $scope.medications = data['info'];
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
-
-            // Documentation
-            patientService.getDocuments($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
-                    $scope.documents = data['info'];
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
-
-            $scope.$watch('files', function () {
-                if ($scope.files != undefined)
-                    sharedService.uploadDocument($scope.files, $scope.user_id, $scope.patient_id, $scope.fileUploadSuccess);
-            });
-
-            /**
-             *
-             */
             $scope.fileUploadSuccess = function (resp) {
                 $window.open('/#/manage/tag_document/' + resp.data.document, '_blank');
+            };
+
+            //Anonymous function (will be hoisting)
+            function convertDateTime(problem) {
+                if (problem.start_date) {
+                    var dateTime = problem.start_date;
+                    var date = dateTime.split("/");
+                    var yyyy = date[2];
+                    var mm = date[0];
+                    var dd = date[1];
+
+                    if (problem.start_time) {
+                        return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
+                    }
+
+                    return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
+                }
+                return '30/11/1970 00:00:00';
             }
+
+            function convertDateTimeBirthday(dateTime) {
+                if (dateTime) {
+                    var date = dateTime.split("/");
+                    var yyyy = date[2];
+                    var mm = date[0];
+                    var dd = date[1];
+
+                    return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
+                }
+                return '30/11/1970 00:00:00';
+            }
+
+            function getTimelineWidgetState(problem) {
+                if (problem.is_active) {
+                    if (problem.is_controlled) {
+                        return 'controlled';
+                    }
+                    return 'uncontrolled';
+                }
+                return 'inactive';
+            }
+
+            function parseTimelineWithoutSegment(problem) {
+                var state = getTimelineWidgetState(problem);
+
+                var timeline_problem = {
+                    'name': problem.problem_name,
+                    'id': problem.id,
+                    events: [
+                        {
+                            event_id: new Date().getTime(),
+                            startTime: convertDateTime(problem),
+                            state: state
+                        },
+                    ]
+                };
+
+                return timeline_problem;
+            }
+
+            function parseTimelineWithSegment(problem) {
+                var events = [];
+                var event;
+                var temp;
+
+                angular.forEach(problem.problem_segment, function (value, key) {
+                    event = {};
+                    event['event_id'] = value.event_id;
+                    event['state'] = getTimelineWidgetState(value);
+
+                    if (key == 0) {
+                        event['startTime'] = convertDateTime(problem);
+                    } else {
+                        event['startTime'] = convertDateTime(temp);
+                    }
+                    temp = value;
+                    events.push(event);
+                });
+
+                if (temp) {
+                    events.push({
+                        event_id: new Date().getTime(),
+                        startTime: convertDateTime(temp),
+                        state: getTimelineWidgetState(problem)
+                    });
+                }
+
+                var timeline_problem = {
+                    'name': problem.problem_name,
+                    'id': problem.id,
+                    events: events
+                };
+
+                return timeline_problem;
+            }
+
+            function copyToClipboard(text) {
+                var $temp = $("<textarea/>");
+                $("body").append($temp);
+                $temp.val(text).select();
+                document.execCommand("copy");
+                $temp.remove();
+            }
+
+            $(window).keydown(function (event) {
+                if (event.ctrlKey && event.keyCode == 67 && $location.path() == '/') {
+                    var text = '';
+
+                    // encounter copy
+                    if ($scope.most_recent_encounter_summaries.length > 0) {
+                        text += "All the encounter summaries from the most recent encounter: \r\n";
+                        angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
+                            var container = $("<div/>");
+                            container.append(value);
+
+                            text += container.text() + '\r\n';
+                        });
+                        text += '\r\n';
+                    }
+
+                    if ($scope.most_recent_encounter_related_problems.length > 0) {
+                        text += "List of related problems : \r\n";
+                        angular.forEach($scope.most_recent_encounter_related_problems, function (value, key) {
+                            text += value.problem_name + '\r\n';
+                        });
+                        text += '\r\n';
+                    }
+
+                    if ($scope.pending_todos.length > 0) {
+                        text += "List of all active todos : \r\n";
+                        angular.forEach($scope.pending_todos, function (value, key) {
+                            text += value.todo + '\r\n';
+                        });
+                    }
+
+                    copyToClipboard(text);
+                    event.preventDefault();
+                }
+
+                if (event.ctrlKey && event.keyCode == 68 && $location.path() == '/') {
+                    event.preventDefault();
+                    $scope.change_homepage_tab('data');
+                }
+
+                if (event.ctrlKey && event.keyCode == 83 && $location.path() == '/') {
+                    event.preventDefault();
+                    $scope.change_homepage_tab('mystory');
+                }
+            });
         });
     /* End of controller */
 

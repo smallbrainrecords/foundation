@@ -130,20 +130,19 @@
     <div class='col-md-12 text-center home-page-tabs'>
         <ul class="nav nav-pills" role="tablist">
             <li role="presentation" ng-class="show_homepage_tab=='problems' ? 'active': ''">
-                <a href=".tab-problems" role="tab" data-toggle="tab" ng-click="change_homepage_tab('problems');">Problems</a>
+                <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('problems');">Problems</a>
             </li>
             <li role="presentation" ng-class="show_homepage_tab=='mystory' ? 'active': ''"
                 ng-if="checkSharedMyStory()">
-                <a href=".tab-mystory" role="tab" data-toggle="tab" ng-click="change_homepage_tab('mystory');">My
+                <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('mystory');">My
                     story</a>
             </li>
             <li role="presentation" ng-class="show_homepage_tab=='data' ? 'active': ''">
-                <a href=".tab-data" role="tab" data-toggle="tab" ng-click="change_homepage_tab('data');">Data</a>
+                <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('data');">Data</a>
             </li>
             <li role="presentation"
-                ng-if="medications"
                 ng-class="show_homepage_tab=='medication' ? 'active': ''">
-                <a href=".tab-medication" role="tab" data-toggle="tab" ng-click="change_homepage_tab('medication');">Medication</a>
+                <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('medication');">Medication</a>
             </li>
         </ul>
     </div>

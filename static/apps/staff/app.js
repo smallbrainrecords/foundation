@@ -4,16 +4,18 @@
 
 
     var StaffApp = angular.module('StaffApp',
-        ['ngRoute', 'ngCookies', 'ngDialog', 'sharedModule', 'httpModule', 'myTools','inr',
-            'toaster', 'ngAnimate', 'ngSanitize', 'ngFileUpload', 'dndLists', 'ui.sortable',
-            'ui.bootstrap', 'todos', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file']);
+        ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', // Core module along with angularJS
+
+            'sharedModule', 'httpModule', 'myTools', 'inr', 'todos', // Development module
+
+            'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', // 3rd party module
+            'ui.bootstrap', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file']);
 
 
-    StaffApp.config(function ($routeProvider) {
+    StaffApp.config(function ($routeProvider, hotkeysProvider) {
 
         $routeProvider
             .when('/', {
-
                 templateUrl: '/static/apps/staff/partials/home.html',
                 controller: 'HomeCtrl'
             })
