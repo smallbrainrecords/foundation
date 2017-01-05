@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('HomeCtrl', function ($scope, $routeParams, patientService, problemService, encounterService,
                                           ngDialog, sharedService, dataService, toaster, $location, todoService,
-                                          prompt, $timeout, CollapseService, $filter, $window, hotkeys) {
+                                          prompt, $timeout, CollapseService, $filter, $window) {
 
             $scope.patient_id = $('#patient_id').val(); // Patients are being managed
             $scope.user_id = $('#user_id').val(); // Current logged in id
@@ -36,57 +36,6 @@
             $scope.show_edit_my_story_tab = false;
             $scope.innerProblemTabSetActive = 0;
             $scope.favorites_collapse = false;
-
-            // Hot key configuration
-            hotkeys.add({
-                combo: 'ctrl+i',
-                description: 'Go to Problem tab',
-                callback: function () {
-                    $scope.show_homepage_tab = 'problems';
-                }
-            });
-
-            hotkeys.add({
-                combo: 'ctrl+s',
-                description: 'Go to My story tab',
-                callback: function () {
-                    $scope.show_homepage_tab = 'mystory';
-                }
-            });
-
-            hotkeys.add({
-                combo: 'ctrl+d',
-                description: 'Go to Data tab',
-                callback: function () {
-                    $scope.show_homepage_tab = 'data';
-                }
-            });
-
-            hotkeys.add({
-                combo: 'ctrl+m',
-                description: 'Go to Medication tab',
-                callback: function () {
-                    $scope.show_homepage_tab = 'medication';
-                }
-            });
-
-            hotkeys.add({
-                combo: 'ctrl+shift+i',
-                description: 'Add new problem',
-                callback: function () {
-                    $scope.show_homepage_tab = 'problems';
-                    $scope.innerProblemTabSetActive = 2;
-                }
-            });
-
-            hotkeys.add({
-                combo: 'ctrl+shift+m',
-                description: 'Add new medication',
-                callback: function () {
-                    $scope.show_homepage_tab = 'medication';
-                    $('medication input[type=text]').focus()
-                }
-            });
 
             /**
              * Default graph view mode: Year
@@ -126,6 +75,9 @@
             });
 
             //INITIALIZE DATA
+
+            sharedService.initHotkey($scope);
+
             patientService.fetchActiveUser().then(function (data) {
                 // Logged in user profile in Django authentication system
                 $scope.active_user = data['user_profile'];

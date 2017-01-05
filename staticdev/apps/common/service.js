@@ -1,13 +1,13 @@
 (function () {
 
     'use strict';
-    angular.module('sharedModule', ['ngFileUpload', 'httpModule'])
+
+    angular.module('sharedModule', ['ngFileUpload', 'httpModule', 'cfp.hotkeys'])
         .service('sharedService', sharedService);
 
-    sharedService.$inject = ['$http', '$cookies', 'Upload', 'httpService'];
+    sharedService.$inject = ['$http', '$cookies', 'Upload', 'hotkeys', '$location'];
 
-
-    function sharedService($http, $cookies, Upload, httpService) {
+    function sharedService($http, $cookies, Upload, hotkeys, $location) {
         /**
          * Upload multiple documentation
          * @param files
@@ -160,5 +160,73 @@
         this.getUploadedDocument = function () {
             return $http.get('/docs/list');
         };
+
+        /**
+         * Common hotkey binding. Prevent hotkey on page reload
+         * @param $scope
+         */
+        this.initHotkey = function ($scope) {
+            hotkeys.add({
+                combo: 'ctrl+i',
+                description: 'Go to Problem tab',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path('/'); // go back to homepage
+                    $scope.show_homepage_tab = 'problems';
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+s',
+                description: 'Go to My story tab',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path('/'); // go back to homepage
+                    $scope.show_homepage_tab = 'mystory';
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+d',
+                description: 'Go to Data tab',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path('/'); // go back to homepage
+                    $scope.show_homepage_tab = 'data';
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+m',
+                description: 'Go to Medication tab',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path('/'); // go back to homepage
+                    $scope.show_homepage_tab = 'medication';
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+shift+i',
+                description: 'Add new problem',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path('/'); // go back to homepage
+                    $scope.show_homepage_tab = 'problems';
+                    $scope.innerProblemTabSetActive = 2;
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+shift+m',
+                description: 'Add new medication',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path('/'); // go back to homepage
+                    $scope.show_homepage_tab = 'medication';
+                    $('medication input[type=text]').focus()
+                }
+            });
+        }
     }
 })();

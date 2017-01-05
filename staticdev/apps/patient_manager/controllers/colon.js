@@ -1,37 +1,39 @@
-(function(){
+(function () {
 
-	'use strict';
+    'use strict';
+
+    // TODO: Separate these controllers to separated files
+
+    angular.module('ManagerApp')
+        .controller('AddNewStudyCtrl', function ($scope, $routeParams, ngDialog, toaster, $location,
+                                                 sharedService, colonService) {
 
 
-	angular.module('ManagerApp')
-		.controller('AddNewStudyCtrl', function($scope, $routeParams, ngDialog, toaster, $location, colonService){
-
-
-			var patient_id = $('#patient_id').val();
-			$scope.patient_id = patient_id;
+            var patient_id = $('#patient_id').val();
+            $scope.patient_id = patient_id;
             $scope.colon_id = $routeParams.colon_id;
-			$scope.study = {};
+            $scope.study = {};
 
             $scope.findings = [
                 'fecal occult blood test',
                 'colonoscopy',
                 'fecal immunochemical test',
-                'other',
+                'other'
             ];
 
             $scope.results = [];
-
-			colonService.fetchColonCancerInfo($scope.colon_id).then(function(data){
+            sharedService.initHotkey($scope);
+            colonService.fetchColonCancerInfo($scope.colon_id).then(function (data) {
                 $scope.colon_cancer = data['info'];
             });
 
-            $scope.update_results = function(finding) {
+            $scope.update_results = function (finding) {
                 if (finding == 'fecal occult blood test') {
                     $scope.results = [
                         'all negative',
                         'one positive',
                         'two positive',
-                        'all positive',
+                        'all positive'
                     ];
                 } else if (finding == 'colonoscopy') {
                     $scope.results = [
@@ -52,26 +54,26 @@
                         'negative',
                     ];
                 }
-            }
+            };
 
-            $scope.addStudy = function(study, image) {
+            $scope.addStudy = function (study, image) {
                 if (study.finding == '' || study.result == '' || study.date == '' || study.finding == undefined || study.result == undefined || study.date == undefined) {
                     toaster.pop('error', 'Error', 'Please select!');
                 } else {
-                    colonService.addNewStudy($scope.colon_id, study).then(function(data){
+                    colonService.addNewStudy($scope.colon_id, study).then(function (data) {
                         var form = {};
                         form.study_id = data.study.id;
 
                         if (study.finding == 'colonoscopy' && study.result == 'adenomatous polyps') {
                             var factor = {value: 'personal history of adenomatous polyp', checked: true};
-                            colonService.addFactor($scope.colon_id, factor).then(function(data){
+                            colonService.addFactor($scope.colon_id, factor).then(function (data) {
                                 if (image) {
-                                    colonService.addImage(form, image).then(function(data){
-                                        if(data['success']==true){
+                                    colonService.addImage(form, image).then(function (data) {
+                                        if (data['success'] == true) {
                                             toaster.pop('success', 'Done', 'Added study!');
-                                        }else if(data['success']==false){
+                                        } else if (data['success'] == false) {
                                             toaster.pop('error', 'Error', 'Please fill valid data');
-                                        }else{
+                                        } else {
                                             toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                                         }
                                         $location.url('/problem/' + $scope.colon_cancer.problem.id);
@@ -82,12 +84,12 @@
                             });
                         } else {
                             if (image) {
-                                colonService.addImage(form, image).then(function(data){
-                                    if(data['success']==true){
+                                colonService.addImage(form, image).then(function (data) {
+                                    if (data['success'] == true) {
                                         toaster.pop('success', 'Done', 'Added study!');
-                                    }else if(data['success']==false){
+                                    } else if (data['success'] == false) {
                                         toaster.pop('error', 'Error', 'Please fill valid data');
-                                    }else{
+                                    } else {
                                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                                     }
                                     $location.url('/problem/' + $scope.colon_cancer.problem.id);
@@ -104,8 +106,9 @@
                 }
             }
 
-		}) /* End of controller */
-        .controller('EditStudyCtrl', function($scope, $routeParams, ngDialog, toaster, $location, colonService, patientService, $cookies){
+        }) /* End of controller */
+        .controller('EditStudyCtrl', function ($scope, $routeParams, ngDialog, toaster, $location, colonService,
+                                               sharedService, patientService, $cookies) {
 
 
             var patient_id = $('#patient_id').val();
@@ -113,6 +116,7 @@
             $scope.colon_id = $routeParams.colon_id;
             $scope.study_id = $routeParams.study_id;
             $scope.study = {};
+            sharedService.initHotkey($scope);
 
             $scope.findings = [
                 'fecal occult blood test',
@@ -123,21 +127,21 @@
 
             $scope.results = [];
 
-            patientService.fetchActiveUser().then(function(data){
+            patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
             });
 
-            colonService.fetchColonCancerInfo($scope.colon_id).then(function(data){
+            colonService.fetchColonCancerInfo($scope.colon_id).then(function (data) {
                 $scope.colon_cancer = data['info'];
             });
 
-            colonService.fetchColonCancerStudyInfo($scope.study_id).then(function(data){
+            colonService.fetchColonCancerStudyInfo($scope.study_id).then(function (data) {
                 $scope.study = data['info'];
                 $scope.study.study_date = moment($scope.study.study_date, "YYYY-MM-DD").format("MM/DD/YYYY");
                 $scope.update_results($scope.study.finding);
             });
 
-            $scope.update_results = function(finding) {
+            $scope.update_results = function (finding) {
                 if (finding == 'fecal occult blood test') {
                     $scope.results = [
                         'all negative',
@@ -164,16 +168,16 @@
                         'negative',
                     ];
                 }
-            }
+            };
 
-            $scope.saveStudy = function(study) {
+            $scope.saveStudy = function (study) {
                 if (study.finding == '' || study.result == '' || study.study_date == '') {
                     toaster.pop('error', 'Error', 'Please select!');
                 } else {
-                    colonService.saveStudy(study).then(function(data){
+                    colonService.saveStudy(study).then(function (data) {
                         if (study.finding == 'colonoscopy' && study.result == 'adenomatous polyps') {
                             var factor = {value: 'personal history of adenomatous polyp', checked: true};
-                            colonService.addFactor($scope.colon_id, factor).then(function(data){
+                            colonService.addFactor($scope.colon_id, factor).then(function (data) {
                                 toaster.pop('success', 'Done', 'Saved study!');
                             });
                         } else {
@@ -183,51 +187,51 @@
                 }
             };
 
-            $scope.image_upload_url = function(){
+            $scope.image_upload_url = function () {
 
-                var url = '/colon_cancer/study/'+$scope.study_id+'/upload_image';
+                var url = '/colon_cancer/study/' + $scope.study_id + '/upload_image';
                 return url;
-            }
+            };
 
-            $scope.get_csrftoken = function(){
+            $scope.get_csrftoken = function () {
                 return $cookies.get('csrftoken');
-            }
+            };
 
-            $scope.open_image_upload_box = function(){
+            $scope.open_image_upload_box = function () {
                 ngDialog.open({
-                    template:'/static/apps/patient_manager/partials/modals/upload_image.html',
-                    className:'ngdialog-theme-default large-modal',
-                    scope:$scope,
-                    cache:false,
+                    template: '/static/apps/patient_manager/partials/modals/upload_image.html',
+                    className: 'ngdialog-theme-default large-modal',
+                    scope: $scope,
+                    cache: false,
                     controller: ['$scope',
-                    function($scope){
-                    }]
+                        function ($scope) {
+                        }]
                 });
             };
 
 
-            $scope.open_image_box = function(image){
+            $scope.open_image_box = function (image) {
 
-                    ngDialog.open({
-                        template:'/static/apps/patient_manager/partials/modals/image.html',
-                        className:'ngdialog-theme-default large-modal',
-                        scope:$scope,
-                        cache:false,
-                        controller: ['$scope',
-                        function($scope){
+                ngDialog.open({
+                    template: '/static/apps/patient_manager/partials/modals/image.html',
+                    className: 'ngdialog-theme-default large-modal',
+                    scope: $scope,
+                    cache: false,
+                    controller: ['$scope',
+                        function ($scope) {
 
                             $scope.image = image;
 
                         }]
-                    });
+                });
 
             };
 
-            $scope.delete_study_image = function(image){
+            $scope.delete_study_image = function (image) {
 
                 var c = confirm("Are you sure ?");
 
-                if(c==false){
+                if (c == false) {
                     return false;
                 }
 
@@ -235,7 +239,7 @@
                 form.study_id = $scope.study_id;
                 form.image_id = image.id;
 
-                colonService.deleteStudyImage(form).then(function(data){
+                colonService.deleteStudyImage(form).then(function (data) {
 
                     var image_index = $scope.study.study_images.indexOf(image);
 
@@ -244,7 +248,7 @@
                 });
             };
 
-            $scope.checkPermitted = function(study, active_user) {
+            $scope.checkPermitted = function (study, active_user) {
                 if (active_user) {
                     if (active_user.role == 'physician' || active_user.role == 'admin' || active_user.id == study.author.id) {
                         return true;
@@ -256,42 +260,45 @@
             };
 
         }) /* End of controller */
-        .controller('AddNewOrderCtrl', function($scope, $routeParams, colonService, ngDialog, problemService, toaster, $location, patientService){
+        .controller('AddNewOrderCtrl', function ($scope, $routeParams, colonService, ngDialog, problemService,
+                                                 sharedService, toaster, $location, patientService) {
 
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.colon_id = $routeParams.colon_id;
+            sharedService.initHotkey($scope);
 
-            patientService.fetchActiveUser().then(function(data){
+            patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
             });
 
-            colonService.fetchColonCancerInfo($scope.colon_id).then(function(data){
+            colonService.fetchColonCancerInfo($scope.colon_id).then(function (data) {
                 $scope.colon_cancer = data['info'];
             });
 
-            $scope.add_todo = function(form) {
-                if(form==undefined){
+            $scope.add_todo = function (form) {
+                if (form == undefined) {
                     return false;
                 }
 
-                if(form.name.trim().length<1){
+                if (form.name.trim().length < 1) {
                     return false;
                 }
 
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.colon_cancer.problem.id;
                 form.colon_cancer_id = $scope.colon_cancer.id;
-                
-                problemService.addTodo(form).then(function(data){
+
+                problemService.addTodo(form).then(function (data) {
                     form.name = '';
                     toaster.pop('success', 'Done', 'Added Todo!');
                     $location.url('/problem/' + $scope.colon_cancer.problem.id);
                 });
 
             }
-        }); /* End of controller */
+        });
+    /* End of controller */
 
 
 })();

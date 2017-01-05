@@ -4,7 +4,8 @@
 
 
     angular.module('ManagerApp')
-        .controller('TodoCtrl', function ($scope, $routeParams, $interval, patientService, ngDialog, todoService, toaster, sharedService) {
+        .controller('TodoCtrl', function ($scope, $routeParams, $interval, patientService, ngDialog,
+                                          todoService, toaster, sharedService) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
@@ -15,6 +16,9 @@
 
             $scope.todo_id = todo_id;
             $scope.current_activity = 0;
+
+            // Init data
+            sharedService.initHotkey($scope);
 
             todoService.fetchTodoInfo(todo_id).then(function (data) {
                 $scope.todo = data['info'];

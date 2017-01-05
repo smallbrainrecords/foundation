@@ -2,9 +2,11 @@
 
     'use strict';
 
+    // TODO: Separate these controllers to separated files
 
     angular.module('ManagerApp')
-        .controller('DataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService, $filter) {
+        .controller('DataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location,
+                                          sharedService, dataService, patientService, $filter) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
@@ -16,6 +18,7 @@
              * @type {string}
              */
             $scope.viewMode = 'Year';
+            sharedService.initHotkey($scope);
             $scope.$watch("viewMode", function (newVal, oldVal) {
                 if (newVal != oldVal) {
                     // Temporary data using for generate graph
@@ -104,7 +107,7 @@
                         toaster.pop('success', 'Done', 'Pinned problem!');
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
-                    } else if(data['success']=="notallow"){
+                    } else if (data['success'] == "notallow") {
                         toaster.pop('error', 'Error', 'You can\'t  unpin this data!');
                         $scope.problems[index].pin = true;
                     } else {
@@ -119,14 +122,15 @@
 
 
         }) /* End of controller */
-        .controller('AddDataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService) {
+        .controller('AddDataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, sharedService,
+                                             $location, dataService, patientService) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.data_id = $routeParams.data_id;
             $scope.new_data = {};
             $scope.new_data.date = moment().format("MM/DD/YYYY");
-
+            sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
 
@@ -164,11 +168,13 @@
 
 
         }) /* End of controller */
-        .controller('ShowAllDataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService) {
+        .controller('ShowAllDataCtrl', function ($scope, $routeParams, ngDialog, problemService, sharedService,
+                                                 toaster, $location, dataService, patientService) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.data_id = $routeParams.data_id;
+            sharedService.initHotkey($scope);
 
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
@@ -180,12 +186,13 @@
             });
 
         }) /* End of controller */
-        .controller('IndividualDataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService) {
+        .controller('IndividualDataCtrl', function ($scope, $routeParams, ngDialog, problemService, sharedService,
+                                                    toaster, $location, dataService, patientService) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.individual_data_id = $routeParams.individual_data_id;
-
+            sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
 
@@ -241,12 +248,13 @@
             };
 
         }) /* End of controller */
-        .controller('DataSettingsCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, dataService, patientService) {
+        .controller('DataSettingsCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, sharedService,
+                                                  $location, dataService, patientService) {
 
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.data_id = $routeParams.data_id;
-
+            sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
             });

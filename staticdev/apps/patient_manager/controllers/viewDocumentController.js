@@ -24,6 +24,8 @@
         $scope.user_id = $('#user_id').val();           // Current logged in id
 
         // INITIALIZE DATA FOR THIS PAGE.(Note: It's should be right after property definition due to some method in controller can use the initialized data)
+        sharedService.initHotkey($scope);
+
         sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
             $scope.document = resp.data.info;
             $scope.todos_ready = true; // TODO: Should be removed

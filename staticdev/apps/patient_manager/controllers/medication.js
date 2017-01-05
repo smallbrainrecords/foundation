@@ -4,12 +4,14 @@
 
 
     angular.module('ManagerApp')
-        .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, patientService, $filter, medicationService, prompt) {
+        .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, sharedService,
+                                                toaster, $location, patientService, $filter, medicationService, prompt) {
             // Properties
             $scope.patient_id = $('#patient_id').val();
             $scope.showMedicationSearch = false;
             $scope.show_medication_history = false;
             $scope.medication_id = $routeParams.medication_id;
+            sharedService.initHotkey($scope);
 
 
             // Method definition

@@ -4,7 +4,8 @@
 
 
     angular.module('ManagerApp')
-        .controller('EncountersCtrl', function ($scope,$rootScope, $routeParams, patientService, ngDialog, $location, toaster, encounterService, ngAudio, prompt) {
+        .controller('EncountersCtrl', function ($scope, $rootScope, $routeParams, patientService, ngDialog,
+                                                $location, toaster, encounterService, ngAudio, prompt, sharedService) {
 
 
             var patient_id = $('#patient_id').val();
@@ -12,6 +13,7 @@
             var encounter_id = $routeParams.encounter_id;
             $scope.encounter_id = encounter_id;
 
+            sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
 
@@ -20,7 +22,7 @@
             patientService.fetchEncounterInfo(encounter_id).then(function (data) {
 
                 $scope.encounter = data['encounter'];
-               $rootScope.encounter_events = $scope.encounter_events = data['encounter_events'];
+                $rootScope.encounter_events = $scope.encounter_events = data['encounter_events'];
                 $scope.related_problems = data['related_problems'];
 
                 // If encounter include any audio automatically playing this audio
@@ -100,7 +102,7 @@
                 var form = {};
                 form.encounter_id = $scope.encounter_id;
                 form.patient_id = $scope.patient_id;
-                form.timestamp = (myAudio != undefined && myAudio !=null)? myAudio.currentTime : 0;
+                form.timestamp = (myAudio != undefined && myAudio != null) ? myAudio.currentTime : 0;
                 // form.summary = $scope.summary;
                 encounterService.addTimestamp(form).then(function (data) {
                     if (data['success'] == true) {

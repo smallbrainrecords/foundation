@@ -35,6 +35,10 @@
              */
             $scope.viewMode = 'Year';
 
+            // Init hot key binding
+            sharedService.initHotkey($scope);
+
+
             $scope.changeView = function (viewName) {
                 $scope.viewMode = viewName;
                 angular.forEach($scope.datas, function (data, key) {
