@@ -503,14 +503,17 @@
                         <div class='col-md-12'>
                             <table class="table table-striped">
                                 <thead>
-                                <th>Medication</th>
-                                <th>Note</th>
+                                <tr>
+
+                                    <th>Medication</th>
+                                    <th>Note</th>
+                                </tr>
                                 </thead>
                                 <tbody>
                                 <tr ng-repeat='medication in medications'
                                     ng-show='medication.current && medication.pin'>
                                     <td>
-                                        <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                        <a class="cursor-pointer" ng-click='open_medication(medication)' ng-bind="medication.name"></a>
                                     </td>
                                     <td>
                                 <span ng-repeat="note in medication.medication_notes"
