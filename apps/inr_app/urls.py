@@ -2,7 +2,6 @@ from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('inr_app.views',
                        url(r'^(?P<patient_id>\d+)/target/get$', 'get_inr_target'),
-                       url(r'^(?P<patient_id>\d+)/target/get$', 'get_inr_target'),
                        url(r'^(?P<patient_id>\d+)/target/set$', 'set_inr_target'),
                        url(r'^(?P<patient_id>\d+)/inrs', 'get_inr_table'),
                        url(r'^(?P<patient_id>\d+)/inr/add', 'add_inr'),
