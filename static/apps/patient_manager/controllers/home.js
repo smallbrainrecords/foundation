@@ -39,7 +39,7 @@
 
             // Hot key configuration
             hotkeys.add({
-                combo: 'ctrl+p',
+                combo: 'ctrl+i',
                 description: 'Go to Problem tab',
                 callback: function () {
                     $scope.show_homepage_tab = 'problems';
@@ -71,7 +71,7 @@
             });
 
             hotkeys.add({
-                combo: 'ctrl+shift+p',
+                combo: 'ctrl+shift+i',
                 description: 'Add new problem',
                 callback: function () {
                     $scope.show_homepage_tab = 'problems';
