@@ -1276,60 +1276,6 @@
 
                 return timeline_problem;
             }
-
-            function copyToClipboard(text) {
-                var $temp = $("<textarea/>");
-                $("body").append($temp);
-                $temp.val(text).select();
-                document.execCommand("copy");
-                $temp.remove();
-            }
-
-            $(window).keydown(function (event) {
-                if (event.ctrlKey && event.keyCode == 67 && $location.path() == '/') {
-                    var text = '';
-
-                    // encounter copy
-                    if ($scope.most_recent_encounter_summaries.length > 0) {
-                        text += "All the encounter summaries from the most recent encounter: \r\n";
-                        angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
-                            var container = $("<div/>");
-                            container.append(value);
-
-                            text += container.text() + '\r\n';
-                        });
-                        text += '\r\n';
-                    }
-
-                    if ($scope.most_recent_encounter_related_problems.length > 0) {
-                        text += "List of related problems : \r\n";
-                        angular.forEach($scope.most_recent_encounter_related_problems, function (value, key) {
-                            text += value.problem_name + '\r\n';
-                        });
-                        text += '\r\n';
-                    }
-
-                    if ($scope.pending_todos.length > 0) {
-                        text += "List of all active todos : \r\n";
-                        angular.forEach($scope.pending_todos, function (value, key) {
-                            text += value.todo + '\r\n';
-                        });
-                    }
-
-                    copyToClipboard(text);
-                    event.preventDefault();
-                }
-
-                if (event.ctrlKey && event.keyCode == 68 && $location.path() == '/') {
-                    event.preventDefault();
-                    $scope.change_homepage_tab('data');
-                }
-
-                if (event.ctrlKey && event.keyCode == 83 && $location.path() == '/') {
-                    event.preventDefault();
-                    $scope.change_homepage_tab('mystory');
-                }
-            });
         });
     /* End of controller */
 

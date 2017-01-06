@@ -227,6 +227,58 @@
                     $('medication input[type=text]').focus()
                 }
             });
+
+
+            hotkeys.add({
+                combo: 'ctrl+c',
+                description: 'Copy most recent encounter to clipboard',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path('/'); // Go back to homepage
+
+                    var text = '';
+
+                    // TODO: Check whether or not data is ready
+                    if ($scope.most_recent_encounter_summaries == undefined || $scope.most_recent_encounter_related_problems == undefined || $scope.pending_todos == undefined) {
+                        alert("Data is not loaded. Try again in few seconds");
+                        return;
+                    }
+
+
+                    if ($scope.most_recent_encounter_summaries.length > 0) {
+                        text += "All the encounter summaries from the most recent encounter: \r\n";
+                        angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
+                            var container = $("<div/>");
+                            container.append(value);
+
+                            text += container.text() + '\r\n';
+                        });
+                        text += '\r\n';
+                    }
+
+                    if ($scope.most_recent_encounter_related_problems.length > 0) {
+                        text += "List of related problems : \r\n";
+                        angular.forEach($scope.most_recent_encounter_related_problems, function (value, key) {
+                            text += value.problem_name + '\r\n';
+                        });
+                        text += '\r\n';
+                    }
+
+                    if ($scope.pending_todos.length > 0) {
+                        text += "List of all active todos : \r\n";
+                        angular.forEach($scope.pending_todos, function (value, key) {
+                            text += value.todo + '\r\n';
+                        });
+                    }
+
+                    // Copy to clipboard
+                    var $temp = $("<textarea/>");
+                    $("body").append($temp);
+                    $temp.val(text).select();
+                    document.execCommand("copy");
+                    $temp.remove();
+                }
+            });
         }
     }
 })();
