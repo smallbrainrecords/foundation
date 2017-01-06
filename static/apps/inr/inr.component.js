@@ -140,7 +140,7 @@
                         });
 
                         scope.inrInstance.current_dose = _.first(response.data.inrs).current_dose;
-                        scope.inrInstance.inr_value = _.first(response.data.inrs).inr_value;
+                        // scope.inrInstance.inr_value = _.first(response.data.inrs).inr_value;
                         scope.inrInstance.new_dosage = _.first(response.data.inrs).new_dosage;
                     } else {
                         toaster.pop('error', 'Error', 'Load INR table failed!');
