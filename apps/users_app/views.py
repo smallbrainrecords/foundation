@@ -35,6 +35,12 @@ from emr.manage_patient_permissions import check_access
 
 
 def permissions_accessed(user, obj_user_id):
+    """
+    Check whether or not clinical staff(s) can control patient
+    :param user: Clinical staff
+    :param obj_user_id: Patient
+    :return:
+    """
     permitted = False
 
     user_profile = UserProfile.objects.get(user=user)
@@ -74,6 +80,7 @@ def is_patient(user):
         return profile.role == 'patient'
     except UserProfile.DoesNotExist:
         return False
+
 
 def login_user(request):
     if request.method == "GET":
@@ -209,7 +216,6 @@ def manage_patient(request, user_id):
 # TODO: Clean up later
 @login_required
 def get_patient_info(request, patient_id):
-
     patient_user = User.objects.get(id=patient_id)
     patient_profile = UserProfile.objects.get(user=patient_user)
 
@@ -251,7 +257,9 @@ def get_patient_info(request, patient_id):
 
         for problem in problem_list:
             todo = ToDo.objects.filter(problem__id=problem['id'], accomplished=False).count()
-            event = ProblemActivity.objects.filter(problem__id=problem['id'], created_on__gte=datetime.datetime.now()-datetime.timedelta(days=30)).count()
+            event = ProblemActivity.objects.filter(problem__id=problem['id'],
+                                                   created_on__gte=datetime.datetime.now() - datetime.timedelta(
+                                                       days=30)).count()
             if todo == 0 and event == 0:
                 problem['multiply'] = 0
             elif todo == 0 or event == 0:
@@ -276,7 +284,8 @@ def get_patient_info(request, patient_id):
     related_problem_holder = []
     encounter = Encounter.objects.filter(patient=patient_user).order_by("-starttime").first()
     if encounter:
-        most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user, encounter=encounter)
+        most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user,
+                                                                     encounter=encounter)
 
         for event in most_recent_encounter_events:
             if not "Started encounter by" in event.summary and not "Stopped encounter by" in event.summary:
@@ -290,20 +299,21 @@ def get_patient_info(request, patient_id):
         related_problem_holder = ProblemSerializer(related_problems, many=True).data
 
     # sharing system
-    shared_patients = SharingPatient.objects.filter(sharing=patient_user).order_by('shared__first_name', 'shared__last_name')
+    shared_patients = SharingPatient.objects.filter(sharing=patient_user).order_by('shared__first_name',
+                                                                                   'shared__last_name')
     patients_list = []
     for shared_patient in shared_patients:
         user_dict = UserProfileSerializer(shared_patient.shared.profile).data
         patients_list.append(user_dict)
 
-    sharing_patients = SharingPatient.objects.filter(shared=patient_user).order_by('sharing__first_name', 'sharing__last_name')
+    sharing_patients = SharingPatient.objects.filter(shared=patient_user).order_by('sharing__first_name',
+                                                                                   'sharing__last_name')
     sharing_patients_list = []
     for sharing_patient in sharing_patients:
         user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
         user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
         user_dict['is_my_story_shared'] = sharing_patient.is_my_story_shared
         sharing_patients_list.append(user_dict)
-
 
     # common problems
     acutes = CommonProblem.objects.filter(author=request.user, problem_type="acute")
@@ -370,6 +380,7 @@ def update_patient_note(request, patient_id):
     patient_profile.save()
     resp['success'] = True
     return ajax_response(resp)
+
 
 @permissions_required(["update_patient_profile"])
 @login_required
@@ -457,7 +468,7 @@ def update_profile(request, patient_id):
         if img.mode not in ('L', 'RGB'):
             img = img.convert('RGB')
 
-        img.thumbnail((160,160), Image.ANTIALIAS)
+        img.thumbnail((160, 160), Image.ANTIALIAS)
         img.save(filename)
 
     resp['success'] = True
@@ -556,11 +567,11 @@ def get_patients_list(request):
         patient_ids = [x.patient.id for x in patient_controllers]
         patients = UserProfile.objects.filter(user__id__in=patient_ids)
 
-
     patients_list = UserProfileSerializer(patients, many=True).data
     for patient in patients_list:
         todo_count = ToDo.objects.filter(patient__id=patient['user']['id'], accomplished=False).count()
-        problem_count = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True, is_controlled=False).count()
+        problem_count = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True,
+                                               is_controlled=False).count()
 
         patient["todo"] = todo_count
         patient["problem"] = problem_count
@@ -638,8 +649,8 @@ def get_todos_physicians(request, user_id):
     patient_ids = [x.patient.id for x in patient_controllers]
 
     todos = ToDo.objects.filter(accomplished=False, patient__id__in=patient_ids,
-                                created_on__gte=datetime.datetime.now()-datetime.timedelta(hours=24)
-                           ).order_by('created_on')
+                                created_on__gte=datetime.datetime.now() - datetime.timedelta(hours=24)
+                                ).order_by('created_on')
 
     resp['new_generated_todos_list'] = TodoSerializer(todos, many=True).data
 
@@ -659,6 +670,7 @@ def user_info(request, user_id):
     resp['success'] = True
     resp['user_profile'] = UserProfileSerializer(user_profile).data
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -698,13 +710,13 @@ def search(request, user_id):
         text_components = MyStoryTextComponent.objects.filter(Q(name__contains=query), patient=user)
         context['text_components'] = text_components
 
-
     context['patient'] = user
     context['user_role'] = actor_profile.role
     context['patient_profile'] = patient_profile
 
     context = RequestContext(request, context)
     return render_to_response("search.html", context)
+
 
 @login_required
 @api_view(["POST"])
@@ -745,7 +757,6 @@ def staff_search(request):
 
         text_components = MyStoryTextComponent.objects.filter(Q(name__contains=query), patient__id__in=patient_ids)
         context['text_components'] = text_components
-
 
     context['user_profile'] = user_profile
 

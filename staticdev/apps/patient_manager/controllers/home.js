@@ -36,6 +36,7 @@
             $scope.show_edit_my_story_tab = false;
             $scope.innerProblemTabSetActive = 0;
             $scope.favorites_collapse = false;
+            $scope.problem_term = '';
 
             /**
              * Default graph view mode: Year
@@ -73,6 +74,7 @@
             $scope.$on('portrait_image_updated', function (event, args) {
                 $scope.patient_info = args.data;
             });
+
 
             //INITIALIZE DATA
 
@@ -340,6 +342,21 @@
 
             // METHOD DEFINITION
 
+            /**
+             *
+             * @param term
+             */
+            $scope.problemTermChanged = function (term) {
+                $scope.unset_new_problem();
+                if (term.length > 2) {
+                    patientService.listTerms(term).then(function (data) {
+                        $scope.problem_terms = data;
+                    });
+                } else {
+                    $scope.problem_terms = [];
+                }
+            };
+
             $scope.timelineSave = function (newData) {
                 var form = {};
 
@@ -476,21 +493,6 @@
                 });
             };
 
-            $scope.$watch('problem_term', function (newVal, oldVal) {
-
-                if (newVal == undefined) {
-                    return false;
-                }
-
-                $scope.unset_new_problem();
-                if (newVal.length > 2) {
-                    patientService.listTerms(newVal).then(function (data) {
-                        $scope.problem_terms = data;
-                    });
-                } else {
-                    $scope.problem_terms = [];
-                }
-            });
 
             $scope.set_new_problem = function (problem) {
 

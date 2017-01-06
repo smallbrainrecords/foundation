@@ -229,7 +229,7 @@
                         scope.inrs.splice(index, 1);
 
                     } else {
-                        toaster.pop('error', 'Error', 'Something went wrong!');
+                        toaster.pop('error', 'Error', response.data.message);
                     }
                 }
 

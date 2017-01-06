@@ -286,22 +286,26 @@
                                                     </div>
                                                     <br>
                                                 </div>
+
+                                                <!--Search problem normally-->
                                                 <input type='text' ng-model='problem_term' class='form-control'
-                                                       id='problemTermInput'
+                                                       id='problemTermInput' ng-change="problemTermChanged(problem_term)"
                                                        placeholder='Search Problem....'>
                                                 <button class='btn btn-sm btn-default'
                                                         ng-click='add_new_problem(problem_term)'>
                                                     Add Problem
                                                 </button>
                                                 <br>
+                                                <!--Problem candidate for -->
                                                 <div ng-show='new_problem.set==true'>
                                                     <hr>
-                                                    <label> {{ new_problem.code }} </label>
-                                                    {{ new_problem.term }} <br>
-                                                    <button class='btn btn-sm btn-default' ng-click='add_problem()'>
+                                                    <label ng-bind="new_problem.code"></label><span
+                                                        ng-bind="new_problem.term "></span>
+                                                    <br>
+                                                    <button class='btn btn-sm btn-primary' ng-click='add_problem()'>
                                                         Add Problem
                                                     </button>
-                                                    <button class='btn btn-sm btn-default'
+                                                    <button class='btn btn-sm btn-danger'
                                                             ng-click='unset_new_problem()'>
                                                         Cancel
                                                     </button>
@@ -320,7 +324,6 @@
                                         </div>
                                     </uib-tab>
                                 </uib-tabset>
-
                                 <hr>
                                 <!-- Start problem section-->
                                 <div class='panel panel-default' ng-repeat="list in problem_lists track by $index"
