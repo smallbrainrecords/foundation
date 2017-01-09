@@ -550,22 +550,22 @@ def get_patient_members(request, user_id):
 def get_patients_list(request):
     user_profile = UserProfile.objects.get(user=request.user)
     if user_profile.role == 'admin':
-        patients = UserProfile.objects.filter(role='patient')
+        patients = UserProfile.objects.filter(role='patient').filter(user__is_active=True)
 
     elif user_profile.role == 'patient':
-        patients = UserProfile.objects.filter(role='patient').exclude(user=request.user)
+        patients = UserProfile.objects.filter(role='patient').exclude(user=request.user).filter(user__is_active=True)
 
     elif user_profile.role == 'physician':
         patient_controllers = PatientController.objects.filter(physician=request.user)
         patient_ids = [x.patient.id for x in patient_controllers]
-        patients = UserProfile.objects.filter(user__id__in=patient_ids)
+        patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         physician_ids = [x.physician.id for x in team_members]
         patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
-        patients = UserProfile.objects.filter(user__id__in=patient_ids)
+        patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
     patients_list = UserProfileSerializer(patients, many=True).data
     for patient in patients_list:
@@ -582,8 +582,7 @@ def get_patients_list(request):
         else:
             patient['multiply'] = todo_count * problem_count
 
-    resp = {}
-    resp['patients_list'] = sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)
+    resp = {'patients_list': sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)}
     return ajax_response(resp)
 
 
