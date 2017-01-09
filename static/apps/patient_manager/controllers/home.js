@@ -37,6 +37,7 @@
             $scope.innerProblemTabSetActive = 0;
             $scope.favorites_collapse = false;
             $scope.problem_term = '';
+            $scope.updateSummary = updateSummary;
 
             /**
              * Default graph view mode: Year
@@ -394,19 +395,6 @@
                     $scope.timeline_ready = true;
                     $scope.timeline_changed = [{changing: new Date().getTime()}];
                 });
-            };
-
-            $scope.update_patient_summary = function () {
-
-                var form = {
-                    'patient_id': $scope.patient_id,
-                    'summary': $scope.patient_info.summary
-                };
-
-                patientService.updatePatientSummary(form).then(function (data) {
-                    toaster.pop('success', 'Done', 'Patient summary updated!');
-                });
-
             };
 
             $scope.toggle_accomplished_todos = function () {
@@ -1275,6 +1263,21 @@
                 };
 
                 return timeline_problem;
+            }
+
+            /**
+             * Update user summary
+             * Refer: https://trello.com/c/K1Thtn7f
+             */
+            function updateSummary() {
+                var form = {
+                    'patient_id': $scope.patient_id,
+                    'summary': $scope.patient_info.summary
+                };
+
+                patientService.updatePatientSummary(form).then(function (data) {
+                    toaster.pop('success', 'Done', 'Patient summary updated!');
+                });
             }
         });
     /* End of controller */

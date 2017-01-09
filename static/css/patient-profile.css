@@ -280,4 +280,10 @@ inr-bfdi {
 .dube-btn-pin-unpin {
   margin-right: 20px; }
 
+#profile-summary {
+  margin-top: 20px;
+  margin-bottom: 20px; }
+  #profile-summary label, #profile-summary textarea, #profile-summary button {
+    margin-bottom: 10px; }
+
 /*# sourceMappingURL=patient-profile.css.map */

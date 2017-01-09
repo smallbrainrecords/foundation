@@ -415,3 +415,11 @@ inr-bfdi {
 .dube-btn-pin-unpin {
   margin-right: 20px;
 }
+
+#profile-summary {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  label, textarea, button {
+    margin-bottom: 10px;
+  }
+}
