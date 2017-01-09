@@ -2,6 +2,10 @@
 
     'use strict';
 
+    /**
+     * DEPRECATED:
+     * Disclaimer: New function should be declared in document.service.js for document related component
+     */
     angular.module('StaffApp')
         .service('documentService', function ($http, $q, $cookies, Upload) {
 
@@ -52,10 +56,13 @@
 
 
             /**
+
              * Get list of document user have uploaded
+             *
+             * @param page
              */
-            this.getUploadedDocument = function () {
-                return $http.get('/docs/list');
+            this.getUploadedDocument = function (page) {
+                return $http.get('/docs/list/' + page);
             };
 
             /**

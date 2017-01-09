@@ -36,33 +36,6 @@
 
 </div>
 
-<!-- Uploaded document list-->
-<div class='panel panel-default'>
-    <div class='panel-heading'>Uploaded document</div>
-
-    <div class='panel-body'>
-
-        <table class='table'>
-            <thead>
-            <tr>
-                <th> Name</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat='document in uploadedDocuments track by $index'>
-                <td>
-                    <span ng-bind="document.filename"></span>
-                </td>
-                <td class="text-right">
-                    <a class="btn btn-default" href="/#/manage/tag_document/{{document.id}}">Tags</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-
-</div>
 
 <div class='panel panel-default' ng-if="active_user.role=='secretary'">
 
@@ -102,8 +75,10 @@
         <button ng-click="reverse=!reverse" ng-init="reverse=false;" class="btn btn-default">Reverse</button>
         <table class='table'>
             <thead>
-            <th> Name</th>
-            <th> Due Date</th>
+            <tr>
+                <th> Name</th>
+                <th> Due Date</th>
+            </tr>
             </thead>
             <tbody>
             <tr ng-repeat='todo in all_todos_list | orderBy: orderByDate: reverse'>

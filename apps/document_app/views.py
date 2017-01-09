@@ -32,16 +32,21 @@ def upload_document(request):
 
 
 @login_required
-def document_list(request):
+def document_list(request, page=1):
     """
-    Handle single file upload
+    Return uploaded document
     :param request:
+    :param page
     :return:
     """
     resp = {'success': False}
 
-    documents = Document.objects.all()
+    page = int(page) - 1
+    per_page = 50
+
+    documents = Document.objects.order_by('-patient').all()[page * per_page: page * per_page + per_page]
     resp['documents'] = DocumentSerialization(documents, many=True).data
+    resp['total'] = Document.objects.count()
     resp['success'] = True
 
     return ajax_response(resp)

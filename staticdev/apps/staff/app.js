@@ -47,6 +47,10 @@
                 templateUrl: '/static/apps/staff/partials/upload_documents.html',
                 controller: 'UploadDocumentsCtrl'
             })
+            .when('/manage/uploaded', {
+                templateUrl: '/static/apps/staff/partials/uploaded_documents.html',
+                controller: 'UploadedDocumentsPageCtrl'
+            })
             .when('/manage/tag_document/:documentId', {
                 templateUrl: '/static/apps/staff/partials/tag_document.html',
                 controller: 'TagDocumentCtrl'

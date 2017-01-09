@@ -4,7 +4,7 @@
 
 
     angular.module('StaffApp')
-        .controller('HomeCtrl', function ($scope, $routeParams, ngDialog, documentService,
+        .controller('HomeCtrl', function ($scope, $routeParams, ngDialog,
                                           staffService, physicianService, toaster, todoService, prompt, $interval) {
 
 
@@ -16,9 +16,7 @@
                     $scope.patients_list = data['patients_list'];
                 });
 
-                documentService.getUploadedDocument().then(function (resp) {
-                    $scope.uploadedDocuments = resp.data.documents;
-                });
+
                 $scope.users = [];
                 $scope.new_list = {};
                 $scope.new_list.labels = [];

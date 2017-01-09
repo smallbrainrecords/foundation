@@ -24,6 +24,8 @@
         charset="utf-8"></script>
 <script src="/static/apps/staff/controllers/tagDocumentController.js" type="text/javascript"
         charset="utf-8"></script>
+<script src="/static/apps/staff/controllers/UploadedDocumentController.js" type="text/javascript"
+        charset="utf-8"></script>
 
 <!--Services-->
 <script src="/static/apps/staff/services/staffService.js" type="text/javascript" charset="utf-8"></script>
@@ -67,6 +69,10 @@
                 {% if user_profile.role != 'patient'%}
                 <a class='btn btn-default btn-manage' href='/#/manage/upload_documents'>
                     Upload documents
+                </a>
+
+                <a class='btn btn-default btn-manage' href='/#/manage/uploaded'>
+                    Manage uploaded documents
                 </a>
                 {% endif %}
 

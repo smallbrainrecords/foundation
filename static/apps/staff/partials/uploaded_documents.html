@@ -1,0 +1,49 @@
+<section class="text-center">
+    <h3>
+        <a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
+    </h3>
+</section>
+<hr>
+<section class="text-center">
+    <h3> Uploaded documents</h3>
+</section>
+<hr>
+
+<div class="container-fluid">
+    <!-- Uploaded document list-->
+    <div class='panel panel-default'>
+        <div class='panel-heading'>Uploaded document</div>
+
+        <div class='panel-body'>
+
+            <table class='table'>
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat='document in documents track by $index'>
+                    <td>
+                        <span ng-if="document.patient">({{document.patient.user.first_name }} {{document.patient.user.last_name }})</span>
+                        <span ng-bind="document.filename"></span>
+                    </td>
+                    <td class="text-right">
+                        <a class="btn btn-default" href="/#/manage/tag_document/{{document.id}}">Tags</a>
+                    </td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td colspan="2" class="text-center">
+                        <ul uib-pagination direction-links="false" boundary-links="false" total-items="totalItems"
+                            ng-model="currentPage" items-per-page="50" ng-change="init(currentPage)"></ul>
+                    </td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+
+    </div>
+</div>
