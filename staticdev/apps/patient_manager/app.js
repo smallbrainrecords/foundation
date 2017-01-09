@@ -6,11 +6,11 @@
     var ManagerApp = angular.module('ManagerApp',
         ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
             'httpModule', 'sharedModule', 'colon_cancers', 'a1c', 'medication',
-            'todos', 'medication-component', 'inr', 'myTools',
+            'todos', 'medication-component', 'inr', 'myTools','document',
 
             'timeLine', 'chart.js', 'toaster', 'dndLists', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
-            'cfp.hotkeys', 'ui.bootstrap']);
+            'cfp.hotkeys', 'ui.bootstrap', 'view.file']);
 
 
     ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider) {

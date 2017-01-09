@@ -1,10 +1,6 @@
 <div class='panel panel-default'>
     <div class='panel-body'>
-        <div class='row'>
-            <div class='col-md-12'>
-                <a href='#/'><b> Back to home page </b></a>
-            </div>
-        </div>
+        <a href='#/'><b> Back to home page </b></a>
     </div><!-- End of Panel Body -->
 </div>
 
@@ -12,13 +8,22 @@
 
 <div class="container-fluid" id="view_document_page">
     <div class="row">
-        <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
-            <h3 ng-bind="document.filename"></h3>
+        <div class="col-md-12 ">
+            <span class="pull-left" ng-bind="document.filename"></span>
             <!--Labels-->
+            <!--</div>-->
+            <!--<div class="col-xs-12  col-sm-12  col-md-4  col-lg-4 text-right">-->
+            <div class="pull-right">
+                <button class="btn btn-default" ng-click="enableTodoPin=!enableTodoPin"
+                        ng-bind="enableTodoPin ? 'Done todo pin' :'Pin todo'"></button>
+                <button class="btn btn-default" ng-click="enableProblemPin=!enableProblemPin"
+                        ng-bind="enableProblemPin ? 'Done problem pin' :'Pin problem'"></button>
+                <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete document</button>
+            </div>
         </div>
-        <div class="col-xs-4  col-sm-4  col-md-4  col-lg-4 text-right">
-            <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete document</button>
-        </div>
+    </div>
+
+    <div class="row">
         <div class="col-md-12">
             <div ng-repeat="label in document.labels track by $index" class="quick-card-editor-label labeled-list"
                  ng-class="label.is_pinned ? '' :''">
@@ -31,13 +36,36 @@
         </div>
     </div>
 
+    <!--View file content section-->
+    <div class="row">
+
+        <div class="col-md-12">
+            <view-file uri="document.document"
+                       content-type="document.file_mime_type[0]"
+                       controls="false"
+                       allow-modal="false"></view-file>
+        </div>
+    </div>
+
     <!--Pinned todo-->
     <div class="panel panel-default">
         <div class="panel-heading">
             <p>List of pinned todo</p>
         </div>
         <div class="panel-body">
-            <todo ng-model="document.todos" accomplished="false" show-problem="true"></todo>
+            <ul class="ul-clean no-padding">
+                <li ng-repeat="todo in active_todos | filter:(enableTodoPin ? '' :{'is_pinned':true})  track by $index">
+                    <div class="item-box flex-container">
+                        <button ng-if="enableTodoPin"
+                                ng-click="todo.is_pinned ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo)"
+                                ng-class="todo.is_pinned ? 'btn-danger':'btn-primary'"
+                                class="btn dube-btn-pin-unpin flex-item pull-left">
+                            <span ng-bind="todo.is_pinned ? 'Un pin' : 'Pin'"></span>
+                        </button>
+                        <span ng-bind="todo.todo" class="flex-item"></span>
+                    </div>
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -47,13 +75,18 @@
             <p>List of pinned problem</p>
         </div>
         <div class="panel-body">
-            <ul class='ul-clean no-padding'>
-                <li ng-repeat='problem in document.problems'>
-                    <div class='item-box'
-                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '
-                         ng-click="open_problem(problem);">
-                        <span ng-bind="problem.problem_name "></span> <span
-                            ng-show="problem.authenticated==false">(not authenticated)</span>
+            <ul class="ul-clean no-padding">
+                <li ng-repeat="problem in active_probs | filter:(enableProblemPin ? '' :{'is_pinned':true}) track by $index">
+                    <div class="item-box flex-container"
+                         ng-show="problem.is_active"
+                         ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                        <button ng-if="enableProblemPin"
+                                ng-click="problem.is_pinned ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem)"
+                                ng-class="problem.is_pinned ? 'btn-danger':'btn-primary'"
+                                class="btn dube-btn-pin-unpin pull-left flex-item">
+                            <span ng-bind="problem.is_pinned ? 'Un pin' : 'Pin'"></span>
+                        </button>
+                        <span ng-bind="problem.problem_name" class="flex-item"></span>
                     </div>
                 </li>
             </ul>

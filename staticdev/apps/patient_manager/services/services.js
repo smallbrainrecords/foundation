@@ -40,6 +40,11 @@
 
             };
 
+             this.fetchProblems = function (patient_id) {
+                var params = {};
+                var url = '/p/problem/' + patient_id + '/getproblems';
+                return httpService.get(params, url);
+            };
 
             this.fetchProblemInfo = function (problem_id) {
 
