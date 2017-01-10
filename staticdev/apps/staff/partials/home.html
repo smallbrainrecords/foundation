@@ -1,5 +1,26 @@
 <toaster-container></toaster-container>
 
+<div class='panel panel-default'>
+    <div class='panel-heading' ng-click="taggedTodoCollapsed ? openTaggedTodo(): closeTaggedTodo()">
+        <i class="fa fa-caret-right" ng-class="taggedTodoCollapsed ? 'fa-caret-right':'fa-caret-down'"></i>
+        Tagged Todos <span class="new-todo" ng-if="newTaggedTodo > 0">({{newTaggedTodo}})</span>
+    </div>
+    <div class='panel-body' ng-if="!taggedTodoCollapsed">
+        <todo ng-model="tagged_todos" accomplished="false" show-problem="true" is-tagged="true"></todo>
+        <hr>
+        <a class='btn btn-default btn-md' ng-click="showAccomplishedTaggedTodos=!showAccomplishedTaggedTodos"
+           ng-bind='showAccomplishedTaggedTodos?"Hide accomplished Todos" :"Show accomplished Todos"'>
+        </a>
+        <hr>
+        <todo ng-if='showAccomplishedTaggedTodos'
+              ng-model="tagged_todos"
+              accomplished="true"
+              show-problem="true"
+              is-tagged="true"></todo>
+    </div>
+</div>
+
+
 <div class='panel panel-default' ng-init="show_all=false">
 
     <div class='panel-heading'>Top Patients List</div>
@@ -35,7 +56,6 @@
     </div>
 
 </div>
-
 
 <div class='panel panel-default' ng-if="active_user.role=='secretary'">
 
@@ -171,9 +191,8 @@
             <span ng-if='show_accomplished_personal_todos==true'>Hide accomplished Todos </span>
         </a>
         <hr>
-        <div class="col-md-12" ng-show='show_accomplished_personal_todos==true'>
-            <todo ng-model="personal_todos" accomplished="true" show-problem="true" is-tagged="false"></todo>
-        </div>
+        <todo ng-if="show_accomplished_personal_todos" ng-model="personal_todos" accomplished="true" show-problem="true"
+              is-tagged="false"></todo>
         <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
             <div class='form-group'>
                 <label> Todo Name </label>
@@ -186,33 +205,13 @@
     </div>
 </div>
 
-<div class='panel panel-default' ng-init="show_accomplished_tagged_todos=false">
-
-    <div class='panel-heading'> Tagged Todos</div>
-
-    <div class='panel-body'>
-        <todo ng-model="tagged_todos" accomplished="false" show-problem="true" is-tagged="true"></todo>
-        <hr>
-        <a class='btn btn-default btn-md' ng-click='show_accomplished_tagged_todos=!show_accomplished_tagged_todos'>
-            <span ng-if='show_accomplished_tagged_todos==false'>Show accomplished Todos </span>
-            <span ng-if='show_accomplished_tagged_todos==true'>Hide accomplished Todos </span>
-        </a>
-        <hr>
-        <div class="col-md-12" ng-show='show_accomplished_tagged_todos==true'>
-            <todo ng-model="tagged_todos" accomplished="true" show-problem="true" is-tagged="true"></todo>
-        </div>
-    </div>
-</div>
-
 <div ng-if="active_user.role=='physician'" class="physician-view">
     <div class='panel panel-default'>
         <div class='panel-heading'>
             Registered Users
         </div>
         <div class='panel-body'>
-            <center>
-                <h4 class='text-info'> Registered Users </h4>
-            </center>
+            <h4 class='text-info text-center'> Registered Users </h4>
             <hr>
             <input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>
             <hr>

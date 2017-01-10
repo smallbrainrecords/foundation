@@ -1,16 +1,18 @@
 <div class="todos-container" ng-show='problem_todos.length'>
     <!-- begin sortable -->
-    <ul ui-sortable="sortableOptions" ng-model="problem_todos">
-        <li ng-repeat="item in problem_todos" class="list-group-item todo" ng-show="item.accomplished==accomplished"
+    <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
+        <li ng-repeat="item in problem_todos | filter :{'accomplished':accomplished} track by $index"
+            class="list-group-item todo"
             ng-click="open_todo(item)">
             <!-- begin show item -->
             <div ng-show='!item.changed'>
 
-                <input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
+                <input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)' title="">
+                <span ng-bind="item.todo" class="todo-name"></span>
                 <span ng-if="item.due_date"> due by <span
-                        ng-class="isDueDate(item.due_date)">{{item.due_date}}</span></span>
+                        ng-class="isDueDate(item.due_date)">{{ item.due_date }}</span></span>
                 <span ng-if="item.patient"> for patient
-						<a href="/u/patient/manage/{{item.patient.id}}/">{{item.patient.first_name}} {{item.patient.last_name}}</a>
+						<a href="/u/patient/manage/{{ item.patient.id }}/">{{ item.patient.first_name }} {{ item.patient.last_name }}</a>
 					</span>
                 <!-- begin label -->
                 <span class="quick-card-editor-label">
@@ -20,13 +22,15 @@
                 <!-- end label -->
                 <p>
                     <span ng-show="item.comments.length > 0"><i
-                            class="fa fa-comment-o"></i> {{item.comments.length}}</span>
-                    <span ng-show="item.attachments.length > 0"><i class="fa fa-file-o"></i> {{item.attachments.length}}</span>
-                    <span ng-if="item.document_set.length > 0"><i class="fa fa-file-pdf-o"></i> {{item.document_set.length}}</span>
+                            class="fa fa-comment-o"></i> {{ item.comments.length }}</span>
+                    <span ng-show="item.attachments.length > 0"><i
+                            class="fa fa-file-o"></i> {{ item.attachments.length }}</span>
+                    <span ng-if="item.document_set.length > 0"><i
+                            class="fa fa-file-pdf-o"></i> {{ item.document_set.length }}</span>
                 </p>
 
                 <p>
-                    <span ng-repeat="member in item.members" class="todo-member">{{member.user.username}}</span>
+                    <span ng-repeat="member in item.members" class="todo-member">{{ member.user.username }}</span>
                 </p>
 
                 <a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>
@@ -66,7 +70,7 @@
                         <div ng-repeat="label in labels">
                             <a href class="todo-label" ng-class="label.css_class"
                                ng-click="changeTodoLabel(item, label)">
-                                {{label.name}}
+                                {{ label.name }}
                                 <i class="fa fa-check" ng-repeat="l in item.labels" ng-if="l.id==label.id"></i>
                             </a>
                             <!-- begin edit label -->
@@ -127,7 +131,7 @@
                             <a href ng-click="changeMember(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
                         </div>
                         <a ng-repeat="member in members" href ng-click="changeTodoMember(item, member)">
-                            {{member.user.first_name}} {{member.user.last_name}}
+                            {{ member.user.first_name }} {{ member.user.last_name }}
                             <i class="fa fa-check" ng-repeat="m in item.members" ng-if="m.id==member.id"></i>
                         </a>
                     </div>
