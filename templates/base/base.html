@@ -105,6 +105,10 @@
     <script src='/static/bower_components/angular-xeditable/dist/js/xeditable.min.js'></script>
     <script src="/static/bower_components/angular-spinkit/build/angular-spinkit.min.js"></script>
 
+    <!-- Install sentry tracker -->
+    <script src="https://cdn.ravenjs.com/3.9.1/angular/raven.min.js" crossorigin="anonymous"></script>
+    <script>Raven.config('https://d71f6e59381c4a4caff011cbe970b229@sentry.io/127883').install();</script>
+
     <!--Common service shared across whole system-->
     <script src="/static/apps/common/httpModule.js" type="text/javascript" charset="utf-8"></script>
     <script src="/static/apps/common/service.js" type="text/javascript" charset="utf-8"></script>
