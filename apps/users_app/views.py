@@ -761,3 +761,20 @@ def staff_search(request):
 
     context = RequestContext(request, context)
     return render_to_response("staff_search.html", context)
+
+
+def update_last_access_tagged_todo(request, user_id):
+    """
+    Update last time user access the tagged todo frame.
+    Mostly used within staff page
+    :param request:
+    :param user_id:
+    :return:
+    """
+    resp = {'success': False}
+    patient_profile = UserProfile.objects.get(user_id=user_id)
+    patient_profile.last_access_tagged_todo = datetime.datetime.now()
+    patient_profile.save()
+    resp['success'] = True
+
+    return ajax_response(resp)

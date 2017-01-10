@@ -44,4 +44,6 @@ urlpatterns = patterns('users_app.views',
                            r'^patient/(?P<patient_id>\d+)/profile/update_note$',
                            'update_patient_note'),
                        url(r'^todos_physicians/(?P<user_id>\d+)$', 'get_todos_physicians'),
+                       url(r'^(?P<user_id>\d+)/profile/last_access_tagged_todo',
+                           'update_last_access_tagged_todo'),
                        )

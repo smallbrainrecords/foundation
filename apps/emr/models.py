@@ -1,8 +1,10 @@
+import ast
 import mimetypes
 import os
-import ast
-from django.db import models
+from datetime import datetime
+
 from django.contrib.auth.models import User
+from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
 from emr.managers import AOneCManager, ProblemManager, ProblemNoteManager, EncounterManager, \
@@ -184,6 +186,7 @@ class UserProfile(models.Model):
     note = models.TextField(null=True, blank=True)
     active_reason = models.TextField(null=True, blank=True)
     inr_target = models.PositiveIntegerField(choices=TARGET_CHOICES, default=1)
+    last_access_tagged_todo = models.DateTimeField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
