@@ -175,8 +175,8 @@ class UserProfile(models.Model):
     role = models.CharField(
         max_length=10, choices=ROLE_CHOICES, default='patient')
     data = models.TextField(blank=True)
-    cover_image = models.ImageField(upload_to='cover_image/', blank=True)
-    portrait_image = models.ImageField(upload_to='cover_image/', blank=True)
+    cover_image = models.ImageField(upload_to='cover_image/', default='/static/images/cover.png')
+    portrait_image = models.ImageField(upload_to='cover_image/', default='/static/images/avatar.png')
     summary = models.TextField(blank=True)
     sex = models.CharField(max_length=6, choices=SEX_CHOICES, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
