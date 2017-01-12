@@ -5,7 +5,7 @@
 
     angular.module('StaffApp')
         .controller('HomeCtrl', function ($scope, $routeParams, ngDialog, toaster, prompt, $interval,
-                                          staffService, physicianService, todoService) {
+                                          staffService, physicianService, todoService, $filter) {
 
             // Properties
             $scope.user_id = $('#user_id').val();
@@ -39,6 +39,7 @@
              */
             function openTaggedTodo() {
                 $scope.taggedTodoCollapsed = false;
+                $scope.newTaggedTodo = 0;
 
                 staffService.updateLastTimeAccessTaggedTodo($scope.user_id).then(function (response) {
                     $scope.lastTimeTaggedTodoAccessed = new Date();
@@ -82,6 +83,7 @@
                         });
                     }
 
+                    // Refresh new todo for secretary
                     if ($scope.active_user.role == 'secretary') {
                         $scope.refresh_todos_physicians();
                         $interval(function () {
@@ -101,13 +103,7 @@
                     $scope.tagged_todos = data['tagged_todos'];
                     $scope.personal_todos = data['personal_todos'];
                     $scope.todos_ready = true;
-
-                    _.each($scope.tagged_todos, function (item, idx) {
-                        var anchor = moment($scope.lastTimeTaggedTodoAccessed);
-                        var todoStart = moment(item.created_on);
-                        if (todoStart.diff(anchor) > 0)
-                            $scope.newTaggedTodo += 1;
-                    });
+                    $scope.newTaggedTodo = data['new_tagged_todo'];
                 });
 
 

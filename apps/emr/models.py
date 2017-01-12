@@ -415,10 +415,11 @@ class ToDo(models.Model):
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
     due_date = models.DateField(blank=True, null=True)
-    order = models.BigIntegerField(null=True, blank=True)
-    members = models.ManyToManyField(UserProfile, blank=True)
+    order = models.BigIntegerField(null=True, blank=True)  # Position in normal todo list
+    # TODO: Dedicated to be remove or specific immediate table candidate: TaggedTodoOrder -> TodoMembership
+    members = models.ManyToManyField(UserProfile, blank=True)  # Clinical staff involved this todo.
     labels = models.ManyToManyField(Label, blank=True)
-    created_at = models.PositiveIntegerField(choices=BELONG_TO, default=0)
+    created_at = models.PositiveIntegerField(choices=BELONG_TO, default=0)  # Place where todo is generated
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     objects = TodoManager()
@@ -431,6 +432,8 @@ class TaggedToDoOrder(models.Model):
     user = models.ForeignKey(User, null=True, blank=True)
     todo = models.ForeignKey(ToDo, null=True, blank=True)
     order = models.BigIntegerField(null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True, null=True,
+                                      blank=True)  # Time when members is tagged to this todo
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo.todo))

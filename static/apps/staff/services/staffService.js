@@ -152,6 +152,15 @@
                 return httpService.post(form, url);
             };
 
+            /**
+             *
+             * @param user_id
+             */
+            this.updateLastTimeAccessTaggedTodo = function (user_id) {
+                var params = {};
+                var url = '/u/' + user_id + '/profile/last_access_tagged_todo';
+                return httpService.post(params, url);
+            }
         });
 
 })();

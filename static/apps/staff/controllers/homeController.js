@@ -4,29 +4,64 @@
 
 
     angular.module('StaffApp')
-        .controller('HomeCtrl', function ($scope, $routeParams, ngDialog,
-                                          staffService, physicianService, toaster, todoService, prompt, $interval) {
+        .controller('HomeCtrl', function ($scope, $routeParams, ngDialog, toaster, prompt, $interval,
+                                          staffService, physicianService, todoService, $filter) {
 
+            // Properties
+            $scope.user_id = $('#user_id').val();
+            $scope.taggedTodoCollapsed = true;
+            $scope.lastTimeTaggedTodoAccessed = null;
+            $scope.showAccomplishedTaggedTodos = false;
+            $scope.newTaggedTodo = 0;
+            $scope.users = [];
+            $scope.new_list = {};
+            $scope.new_list.labels = [];
+            $scope.todo_lists = [];
+            $scope.currentLabel = null;
+            $scope.active_user = null;
 
-            $scope.init = function () {
-                var user_id = $('#user_id').val();
-                $scope.user_id = user_id;
+            // Function definitions
+            $scope.init = init;
+            $scope.openTaggedTodo = openTaggedTodo;
+            $scope.closeTaggedTodo = closeTaggedTodo;
+            $scope.add_todo = add_todo;
+            $scope.add_new_list_label = add_new_list_label;
+            $scope.add_todo_list = add_todo_list;
+            $scope.delete_list = delete_list;
+            $scope.refresh_todos_physicians = refresh_todos_physicians;
+            $scope.orderByDate = orderByDate;
+            $scope.getNewTodos = getNewTodos;
+            $scope.openTodoList = openTodoList;
 
+            // method definition
+            /**
+             *
+             */
+            function openTaggedTodo() {
+                $scope.taggedTodoCollapsed = false;
+                $scope.newTaggedTodo = 0;
+
+                staffService.updateLastTimeAccessTaggedTodo($scope.user_id).then(function (response) {
+                    $scope.lastTimeTaggedTodoAccessed = new Date();
+                });
+            }
+
+            function closeTaggedTodo() {
+                $scope.taggedTodoCollapsed = true;
+            }
+
+            /**
+             *
+             */
+            function init() {
                 staffService.getPatientsList().then(function (data) {
                     $scope.patients_list = data['patients_list'];
                 });
 
-
-                $scope.users = [];
-                $scope.new_list = {};
-                $scope.new_list.labels = [];
-                $scope.todo_lists = [];
-                $scope.currentLabel = null;
-
-
                 staffService.fetchActiveUser().then(function (data) {
 
                     $scope.active_user = data['user_profile'];
+                    $scope.lastTimeTaggedTodoAccessed = $scope.active_user.last_access_tagged_todo;
 
                     var role_form = {
 
@@ -48,6 +83,7 @@
                         });
                     }
 
+                    // Refresh new todo for secretary
                     if ($scope.active_user.role == 'secretary') {
                         $scope.refresh_todos_physicians();
                         $interval(function () {
@@ -63,11 +99,13 @@
 
                 });
 
-                staffService.getUserTodoList(user_id).then(function (data) {
+                staffService.getUserTodoList($scope.user_id).then(function (data) {
                     $scope.tagged_todos = data['tagged_todos'];
                     $scope.personal_todos = data['personal_todos'];
                     $scope.todos_ready = true;
+                    $scope.newTaggedTodo = data['new_tagged_todo'];
                 });
+
 
                 todoService.fetchTodoMembers($scope.user_id).then(function (data) {
                     $scope.members = data['members'];
@@ -80,9 +118,13 @@
                 staffService.fetchLabeledTodoList($scope.user_id).then(function (data) {
                     $scope.todo_lists = data['todo_lists'];
                 });
-            };
+            }
 
-            $scope.add_todo = function (form) {
+            /**
+             *
+             * @param form
+             */
+            function add_todo(form) {
 
                 form.user_id = $scope.user_id;
 
@@ -127,17 +169,26 @@
                         toaster.pop('success', 'Done', 'New Todo added successfully');
                     });
                 });
-            };
+            }
 
-            $scope.add_new_list_label = function (new_list, label) {
+            /**
+             *
+             * @param new_list
+             * @param label
+             */
+            function add_new_list_label(new_list, label) {
                 var index = new_list.labels.indexOf(label);
                 if (index > -1)
                     new_list.labels.splice(index, 1);
                 else
                     new_list.labels.push(label);
-            };
+            }
 
-            $scope.add_todo_list = function (form) {
+            /**
+             *
+             * @param form
+             */
+            function add_todo_list(form) {
 
                 form.user_id = $scope.user_id;
                 if (form.name && form.labels.length > 0) {
@@ -151,9 +202,13 @@
                 } else {
                     toaster.pop('error', 'Error', 'Please select name and labels');
                 }
-            };
+            }
 
-            $scope.delete_list = function (list) {
+            /**
+             *
+             * @param list
+             */
+            function delete_list(list) {
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a todo list is forever. There is no undo."
@@ -166,16 +221,24 @@
                 }, function () {
                     return false;
                 });
-            };
+            }
 
-            $scope.refresh_todos_physicians = function () {
+            /**
+             *
+             */
+            function refresh_todos_physicians() {
                 staffService.getTodosPhysicians($scope.user_id).then(function (data) {
                     $scope.new_generated_todos_list = data['new_generated_todos_list'];
                     $scope.new_generated_physicians_list = data['new_generated_physicians_list'];
                 })
-            };
+            }
 
-            $scope.orderByDate = function (item) {
+            /**
+             *
+             * @param item
+             * @returns {number}
+             */
+            function orderByDate(item) {
                 if (item.due_date != null) {
                     var parts = item.due_date.split('/');
                     var number = parseInt(parts[2] + parts[0] + parts[1]);
@@ -184,9 +247,14 @@
                 }
 
                 return -number;
-            };
+            }
 
-            $scope.getNewTodos = function (list) {
+            /**
+             *
+             * @param list
+             * @returns {number}
+             */
+            function getNewTodos(list) {
                 var number = 0;
                 angular.forEach(list.todos, function (value, key) {
                     if (list.expanded.indexOf(value.id) == -1) {
@@ -195,9 +263,13 @@
                 });
 
                 return number;
-            };
+            }
 
-            $scope.openTodoList = function (list) {
+            /**
+             *
+             * @param list
+             */
+            function openTodoList(list) {
                 list.collapse = !list.collapse;
                 if (list.collapse) {
                     var form = {};
@@ -217,8 +289,7 @@
                         });
                     }
                 }
-            };
-
+            }
 
             $scope.init();
 

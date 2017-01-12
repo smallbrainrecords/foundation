@@ -3,17 +3,23 @@
     <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
         <li ng-repeat="item in problem_todos | filter :{'accomplished':accomplished} track by $index"
             class="list-group-item todo"
+            ng-class="item.new_tagged ?'new-tagged-todo':''"
             ng-click="open_todo(item)">
             <!-- begin show item -->
             <div ng-show='!item.changed'>
+                <input ng-model='item.accomplished'
+                       type='checkbox'
+                       ng-change='update_todo_status(item)' title="">
 
-                <input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)' title="">
                 <span ng-bind="item.todo" class="todo-name"></span>
+
                 <span ng-if="item.due_date"> due by <span
                         ng-class="isDueDate(item.due_date)">{{ item.due_date }}</span></span>
+
                 <span ng-if="item.patient"> for patient
 						<a href="/u/patient/manage/{{ item.patient.id }}/">{{ item.patient.first_name }} {{ item.patient.last_name }}</a>
-					</span>
+				</span>
+
                 <!-- begin label -->
                 <span class="quick-card-editor-label">
 						<a ng-repeat="label in item.labels" href class="todo-label" ng-class="label.css_class"

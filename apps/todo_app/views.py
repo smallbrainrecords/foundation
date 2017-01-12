@@ -125,6 +125,12 @@ def update_todo_status(request, todo_id):
 @login_required
 def update_order(request):
     # TODO: Need to understand the logic behind this API
+    """
+    " Update ordering of todo(is a specific (virtual list which is determined from other property)list:
+    " Patient, Tagged todo, Staff(Personal todo), List todo ??? ) entity
+    :param request:
+    :return:
+    """
     resp = {}
     datas = json.loads(request.body)
     id_todos = datas['todos']
@@ -584,12 +590,32 @@ def get_labels(request, user_id):
 
 @login_required
 def get_user_todos(request, user_id):
+    """
+    Get clinical staff todo list \n
+    Tagged(which todo user is a member of) \n
+    Personal(which todo they are authored) \n
+    :param request:
+    :param user_id:
+    :return:
+    """
+    resp = {}
+    new_tagged_todo = 0
+
     tagged_todo_order = TaggedToDoOrder.objects.filter(user_id=user_id).order_by('order', 'todo__due_date')
     tagged_todos = [t.todo for t in tagged_todo_order]
     personal_todos = ToDo.objects.filter(user_id=user_id).order_by('order', 'due_date')
 
-    resp = {}
-    resp['tagged_todos'] = TodoSerializer(tagged_todos, many=True).data
+    serialized_data = TodoSerializer(tagged_todos, many=True).data
+    for item in serialized_data:
+        tagged_todo_instance = TaggedToDoOrder.objects.filter(todo_id=item['id']).filter(user_id=user_id).get()
+        if tagged_todo_instance.created_on is not None and request.user.profile.last_access_tagged_todo is not None and tagged_todo_instance.created_on >= request.user.profile.last_access_tagged_todo:
+            item['new_tagged'] = True
+            new_tagged_todo += 1
+        else:
+            item['new_tagged'] = False
+
+    resp['tagged_todos'] = serialized_data
+    resp['new_tagged_todo'] = new_tagged_todo
     resp['personal_todos'] = TodoSerializer(personal_todos, many=True).data
     return ajax_response(resp)
 
