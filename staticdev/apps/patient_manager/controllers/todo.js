@@ -2,139 +2,15 @@
 
     'use strict';
 
-
     angular.module('ManagerApp')
         .controller('TodoCtrl', function ($scope, $routeParams, $interval, patientService, ngDialog,
                                           todoService, toaster, sharedService) {
 
-            var patient_id = $('#patient_id').val();
-            $scope.patient_id = patient_id;
-            var user_id = $('#user_id').val();
-            $scope.user_id = user_id;
-            var todo_id = $routeParams.todo_id;
+            $scope.patient_id = $('#patient_id').val();
+            $scope.user_id = $('#user_id').val();
             $scope.loading = true;
-
-            $scope.todo_id = todo_id;
+            $scope.todo_id = $routeParams.todo_id;
             $scope.current_activity = 0;
-
-            // Init data
-            sharedService.initHotkey($scope);
-
-            todoService.fetchTodoInfo(todo_id).then(function (data) {
-                $scope.todo = data['info'];
-                $scope.comments = data['comments'];
-                $scope.attachments = data['attachments'];
-                $scope.documents = data['documents'];
-                $scope.related_encounters = data['related_encounters'];
-                $scope.activities = data['activities'];
-                if (data['activities'].length) {
-                    $scope.current_activity = data['activities'][0].id;
-                }
-                $interval(function () {
-                    $scope.refresh_todo_activity();
-                }, 10000);
-
-                $scope.sharing_patients = data['sharing_patients'];
-                $scope.loading = false;
-            });
-
-            patientService.fetchActiveUser().then(function (data) {
-                $scope.active_user = data['user_profile'];
-            });
-
-            todoService.addTodoAccessEncounter(todo_id).then(function () {
-            });
-
-            todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
-                $scope.members = data['members'];
-            });
-
-            todoService.fetchLabels($scope.patient_id).then(function (data) {
-                $scope.labels = data['labels'];
-            });
-
-            $scope.isDueDate = function (date) {
-                var date = new Date(date);
-                var today = new Date();
-                if (date < today) {
-                    return 'due-date';
-                }
-                return '';
-            };
-
-
-            // add comment
-            $scope.add_comment = function (form) {
-                form.todo_id = $scope.todo_id;
-
-                todoService.addComment(form).then(function (data) {
-                    var comment = data['comment'];
-                    $scope.comments.push(comment);
-
-                    $scope.new_comment = {};
-                    toaster.pop('success', 'Done', 'New Comment added successfully');
-                });
-            };
-
-            // edit comment
-            $scope.toggleEditComment = function (comment) {
-                comment.edit = true;
-            };
-
-            $scope.toggleSaveComment = function (comment) {
-
-                todoService.editComment(comment).then(function (data) {
-                    comment.datetime = data['comment']['datetime'];
-                    comment.edit = false;
-                    toaster.pop('success', 'Done', 'Edited comment successfully');
-                });
-
-            };
-
-            // delete comment
-            $scope.delete = function (comment) {
-                $scope.currentComment = comment;
-                angular.element('#deleteCommentModal').modal();
-            };
-
-            $scope.confirmDelete = function (currentComment) {
-                todoService.deleteComment(currentComment).then(function (data) {
-                    var index = $scope.comments.indexOf(currentComment);
-                    $scope.comments.splice(index, 1);
-                    angular.element('#deleteCommentModal').modal('hide');
-                    toaster.pop('success', 'Done', 'Deleted comment successfully');
-                });
-            };
-
-            // change todo text
-            $scope.changeText = function (todo) {
-                todo.change_text = (todo.change_text != true) ? true : false;
-            };
-
-            $scope.saveTodoText = function (todo) {
-                todoService.changeTodoText(todo).then(function (data) {
-                    if (data['success'] == true) {
-                        toaster.pop('success', "Done", "Updated Todo text!");
-                    } else {
-                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                    }
-                });
-            };
-
-            // update status
-            $scope.update_todo_status = function (todo) {
-                patientService.updateTodoStatus(todo).then(function (data) {
-                    if (data['success'] == true) {
-                        toaster.pop('success', "Done", "Updated Todo status !");
-                    } else {
-                        toaster.pop('error', 'Warning', 'Something went wrong!');
-                    }
-                });
-
-            };
-
-            // change label
-            // label
             $scope.labels_component = [
                 {name: 'green', css_class: 'todo-label-green'},
                 {name: 'yellow', css_class: 'todo-label-yellow'},
@@ -145,20 +21,172 @@
                 {name: 'sky', css_class: 'todo-label-sky'},
             ];
             $scope.label_component = {};
+            $scope.allowDueDateNotification = true;
 
-            $scope.createLabel = function (todo) {
+            $scope.isDueDate = isDueDate;
+            $scope.add_comment = add_comment;
+            $scope.toggleEditComment = toggleEditComment;
+            $scope.toggleSaveComment = toggleSaveComment;
+            $scope.delete = deleteComment;
+            $scope.confirmDelete = confirmDelete;
+            $scope.changeText = changeText;
+            $scope.saveTodoText = saveTodoText;
+            $scope.update_todo_status = update_todo_status;
+            $scope.createLabel = createLabel;
+            $scope.createLabel2 = createLabel2;
+            $scope.selectLabelComponent = selectLabelComponent;
+            $scope.saveCreateLabel = saveCreateLabel;
+            $scope.saveCreateLabelAll = saveCreateLabelAll;
+            $scope.editLabel = editLabel;
+            $scope.selectEditLabelComponent = selectEditLabelComponent;
+            $scope.saveEditLabel = saveEditLabel;
+            $scope.deleteEditLabel = deleteEditLabel;
+            $scope.confirmDeleteLabel = confirmDeleteLabel;
+            $scope.changeLabel = changeLabel;
+            $scope.changeLabel2 = changeLabel2;
+            $scope.changeTodoLabel = changeTodoLabel;
+            $scope.changeDueDate = changeDueDate;
+            $scope.changeDueDate2 = changeDueDate2;
+            $scope.saveTodoDueDate = saveTodoDueDate;
+            $scope.changeAttachment = changeAttachment;
+            $scope.addAttachment = addAttachment;
+            $scope.deleteAttachment = deleteAttachment;
+            $scope.confirmDeleteAttachment = confirmDeleteAttachment;
+            $scope.changeMember = changeMember;
+            $scope.changeMember2 = changeMember2;
+            $scope.changeTodoMember = changeTodoMember;
+            $scope.refresh_todo_activity = refresh_todo_activity;
+            $scope.isInArray = isInArray;
+            $scope.checkSharedProblem = checkSharedProblem;
+            $scope.deleteDocumentTag = deleteDocumentTag;
+            $scope.deleteDocument = deleteDocument;
+            $scope.init = init;
+
+            function init() {
+
+                sharedService.initHotkey($scope);
+
+                todoService.fetchTodoInfo($scope.todo_id).then(function (data) {
+                    $scope.todo = data['info'];
+                    $scope.comments = data['comments'];
+                    $scope.attachments = data['attachments'];
+                    $scope.documents = data['documents'];
+                    $scope.related_encounters = data['related_encounters'];
+                    $scope.activities = data['activities'];
+                    if (data['activities'].length) {
+                        $scope.current_activity = data['activities'][0].id;
+                    }
+                    $interval(function () {
+                        $scope.refresh_todo_activity();
+                    }, 10000);
+
+                    $scope.sharing_patients = data['sharing_patients'];
+                    $scope.loading = false;
+                });
+
+                patientService.fetchActiveUser().then(function (data) {
+                    $scope.active_user = data['user_profile'];
+                });
+
+                todoService.addTodoAccessEncounter($scope.todo_id).then(function () {
+                });
+
+                todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
+                    $scope.members = data['members'];
+                });
+
+                todoService.fetchLabels($scope.patient_id).then(function (data) {
+                    $scope.labels = data['labels'];
+                });
+            }
+
+            function isDueDate(date) {
+                var date = new Date(date);
+                var today = new Date();
+                if (date < today) {
+                    return 'due-date';
+                }
+                return '';
+            }
+
+            function add_comment(form) {
+                form.todo_id = $scope.todo_id;
+
+                todoService.addComment(form).then(function (data) {
+                    var comment = data['comment'];
+                    $scope.comments.push(comment);
+
+                    $scope.new_comment = {};
+                    toaster.pop('success', 'Done', 'New Comment added successfully');
+                });
+            }
+
+            function toggleEditComment(comment) {
+                comment.edit = true;
+            }
+
+            function toggleSaveComment(comment) {
+
+                todoService.editComment(comment).then(function (data) {
+                    comment.datetime = data['comment']['datetime'];
+                    comment.edit = false;
+                    toaster.pop('success', 'Done', 'Edited comment successfully');
+                });
+
+            }
+
+            function deleteComment(comment) {
+                $scope.currentComment = comment;
+                angular.element('#deleteCommentModal').modal();
+            }
+
+            function confirmDelete(currentComment) {
+                todoService.deleteComment(currentComment).then(function (data) {
+                    var index = $scope.comments.indexOf(currentComment);
+                    $scope.comments.splice(index, 1);
+                    angular.element('#deleteCommentModal').modal('hide');
+                    toaster.pop('success', 'Done', 'Deleted comment successfully');
+                });
+            }
+
+            function changeText(todo) {
+                todo.change_text = (todo.change_text != true) ? true : false;
+            }
+
+            function saveTodoText(todo) {
+                todoService.changeTodoText(todo).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', "Done", "Updated Todo text!");
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                    }
+                });
+            }
+
+            function update_todo_status(todo) {
+                patientService.updateTodoStatus(todo).then(function (data) {
+                    if (data['success'] == true) {
+                        toaster.pop('success', "Done", "Updated Todo status !");
+                    } else {
+                        toaster.pop('error', 'Warning', 'Something went wrong!');
+                    }
+                });
+
+            }
+
+            function createLabel(todo) {
                 todo.create_label = (todo.create_label != true) ? true : false;
-            };
+            }
 
-            $scope.createLabel2 = function (todo) {
+            function createLabel2(todo) {
                 todo.create_label2 = (todo.create_label2 != true) ? true : false;
-            };
+            }
 
-            $scope.selectLabelComponent = function (component) {
+            function selectLabelComponent(component) {
                 $scope.label_component.css_class = component.css_class;
-            };
+            }
 
-            $scope.saveCreateLabel = function (todo) {
+            function saveCreateLabel(todo) {
                 $scope.label_component.is_all = null;
                 if ($scope.label_component.css_class != null) {
                     todoService.saveCreateLabel(todo.id, $scope.label_component).then(function (data) {
@@ -177,9 +205,9 @@
                 }
                 todo.create_label = false;
                 todo.create_label2 = false;
-            };
+            }
 
-            $scope.saveCreateLabelAll = function (todo) {
+            function saveCreateLabelAll(todo) {
                 $scope.label_component.is_all = true;
                 if ($scope.label_component.css_class != null) {
                     todoService.saveCreateLabel(todo.id, $scope.label_component).then(function (data) {
@@ -198,17 +226,17 @@
                 }
                 todo.create_label = false;
                 todo.create_label2 = false;
-            };
+            }
 
-            $scope.editLabel = function (label) {
+            function editLabel(label) {
                 label.edit_label = (label.edit_label != true) ? true : false;
-            };
+            }
 
-            $scope.selectEditLabelComponent = function (label, component) {
+            function selectEditLabelComponent(label, component) {
                 label.css_class = component.css_class;
-            };
+            }
 
-            $scope.saveEditLabel = function (label) {
+            function saveEditLabel(label) {
                 if (label.css_class != null) {
                     todoService.saveEditLabel(label).then(function (data) {
                         if (data['success'] == true) {
@@ -227,14 +255,14 @@
                     });
                 }
                 label.edit_label = false;
-            };
+            }
 
-            $scope.deleteEditLabel = function (label) {
+            function deleteEditLabel(label) {
                 $scope.currentLabel = label;
                 angular.element('#deleteLabelModal').modal();
-            };
+            }
 
-            $scope.confirmDeleteLabel = function (currentLabel) {
+            function confirmDeleteLabel(currentLabel) {
                 todoService.deleteLabel(currentLabel).then(function (data) {
                     var index = $scope.labels.indexOf(currentLabel);
                     $scope.labels.splice(index, 1);
@@ -249,17 +277,17 @@
                     angular.element('#deleteLabelModal').modal('hide');
                     toaster.pop('success', 'Done', 'Deleted label successfully');
                 });
-            };
+            }
 
-            $scope.changeLabel = function (todo) {
+            function changeLabel(todo) {
                 todo.change_label = (todo.change_label != true) ? true : false;
-            };
+            }
 
-            $scope.changeLabel2 = function (todo) {
+            function changeLabel2(todo) {
                 todo.change_label2 = (todo.change_label2 != true) ? true : false;
-            };
+            }
 
-            $scope.changeTodoLabel = function (todo, label) {
+            function changeTodoLabel(todo, label) {
 
                 var is_existed = false;
                 var existed_key;
@@ -292,19 +320,17 @@
                     });
                 }
 
-            };
+            }
 
-            // change due date
-            $scope.changeDueDate = function (todo) {
+            function changeDueDate(todo) {
                 todo.change_due_date = (todo.change_due_date != true) ? true : false;
-            };
+            }
 
-            $scope.changeDueDate2 = function (todo) {
+            function changeDueDate2(todo) {
                 todo.change_due_date2 = (todo.change_due_date2 != true) ? true : false;
-            };
+            }
 
-            $scope.allowDueDateNotification = true;
-            $scope.saveTodoDueDate = function (todo) {
+            function saveTodoDueDate(todo) {
                 todoService.changeTodoDueDate(todo).then(function (data) {
                     if (data['success'] == true) {
                         if ($scope.allowDueDateNotification)
@@ -318,14 +344,13 @@
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
                 });
-            };
+            }
 
-            // Attachment
-            $scope.changeAttachment = function (todo) {
+            function changeAttachment(todo) {
                 todo.change_attachment = (todo.change_attachment != true) ? true : false;
-            };
+            }
 
-            $scope.addAttachment = function (todo, attachment) {
+            function addAttachment(todo, attachment) {
                 var form = {};
                 form.todo_id = $scope.todo_id;
 
@@ -342,33 +367,31 @@
                     }
                     todo.change_attachment = false
                 });
-            };
+            }
 
-            // delete Attachment
-            $scope.deleteAttachment = function (attachment) {
+            function deleteAttachment(attachment) {
                 $scope.currentAttachment = attachment;
                 angular.element('#deleteAttachmentModal').modal();
-            };
+            }
 
-            $scope.confirmDeleteAttachment = function (currentAttachment) {
+            function confirmDeleteAttachment(currentAttachment) {
                 todoService.deleteAttachment(currentAttachment).then(function (data) {
                     var index = $scope.attachments.indexOf(currentAttachment);
                     $scope.attachments.splice(index, 1);
                     angular.element('#deleteAttachmentModal').modal('hide');
                     toaster.pop('success', 'Done', 'Deleted attachment successfully');
                 });
-            };
+            }
 
-            // add member
-            $scope.changeMember = function (todo) {
+            function changeMember(todo) {
                 todo.change_member = (todo.change_member != true) ? true : false;
-            };
+            }
 
-            $scope.changeMember2 = function (todo) {
+            function changeMember2(todo) {
                 todo.change_member2 = (todo.change_member2 != true) ? true : false;
-            };
+            }
 
-            $scope.changeTodoMember = function (todo, member) {
+            function changeTodoMember(todo, member) {
 
                 var is_existed = false;
                 var existed_key;
@@ -401,9 +424,9 @@
                     });
                 }
 
-            };
+            }
 
-            $scope.refresh_todo_activity = function () {
+            function refresh_todo_activity() {
                 todoService.getTodoActivity($scope.todo_id, $scope.current_activity).then(function (data) {
                     if (data != null) {
                         if (data['activities'].length) {
@@ -414,9 +437,9 @@
                         }
                     }
                 })
-            };
+            }
 
-            $scope.isInArray = function (array, item) {
+            function isInArray(array, item) {
                 var is_existed = false;
                 angular.forEach(array, function (value, key2) {
                     if (value == item) {
@@ -424,11 +447,16 @@
                     }
                 });
                 return is_existed;
-            };
+            }
 
-            // check sharing problem
-            $scope.checkSharedProblem = function (problem, sharing_patients) {
-                if ($scope.patient_id == $scope.user_id || ($scope.active_user.hasOwnProperty('role') && $scope.active_user.role != 'patient')) {
+            /**
+             * TODO: Active user is not finished fetching
+             * @param problem
+             * @param sharing_patients
+             * @returns {boolean}
+             */
+            function checkSharedProblem(problem, sharing_patients) {
+                if ($scope.patient_id == $scope.user_id || ($scope.active_user && $scope.active_user.role != 'patient')) {
                     return true;
                 } else {
                     var is_existed = false;
@@ -440,14 +468,9 @@
 
                     return is_existed;
                 }
-            };
+            }
 
-            /**
-             *
-             * @param document
-             * @param todo
-             */
-            $scope.deleteDocumentTag = function (document, todo) {
+            function deleteDocumentTag(document, todo) {
                 ngDialog.openConfirm({
                     template: 'delete-document-tag',
                     showClose: false
@@ -466,9 +489,9 @@
                 }, function (error) {
                     console.log('user cancel');
                 });
-            };
+            }
 
-            $scope.deleteDocument = function (document, todo) {
+            function deleteDocument(document, todo) {
                 ngDialog.openConfirm({
                     template: 'delete-document',
                     showClose: false
@@ -489,6 +512,7 @@
                 });
             }
 
+            $scope.init();
         });
     /* End of controller */
 

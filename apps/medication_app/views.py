@@ -1,3 +1,4 @@
+import reversion
 from rest_framework.decorators import api_view
 
 from common.views import *
@@ -37,15 +38,22 @@ def get_medications(request, patient_id):
 @login_required
 def get_medication(request, patient_id, medication_id):
     resp = {'success': False}
+    history_list = []
 
     if permissions_accessed(request.user, int(patient_id)):
         try:
             medication = Medication.objects.get(id=medication_id)
+            reversion_list = reversion.get_for_object(medication)
+            for item in reversion_list:
+                history_list.append({
+                    'date': item.revision.date_created.isoformat(),
+                    'comment': item.revision.comment
+                })
         except Medication.DoesNotExist:
             pass
-
         resp['success'] = True
         resp['info'] = MedicationSerializer(medication).data
+        resp['history'] = history_list
     return ajax_response(resp)
 
 
@@ -160,7 +168,7 @@ def change_active_medication(request, patient_id, medication_id):
 @login_required
 def change_dosage(request, patient_id, medication_id):
     """
-
+    Change dosage in medication detail page
     :param medication_id:
     :param patient_id:
     :param request:
@@ -169,16 +177,20 @@ def change_dosage(request, patient_id, medication_id):
     resp = {'success': False}
     json_body = json.loads(request.body)
 
-    # TODO: Permission checking
-
     medication = Medication.objects.get(id=medication_id)
+
     old_medication_name = medication.name
+
     medication.name = json_body.get('name')  # 'name' is required request parameter
     medication.search_str = json_body.get('search_str')  # 'search_str' is required request parameter
     medication.concept_id = json_body.get('concept_id', None)
-    medication.save()
 
-    # TODO: Save change to django-reversion model history
+    comment = "{0} was changed to {1}".format(old_medication_name, medication.name)
+    with reversion.create_revision():
+        medication.save()
+        reversion.set_user(request.user)
+        reversion.set_comment(comment)
+
     # Refer: https://trello.com/c/W0rCwqtj
     # Create an todo related to this medication changing
     todo = ToDo()
@@ -188,6 +200,8 @@ def change_dosage(request, patient_id, medication_id):
     todo.medication = medication
     todo.save()
 
+    # Return data
     resp['medication'] = MedicationSerializer(medication).data
+    resp['history'] = {'date': datetime.now().isoformat(), 'comment': comment}
     resp['success'] = True
     return ajax_response(resp)

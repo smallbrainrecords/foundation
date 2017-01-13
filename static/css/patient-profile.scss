@@ -1,4 +1,5 @@
 @import "../apps/todo/todo.scss";
+@import "../apps/medication/medication.scss";
 
 body {
   padding-top: 70px;
@@ -423,5 +424,17 @@ inr-bfdi {
   margin-bottom: 20px;
   label, textarea, button {
     margin-bottom: 10px;
+  }
+}
+
+.audit-log {
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+  margin: 0;
+  &:last-child {
+    border: none;
+  }
+  .datetime{
+    font-weight: bold;
   }
 }

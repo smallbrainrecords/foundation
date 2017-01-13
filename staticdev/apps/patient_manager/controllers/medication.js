@@ -7,51 +7,62 @@
         .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, sharedService,
                                                 toaster, $location, patientService, $filter, medicationService, prompt) {
             // Properties
+            $scope.user_id = $('#user_id').val();
             $scope.patient_id = $('#patient_id').val();
             $scope.showMedicationSearch = false;
             $scope.show_medication_history = false;
             $scope.medication_id = $routeParams.medication_id;
-            sharedService.initHotkey($scope);
+            // Containing edit history of this medication record including: Status changing, Dosage changing and note changing, pinned problem
+            $scope.medicationHistory = [];
+            $scope.show_pin_to_new_problem = false;
 
+            $scope.init = init;
+            $scope.see_medication_history = see_medication_history;
+            $scope.add_note = add_note;
+            $scope.edit_note = edit_note;
+            $scope.save_note = save_note;
+            $scope.delete_note = delete_note;
+            $scope.isInPins = isInPins;
+            $scope.toggle_pin_to_new_problem = toggle_pin_to_new_problem;
+            $scope.medication_pin_to_problem = medication_pin_to_problem;
+            $scope.open_problem = open_problem;
+            $scope.change_active_medication = change_active_medication;
+            $scope.changeDosage = changeDosage;
 
             // Method definition
-            patientService.fetchActiveUser().then(function (data) {
-                $scope.active_user = data['user_profile'];
-            });
+            function init() {
+                sharedService.initHotkey($scope);
 
-            medicationService.fetchMedicationInfo($scope.patient_id, $scope.medication_id).then(function (data) {
-                $scope.medication = data['info'];
-            });
+                patientService.fetchActiveUser().then(function (data) {
+                    $scope.active_user = data['user_profile'];
+                });
 
-            $scope.dosage_increase = function () {
-                if ($scope.medication.concept_id == null) {
-                    prompt({
-                        "message": "This is largest dosage form"
-                    }).then(function (result) {
-                        return false;
-                    }, function () {
-                        return false;
+                medicationService.fetchMedicationInfo($scope.patient_id, $scope.medication_id).then(function (data) {
+                    $scope.medication = data['info'];
+                    $scope.medicationHistory = data['history']
+                });
+
+                // pin to problem
+                problemService.fetchProblems($scope.patient_id).then(function (data) {
+                    $scope.problems = data['problems'];
+
+                    medicationService.fetchPinToProblem($scope.medication_id).then(function (data) {
+                        $scope.pins = data['pins'];
+
+                        angular.forEach($scope.problems, function (problem) {
+                            if ($scope.isInPins($scope.pins, problem)) {
+                                problem.pin = true;
+                            }
+                        });
                     });
-                }
-            };
+                });
+            }
 
-            $scope.dosage_decrease = function () {
-                if ($scope.medication.concept_id == null) {
-                    prompt({
-                        "message": "This is smallest dosage form"
-                    }).then(function (result) {
-                        return false;
-                    }, function () {
-                        return false;
-                    });
-                }
-            };
-
-            $scope.see_medication_history = function () {
+            function see_medication_history() {
                 $scope.medication.show_medication_history = !$scope.medication.show_medication_history;
-            };
+            }
 
-            $scope.add_note = function (form, oldNote) {
+            function add_note(form, oldNote) {
                 if (form.note == '') return;
                 form.medication_id = $scope.medication.id;
                 form.patient_id = $scope.patient_id;
@@ -61,20 +72,20 @@
                         form.note = oldNote;
                     toaster.pop('success', 'Done', 'Added note!');
                 });
-            };
+            }
 
-            $scope.edit_note = function (note) {
+            function edit_note(note) {
                 note.show_edit_note = !note.show_edit_note;
-            };
+            }
 
-            $scope.save_note = function (note) {
+            function save_note(note) {
                 medicationService.editNote(note).then(function (data) {
                     note.show_edit_note = false;
                     toaster.pop('success', 'Done', 'Edited note successfully');
                 });
-            };
+            }
 
-            $scope.delete_note = function (note) {
+            function delete_note(note) {
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
@@ -87,25 +98,9 @@
                 }, function () {
                     return false;
                 });
-            };
+            }
 
-
-            // pin to problem
-            problemService.fetchProblems($scope.patient_id).then(function (data) {
-                $scope.problems = data['problems'];
-
-                medicationService.fetchPinToProblem($scope.medication_id).then(function (data) {
-                    $scope.pins = data['pins'];
-
-                    angular.forEach($scope.problems, function (problem) {
-                        if ($scope.isInPins($scope.pins, problem)) {
-                            problem.pin = true;
-                        }
-                    });
-                });
-            });
-
-            $scope.isInPins = function (array, item) {
+            function isInPins(array, item) {
                 var is_existed = false;
                 angular.forEach(array, function (value, key2) {
                     if (value.problem == item.id) {
@@ -113,17 +108,13 @@
                     }
                 });
                 return is_existed;
-            };
+            }
 
-            /*
-             * toggle pin to new problem, display list of current patient problems
-             */
-            $scope.show_pin_to_new_problem = false;
-            $scope.toggle_pin_to_new_problem = function () {
+            function toggle_pin_to_new_problem() {
                 $scope.show_pin_to_new_problem = !$scope.show_pin_to_new_problem;
-            };
+            }
 
-            $scope.medication_pin_to_problem = function (medication_id, problem_id) {
+            function medication_pin_to_problem(medication_id, problem_id) {
                 var form = {};
                 form.medication_id = medication_id;
                 form.problem_id = problem_id;
@@ -137,37 +128,34 @@
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
                 });
-            };
+            }
 
-            $scope.open_problem = function (problem) {
+            function open_problem(problem) {
                 $location.path('/problem/' + problem.id);
-            };
+            }
 
-            $scope.change_active_medication = function () {
-                medicationService.changeActiveMedication($scope.patient_id, $scope.medication_id).then(function (data) {
-                    toaster.pop('success', 'Done', 'Changed successfully!');
-                });
-            };
+            function change_active_medication() {
+                medicationService.changeActiveMedication($scope.patient_id, $scope.medication_id)
+                    .then(function (response) {
+                        toaster.pop('success', 'Done', 'Changed successfully!');
+                    });
+            }
 
-
-            /**
-             * Change new dosage
-             * @param medication
-             */
-            $scope.changeDosage = function (medication) {
+            function changeDosage(medication) {
                 medicationService.changeDosage($scope.patient_id, $scope.medication.id, medication)
                     .then(function (response) {
                         if (response.data.success) {
                             toaster.pop('success', 'Done', 'Changed successfully!');
-                            $scope.medication = response.data.medication;
                             $scope.showMedicationSearch = false;
+                            $scope.medication = response.data.medication;
+                            $scope.medicationHistory.unshift(response.data.history)
                         } else {
                             toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-
                         }
                     });
             }
 
+            $scope.init();
         });
     /* End of controller */
 })();

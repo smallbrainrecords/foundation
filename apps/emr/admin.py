@@ -171,3 +171,6 @@ admin.site.register(Inr)
 admin.site.register(MedicationPinToProblem)
 admin.site.register(MedicationTextNote)
 admin.site.register(InrTextNote)
+
+# TODO: AnhDN(1/12/2017) Need to understand why need to patch_admin to able to view reversion from other app
+patch_admin(Medication)
