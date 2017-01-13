@@ -1,7 +1,7 @@
 <div class="todos-container" ng-show='problem_todos.length'>
     <!-- begin sortable -->
     <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
-        <li ng-repeat="item in problem_todos | filter :{'accomplished':accomplished} track by $index"
+        <li ng-repeat="item in problem_todos | filter :{'accomplished':accomplished} | orderBy: 'new_tagged':true track by $index"
             class="list-group-item todo"
             ng-class="item.new_tagged ?'new-tagged-todo':''"
             ng-click="open_todo(item)">
