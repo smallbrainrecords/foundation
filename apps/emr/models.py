@@ -305,8 +305,11 @@ class Problem(MPTTModel):
     authenticated = models.BooleanField(default=False)
     start_date = models.DateField(auto_now_add=True)
     start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
-    labels = models.ManyToManyField(ProblemLabel, blank=True)
     old_problem_name = models.CharField(max_length=200, blank=True, null=True)
+
+    labels = models.ManyToManyField(ProblemLabel, blank=True)
+    medications = models.ManyToManyField('Medication',through='MedicationPinToProblem')
+
     objects = ProblemManager()
 
     def __unicode__(self):
@@ -406,20 +409,36 @@ class Label(models.Model):
 
 
 class ToDo(models.Model):
-    patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient")
-    user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")
-    problem = models.ForeignKey(Problem, null=True, blank=True)
-    a1c = models.ForeignKey("AOneC", null=True, blank=True, related_name="a1c_todos")
-    colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos")
+    """
+    CORE MODELS \n
+    The task or 'todo' is a functional unit of care.
+    Tasks are typically more discrete or focused than goals:
+    changing a medication, getting some blood-work, starting physical therapy, checking blood pressure at home ...
+    Tasks can be associated with a problem but are not required to have this association.
+    Tasks are accomplished or not (true or false).
+    Tasks have the capacity to be commented on by users.
+    Tasks can be assigned to members of the care team.
+    Tasks can have a due date.
+    Tasks can have media files attached to them.
+    Tasks that are associated with a problem are part of that problem's activity log.
+    Tasks that are added or accomplished during an encounter are timestamped for that encounter and create annotations for that encounters media file.
+    """
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
-    notes = models.ManyToManyField(TextNote, blank=True)
     due_date = models.DateField(blank=True, null=True)
     order = models.BigIntegerField(null=True, blank=True)  # Position in normal todo list
-    # TODO: Dedicated to be remove or specific immediate table candidate: TaggedTodoOrder -> TodoMembership
-    members = models.ManyToManyField(UserProfile, blank=True)  # Clinical staff involved this todo.
+
+    user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")  # Author
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient")
     labels = models.ManyToManyField(Label, blank=True)
-    created_at = models.PositiveIntegerField(choices=BELONG_TO, default=0)  # Place where todo is generated
+    a1c = models.ForeignKey("AOneC", null=True, blank=True, related_name="a1c_todos")
+    problem = models.ForeignKey(Problem, null=True, blank=True)
+    colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos")
+    notes = models.ManyToManyField(TextNote, blank=True)  # aka comment should 1-n relation
+    members = models.ManyToManyField(UserProfile, blank=True)  # Tagged clinical staff (change to TaggedTodoOrder)
+    medication = models.ForeignKey("Medication", null=True)
+
+    created_at = models.PositiveIntegerField(choices=BELONG_TO, default=0)  # Place where todo is generated -> removed
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     objects = TodoManager()

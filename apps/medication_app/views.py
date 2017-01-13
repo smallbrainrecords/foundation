@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Medication, MedicationTextNote, MedicationPinToProblem
+from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo
 from emr.mysnomedct import SnomedctConnector
 from users_app.views import permissions_accessed
 from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
@@ -172,13 +172,21 @@ def change_dosage(request, patient_id, medication_id):
     # TODO: Permission checking
 
     medication = Medication.objects.get(id=medication_id)
+    old_medication_name = medication.name
     medication.name = json_body.get('name')  # 'name' is required request parameter
     medication.search_str = json_body.get('search_str')  # 'search_str' is required request parameter
     medication.concept_id = json_body.get('concept_id', None)
-
     medication.save()
 
     # TODO: Save change to django-reversion model history
+    # Refer: https://trello.com/c/W0rCwqtj
+    # Create an todo related to this medication changing
+    todo = ToDo()
+    todo.todo = "Medication name changed from {0} to {1}".format(old_medication_name, medication.name)
+    todo.user = request.user
+    todo.patient_id = patient_id
+    todo.medication = medication
+    todo.save()
 
     resp['medication'] = MedicationSerializer(medication).data
     resp['success'] = True

@@ -15,7 +15,7 @@ from a1c_app.serializers import AOneCSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
 from common.views import *
 from data_app.serializers import ObservationPinToProblemSerializer, ObservationSerializer
-from emr.models import ColonCancerScreening
+from emr.models import ColonCancerScreening, Medication
 from emr.models import Encounter
 from emr.models import Goal, ToDo, TextNote, PatientImage, Label
 from emr.models import MedicationPinToProblem
@@ -56,9 +56,16 @@ def track_problem_click(request, problem_id):
     return ajax_response(resp)
 
 
-# Problem
 @login_required
 def get_problem_info(request, problem_id):
+    """
+    Loading problem details
+    :param request:
+    :param problem_id:
+    :return:
+    """
+    medication_todo_set = []
+
     problem_info = Problem.objects.select_related("patient").prefetch_related(
         "goal_set",
         "patientimage_set",
@@ -66,8 +73,12 @@ def get_problem_info(request, problem_id):
         "problemactivity_set",
         "problem_encounter_records",
         "problem_aonecs",
+        Prefetch("medications",queryset=Medication.objects.only("id").all()),
         Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
     ).get(id=problem_id)
+
+    for medication in problem_info.medications.all():
+        medication_todo_set += medication.todo_set.all()
 
     # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
     if problem_info.concept_id in ['73211009', '46635009', '44054006']:
@@ -99,7 +110,7 @@ def get_problem_info(request, problem_id):
         'patient_notes': patient_note_holder,
         'physician_notes': physician_note_holder,
         'problem_goals': serialized_problem["problem_goals"],
-        'problem_todos': serialized_problem["problem_todos"],
+        'problem_todos': serialized_problem["problem_todos"] + TodoSerializer(medication_todo_set,many=True).data,
         'problem_images': serialized_problem["problem_images"],
         'effecting_problems': serialized_problem["effecting_problems"],
         'effected_problems': serialized_problem["effected_problems"],
@@ -224,7 +235,7 @@ def change_name(request, problem_id):
     old_problem_name = problem.problem_name
     if datetime.now() > datetime.strptime(
                             problem.start_date.strftime('%d/%m/%Y') + ' ' + problem.start_time.strftime('%H:%M:%S'),
-                            "%d/%m/%Y %H:%M:%S") + timedelta(hours=24):
+            "%d/%m/%Y %H:%M:%S") + timedelta(hours=24):
         problem.old_problem_name = old_problem_name
 
     problem.problem_name = term
@@ -235,13 +246,13 @@ def change_name(request, problem_id):
 
     if old_problem_concept_id and problem.concept_id:
         summary = '<b>%s (%s)</b> was changed to <b>%s (%s)</b>' % (
-        old_problem_name, old_problem_concept_id, problem.problem_name, problem.concept_id)
+            old_problem_name, old_problem_concept_id, problem.problem_name, problem.concept_id)
     elif old_problem_concept_id:
         summary = '<b>%s (%s)</b> was changed to <b>%s</b>' % (
-        old_problem_name, old_problem_concept_id, problem.problem_name)
+            old_problem_name, old_problem_concept_id, problem.problem_name)
     elif problem.concept_id:
         summary = '<b>%s</b> was changed to <b>%s (%s)</b>' % (
-        old_problem_name, problem.problem_name, problem.concept_id)
+            old_problem_name, problem.problem_name, problem.concept_id)
     else:
         summary = '<b>%s</b> was changed to <b>%s</b>' % (old_problem_name, problem.problem_name)
 
@@ -308,7 +319,7 @@ def update_start_date(request, problem_id):
     physician = request.user
     patient = problem.patient
     summary = '''Changed <u>problem</u> : <b>%s</b> start date to <b>%s</b>''' % (
-    problem.problem_name, problem.start_date)
+        problem.problem_name, problem.start_date)
     op_add_event(physician, patient, summary, problem)
     activity = summary
     add_problem_activity(problem, actor_profile, activity)
@@ -523,14 +534,14 @@ def add_problem_todo(request, problem_id):
     physician = request.user
 
     summary = '''Added <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> to <u>problem</u> : <b>%s</b>''' % (
-    new_todo.id, todo, problem.problem_name)
+        new_todo.id, todo, problem.problem_name)
     op_add_event(physician, patient, summary, problem)
 
     activity = summary
     add_problem_activity(problem, actor_profile, activity, 'output')
 
     summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (
-    new_todo.id, new_todo.todo, problem.problem_name)
+        new_todo.id, new_todo.todo, problem.problem_name)
     op_add_todo_event(physician, patient, summary, new_todo, True)
     # todo activity
     activity = '''
@@ -624,11 +635,11 @@ def relate_problem(request):
         except ProblemRelationship.DoesNotExist:
             problem_relationship = ProblemRelationship.objects.create(source=source, target=target)
             activity = '''Created Problem Relationship: <b>%s</b> effects <b>%s</b>''' % (
-            source.problem_name, target.problem_name)
+                source.problem_name, target.problem_name)
     else:
         ProblemRelationship.objects.get(source=source, target=target).delete()
         activity = '''Removed Problem Relationship: <b>%s</b> effects <b>%s</b>''' % (
-        source.problem_name, target.problem_name)
+            source.problem_name, target.problem_name)
 
     if activity:
         add_problem_activity(source, actor_profile, activity)
@@ -656,7 +667,7 @@ def update_by_ptw(request):
 
         physician = request.user
         summary = '''Changed <u>problem</u> :<b>%s</b> start date to <b>%s</b>''' % (
-        problem.problem_name, problem.start_date)
+            problem.problem_name, problem.start_date)
         op_add_event(physician, patient, summary, problem)
         activity = summary
         add_problem_activity(problem, actor_profile, activity)
