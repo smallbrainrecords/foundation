@@ -61,14 +61,19 @@ def get_medication(request, patient_id, medication_id):
 @api_view(["POST"])
 def add_medication(request, patient_id):
     resp = {'success': False}
-    if permissions_accessed(request.user, int(patient_id)):
-        patient_user = User.objects.get(id=patient_id)
+
+    medication_name = request.POST.get("name")
+    concept_id = request.POST.get("concept_id", "")
+    search_string = request.POST.get("search_str", "")
+    patient_user = User.objects.get(id=patient_id)
+
+    if permissions_accessed(request.user, int(patient_id)) and medication_name:
         medication = Medication()
         medication.author = request.user.profile
         medication.patient = patient_user.profile
-        medication.name = request.POST.get("name", None)
-        medication.concept_id = request.POST.get("concept_id", None)
-        medication.search_str = request.POST.get("search_str", "")
+        medication.name = medication_name
+        medication.concept_id = concept_id
+        medication.search_str = search_string
         medication.save()
 
         resp['medication'] = MedicationSerializer(medication).data

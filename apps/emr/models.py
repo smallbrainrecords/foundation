@@ -953,7 +953,7 @@ class InrTextNote(models.Model):
 class Medication(models.Model):
     author = models.ForeignKey(UserProfile, related_name='author_medications')
     patient = models.ForeignKey(UserProfile, related_name="patient_medications", blank=True, null=True)
-    name = models.TextField(null=True, blank=True)
+    name = models.TextField()
     concept_id = models.CharField(max_length=20, blank=True, null=True)
     current = models.BooleanField(default=True)
     # Store original medication search string for change dosage function

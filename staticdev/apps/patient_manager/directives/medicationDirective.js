@@ -42,17 +42,24 @@ function medicationDirective(CollapseService, toaster, $location, $timeout, prom
 
 
             scope.add_medication = function (form) {
-                if (form.name == '') return;
+                // Preventing adding medication with empty name
+                if (form.name == '')
+                    return;
+
                 form.search_str = scope.manual_medication.name;
                 form.patient_id = scope.patient_id;
                 medicationService.addMedication(form).then(function (data) {
-                    scope.medications.push(data['medication']);
-                    form.name = '';
-                    scope.unset_new_medication();
-                    toaster.pop('success', 'Done', 'Added medication!');
-                    // Reset medication search terms after added to item
-                    scope.manual_medication = {};
-                    scope.medication_terms = [];
+                    if (data.success) {
+                        toaster.pop('success', 'Done', 'Added medication!');
+                        scope.medications.push(data['medication']);
+                        form.name = '';
+                        scope.unset_new_medication();
+                        // Reset medication search terms after added to item
+                        scope.manual_medication = {};
+                        scope.medication_terms = [];
+                    } else {
+                        toaster.pop('error', 'Error', 'Medication name cannot empty');
+                    }
                 });
             };
 
