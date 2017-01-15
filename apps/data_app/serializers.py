@@ -66,7 +66,10 @@ class ObservationValueSerializer(serializers.ModelSerializer):
         return obj.component.observation.id
 
     def get_value_quantity(self, obj):
-        return "%g" % float(obj.value_quantity)
+        if obj.value_quantity is not None:
+            return "%g" % float(obj.value_quantity)
+        else:
+            return 0
 
 
 class ObservationComponentSerializer(serializers.ModelSerializer):

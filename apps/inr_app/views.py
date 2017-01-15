@@ -188,7 +188,7 @@ def get_inr_table(request, patient_id):
     row = json_body.get('row')
 
     observation_value = ObservationValue.objects.filter(component__component_code='6301-6') \
-        .filter(component__observation__subject_id=patient_id).order_by('-created_on')
+        .filter(component__observation__subject_id=patient_id).order_by('-effective_datetime')
 
     if 0 == row:
         resp['inrs'] = InrSerializer(observation_value, many=True).data
