@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
-                                              dataService, medicationService, inrService) {
+                                              dataService, medicationService, CollapseService) {
 
 
             $scope.patient_id = $('#patient_id').val();
@@ -97,6 +97,7 @@
             $scope.open_change_medication = open_change_medication;
             $scope.close_change_medication = close_change_medication;
             $scope.medication_pin_to_problem = medication_pin_to_problem;
+            $scope.goToMedicationTab = goToMedicationTab;
             $scope.init = init;
 
             // METHOD DEFINITION
@@ -1217,6 +1218,10 @@
                 });
             }
 
+            function goToMedicationTab(){
+                CollapseService.ChangeHomepageTab('medication');
+                $location.path('/');
+            }
             $scope.init();
 
             $scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function (nV, oV) {
