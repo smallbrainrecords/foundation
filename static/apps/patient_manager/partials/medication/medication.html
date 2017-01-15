@@ -48,12 +48,14 @@
 
             <!-- Medication's history -->
             <div class="row" ng-if="medication.show_medication_history">
-                <div class='col-md-12'>
+                <div class='col-md-6'>
                     <label>History of dosages: </label>
                     <p ng-repeat="record in medicationHistory track by $index" class="audit-log">
-                        On <span class="datetime" ng-bind="record.date | date:'MM/d/yyyy'"></span> <span
-                            ng-bind="record.comment"></span>
+                        <span ng-bind="record.comment"></span>
                     </p>
+                </div>
+                <div class="col-md-6">
+                    <label>Note:</label>
                 </div>
             </div>
 
