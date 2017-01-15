@@ -48,14 +48,30 @@
 
             <!-- Medication's history -->
             <div class="row" ng-if="medication.show_medication_history">
+                <!--Dosage history-->
                 <div class='col-md-6'>
                     <label>History of dosages: </label>
-                    <p ng-repeat="record in medicationHistory track by $index" class="audit-log">
+                    <p ng-repeat="record in medicationHistory  | orderBy:'date':true track by $index" class="audit-log">
                         <span ng-bind="record.comment"></span>
                     </p>
                 </div>
+                <!--Note history-->
                 <div class="col-md-6">
                     <label>Note:</label>
+                    <div ng-repeat="record in medicationNoteHistory | orderBy:'datetime':true track by $index"
+                         class="audit-log"
+                         ng-init="record.editMode=false">
+                        <div ng-show="!record.editMode">
+                            <span ng-bind="record.note"></span>
+                            <button class="btn btn-default" ng-click="record.editMode=!record.editMode">Edit</button>
+                            <button class="btn btn-danger" ng-click="deleteNoteHistory(record);">Delete</button>
+                        </div>
+                        <div ng-show="record.editMode">
+                            <input type='text' class='form-control' ng-model='record.note' title="">
+                            <button class="btn btn-primary" ng-click="updateNoteHistory(record);">Save</button>
+                            <button class="btn btn-danger" ng-click="record.editMode=!record.editMode">Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

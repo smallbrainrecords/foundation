@@ -49,11 +49,15 @@ def get_medication(request, patient_id, medication_id):
                     'date': item.revision.date_created.isoformat(),
                     'comment': item.revision.comment
                 })
+            notes = MedicationTextNote.objects.filter(medication_id=medication_id).order_by('-datetime')
         except Medication.DoesNotExist:
             pass
+
         resp['success'] = True
         resp['info'] = MedicationSerializer(medication).data
         resp['history'] = history_list
+        resp['noteHistory'] = MedicationTextNoteSerializer(notes, many=True).data
+
     return ajax_response(resp)
 
 
@@ -199,7 +203,8 @@ def change_dosage(request, patient_id, medication_id):
     # Refer: https://trello.com/c/W0rCwqtj
     # Create an todo related to this medication changing
     todo = ToDo()
-    todo.todo = "Medication name changed from {0} to {1} by {2}".format(old_medication_name, medication.name,request.user.profile.__str__())
+    todo.todo = "Medication name changed from {0} to {1} by {2}".format(old_medication_name, medication.name,
+                                                                        request.user.profile.__str__())
     todo.user = request.user
     todo.patient_id = patient_id
     todo.medication = medication

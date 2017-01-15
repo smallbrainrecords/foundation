@@ -6,8 +6,7 @@
         function ($http, $q, $cookies, httpService) {
 
             this.csrf_token = function () {
-                var token = $cookies.get('csrftoken');
-                return token;
+                return $cookies.get('csrftoken');
             };
 
             this.addMedication = function (form) {
@@ -63,9 +62,10 @@
 
             /**
              * Change medication dosage
-             * @param patient_id
-             * @param medication
              * @returns {HttpPromise}
+             * @param patientId
+             * @param medicationId
+             * @param medicationObj
              */
             this.changeDosage = function (patientId, medicationId, medicationObj) {
                 var url = '/medication/' + patientId + '/' + medicationId + '/change_dosage';

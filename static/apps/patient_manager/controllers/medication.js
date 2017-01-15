@@ -14,20 +14,20 @@
             $scope.medication_id = $routeParams.medication_id;
             // Containing edit history of this medication record including: Status changing, Dosage changing and note changing, pinned problem
             $scope.medicationHistory = [];
+            $scope.medicationNoteHistory = [];
             $scope.show_pin_to_new_problem = false;
 
             $scope.init = init;
             $scope.see_medication_history = see_medication_history;
             $scope.add_note = add_note;
-            $scope.edit_note = edit_note;
-            $scope.save_note = save_note;
-            $scope.delete_note = delete_note;
             $scope.isInPins = isInPins;
             $scope.toggle_pin_to_new_problem = toggle_pin_to_new_problem;
             $scope.medication_pin_to_problem = medication_pin_to_problem;
             $scope.open_problem = open_problem;
             $scope.change_active_medication = change_active_medication;
             $scope.changeDosage = changeDosage;
+            $scope.updateNoteHistory = updateNoteHistory;
+            $scope.deleteNoteHistory = deleteNoteHistory;
 
             // Method definition
             function init() {
@@ -39,7 +39,8 @@
 
                 medicationService.fetchMedicationInfo($scope.patient_id, $scope.medication_id).then(function (data) {
                     $scope.medication = data['info'];
-                    $scope.medicationHistory = data['history']
+                    $scope.medicationHistory = data['history'];
+                    $scope.medicationNoteHistory = data['noteHistory'];
                 });
 
                 // pin to problem
@@ -67,36 +68,10 @@
                 form.medication_id = $scope.medication.id;
                 form.patient_id = $scope.patient_id;
                 medicationService.addMedicationNote(form).then(function (data) {
-                    $scope.medication.medication_notes.push(data['note']);
+                    $scope.medicationNoteHistory.push(data['note']);
                     if (typeof oldNote !== 'undefined')
                         form.note = oldNote;
                     toaster.pop('success', 'Done', 'Added note!');
-                });
-            }
-
-            function edit_note(note) {
-                note.show_edit_note = !note.show_edit_note;
-            }
-
-            function save_note(note) {
-                medicationService.editNote(note).then(function (data) {
-                    note.show_edit_note = false;
-                    toaster.pop('success', 'Done', 'Edited note successfully');
-                });
-            }
-
-            function delete_note(note) {
-                prompt({
-                    "title": "Are you sure?",
-                    "message": "Deleting a note is forever. There is no undo."
-                }).then(function (result) {
-                    medicationService.deleteNote(note).then(function (data) {
-                        var index = $scope.medication.medication_notes.indexOf(note);
-                        $scope.medication.medication_notes.splice(index, 1);
-                        toaster.pop('success', 'Done', 'Deleted note successfully');
-                    });
-                }, function () {
-                    return false;
                 });
             }
 
@@ -153,6 +128,30 @@
                             toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                         }
                     });
+            }
+
+            function updateNoteHistory(note) {
+                medicationService.editNote(note)
+                    .then(function (data) {
+                        note.editMode = false;
+                        toaster.pop('success', 'Done', 'Edited note successfully');
+                    });
+            }
+
+            function deleteNoteHistory(note) {
+                prompt({
+                    "title": "Are you sure?",
+                    "message": "Deleting a note is forever. There is no undo."
+                }).then(function (result) {
+                    medicationService.deleteNote(note)
+                        .then(function (data) {
+                            var index = $scope.medicationNoteHistory.indexOf(note);
+                            $scope.medicationNoteHistory.splice(index, 1);
+                            toaster.pop('success', 'Done', 'Deleted note successfully');
+                        });
+                }, function () {
+                    return false;
+                });
             }
 
             $scope.init();
