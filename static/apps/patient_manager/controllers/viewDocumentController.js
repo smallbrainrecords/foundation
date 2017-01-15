@@ -153,7 +153,7 @@
          * Initialize data for this view document page
          */
         function init() {
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             // patientService.fetchActiveUser().then(function (data) {
             //     $scope.active_user = data['user_profile'];

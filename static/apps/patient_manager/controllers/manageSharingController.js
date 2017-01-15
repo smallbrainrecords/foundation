@@ -25,7 +25,7 @@
                 patientService.getSharingPatients($scope.patient_id).then(function (data) {
                     $scope.sharing_patients = data['sharing_patients'];
                 });
-                sharedService.initHotkey($scope);
+                //sharedService.initHotkey($scope);
 
             };
 
@@ -106,7 +106,7 @@
                 $scope.is_my_story_shared = data['is_my_story_shared'];
             });
 
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             $scope.inArray = function (array, item) {
                 var is_existed = false;

@@ -11,7 +11,7 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.a1c_id = $routeParams.a1c_id;
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             a1cService.fetchA1cInfo($scope.a1c_id).then(function (data) {
                 $scope.a1c = data['info'];
@@ -51,7 +51,7 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.a1c_id = $routeParams.a1c_id;
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             a1cService.fetchA1cInfo($scope.a1c_id).then(function (data) {
                 $scope.a1c = data['info'];
@@ -140,7 +140,7 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.a1c_id = $routeParams.a1c_id;
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
@@ -176,7 +176,7 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.value_id = $routeParams.value_id;
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
             });

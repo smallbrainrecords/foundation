@@ -25,7 +25,7 @@
 
 
                 $scope.files = {};
-                sharedService.initHotkey($scope);
+                //sharedService.initHotkey($scope);
             };
 
 

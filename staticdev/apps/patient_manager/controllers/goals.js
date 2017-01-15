@@ -19,7 +19,7 @@
             $scope.edit_goal = false;
             $scope.new_goal_name = null;
 
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             patientService.fetchActiveUser().then(function (data) {
 

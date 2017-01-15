@@ -7,8 +7,6 @@
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
                                               dataService, medicationService, CollapseService) {
-
-
             $scope.patient_id = $('#patient_id').val();
             $scope.user_id =  $('#user_id').val();
             $scope.inrWidgetExist = false;
@@ -103,7 +101,7 @@
             // METHOD DEFINITION
 
             function init() {
-                sharedService.initHotkey($scope);
+                //sharedService.initHotkey($scope);
 
                 patientService.fetchActiveUser().then(function (data) {
                     $scope.active_user = data['user_profile'];

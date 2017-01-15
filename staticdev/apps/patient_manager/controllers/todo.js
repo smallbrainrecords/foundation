@@ -64,7 +64,7 @@
 
             function init() {
 
-                sharedService.initHotkey($scope);
+                //sharedService.initHotkey($scope);
 
                 todoService.fetchTodoInfo($scope.todo_id).then(function (data) {
                     $scope.todo = data['info'];

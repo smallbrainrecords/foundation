@@ -13,7 +13,7 @@
             var encounter_id = $routeParams.encounter_id;
             $scope.encounter_id = encounter_id;
 
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
 

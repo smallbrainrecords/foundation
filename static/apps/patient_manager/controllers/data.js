@@ -18,7 +18,7 @@
              * @type {string}
              */
             $scope.viewMode = 'Year';
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
             $scope.$watch("viewMode", function (newVal, oldVal) {
                 if (newVal != oldVal) {
                     // Temporary data using for generate graph
@@ -130,7 +130,7 @@
             $scope.data_id = $routeParams.data_id;
             $scope.new_data = {};
             $scope.new_data.date = moment().format("MM/DD/YYYY");
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
 
@@ -174,7 +174,7 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.data_id = $routeParams.data_id;
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
@@ -192,7 +192,7 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.individual_data_id = $routeParams.individual_data_id;
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
 
@@ -254,7 +254,7 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.data_id = $routeParams.data_id;
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];
             });

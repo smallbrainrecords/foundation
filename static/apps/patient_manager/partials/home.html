@@ -97,19 +97,19 @@
 <div class='row'>
     <div class='col-md-12 text-center home-page-tabs'>
         <ul class="nav nav-pills" role="tablist">
-            <li role="presentation" ng-class="show_homepage_tab=='problems' ? 'active': ''">
+            <li role="presentation" ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
                 <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('problems');">Problems</a>
             </li>
-            <li role="presentation" ng-class="show_homepage_tab=='mystory' ? 'active': ''"
+            <li role="presentation" ng-class="collapse.show_homepage_tab=='mystory' ? 'active': ''"
                 ng-if="checkSharedMyStory()">
                 <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('mystory');">My
                     story</a>
             </li>
-            <li role="presentation" ng-class="show_homepage_tab=='data' ? 'active': ''">
+            <li role="presentation" ng-class="collapse.show_homepage_tab=='data' ? 'active': ''">
                 <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('data');">Data</a>
             </li>
             <li role="presentation"
-                ng-class="show_homepage_tab=='medication' ? 'active': ''">
+                ng-class="collapse.show_homepage_tab=='medication' ? 'active': ''">
                 <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('medication');">Medication</a>
             </li>
         </ul>
@@ -131,7 +131,7 @@
     <div class='col-md-12'>
         <div class="tab-content">
             <!-- Problems tab -->
-            <div role="tabpanel" class="tab-pane tab-problems" ng-class="show_homepage_tab=='problems' ? 'active': ''">
+            <div role="tabpanel" class="tab-pane tab-problems" ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
                 <div class='row'>
 
                     <div class='col-md-12'>
@@ -139,7 +139,7 @@
                             <div class='panel-heading'> Problems</div>
                             <div class='panel-body'>
 
-                                <uib-tabset active="innerProblemTabSetActive">
+                                <uib-tabset active="collapse.innerProblemTabSetActive">
                                     <uib-tab index="0" heading="Active Problems">
                                         <div>
                                             <ul class='ul-clean no-padding' ui-sortable="sortableOptionsProblem"
@@ -592,7 +592,7 @@
 
             <!-- story tab -->
             <div role="tabpanel" class="tab-pane tab-mystory"
-                 ng-class="show_homepage_tab=='mystory' ? 'active': ''"
+                 ng-class="collapse.show_homepage_tab=='mystory' ? 'active': ''"
                  ng-if="checkSharedMyStory();">
                 <h3>My Story</h3>
                 <br>
@@ -834,7 +834,7 @@
             <!-- end story tab -->
 
             <!-- data tab -->
-            <div role="tabpanel" class="tab-pane tab-data" ng-class="show_homepage_tab=='data' ? 'active': ''">
+            <div role="tabpanel" class="tab-pane tab-data" ng-class="collapse.show_homepage_tab=='data' ? 'active': ''">
                 <div class='panel panel-default'>
                     <div class='panel-body'>
                         <div class="row">
@@ -1008,7 +1008,7 @@
 
             <!-- medication tab -->
             <div role="tabpanel" class="tab-pane tab-medication"
-                 ng-class="show_homepage_tab=='medication' ? 'active': ''">
+                 ng-class="collapse.show_homepage_tab=='medication' ? 'active': ''">
                 <div class='row' ng-if="medications">
                     <medication ng-model="medications"></medication>
                 </div>

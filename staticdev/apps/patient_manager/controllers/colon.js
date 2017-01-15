@@ -22,7 +22,7 @@
             ];
 
             $scope.results = [];
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
             colonService.fetchColonCancerInfo($scope.colon_id).then(function (data) {
                 $scope.colon_cancer = data['info'];
             });
@@ -116,7 +116,7 @@
             $scope.colon_id = $routeParams.colon_id;
             $scope.study_id = $routeParams.study_id;
             $scope.study = {};
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             $scope.findings = [
                 'fecal occult blood test',
@@ -267,7 +267,7 @@
             var patient_id = $('#patient_id').val();
             $scope.patient_id = patient_id;
             $scope.colon_id = $routeParams.colon_id;
-            sharedService.initHotkey($scope);
+            //sharedService.initHotkey($scope);
 
             patientService.fetchActiveUser().then(function (data) {
                 $scope.active_user = data['user_profile'];

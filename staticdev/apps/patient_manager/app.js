@@ -6,7 +6,7 @@
     var ManagerApp = angular.module('ManagerApp',
         ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
             'httpModule', 'sharedModule', 'colon_cancers', 'a1c', 'medication',
-            'todos', 'medication-component', 'inr', 'myTools','document',
+            'todos', 'medication-component', 'inr', 'myTools', 'document',
 
             'timeLine', 'chart.js', 'toaster', 'dndLists', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
@@ -134,32 +134,119 @@
 
     });
 
-    ManagerApp.factory('CollapseService', function () {
-        var CollapseService = {};
+    ManagerApp.run(function (CollapseService, patientService) {
+        console.log('Patient profile');
 
-        CollapseService.show_colon_collapse = false;
-        CollapseService.show_a1c_collapse = false;
-        CollapseService.show_homepage_tab = 'problems'; // problems, my_story, data
-        CollapseService.show_inr_collapse = false;
-
-        CollapseService.ChangeColonCollapse = function () {
-            CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
-        };
-
-        CollapseService.ChangeA1cCollapse = function () {
-            CollapseService.show_a1c_collapse = !CollapseService.show_a1c_collapse;
-        };
-
-        CollapseService.ChangeHomepageTab = function (tab) {
-            CollapseService.show_homepage_tab = tab;
-        };
-
-        CollapseService.ChangeInrCollapse = function () {
-            CollapseService.show_inr_collapse = !CollapseService.show_inr_collapse;
-        };
-
-        return CollapseService;
+        CollapseService.initHotKey();
     });
 
 
+    ManagerApp.factory('CollapseService', function (hotkeys, $location, $timeout, $rootScope) {
+        var CollapseService = {
+            show_colon_collapse: false,
+            show_a1c_collapse: false,
+            show_homepage_tab: 'problems',
+            show_inr_collapse: false,
+            innerProblemTabSetActive: 0,
+            ChangeColonCollapse: ChangeColonCollapse,
+            ChangeA1cCollapse: ChangeA1cCollapse,
+            ChangeHomepageTab: ChangeHomepageTab,
+            ChangeInrCollapse: ChangeInrCollapse,
+            initHotKey: initHotKey
+        };
+        return CollapseService;
+
+        function ChangeColonCollapse() {
+            CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
+        }
+
+        function ChangeA1cCollapse() {
+            CollapseService.show_a1c_collapse = !CollapseService.show_a1c_collapse;
+        }
+
+        function ChangeHomepageTab(tab) {
+            CollapseService.show_homepage_tab = tab;
+        }
+
+        function ChangeInrCollapse() {
+            CollapseService.show_inr_collapse = !CollapseService.show_inr_collapse;
+        }
+
+        function initHotKey() {
+            hotkeys.add({
+                combo: 'ctrl+i',
+                description: 'Go to Problem tab',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    CollapseService.ChangeHomepageTab('problems');
+                    $location.path('/');
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+s',
+                description: 'Go to My story tab',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    CollapseService.ChangeHomepageTab('mystory');
+                    $location.path('/');
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+d',
+                description: 'Go to Data tab',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    CollapseService.ChangeHomepageTab('data');
+                    $location.path('/');
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+m',
+                description: 'Go to Medication tab',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    CollapseService.ChangeHomepageTab('medication');
+                    $location.path('/');
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+shift+i',
+                description: 'Go to add new problem',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    CollapseService.ChangeHomepageTab('problems');
+                    CollapseService.innerProblemTabSetActive = 2;
+                    $location.path('/');
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+shift+m',
+                description: 'Go to add new medication',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    CollapseService.ChangeHomepageTab('medication');
+                    $location.path('/');
+                    $timeout(function () {
+                        $('medication input[type=text]').focus();
+                    }, 500);
+                }
+            });
+
+            hotkeys.add({
+                combo: 'ctrl+c',
+                description: 'Copy most recent encounter to clipboard',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path('/');
+
+                    $rootScope.$broadcast('copyEncounter', {});
+                }
+            });
+        }
+    });
 })();
