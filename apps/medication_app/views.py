@@ -2,8 +2,11 @@ import reversion
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TaggedToDoOrder
+from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TaggedToDoOrder, UserProfile, \
+    TodoActivity
 from emr.mysnomedct import SnomedctConnector
+from emr.operations import op_add_todo_event
+from todo_app.operations import add_todo_activity
 from users_app.views import permissions_accessed
 from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
 
@@ -185,14 +188,15 @@ def change_dosage(request, patient_id, medication_id):
     """
     resp = {'success': False}
     json_body = json.loads(request.body)
+    name = json_body.get('name')
+    search_string = json_body.get('search_str')
+    concept_id = json_body.get('concept_id', None)
 
     medication = Medication.objects.get(id=medication_id)
-
     old_medication_name = medication.name
-
-    medication.name = json_body.get('name')  # 'name' is required request parameter
-    medication.search_str = json_body.get('search_str')  # 'search_str' is required request parameter
-    medication.concept_id = json_body.get('concept_id', None)
+    medication.name = name
+    medication.search_str = search_string
+    medication.concept_id = concept_id
 
     comment = "{0} was changed to {1}".format(old_medication_name, medication.name)
     with reversion.create_revision():
@@ -200,15 +204,12 @@ def change_dosage(request, patient_id, medication_id):
         reversion.set_user(request.user)
         reversion.set_comment(comment)
 
-    # Refer: https://trello.com/c/W0rCwqtj
     # Create an todo related to this medication changing
-    todo = ToDo()
-    todo.todo = "Medication name changed from {0} to {1} by {2}".format(old_medication_name, medication.name,
-                                                                        request.user.profile.__str__())
-    todo.user = request.user
-    todo.patient_id = patient_id
-    todo.medication = medication
+    todo = ToDo(todo="Medication name changed from {0} to {1}".format(old_medication_name, medication.name),
+                user=request.user, patient_id=patient_id, medication=medication)
     todo.save()
+
+    TodoActivity(todo=todo, author=request.user.profile, activity="Added this todo.").save()
 
     # Return data
     resp['medication'] = MedicationSerializer(medication).data
