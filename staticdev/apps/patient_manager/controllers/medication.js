@@ -7,32 +7,34 @@
         .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, sharedService,
                                                 toaster, $location, patientService, $filter, medicationService, prompt) {
             // Properties
+            // TODO: DRY
             $scope.user_id = $('#user_id').val();
             $scope.patient_id = $('#patient_id').val();
+
+
             $scope.showMedicationSearch = false;
-            $scope.show_medication_history = false;
+            $scope.showMedicationHistory = false;
             $scope.medication_id = $routeParams.medication_id;
-            // Containing edit history of this medication record including: Status changing, Dosage changing and note changing, pinned problem
             $scope.medicationHistory = [];
             $scope.medicationNoteHistory = [];
-            $scope.show_pin_to_new_problem = false;
+            $scope.showPinToNewProblem = false;
 
-            $scope.init = init;
-            $scope.see_medication_history = see_medication_history;
-            $scope.add_note = add_note;
+            $scope.seeMedicationHistory = seeMedicationHistory;
+            $scope.addNote = addNote;
             $scope.isInPins = isInPins;
-            $scope.toggle_pin_to_new_problem = toggle_pin_to_new_problem;
-            $scope.medication_pin_to_problem = medication_pin_to_problem;
-            $scope.open_problem = open_problem;
-            $scope.change_active_medication = change_active_medication;
+            $scope.togglePinToNewProblem = togglePinToNewProblem;
+            $scope.medicationPinToProblem = medicationPinToProblem;
+            $scope.openProblem = openProblem;
+            $scope.changeActiveMedication = changeActiveMedication;
             $scope.changeDosage = changeDosage;
             $scope.updateNoteHistory = updateNoteHistory;
             $scope.deleteNoteHistory = deleteNoteHistory;
 
-            // Method definition
-            function init() {
-                //sharedService.initHotkey($scope);
+            init();
 
+            ////////////////////////
+
+            function init() {
                 patientService.fetchActiveUser().then(function (data) {
                     $scope.active_user = data['user_profile'];
                 });
@@ -59,11 +61,11 @@
                 });
             }
 
-            function see_medication_history() {
-                $scope.medication.show_medication_history = !$scope.medication.show_medication_history;
+            function seeMedicationHistory() {
+                $scope.medication.showMedicationHistory = !$scope.medication.showMedicationHistory;
             }
 
-            function add_note(form, oldNote) {
+            function addNote(form, oldNote) {
                 if (form.note == '') return;
                 form.medication_id = $scope.medication.id;
                 form.patient_id = $scope.patient_id;
@@ -85,11 +87,11 @@
                 return is_existed;
             }
 
-            function toggle_pin_to_new_problem() {
-                $scope.show_pin_to_new_problem = !$scope.show_pin_to_new_problem;
+            function togglePinToNewProblem() {
+                $scope.showPinToNewProblem = !$scope.showPinToNewProblem;
             }
 
-            function medication_pin_to_problem(medication_id, problem_id) {
+            function medicationPinToProblem(medication_id, problem_id) {
                 var form = {};
                 form.medication_id = medication_id;
                 form.problem_id = problem_id;
@@ -105,11 +107,11 @@
                 });
             }
 
-            function open_problem(problem) {
+            function openProblem(problem) {
                 $location.path('/problem/' + problem.id);
             }
 
-            function change_active_medication() {
+            function changeActiveMedication() {
                 medicationService.changeActiveMedication($scope.patient_id, $scope.medication_id)
                     .then(function (response) {
                         toaster.pop('success', 'Done', 'Changed successfully!');
@@ -133,8 +135,14 @@
             function updateNoteHistory(note) {
                 medicationService.editNote(note)
                     .then(function (data) {
-                        note.editMode = false;
-                        toaster.pop('success', 'Done', 'Edited note successfully');
+                        if (data.success) {
+                            note.editMode = false;
+                            toaster.pop('success', 'Done', 'Edited note success');
+                        } else {
+                            toaster.pop('error', 'Error', "You don't have permission to edit");
+                        }
+                    }, function () {
+                        toaster.pop('error', 'Error', 'Something went wrong! We fix this ASAP');
                     });
             }
 
@@ -145,16 +153,20 @@
                 }).then(function (result) {
                     medicationService.deleteNote(note)
                         .then(function (data) {
-                            var index = $scope.medicationNoteHistory.indexOf(note);
-                            $scope.medicationNoteHistory.splice(index, 1);
-                            toaster.pop('success', 'Done', 'Deleted note successfully');
+                            if (data.success) {
+                                var index = $scope.medicationNoteHistory.indexOf(note);
+                                $scope.medicationNoteHistory.splice(index, 1);
+                                toaster.pop('success', 'Done', 'Deleted note successfully');
+                            } else {
+                                toaster.pop('error', 'Error', "You don't have permission to delete");
+                            }
+                        }, function () {
+                            toaster.pop('error', 'Error', 'Something went wrong! We fix this ASAP');
                         });
                 }, function () {
                     return false;
                 });
             }
-
-            $scope.init();
         });
     /* End of controller */
 })();

@@ -1,4 +1,4 @@
-<!--TODO: Should move to base.html or page scope-->
+<toaster-container></toaster-container>
 <div class='panel panel-default'>
     <div class='panel-body'>
         <a href='#/'><b> Back to home page </b></a>
@@ -16,10 +16,10 @@
                 <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8 medication-action-control">
                     <button class="btn btn-default" ng-click="showMedicationSearch =!showMedicationSearch">Change dosage
                     </button>
-                    <button class="btn btn-default" ng-click="see_medication_history();">See medication history</button>
+                    <button class="btn btn-default" ng-click="seeMedicationHistory();">See medication history</button>
 
                     <button class="btn btn-default"
-                            ng-click="toggle_pin_to_new_problem();"
+                            ng-click="togglePinToNewProblem();"
                             ng-if="active_user.role == 'admin' || active_user.id== medication.author.id">
                         Pin to new problem
                     </button>
@@ -27,11 +27,11 @@
             </div>
 
             <!--Current control-->
-            <div class="row" ng-if="active_user.role == 'admin' || active_user.id== medication.author.id">
+            <div class="row">
                 <div class="col-md-12">
                     <label>
                         <input type='checkbox' ng-model='medication.current'
-                               ng-change="change_active_medication();">
+                               ng-change="changeActiveMedication();">
                         Is active
                     </label>
                 </div>
@@ -47,7 +47,7 @@
             </div>
 
             <!-- Medication's history -->
-            <div class="row" ng-if="medication.show_medication_history">
+            <div class="row" ng-if="medication.showMedicationHistory">
                 <!--Dosage history-->
                 <div class='col-md-6'>
                     <label>History of dosages: </label>
@@ -120,7 +120,7 @@
                         <li ng-repeat='problem in problems | filter:{"pin":true} track by $index'>
                             <div class='item-box'
                                  ng-class='problem.is_controlled==true ? "green-box" : "red-box" '
-                                 ng-click="open_problem(problem);">
+                                 ng-click="openProblem(problem);">
 
                                 {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
                             </div>
@@ -130,7 +130,7 @@
             </div>
         </div>
         <div class='panel panel-default'
-             ng-if="(active_user.role == 'admin' || active_user.id== medication.author.id) && show_pin_to_new_problem">
+             ng-if="(active_user.role == 'admin' || active_user.id== medication.author.id) && showPinToNewProblem">
             <div class='panel-heading'>
                 List of current problems
             </div>
@@ -139,7 +139,7 @@
                 <p ng-repeat="problem in problems">
                     <input type="checkbox"
                            ng-model="problem.pin"
-                           ng-change="medication_pin_to_problem(medication.id, problem.id);" title="">
+                           ng-change="medicationPinToProblem(medication.id, problem.id);" title="">
                     <span ng-bind="problem.problem_name "></span>
                 </p>
             </div>

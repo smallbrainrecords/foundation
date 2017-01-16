@@ -2,11 +2,8 @@ import reversion
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TaggedToDoOrder, UserProfile, \
-    TodoActivity
+from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TodoActivity
 from emr.mysnomedct import SnomedctConnector
-from emr.operations import op_add_todo_event
-from todo_app.operations import add_todo_activity
 from users_app.views import permissions_accessed
 from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
 
@@ -110,18 +107,26 @@ def add_medication_note(request, patient_id, medication_id):
 
 @login_required
 def edit_note(request, note_id):
-    note = MedicationTextNote.objects.get(id=note_id)
-    note.note = request.POST.get('note')
-    note.save()
+    resp = {'success': False}
 
-    resp = {'note': MedicationTextNoteSerializer(note).data, 'success': True}
+    note = MedicationTextNote.objects.get(id=note_id)
+    if note.author == request.user.profile:
+        note.note = request.POST.get('note')
+        note.save()
+        resp['note'] = MedicationTextNoteSerializer(note).data
+        resp['success'] = True
+
     return ajax_response(resp)
 
 
 @login_required
 def delete_note(request, note_id):
-    MedicationTextNote.objects.get(id=note_id).delete()
-    resp = {'success': True}
+    resp = {'success': False}
+    note = MedicationTextNote.objects.get(id=note_id)
+    if note.author == request.user.profile:
+        note.delete()
+        resp['success'] = True
+
     return ajax_response(resp)
 
 
@@ -158,21 +163,18 @@ def pin_to_problem(request, patient_id):
 @api_view(["POST"])
 def change_active_medication(request, patient_id, medication_id):
     """
-    Only nurse can change the active & inactive status
-    https://trello.com/c/4qYulhv7
     :param request:
     :param patient_id:
     :param medication_id:
     :return:
     """
     resp = {'success': False}
-    if request.user.profile.role == 'nurse':
-        medication = Medication.objects.get(id=medication_id)
-        medication.current = not medication.current
-        medication.save()
+    medication = Medication.objects.get(id=medication_id)
+    medication.current = not medication.current
+    medication.save()
 
-        resp['medication'] = MedicationSerializer(medication).data
-        resp['success'] = True
+    resp['medication'] = MedicationSerializer(medication).data
+    resp['success'] = True
 
     return ajax_response(resp)
 
