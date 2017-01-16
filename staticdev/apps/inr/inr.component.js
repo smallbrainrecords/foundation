@@ -17,6 +17,8 @@
 
         function linkFn(scope, element, attr, model) {
             var now = new Date();
+            scope.patientId = $('#patient_id').val();           // TODO: Need to be make an other way to retrieve patient ID
+
             scope.todo_ready = false;
             // Properties definition
             scope.altInputFormats = ['M/d/yy'];
@@ -46,7 +48,6 @@
             scope.todoName = "";                           //
             scope.noteInstance = {};                            //
             scope.totalNote = 0;
-            scope.patientId = $('#patient_id').val();           // TODO: Need to be make an other way to retrieve patient ID
 
             scope.inrTarget = null;                             // Goal(Target INR for the patient. Only one option is selected) 2-3 or 2.5-3.5.
             scope.inrs = [];                                    // Data for INR table
@@ -68,12 +69,12 @@
             scope.hideAllNotes = hideAllNotes;
 
             // Bootstrap load the widget's data
-            initData();
+            init();
 
             /**
              * Function to load all related data for this widget
              */
-            function initData() {
+            function init() {
                 // Get current target INR setting.
                 inrService.getINRTarget(scope.patientId).then(function (response) {
                     scope.inrTarget = response.data.target;
@@ -187,13 +188,13 @@
 
                 function editINRSuccess(response) {
                     if (response.data.success) {
-                        toaster.pop('success', 'Done', 'Msg when success');
+                        toaster.pop('success', 'Done', 'Update INR value successes');
 
-                        // TODO Update INR row from INR table;
-                        var index = scope.inrs.indexOf(inr);
-                        scope.editEnabled[index] = false;
+                        inr.editMode = false;
+                        // var index = scope.inrs.indexOf(inr);
+                        // scope.editEnabled[index] = false;
                     } else {
-                        toaster.pop('error', 'Error', 'Something went wrong!');
+                        toaster.pop('error', 'Error', "You don't have permission to edit");
                     }
                 }
 
@@ -229,7 +230,7 @@
                         scope.inrs.splice(index, 1);
 
                     } else {
-                        toaster.pop('error', 'Error', response.data.message);
+                        toaster.pop('error', 'Error', "You don't have permission to delete");
                     }
                 }
 

@@ -242,14 +242,13 @@ def add_inr(request, patient_id):
 @login_required
 def update_inr(request, patient_id):
     """
-    TODO: Edit authorization
+    Edit authorization
     :param request:
     :param patient_id:
     :return:
     """
     resp = {'success': False}
     json_body = json.loads(request.body)
-
     observation_value_id = json_body.get('id')
     date_measured = json_body.get('date_measured')
     current_dose = json_body.get('current_dose')
@@ -259,14 +258,17 @@ def update_inr(request, patient_id):
 
     # 1st update observation value first
     # Update primary info
-    observation_value = ObservationValue.objects.select_related('inr').filter(id=observation_value_id)
-    observation_value.update(effective_datetime=dateutil.parser.parse(date_measured), value_quantity=inr_value)
+    observation_value = ObservationValue.objects.select_related('inr').get(id=observation_value_id)
 
-    # Update dosage info
-    # Case item INR is not created through the INR widget.
-    inr, created = Inr.objects.get_or_create(observation_value=observation_value.get())
+    # Permission checking
+    if request.user.profile.role == 'patient' and observation_value.author != request.user.profile:
+        return ajax_response(resp)
 
-    # If inr is newly created then assign it author & patient
+    observation_value.effective_datetime = dateutil.parser.parse(date_measured)
+    observation_value.value_quantity = inr_value
+    observation_value.save()
+
+    inr, created = Inr.objects.get_or_create(observation_value=observation_value)
     if created:
         inr.author = request.user.profile
         inr.patient_id = patient_id
@@ -276,8 +278,7 @@ def update_inr(request, patient_id):
     inr.next_inr = dateutil.parser.parse(next_inr)
     inr.save()
 
-    # Fetch data from DB to get
-    resp['inr'] = InrSerializer(observation_value.get()).data
+    resp['inr'] = InrSerializer(observation_value.refresh_from_db()).data
     resp['success'] = True
     return ajax_response(resp)
 
@@ -292,9 +293,14 @@ def delete_inr(request, patient_id):
     """
     resp = {'success': False}
     json_body = json.loads(request.body)
-
     observation_value_id = json_body.get('id')
-    ObservationValue.objects.filter(id=observation_value_id).delete()
+
+    observation_value = ObservationValue.objects.filter(id=observation_value_id).get()
+    # Patient can only delete item if they entered
+    if request.user.profile.role == 'patient' and observation_value.author != request.user.profile:
+        return ajax_response(resp)
+
+    observation_value.delete()
 
     resp = {'success': True}
     return ajax_response(resp)

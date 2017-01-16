@@ -8,9 +8,26 @@
     inrService.$inject = ['$http', '$q', '$cookies', 'httpService'];
 
     function inrService($http, $q, $cookies, httpService) {
-        this.csrf_token = function () {
-            return $cookies.get('csrftoken');
+        return {
+            csrf_token: csrf_token,
+            getINRTarget: getINRTarget,
+            getINRs: getINRs,
+            setINRTarget: setINRTarget,
+            addINR: addINR,
+            updateINR: updateINR,
+            deleteINR: deleteINR,
+            getProblems: getProblems,
+            getMedications: getMedications,
+            getOrders: getOrders,
+            addOrder: addOrder,
+            addNote: addNote,
+            loadNotes: loadNotes,
+            findPatient: findPatient
         };
+
+        function csrf_token() {
+            return $cookies.get('csrftoken');
+        }
 
         /**
          *  Get patient's goal range for INR value.
@@ -19,16 +36,16 @@
          *
          * @param patientId
          */
-        this.getINRTarget = function (patientId) {
+        function getINRTarget(patientId) {
             return $http.get('/inr/' + patientId + '/target/get');
-        };
+        }
 
         /**
          * Loading data for INR tables
          * @param patientId
          * @param numberOfRow
          */
-        this.getINRs = function (patientId, numberOfRow) {
+        function getINRs(patientId, numberOfRow) {
             return $http.post('/inr/' + patientId + '/inrs/', {
                 row: numberOfRow
             }, {
@@ -36,14 +53,14 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          * Set patient's goal range for INR value.
          * @param patientId
          * @param inr
          */
-        this.setINRTarget = function (patientId, inr) {
+        function setINRTarget(patientId, inr) {
             return $http.post('/inr/' + patientId + '/target/set', {
                 value: inr
             }, {
@@ -51,14 +68,14 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          * Adding new INR to INR table, also add new data point to observation data point
          * @param patientId
          * @param inrObj
          */
-        this.addINR = function (patientId, inrObj) {
+        function addINR(patientId, inrObj) {
             // Modify resources
             // inrObj.date_measured = inrObj.date_measured.getTime();
             // inrObj.next_inr = inrObj.next_inr.getTime();
@@ -68,15 +85,14 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
-
+        }
 
         /**
          * Update an INR row in INR table
          * @param patientId
          * @param inrObj
          */
-        this.updateINR = function (patientId, inrObj) {
+        function updateINR(patientId, inrObj) {
             // Modify resources
             // inrObj.date_measured = inrObj.date_measured.getTime();
             // inrObj.next_inr = inrObj.next_inr.getTime();
@@ -86,29 +102,28 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          * Delete an INR object in INR table
          * @param patientId
          * @param inrObj
          */
-        this.deleteINR = function (patientId, inrObj) {
+        function deleteINR(patientId, inrObj) {
             return $http.post('/inr/' + patientId + '/inr/delete', inrObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
-
+        }
 
         /**
          *
          * @param patientId
          */
-        this.getProblems = function (patientId) {
+        function getProblems(patientId) {
             return $http.get('/inr/' + patientId + '/problems');
-        };
+        }
 
         /**
          * Get all medication which have conceptID in this sets
@@ -117,51 +132,51 @@
          *
          * @param patientId
          */
-        this.getMedications = function (patientId) {
+        function getMedications(patientId) {
             return $http.get('/inr/' + patientId + '/medications');
-        };
+        }
 
         /**
          * Get all order related(generated) to this INR widget
          * Should be filtered by problem
          * @param patientId
          */
-        this.getOrders = function (patientId, problemId) {
+        function getOrders(patientId, problemId) {
             return $http.get('/inr/' + patientId + '/' + problemId + '/orders');
-        };
+        }
 
         /**
          *
          * @param patientId
          * @param orderObj
          */
-        this.addOrder = function (patientId, orderObj) {
+        function addOrder(patientId, orderObj) {
             return $http.post('/inr/' + patientId + '/order/add', orderObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          *
          * @param patientId
          * @param noteObj
          */
-        this.addNote = function (patientId, noteObj) {
+        function addNote(patientId, noteObj) {
             return $http.post('/inr/' + patientId + '/note/add', noteObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          *
          * @param patientId
          * @param numberOfRow
          */
-        this.loadNotes = function (patientId, numberOfRow) {
+        function loadNotes(patientId, numberOfRow) {
             return $http.post('/inr/' + patientId + '/notes/', {
                 row: numberOfRow
             }, {
@@ -169,13 +184,13 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          *
          * @param viewValue
          */
-        this.findPatient = function (viewValue) {
+        function findPatient(viewValue) {
             return $http.post('/inr/patients', {
                 search_str: viewValue
             }, {

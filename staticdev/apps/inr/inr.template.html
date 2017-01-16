@@ -55,8 +55,8 @@
                                        alt-input-formats="altInputFormats"/>
                                 <span class="input-group-btn"><button type="button" class="btn btn-default"
                                                                       ng-click="dateMeasuredIsOpened=true">
-                                    <i class="glyphicon glyphicon-calendar"></i></button>
-                                </span>
+                                        <i class="glyphicon glyphicon-calendar"></i></button>
+                                    </span>
                             </p>
 
                         </th>
@@ -94,8 +94,8 @@
                                        alt-input-formats="altInputFormats"/>
                                 <span class="input-group-btn"><button type="button" class="btn btn-default"
                                                                       ng-click="nextINRIsOpened=true">
-                                    <i class="glyphicon glyphicon-calendar"></i></button>
-                                </span>
+                                        <i class="glyphicon glyphicon-calendar"></i></button>
+                                    </span>
                             </p>
                         </th>
                         <th style="width: 150px">
@@ -107,9 +107,12 @@
                     </thead>
 
                     <tbody>
-                    <tr ng-repeat='inr in inrs track by $index'>
+                    <tr ng-repeat='inr in inrs track by $index' ng-init="inr.editMode =false">
                         <td>
-                            <p class="input-group" ng-if="editEnabled[$index]">
+                            <!-- disable edit this field-->
+                            <span ng-bind="inr.date_measured | date :'MM/dd/yyyy'" ng-if="!inr.editMode"></span>
+
+                            <p class="input-group" ng-if="inr.editMode">
                                 <input type="text"
                                        class="form-control"
                                        title="Date measured"
@@ -127,42 +130,48 @@
                                                                       ng-click="dateMeasuredIsOpened=true">
                                     <i class="glyphicon glyphicon-calendar"></i></button>
                                 </span>
+
                             </p>
-                            <!-- disable edit this field-->
-                            <span ng-bind="inr.date_measured | date :'MM/dd/yyyy'" ng-if="!editEnabled[$index]"></span>
+
                         </td>
                         <td>
+                            <span ng-bind="inr.current_dose" ng-if="!inr.editMode"></span>
+
                             <input class="form-control" type="text" title="Current dose" ng-model='inr.current_dose'
-                                   ng-if="editEnabled[$index]"
+                                   ng-if="inr.editMode"
                                    name="current-dose">
-                            <span ng-bind="inr.current_dose" ng-if="!editEnabled[$index]"></span>
                         </td>
                         <td>
+
+                            <!-- Display field-->
+                            <span ng-bind="inr.inr_value" ng-if="!inr.editMode"></span>
                             <!--Edit field-->
-                            <input ng-if="editEnabled[$index]"
+                            <input ng-if="inr.editMode"
                                    class="form-control"
                                    type="text"
                                    title="INR"
                                    ng-model='inr.inr_value'
                                    name="inr">
 
-                            <!-- Display field-->
-                            <span ng-bind="inr.inr_value" ng-if="!editEnabled[$index]"></span>
-
                         </td>
                         <td>
+
+                            <!-- Display field-->
+                            <span ng-bind="inr.new_dosage" ng-if="!inr.editMode"></span>
                             <!--Edit field-->
                             <input class="form-control" type="text" ng-model='inr.new_dosage' name="new-dosage"
-                                   ng-if="editEnabled[$index]"
+                                   ng-if="inr.editMode"
                                    title="New dosage">
 
-                            <!-- Display field-->
-                            <span ng-bind="inr.new_dosage" ng-if="!editEnabled[$index]"></span>
                         </td>
                         <td>
+
+
+                            <!--Display field-->
+                            <span ng-bind="inr.next_inr | date :'MM/dd/yyyy'" ng-if="!inr.editMode"></span>
                             <!--Edit field-->
 
-                            <p class="input-group" ng-if="editEnabled[$index]">
+                            <p class="input-group" ng-if="inr.editMode">
                                 <input type="text"
                                        class="form-control"
                                        title="Next INR"
@@ -180,19 +189,15 @@
                                     <i class="glyphicon glyphicon-calendar"></i></button>
                                 </span>
                             </p>
-
-                            <!--Display field-->
-                            <span ng-bind="inr.next_inr | date :'MM/dd/yyyy'" ng-if="!editEnabled[$index]"></span>
                         </td>
                         <td>
-                            <div class="init-btn-group" ng-init="!editEnabled[$index]"
-                                 ng-if="editEnabled[$index] != true">
-                                <button class="btn btn-default" ng-click="editEnabled[$index]=true">Edit</button>
+                            <div class="init-btn-group" ng-if="!inr.editMode ">
+                                <button class="btn btn-default" ng-click="inr.editMode=true">Edit</button>
                                 <button class="btn btn-danger" ng-click="deleteINR(inr)">Delete</button>
                             </div>
-                            <div class="edit-group" ng-if="editEnabled[$index]">
+                            <div class="edit-group" ng-if="inr.editMode">
                                 <button class="btn btn-primary" ng-click="editINR(inr)">Save</button>
-                                <button class="btn btn-danger" ng-click="editEnabled[$index]=false">Cancel</button>
+                                <button class="btn btn-danger" ng-click="inr.editMode=false">Cancel</button>
                             </div>
                         </td>
                     </tr>
