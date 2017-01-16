@@ -134,35 +134,42 @@
                             </p>
 
                         </td>
-                        <td>
-                            <span ng-bind="inr.current_dose" ng-if="!inr.editMode"></span>
 
-                            <input class="form-control" type="text" title="Current dose" ng-model='inr.current_dose'
-                                   ng-if="inr.editMode"
-                                   name="current-dose">
+                        <td>
+                            <div ng-if="!inr.editMode">
+                                <span ng-bind="inr.current_dose"></span>
+                            </div>
+                            <div ng-if="inr.editMode">
+                                <input class="form-control" type="text" title="Current dose" ng-model='inr.current_dose'
+                                       name="current-dose">
+                            </div>
                         </td>
                         <td>
+                            <div ng-if="!inr.editMode">                       <!-- Display field-->
+                                <span ng-bind="inr.inr_value"></span>
 
-                            <!-- Display field-->
-                            <span ng-bind="inr.inr_value" ng-if="!inr.editMode"></span>
-                            <!--Edit field-->
-                            <input ng-if="inr.editMode"
-                                   class="form-control"
-                                   type="text"
-                                   title="INR"
-                                   ng-model='inr.inr_value'
-                                   name="inr">
+                            </div>
+                            <div ng-if="inr.editMode">
+                                <!--Edit field-->
+                                <input
+                                        class="form-control"
+                                        type="text"
+                                        title="INR"
+                                        ng-model='inr.inr_value'
+                                        name="inr"></div>
+
 
                         </td>
                         <td>
-
-                            <!-- Display field-->
-                            <span ng-bind="inr.new_dosage" ng-if="!inr.editMode"></span>
+                            <div ng-if="!inr.editMode">
+                                <!-- Display field-->
+                                <span ng-bind="inr.new_dosage"></span>
+                            </div>
                             <!--Edit field-->
-                            <input class="form-control" type="text" ng-model='inr.new_dosage' name="new-dosage"
-                                   ng-if="inr.editMode"
-                                   title="New dosage">
-
+                            <div ng-if="inr.editMode">
+                                <input class="form-control" type="text" ng-model='inr.new_dosage' name="new-dosage"
+                                       title="New dosage">
+                            </div>
                         </td>
                         <td>
 
