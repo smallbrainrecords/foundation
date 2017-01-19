@@ -5,7 +5,8 @@ from common.views import *
 from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TodoActivity
 from emr.mysnomedct import SnomedctConnector
 from emr.operations import op_add_todo_event
-from medication_app.operations import op_medication_event
+from medication_app.operations import op_medication_event, op_pin_medication_to_problem_for_all_controlled_patient, \
+    count_pinned_have_same_medication_concept_id_and_problem_concept_id
 from users_app.views import permissions_accessed
 from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
 
@@ -160,6 +161,11 @@ def pin_to_problem(request, patient_id):
                                          problem_id=problem_id)
             pin.save()
 
+            pinned_instance_set, count = count_pinned_have_same_medication_concept_id_and_problem_concept_id(
+                request.user, pin.medication, pin.problem)
+            if request.user.profile.role == "physician" and count >= 3:
+                op_pin_medication_to_problem_for_all_controlled_patient(request.user, pinned_instance_set,
+                                                                        pin.medication, pin.problem)
         resp['pin'] = MedicationPinToProblemSerializer(pin).data
         resp['success'] = True
 
