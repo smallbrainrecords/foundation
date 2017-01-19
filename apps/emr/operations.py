@@ -1,10 +1,8 @@
-
 from .models import Encounter, EncounterEvent, EncounterTodoRecord
 from .models import EncounterProblemRecord
 
 
 def op_add_event(physician, patient, event_summary, problem=None, todo=False):
-
     latest_encounter = Encounter.objects.filter(
         physician=physician,
         patient=patient).order_by('-id')
@@ -32,8 +30,8 @@ def op_add_event(physician, patient, event_summary, problem=None, todo=False):
 
     return True
 
-def op_add_todo_event(physician, patient, event_summary, todo=None, problem=False):
 
+def op_add_todo_event(physician, patient, event_summary, todo=None, problem=False):
     latest_encounter = Encounter.objects.filter(
         physician=physician,
         patient=patient).order_by('-id')

@@ -1,7 +1,6 @@
 import ast
 import mimetypes
 import os
-from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -308,7 +307,7 @@ class Problem(MPTTModel):
     old_problem_name = models.CharField(max_length=200, blank=True, null=True)
 
     labels = models.ManyToManyField(ProblemLabel, blank=True)
-    medications = models.ManyToManyField('Medication',through='MedicationPinToProblem')
+    medications = models.ManyToManyField('Medication', through='MedicationPinToProblem')
 
     objects = ProblemManager()
 

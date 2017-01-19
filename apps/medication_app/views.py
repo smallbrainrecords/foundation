@@ -4,6 +4,8 @@ from rest_framework.decorators import api_view
 from common.views import *
 from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TodoActivity
 from emr.mysnomedct import SnomedctConnector
+from emr.operations import op_add_todo_event
+from medication_app.operations import op_medication_event
 from users_app.views import permissions_accessed
 from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
 
@@ -72,14 +74,13 @@ def add_medication(request, patient_id):
     patient_user = User.objects.get(id=patient_id)
 
     if permissions_accessed(request.user, int(patient_id)) and medication_name:
-        medication = Medication()
-        medication.author = request.user.profile
-        medication.patient = patient_user.profile
-        medication.name = medication_name
-        medication.concept_id = concept_id
-        medication.search_str = search_string
+        medication = Medication(author=request.user.profile, patient=patient_user.profile, name=medication_name,
+                                concept_id=concept_id, search_str=search_string)
         medication.save()
 
+        op_medication_event(request.user, patient_user,
+                            "Added medication <a href='#/medication/{0}'><b>{1}</b></a>".format(medication.id,
+                                                                                                medication_name))
         resp['medication'] = MedicationSerializer(medication).data
         resp['success'] = True
 
@@ -90,14 +91,20 @@ def add_medication(request, patient_id):
 @api_view(["POST"])
 def add_medication_note(request, patient_id, medication_id):
     resp = {'success': False}
+    note = request.POST.get("note", None)
+    old_note = request.POST.get("old_note", None)
+    patient_user = User.objects.get(id=patient_id)
+
     if permissions_accessed(request.user, int(patient_id)):
         medication = Medication.objects.get(id=medication_id)
+        latest_note = medication.medication_notes.last()
 
-        note = MedicationTextNote()
-        note.author = request.user.profile
-        note.note = request.POST.get("note", None)
-        note.medication = medication
+        note = MedicationTextNote(author=request.user.profile, note=note, medication=medication)
         note.save()
+
+        op_medication_event(request.user, patient_user,
+                            "<b>{0}</b> was changed from <b>{1}</b> to <b>{2}</b>".format(medication, latest_note,
+                                                                                          note))
 
         resp['note'] = MedicationTextNoteSerializer(note).data
         resp['success'] = True
@@ -169,10 +176,15 @@ def change_active_medication(request, patient_id, medication_id):
     :return:
     """
     resp = {'success': False}
+    patient_user = User.objects.get(id=patient_id)
+
     medication = Medication.objects.get(id=medication_id)
     medication.current = not medication.current
     medication.save()
 
+    op_medication_event(request.user, patient_user,
+                        "<b>{0}</b> changed to <b>{1}</b>".format(medication.name,
+                                                                  medication.current and "active" or "inactive"))
     resp['medication'] = MedicationSerializer(medication).data
     resp['success'] = True
 
@@ -193,6 +205,7 @@ def change_dosage(request, patient_id, medication_id):
     name = json_body.get('name')
     search_string = json_body.get('search_str')
     concept_id = json_body.get('concept_id', None)
+    patient_user = User.objects.get(id=patient_id)
 
     medication = Medication.objects.get(id=medication_id)
     old_medication_name = medication.name
@@ -206,10 +219,17 @@ def change_dosage(request, patient_id, medication_id):
         reversion.set_user(request.user)
         reversion.set_comment(comment)
 
+    op_medication_event(request.user, patient_user,
+                        "Medication name changed from <b>{0}</b> to <b>{1}</b>".format(old_medication_name,
+                                                                                       medication.name))
+
     # Create an todo related to this medication changing
     todo = ToDo(todo="Medication name changed from {0} to {1}".format(old_medication_name, medication.name),
                 user=request.user, patient_id=patient_id, medication=medication)
     todo.save()
+
+    op_add_todo_event(request.user, patient_user,
+                      "Added todo <a href='#/todo/{0}'><b>{1}</b></a>".format(todo.id, todo.todo))
 
     TodoActivity(todo=todo, author=request.user.profile, activity="Added this todo.").save()
 

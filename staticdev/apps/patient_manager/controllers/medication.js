@@ -66,15 +66,19 @@
             }
 
             function addNote(form, oldNote) {
-                if (form.note == '') return;
+                if (form.note == '')
+                    return;
+
                 form.medication_id = $scope.medication.id;
                 form.patient_id = $scope.patient_id;
-                medicationService.addMedicationNote(form).then(function (data) {
-                    $scope.medicationNoteHistory.push(data['note']);
-                    if (typeof oldNote !== 'undefined')
-                        form.note = oldNote;
-                    toaster.pop('success', 'Done', 'Added note!');
-                });
+
+                medicationService.addMedicationNote(form)
+                    .then(function (data) {
+                        $scope.medicationNoteHistory.push(data['note']);
+                        if (typeof oldNote !== 'undefined')
+                            form.note = oldNote;
+                        toaster.pop('success', 'Done', 'Added note!');
+                    });
             }
 
             function isInPins(array, item) {
