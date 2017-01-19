@@ -1,7 +1,7 @@
-from emr.models import Encounter, EncounterEvent
+from emr.models import Encounter, EncounterEvent, ProblemActivity
 
 
-def op_medication_event(actor, patient, summary):
+def op_medication_event(medication, actor, patient, summary):
     """
     Log medication event to encounter & pinned problem \n
     Addition: Added medication {medication_name_and_link_to_medication_page} \n
@@ -21,4 +21,11 @@ def op_medication_event(actor, patient, summary):
         if latest_encounter.is_active():
             encounter_event = EncounterEvent(encounter=latest_encounter, summary=summary)
             encounter_event.save()
+
+    # Add log to pinned problem activity
+    problems = medication.problem_set.all()
+    for problem in problems:
+        activity = ProblemActivity(problem=problem, author=actor.profile, activity=summary)
+        activity.save()
+
     pass

@@ -78,7 +78,7 @@ def add_medication(request, patient_id):
                                 concept_id=concept_id, search_str=search_string)
         medication.save()
 
-        op_medication_event(request.user, patient_user,
+        op_medication_event(medication, request.user, patient_user,
                             "Added medication <a href='#/medication/{0}'><b>{1}</b></a>".format(medication.id,
                                                                                                 medication_name))
         resp['medication'] = MedicationSerializer(medication).data
@@ -102,7 +102,7 @@ def add_medication_note(request, patient_id, medication_id):
         note = MedicationTextNote(author=request.user.profile, note=note, medication=medication)
         note.save()
 
-        op_medication_event(request.user, patient_user,
+        op_medication_event(medication, request.user, patient_user,
                             "<b>{0}</b> was changed from <b>{1}</b> to <b>{2}</b>".format(medication, latest_note,
                                                                                           note))
 
@@ -182,7 +182,7 @@ def change_active_medication(request, patient_id, medication_id):
     medication.current = not medication.current
     medication.save()
 
-    op_medication_event(request.user, patient_user,
+    op_medication_event(medication, request.user, patient_user,
                         "<b>{0}</b> changed to <b>{1}</b>".format(medication.name,
                                                                   medication.current and "active" or "inactive"))
     resp['medication'] = MedicationSerializer(medication).data
@@ -219,7 +219,7 @@ def change_dosage(request, patient_id, medication_id):
         reversion.set_user(request.user)
         reversion.set_comment(comment)
 
-    op_medication_event(request.user, patient_user,
+    op_medication_event(medication, request.user, patient_user,
                         "Medication name changed from <b>{0}</b> to <b>{1}</b>".format(old_medication_name,
                                                                                        medication.name))
 
