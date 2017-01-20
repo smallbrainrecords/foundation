@@ -76,10 +76,6 @@
          * @param inrObj
          */
         function addINR(patientId, inrObj) {
-            // Modify resources
-            // inrObj.date_measured = inrObj.date_measured.getTime();
-            // inrObj.next_inr = inrObj.next_inr.getTime();
-
             return $http.post('/inr/' + patientId + '/inr/add', inrObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
@@ -93,10 +89,6 @@
          * @param inrObj
          */
         function updateINR(patientId, inrObj) {
-            // Modify resources
-            // inrObj.date_measured = inrObj.date_measured.getTime();
-            // inrObj.next_inr = inrObj.next_inr.getTime();
-
             return $http.post('/inr/' + patientId + '/inr/update', inrObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')

@@ -59,7 +59,6 @@ class InrSerializer(serializers.ModelSerializer):
 
     def get_current_dose(self, obj):
         """
-        TODO: What is self
         :param obj:
         :return:
         """
@@ -92,8 +91,6 @@ class INRPatientSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
     date_of_birth = serializers.DateField(format='%m/%d/%Y')
-    new_dosage = serializers.SerializerMethodField()
-    current_dose = serializers.SerializerMethodField()
     problem_id = serializers.SerializerMethodField()
 
     class Meta:
@@ -103,8 +100,6 @@ class INRPatientSerializer(serializers.ModelSerializer):
             'avatar',
             'full_name',
             'date_of_birth',
-            'current_dose',
-            'new_dosage',
             'problem_id'
         )
 
@@ -114,23 +109,6 @@ class INRPatientSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return unicode(obj)
-
-    def get_current_dose(self, obj):
-        observation_value = ObservationValue.objects.filter(component__component_code='6301-6') \
-            .filter(component__observation__subject_id=obj.user_id).order_by('-created_on').first()
-
-        if hasattr(observation_value, 'inr') and observation_value.inr is not None:
-            return observation_value.inr.current_dose
-        else:
-            return 0
-
-    def get_new_dosage(self, obj):
-        observation_value = ObservationValue.objects.filter(component__component_code='6301-6') \
-            .filter(component__observation__subject_id=obj.user_id).order_by('-created_on').first()
-        if hasattr(observation_value, 'inr') and observation_value.inr is not None:
-            return observation_value.inr.new_dosage
-        else:
-            return 0
 
     def get_problem_id(self, obj):
         # Find patient's observation (INR data type)

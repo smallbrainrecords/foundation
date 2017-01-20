@@ -1,4 +1,5 @@
-import dateutil.parser
+from dateutil import parser, relativedelta
+from dateutil.relativedelta import relativedelta
 
 from common.views import *
 from emr.models import Inr, InrTextNote, UserProfile, Medication, ObservationComponent, \
@@ -202,7 +203,6 @@ def get_inr_table(request, patient_id):
 @login_required
 def add_inr(request, patient_id):
     """
-    TODO: Normalize all datetime params. is it should be timestamp only
     :param patient_id:
     :param request:
     :return:
@@ -214,35 +214,45 @@ def add_inr(request, patient_id):
     current_dose = json_body.get('current_dose')
     inr_value = json_body.get('inr_value')
     new_dosage = json_body.get('new_dosage')
-    next_inr = json_body.get('next_inr')  # Date time value
+    next_inr = json_body.get('next_inr')
 
-    # Client shouldn't know about the patient based's component id -> This one should be loading in server-side
-    # Is there any duplicated observation component code per patient?
     observation_component = ObservationComponent.objects.filter(observation__subject_id=patient_id).filter(
-        component_code='6301-6').get()
+        component_code='6301-6')
 
-    # 1st add observation value first
-    observation_value = ObservationValue(author=request.user.profile, component_id=observation_component.id,
-                                         effective_datetime=dateutil.parser.parse(date_measured),
-                                         value_quantity=inr_value)
-    observation_value.save()
+    if observation_component.exists():
+        if date_measured is None:
+            date_measured = datetime.now().strftime('%m/%d/%Y %H:%M')
+        if next_inr is None:
+            next_inr = (datetime.now() + relativedelta(months=+1)).strftime('%m/%d/%Y %H:%M')
 
-    # 2nd add dosage
-    dosage = Inr(observation_value=observation_value, patient_id=patient_id, author=request.user.profile,
-                 current_dose=current_dose, new_dosage=new_dosage,
-                 next_inr=dateutil.parser.parse(next_inr))
-    dosage.save()
+        # 1st add observation value first
+        observation_value = ObservationValue(author=request.user.profile, component_id=observation_component.get().id,
+                                             effective_datetime=parser.parse(date_measured),
+                                             value_quantity=inr_value)
+        observation_value.save()
 
-    # Fetch data from DB to get
-    resp['inr'] = InrSerializer(ObservationValue.objects.filter(id=observation_value.id).get()).data
-    resp['success'] = True
+        last_dosage = Inr.objects.filter(patient_id=patient_id).order_by('observation_value__effective_datetime').last()
+        if current_dose is None:
+            current_dose = last_dosage.current_dose
+        if new_dosage is None:
+            new_dosage = last_dosage.new_dosage
+
+        # 2nd add dosage
+        dosage = Inr(observation_value=observation_value, patient_id=patient_id, author=request.user.profile,
+                     current_dose=current_dose, new_dosage=new_dosage,
+                     next_inr=parser.parse(next_inr))
+        dosage.save()
+
+        # Fetch data from DB to get
+        resp['inr'] = InrSerializer(ObservationValue.objects.filter(id=observation_value.id).get()).data
+        resp['success'] = True
+
     return ajax_response(resp)
 
 
 @login_required
 def update_inr(request, patient_id):
     """
-    Edit authorization
     :param request:
     :param patient_id:
     :return:
@@ -264,7 +274,7 @@ def update_inr(request, patient_id):
     if request.user.profile.role == 'patient' and observation_value.author != request.user.profile:
         return ajax_response(resp)
 
-    observation_value.effective_datetime = dateutil.parser.parse(date_measured)
+    observation_value.effective_datetime = parser.parse(date_measured)
     observation_value.value_quantity = inr_value
     observation_value.save()
 
@@ -275,7 +285,7 @@ def update_inr(request, patient_id):
 
     inr.current_dose = current_dose
     inr.new_dosage = new_dosage
-    inr.next_inr = dateutil.parser.parse(next_inr)
+    inr.next_inr = parser.parse(next_inr)
     inr.save()
 
     resp['inr'] = InrSerializer(observation_value.refresh_from_db()).data
@@ -286,7 +296,6 @@ def update_inr(request, patient_id):
 @login_required
 def delete_inr(request, patient_id):
     """
-    TODO: Delete authorization
     :param patient_id:
     :param request:
     :return:

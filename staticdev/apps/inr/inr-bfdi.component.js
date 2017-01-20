@@ -15,12 +15,7 @@
         };
 
         function linkFn(scope, element, attr, model) {
-            var now = new Date();
-            scope.inr = {
-                date_measured: now,
-                inr_value: null, // This is nurse entry
-                next_inr: new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
-            };
+            scope.inr = {inr_value: null};
 
             scope.loadingPatients = true;
             scope.isOpenned = true;
@@ -37,8 +32,6 @@
             }
 
             function addINR(patient) {
-                scope.inr.current_dose = patient.current_dose;
-                scope.inr.new_dosage = patient.new_dosage;
 
                 inrService.addINR(patient.id, scope.inr).then(addINRSuccess, addINRError);
 
@@ -46,12 +39,12 @@
                     if (response.data.success) {
                         toaster.pop('success', 'Done', 'Add new INR success');
                     } else {
-                        toaster.pop('error', 'Error', 'Add INR failed');
+                        toaster.pop('error', 'Error', 'Patient does not have INR data type');
                     }
                 }
 
                 function addINRError() {
-                    toaster.pop('error', 'Error', 'Add INR failed');
+                    toaster.pop('error', 'Error', 'Something wrong we fixed this ASAP');
                 }
             }
 
