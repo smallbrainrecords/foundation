@@ -405,7 +405,8 @@
                     }
                 });
                 if (!is_existed) {
-                    todo.members.push(member);
+                    console.log(member);
+                    todo.members.push(member.user);
                     todoService.addTodoMember(todo, member).then(function (data) {
                         if (data['success'] == true) {
                             toaster.pop('success', "Done", "Added member!");

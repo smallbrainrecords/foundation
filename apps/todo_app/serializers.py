@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from emr.models import  ToDo, ToDoComment, Label, ToDoAttachment, TodoActivity, LabeledToDoList
-
+from emr.models import ToDo, ToDoComment, Label, ToDoAttachment, TodoActivity, LabeledToDoList
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
 
@@ -16,11 +15,10 @@ class LabelSerializer(serializers.ModelSerializer):
             'css_class',
             'author',
             'is_all',
-            )
+        )
 
 
 class CommentToDoSerializer(serializers.ModelSerializer):
-
     user = SafeUserSerializer()
 
     class Meta:
@@ -31,11 +29,10 @@ class CommentToDoSerializer(serializers.ModelSerializer):
             'user',
             'comment',
             'datetime',
-            )
+        )
 
 
 class AttachmentToDoSerializer(serializers.ModelSerializer):
-
     user = SafeUserSerializer()
 
     class Meta:
@@ -48,7 +45,7 @@ class AttachmentToDoSerializer(serializers.ModelSerializer):
             'datetime',
             'filename',
             'is_image',
-            )
+        )
 
 
 class TodoSerializer(serializers.ModelSerializer):
@@ -56,7 +53,7 @@ class TodoSerializer(serializers.ModelSerializer):
     comments = CommentToDoSerializer(many=True)
     attachments = AttachmentToDoSerializer(many=True)
     patient = SafeUserSerializer()
-    members = UserProfileSerializer(many=True)
+    members = SafeUserSerializer(many=True)
     due_date = serializers.DateField(format='%m/%d/%Y')
     problem = serializers.SerializerMethodField()
 
@@ -78,7 +75,7 @@ class TodoSerializer(serializers.ModelSerializer):
             'document_set',
             'created_at',
             'created_on',
-            )
+        )
 
     def get_problem(self, obj):
         from problems_app.serializers import ProblemSerializer
@@ -89,7 +86,6 @@ class TodoSerializer(serializers.ModelSerializer):
 
 
 class ToDoCommentSerializer(serializers.ModelSerializer):
-
     user = SafeUserSerializer()
     todo = TodoSerializer()
 
@@ -102,10 +98,10 @@ class ToDoCommentSerializer(serializers.ModelSerializer):
             'user',
             'comment',
             'datetime',
-            )
+        )
+
 
 class TodoActivitySerializer(serializers.ModelSerializer):
-
     todo = TodoSerializer()
     author = UserProfileSerializer()
     comment = CommentToDoSerializer()
@@ -125,7 +121,6 @@ class TodoActivitySerializer(serializers.ModelSerializer):
 
 
 class LabeledToDoListSerializer(serializers.ModelSerializer):
-
     user = SafeUserSerializer()
     labels = LabelSerializer(many=True)
 

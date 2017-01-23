@@ -3,47 +3,22 @@ from django.db.models import Max
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import UserProfile, ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRecord, \
-    Encounter, TodoActivity, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController, SharingPatient, \
-    DocumentTodo
+from document_app.serializers import *
+from emr.models import ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRecord, \
+    Encounter, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController, SharingPatient
 from emr.operations import op_add_event, op_add_todo_event
 from problems_app.operations import add_problem_activity
-from users_app.serializers import UserProfileSerializer
-from .operations import add_todo_activity
-from .serializers import TodoSerializer, ToDoCommentSerializer, SafeUserSerializer, \
-    TodoActivitySerializer, LabelSerializer, LabeledToDoListSerializer
-
-from document_app.serializers import *
-
-
-def is_patient(user):
-    try:
-        profile = UserProfile.objects.get(user=user)
-        return profile.role == 'patient'
-    except UserProfile.DoesNotExist:
-        return False
-
-
-# set problem authentication to false if not physician, admin
-def set_problem_authentication_false(request, todo):
-    if todo.problem:
-        problem = todo.problem
-        actor_profile = UserProfile.objects.get(user=request.user)
-        authenticated = actor_profile.role in ("physician", "admin")
-        problem.authenticated = authenticated
-        problem.save()
+from todo_app.operations import *
+from .serializers import ToDoCommentSerializer, TodoActivitySerializer, LabeledToDoListSerializer
 
 
 @login_required
 def get_todo_activity(request, todo_id, last_id):
     activities = TodoActivity.objects.filter(todo_id=todo_id).filter(id__gt=last_id)
-    resp = {}
-    resp['activities'] = TodoActivitySerializer(activities, many=True).data
-    resp['success'] = True
+    resp = {'activities': TodoActivitySerializer(activities, many=True).data, 'success': True}
     return ajax_response(resp)
 
 
-# Todos
 @permissions_required(["add_todo"])
 @login_required
 def add_patient_todo(request, patient_id):
@@ -69,9 +44,7 @@ def add_patient_todo(request, patient_id):
     activity = "Added this todo."
     add_todo_activity(new_todo, actor_profile, activity)
 
-    resp = {}
-    resp['todo'] = TodoSerializer(new_todo).data
-    resp['success'] = True
+    resp = {'todo': TodoSerializer(new_todo).data, 'success': True}
     return ajax_response(resp)
 
 
@@ -124,7 +97,7 @@ def update_todo_status(request, todo_id):
 @permissions_required(["set_todo_order"])
 @login_required
 def update_order(request):
-    # TODO: Need to understand the logic behind this API
+    # TODO: Need to understand the logic behind this API -> Tagged todo table are not correct
     """
     " Update ordering of todo(is a specific (virtual list which is determined from other property)list:
     " Patient, Tagged todo, Staff(Personal todo), List todo ??? ) entity
@@ -236,7 +209,14 @@ def update_order(request):
 
 @login_required
 def get_todo_info(request, todo_id):
+    """
+    TODO:
+    :param request:
+    :param todo_id:
+    :return:
+    """
     from encounters_app.serializers import EncounterSerializer
+
     todo_info = ToDo.objects.get(id=todo_id)
     comments = ToDoComment.objects.filter(todo=todo_info)
     attachments = ToDoAttachment.objects.filter(todo=todo_info)
@@ -270,15 +250,16 @@ def get_todo_info(request, todo_id):
         user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
         sharing_patients_list.append(user_dict)
 
-    resp = {}
-    resp['success'] = True
-    resp['info'] = TodoSerializer(todo_info).data
-    resp['comments'] = ToDoCommentSerializer(comments, many=True).data
-    resp['attachments'] = attachment_todos_holder
-    resp['documents'] = document_todos_holder
-    resp['related_encounters'] = EncounterSerializer(related_encounters, many=True).data
-    resp['activities'] = TodoActivitySerializer(activities, many=True).data
-    resp['sharing_patients'] = sharing_patients_list
+    # Update tagged todo status to viewed
+    is_tagged = TaggedToDoOrder.objects.filter(user=request.user).filter(todo=todo_info)
+    if is_tagged.exists():
+        is_tagged.update(status=2)
+
+    resp = {'success': True, 'info': TodoSerializer(todo_info).data,
+            'comments': ToDoCommentSerializer(comments, many=True).data, 'attachments': attachment_todos_holder,
+            'documents': document_todos_holder,
+            'related_encounters': EncounterSerializer(related_encounters, many=True).data,
+            'activities': TodoActivitySerializer(activities, many=True).data, 'sharing_patients': sharing_patients_list}
     return ajax_response(resp)
 
 
@@ -533,22 +514,25 @@ def delete_attachment(request, attachment_id):
 @permissions_required(["add_todo"])
 @login_required
 def add_todo_member(request, todo_id):
+    """
+    TODO: Migrate members relationship to taggedtodoorder table
+    :param request:
+    :param todo_id:
+    :return:
+    """
     resp = {}
-    actor_profile = UserProfile.objects.get(user=request.user)
-    member_id = request.POST.get('id')
     todo = ToDo.objects.get(id=todo_id)
+    member_id = request.POST.get('id')
     member = UserProfile.objects.get(id=int(member_id))
-    todo.members.add(member)
 
-    tagged_todo = TaggedToDoOrder.objects.create(todo=todo, user=member.user)
-    # set problem authentication
+    TaggedToDoOrder.objects.create(todo=todo, user=member.user)
+
+    # Set problem authentication
     set_problem_authentication_false(request, todo)
 
-    # todo activity
-    activity = '''
-        <b>%s %s - %s</b> joined this todo.
-    ''' % (member.user.first_name, member.user.last_name, member.role)
-    add_todo_activity(todo, actor_profile, activity)
+    # Save activity
+    log = "<b>{0} {1} - {2}</b> joined this todo.".format(member.user.first_name, member.user.last_name, member.role)
+    add_todo_activity(todo, request.user.profile, log)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -557,12 +541,17 @@ def add_todo_member(request, todo_id):
 @permissions_required(["add_todo"])
 @login_required
 def remove_todo_member(request, todo_id):
+    """
+    TODO: Migrate members relationship to taggedtodoorder table
+    :param request:
+    :param todo_id:
+    :return:
+    """
     resp = {}
-    actor_profile = UserProfile.objects.get(user=request.user)
-    member_id = request.POST.get('id')
     todo = ToDo.objects.get(id=todo_id)
+    member_id = request.POST.get('id')
     member = UserProfile.objects.get(id=int(member_id))
-    todo.members.remove(member)
+
     tagged_todo = TaggedToDoOrder.objects.filter(todo=todo, user=member.user).first()
     if tagged_todo:
         tagged_todo.delete()
@@ -571,10 +560,8 @@ def remove_todo_member(request, todo_id):
     set_problem_authentication_false(request, todo)
 
     # todo activity
-    activity = '''
-        <b>%s %s - %s</b> left this todo.
-    ''' % (member.user.first_name, member.user.last_name, member.role)
-    add_todo_activity(todo, actor_profile, activity)
+    log = "<b>{0} {1} - {2}</b> left this todo.".format(member.user.first_name, member.user.last_name, member.role)
+    add_todo_activity(todo, request.user.profile, log)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -583,8 +570,7 @@ def remove_todo_member(request, todo_id):
 @login_required
 def get_labels(request, user_id):
     labels = Label.objects.filter(Q(is_all=True) | (Q(is_all=False) & Q(author_id=user_id)))
-    resp = {}
-    resp['labels'] = LabelSerializer(labels, many=True).data
+    resp = {'labels': LabelSerializer(labels, many=True).data}
     return ajax_response(resp)
 
 
@@ -599,23 +585,21 @@ def get_user_todos(request, user_id):
     :return:
     """
     resp = {}
-    new_tagged_todo = 0
+    # Load tagged todo which have not yet viewed
+    new_tagged_todo_count = TaggedToDoOrder.objects.filter(user_id=user_id).filter(status=0).count()
 
     tagged_todo_order = TaggedToDoOrder.objects.filter(user_id=user_id).order_by('order', 'todo__due_date')
     tagged_todos = [t.todo for t in tagged_todo_order]
-    personal_todos = ToDo.objects.filter(user_id=user_id).order_by('order', 'due_date')
-
     serialized_data = TodoSerializer(tagged_todos, many=True).data
     for item in serialized_data:
         tagged_todo_instance = TaggedToDoOrder.objects.filter(todo_id=item['id']).filter(user_id=user_id).get()
-        if tagged_todo_instance.created_on is not None and request.user.profile.last_access_tagged_todo is not None and tagged_todo_instance.created_on >= request.user.profile.last_access_tagged_todo:
-            item['new_tagged'] = True
-            new_tagged_todo += 1
-        else:
-            item['new_tagged'] = False
+        item['tagged_status'] = tagged_todo_instance.status
+
+    # Load personal todo list
+    personal_todos = ToDo.objects.filter(user_id=user_id).order_by('order', 'due_date')
 
     resp['tagged_todos'] = serialized_data
-    resp['new_tagged_todo'] = new_tagged_todo
+    resp['new_tagged_todo'] = new_tagged_todo_count
     resp['personal_todos'] = TodoSerializer(personal_todos, many=True).data
     return ajax_response(resp)
 

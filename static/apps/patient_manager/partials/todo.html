@@ -119,7 +119,7 @@
                 <div class="todo-component" ng-if="todo.members.length > 0">
                     <p>Members:</p>
                     <div class="quick-card-editor-label">
-                        <span ng-repeat="member in todo.members" class="todo-member">{{member.user.username}}</span>
+                        <span ng-repeat="member in todo.members" class="todo-member">{{member.username}}</span>
                         <a href ng-click="changeMember2(todo)"><i class="fa fa-plus"></i></a>
                     </div>
 

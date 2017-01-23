@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from django.db.models import Q
 from common.views import *
 # from django.shortcuts import render
-from emr.models import UserProfile, Problem
+from emr.models import UserProfile, Problem, TaggedToDoOrder
 from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
 
@@ -772,9 +772,13 @@ def update_last_access_tagged_todo(request, user_id):
     :return:
     """
     resp = {'success': False}
-    patient_profile = UserProfile.objects.get(user_id=user_id)
-    patient_profile.last_access_tagged_todo = datetime.datetime.now()
-    patient_profile.save()
+    user_profile = UserProfile.objects.get(user_id=user_id)
+    user_profile.last_access_tagged_todo = datetime.datetime.now()
+    user_profile.save()
+
+    # Update all newly tagged todo to viewed todo
+    TaggedToDoOrder.objects.filter(user_id=user_profile.user_id).filter(status=0).update(status=1)
+
     resp['success'] = True
 
     return ajax_response(resp)

@@ -126,6 +126,12 @@ OBSERVATION_TYPES = [
     },
 ]
 
+VIEW_STATUS = (
+    (0, 'New'),
+    (1, 'Seen'),
+    (2, 'Viewed')
+)
+
 
 # UTILITIES
 def get_path(instance, filename):
@@ -416,7 +422,7 @@ class ToDo(models.Model):
     Tasks can be associated with a problem but are not required to have this association.
     Tasks are accomplished or not (true or false).
     Tasks have the capacity to be commented on by users.
-    Tasks can be assigned to members of the care team.
+    Tasks can be assigned to clinical staff of the care team.
     Tasks can have a due date.
     Tasks can have media files attached to them.
     Tasks that are associated with a problem are part of that problem's activity log.
@@ -434,7 +440,7 @@ class ToDo(models.Model):
     problem = models.ForeignKey(Problem, null=True, blank=True)
     colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos")
     notes = models.ManyToManyField(TextNote, blank=True)  # aka comment should 1-n relation
-    members = models.ManyToManyField(UserProfile, blank=True)  # Tagged clinical staff (change to TaggedTodoOrder)
+    members = models.ManyToManyField(User, through="TaggedToDoOrder")
     medication = models.ForeignKey("Medication", null=True)
 
     created_at = models.PositiveIntegerField(choices=BELONG_TO, default=0)  # Place where todo is generated -> removed
@@ -450,8 +456,8 @@ class TaggedToDoOrder(models.Model):
     user = models.ForeignKey(User, null=True, blank=True)
     todo = models.ForeignKey(ToDo, null=True, blank=True)
     order = models.BigIntegerField(null=True, blank=True)
-    created_on = models.DateTimeField(auto_now_add=True, null=True,
-                                      blank=True)  # Time when members is tagged to this todo
+    status = models.IntegerField(choices=VIEW_STATUS, default=0)
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo.todo))

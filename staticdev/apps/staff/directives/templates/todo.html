@@ -1,16 +1,15 @@
 <div class="todos-container" ng-show='problem_todos.length'>
     <!-- begin sortable -->
     <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
-        <li ng-repeat="item in problem_todos | filter :{'accomplished':accomplished} | orderBy: 'new_tagged':true track by $index"
+        <li ng-repeat="item in problem_todos |orderBy:'tagged_status' | filter :{'accomplished':accomplished} track by $index"
             class="list-group-item todo"
-            ng-class="item.new_tagged ?'new-tagged-todo':''"
+            ng-class="(item.hasOwnProperty('tagged_status') && item.tagged_status != 2 )?'new-tagged-todo':''"
             ng-click="open_todo(item)">
             <!-- begin show item -->
             <div ng-show='!item.changed'>
                 <input ng-model='item.accomplished'
                        type='checkbox'
                        ng-change='update_todo_status(item)' title="">
-
                 <span ng-bind="item.todo" class="todo-name"></span>
 
                 <span ng-if="item.due_date"> due by <span
@@ -36,7 +35,7 @@
                 </p>
 
                 <p>
-                    <span ng-repeat="member in item.members" class="todo-member">{{ member.user.username }}</span>
+                    <span ng-repeat="member in item.members" class="todo-member">{{ member.username }}</span>
                 </p>
 
                 <a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>
