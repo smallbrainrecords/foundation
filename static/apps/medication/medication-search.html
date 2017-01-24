@@ -11,7 +11,7 @@
             </div>
 
             <div class='form-group'>
-                <input type='submit' value='Add' class='btn btn-default btn-primary'
+                <input type='submit' value='Add free text medication' class='btn btn-default btn-primary'
                        ng-click="$ctrl.onUpdate({value:{name: $ctrl.searchTerm,search_str:$ctrl.searchTerm}});">
             </div>
         </form>
@@ -23,7 +23,7 @@
             <label> {{ $ctrl.new_medication.concept_id }} </label>
             {{ $ctrl.new_medication.name }} <br>
             <button class='btn btn-sm btn-primary' ng-click='$ctrl.onUpdate({value:$ctrl.new_medication})'> Add
-                Medication
+                 snomed based medication (Prefered)
             </button>
             <button class='btn btn-sm btn-default' ng-click='$ctrl.unsetNewMedication()'>Cancel</button>
             <hr>
