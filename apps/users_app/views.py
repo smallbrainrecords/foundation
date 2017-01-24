@@ -693,22 +693,22 @@ def search(request, user_id):
     context = {}
     query = request.POST.get("query", None)
     if query:
-        notes = ProblemNote.objects.filter(note__contains=query, problem__patient=user)
+        notes = ProblemNote.objects.filter(note__icontains=query, problem__patient=user)
         context['notes'] = notes
 
-        goals = Goal.objects.filter(goal__contains=query, patient=user)
+        goals = Goal.objects.filter(goal__icontains=query, patient=user)
         context['goals'] = goals
 
-        todos = ToDo.objects.filter(todo__contains=query, patient=user)
+        todos = ToDo.objects.filter(todo__icontains=query, patient=user)
         context['todos'] = todos
 
-        summaries = EncounterEvent.objects.filter(summary__contains=query, encounter__patient=user)
+        summaries = EncounterEvent.objects.filter(summary__icontains=query, encounter__patient=user)
         context['summaries'] = summaries
 
-        tabs = MyStoryTab.objects.filter(name__contains=query, patient=user)
+        tabs = MyStoryTab.objects.filter(name__icontains=query, patient=user)
         context['tabs'] = tabs
 
-        text_components = MyStoryTextComponent.objects.filter(Q(name__contains=query), patient=user)
+        text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient=user)
         context['text_components'] = text_components
 
     context['patient'] = user
@@ -741,22 +741,22 @@ def staff_search(request):
     context = {}
     query = request.POST.get("query", None)
     if query:
-        notes = ProblemNote.objects.filter(note__contains=query, problem__patient__id__in=patient_ids)
+        notes = ProblemNote.objects.filter(note__icontains=query, problem__patient__id__in=patient_ids)
         context['notes'] = notes
 
-        goals = Goal.objects.filter(goal__contains=query, patient__id__in=patient_ids)
+        goals = Goal.objects.filter(goal__icontains=query, patient__id__in=patient_ids)
         context['goals'] = goals
 
-        todos = ToDo.objects.filter(todo__contains=query, patient__id__in=patient_ids)
+        todos = ToDo.objects.filter(todo__icontains=query, patient__id__in=patient_ids)
         context['todos'] = todos
 
-        summaries = EncounterEvent.objects.filter(summary__contains=query, encounter__patient__id__in=patient_ids)
+        summaries = EncounterEvent.objects.filter(summary__icontains=query, encounter__patient__id__in=patient_ids)
         context['summaries'] = summaries
 
-        tabs = MyStoryTab.objects.filter(name__contains=query, patient__id__in=patient_ids)
+        tabs = MyStoryTab.objects.filter(name__icontains=query, patient__id__in=patient_ids)
         context['tabs'] = tabs
 
-        text_components = MyStoryTextComponent.objects.filter(Q(name__contains=query), patient__id__in=patient_ids)
+        text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient__id__in=patient_ids)
         context['text_components'] = text_components
 
     context['user_profile'] = user_profile
