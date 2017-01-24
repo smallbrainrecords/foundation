@@ -132,6 +132,10 @@ VIEW_STATUS = (
     (2, 'Viewed')
 )
 
+# Medication concept id set used on INR related problem
+MEDICATION_BLEEDING_RISK = {375383004, 375379004, 375378007, 319735007, 375374009, 319734006, 375380001, 375375005,
+                            319733000, 319736008}
+
 
 # UTILITIES
 def get_path(instance, filename):

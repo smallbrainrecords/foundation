@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from django.db.models import Q
 from common.views import *
 # from django.shortcuts import render
-from emr.models import UserProfile, Problem, TaggedToDoOrder
+from emr.models import UserProfile, Problem, TaggedToDoOrder, Medication, MEDICATION_BLEEDING_RISK
 from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
 
@@ -333,6 +333,8 @@ def get_patient_info(request, patient_id):
     resp['sharing_patients'] = sharing_patients_list
     resp['acutes_list'] = CommonProblemSerializer(acutes, many=True).data
     resp['chronics_list'] = CommonProblemSerializer(chronics, many=True).data
+    resp['bleeding_risk'] = Medication.objects.filter(current=True).filter(
+        concept_id__in=MEDICATION_BLEEDING_RISK).exists()
     return ajax_response(resp)
 
 
