@@ -9,7 +9,7 @@
             'sharedModule', 'httpModule', 'myTools', 'inr', 'todos', // Development module
 
             'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', // 3rd party module
-            'ui.bootstrap', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file']);
+            'ui.bootstrap', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file','angularMoment']);
 
 
     StaffApp.config(function ($routeProvider) {

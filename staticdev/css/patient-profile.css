@@ -7,6 +7,46 @@ todo .new-tagged-todo {
     font-size: 2em;
     top: 10px; }
 
+.todo-label-front {
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  padding: 0;
+  display: inline-block;
+  margin: 0 2px;
+  clear: none; }
+
+.quick-info, .tagged-member {
+  margin-bottom: 10px; }
+
+.quick-card-editor-label a.todo-label-name {
+  margin-right: 4px;
+  margin-bottom: 4px; }
+
+#comments textarea {
+  width: 100%;
+  resize: none; }
+#comments form.new-comment {
+  background: #EEEFF1;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 2px; }
+#comments .comment-history .comment {
+  background: #EEEFF1;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 2px; }
+  #comments .comment-history .comment .username {
+    font-weight: bold; }
+  #comments .comment-history .comment .comment-content-wrapper {
+    margin-bottom: 15px; }
+    #comments .comment-history .comment .comment-content-wrapper .comment-content {
+      background: white;
+      padding: 10px;
+      border-radius: 5px; }
+  #comments .comment-history .comment textarea {
+    margin-bottom: 15px; }
+
 /*Stytle for medication related component*/
 @media (min-width: 992px) {
   #medication-page #medication-header .medication-action-control {
@@ -308,5 +348,14 @@ inr-bfdi {
     border: none; }
   .audit-log .datetime {
     font-weight: bold; }
+
+todo .new-tagged-todo {
+  background: #F2DEDE; }
+  todo .new-tagged-todo input[type='checkbox']:before {
+    content: "*";
+    left: 2px;
+    position: absolute;
+    font-size: 2em;
+    top: 10px; }
 
 /*# sourceMappingURL=patient-profile.css.map */

@@ -1,4 +1,5 @@
 @import "../apps/todo/todo.scss";
+@import "../apps/todo/todo-page.scss";
 @import "../apps/medication/medication.scss";
 
 body {
@@ -436,5 +437,18 @@ inr-bfdi {
   }
   .datetime{
     font-weight: bold;
+  }
+}
+
+todo {
+  .new-tagged-todo {
+    background: #F2DEDE;
+    input[type='checkbox']:before {
+      content: "*";
+      left: 2px;
+      position: absolute;
+      font-size: 2em;
+      top: 10px;
+    }
   }
 }

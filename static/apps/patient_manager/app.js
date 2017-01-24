@@ -10,7 +10,7 @@
 
             'timeLine', 'chart.js', 'toaster', 'dndLists', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
-            'cfp.hotkeys', 'ui.bootstrap', 'view.file']);
+            'cfp.hotkeys', 'ui.bootstrap', 'view.file','angularMoment']);
 
 
     ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider) {

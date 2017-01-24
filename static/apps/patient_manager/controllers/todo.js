@@ -18,20 +18,20 @@
                 {name: 'red', css_class: 'todo-label-red'},
                 {name: 'purple', css_class: 'todo-label-purple'},
                 {name: 'blue', css_class: 'todo-label-blue'},
-                {name: 'sky', css_class: 'todo-label-sky'},
+                {name: 'sky', css_class: 'todo-label-sky'}
             ];
             $scope.label_component = {};
             $scope.allowDueDateNotification = true;
 
             $scope.isDueDate = isDueDate;
-            $scope.add_comment = add_comment;
+            $scope.add_comment = addComment;
             $scope.toggleEditComment = toggleEditComment;
             $scope.toggleSaveComment = toggleSaveComment;
             $scope.delete = deleteComment;
             $scope.confirmDelete = confirmDelete;
             $scope.changeText = changeText;
             $scope.saveTodoText = saveTodoText;
-            $scope.update_todo_status = update_todo_status;
+            $scope.updateTodoStatus = updateTodoStatus;
             $scope.createLabel = createLabel;
             $scope.createLabel2 = createLabel2;
             $scope.selectLabelComponent = selectLabelComponent;
@@ -55,12 +55,13 @@
             $scope.changeMember = changeMember;
             $scope.changeMember2 = changeMember2;
             $scope.changeTodoMember = changeTodoMember;
-            $scope.refresh_todo_activity = refresh_todo_activity;
+            $scope.refresh_todo_activity = refreshTodoActivity;
             $scope.isInArray = isInArray;
             $scope.checkSharedProblem = checkSharedProblem;
             $scope.deleteDocumentTag = deleteDocumentTag;
             $scope.deleteDocument = deleteDocument;
-            $scope.init = init;
+
+            init();
 
             function init() {
 
@@ -109,7 +110,7 @@
                 return '';
             }
 
-            function add_comment(form) {
+            function addComment(form) {
                 form.todo_id = $scope.todo_id;
 
                 todoService.addComment(form).then(function (data) {
@@ -163,7 +164,7 @@
                 });
             }
 
-            function update_todo_status(todo) {
+            function updateTodoStatus(todo) {
                 patientService.updateTodoStatus(todo).then(function (data) {
                     if (data['success'] == true) {
                         toaster.pop('success', "Done", "Updated Todo status !");
@@ -427,7 +428,7 @@
 
             }
 
-            function refresh_todo_activity() {
+            function refreshTodoActivity() {
                 todoService.getTodoActivity($scope.todo_id, $scope.current_activity).then(function (data) {
                     if (data != null) {
                         if (data['activities'].length) {
@@ -512,8 +513,6 @@
                         })
                 });
             }
-
-            $scope.init();
         });
     /* End of controller */
 
