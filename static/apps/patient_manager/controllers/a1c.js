@@ -5,7 +5,7 @@
 
     angular.module('ManagerApp')
         .controller('AddDifferentOrderCtrl', function ($scope, $routeParams, a1cService, ngDialog, problemService,
-                                                       sharedService, toaster, $location) {
+                                                       sharedService, toaster, $location, patientService) {
 
 
             var patient_id = $('#patient_id').val();
@@ -15,6 +15,10 @@
 
             a1cService.fetchA1cInfo($scope.a1c_id).then(function (data) {
                 $scope.a1c = data['info'];
+            });
+
+            patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+                $scope.patient = data;
             });
 
             $scope.add_todo = function (form) {
@@ -34,12 +38,30 @@
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.a1c.problem.id;
                 form.a1c_id = $scope.a1c.id;
-                problemService.addTodo(form).then(function (data) {
+
+                if ($scope.patient['bleeding_risk']) {
+                    var bleedingRiskDialog = ngDialog.open({
+                        template: 'bleedingRiskDialog',
+                        showClose: false,
+                        closeByEscape: false,
+                        closeByDocument: false,
+                        closeByNavigation: false
+                    });
+
+                    bleedingRiskDialog.closePromise.then(function () {
+                        problemService.addTodo(form).then(addTodoSuccess);
+                    });
+                } else {
+                    problemService.addTodo(form).then(addTodoSuccess);
+                }
+
+                // Add todo succeeded
+                function addTodoSuccess(data) {
                     form.name = '';
                     form.month = '';
                     toaster.pop('success', 'Done', 'Added Todo!');
                     $location.url('/problem/' + $scope.a1c.problem.id);
-                });
+                }
             }
 
 

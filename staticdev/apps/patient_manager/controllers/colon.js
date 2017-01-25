@@ -277,12 +277,12 @@
                 $scope.colon_cancer = data['info'];
             });
 
-            $scope.add_todo = function (form) {
-                if (form == undefined) {
-                    return false;
-                }
+            patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+                $scope.patient = data;
+            });
 
-                if (form.name.trim().length < 1) {
+            $scope.add_todo = function (form) {
+                if (form == undefined && form.name.trim().length < 1) {
                     return false;
                 }
 
@@ -290,12 +290,28 @@
                 form.problem_id = $scope.colon_cancer.problem.id;
                 form.colon_cancer_id = $scope.colon_cancer.id;
 
-                problemService.addTodo(form).then(function (data) {
+                if ($scope.patient['bleeding_risk']) {
+                    var bleedingRiskDialog = ngDialog.open({
+                        template: 'bleedingRiskDialog',
+                        showClose: false,
+                        closeByEscape: false,
+                        closeByDocument: false,
+                        closeByNavigation: false
+                    });
+
+                    bleedingRiskDialog.closePromise.then(function () {
+                        problemService.addTodo(form).then(addTodoSuccess);
+                    });
+                } else {
+                    problemService.addTodo(form).then(addTodoSuccess);
+                }
+
+                // Add todo succeeded
+                function addTodoSuccess(data) {
                     form.name = '';
                     toaster.pop('success', 'Done', 'Added Todo!');
                     $location.url('/problem/' + $scope.colon_cancer.problem.id);
-                });
-
+                }
             }
         });
     /* End of controller */

@@ -5,9 +5,9 @@
         'httpModule', 'ngDialog', 'toaster', 'monospaced.elastic'])
         .directive('inr', INR);
 
-    INR.$inject = ['uibDateParser', 'toaster', 'ngDialog', '$routeParams', '$filter', 'inrService'];
+    INR.$inject = ['uibDateParser', 'toaster', 'ngDialog', '$routeParams', '$filter', 'inrService', 'patientService'];
 
-    function INR(uibDateParser, toaster, ngDialog, $routeParams, $filter, inrService) {
+    function INR(uibDateParser, toaster, ngDialog, $routeParams, $filter, inrService, patientService) {
         return {
             restrict: 'E',
             templateUrl: '/static/apps/inr/inr.template.html',
@@ -102,6 +102,10 @@
                 inrService.loadNotes(scope.patientId, 1).then(function (response) {
                     scope.noteInstance = response.data.note;
                     scope.totalNote = response.data.total;
+                });
+
+                patientService.fetchPatientInfo(scope.patientId).then(function (data) {
+                    scope.patient = data;
                 });
             }
 
@@ -253,49 +257,70 @@
              * @param repeat: 1 - 1 month, 2 - 1 week, 3- 2 weeks
              */
             function addOrder(title, repeat) {
-                // Manipulate due date before submmiting
-                var now = new Date();
-                switch (repeat) {
-                    case 1: // Repeat 1 month
-                        var due_date = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-                        break;
-                    case 2: // Repeat 1 week
-                        var due_date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
-                        break;
-                    case 3: // Repeat 2 weeks
-                        var due_date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
-                        break;
+                // Bleeding risk dialog
+                if (scope.patient['bleeding_risk']) {
+                    var bleedingRiskDialog = ngDialog.open({
+                        template: 'bleedingRiskDialog',
+                        showClose: false,
+                        closeByEscape: false,
+                        closeByDocument: false,
+                        closeByNavigation: false
+                    });
+
+                    bleedingRiskDialog.closePromise.then(function () {
+                        addOrderItem(title, repeat);
+
+                    });
+                } else {
+                    addOrderItem(title, repeat);
                 }
 
-                if (due_date != null) {
-                    due_date = $filter('date')(due_date, 'yyyy-MM-dd');
-                }
+                function addOrderItem(title, repeat) {
 
-                inrService.addOrder(scope.patientId, {
-                    'todo': title,
-                    'due_date': due_date,
-                    'problem_id': $routeParams.problem_id
-                }).then(addOrderSuccess, addOrderFailed);
 
-                function addOrderSuccess(response) {
-                    if (response.data.success) {
-                        toaster.pop('success', 'Done', 'Add new order success');
+                    // Manipulate due date before submitting
+                    var now = new Date();
+                    switch (repeat) {
+                        case 1: // Repeat 1 month
+                            var due_date = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+                            break;
+                        case 2: // Repeat 1 week
+                            var due_date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+                            break;
+                        case 3: // Repeat 2 weeks
+                            var due_date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
+                            break;
+                    }
 
-                        scope.orders.push(response.data.order);
-                        scope.$emit('inrWidgetOrderAdded',
-                            {'order': response.data.order}
-                        );
-                        scope.todoName = "";
-                    } else {
-                        toaster.pop('error', 'Error', 'Something went wrong!');
+                    if (due_date != null) {
+                        due_date = $filter('date')(due_date, 'yyyy-MM-dd');
+                    }
+
+                    inrService.addOrder(scope.patientId, {
+                        'todo': title,
+                        'due_date': due_date,
+                        'problem_id': $routeParams.problem_id
+                    }).then(addOrderSuccess, addOrderFailed);
+
+                    function addOrderSuccess(response) {
+                        if (response.data.success) {
+                            toaster.pop('success', 'Done', 'Add new order success');
+
+                            scope.orders.push(response.data.order);
+                            scope.$emit('inrWidgetOrderAdded',
+                                {'order': response.data.order}
+                            );
+                            scope.todoName = "";
+                        } else {
+                            toaster.pop('error', 'Error', 'Something went wrong!');
+                        }
+                    }
+
+                    function addOrderFailed() {
+                        toaster.pop('error', 'Error', 'Add order failed!');
+
                     }
                 }
-
-                function addOrderFailed() {
-                    toaster.pop('error', 'Error', 'Add order failed!');
-
-                }
-
             }
 
             /**

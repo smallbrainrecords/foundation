@@ -8,9 +8,11 @@
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
                                               dataService, medicationService, CollapseService) {
             $scope.patient_id = $('#patient_id').val();
-            $scope.user_id =  $('#user_id').val();
+            $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
+            $scope.patient = {}; // All patient's data loaded from server side
+            $scope.user_id = $('#user_id').val();
             $scope.inrWidgetExist = false;
-            $scope.problem_id =  $routeParams.problem_id;
+            $scope.problem_id = $routeParams.problem_id;
             $scope.show_accomplished_todos = false;
             $scope.show_accomplished_goals = false;
             $scope.loading = true;
@@ -121,7 +123,7 @@
 
                 patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
                     $scope.patient_info = data['info'];
-
+                    $scope.patient = data;
                 });
 
                 problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
@@ -871,66 +873,67 @@
             }
 
             function add_todo(form) {
-
-
-                if (form == undefined) {
-                    return false;
-                }
-
-                if (form.name.trim().length < 1) {
+                if (form == undefined || form.name.trim().length < 1) {
                     return false;
                 }
 
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
 
-                prompt({
-                    title: 'Add Due Date',
-                    message: 'Enter due date',
-                    input: true,
-                    label: 'Due Date',
-                }).then(function (due_date) {
-                    if (moment(due_date, "MM/DD/YYYY", true).isValid()) {
-                        form.due_date = due_date;
-                    } else if (moment(due_date, "M/D/YYYY", true).isValid()) {
-                        form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
-                    } else if (moment(due_date, "MM/YYYY", true).isValid()) {
-                        form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
-                    } else if (moment(due_date, "M/YYYY", true).isValid()) {
-                        form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
-                    } else if (moment(due_date, "MM/DD/YY", true).isValid()) {
-                        form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
-                    } else if (moment(due_date, "M/D/YY", true).isValid()) {
-                        form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
-                    } else if (moment(due_date, "MM/YY", true).isValid()) {
-                        form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
-                    } else if (moment(due_date, "M/YY", true).isValid()) {
-                        form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
-                    } else {
-                        toaster.pop('error', 'Error', 'Please enter a valid date!');
-                        return false;
-                    }
-
-                    problemService.addTodo(form).then(function (data) {
-
-                        form.name = '';
-                        $scope.problem_todos.push(data['todo']);
-                        toaster.pop('success', 'Done', 'Added Todo!');
-                        $scope.set_authentication_false();
-                        /* Not-angular-way */
-                        $('#todoNameInput').focus();
+                // Show bleeding risk notification
+                if ($scope.patient['bleeding_risk']) {
+                    var bleedingRiskDialog = ngDialog.open({
+                        template: 'bleedingRiskDialog',
+                        showClose: false,
+                        closeByEscape: false,
+                        closeByDocument: false,
+                        closeByNavigation: false
                     });
-                }, function () {
-                    problemService.addTodo(form).then(function (data) {
 
-                        form.name = '';
-                        $scope.problem_todos.push(data['todo']);
-                        toaster.pop('success', 'Done', 'Added Todo!');
-                        $scope.set_authentication_false();
-                        /* Not-angular-way */
-                        $('#todoNameInput').focus();
+                    bleedingRiskDialog.closePromise.then(askDueDate);
+                } else {
+                    askDueDate();
+                }
+
+                function askDueDate() {
+                    var dueDateDialog = ngDialog.open({
+                        template: 'askDueDateDialog',
+                        showClose: false,
+                        closeByEscape: false,
+                        closeByDocument: false,
+                        closeByNavigation: false,
+                        controller: function () {
+                            var vm = this;
+                            var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
+                            vm.dueDate = '';
+
+                            vm.dueDateIsValid = function () {
+                                var isValid = moment(vm.dueDate, acceptedFormat, true).isValid();
+                                if (!isValid)
+                                    toaster.pop('error', 'Error', 'Please enter a valid date!');
+                                return isValid;
+                            }
+                        },
+                        controllerAs: 'vm'
                     });
-                });
+
+                    dueDateDialog.closePromise.then(function (data) {
+                        if (data.value != undefined)
+                            form.due_date = data.value;
+                        problemService.addTodo(form).then(addTodoSuccess);
+                    })
+                }
+
+                // Add todo succeeded
+                function addTodoSuccess(data) {
+                    form.name = '';
+                    $scope.problem_todos.push(data['todo']);
+                    toaster.pop('success', 'Done', 'Added Todo!');
+                    $scope.set_authentication_false();
+
+                    /* Not-angular-way */
+                    $('#todoNameInput').focus();
+                }
             }
 
             function image_upload_url() {
@@ -1216,10 +1219,11 @@
                 });
             }
 
-            function goToMedicationTab(){
+            function goToMedicationTab() {
                 CollapseService.ChangeHomepageTab('medication');
                 $location.path('/');
             }
+
             $scope.init();
 
             $scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function (nV, oV) {

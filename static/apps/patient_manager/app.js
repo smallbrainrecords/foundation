@@ -10,7 +10,7 @@
 
             'timeLine', 'chart.js', 'toaster', 'dndLists', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'problems', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
-            'cfp.hotkeys', 'ui.bootstrap', 'view.file','angularMoment']);
+            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment']);
 
 
     ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider) {
@@ -134,10 +134,12 @@
 
     });
 
-    ManagerApp.run(function (CollapseService, patientService) {
-        console.log('Patient profile');
+    ManagerApp.run(function (CollapseService, $templateCache) {
 
         CollapseService.initHotKey();
+
+        $templateCache.put('bleedingRiskDialog', "<div class='text-center'><p>This patient is on INR, will this affect the patient's bleeding risk?</p><button class='btn btn-primary' ng-click='closeThisDialog()'>Thank you</button></div>");
+        $templateCache.put('askDueDateDialog', '<div class="row"><div class="col-md-12"><p>Enter due date</p><input class="form-control" auto-focus type="text" ng-model="vm.dueDate" title="Due date" placeholder="Enter a due date"></div><div class="col-md-12 text-right ngdialog-buttons"><br><button class="btn btn-primary" ng-click="vm.dueDateIsValid() && closeThisDialog(vm.dueDate)">Ok</button><button class="btn btn-danger" ng-click="closeThisDialog()">Add todo without a due date</button></div></div>');
     });
 
 

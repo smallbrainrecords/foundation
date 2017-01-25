@@ -15,6 +15,8 @@
 
         $scope.patient_id = $('#patient_id').val(); // Patients are being managed
         $scope.user_id = $('#user_id').val(); // Current logged in id
+        $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
+        $scope.patient = {}; // All patient's data loaded from server side
         $scope.show_accomplished_todos = false;
         $scope.problem_terms = [];
         $scope.new_problem = {set: false};
@@ -154,6 +156,7 @@
             });
 
             patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+                $scope.patient = data;
                 $scope.patient_info = data['info'];
                 $scope.problems = data['problems'];
                 $scope.inactive_problems = data['inactive_problems'];
@@ -396,51 +399,51 @@
                 $scope.patient_info = args.data;
             });
 
-            $scope.$on('copyEncounter',function(event,args){
-                 // So every page will have current patient $user
-                    var text = '';
+            $scope.$on('copyEncounter', function (event, args) {
+                // So every page will have current patient $user
+                var text = '';
 
-                    // TODO: Check whether or not data is ready
-                    if ($scope.most_recent_encounter_summaries == undefined ||
-                        $scope.most_recent_encounter_related_problems == undefined ||
-                        $scope.pending_todos == undefined) {
-                        alert("Data is not loaded. Try again in few seconds");
-                        return;
-                    }
+                // TODO: Check whether or not data is ready
+                if ($scope.most_recent_encounter_summaries == undefined ||
+                    $scope.most_recent_encounter_related_problems == undefined ||
+                    $scope.pending_todos == undefined) {
+                    alert("Data is not loaded. Try again in few seconds");
+                    return;
+                }
 
 
-                    if ($scope.most_recent_encounter_summaries.length > 0) {
-                        text += "All the encounter summaries from the most recent encounter: \r\n";
-                        angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
-                            var container = $("<div/>");
-                            container.append(value);
+                if ($scope.most_recent_encounter_summaries.length > 0) {
+                    text += "All the encounter summaries from the most recent encounter: \r\n";
+                    angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
+                        var container = $("<div/>");
+                        container.append(value);
 
-                            text += container.text() + '\r\n';
-                        });
-                        text += '\r\n';
-                    }
+                        text += container.text() + '\r\n';
+                    });
+                    text += '\r\n';
+                }
 
-                    if ($scope.most_recent_encounter_related_problems.length > 0) {
-                        text += "List of related problems : \r\n";
-                        angular.forEach($scope.most_recent_encounter_related_problems, function (value, key) {
-                            text += value.problem_name + '\r\n';
-                        });
-                        text += '\r\n';
-                    }
+                if ($scope.most_recent_encounter_related_problems.length > 0) {
+                    text += "List of related problems : \r\n";
+                    angular.forEach($scope.most_recent_encounter_related_problems, function (value, key) {
+                        text += value.problem_name + '\r\n';
+                    });
+                    text += '\r\n';
+                }
 
-                    if ($scope.pending_todos.length > 0) {
-                        text += "List of all active todos : \r\n";
-                        angular.forEach($scope.pending_todos, function (value, key) {
-                            text += value.todo + '\r\n';
-                        });
-                    }
+                if ($scope.pending_todos.length > 0) {
+                    text += "List of all active todos : \r\n";
+                    angular.forEach($scope.pending_todos, function (value, key) {
+                        text += value.todo + '\r\n';
+                    });
+                }
 
-                    // Copy to clipboard
-                    var $temp = $("<textarea/>");
-                    $("body").append($temp);
-                    $temp.val(text).select();
-                    document.execCommand("copy");
-                    $temp.remove();
+                // Copy to clipboard
+                var $temp = $("<textarea/>");
+                $("body").append($temp);
+                $temp.val(text).select();
+                document.execCommand("copy");
+                $temp.remove();
             });
         }
 
@@ -533,65 +536,71 @@
         }
 
         function add_todo(form) {
-
+            if (form == undefined || form.name.trim().length < 1) {
+                return false;
+            }
             form.patient_id = $scope.patient_id;
 
-            prompt({
-                title: 'Add Due Date',
-                message: 'Enter due date',
-                input: true,
-                label: 'Due Date',
-            }).then(function (due_date) {
-                if (moment(due_date, "MM/DD/YYYY", true).isValid()) {
-                    form.due_date = due_date;
-                } else if (moment(due_date, "M/D/YYYY", true).isValid()) {
-                    form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
-                } else if (moment(due_date, "MM/YYYY", true).isValid()) {
-                    form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
-                } else if (moment(due_date, "M/YYYY", true).isValid()) {
-                    form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
-                } else if (moment(due_date, "MM/DD/YY", true).isValid()) {
-                    form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
-                } else if (moment(due_date, "M/D/YY", true).isValid()) {
-                    form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
-                } else if (moment(due_date, "MM/YY", true).isValid()) {
-                    form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
-                } else if (moment(due_date, "M/YY", true).isValid()) {
-                    form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
-                } else {
-                    toaster.pop('error', 'Error', 'Please enter a valid date!');
-                    return false;
-                }
-
-                patientService.addToDo(form).then(function (data) {
-                    var new_todo = data['todo'];
-                    $scope.pending_todos.push(new_todo);
-                    $scope.problem_todos.push(new_todo);
-
-                    $scope.new_todo = {};
-
-                    toaster.pop('success', 'Done', 'New Todo added successfully');
+            if ($scope.patient['bleeding_risk']) {
+                var bleedingRiskDialog = ngDialog.open({
+                    template: 'bleedingRiskDialog',
+                    showClose: false,
+                    closeByEscape: false,
+                    closeByDocument: false,
+                    closeByNavigation: false
                 });
-            }, function () {
-                patientService.addToDo(form).then(function (data) {
-                    var new_todo = data['todo'];
-                    $scope.pending_todos.push(new_todo);
-                    $scope.problem_todos.push(new_todo);
 
-                    $scope.new_todo = {};
+                bleedingRiskDialog.closePromise.then(askDueDate);
+            } else {
+                askDueDate();
+            }
 
-                    toaster.pop('success', 'Done', 'New Todo added successfully');
+            function askDueDate() {
+                var dueDateDialog = ngDialog.open({
+                    template: 'askDueDateDialog',
+                    showClose: false,
+                    closeByEscape: false,
+                    closeByDocument: false,
+                    closeByNavigation: false,
+                    controller: function () {
+                        var vm = this;
+                        var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
+                        vm.dueDate = '';
+
+                        vm.dueDateIsValid = function () {
+                            var isValid = moment(vm.dueDate, acceptedFormat, true).isValid();
+                            if (!isValid)
+                                toaster.pop('error', 'Error', 'Please enter a valid date!');
+                            return isValid;
+                        }
+                    },
+                    controllerAs: 'vm'
                 });
-            });
+
+                dueDateDialog.closePromise.then(function (data) {
+                    if (data.value != undefined)
+                        form.due_date = data.value;
+                    patientService.addToDo(form).then(addTodoSuccess);
+                })
+            }
+
+            // Add todo succeeded
+            function addTodoSuccess(data) {
+                var new_todo = data['todo'];
+                $scope.pending_todos.push(new_todo);
+                $scope.problem_todos.push(new_todo);
+
+                $scope.new_todo = {};
+
+                toaster.pop('success', 'Done', 'Added Todo!');
+            }
         }
 
         function set_new_problem(problem) {
-
             $scope.new_problem.set = true;
             $scope.new_problem.active = problem.active;
             $scope.new_problem.term = problem.term;
             $scope.new_problem.code = problem.code;
-
 
         }
 
