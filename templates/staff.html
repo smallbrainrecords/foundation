@@ -86,7 +86,7 @@
             <div ng-view>
                 Loading...
             </div>
-            <toaster-container></toaster-container>
+            <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
         </div>
         {% if user_profile.role == 'mid-level' or user_profile.role == 'nurse' or user_profile.role == 'secretary' %}
         <div class='panel panel-default'>

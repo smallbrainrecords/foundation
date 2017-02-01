@@ -1,18 +1,38 @@
+<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
+
+
+      <b>Name</b> : {{active_user.user.first_name}} {{active_user.user.last_name}}
+      <br>
+      <b>Username</b> : {{active_user.user.username}}
+      <br>
+      <b>Role</b> : {{active_user.role}}
+
+    <hr>
+
 <div class='row'>
 
 
 <div class='col-md-3'>
 
 
-	<div class='panel panel-default'>
+    <div class='panel panel-default'>
 
-		<div class='panel-heading'>
-			Options
-		</div>
-		<div class='panel-body'>
+        <div class='panel-heading'>
+            Options
+        </div>
+        <div class='panel-body'>
 
-		</div>
-	</div>
+        <a class='btn btn-default' href='#/add/user'>
+          Add User
+        </a>
+        </br>
+        </br>
+        <a class='btn btn-default' href='#/manage/sharing'>
+          Manage sharing between patients
+        </a>
+
+        </div>
+    </div>
 
 
 </div>
@@ -20,62 +40,245 @@
 
 <div class='col-md-9'>
 
-		<div class='panel panel-default'>
+  <div class='panel panel-default'>
 
-		<div class='panel-heading'>
-			Dashboard
-		</div>
-		<div class='panel-body'>
-			<center>
-			<h4 class='text-info'> Users </h4>
-			</center>
-			<hr>
-			<table class='table' >
-				<thead>
+
+
+
+        <div class='panel-heading'>
+            Registered Users
+        </div>
+        <div class='panel-body'>
+            <center>
+            <h4 class='text-info'> Registered Users </h4>
+            </center>
+            <hr>
+      <input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>
+      <hr>
+            <table class='table' >
+                <thead>
         <tr>
           <th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>
           <th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>
           <th class="sort " sortBy='login' sortOrder="desc">Username</th>
-          <th class="sort " sortBy='birthDate' sortOrder="desc">Date of birth</th>
+          <th class="sort " sortBy='birthDate' sortOrder="desc">Role</th>
           <th class="sort " sortBy='sex' sortOrder="desc">Sex</th>
           <th>Contact Number</th>
           <th>Action</th>
         </tr>
-        	</thead>
+            </thead>
 
-        	<tbody>
+            <tbody>
 
-        		<tr ng-repeat='user in users'>
-        			<td> {{user.user.first_name}} </td>
-        			<td> {{user.user.last_name}} </td>
-        			<td> {{user.user.username}} </td>
-        			<td> {{user.date_of_birth}} </td>
-        			<td> {{user.sex}} </td>
-        			<td> {{user.phone_number}} </td>
-        			<td>
+                <tr ng-repeat='user in users|filter:query_users'>
+                    <td> {{user.user.first_name}} </td>
+                    <td> {{user.user.last_name}} </td>
+                    <td> {{user.user.username}} </td>
+                    <td> {{user.role}} </td>
+                    <td> {{user.sex}} </td>
+                    <td> {{user.phone_number}} </td>
+                    <td>
 
-        				<a href='#/edit/{{user.user.id}}/'  class='btn btn-sm btn-default'>
-        					Edit 
-        				</a>
+                        <a href='#/edit/{{user.user.id}}/'  class='btn btn-sm btn-default'>
+                            Edit 
+                        </a>
 
-        				<a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'  ng-show='user.role=="patient"'>
-        					Manage
-        				</a>
+                        <a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'  ng-show='user.role=="patient"'>
+                            Manage
+                        </a>
 
-        				
-
-
-        			</td>
+                        
 
 
-        		</tr>
+                    </td>
 
-        	</tbody>
+
+                </tr>
+
+            </tbody>
 
         </table>
 
-		</div>
-	</div>
+        </div>
+    </div>
+
+
+
+    <div class='panel panel-default' ng-if='active_user.role=="admin"'>
+
+    <div class='panel-heading'>
+      Users Pending Registration
+    </div>
+    <div class='panel-body'>
+
+      <input type='text' class='form-control' ng-model='query_pending' placeholder='Search...'>
+      <hr>
+
+      <button class='btn btn-default pull-right' ng-click='refresh_pending_users()'>
+        Refresh
+      </button>
+
+      <center>
+      <h4 class='text-info'> Users Waiting Approval </h4>
+      </center>
+      <hr>
+      <table class='table' >
+        <thead>
+        <tr>
+          <th>Full Name</th>
+          <th>Username</th>
+          <th> Assign </th>
+          <th> Actions </th>
+        </tr>
+          </thead>
+
+          <tbody>
+
+            <tr ng-repeat='user in pending_users | filter:query_pending'>
+              <td> {{user.full_name}} </td>
+
+              <td> {{user.username}} </td>
+
+              <td> <select ng-model='user.role'>
+                    <option value=''>--Role--</option>
+                    <option value='patient'>Patient</option>
+                    <option value='physician'>Physician</option>
+                    <option value='admin'>Admin </option>
+                  </select>
+               </td>
+
+
+               <td> <button class='btn btn-default' ng-click='update_pending_user(user)'> Save </button>
+               </td>
+
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+    </div>
+  </div>
+
+
+    <div class='physician-view' ng-if='active_user.role=="physician"'>
+
+      <div class='panel panel-default' id='patientsAssignedInfo'>
+
+        <div class='panel-heading'> Patients Assigned</div>
+
+        <div class='panel-body'>
+
+          <table class='table'>
+                <thead>
+                    <th> Name </th>
+                    <th> Username </th>
+                    <th> Contact Number </th>
+                    <th> Actions </th>
+                </thead>
+                <tbody>
+                    <tr ng-repeat='patient in patients'>
+                        <td> {{patient.user.first_name}} {{patient.user.last_name}} </td>
+                        <td> {{patient.user.username}} </td>
+                        <td> {{patient.phone_number}} </td>
+                        <td> <a href='/u/patient/manage/{{patient.user.id}}/' class='btn btn-sm btn-default'         ng-show='patient.role=="patient"'>
+                                Manage
+                             </a>
+                        </td>
+                    </tr>
+                </tbody>
+         </table>
+
+        </div>
+
+      </div>
+
+      <div class='panel panel-default' id='nursesAssignedInfo'>
+
+        <div class='panel-heading'> Nurses Assigned</div>
+
+        <div class='panel-body'>
+
+
+          <table class='table'>
+                <thead>
+                    <th> Name </th>
+                    <th> Username </th>
+                    <th> Contact Number </th>
+
+                </thead>
+                <tbody>
+                    <tr ng-repeat='nurse  in team.nurses'>
+                        <td> {{nurse.user.first_name}} {{nurse.user.last_name}} </td>
+                        <td> {{nurse.user.username}} </td>
+                        <td> {{nurse.phone_number}} </td>
+                    </tr>
+                </tbody>
+         </table>
+
+        </div>
+
+      </div>
+
+
+      <div class='panel panel-default' id='midLevelAssignedInfo'>
+
+        <div class='panel-heading'> Mid-Level Assigned</div>
+
+        <div class='panel-body'>
+
+          <table class='table'>
+                <thead>
+                    <th> Name </th>
+                    <th> Username </th>
+                    <th> Contact Number </th>
+
+                </thead>
+                <tbody>
+                    <tr ng-repeat='staff  in team.mid_level_staffs'>
+                        <td> {{staff.user.first_name}} {{staff.user.last_name}} </td>
+                        <td> {{staff.user.username}} </td>
+                        <td> {{staff.phone_number}} </td>
+                    </tr>
+                </tbody>
+         </table>
+
+        </div>
+
+      </div>
+
+
+      <div class='panel panel-default' id='secretaryAssignedInfo'>
+
+        <div class='panel-heading'> Secretary Assigned</div>
+
+        <div class='panel-body'>
+
+         <table class='table'>
+                <thead>
+                    <th> Name </th>
+                    <th> Username </th>
+                    <th> Contact Number </th>
+
+                </thead>
+                <tbody>
+                    <tr ng-repeat='staff  in team.secretaries'>
+                        <td> {{staff.user.first_name}} {{staff.user.last_name}} </td>
+                        <td> {{staff.user.username}} </td>
+                        <td> {{staff.phone_number}} </td>
+                    </tr>
+                </tbody>
+         </table>
+
+        </div>
+
+      </div>
+
+
+
+    </div>
+
 
 </div>
 

@@ -1,5 +1,5 @@
 <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-    <toaster-container></toaster-container>
+    <!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
     <a href='#/'><b> Manage Patient </b></a>
 </div>
 
@@ -60,7 +60,7 @@
                             </form>
                         </div>
                     </div>
-			<p><b>Comments:</b></p>
+                    <p>Comments:</p>
                     <div class="row comment-history" ng-repeat="comment in comments | orderBy:'datetime':true track by $index">
                         <div class="col-xs-12">
                             <div class="comment">
