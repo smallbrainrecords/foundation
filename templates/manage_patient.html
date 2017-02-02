@@ -102,30 +102,31 @@
     </div>
 
     {% verbatim %}
-    <div id='encounter-bar' class='bottom-bar'
-         ng-controller='EncountersMainCtrl'
-         ng-show='show_encounter_ui==true'>
+    <div id='encounter-bar' class='bottom-bar' ng-controller='EncountersMainCtrl' ng-show='show_encounter_ui==true'>
         <ng-audio-recorder id='audioInput' audio-model='recordedInput' show-player="false"
                            on-conversion-complete="convert_is_finished()"
                            on-record-start="record_start()">
             <div ng-if="!recorder.isAvailable">
-                Message for users when recording is not possible.
+                Your browser is not support recording
             </div>
         </ng-audio-recorder>
-        <div class='row' id='encounter-box'>
 
-            <div class='col-md-12' ng-show='encounter_flag==false'>
-                <button class='btn btn-warning btn-md' ng-click='start_encounter()'>
+        <div class='row' id='encounter-box'>
+            <div class='col-md-12' ng-show='!encounter_flag'>
+                <button class='btn btn-warning btn-md' ng-click='start_encounter()'
+                        ng-if="!encounterCtrl.status.isConverting && !encounterUploading">
                     Start Encounter
                 </button>
+                <!--Audio conversion & uploading status-->
+                <div>
+                    <label ng-if="encounterCtrl.status.isConverting">Converting encounter...</label>
+                    <label ng-if="encounterUploading">Uploading encounter...</label>
+                </div>
             </div>
 
-            <div class='col-md-12' ng-show='encounter_flag==true'>
-
+            <div class='col-md-12' ng-show='encounter_flag'>
                 <div class='row'>
-
                     <div class='col-md-6'>
-
                         <button class='btn btn-warning btn-md' ng-click='stop_encounter()'>
                             Stop Encounter
                         </button>

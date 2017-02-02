@@ -1,77 +1,57 @@
 (function () {
 
     'use strict';
-    var blob;
 
     angular.module('ManagerApp')
         .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload,
                                                     encounterService, recorderService, toaster, $interval, $rootScope,
                                                     encounterRecorderFailSafeService, $window) {
 
-            var patient_id = $('#patient_id').val();
-
-            /**
-             * Restore last unsaved session
-             * @type {Array}
-             */
+            $scope.encounterUploading = false;
             $scope.unsavedBlob = encounterRecorderFailSafeService.restoreUnsavedBlob();
-
-            /**
-             * Storage to store multiple recording audio file
-             * @type {Array}
-             */
             $scope.blobs = [];
-
-            /**
-             * Total elapsed time of audio file recorded
-             * @type {number}
-             */
             $scope.elapsedTime = encounterRecorderFailSafeService.restoreUnsavedDuration();
-
-            /**
-             * Maximum time in second be allowed
-             * to record also encounter session
-             * When this time is reached the encounter session will be stopped automatically
-             * Default 90 mins
-             * @type {number}
-             */
             $scope.limitTime = 5400;
-
-            /**
-             * Flag determine on progress
-             */
             $scope.convert_flag = false;
-
-            /**
-             * Status of the minor recorder
-             * @type {boolean}
-             */
-            // $scope.minorRecorderFlag = false;
-
             $scope.show_encounter_ui = false;
-
-            $scope.patient_id = patient_id;
-
+            $scope.patient_id = $('#patient_id').val();
             $rootScope.encounter_flag = $scope.encounter_flag = false;
 
-            /* Get Status of any running encounters */
-            patientService.getEncounterStatus(patient_id).then(function (data) {
+            $scope.start_encounter = start_encounter;
+            $scope.stop_encounter = stop_encounter;
+            $scope.convert_is_finished = convert_is_finished;
+            $scope.auto_upload = auto_upload;
+            $scope.toggle_recorder = toggle_recorder;
+            $scope.record_start = record_start;
+            $scope.view_encounter = view_encounter;
+            $scope.add_event_summary = add_event_summary;
+            $window.onbeforeunload = onbeforeunload;
 
-                $scope.show_encounter_ui = data['permitted'];
+            init();
 
-                if (data['encounter_active'] == true) {
-                    $scope.encounter_flag = true;
-                    $rootScope.encounter_flag = true;
-                    $scope.encounter = data['current_encounter'];
-                    $scope.blobs.push($scope.unsavedBlob);
-                } else {
-                    $scope.encounter_flag = false;
-                    $rootScope.encounter_flag = false;
-                    encounterRecorderFailSafeService.clearUnsavedData();
-                }
+            function init() {
 
-            });
-            $scope.start_encounter = function () {
+                /* Get Status of any running encounters */
+                patientService.getEncounterStatus($scope.patient_id)
+                    .then(function (data) {
+
+                        $scope.show_encounter_ui = data['permitted'];
+
+                        if (data['encounter_active'] == true) {
+                            $scope.encounter_flag = true;
+                            $rootScope.encounter_flag = true;
+                            $scope.encounter = data['current_encounter'];
+                            $scope.blobs.push($scope.unsavedBlob);
+                        } else {
+                            $scope.encounter_flag = false;
+                            $rootScope.encounter_flag = false;
+                            encounterRecorderFailSafeService.clearUnsavedData();
+                        }
+
+                    });
+            }
+
+            function start_encounter() {
 
                 if ($scope.encounter_flag == true) {
                     alert("An encounter is already running!");
@@ -91,14 +71,14 @@
                         }
                         // Remove last saved session for safe
                         encounterRecorderFailSafeService.clearUnsavedData();
-                        $scope.blobs=[];
+                        $scope.blobs = [];
                         $scope.elapsedTime = 0;
                         $scope.encounterCtrl.startRecord();
                     });
                 }
-            };
+            }
 
-            $scope.stop_encounter = function () {
+            function stop_encounter() {
                 if ($scope.encounter_flag == true) {
                     var encounter_id = $scope.encounter.id;
 
@@ -120,15 +100,14 @@
                         }
                     });
                 }
-            };
-
+            }
 
             /**
              * Callback when recorder have finished convert dataUrl to Blob
              * and upload audio to server
              * This will not fired if the main audio is on paused state
              */
-            $scope.convert_is_finished = function () {
+            function convert_is_finished() {
                 $scope.blobs.push($scope.encounterCtrl.audioModel);
 
                 // Store for recovering session
@@ -138,31 +117,34 @@
                 if (!$scope.encounter_flag) {
                     $scope.auto_upload();
                 }
-            };
+            }
 
             /**
              * Automatically upload file
              */
-            $scope.auto_upload = function () {
+            function auto_upload() {
                 var form = {};
                 form.encounter_id = $scope.encounter.id;
                 form.patient_id = $scope.patient_id;
 
                 var file = new File($scope.blobs, Date.now() + ".mp3");
+                $scope.encounterUploading = true;
+                encounterService.uploadAudio(form, file)
+                    .then(function (data) {
+                        $scope.encounterUploading = false;
 
-                encounterService.uploadAudio(form, file).then(function (data) {
-                    if (data['success'] == true) {
-                        toaster.pop('success', 'Done', 'Uploaded Audio!');
-                    }
-                });
-            };
+                        if (data['success'] == true) {
+                            toaster.pop('success', 'Done', 'Uploaded Audio!');
+                        }
+                    });
+            }
 
             /**
              * toggle_recorder
              * Pause or Resume recorder while encounter
              * Add new time stamp for later
              */
-            $scope.toggle_recorder = function () {
+            function toggle_recorder() {
                 // Stop & convert the minor audio file
                 $scope.encounterCtrl = $scope.encounterCtrl || recorderService.controller("audioInput");
                 $scope.encounterCtrl.status.isRecording ? $scope.encounterCtrl.stopRecord() : $scope.encounterCtrl.startRecord();
@@ -183,29 +165,28 @@
                 });
 
 
-            };
+            }
 
             /**
              * Callback when recorder starting
              * Getting the ngRecordAudioController for globally using
              * @deprecated
              */
-            $scope.record_start = function () {
+            function record_start() {
                 $scope.encounterCtrl = recorderService.controller("audioInput");
-            };
+            }
 
             $scope.$watch('encounterCtrl.elapsedTime', function (newVal, oldVal) {
                 $scope.elapsedTime++;
             });
 
-            $scope.view_encounter = function () {
+            function view_encounter() {
                 var encounter_id = $scope.encounter.id;
                 $location.path('/encounter/' + encounter_id);
 
-            };
+            }
 
-
-            $scope.add_event_summary = function () {
+            function add_event_summary() {
 
                 if ($scope.event_summary.length < 1) {
 
@@ -229,7 +210,7 @@
                     }
 
                 });
-            };
+            }
 
             /**
              * Track total recorded time of encounter
@@ -244,7 +225,7 @@
              * @param e
              * @returns {string}
              */
-            $window.onbeforeunload = function (e) {
+            function onbeforeunload(e) {
                 if ($scope.encounterCtrl.status.isRecording) {
 
                     var confirmationMessage = "\o/"; // Due to browser security we cannot customize user message here
@@ -252,8 +233,7 @@
                     e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
                     return confirmationMessage;              // Gecko, WebKit, Chrome <34
                 }
-            };
-
+            }
         });
     /* End of controller */
 
