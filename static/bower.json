@@ -36,6 +36,8 @@
     "angular-elastic": "^2.5.1",
     "angular-xeditable": "^0.5.0",
     "angular-spinkit": "^0.3.4",
-    "angular-moment": "^1.0.1"
+    "angular-moment": "^1.0.1",
+    "awesome-bootstrap-checkbox": "^0.3.7",
+    "checklist-model": "^0.10.0"
   }
 }

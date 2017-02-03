@@ -160,5 +160,17 @@
         this.getUploadedDocument = function () {
             return $http.get('/docs/list');
         };
+
+        this.getSettings = function () {
+            return $http.get('/u/setting');
+        };
+
+        this.updateSettings = function (settingObj) {
+            return $http.post('/u/update_setting', settingObj, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            });
+        }
     }
 })();

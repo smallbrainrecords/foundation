@@ -9,7 +9,7 @@
             'sharedModule', 'httpModule', 'myTools', 'inr', 'todos', // Development module
 
             'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', // 3rd party module
-            'ui.bootstrap', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file','angularMoment']);
+            'ui.bootstrap', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file', 'angularMoment', 'checklist-model']);
 
 
     StaffApp.config(function ($routeProvider) {
@@ -18,6 +18,10 @@
             .when('/', {
                 templateUrl: '/static/apps/staff/partials/home.html',
                 controller: 'HomeCtrl'
+            })
+            .when('/manage/setting', {
+                templateUrl: '/static/apps/staff/setting-page/setting-page.html',
+                controller: 'SettingPageController'
             })
             .when("/todo/:todo_id", {
                 templateUrl: '/static/apps/staff/partials/todo.html',
@@ -57,4 +61,10 @@
             });
     });
 
+    StaffApp.run(function (staffService) {
+        // staffService.fetchActiveUser($('#user_id').val()).then(function (data) {
+        //     staffService.user = data;
+        //     console.log(data);
+        // });
+    })
 })();

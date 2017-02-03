@@ -38,28 +38,34 @@
 <script src="/static/apps/admin/directives/directives.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/staff/directives/todoDirective.js" type="text/javascript" charset="utf-8"></script>
 
+<script src="/static/apps/staff/setting-page/setting-page.controller.js" type="text/javascript"
+        charset="utf-8"></script>
+
 <input type='hidden' id='user_id' value='{{user.id}}'>
 
 <div class='row'>
-
     <div class='col-md-3'>
         <div class='panel panel-default'>
-
             <div class='panel-heading'>
                 Info
             </div>
             <div class='panel-body'>
-                <b> Name </b>: {{user.first_name}} {{user.last_name}}
-                <br>
-                <b> Role </b>: {{user_profile.get_role_display}}
-                <br>
-                <b> Username </b>: {{user.username}}
-                <br>
+                <p>
+                    <b> Name </b>: {{user.first_name}} {{user.last_name}}
+                </p>
+                <p>
+                    <b> Role </b>: {{user_profile.get_role_display}}
+                </p>
+                <p>
+                    <b> Username </b>: {{user.username}}
+                </p>
+
                 <a class='btn btn-default btn-manage' href='/project/admin/#/add/user'>Add User</a>
 
                 <a class='btn btn-default btn-manage' href='/#/manage/sharing'>
                     Manage sharing between patients
                 </a>
+
                 {% if user_profile.role == 'mid-level' or user_profile.role == 'physician' %}
                 <a class='btn btn-default btn-manage' href='/#/manage/common_problems'>
                     Adding common problems
@@ -74,6 +80,12 @@
                 <a class='btn btn-default btn-manage' href='/#/manage/uploaded'>
                     Manage uploaded documents
                 </a>
+                {% if user_profile.role == 'admin' or user_profile.role == 'physician' %}
+
+                <a class='btn btn-default btn-manage' href='/#/manage/setting'>
+                    Setting
+                </a>
+                {% endif %}
                 {% endif %}
 
             </div>
@@ -90,19 +102,14 @@
         </div>
         {% if user_profile.role == 'mid-level' or user_profile.role == 'nurse' or user_profile.role == 'secretary' %}
         <div class='panel panel-default'>
-
             <div class='panel-heading'>
                 Physicians Assigned
             </div>
             <div class='panel-body'>
-
                 {% for physician in physicians %}
-
                 <p>{{physician.first_name}} {{physician.last_name}} {{physician.username}}</p>
                 {% endfor %}
-
             </div>
-
         </div>
 
         <div class='panel panel-default'>
@@ -110,13 +117,13 @@
                 Patients Assigned
             </div>
             <div class='panel-body'>
-
                 <table class='table'>
-
                     <thead>
-                    <th> Name</th>
-                    <th> Username</th>
-                    <th> Actions</th>
+                    <tr>
+                        <th> Name</th>
+                        <th> Username</th>
+                        <th> Actions</th>
+                    </tr>
                     </thead>
 
                     <tbody>
@@ -136,10 +143,6 @@
             </div>
         </div>
         {% endif %}
-
     </div>
-
 </div>
-
-
 {% endblock %}

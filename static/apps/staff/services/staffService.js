@@ -4,6 +4,7 @@
 
     angular.module('StaffApp').service('staffService',
         function ($q, $cookies, $http, httpService) {
+            this.user = {};
 
             this.csrf_token = function () {
                 return $cookies.get('csrftoken');
