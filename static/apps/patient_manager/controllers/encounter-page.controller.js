@@ -4,59 +4,80 @@
 
 
     angular.module('ManagerApp')
-        .controller('EncountersCtrl', function ($scope, $rootScope, $routeParams, patientService, ngDialog,
-                                                $location, toaster, encounterService, ngAudio, prompt, sharedService) {
+        .controller('EncounterPageCtrl', function ($scope, $rootScope, $routeParams, patientService, ngDialog,
+                                                   $location, toaster, encounterService, ngAudio, prompt, $timeout) {
 
 
-            var patient_id = $('#patient_id').val();
-            $scope.patient_id = patient_id;
-            var encounter_id = $routeParams.encounter_id;
-            $scope.encounter_id = encounter_id;
+            $scope.patient_id = $('#patient_id').val();
+            $scope.encounter_id = $routeParams.encounter_id;
+            $scope.encounter = {};
+            $scope.related_problems = {};
+            $scope.active_user = {};
 
-            //sharedService.initHotkey($scope);
-            patientService.fetchActiveUser().then(function (data) {
-                $scope.active_user = data['user_profile'];
+            $scope.update_note = updateNote;
+            $scope.upload_video = uploadVideo;
+            $scope.upload_audio = uploadAudio;
+            $scope.add_timestamp = addTimestamp;
+            $scope.markFavoriteEvent = markFavoriteEvent;
+            $scope.unmarkFavoriteEvent = unMarkFavoriteEvent;
+            $scope.nameFavoriteEvent = nameFavoriteEvent;
+            $scope.deleteEncounter = deleteEncounter;
+            $scope.permitted = permitted;
 
-            });
+            init();
 
-            patientService.fetchEncounterInfo(encounter_id).then(function (data) {
+            function init() {
 
-                $scope.encounter = data['encounter'];
-                $rootScope.encounter_events = $scope.encounter_events = data['encounter_events'];
-                $scope.related_problems = data['related_problems'];
+                patientService.fetchActiveUser().then(function (data) {
+                    $scope.active_user = data['user_profile'];
 
-                // If encounter include any audio automatically playing this audio
-                if ($scope.encounter.audio != null && $routeParams.startAt != null) {
-                    // TODO: We have to check that audio1 element must be valid before playing
-                    var canPlay = setInterval(function () {
-                        console.log("We trying to playing audio again");
-                        var myAudio = document.getElementById('audio1');
-                        if (myAudio != null) {
-                            console.log("Hurray can play audio at position for now");
-                            myAudio.currentTime = parseInt($routeParams.startAt);
-                            myAudio.play();
-                            clearInterval(canPlay);
+                });
+
+                patientService.fetchEncounterInfo($scope.encounter_id)
+                    .then(function (data) {
+                        $scope.encounter = data['encounter'];
+                        $rootScope.encounter_events = $scope.encounter_events = data['encounter_events'];
+                        $scope.related_problems = data['related_problems'];
+
+                        // If encounter include any audio automatically playing this audio
+                        if ($scope.encounter.audio != null) {
+                            $timeout(function () {
+                                var myAudio = document.getElementById('audio1');
+                                myAudio.onplay = function () {
+                                    console.log('abc');
+                                    encounterService.updateAudioPlayedCount($scope.encounter_id);
+                                };
+                            }, 1000);
+
+                            if ($routeParams.startAt != null) {
+                                // TODO: We have to check that audio1 element must be valid before playing
+                                var canPlay = setInterval(function () {
+                                    if (myAudio != null) {
+                                        myAudio.currentTime = parseInt($routeParams.startAt);
+                                        myAudio.play();
+                                        clearInterval(canPlay);
+                                    }
+                                }, 1000);
+                            }
                         }
-                    }, 1000);
-                }
-            });
+                    });
+            }
 
-            $scope.update_note = function () {
+            function updateNote() {
 
                 var form = {};
                 form.encounter_id = $scope.encounter_id;
                 form.patient_id = $scope.patient_id;
                 form.note = $scope.encounter.note;
                 encounterService.updateNote(form).then(function (data) {
-
                     toaster.pop('success', 'Done', 'Updated note!');
 
                 });
 
 
-            };
+            }
 
-            $scope.upload_video = function () {
+            function uploadVideo() {
 
                 var form = {};
                 form.encounter_id = $scope.encounter_id;
@@ -71,9 +92,9 @@
                     }
                 });
 
-            };
+            }
 
-            $scope.upload_audio = function () {
+            function uploadAudio() {
 
                 var form = {};
                 form.encounter_id = $scope.encounter_id;
@@ -85,17 +106,9 @@
                         toaster.pop('success', 'Done', 'Uploaded Audio!');
                     }
                 });
-            };
+            }
 
-            /**
-             *
-             * Add an timestamp event
-             * Get timestamp of current playing audio.
-             * TODO:1. Ask @Jim for default timestamp will be added if there is any error
-             * TODO:2. Ask @Rohit for adding support we can add timestamp from client.Currently not supported yet
-             * Default timestamp: 0
-             */
-            $scope.add_timestamp = function () {
+            function addTimestamp() {
                 // Get default encounter element page
                 var myAudio = document.getElementById('audio1');
 
@@ -112,9 +125,9 @@
                         toaster.pop('error', 'Warning', 'Something went wrong!');
                     }
                 });
-            };
+            }
 
-            $scope.markFavoriteEvent = function (encounter_event) {
+            function markFavoriteEvent(encounter_event) {
                 var form = {};
                 form.encounter_event_id = encounter_event.id;
                 form.is_favorite = true;
@@ -122,9 +135,9 @@
                     encounter_event.is_favorite = true;
                     toaster.pop('success', 'Done', 'Marked favorite!');
                 });
-            };
+            }
 
-            $scope.unmarkFavoriteEvent = function (encounter_event) {
+            function unMarkFavoriteEvent(encounter_event) {
                 var form = {};
                 form.encounter_event_id = encounter_event.id;
                 form.is_favorite = false;
@@ -132,9 +145,9 @@
                     encounter_event.is_favorite = false;
                     toaster.pop('success', 'Done', 'Unmarked favorite!');
                 });
-            };
+            }
 
-            $scope.nameFavoriteEvent = function (encounter_event) {
+            function nameFavoriteEvent(encounter_event) {
                 var form = {};
                 form.encounter_event_id = encounter_event.id;
                 form.name_favorite = encounter_event.name_favorite;
@@ -142,9 +155,9 @@
                     encounter_event.is_named = false;
                     toaster.pop('success', 'Done', 'Named favorite!');
                 });
-            };
+            }
 
-            $scope.deleteEncounter = function () {
+            function deleteEncounter() {
                 prompt({
                     "title": "Are you sure?",
                     "message": "This is irreversible."
@@ -159,12 +172,11 @@
                 }, function () {
                     return false;
                 });
-            };
+            }
 
+            function permitted(permissions) {
 
-            $scope.permitted = function (permissions) {
-
-                if ($scope.active_user == undefined) {
+                if (_.isUndefined($scope.active_user) || _.isEmpty($scope.active_user)) {
                     return false;
                 }
 
@@ -178,11 +190,6 @@
                 }
 
                 return true;
-            };
-
-
+            }
         });
-    /* End of controller */
-
-
 })();

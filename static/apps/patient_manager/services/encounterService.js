@@ -5,7 +5,7 @@
     angular.module('ManagerApp').service('encounterService',
         function ($http, $q, $cookies, httpService) {
             this.csrf_token = function () {
-                return  $cookies.get('csrftoken');
+                return $cookies.get('csrftoken');
             };
 
             this.updateNote = function (form) {
@@ -105,6 +105,10 @@
                 var url = '/enc/patient/' + form.patient_id + '/encounter/' + form.encounter_id + '/delete';
                 return httpService.post(form, url);
             };
+
+            this.updateAudioPlayedCount = function (encounterId) {
+                return $http.get('/enc/encounter/' + encounterId + '/audio_played');
+            }
 
 
         });

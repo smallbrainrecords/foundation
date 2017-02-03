@@ -57,8 +57,8 @@
             })
             .when('/encounter/:encounter_id', {
 
-                templateUrl: '/static/apps/patient_manager/partials/encounter.html',
-                controller: 'EncountersCtrl'
+                templateUrl: '/static/apps/patient_manager/partials/encounter-page.template.html',
+                controller: 'EncounterPageCtrl'
 
             })
             .when("/todo/:todo_id", {

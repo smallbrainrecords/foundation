@@ -399,13 +399,13 @@
 
                         pain_data = process_pain_data(pain_data);
 
-                        var control_ui = '<div id="controls" style="background:whitesmoke">'
-                        control_ui += '<input type="button" id="toggleSlideshow" value="Start slideshow">'
+                        var control_ui = '<div id="controls" style="background:whitesmoke">';
+                        control_ui += '<input type="button" id="toggleSlideshow" value="Start slideshow">';
 
-                        control_ui += '<input type="button" id="backwards" value="<">'
-                        control_ui += '<input type="button" id="forwards" value=">">'
+                        control_ui += '<input type="button" id="backwards" value="<">';
+                        control_ui += '<input type="button" id="forwards" value=">">';
 
-                        control_ui += '</div>'
+                        control_ui += '</div>';
 
 
                         $element.append(control_ui);
@@ -413,10 +413,10 @@
                         for (var i = 0; i < pain_data.length; i++) {
 
 
-                            var canvas_html = '<div class="pain_avatar" id="pain_avatar' + i + '"> '
-                            canvas_html += '<canvas id="myCanvas' + i + '" width="214" height="442" style="background:#FFF; border:1px solid #000000;"></canvas>'
-                            canvas_html += '<p>' + pain_data[i]['datetime'] + ' (' + (i + 1) + '/' + pain_data.length + ')</p>'
-                            canvas_html += '</div>'
+                            var canvas_html = '<div class="pain_avatar" id="pain_avatar' + i + '"> ';
+                            canvas_html += '<canvas id="myCanvas' + i + '" width="214" height="442" style="background:#FFF; border:1px solid #000000;"></canvas>';
+                            canvas_html += '<p>' + pain_data[i]['datetime'] + ' (' + (i + 1) + '/' + pain_data.length + ')</p>';
+                            canvas_html += '</div>';
 
                             $element.append(canvas_html);
 
@@ -578,17 +578,17 @@
 
     myTools.directive('ngAudioPlayer', ['$parse', function ($parse) {
 
-        var component = {}
+        var component = {};
 
         component.restrict = 'A';
-        component.link = function ($scope, $element, $attrs) {
+        component.link = function ($scope, $element, $attr) {
 
-            $scope.audio_src = $attrs.audioSrc;
-            $scope.audio_type = $attrs.audioType;
+            $scope.audio_src = $attr.audioSrc;
+            $scope.audio_type = $attr.audioType;
         };
 
 
-        component.template = function ($element, $attrs) {
+        component.template = function ($element, $attr) {
             var template = '';
             template += '<audio controls id="audio1" preload="auto">';
             template += '<source src="{{audio_src}}" type="{{audio_type}}" >';
