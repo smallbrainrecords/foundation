@@ -9,7 +9,7 @@
         <div class="row">
             <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
                 <div class="io-box">
-                    <input ng-model='item.accomplished' type='checkbox' ng-change='updateTodoStatus(todo)' title="">
+                    <input ng-model='todo.accomplished' type='checkbox' ng-change='updateTodoStatus(todo)' title="">
 
                     <span class="todo-name" ng-bind="todo.todo" ng-click="changeText(todo)" ng-if="!todo.change_text"></span>
                     <div class="quick-card-editor-text" ng-if="todo.change_text">

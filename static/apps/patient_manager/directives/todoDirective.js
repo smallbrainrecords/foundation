@@ -1,24 +1,25 @@
-var todos = angular.module('todos', []);
+(function () {
 
-todos.directive('todo', ['todoService', 'patientService', 'toaster', '$location', '$timeout', todoDirective]);
+    'use strict';
 
-function todoDirective(todoService, patientService, toaster, $location, $timeout) {
+    angular.module('todos', ['sharedModule', 'ngDialog'])
+        .directive('todo', todoDirective);
 
-    var todoObj = {};
+    todoDirective.$inject = ['todoService', 'patientService', 'toaster', '$location', '$timeout', 'sharedService', 'ngDialog'];
 
-    return {
-        restrict: 'E',
-        templateUrl: '/static/apps/patient_manager/directives/templates/todo.html',
-        scope: true,
-        link: function (scope, element, attr, model) {
+    function todoDirective(todoService, patientService, toaster, $location, $timeout, sharedService, ngDialog) {
+
+        return {
+            restrict: 'E',
+            templateUrl: '/static/apps/patient_manager/directives/templates/todo.html',
+            scope: true,
+            link: link
+        };
+
+        function link(scope, element, attr, model) {
             scope.$watch('todos_ready', function (newVal, oldVal) {
                 if (newVal) {
-                    scope.set_authentication_false = function () {
-                        if (scope.problem) {
-                            if (scope.active_user.role != "physician" && scope.active_user.role != "admin")
-                                scope.problem.authenticated = false;
-                        }
-                    };
+                    scope.allowDueDateNotification = true;
 
                     if (scope.todos_ready) {
                         var currentTodo;
@@ -78,6 +79,13 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                         scope.todos_ready = false;
                     }
 
+                    scope.set_authentication_false = function set_authentication_false() {
+                        if (scope.problem) {
+                            if (scope.active_user.role != "physician" && scope.active_user.role != "admin")
+                                scope.problem.authenticated = false;
+                        }
+                    };
+
                     scope.isDueDate = function (date) {
                         var date = new Date(date);
                         var today = new Date();
@@ -87,20 +95,41 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                         return '';
                     };
 
-
                     // update status
                     scope.update_todo_status = function (todo) {
                         scope.dragged = true;
-                        patientService.updateTodoStatus(todo).then(function (data) {
-                            if (data['success'] == true) {
-                                toaster.pop('success', "Done", "Updated Todo status !");
-                                scope.set_authentication_false();
-                            } else {
-                                toaster.pop('error', 'Warning', 'Something went wrong!');
-                            }
-                            scope.dragged = false;
-                        });
+                        if (_.contains(sharedService.settings.todo_popup_confirm, scope.active_user.role)) {
+                            var confirmationPopup = ngDialog.open({
+                                template: 'todoPopupConfirmDialog',
+                                showClose: false,
+                                closeByEscape: false,
+                                closeByDocument: false,
+                                closeByNavigation: false
+                            });
 
+                            confirmationPopup.closePromise.then(function (response) {
+                                if (response.value) {
+                                    acceptedChangeTodoStatus();
+                                } else {
+                                    // revert back to original todo's accomplished status due to non customized checkbox
+                                    todo.accomplished = !todo.accomplished;
+                                }
+                            })
+                        } else {
+                            acceptedChangeTodoStatus()
+                        }
+                        function acceptedChangeTodoStatus() {
+                            patientService.updateTodoStatus(todo)
+                                .then(function (data) {
+                                    if (data['success']) {
+                                        toaster.pop('success', "Done", "Updated Todo status !");
+                                        scope.set_authentication_false();
+                                    } else {
+                                        toaster.pop('error', 'Warning', 'Something went wrong!');
+                                    }
+                                    scope.dragged = false;
+                                });
+                        }
                     };
 
                     scope.open_todo = function (todo) {
@@ -145,7 +174,6 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                         todo.change_due_date = (todo.change_due_date != true) ? true : false;
                     };
 
-                    scope.allowDueDateNotification = true;
                     scope.saveTodoDueDate = function (todo) {
                         todoService.changeTodoDueDate(todo).then(function (data) {
                             if (data['success'] == true) {
@@ -366,6 +394,6 @@ function todoDirective(todoService, patientService, toaster, $location, $timeout
                 }
             }, true);
         }
-    }
 
-}
+    }
+})();

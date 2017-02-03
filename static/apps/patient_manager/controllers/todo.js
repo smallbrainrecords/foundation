@@ -165,14 +165,37 @@
             }
 
             function updateTodoStatus(todo) {
-                patientService.updateTodoStatus(todo).then(function (data) {
-                    if (data['success'] == true) {
-                        toaster.pop('success', "Done", "Updated Todo status !");
-                    } else {
-                        toaster.pop('error', 'Warning', 'Something went wrong!');
-                    }
-                });
+                if (_.contains(sharedService.settings.todo_popup_confirm, $scope.active_user.role)) {
+                    var confirmationPopup = ngDialog.open({
+                        template: 'todoPopupConfirmDialog',
+                        showClose: false,
+                        closeByEscape: false,
+                        closeByDocument: false,
+                        closeByNavigation: false
+                    });
 
+                    confirmationPopup.closePromise.then(function (response) {
+                        if (response.value) {
+                            acceptedChangeTodoStatus();
+                        } else {
+                            // revert back to original todo's accomplished status due to non customized checkbox
+                            $scope.todo.accomplished = !$scope.todo.accomplished;
+                        }
+                    })
+                } else {
+                    acceptedChangeTodoStatus()
+                }
+
+                function acceptedChangeTodoStatus(response) {
+
+                    patientService.updateTodoStatus(todo).then(function (data) {
+                        if (data['success'] == true) {
+                            toaster.pop('success', "Done", "Updated Todo status !");
+                        } else {
+                            toaster.pop('error', 'Warning', 'Something went wrong!');
+                        }
+                    });
+                }
             }
 
             function createLabel(todo) {

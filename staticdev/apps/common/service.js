@@ -8,6 +8,8 @@
     sharedService.$inject = ['$http', '$cookies', 'Upload', 'hotkeys', '$location'];
 
     function sharedService($http, $cookies, Upload, hotkeys, $location) {
+        this.settings = {};
+
         /**
          * Upload multiple documentation
          * @param files
