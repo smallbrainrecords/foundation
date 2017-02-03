@@ -280,10 +280,13 @@ def get_patient_info(request, patient_id):
     encounters = Encounter.objects.filter(patient=patient_user).order_by('-starttime')
     favorites = EncounterEvent.objects.filter(encounter__patient=patient_user, is_favorite=True).order_by('-datetime')
 
+    # Retrieve most recent encounter information
     most_recent_encounter_summaries = []
+    most_recent_encounter_documents_holder = []
     related_problem_holder = []
     encounter = Encounter.objects.filter(patient=patient_user).order_by("-starttime").first()
     if encounter:
+        # Encounter's event summaries
         most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user,
                                                                      encounter=encounter)
 
@@ -291,7 +294,15 @@ def get_patient_info(request, patient_id):
             if not "Started encounter by" in event.summary and not "Stopped encounter by" in event.summary:
                 most_recent_encounter_summaries.append(event.summary)
 
-        # Related problems
+        # Encounter's document
+        for document in encounter.encounter_document.all():
+            most_recent_encounter_documents_holder.append({
+                'name': document.component.__str__(),
+                'value': '%g' % float(document.value_quantity),
+                'effective': document.effective_datetime.isoformat()
+            })
+
+        # Encounter's related problems
         related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
         related_problem_ids = [x.problem.id for x in related_problem_records]
 
@@ -329,6 +340,7 @@ def get_patient_info(request, patient_id):
     resp['favorites'] = EncounterEventSerializer(favorites, many=True).data
     resp['most_recent_encounter_summaries'] = most_recent_encounter_summaries
     resp['most_recent_encounter_related_problems'] = related_problem_holder
+    resp['most_recent_encounter_documents'] = most_recent_encounter_documents_holder
     resp['shared_patients'] = patients_list
     resp['sharing_patients'] = sharing_patients_list
     resp['acutes_list'] = CommonProblemSerializer(acutes, many=True).data

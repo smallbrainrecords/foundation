@@ -43,6 +43,7 @@
         $scope.show_edit_my_story_tab = false;
         $scope.favorites_collapse = false;
         $scope.problem_term = '';
+        $scope.most_recent_encounter_documents = [];
 
         $scope.init = init;
         $scope.updateSummary = updateSummary;
@@ -167,6 +168,7 @@
                 $scope.favorites = data['favorites'];
                 $scope.most_recent_encounter_summaries = data['most_recent_encounter_summaries'];
                 $scope.most_recent_encounter_related_problems = data['most_recent_encounter_related_problems'];
+                $scope.most_recent_encounter_documents = data['most_recent_encounter_documents'];
                 $scope.shared_patients = data['shared_patients'];
                 $scope.sharing_patients = data['sharing_patients'];
                 $scope.acutes = data['acutes_list'];
@@ -404,10 +406,8 @@
                 var text = '';
 
                 // TODO: Check whether or not data is ready
-                if ($scope.most_recent_encounter_summaries == undefined ||
-                    $scope.most_recent_encounter_related_problems == undefined ||
-                    $scope.pending_todos == undefined) {
-                    alert("Data is not loaded. Try again in few seconds");
+                if (_.isUndefined($scope.most_recent_encounter_summaries) || _.isUndefined($scope.most_recent_encounter_related_problems) || _.isUndefined($scope.pending_todos)) {
+                    alert("Data is not loading. Try again in few seconds");
                     return;
                 }
 
@@ -417,6 +417,18 @@
                     angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
                         var container = $("<div/>");
                         container.append(value);
+
+                        text += container.text() + '\r\n';
+                    });
+                    text += '\r\n';
+                }
+
+                // Refer https://trello.com/c/cFylaLdv
+                if ($scope.most_recent_encounter_documents.length > 0) {
+                    text += "List of encounter document: \r\n";
+                    angular.forEach($scope.most_recent_encounter_documents, function (value, key) {
+                        var container = $("<div/>");
+                        container.append(value.name + ': ' + value.value + " at " + $filter('date')(value.effective, 'dd/MM/yyyy h:mm'));
 
                         text += container.text() + '\r\n';
                     });
