@@ -165,7 +165,10 @@
             }
 
             function updateTodoStatus(todo) {
-                if (_.contains(sharedService.settings.todo_popup_confirm, $scope.active_user.role)) {
+                // Don't show confirmation popup if change status from accomplished to true.
+                // Because default ui checkbox behaviour the todo's accomplished status will be updated before confirm popup display
+                // so we have to used todo's accomplished value changed already in frontend at this point
+                if (_.contains(sharedService.settings.todo_popup_confirm, $scope.active_user.role) && $scope.todo.accomplished) {
                     var confirmationPopup = ngDialog.open({
                         template: 'todoPopupConfirmDialog',
                         showClose: false,
