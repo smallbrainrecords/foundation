@@ -5,7 +5,7 @@
     angular.module('ManagerApp')
         .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload,
                                                     encounterService, recorderService, toaster, $interval, $rootScope,
-                                                    encounterRecorderFailSafeService, $window) {
+                                                    encounterRecorderFailSafeService, $window, sharedService) {
 
             $scope.encounterUploading = false;
             $scope.unsavedBlob = encounterRecorderFailSafeService.restoreUnsavedBlob();
@@ -16,6 +16,7 @@
             $scope.show_encounter_ui = false;
             $scope.patient_id = $('#patient_id').val();
             $rootScope.encounter_flag = $scope.encounter_flag = false;
+            $scope.settings = sharedService.settings;
 
             $scope.start_encounter = start_encounter;
             $scope.stop_encounter = stop_encounter;
@@ -65,15 +66,19 @@
                         $scope.encounter_flag = true;
                         $rootScope.encounter_flag = true;
 
-                        $scope.encounterCtrl = recorderService.controller("audioInput");
-                        if ($scope.encounterCtrl.status.isRecording) {
-                            $scope.encounterCtrl.stopRecord();
+                        // This section is control under general site setting
+                        if (sharedService.settings.browser_audio_recording) {
+                            $scope.encounterCtrl = recorderService.controller("audioInput");
+                            if ($scope.encounterCtrl.status.isRecording) {
+                                $scope.encounterCtrl.stopRecord();
+                            }
+                            // Remove last saved session for safe
+                            encounterRecorderFailSafeService.clearUnsavedData();
+                            $scope.blobs = [];
+                            $scope.elapsedTime = 0;
+                            $scope.encounterCtrl.startRecord();
                         }
-                        // Remove last saved session for safe
-                        encounterRecorderFailSafeService.clearUnsavedData();
-                        $scope.blobs = [];
-                        $scope.elapsedTime = 0;
-                        $scope.encounterCtrl.startRecord();
+
                     });
                 }
             }
@@ -90,10 +95,13 @@
                             $scope.encounter_flag = false;
                             $rootScope.encounter_flag = false;
 
-                            if ($scope.encounterCtrl.status.isRecording) {
-                                $scope.encounterCtrl.stopRecord();
-                            } else {
-                                $scope.auto_upload();
+                            // This section is controlled under general site setting
+                            if (sharedService.settings.browser_audio_recording) {
+                                if ($scope.encounterCtrl.status.isRecording) {
+                                    $scope.encounterCtrl.stopRecord();
+                                } else {
+                                    $scope.auto_upload();
+                                }
                             }
                         } else {
                             alert(data['msg']);
