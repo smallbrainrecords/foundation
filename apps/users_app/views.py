@@ -4,34 +4,27 @@ try:
 except ImportError:
     import Image
     import ImageOps
-import operator
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
-from django.db.models import Q
-from common.views import *
-# from django.shortcuts import render
-from emr.models import UserProfile, Problem, TaggedToDoOrder, Medication, MEDICATION_BLEEDING_RISK
-from emr.models import Goal, ToDo
-from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
-
-from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
-from emr.models import SharingPatient, CommonProblem
-from emr.models import ProblemNote
-from emr.models import MyStoryTab, MyStoryTextComponent
-
-from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
-from goals_app.serializers import GoalSerializer
-from .serializers import UserProfileSerializer
-from todo_app.serializers import TodoSerializer
-from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
-
-from .forms import LoginForm, RegisterForm, UpdateBasicProfileForm, UpdateProfileForm, UpdateEmailForm
-
 import datetime
+import operator
 
+from rest_framework.decorators import api_view
+
+from common.views import *
 from emr.manage_patient_permissions import ROLE_PERMISSIONS
-
 from emr.manage_patient_permissions import check_access
+from emr.models import Encounter, EncounterEvent, EncounterProblemRecord
+from emr.models import Goal, ToDo
+from emr.models import MyStoryTab, MyStoryTextComponent
+from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
+from emr.models import ProblemNote
+from emr.models import SharingPatient, CommonProblem
+from emr.models import UserProfile, Problem, TaggedToDoOrder, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting
+from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
+from goals_app.serializers import GoalSerializer
+from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
+from todo_app.serializers import TodoSerializer
+from .forms import LoginForm, RegisterForm, UpdateBasicProfileForm, UpdateProfileForm, UpdateEmailForm
+from .serializers import UserProfileSerializer
 
 
 def permissions_accessed(user, obj_user_id):
@@ -794,5 +787,56 @@ def update_last_access_tagged_todo(request, user_id):
     TaggedToDoOrder.objects.filter(user_id=user_profile.user_id).filter(status=0).update(status=1)
 
     resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def update_user_permission(request, user_id):
+    resp = {'success': False}
+
+    # request.user.user_permissions.add(permission_name)
+    return ajax_response(resp)
+
+
+@login_required
+def update_role_permission(request, user_id):
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    role = json_body.get('role')
+    permission = json_body.get('permission')
+
+    # Can update role's permission
+    if request.user.profile.role in ['admin', 'physician']:
+        users = User.objects.filter(profile_role=role).all()
+        for user in users:
+            user.user_permissions.add(permission)
+
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def get_general_setting(request):
+    resp = {'success': False}
+    data = {}
+    settings = GeneralSetting.objects.all()
+    for setting in settings:
+        data[setting.setting_key] = setting.setting_value
+
+    resp['settings'] = data
+    return ajax_response(resp)
+
+
+@login_required
+def update_general_setting(request):
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    key = json_body.get('setting_key')
+    value = json_body.get('setting_value')
+
+    if request.user.profile.role in ['admin', 'physician']:
+        GeneralSetting.objects.filter(setting_key=key).update(setting_value=value)
+        resp['success'] = True
 
     return ajax_response(resp)

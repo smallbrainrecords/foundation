@@ -1042,6 +1042,18 @@ class DocumentProblem(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
 
 
+class GeneralSetting(models.Model):
+    """
+    Site settings
+    setting_key is fixed & unique:
+    browser_audio_recording - true/false
+    todo_popup_confirm - array of affected roles
+    """
+    setting_key = models.TextField()
+    setting_value = models.TextField()
+    created_on = models.DateTimeField(auto_now_add=True)
+
+
 class EncounterObservationValue(models.Model):
     encounter = models.ForeignKey(Encounter, null=False)
     observation_value = models.ForeignKey(ObservationValue, null=False)
