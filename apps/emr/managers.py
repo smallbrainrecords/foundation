@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
-from django.utils import timezone
+
 from django.db import models
+
 
 class AOneCManager(models.Manager):
     def create_if_not_exist(self, problem):
         from emr.models import AOneC, Observation, ObservationComponent, OBSERVATION_TYPES
         if not Observation.objects.filter(subject=problem.patient.profile, name=OBSERVATION_TYPES[0]['name']).exists():
             observation = Observation.objects.create(subject=problem.patient.profile,
-                                                    name=OBSERVATION_TYPES[0]['name'])
+                                                     name=OBSERVATION_TYPES[0]['name'])
 
             observation.save()
         else:
@@ -21,7 +22,7 @@ class AOneCManager(models.Manager):
 
         if not AOneC.objects.filter(problem=problem).exists():
             AOneC.objects.create(problem=problem, observation=observation)
-        
+
 
 class ProblemManager(models.Manager):
     def create_new_problem(self, patient_id, problem_name, concept_id, user_profile):
@@ -32,9 +33,11 @@ class ProblemManager(models.Manager):
         new_problem.save()
         # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
         if concept_id in ['73211009', '46635009', '44054006']:
-            observation = Observation.objects.create(name=OBSERVATION_TYPES[0]['name'], subject=new_problem.patient.profile)
+            observation = Observation.objects.create(name=OBSERVATION_TYPES[0]['name'],
+                                                     subject=new_problem.patient.profile)
             AOneC.objects.create(problem=new_problem, observation=observation)
         return new_problem
+
 
 class ProblemNoteManager(models.Manager):
     def create_history_note(self, author, problem, note):
@@ -44,6 +47,7 @@ class ProblemNoteManager(models.Manager):
     def create_wiki_note(self, author, problem, note):
         from emr.models import ProblemNote
         return ProblemNote.objects.create(author=author, problem=problem, note=note, note_type='wiki')
+
 
 class EncounterManager(models.Manager):
     def stop_patient_encounter(self, physician, encounter_id):
@@ -78,10 +82,11 @@ class EncounterManager(models.Manager):
         encounter_event = EncounterEvent.objects.create(encounter=encounter, timestamp=timestamp, summary=summary)
         return encounter_event
 
+
 class TodoManager(models.Manager):
     def add_patient_todo(self, patient, todo_name, due_date):
         from django.db.models import Max
-        order =  self.filter(patient=patient).aggregate(Max('order'))
+        order = self.filter(patient=patient).aggregate(Max('order'))
         if not order['order__max']:
             order = 1
         else:
@@ -91,7 +96,7 @@ class TodoManager(models.Manager):
 
     def add_staff_todo(self, user_id, todo_name, due_date):
         from django.db.models import Max
-        order =  self.filter(user_id=user_id).aggregate(Max('order'))
+        order = self.filter(user_id=user_id).aggregate(Max('order'))
         if not order['order__max']:
             order = 1
         else:
@@ -109,5 +114,4 @@ class ColonCancerScreeningManager(models.Manager):
 
 class ColonCancerStudyManager(models.Manager):
     def create_new_study(self, colon_cancer):
-        self.create(colon=colon_cancer, patient=problem.patient.profile)
-        
+        self.create(colon=colon_cancer, patient=colon_cancer.problem.patient.profile)

@@ -1,11 +1,9 @@
 from rest_framework import serializers
 
 from emr.models import Encounter, EncounterEvent
-from emr.models import EncounterProblemRecord
 
 
 class EncounterSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Encounter
 
@@ -16,6 +14,7 @@ class EncounterSerializer(serializers.ModelSerializer):
             'starttime',
             'stoptime',
             'audio',
+            'audio_played_count',
             'video',
             'note',
             'duration',
@@ -23,7 +22,6 @@ class EncounterSerializer(serializers.ModelSerializer):
 
 
 class EncounterEventSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = EncounterEvent
 
@@ -36,4 +34,4 @@ class EncounterEventSerializer(serializers.ModelSerializer):
             'video_timestamp',
             'timestamp',
             'is_favorite',
-            'name_favorite', )
+            'name_favorite',)

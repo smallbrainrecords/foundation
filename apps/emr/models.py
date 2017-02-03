@@ -229,6 +229,7 @@ class Encounter(models.Model):
     starttime = models.DateTimeField(auto_now_add=True)
     stoptime = models.DateTimeField(null=True, blank=True)
     audio = models.FileField(upload_to=get_path, blank=True)
+    audio_played_count = models.IntegerField(default=0)
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
 
