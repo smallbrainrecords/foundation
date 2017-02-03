@@ -232,6 +232,7 @@ class Encounter(models.Model):
     audio_played_count = models.IntegerField(default=0)
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
+    encounter_document = models.ManyToManyField('ObservationValue', through='EncounterObservationValue')
 
     objects = EncounterManager()
 
@@ -1038,4 +1039,10 @@ class DocumentProblem(models.Model):
     document = models.ForeignKey(Document)
     problem = models.ForeignKey(Problem)
     author = models.ForeignKey(UserProfile)  # User who attach document to the problem
+    created_on = models.DateTimeField(auto_now_add=True)
+
+
+class EncounterObservationValue(models.Model):
+    encounter = models.ForeignKey(Encounter, null=False)
+    observation_value = models.ForeignKey(ObservationValue, null=False)
     created_on = models.DateTimeField(auto_now_add=True)

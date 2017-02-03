@@ -11,6 +11,8 @@
             $scope.patient_id = $('#patient_id').val();
             $scope.encounter_id = $routeParams.encounter_id;
             $scope.encounter = {};
+            $scope.encounterDocuments = [];
+            $scope.related_problems = [];
             $scope.related_problems = {};
             $scope.active_user = {};
 
@@ -37,6 +39,7 @@
                     .then(function (data) {
                         $scope.encounter = data['encounter'];
                         $rootScope.encounter_events = $scope.encounter_events = data['encounter_events'];
+                        $scope.encounterDocuments = data['encounter_documents'];
                         $scope.related_problems = data['related_problems'];
 
                         // If encounter include any audio automatically playing this audio

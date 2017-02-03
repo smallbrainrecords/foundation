@@ -2,6 +2,7 @@ from django.db.models import F
 from rest_framework.decorators import api_view
 
 from common.views import *
+from data_app.serializers import ObservationValueSerializer
 from emr.models import Encounter, EncounterEvent
 from emr.models import EncounterProblemRecord
 from problems_app.serializers import ProblemSerializer
@@ -16,13 +17,24 @@ def get_encounter_info(request, encounter_id):
     encounter_events = EncounterEvent.objects.filter(encounter=encounter).order_by('datetime')
     related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
     related_problems = [x.problem for x in related_problem_records]
+    encounter_documents = encounter.encounter_document.all()
 
     encounter_dict = EncounterSerializer(encounter).data
     encounter_events_holder = EncounterEventSerializer(encounter_events, many=True).data
+
+    encounter_documents_holder = []
+    for document in encounter_documents:
+        encounter_documents_holder.append({
+            'name': document.component.__str__(),
+            'value': '%g' % float(document.value_quantity),
+            'effective': document.effective_datetime.isoformat()
+        })
+
     related_problem_holder = ProblemSerializer(related_problems, many=True).data
 
     resp['encounter'] = encounter_dict
     resp['encounter_events'] = encounter_events_holder
+    resp['encounter_documents'] = encounter_documents_holder
     resp['related_problems'] = related_problem_holder
 
     return ajax_response(resp)
@@ -68,8 +80,9 @@ def create_new_encounter(request, patient_id):
 @login_required
 def stop_patient_encounter(request, encounter_id):
     resp = {}
-    physician = request.user
-    Encounter.objects.stop_patient_encounter(physician, encounter_id)
+
+    Encounter.objects.stop_patient_encounter(request.user, encounter_id)
+
     resp['success'] = True
     resp['msg'] = 'Encounter is stopped'
     return ajax_response(resp)

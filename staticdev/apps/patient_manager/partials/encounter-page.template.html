@@ -151,7 +151,35 @@
     </table>
 </section>
 
-<section id="encounter-related-problem">
+<section id="encounter-document" ng-if="encounterDocuments.length > 0">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Encounter documents
+        </div>
+        <div class="panel-body">
+
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Value</th>
+                    <th>Effective datetime</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="encounterDocument in encounterDocuments track by $index">
+                    <td ng-bind="encounterDocument.name"></td>
+                    <td ng-bind="encounterDocument.value"></td>
+                    <td ng-bind="encounterDocument.effective | date  : 'dd/MM/yyyy h:mm'"></td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</section>
+
+<section id="encounter-related-problem" ng-if="related_problems.length > 0">
     <div class='row'>
         <div class='col-md-12'>
             <div class='panel panel-default'>

@@ -51,13 +51,19 @@ class ProblemNoteManager(models.Manager):
 
 class EncounterManager(models.Manager):
     def stop_patient_encounter(self, physician, encounter_id):
-        from emr.models import EncounterEvent
+        from emr.models import EncounterEvent, ObservationValue, EncounterObservationValue
+
         latest_encounter = self.get(physician=physician, id=encounter_id)
         latest_encounter.stoptime = datetime.now()
         latest_encounter.save()
 
         event_summary = 'Stopped encounter by <b>%s</b>' % physician.username
         EncounterEvent.objects.create(encounter=latest_encounter, summary=event_summary)
+
+        # https://trello.com/c/cFylaLdv
+        data_value = ObservationValue.objects.filter(component__observation__subject=latest_encounter.patient.profile).filter(created_on__lte=latest_encounter.stoptime).filter(created_on__gte=datetime.now().date()).all()
+        for value in data_value:
+            EncounterObservationValue.objects.create(encounter=latest_encounter, observation_value=value)
 
     def create_new_encounter(self, patient_id, physician):
         from emr.models import EncounterEvent
