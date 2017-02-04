@@ -346,7 +346,7 @@ def get_patient_info(request, patient_id):
     resp['acutes_list'] = CommonProblemSerializer(acutes, many=True).data
     resp['chronics_list'] = CommonProblemSerializer(chronics, many=True).data
     resp['bleeding_risk'] = Medication.objects.filter(current=True).filter(
-        concept_id__in=MEDICATION_BLEEDING_RISK).exists()
+        concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=patient_profile).exists()
     return ajax_response(resp)
 
 
@@ -775,6 +775,7 @@ def staff_search(request):
 
     context = RequestContext(request, context)
     return render_to_response("staff_search.html", context)
+
 
 @login_required
 def update_last_access_tagged_todo(request, user_id):
