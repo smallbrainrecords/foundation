@@ -1,3 +1,4 @@
+from dateutil import parser
 from django.core.servers.basehttp import FileWrapper
 from django.db.models import Max
 from rest_framework.decorators import api_view
@@ -25,7 +26,7 @@ def add_patient_todo(request, patient_id):
     todo_name = request.POST.get('name')
     due_date = request.POST.get('due_date', None)
     if due_date:
-        due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
+        due_date = parser.parse(due_date).date()
 
     patient = User.objects.get(id=patient_id)
     physician = request.user

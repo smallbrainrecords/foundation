@@ -571,7 +571,6 @@
                 var dueDateDialog = ngDialog.open({
                     template: 'askDueDateDialog',
                     showClose: false,
-                    closeByEscape: false,
                     closeByDocument: false,
                     closeByNavigation: false,
                     controller: function () {
@@ -584,14 +583,16 @@
                             if (!isValid)
                                 toaster.pop('error', 'Error', 'Please enter a valid date!');
                             return isValid;
-                        }
+                        };
                     },
                     controllerAs: 'vm'
                 });
 
                 dueDateDialog.closePromise.then(function (data) {
-                    if (data.value != undefined)
+                    if (!_.isUndefined(data.value) && '$escape' != data.value)
                         form.due_date = data.value;
+
+
                     patientService.addToDo(form).then(addTodoSuccess);
                 })
             }
@@ -604,6 +605,8 @@
 
                 $scope.new_todo = {};
 
+                $('#todoNameInput').val("");
+                $('#todoNameInput').focus();
                 toaster.pop('success', 'Done', 'Added Todo!');
             }
         }

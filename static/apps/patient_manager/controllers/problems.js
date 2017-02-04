@@ -899,7 +899,6 @@
                     var dueDateDialog = ngDialog.open({
                         template: 'askDueDateDialog',
                         showClose: false,
-                        closeByEscape: false,
                         closeByDocument: false,
                         closeByNavigation: false,
                         controller: function () {
@@ -918,7 +917,7 @@
                     });
 
                     dueDateDialog.closePromise.then(function (data) {
-                        if (data.value != undefined)
+                        if (!_.isUndefined(data.value) && '$escape' != data.value)
                             form.due_date = data.value;
                         problemService.addTodo(form).then(addTodoSuccess);
                     })
@@ -932,6 +931,7 @@
                     $scope.set_authentication_false();
 
                     /* Not-angular-way */
+                    $('#todoNameInput').val("");
                     $('#todoNameInput').focus();
                 }
             }

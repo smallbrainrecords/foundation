@@ -1,7 +1,7 @@
 <div class="todos-container" ng-show='problem_todos.length'>
     <!-- begin sortable -->
     <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
-        <li ng-repeat="item in problem_todos" class="list-group-item todo"
+        <li ng-repeat="item in problem_todos track by $index" class="list-group-item todo"
             ng-show="item.accomplished==accomplished && checkSharedProblem(item.problem, sharing_patients)"
             ng-click="open_todo(item)">
             <!-- begin show item -->
