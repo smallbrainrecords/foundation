@@ -62,7 +62,7 @@
 
             })
             .when("/todo/:todo_id", {
-                templateUrl: '/static/apps/patient_manager/partials/todo.html',
+                templateUrl: '/static/apps/patient_manager/partials/patient-todo-page.template.html',
                 controller: 'TodoCtrl'
             })
             .when("/a1c/:a1c_id/add_different_order", {

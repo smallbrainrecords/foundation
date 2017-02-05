@@ -68,7 +68,7 @@
                         <div class="comment">
                             <p class="username">{{comment.user.first_name}} {{comment.user.last_name}}</p>
                             <div ng-show="!comment.edit" class="comment-content-wrapper">
-                                <span class="comment-content" ng-bind="comment.comment"></span>
+                                <p class="comment-content" ng-bind="comment.comment"></p>
                             </div>
                             <div ng-if="comment.user.id == active_user.user.id || ['physician','admin'].indexOf(active_user.role) != -1">
 

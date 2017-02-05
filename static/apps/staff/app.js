@@ -24,7 +24,7 @@
                 controller: 'SettingPageController'
             })
             .when("/todo/:todo_id", {
-                templateUrl: '/static/apps/staff/partials/todo.html',
+                templateUrl: '/static/apps/staff/partials/staff-todo-page.template.html',
                 controller: 'TodoCtrl'
             })
             .when('/manage/sharing', {
