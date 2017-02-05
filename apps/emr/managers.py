@@ -61,16 +61,28 @@ class EncounterManager(models.Manager):
         EncounterEvent.objects.create(encounter=latest_encounter, summary=event_summary)
 
         # https://trello.com/c/cFylaLdv
-        data_value = ObservationValue.objects.filter(component__observation__subject=latest_encounter.patient.profile).filter(created_on__lte=latest_encounter.stoptime).filter(created_on__gte=datetime.now().date()).all()
+        data_value = ObservationValue.objects.filter(
+            component__observation__subject=latest_encounter.patient.profile).filter(
+            created_on__lte=latest_encounter.stoptime).filter(created_on__gte=datetime.now().date()).all()
         for value in data_value:
             EncounterObservationValue.objects.create(encounter=latest_encounter, observation_value=value)
 
     def create_new_encounter(self, patient_id, physician):
         from emr.models import EncounterEvent
+        from emr.models import Encounter
+
+        # Stop all encounter which currently applied to patient or physician or midlevel
+        patient_encounter = self.filter(patient_id=patient_id).filter(stoptime=None)
+        if patient_encounter.exists():
+            Encounter.objects.stop_patient_encounter(physician, patient_encounter.get().id)
+        physician_encounter = self.filter(physician=physician).filter(stoptime=None)
+        if physician_encounter.exists():
+            Encounter.objects.stop_patient_encounter(physician, physician_encounter.get().id)
+
         encounter = self.create(patient_id=patient_id, physician=physician)
         # Add event started encounter
         event_summary = 'Started encounter by <b>%s</b>' % (physician.username)
-        encounter_event = EncounterEvent.objects.create(encounter=encounter, summary=event_summary)
+        EncounterEvent.objects.create(encounter=encounter, summary=event_summary)
         return encounter
 
     def add_event_summary(self, encounter_id, physician, event_summary):
