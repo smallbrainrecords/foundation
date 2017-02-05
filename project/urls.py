@@ -43,10 +43,10 @@ urlpatterns = patterns('',
                        url(r'^update/$', 'emr.views.update'),
 
                        # these urls should be removed
-                       #url(r'^create_encounter/(?P<patient_id>\d+)/$', 'emr.views.create_encounter'),
-                       #url(r'^stop_encounter/(?P<encounter_id>\d+)/$', 'emr.views.stop_encounter'),
-                       #url(r'^save_encounter_event/$', 'emr.views.save_event_summary'),
-                       #url(r'^encounter/(?P<encounter_id>\d+)/$', 'emr.views.encounter'),
+                       # url(r'^create_encounter/(?P<patient_id>\d+)/$', 'emr.views.create_encounter'),
+                       # url(r'^stop_encounter/(?P<encounter_id>\d+)/$', 'emr.views.stop_encounter'),
+                       # url(r'^save_encounter_event/$', 'emr.views.save_event_summary'),
+                       # url(r'^encounter/(?P<encounter_id>\d+)/$', 'emr.views.encounter'),
 
                        # New URLS
                        url(r'^list_terms/$', 'emr.views.list_snomed_terms'),
@@ -88,6 +88,8 @@ urlpatterns = patterns('',
                        # Pain Avatars
                        url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', 'pain.views.patient_pain_avatars'),
                        url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', 'pain.views.add_pain_avatar'),
+
+                       url(r'session_security/', include('session_security.urls')),
 
                        # MEDIA AND STATIC FILES
                        (r'^media/(?P<path>.*)$', 'django.views.static.serve',
