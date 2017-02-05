@@ -523,73 +523,73 @@ def upload_image_to_problem(request, problem_id):
         return render_to_response('upload_image_to_problem.html', context)
 
 
-@login_required
-def create_encounter(request, patient_id):
-    encounter = Encounter(patient=User.objects.get(id=patient_id), physician=User.objects.get(id=request.user.id))
-    encounter.save()
-    return HttpResponse(encounter.id, content_type="text/plain")
-
-
-@login_required
-def stop_encounter(request, encounter_id):
-
-    encounter = Encounter.objects.get(id=encounter_id)
-    encounter.stoptime = datetime.now()
-    encounter.save()
-    return HttpResponse('saved', content_type="text/plain")
-
-
-@login_required 
-def save_event_summary(request):
-
-    summary = request.POST.get('summary', 'Unknown')
-    encounter_id = request.POST.get('encounter_id', None)
-
-    encounter = Encounter.objects.get(id=encounter_id)
-
-    encounter_event = EncounterEvent(
-        encounter=encounter,
-        summary=summary)
-
-    encounter_event.save()
-
-    return HttpResponse('ok')
-
-
-@login_required
-def encounter(request, encounter_id):
-    print 'encounter debug'
-    print request.POST
-    print request.FILES
-    if 'note' in request.POST:
-        encounter = Encounter.objects.get(id=encounter_id)
-        encounter.note = request.POST['note']
-        encounter.save()
-    if 'audio_file' in request.FILES:
-        encounter = Encounter.objects.get(id=encounter_id)
-        encounter.audio = request.FILES['audio_file']
-        encounter.save()
-    if 'video_file' in request.FILES:
-        encounter = Encounter.objects.get(id=encounter_id)
-        encounter.video = request.FILES['video_file']
-        encounter.save()
-    role_of_user_requesting_the_data = UserProfile.objects.get(user=request.user).role    
-    encounter = Encounter.objects.get(id=encounter_id)    
-    patient = encounter.patient        
-    if (not ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician']) or (Sharing.objects.filter(patient=patient, other_patient=request.user)))):
-        return HttpResponse("Not allowed")
-
-    encounter = Encounter.objects.get(id=encounter_id)
-    events = EncounterEvent.objects.filter(encounter=encounter).order_by('datetime')
-    patient = encounter.patient
-
-    context = {
-        'encounter':encounter,
-        'events':events,
-        'patient':patient
-    }
-    context = RequestContext(request, context)
-    return render_to_response("encounter.html", context)
+# @login_required
+# def create_encounter(request, patient_id):
+#     encounter = Encounter(patient=User.objects.get(id=patient_id), physician=User.objects.get(id=request.user.id))
+#     encounter.save()
+#     return HttpResponse(encounter.id, content_type="text/plain")
+#
+#
+# @login_required
+# def stop_encounter(request, encounter_id):
+#
+#     encounter = Encounter.objects.get(id=encounter_id)
+#     encounter.stoptime = datetime.now()
+#     encounter.save()
+#     return HttpResponse('saved', content_type="text/plain")
+#
+#
+# @login_required
+# def save_event_summary(request):
+#
+#     summary = request.POST.get('summary', 'Unknown')
+#     encounter_id = request.POST.get('encounter_id', None)
+#
+#     encounter = Encounter.objects.get(id=encounter_id)
+#
+#     encounter_event = EncounterEvent(
+#         encounter=encounter,
+#         summary=summary)
+#
+#     encounter_event.save()
+#
+#     return HttpResponse('ok')
+#
+#
+# @login_required
+# def encounter(request, encounter_id):
+#     print 'encounter debug'
+#     print request.POST
+#     print request.FILES
+#     if 'note' in request.POST:
+#         encounter = Encounter.objects.get(id=encounter_id)
+#         encounter.note = request.POST['note']
+#         encounter.save()
+#     if 'audio_file' in request.FILES:
+#         encounter = Encounter.objects.get(id=encounter_id)
+#         encounter.audio = request.FILES['audio_file']
+#         encounter.save()
+#     if 'video_file' in request.FILES:
+#         encounter = Encounter.objects.get(id=encounter_id)
+#         encounter.video = request.FILES['video_file']
+#         encounter.save()
+#     role_of_user_requesting_the_data = UserProfile.objects.get(user=request.user).role
+#     encounter = Encounter.objects.get(id=encounter_id)
+#     patient = encounter.patient
+#     if (not ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician']) or (Sharing.objects.filter(patient=patient, other_patient=request.user)))):
+#         return HttpResponse("Not allowed")
+#
+#     encounter = Encounter.objects.get(id=encounter_id)
+#     events = EncounterEvent.objects.filter(encounter=encounter).order_by('datetime')
+#     patient = encounter.patient
+#
+#     context = {
+#         'encounter':encounter,
+#         'events':events,
+#         'patient':patient
+#     }
+#     context = RequestContext(request, context)
+#     return render_to_response("encounter.html", context)
 
 
 def save_patient_summary(request, patient_id):
