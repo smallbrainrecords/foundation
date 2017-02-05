@@ -10,7 +10,8 @@ from rest_framework.decorators import api_view
 from django.db.models import Q
 from common.views import *
 # from django.shortcuts import render
-from emr.models import UserProfile, Problem, TaggedToDoOrder, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting
+from emr.models import UserProfile, Problem, TaggedToDoOrder, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting, \
+    Document
 from emr.models import Goal, ToDo
 from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
 
@@ -723,12 +724,15 @@ def search(request, user_id):
         text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient=user)
         context['text_components'] = text_components
 
+        documents = Document.objects.filter(Q(document__icontains=query), patient=user.profile)
+        context['documents'] = documents
+
     context['patient'] = user
     context['user_role'] = actor_profile.role
     context['patient_profile'] = patient_profile
 
     context = RequestContext(request, context)
-    return render_to_response("search.html", context)
+    return render_to_response("patient_search.html", context)
 
 
 @login_required
@@ -770,6 +774,9 @@ def staff_search(request):
 
         text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient__id__in=patient_ids)
         context['text_components'] = text_components
+
+        documents = Document.objects.filter(Q(document__icontains=query))
+        context['documents'] = documents
 
     context['user_profile'] = user_profile
 

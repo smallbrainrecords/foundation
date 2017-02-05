@@ -13,7 +13,7 @@
 
 {% block content %}
     
-    <div>
+    <section id="search-result">
         <div class='panel panel-default'>
             <div class='panel-heading'> Notes </div>
             <div class='panel-body'>
@@ -127,7 +127,20 @@
                 </ul>
             </div>
         </div>
-    </div>
+
+        <div class='panel panel-default'>
+            <div class='panel-heading'> Documents </div>
+            <div class='panel-body'>
+                <ul class='list-group'>
+                    {% for document in documents %}
+                        <li>
+                            {{document.filename}}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
 {% endblock %}
 {% block page_js %}
 {% endblock %}
