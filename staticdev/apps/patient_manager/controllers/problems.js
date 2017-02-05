@@ -34,6 +34,7 @@
                 {name: 'blue', css_class: 'todo-label-blue'},
                 {name: 'sky', css_class: 'todo-label-sky'},
             ];
+            $scope.isOtherPatientNoteShowing = false;
             $scope.problem_label_component = {};
             $scope.create_label_problems_list = false;
             $scope.new_list = {};
