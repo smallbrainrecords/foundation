@@ -402,7 +402,8 @@ inr-bfdi {
 
 .tab-problems {
   .nav.nav-tabs {
-    width: 395px;
+    width: -moz-fit-content;
+    width: fit-content;
     margin-left: auto;
     margin-right: auto;
     border-bottom: none;
@@ -435,7 +436,7 @@ inr-bfdi {
   &:last-child {
     border: none;
   }
-  .datetime{
+  .datetime {
     font-weight: bold;
   }
 }
