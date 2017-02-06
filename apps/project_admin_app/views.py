@@ -17,7 +17,6 @@ from emr.models import PatientController, PhysicianTeam
 
 @login_required
 def home(request):
-
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
 
@@ -34,18 +33,15 @@ def home(request):
 
 @login_required
 def list_registered_users(request):
-
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
 
     if actor_profile.role == 'physician':
-
         controlled_patients = PatientController.objects.filter(physician=actor)
         patients_ids = [long(x.patient.id) for x in controlled_patients]
         user_profiles = UserProfile.objects.filter(user__id__in=patients_ids)
 
     if actor_profile.role == 'admin':
-
         user_profiles = UserProfile.objects.all()
 
     user_profiles_holder = UserProfileSerializer(user_profiles, many=True).data
@@ -55,7 +51,6 @@ def list_registered_users(request):
 
 @login_required
 def list_unregistered_users(request):
-
     users = []
     for user in User.objects.all():
         try:
@@ -113,9 +108,7 @@ def approve_user(request):
 
 @login_required
 def update_profile(request):
-
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
 
     if request.method == 'POST':
         form = UpdateProfileForm(request.POST, request.FILES)
@@ -129,16 +122,18 @@ def update_profile(request):
             portrait_image = form.cleaned_data['portrait_image']
             date_of_birth = form.cleaned_data['date_of_birth']
 
-            user = User.objects.get(id=user_id)
+            user_profile = UserProfile.objects.get(user_id=user_id)
 
-            user_profile = UserProfile.objects.get(user=user)
-
-            user_profile.phone_number = phone_number
-            user_profile.sex = sex
-            user_profile.role = role
-            user_profile.summary = summary
-            user_profile.date_of_birth = date_of_birth
-
+            if phone_number:
+                user_profile.phone_number = phone_number
+            if sex:
+                user_profile.sex = sex
+            if role:
+                user_profile.role = role
+            if summary:
+                user_profile.summary = summary
+            if date_of_birth:
+                user_profile.date_of_birth = date_of_birth
             if cover_image:
                 user_profile.cover_image = cover_image
 
@@ -154,7 +149,6 @@ def update_profile(request):
 
 @login_required
 def update_basic_profile(request):
-
     resp = {}
 
     resp['success'] = False
@@ -345,7 +339,6 @@ def create_user(request):
 
 @login_required
 def list_patient_physicians(request):
-
     patient_id = request.GET.get('patient_id')
 
     physicians_list = []
@@ -370,7 +363,6 @@ def list_patient_physicians(request):
 
 @login_required
 def fetch_physician_data(request):
-
     success = False
 
     physician_id = request.GET.get('physician_id')
@@ -438,7 +430,6 @@ def fetch_physician_data(request):
 
 @login_required
 def assign_physician_member(request):
-
     success = False
     errors = []
 
@@ -494,7 +485,6 @@ def assign_physician_member(request):
 
 @login_required
 def unassign_physician_member(request):
-
     success = False
     errors = []
 
@@ -588,6 +578,7 @@ def list_assigned_physicians(request):
     resp['unassigned_physicians'] = unassigned_physicians_list
     return ajax_response(resp)
 
+
 @login_required
 def update_active(request):
     resp = {}
@@ -610,6 +601,7 @@ def update_active(request):
 
             resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 def update_deceased_date(request):

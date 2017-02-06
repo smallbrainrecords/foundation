@@ -359,4 +359,7 @@ todo .new-tagged-todo {
     font-size: 2em;
     top: 10px; }
 
+#image-info .thumbnail.cover {
+  width: 100%; }
+
 /*# sourceMappingURL=patient-profile.css.map */

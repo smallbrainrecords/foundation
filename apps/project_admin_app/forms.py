@@ -28,13 +28,13 @@ class UpdateBasicProfileForm(forms.Form):
 
 class UpdateProfileForm(forms.Form):
     user_id = forms.IntegerField(required=True)
-    phone_number = forms.CharField(max_length=255, required=True)
-    sex = forms.ChoiceField(choices=SEX_CHOICES, required=True)
-    role = forms.ChoiceField(choices=ROLE_CHOICES, required=True)
+    phone_number = forms.CharField(max_length=255, required=False)
+    sex = forms.ChoiceField(choices=SEX_CHOICES, required=False)
+    role = forms.ChoiceField(choices=ROLE_CHOICES, required=False)
     summary = forms.CharField(required=False)
     cover_image = forms.ImageField(required=False)
     portrait_image = forms.ImageField(required=False)
-    date_of_birth = forms.DateField(required=True)
+    date_of_birth = forms.DateField(required=False)
 
 
 class UpdatePasswordForm(forms.Form):
