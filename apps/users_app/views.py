@@ -703,6 +703,19 @@ def search(request, user_id):
     if not is_patient(user):
         return HttpResponse("Error: this user isn't a patient")
 
+    patient_ids = []
+    if actor_profile.role == 'admin':
+        patients = UserProfile.objects.filter(role='patient')
+        patient_ids = [x.user.id for x in patients]
+    elif actor_profile.role == 'physician':
+        patient_controllers = PatientController.objects.filter(physician=request.user)
+        patient_ids = [x.patient.id for x in patient_controllers]
+    elif actor_profile.role in ('secretary', 'mid-level', 'nurse'):
+        team_members = PhysicianTeam.objects.filter(member=request.user)
+        physician_ids = [x.physician.id for x in team_members]
+        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_ids = [x.patient.id for x in patient_controllers]
+
     context = {}
     query = request.POST.get("query", None)
     if query:
@@ -726,6 +739,12 @@ def search(request, user_id):
 
         documents = Document.objects.filter(Q(document__icontains=query), patient=user.profile)
         context['documents'] = documents
+        if request.user.profile.role is not 'patient':
+            patients = UserProfile.objects.filter(role='patient').filter(
+                Q(user__first_name__icontains=query)
+                | Q(user__last_name__icontains=query)
+            ).filter(user_id__in=patient_ids)
+            context['patients'] = patients
 
     context['patient'] = user
     context['user_role'] = actor_profile.role
@@ -778,6 +797,12 @@ def staff_search(request):
         documents = Document.objects.filter(Q(document__icontains=query))
         context['documents'] = documents
 
+        if request.user.profile.role is not 'patient':
+            patients = UserProfile.objects.filter(role='patient').filter(
+                Q(user__first_name__icontains=query)
+                | Q(user__last_name__icontains=query)
+            ).filter(user_id__in=patient_ids)
+            context['patients'] = patients
     context['user_profile'] = user_profile
 
     context = RequestContext(request, context)
