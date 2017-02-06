@@ -59,26 +59,38 @@
                 } else {
                     /* Send Request is Backend */
 
-                    patientService.startNewEncounter($scope.patient_id).then(function (data) {
+                    patientService.startNewEncounter($scope.patient_id).then(function (response) {
+                        if (response.success) {
+                            toaster.pop('success', 'Done', 'New Encounter Started');
 
-                        alert('New Encounter Started');
-                        $scope.encounter = data['encounter'];
-                        $scope.encounter_flag = true;
-                        $rootScope.encounter_flag = true;
+                            $scope.encounter = data['encounter'];
+                            $scope.encounter_flag = true;
+                            $rootScope.encounter_flag = true;
 
-                        // This section is control under general site setting
-                        if (sharedService.settings.browser_audio_recording) {
-                            $scope.encounterCtrl = recorderService.controller("audioInput");
-                            if ($scope.encounterCtrl.status.isRecording) {
-                                $scope.encounterCtrl.stopRecord();
+                            // This section is control under general site setting
+                            if (sharedService.settings.browser_audio_recording) {
+                                $scope.encounterCtrl = recorderService.controller("audioInput");
+                                if ($scope.encounterCtrl.status.isRecording) {
+                                    $scope.encounterCtrl.stopRecord();
+                                }
+                                // Remove last saved session for safe
+                                encounterRecorderFailSafeService.clearUnsavedData();
+                                $scope.blobs = [];
+                                $scope.elapsedTime = 0;
+                                $scope.encounterCtrl.startRecord();
                             }
-                            // Remove last saved session for safe
-                            encounterRecorderFailSafeService.clearUnsavedData();
-                            $scope.blobs = [];
-                            $scope.elapsedTime = 0;
-                            $scope.encounterCtrl.startRecord();
+                        } else {
+                            ngDialog.open({
+                                template: response.message,
+                                plain: true
+
+                            });
+                            console.log(response);
+                            // toaster.pop('error', 'Error', response.message);
                         }
 
+                    }, function () {
+                        toaster.pop('error', 'Error', 'Something are went wrong, we are fixing ASAP!');
                     });
                 }
             }

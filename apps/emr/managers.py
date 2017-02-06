@@ -71,13 +71,7 @@ class EncounterManager(models.Manager):
         from emr.models import EncounterEvent
         from emr.models import Encounter
 
-        # Stop all encounter which currently applied to patient or physician or midlevel
-        patient_encounter = self.filter(patient_id=patient_id).filter(stoptime=None)
-        if patient_encounter.exists():
-            Encounter.objects.stop_patient_encounter(physician, patient_encounter.get().id)
-        physician_encounter = self.filter(physician=physician).filter(stoptime=None)
-        if physician_encounter.exists():
-            Encounter.objects.stop_patient_encounter(physician, physician_encounter.get().id)
+
 
         encounter = self.create(patient_id=patient_id, physician=physician)
         # Add event started encounter

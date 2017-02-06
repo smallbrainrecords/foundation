@@ -68,7 +68,22 @@ def patient_encounter_status(request, patient_id):
 @login_required
 @api_view(["POST"])
 def create_new_encounter(request, patient_id):
-    resp = {}
+    resp = {'success': False}
+
+    # Stop all encounter which currently applied to patient or physician or midlevel
+    patient_encounter = Encounter.objects.filter(patient_id=patient_id).filter(stoptime=None)
+    physician_encounter = Encounter.objects.filter(physician=request.user).filter(stoptime=None)
+
+    if patient_encounter.exists():
+        encounter = patient_encounter.get()
+        resp['message'] = "This patient is having an active encounter by <b>{0}</b>".format(encounter.physician.get_full_name())
+        return ajax_response(resp)
+
+    if physician_encounter.exists():
+        encounter = physician_encounter.get()
+        resp['message'] = "You are having an active encounter for <b>{0}<b>. Please stop it first".format(encounter.patient.get_full_name())
+        return ajax_response(resp)
+
     encounter = Encounter.objects.create_new_encounter(patient_id, request.user)
     resp['success'] = True
     resp['encounter'] = EncounterSerializer(encounter).data
