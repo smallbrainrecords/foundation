@@ -26,7 +26,7 @@ def add_patient_todo(request, patient_id):
     todo_name = request.POST.get('name')
     due_date = request.POST.get('due_date', None)
     if due_date:
-        due_date = parser.parse(due_date).date()
+        due_date = parser.parse(due_date, dayfirst=False).date()
 
     patient = User.objects.get(id=patient_id)
     physician = request.user
@@ -321,7 +321,7 @@ def change_todo_due_date(request, todo_id):
     actor_profile = UserProfile.objects.get(user=request.user)
     if due_date:
         try:
-            due_date = parser.parse(due_date).date()
+            due_date = parser.parse(due_date, dayfirst=False).date()
 
             # due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
         except:
@@ -613,7 +613,7 @@ def add_staff_todo(request, user_id):
     todo_name = request.POST.get('name')
     due_date = request.POST.get('due_date', None)
     if due_date:
-        due_date = parser.parse(due_date).date()
+        due_date = parser.parse(due_date, dayfirst=False).date()
 
         # due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
