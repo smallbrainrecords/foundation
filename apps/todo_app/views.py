@@ -321,7 +321,9 @@ def change_todo_due_date(request, todo_id):
     actor_profile = UserProfile.objects.get(user=request.user)
     if due_date:
         try:
-            due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
+            due_date = parser.parse(due_date).date()
+
+            # due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
         except:
             resp['success'] = False
             resp['todo'] = TodoSerializer(todo).data
@@ -611,7 +613,9 @@ def add_staff_todo(request, user_id):
     todo_name = request.POST.get('name')
     due_date = request.POST.get('due_date', None)
     if due_date:
-        due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
+        due_date = parser.parse(due_date).date()
+
+        # due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
     actor_profile = UserProfile.objects.get(user=request.user)
     new_todo = ToDo.objects.add_staff_todo(user_id, todo_name, due_date)

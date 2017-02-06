@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from dateutil import parser
+
 try:
     from PIL import Image, ImageOps
 except ImportError:
@@ -489,8 +491,7 @@ def add_problem_goal(request, problem_id):
 @permissions_required(["add_todo"])
 @login_required
 def add_problem_todo(request, problem_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
 
     problem = Problem.objects.get(id=problem_id)
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -502,7 +503,8 @@ def add_problem_todo(request, problem_id):
     todo = request.POST.get('name')
     due_date = request.POST.get('due_date', None)
     if due_date:
-        due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
+        due_date = parser.parse(due_date).date()
+        # due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
     new_todo = ToDo(patient=patient, problem=problem, todo=todo, due_date=due_date)
 

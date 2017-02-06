@@ -262,13 +262,15 @@
 
                                 <div class='form-group'>
                                     <label> Todo name
-                                        <input type='text' class='form-control' ng-model='todo_form.name' tabindex="2"
+                                        <input type='text' class='form-control' ng-model='todo_form.name'
+                                               ng-attr-tabindex="{{wiki_note_form.note ? 3: 2}}"
                                                id='todoNameInput'>
                                     </label>
                                 </div>
 
                                 <div class='form-group'>
-                                    <input type='submit' value='Submit' class='btn btn-default'>
+                                    <input type='submit' value='Submit' class='btn btn-default'
+                                           ng-attr-tabindex="{{wiki_note_form.note ? 4 : 3}}">
                                 </div>
 
 
@@ -324,7 +326,8 @@
                                           required title="Wiki note"></textarea>
                                 </div>
                                 <div class='form-group'>
-                                    <button type='submit' class='btn btn-default'>
+                                    <button type='submit' class='btn btn-default'
+                                            ng-attr-tabindex="{{wiki_note_form.note ? 2: -1}}">
                                         Add
                                     </button>
                                 </div>
@@ -394,7 +397,8 @@
 
                         <!--Patient note-->
                         <div class='col-md-12'>
-                            <button class='btn btn-link' ng-click='isOtherPatientNoteShowing = !isOtherPatientNoteShowing '>
+                            <button class='btn btn-link'
+                                    ng-click='isOtherPatientNoteShowing = !isOtherPatientNoteShowing '>
                                 <span ng-show='isOtherPatientNoteShowing'>Hide other Patient notes </span>
                                 <span ng-show='!isOtherPatientNoteShowing'> Show other Patient notes ({{ patient_wiki_notes.length }}) </span>
                             </button>
