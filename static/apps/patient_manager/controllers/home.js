@@ -45,7 +45,7 @@
         $scope.problem_term = '';
         $scope.most_recent_encounter_documents = [];
 
-        $scope.init = init;
+
         $scope.updateSummary = updateSummary;
         $scope.problemTermChanged = problemTermChanged;
         $scope.timelineSave = timelineSave;
@@ -98,13 +98,11 @@
         $scope.check_has_data_loinc_code = check_has_data_loinc_code;
         $scope.add_bfdi_value = add_bfdi_value;
         $scope.fileUploadSuccess = fileUploadSuccess;
-        // $scope.open_data = open_data;
 
-        $scope.init();
+        init();
 
 
         //INITIALIZE DATA
-
         function init() {
 
             patientService.fetchActiveUser().then(function (data) {

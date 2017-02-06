@@ -217,6 +217,7 @@ def manage_patient(request, user_id):
 # TODO: Clean up later
 @login_required
 def get_patient_info(request, patient_id):
+    resp = {}
     patient_user = User.objects.get(id=patient_id)
     patient_profile = UserProfile.objects.get(user=patient_user)
 
@@ -331,7 +332,6 @@ def get_patient_info(request, patient_id):
     acutes = CommonProblem.objects.filter(author=request.user, problem_type="acute")
     chronics = CommonProblem.objects.filter(author=request.user, problem_type="chronic")
 
-    resp = {}
     resp['info'] = UserProfileSerializer(patient_profile).data
     resp['problems'] = problem_list
     resp['goals'] = GoalSerializer(goals, many=True).data
