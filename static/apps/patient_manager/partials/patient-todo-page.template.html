@@ -20,10 +20,10 @@
 
                     <span ng-if="todo.due_date"> due by <span
                             ng-class="isDueDate(todo.due_date)">{{ todo.due_date }}</span></span>
-                    <span ng-if="todo.patient"> for patient
-						<a href="/u/patient/manage/{{ todo.patient.id }}">{{ todo.patient.first_name }}
-                            {{ todo.patient.last_name }}</a>
-				    </span>
+
+                    <span ng-if="todo.problem"> for problem
+						<a href="#/problem/{{todo.problem.id}}">{{todo.problem.problem_name}}</a>
+					</span>
 
                     <!-- begin label -->
                     <a ng-repeat="label in todo.labels" class="todo-label-front" ng-class="label.css_class"
