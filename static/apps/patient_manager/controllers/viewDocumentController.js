@@ -22,6 +22,7 @@
         $scope.user_id = $('#user_id').val();           // Current logged in id
         $scope.enableTodoPin = false;
         $scope.enableProblemPin = false;
+        $scope.labels = [];
 
         $scope.init = init;
         $scope.deleteDocument = deleteDocument;
@@ -164,7 +165,22 @@
             sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
                 $scope.document = resp.data.info;
 
-                $scope.getPatientInfo($scope.patient_id);
+                $scope.labels = resp.data.labels;
+
+                // TODO: Is this task is correct place
+                var document_label_pk = _.pluck($scope.document.labels, 'id');
+                _.map($scope.labels, function (value, key, list) {
+                    value.is_pinned = _.contains(document_label_pk, value.id);
+                });
+
+                // Loading all related
+                if (resp.data.info.patient != null) {
+                    var patientId = resp.data.info.patient.user.id;
+                    $scope.getPatientInfo(patientId);
+                }
+
+                // $scope.getPatientInfo($scope.patient_id);
+
             });
 
             // Refer https://trello.com/c/fDYvV4z6
