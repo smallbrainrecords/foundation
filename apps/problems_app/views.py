@@ -851,7 +851,7 @@ def get_label_problem_lists(request, patient_id, user_id):
     for label_list in lists:
         problem_list = label_list.problem_list
         if problem_list:
-            problems_qs = Problem.objects.filter(labels__in=label_list.labels.all()).filter(is_active=False).distinct()
+            problems_qs = Problem.objects.filter(labels__in=label_list.labels.all()).filter(is_active=True).distinct()
             problems = []
             for problem in problems_qs:
                 if problem.id in problem_list:
@@ -859,7 +859,7 @@ def get_label_problem_lists(request, patient_id, user_id):
                 else:
                     problems.append(problem)
         else:
-            problems = Problem.objects.filter(labels__in=label_list.labels.all()).filter(is_active=False).distinct().order_by('start_date')
+            problems = Problem.objects.filter(labels__in=label_list.labels.all()).filter(is_active=True).distinct().order_by('start_date')
 
         problems_holder = ProblemSerializer(problems, many=True).data
         if not label_list.problem_list:
