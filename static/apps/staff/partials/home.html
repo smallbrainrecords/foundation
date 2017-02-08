@@ -21,7 +21,7 @@
 </div>
 
 
-<div class='panel panel-default' ng-init="show_all=false">
+<div class='panel panel-default'>
 
     <div class='panel-heading'>Top Patients List</div>
 
@@ -31,8 +31,9 @@
             <thead>
             <tr>
                 <th> Name</th>
-                <th> Active uncontrolled problems</th>
-                <th> Todos</th>
+                <th> P</th>
+                <th> T</th>
+                <th> E</th>
                 <th> Multiply</th>
             </tr>
             </thead>
@@ -44,13 +45,13 @@
                 </td>
                 <td> {{patient.problem }}</td>
                 <td> {{patient.todo}}</td>
+                <td> {{patient.encounter}}</td>
                 <td> {{patient.multiply}}</td>
             </tr>
             </tbody>
         </table>
         <a href class="btn btn-default" ng-click="show_all=!show_all">
-            <span ng-if='show_all==false'>Show all </span>
-            <span ng-if='show_all==true'>Not show all </span>
+            <span ng-bind='show_all? "Not show all":"Show all"'></span>
         </a>
 
     </div>

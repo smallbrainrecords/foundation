@@ -19,6 +19,7 @@
             $scope.todo_lists = [];
             $scope.currentLabel = null;
             $scope.active_user = null;
+            $scope.show_all = false;
 
             // Function definitions
             $scope.init = init;

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from dateutil.relativedelta import relativedelta
+
 try:
     from PIL import Image, ImageOps
 except ImportError:
@@ -587,15 +589,19 @@ def get_patients_list(request):
         todo_count = ToDo.objects.filter(patient__id=patient['user']['id'], accomplished=False).count()
         problem_count = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True,
                                                is_controlled=False).count()
+        six_weeks_earlier = datetime.datetime.now() - relativedelta(weeks=6)
+        encounter_count = Encounter.objects.filter(patient__id=patient['user']['id'],
+                                                   starttime__gte=six_weeks_earlier).count()
 
+        patient["encounter"] = encounter_count
         patient["todo"] = todo_count
         patient["problem"] = problem_count
-        if todo_count == 0 and problem_count == 0:
+        if todo_count == 0 and problem_count == 0 and encounter_count == 0:
             patient['multiply'] = 0
-        elif todo_count == 0 or problem_count == 0:
+        elif todo_count == 0 or problem_count == 0 or encounter_count == 0:
             patient['multiply'] = 1
         else:
-            patient['multiply'] = todo_count * problem_count
+            patient['multiply'] = todo_count * problem_count * encounter_count
 
     resp = {'patients_list': sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)}
     return ajax_response(resp)
