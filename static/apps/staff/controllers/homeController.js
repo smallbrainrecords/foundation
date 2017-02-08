@@ -125,50 +125,92 @@
              * @param form
              */
             function add_todo(form) {
+                if (form == undefined || form.name.trim().length < 1) {
+                    return false;
+                }
 
                 form.user_id = $scope.user_id;
 
-                prompt({
-                    title: 'Add Due Date',
-                    message: 'Enter due date',
-                    input: true,
-                    label: 'Due Date'
-                }).then(function (due_date) {
-                    if (moment(due_date, "MM/DD/YYYY", true).isValid()) {
-                        form.due_date = due_date;
-                    } else if (moment(due_date, "M/D/YYYY", true).isValid()) {
-                        form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
-                    } else if (moment(due_date, "MM/YYYY", true).isValid()) {
-                        form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
-                    } else if (moment(due_date, "M/YYYY", true).isValid()) {
-                        form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
-                    } else if (moment(due_date, "MM/DD/YY", true).isValid()) {
-                        form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
-                    } else if (moment(due_date, "M/D/YY", true).isValid()) {
-                        form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
-                    } else if (moment(due_date, "MM/YY", true).isValid()) {
-                        form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
-                    } else if (moment(due_date, "M/YY", true).isValid()) {
-                        form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
-                    } else {
-                        toaster.pop('error', 'Error', 'Please enter a valid date!');
-                        return false;
-                    }
+                askDueDate();
 
-                    staffService.addToDo(form).then(function (data) {
-                        var new_todo = data['todo'];
-                        $scope.personal_todos.push(new_todo);
-                        $scope.new_todo = {};
-                        toaster.pop('success', 'Done', 'New Todo added successfully');
+                function askDueDate() {
+                    var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
+
+                    var dueDateDialog = ngDialog.open({
+                        template: 'askDueDateDialog',
+                        showClose: false,
+                        closeByDocument: false,
+                        closeByNavigation: false,
+                        controller: function () {
+                            var vm = this;
+                            vm.dueDate = '';
+                            vm.dueDateIsValid = function () {
+                                var isValid = moment(vm.dueDate, acceptedFormat, true).isValid();
+                                if (!isValid)
+                                    toaster.pop('error', 'Error', 'Please enter a valid date!');
+                                return isValid;
+                            };
+                        },
+                        controllerAs: 'vm'
                     });
-                }, function () {
-                    staffService.addToDo(form).then(function (data) {
-                        var new_todo = data['todo'];
-                        $scope.personal_todos.push(new_todo);
-                        $scope.new_todo = {};
-                        toaster.pop('success', 'Done', 'New Todo added successfully');
-                    });
-                });
+
+                    dueDateDialog.closePromise.then(function (data) {
+                        if (!_.isUndefined(data.value) && '$escape' != data.value)
+                            form.due_date = moment(data.value, acceptedFormat).toString();
+                        staffService.addToDo(form).then(addTodoSuccess);
+                    })
+                }
+
+                function addTodoSuccess(data) {
+
+                    var new_todo = data['todo'];
+                    $scope.personal_todos.push(new_todo);
+                    $scope.new_todo = {};
+                    toaster.pop('success', 'Done', 'Added Todo!');
+
+                }
+
+                // prompt({
+                //     title: 'Add Due Date',
+                //     message: 'Enter due date',
+                //     input: true,
+                //     label: 'Due Date'
+                // }).then(function (due_date) {
+                //     if (moment(due_date, "MM/DD/YYYY", true).isValid()) {
+                //         form.due_date = due_date;
+                //     } else if (moment(due_date, "M/D/YYYY", true).isValid()) {
+                //         form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
+                //     } else if (moment(due_date, "MM/YYYY", true).isValid()) {
+                //         form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
+                //     } else if (moment(due_date, "M/YYYY", true).isValid()) {
+                //         form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
+                //     } else if (moment(due_date, "MM/DD/YY", true).isValid()) {
+                //         form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
+                //     } else if (moment(due_date, "M/D/YY", true).isValid()) {
+                //         form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
+                //     } else if (moment(due_date, "MM/YY", true).isValid()) {
+                //         form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
+                //     } else if (moment(due_date, "M/YY", true).isValid()) {
+                //         form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
+                //     } else {
+                //         toaster.pop('error', 'Error', 'Please enter a valid date!');
+                //         return false;
+                //     }
+                //
+                //     staffService.addToDo(form).then(function (data) {
+                //         var new_todo = data['todo'];
+                //         $scope.personal_todos.push(new_todo);
+                //         $scope.new_todo = {};
+                //         toaster.pop('success', 'Done', 'New Todo added successfully');
+                //     });
+                // }, function () {
+                //     staffService.addToDo(form).then(function (data) {
+                //         var new_todo = data['todo'];
+                //         $scope.personal_todos.push(new_todo);
+                //         $scope.new_todo = {};
+                //         toaster.pop('success', 'Done', 'New Todo added successfully');
+                //     });
+                // });
             }
 
             /**

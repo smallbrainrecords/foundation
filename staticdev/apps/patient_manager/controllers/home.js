@@ -566,6 +566,8 @@
             }
 
             function askDueDate() {
+                var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
+
                 var dueDateDialog = ngDialog.open({
                     template: 'askDueDateDialog',
                     showClose: false,
@@ -573,9 +575,7 @@
                     closeByNavigation: false,
                     controller: function () {
                         var vm = this;
-                        var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
                         vm.dueDate = '';
-
                         vm.dueDateIsValid = function () {
                             var isValid = moment(vm.dueDate, acceptedFormat, true).isValid();
                             if (!isValid)
@@ -588,8 +588,7 @@
 
                 dueDateDialog.closePromise.then(function (data) {
                     if (!_.isUndefined(data.value) && '$escape' != data.value)
-                        form.due_date = data.value;
-
+                        form.due_date = moment(data.value, acceptedFormat).toString();
 
                     patientService.addToDo(form).then(addTodoSuccess);
                 })
