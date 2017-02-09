@@ -164,6 +164,9 @@
                 {% for document in documents %}
                 <li>
                     {{document.filename}}
+                    {% if document.patient %}
+                    (<a href='/u/patient/manage/{{document.patient.id}}/'>{{document.patient}}</a>)
+                    {% endif %}
                 </li>
                 {% endfor %}
             </ul>
