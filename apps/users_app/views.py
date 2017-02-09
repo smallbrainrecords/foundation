@@ -596,12 +596,8 @@ def get_patients_list(request):
         patient["encounter"] = encounter_count
         patient["todo"] = todo_count
         patient["problem"] = problem_count
-        if todo_count == 0 and problem_count == 0 and encounter_count == 0:
-            patient['multiply'] = 0
-        elif todo_count == 0 or problem_count == 0 or encounter_count == 0:
-            patient['multiply'] = 1
-        else:
-            patient['multiply'] = todo_count * problem_count * encounter_count
+        patient['multiply'] = (todo_count if todo_count != 0 else 1) * (problem_count if problem_count != 0 else 1) * (
+        encounter_count if encounter_count != 0 else 1)
 
     resp = {'patients_list': sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)}
     return ajax_response(resp)
