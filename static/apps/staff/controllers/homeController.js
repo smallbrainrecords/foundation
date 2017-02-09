@@ -40,7 +40,6 @@
              */
             function openTaggedTodo() {
                 $scope.taggedTodoCollapsed = false;
-                $scope.newTaggedTodo = 0;
 
                 staffService.updateLastTimeAccessTaggedTodo($scope.user_id).then(function (response) {
                     $scope.lastTimeTaggedTodoAccessed = new Date();

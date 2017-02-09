@@ -830,7 +830,7 @@ def update_last_access_tagged_todo(request, user_id):
     user_profile.save()
 
     # Update all newly tagged todo to viewed todo
-    TaggedToDoOrder.objects.filter(user_id=user_profile.user_id).filter(status=0).update(status=1)
+    # TaggedToDoOrder.objects.filter(user_id=user_profile.user_id).filter(status=0).update(status=1)
 
     resp['success'] = True
 
