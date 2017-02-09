@@ -39,7 +39,7 @@ def list_registered_users(request):
     if actor_profile.role == 'physician':
         controlled_patients = PatientController.objects.filter(physician=actor)
         patients_ids = [long(x.patient.id) for x in controlled_patients]
-        user_profiles = UserProfile.objects.filter(user__id__in=patients_ids)
+        user_profiles = UserProfile.objects.filter(user__id__in=patients_ids).filter(user__is_active=True)
 
     if actor_profile.role == 'admin':
         user_profiles = UserProfile.objects.all()
@@ -340,7 +340,7 @@ def create_user(request):
 @login_required
 def list_patient_physicians(request):
     patient_id = request.GET.get('patient_id')
-
+    resp = {}
     physicians_list = []
 
     try:
@@ -354,7 +354,6 @@ def list_patient_physicians(request):
     except User.DoesNotExist as e:
         resp['error'] = str(e)
 
-    resp = {}
     resp['success'] = True
     resp['physicians'] = physicians_list
 
@@ -401,7 +400,7 @@ def fetch_physician_data(request):
     patients = PatientController.objects.filter(physician=physician)
     patient_ids = [long(x.patient.id) for x in patients]
 
-    patient_profiles = UserProfile.objects.filter(user__id__in=patient_ids)
+    patient_profiles = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
     patient_profiles_dict = UserProfileSerializer(
         patient_profiles, many=True).data
 
