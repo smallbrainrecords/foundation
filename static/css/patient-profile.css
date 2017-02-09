@@ -283,18 +283,33 @@ a.btn-manage {
   .problem-uncontrolled.affix {
     top: 50px; }
 
+#time-range-select.affix {
+  top: 50px; }
+
 @media (max-width: 768px) {
   .problem-uncontrolled, .problem-controlled {
+    max-width: 720px; }
+
+  #time-range-select {
     max-width: 720px; } }
 @media (min-width: 768px) {
   .problem-uncontrolled, .problem-controlled {
-    min-width: 720px; } }
+    min-width: 720px; }
+
+  #time-range-select {
+    max-width: 720px; } }
 @media (min-width: 992px) {
   .problem-uncontrolled, .problem-controlled {
-    min-width: 940px; } }
+    min-width: 940px; }
+
+  #time-range-select {
+    max-width: 940px; } }
 @media (min-width: 1200px) {
   .problem-uncontrolled, .problem-controlled {
-    min-width: 1140px; } }
+    min-width: 1140px; }
+
+  #time-range-select {
+    max-width: 1140px; } }
 #view_document_page .uploaded_document .document_icon {
   margin-right: 10px; }
 

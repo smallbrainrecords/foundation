@@ -463,11 +463,6 @@
     </div>
 
     <div class="row">
-        <!--hasPinnedGraph == true &&  medications.length > 0 == true col-md-6-->
-        <!--hasPinnedGraph == true &&  medications.length > 0 != true col-md-12-->
-        <!--hasPinnedGraph == false &&  medications.length > 0 == true col-md-12-->
-        <!--hasPinnedGraph == false &&  medications.length > 0 != true hide-->
-        <!--col-md-6 | col-md-12-->
         <div ng-if="hasPinnedGraph" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-8'">
             <div class='panel panel-default'>
                 <div class="panel-header">
