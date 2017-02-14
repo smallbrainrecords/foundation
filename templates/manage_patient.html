@@ -135,6 +135,8 @@
                             View Encounter
                         </button>
 
+                        <span>Record time elapsed: {{ elapsedTime*1000 | duration }}</span>
+
                         <!-- Pause/Resume recorder while encountering | Disable while converting -->
                         <div ng-if="settings.browser_audio_recording">
                             <button type="button" class="btn btn-default" aria-label="Left Align"
@@ -145,7 +147,6 @@
                                 <span ng-if="encounterCtrl.status.isRecording" class="glyphicon glyphicon-pause"
                                       aria-hidden="true"></span>
                             </button>
-                            <span>Record time elapsed: {{ elapsedTime*1000 | duration }}</span>
                         </div>
 
                     </div>

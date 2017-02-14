@@ -24,6 +24,7 @@
             /**
              * Restore total time recorded
              * @returns {number}
+             * @deprecated
              */
             this.restoreUnsavedDuration = function () {
                 var duration = localStorage.getItem('cached-duration');

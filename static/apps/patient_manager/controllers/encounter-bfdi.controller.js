@@ -7,14 +7,14 @@
                                                     encounterService, recorderService, toaster, $interval, $rootScope,
                                                     encounterRecorderFailSafeService, $window, sharedService) {
 
+            $scope.patient_id = $('#patient_id').val();
             $scope.encounterUploading = false;
             $scope.unsavedBlob = encounterRecorderFailSafeService.restoreUnsavedBlob();
             $scope.blobs = [];
-            $scope.elapsedTime = encounterRecorderFailSafeService.restoreUnsavedDuration();
+            $scope.elapsedTime = 0; //encounterRecorderFailSafeService.restoreUnsavedDuration();
             $scope.limitTime = 5400;
             $scope.convert_flag = false;
             $scope.show_encounter_ui = false;
-            $scope.patient_id = $('#patient_id').val();
             $rootScope.encounter_flag = $scope.encounter_flag = false;
             $scope.settings = sharedService.settings;
 
@@ -42,6 +42,7 @@
                             $scope.encounter_flag = true;
                             $rootScope.encounter_flag = true;
                             $scope.encounter = data['current_encounter'];
+                            $scope.elapsedTime = moment().diff($scope.encounter.starttime, 'seconds');
                             $scope.blobs.push($scope.unsavedBlob);
                         } else {
                             $scope.encounter_flag = false;
@@ -50,6 +51,18 @@
                         }
 
                     });
+
+                $interval(function (newVal, oldVal) {
+                    $scope.elapsedTime++;
+                }, 1000);
+
+                /**
+                 * Track total recorded time of encounter
+                 */
+                $scope.$watch('elapsedTime', function (newVal, oldVal) {
+                    if (newVal >= $scope.limitTime)
+                        $scope.stop_encounter();
+                });
             }
 
             function start_encounter() {
@@ -59,39 +72,37 @@
                 } else {
                     /* Send Request is Backend */
 
-                    patientService.startNewEncounter($scope.patient_id).then(function (response) {
-                        if (response.success) {
-                            toaster.pop('success', 'Done', 'New Encounter Started');
+                    patientService.startNewEncounter($scope.patient_id)
+                        .then(function (response) {
+                            if (response.success) {
+                                toaster.pop('success', 'Done', 'New Encounter Started');
 
-                            $scope.encounter = data['encounter'];
-                            $scope.encounter_flag = true;
-                            $rootScope.encounter_flag = true;
+                                $scope.encounter = response.encounter;
+                                $scope.encounter_flag = true;
+                                $rootScope.encounter_flag = true;
 
-                            // This section is control under general site setting
-                            if (sharedService.settings.browser_audio_recording) {
-                                $scope.encounterCtrl = recorderService.controller("audioInput");
-                                if ($scope.encounterCtrl.status.isRecording) {
-                                    $scope.encounterCtrl.stopRecord();
+                                // This section is control under general site setting
+                                if (sharedService.settings.browser_audio_recording) {
+                                    $scope.encounterCtrl = recorderService.controller("audioInput");
+                                    if ($scope.encounterCtrl.status.isRecording) {
+                                        $scope.encounterCtrl.stopRecord();
+                                    }
+                                    // Remove last saved session for safe
+                                    encounterRecorderFailSafeService.clearUnsavedData();
+                                    $scope.blobs = [];
+                                    $scope.elapsedTime = 0;
+                                    $scope.encounterCtrl.startRecord();
                                 }
-                                // Remove last saved session for safe
-                                encounterRecorderFailSafeService.clearUnsavedData();
-                                $scope.blobs = [];
-                                $scope.elapsedTime = 0;
-                                $scope.encounterCtrl.startRecord();
+                            } else {
+                                ngDialog.open({
+                                    template: response.message,
+                                    plain: true
+
+                                });
                             }
-                        } else {
-                            ngDialog.open({
-                                template: response.message,
-                                plain: true
-
-                            });
-                            console.log(response);
-                            // toaster.pop('error', 'Error', response.message);
-                        }
-
-                    }, function () {
-                        toaster.pop('error', 'Error', 'Something are went wrong, we are fixing ASAP!');
-                    });
+                        }, function () {
+                            alert("Something are went wrong, we are fixing ASAP!");
+                        });
                 }
             }
 
@@ -196,10 +207,6 @@
                 $scope.encounterCtrl = recorderService.controller("audioInput");
             }
 
-            $scope.$watch('encounterCtrl.elapsedTime', function (newVal, oldVal) {
-                $scope.elapsedTime++;
-            });
-
             function view_encounter() {
                 var encounter_id = $scope.encounter.id;
                 $location.path('/encounter/' + encounter_id);
@@ -233,14 +240,6 @@
             }
 
             /**
-             * Track total recorded time of encounter
-             */
-            $scope.$watch('elapsedTime', function (newVal, oldVal) {
-                if (newVal > $scope.limitTime)
-                    $scope.stop_encounter();
-            });
-
-            /**
              * Show an notify message when user try to refresh | close tabs | close window
              * @param e
              * @returns {string}
@@ -254,6 +253,7 @@
                     return confirmationMessage;              // Gecko, WebKit, Chrome <34
                 }
             }
+
         });
     /* End of controller */
 

@@ -24,10 +24,11 @@
             /**
              * Restore total time recorded
              * @returns {number}
+             * @deprecated
              */
             this.restoreUnsavedDuration = function () {
                 var duration = localStorage.getItem('cached-duration');
-                return duration === null ? 0 : duration;
+                return duration == null ? 0 : duration;
             };
 
             /**
@@ -75,7 +76,7 @@
                 return new Blob([ab]);
             };
 
-            /**
+              /**
              * Remove last stored session
              */
             this.clearUnsavedData = function () {
