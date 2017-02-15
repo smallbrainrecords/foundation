@@ -76,12 +76,14 @@ def create_new_encounter(request, patient_id):
 
     if patient_encounter.exists():
         encounter = patient_encounter.get()
-        resp['message'] = "This patient is having an active encounter by <b>{0}</b>".format(encounter.physician.get_full_name())
+        resp['message'] = "This patient is having an active encounter by <b>{0}</b>".format(
+            encounter.physician.get_full_name())
         return ajax_response(resp)
 
     if physician_encounter.exists():
         encounter = physician_encounter.get()
-        resp['message'] = "You are having an active encounter for <b>{0}<b>. Please stop it first".format(encounter.patient.get_full_name())
+        resp['message'] = "You are having an active encounter for <b>{0}<b>. Please stop it first".format(
+            encounter.patient.get_full_name())
         return ajax_response(resp)
 
     encounter = Encounter.objects.create_new_encounter(patient_id, request.user)
@@ -206,5 +208,22 @@ def delete_encounter(request, patient_id, encounter_id):
 def increase_audio_played_count(request, encounter_id):
     resp = {}
     Encounter.objects.filter(id=encounter_id).update(audio_played_count=F('audio_played_count') + 1)
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+@permissions_required(["add_encounter_timestamp"])
+@api_view(["POST"])
+def add_encounter_event(request, encounter_id):
+    """
+    Add encounter event
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    summary = request.POST.get('event', "")
+    EncounterEvent.objects.create(encounter_id=encounter_id, summary=summary)
+
     resp['success'] = True
     return ajax_response(resp)

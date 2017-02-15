@@ -134,7 +134,7 @@
 
     });
 
-    ManagerApp.run(function (CollapseService, sharedService, $templateCache) {
+    ManagerApp.run(function (CollapseService, sharedService) {
         // Loading general setting, risk setting is failed to load -> deferred setting value
         sharedService.getSettings().then(function (response) {
             angular.forEach(response.data.settings, function (value, key) {
@@ -213,6 +213,7 @@
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
                     CollapseService.ChangeHomepageTab('medication');
+
                     $location.path('/');
                 }
             });

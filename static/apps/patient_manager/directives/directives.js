@@ -383,7 +383,6 @@
                 },
                 link: function ($scope, $element, $attrs) {
 
-                    console.log('pain-avatar');
                     $element.html("Pain Avatar");
 
                     $scope.$watch('pain_data', function (pain_data) {
@@ -392,7 +391,6 @@
                         if (pain_data == undefined) {
                             return false;
                         }
-                        console.log('Render');
 
                         /******* Render Pain Avatar ***************/
 

@@ -41,7 +41,7 @@
                         if (data['encounter_active'] == true) {
                             $scope.encounter_flag = true;
                             $rootScope.encounter_flag = true;
-                            $scope.encounter = data['current_encounter'];
+                            encounterService.activeEncounter = $scope.encounter = data['current_encounter'];
                             $scope.elapsedTime = moment().diff($scope.encounter.starttime, 'seconds');
                             $scope.blobs.push($scope.unsavedBlob);
                         } else {
@@ -77,7 +77,7 @@
                             if (response.success) {
                                 toaster.pop('success', 'Done', 'New Encounter Started');
 
-                                $scope.encounter = response.encounter;
+                                encounterService.activeEncounter = $scope.encounter = response.encounter;
                                 $scope.encounter_flag = true;
                                 $rootScope.encounter_flag = true;
 

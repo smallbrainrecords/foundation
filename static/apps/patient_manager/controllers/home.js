@@ -110,9 +110,6 @@
                 $scope.active_user = data['user_profile'];
             });
 
-            /*
-             *   medication
-             */
             patientService.getMedications($scope.patient_id).then(function (data) {
                 if (data['success'] == true) {
                     $scope.medications = data['info'];
@@ -393,6 +390,16 @@
             $scope.$watch('files', function () {
                 if ($scope.files != undefined)
                     sharedService.uploadDocument($scope.files, $scope.user_id, $scope.patient_id, $scope.fileUploadSuccess);
+            });
+
+            $scope.$watch('collapse.show_homepage_tab', function (newVal, oldVal) {
+                if ("medication" === newVal && encounterService.activeEncounter.is_active) {
+                    var form = {
+                        'event': "Medication list was accessed"
+                    };
+
+                    encounterService.addEncounterEvent(encounterService.activeEncounter.id, form);
+                }
             });
 
             $scope.$on('portrait_image_updated', function (event, args) {

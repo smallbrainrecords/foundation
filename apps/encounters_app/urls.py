@@ -19,4 +19,5 @@ urlpatterns = patterns('encounters_app.views',
                        url(r'^encounter_event/(?P<encounter_event_id>\d+)/name_favorite$', 'name_favorite'),
                        url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/delete$', 'delete_encounter'),
                        url(r'^encounter/(?P<encounter_id>\d+)/audio_played', 'increase_audio_played_count'),
+                       url(r'^encounter/(?P<encounter_id>\d+)/event', 'add_encounter_event'),
                        )
