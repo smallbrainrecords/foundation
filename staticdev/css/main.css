@@ -83,7 +83,7 @@
 }
 
 /*ce-entity ce-flag {*/
-    /*font-weight: bold;*/
+/*font-weight: bold;*/
 /*}*/
 
 .nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
@@ -189,7 +189,7 @@
     color: #e6e6e6;
     display: block;
     float: left;
-    margin: 0 0 4px 8px;
+    margin: 0 0 5px 0;
     padding: 6px 9pt 6px 8px;
     text-decoration: none;
     -webkit-transition: -webkit-transform 85ms ease-in;
@@ -343,7 +343,8 @@
 
 .datepicker.dropdown-menu {
     width: 250px;
-    height: 250px;}
+    height: 250px;
+}
 
 button {
     outline: none;
@@ -351,11 +352,11 @@ button {
 }
 
 /*tbody {*/
-    /*height: 180px;*/
+/*height: 180px;*/
 /*}*/
 
 /*tbody button {*/
-    /*padding: 6px;*/
+/*padding: 6px;*/
 /*}*/
 
 /*&*/
@@ -365,7 +366,7 @@ button {
 /*.datepicker-mode-2 {*/
 
 /*tbody button {*/
-    /*height: 65px;*/
+/*height: 65px;*/
 /*}*/
 
 /*}*/
@@ -374,6 +375,7 @@ button {
 .timepicker.dropdown-menu {
     padding: 0 4px;
 }
+
 button {
     outline: none;
     border: 0px;
@@ -512,7 +514,7 @@ tbody button {
     border: none;
 }
 
-.pickadate{
-    top: 0px!important;
-    left: 0px!important;
+.pickadate {
+    top: 0px !important;
+    left: 0px !important;
 }
