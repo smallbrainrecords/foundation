@@ -536,7 +536,7 @@ def staff(request):
     physician_ids = [x.physician.id for x in physicians]
     patients = PatientController.objects.filter(physician__id__in=physician_ids)
     patient_ids = [x.patient.id for x in patients]
-    patients = User.objects.filter(id__in=patient_ids)
+    patients = User.objects.filter(id__in=patient_ids).filter(is_active=True)
 
     physicians = [x.physician for x in physicians]
 
