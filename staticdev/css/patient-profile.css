@@ -75,7 +75,8 @@ body {
     width: 100%;
     max-width: 100%;
     top: 0;
-    height: 100%; }
+    height: 100%;
+    background: #639df9; }
     .profile-section .cover-image:hover + .dropdown .btn-camera {
       background-color: #000;
       opacity: 0.7; }
@@ -91,7 +92,7 @@ body {
     .profile-section .btn-cover-picture-edit:hover {
       border: 1px solid #fff; }
   .profile-section .profile-picture {
-    background: #639df9;
+    background: #fff;
     border: 1px solid #cccccc;
     padding: 5px;
     position: absolute;
