@@ -1,5 +1,3 @@
-<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
-
 <div class='panel panel-default'>
     <div class='panel-heading' ng-click="taggedTodoCollapsed ? openTaggedTodo(): closeTaggedTodo()">
         <i class="fa fa-caret-right" ng-class="taggedTodoCollapsed ? 'fa-caret-right':'fa-caret-down'"></i>
@@ -19,7 +17,6 @@
               is-tagged="true"></todo>
     </div>
 </div>
-
 
 <div class='panel panel-default'>
 
@@ -93,7 +90,7 @@
     </div>
 
     <div class='panel-body'>
-        <button ng-click="reverse=!reverse" ng-init="reverse=false;" class="btn btn-default">Reverse</button>
+        <button ng-click="reverse=!reverse" class="btn btn-default">Reverse</button>
         <table class='table'>
             <thead>
             <tr>
@@ -131,27 +128,32 @@
 
 <div class='panel panel-default'>
 
-    <div class='panel-heading'> Labeled Todos Lists</div>
+    <div class='panel-heading'> Labeled to do lists</div>
 
     <div class='panel-body'>
-        <form class='form-inline' role='form' ng-submit='add_todo_list(new_list)'>
+        <form class='form-inline' role='form'>
             <div class='form-group'>
-                <label> Labeled Todos Lists Name </label>
-                <input type='text' class="form-control" title="Label name" ng-model='new_list.name'>
+                <label> Labeled to do list name
+                    <input type='text' class="form-control" ng-model='new_list.name'> </label>
                 <br>
                 <div class="quick-card-editor-label labeled-list">
-                    <div ng-repeat="label in labels">
+                    <div ng-repeat="label in labels track by $index">
                         <a href class="todo-label" ng-class="label.css_class"
                            ng-click="add_new_list_label(new_list, label)">
-                            {{label.name}}
-                            <i class="fa fa-check" ng-repeat="l in new_list.labels" ng-if="l.id==label.id"></i>
+                            <span ng-bind="label.name"></span>
+                            <i class="fa fa-check" ng-repeat="l in new_list.labels track by $index"
+                               ng-if="l.id==label.id"></i>
                         </a>
                     </div>
                 </div>
             </div>
             <br>
             <br>
-            <button type='submit' class='btn btn-default'> Add List</button>
+            <button type='button' ng-click="add_todo_list(new_list,0)" class='btn btn-primary'>Add list only for me
+            </button>
+            <button type='button' ng-click="add_todo_list(new_list,1)" class='btn btn-danger'
+                    ng-if="['admin','physician'].indexOf(active_user.role) != -1">Add list for all users
+            </button>
             <br>
         </form>
     </div>
@@ -179,7 +181,7 @@
     </div>
 </div>
 
-<div class='panel panel-default' ng-init="show_accomplished_personal_todos=false">
+<div class='panel panel-default'>
 
     <div class='panel-heading'> Personal Todos</div>
 

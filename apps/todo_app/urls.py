@@ -3,9 +3,11 @@ from django.conf.urls import patterns, include, url
 urlpatterns = patterns('todo_app.views',
 
                        url(r'^patient/(?P<patient_id>\d+)/todos/add/new_todo$', 'add_patient_todo'),
+
                        url(r'^staff/(?P<user_id>\d+)/todos/add/new_todo$', 'add_staff_todo'),
                        url(r'^staff/(?P<user_id>\d+)/new_list$', 'add_staff_todo_list'),
                        url(r'^staff/all_todos/(?P<user_id>\d+)$', 'staff_all_todos'),
+
                        url(r'^todo/(?P<todo_id>\d+)/update/$', 'update_todo_status'),
                        url(r'^todo/updateOrder/$', 'update_order'),
                        url(r'^todo/(?P<todo_id>\d+)/info/$', 'get_todo_info'),
@@ -20,8 +22,6 @@ urlpatterns = patterns('todo_app.views',
                        url(r'^todo/newLabel/(?P<todo_id>\d+)$', 'new_todo_label'),
                        url(r'^todo/accessEncounter/(?P<todo_id>\d+)$', 'todo_access_encounter'),
                        url(r'^todo/(?P<todo_id>\d+)/addAttachment$', 'add_todo_attachment'),
-                       url(r'^attachment/(?P<attachment_id>\d+)/downloadAttachment$', 'download_attachment'),
-                       url(r'^attachment/(?P<attachment_id>\d+)/delete$', 'delete_attachment'),
                        url(r'^todo/(?P<todo_id>\d+)/(?P<last_id>\d+)/activity/$', 'get_todo_activity'),
                        url(r'^todo/(?P<todo_id>\d+)/addMember$', 'add_todo_member'),
                        url(r'^todo/(?P<todo_id>\d+)/removeMember$', 'remove_todo_member'),
@@ -32,4 +32,6 @@ urlpatterns = patterns('todo_app.views',
                        url(r'^todo/(?P<list_id>\d+)/deleteTodoList$', 'delete_todo_list'),
                        url(r'^todo/(?P<list_id>\d+)/open_todo_list$', 'open_todo_list'),
 
+                       url(r'^attachment/(?P<attachment_id>\d+)/downloadAttachment$', 'download_attachment'),
+                       url(r'^attachment/(?P<attachment_id>\d+)/delete$', 'delete_attachment'),
                        )

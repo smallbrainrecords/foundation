@@ -20,9 +20,10 @@
             $scope.currentLabel = null;
             $scope.active_user = null;
             $scope.show_all = false;
+            $scope.show_accomplished_personal_todos = false;
+            $scope.reverse = false;
 
             // Function definitions
-            $scope.init = init;
             $scope.openTaggedTodo = openTaggedTodo;
             $scope.closeTaggedTodo = closeTaggedTodo;
             $scope.add_todo = add_todo;
@@ -34,25 +35,8 @@
             $scope.getNewTodos = getNewTodos;
             $scope.openTodoList = openTodoList;
 
-            // method definition
-            /**
-             *
-             */
-            function openTaggedTodo() {
-                $scope.taggedTodoCollapsed = false;
+            init();
 
-                staffService.updateLastTimeAccessTaggedTodo($scope.user_id).then(function (response) {
-                    $scope.lastTimeTaggedTodoAccessed = new Date();
-                });
-            }
-
-            function closeTaggedTodo() {
-                $scope.taggedTodoCollapsed = true;
-            }
-
-            /**
-             *
-             */
             function init() {
                 staffService.getPatientsList().then(function (data) {
                     $scope.patients_list = data['patients_list'];
@@ -169,48 +153,6 @@
                     toaster.pop('success', 'Done', 'Added Todo!');
 
                 }
-
-                // prompt({
-                //     title: 'Add Due Date',
-                //     message: 'Enter due date',
-                //     input: true,
-                //     label: 'Due Date'
-                // }).then(function (due_date) {
-                //     if (moment(due_date, "MM/DD/YYYY", true).isValid()) {
-                //         form.due_date = due_date;
-                //     } else if (moment(due_date, "M/D/YYYY", true).isValid()) {
-                //         form.due_date = moment(due_date, "M/D/YYYY").format("MM/DD/YYYY");
-                //     } else if (moment(due_date, "MM/YYYY", true).isValid()) {
-                //         form.due_date = moment(due_date, "MM/YYYY").date(1).format("MM/DD/YYYY");
-                //     } else if (moment(due_date, "M/YYYY", true).isValid()) {
-                //         form.due_date = moment(due_date, "M/YYYY").date(1).format("MM/DD/YYYY");
-                //     } else if (moment(due_date, "MM/DD/YY", true).isValid()) {
-                //         form.due_date = moment(due_date, "MM/DD/YY").format("MM/DD/YYYY");
-                //     } else if (moment(due_date, "M/D/YY", true).isValid()) {
-                //         form.due_date = moment(due_date, "M/D/YY").format("MM/DD/YYYY");
-                //     } else if (moment(due_date, "MM/YY", true).isValid()) {
-                //         form.due_date = moment(due_date, "MM/YY").date(1).format("MM/DD/YYYY");
-                //     } else if (moment(due_date, "M/YY", true).isValid()) {
-                //         form.due_date = moment(due_date, "M/YY").date(1).format("MM/DD/YYYY");
-                //     } else {
-                //         toaster.pop('error', 'Error', 'Please enter a valid date!');
-                //         return false;
-                //     }
-                //
-                //     staffService.addToDo(form).then(function (data) {
-                //         var new_todo = data['todo'];
-                //         $scope.personal_todos.push(new_todo);
-                //         $scope.new_todo = {};
-                //         toaster.pop('success', 'Done', 'New Todo added successfully');
-                //     });
-                // }, function () {
-                //     staffService.addToDo(form).then(function (data) {
-                //         var new_todo = data['todo'];
-                //         $scope.personal_todos.push(new_todo);
-                //         $scope.new_todo = {};
-                //         toaster.pop('success', 'Done', 'New Todo added successfully');
-                //     });
-                // });
             }
 
             /**
@@ -226,21 +168,31 @@
                     new_list.labels.push(label);
             }
 
-            /**
+            /***
              *
              * @param form
+             * @param visibility
              */
-            function add_todo_list(form) {
-
+            function add_todo_list(form, visibility) {
                 form.user_id = $scope.user_id;
+                form.visibility = visibility;
                 if (form.name && form.labels.length > 0) {
-                    staffService.addToDoList(form).then(function (data) {
-                        var new_list = data['new_list'];
-                        $scope.todo_lists.push(new_list);
-                        $scope.new_list = {};
-                        $scope.new_list.labels = [];
-                        toaster.pop('success', 'Done', 'New Todo List added successfully');
-                    });
+                    staffService.addToDoList(form)
+                        .then(function (data) {
+                            if (data.success) {
+
+                                var new_list = data['new_list'];
+                                $scope.todo_lists.push(new_list);
+                                $scope.new_list = {};
+                                $scope.new_list.labels = [];
+                                toaster.pop('success', 'Done', 'New to do list added successfully');
+                            } else {
+                                toaster.pop('error', 'Error', "You don't have permission to do this action");
+                            }
+                        }, function (data) {
+                            toaster.pop('error', 'Error', "Something when wrong, We fix this ASAP");
+
+                        });
                 } else {
                     toaster.pop('error', 'Error', 'Please select name and labels');
                 }
@@ -333,7 +285,17 @@
                 }
             }
 
-            $scope.init();
+            function openTaggedTodo() {
+                $scope.taggedTodoCollapsed = false;
+
+                staffService.updateLastTimeAccessTaggedTodo($scope.user_id).then(function (response) {
+                    $scope.lastTimeTaggedTodoAccessed = new Date();
+                });
+            }
+
+            function closeTaggedTodo() {
+                $scope.taggedTodoCollapsed = true;
+            }
 
         });
     /* End of controller */

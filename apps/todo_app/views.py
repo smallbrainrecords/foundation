@@ -572,6 +572,7 @@ def remove_todo_member(request, todo_id):
 
 @login_required
 def get_labels(request, user_id):
+    # TODO: 01/12/2017 by AnhDN https://trello.com/c/L3JA1OVP
     labels = Label.objects.filter(Q(is_all=True) | (Q(is_all=False) & Q(author_id=user_id)))
     resp = {'labels': LabelSerializer(labels, many=True).data}
     return ajax_response(resp)
@@ -632,13 +633,22 @@ def add_staff_todo(request, user_id):
 @permissions_required(["add_todo"])
 @login_required
 def add_staff_todo_list(request, user_id):
-    resp = {}
+    resp = {'success': False}
+
+    # RETRIEVE DATA SEND FROM FRONT END
     data = json.loads(request.body)
     list_name = data['name']
     labels = data['labels']
-    user = User.objects.get(id=user_id)
+    visibility = data['visibility']
 
-    new_list = LabeledToDoList.objects.create(user_id=user_id, name=list_name)
+    # VALIDATE PERMISSIONS
+    # 0: Only for me and 1: For all user
+    # If other user role rather than Admin / Physician they can not add Labeled to do list for all user
+    if request.user.profile.role not in ['physician', 'admin'] and 1 == visibility:
+        return ajax_response(resp)
+
+    # SAVING DATA
+    new_list = LabeledToDoList.objects.create(user_id=user_id, name=list_name, private=visibility)
 
     label_ids = []
     for label in labels:

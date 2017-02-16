@@ -470,9 +470,10 @@ class TaggedToDoOrder(models.Model):
 
 
 class LabeledToDoList(models.Model):
-    user = models.ForeignKey(User)
-    labels = models.ManyToManyField(Label, blank=True)
     name = models.TextField()
+    user = models.ForeignKey(User)  # author
+    labels = models.ManyToManyField(Label, blank=True)
+    private = models.BooleanField(default=0)
     todo_list = ListField(null=True, blank=True)
     expanded = ListField(null=True, blank=True)
 
@@ -891,6 +892,7 @@ class MyStoryTab(models.Model):
     author = models.ForeignKey(User, related_name="author_story_tabs", null=True, blank=True)
     name = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)
+    # TODO: Why need both private & is_all
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)
 
@@ -905,6 +907,7 @@ class MyStoryTextComponent(models.Model):
     name = models.TextField(null=True, blank=True)
     datetime = models.DateTimeField(auto_now_add=True)
     concept_id = models.CharField(max_length=20, blank=True, null=True)
+    # TODO: Why need both private & is_all
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)
 
