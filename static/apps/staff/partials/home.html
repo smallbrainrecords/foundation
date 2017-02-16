@@ -149,9 +149,9 @@
             </div>
             <br>
             <br>
-            <button type='button' ng-click="add_todo_list(new_list,0)" class='btn btn-primary'>Add list only for me
+            <button type='button' ng-click="add_todo_list(new_list,1)" class='btn btn-primary'>Add list only for me
             </button>
-            <button type='button' ng-click="add_todo_list(new_list,1)" class='btn btn-danger'
+            <button type='button' ng-click="add_todo_list(new_list,0)" class='btn btn-danger'
                     ng-if="['admin','physician'].indexOf(active_user.role) != -1">Add list for all users
             </button>
             <br>

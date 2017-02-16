@@ -572,7 +572,6 @@ def remove_todo_member(request, todo_id):
 
 @login_required
 def get_labels(request, user_id):
-    # TODO: 01/12/2017 by AnhDN https://trello.com/c/L3JA1OVP
     labels = Label.objects.filter(Q(is_all=True) | (Q(is_all=False) & Q(author_id=user_id)))
     resp = {'labels': LabelSerializer(labels, many=True).data}
     return ajax_response(resp)
@@ -670,10 +669,20 @@ def add_staff_todo_list(request, user_id):
 @login_required
 def get_user_label_lists(request, user_id):
     resp = {}
-    user = User.objects.get(id=user_id)
-    lists = LabeledToDoList.objects.filter(user=user)
+
+    lists = LabeledToDoList.objects.filter(user_id=user_id).all()
+
+    # Loaded admin labeled to do list for all user
+    admin_labeled_todo_list = LabeledToDoList.objects.filter(user__profile__role='admin', private=0).all()
+
+    # Load physician labeled to do list for all user
+    physicians = PhysicianTeam.objects.filter(member=request.user)
+    physician_ids = [x.physician.id for x in physicians]
+    physician_labeled_todo_list = LabeledToDoList.objects.filter(user_id__in=physician_ids).filter(private=0).all()
+
+    merged_list = list(lists) + list(admin_labeled_todo_list) + list(physician_labeled_todo_list)
     lists_holder = []
-    for label_list in lists:
+    for label_list in merged_list:
         list_dict = LabeledToDoListSerializer(label_list).data
 
         # TODO: Have to simplify the below logic, after understand what is being done here.

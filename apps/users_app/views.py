@@ -496,8 +496,7 @@ def update_profile(request, patient_id):
 @login_required
 @api_view(["POST"])
 def update_patient_email(request, patient_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     form = UpdateEmailForm(request.POST)
     if not form.is_valid():
         return ajax_response(resp)
@@ -514,13 +513,12 @@ def update_patient_email(request, patient_id):
 
 @login_required
 def fetch_active_user(request):
+    resp = {}
     user_profile = UserProfile.objects.get(user=request.user)
 
     user_profile_serialized = UserProfileSerializer(user_profile).data
-    print user_profile_serialized
     user_profile_serialized['permissions'] = ROLE_PERMISSIONS[user_profile.role]
 
-    resp = {}
     resp['user_profile'] = user_profile_serialized
     return ajax_response(resp)
 
