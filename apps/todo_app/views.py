@@ -711,8 +711,13 @@ def get_user_label_lists(request, user_id):
 @permissions_required(["add_todo"])
 @login_required
 def delete_todo_list(request, list_id):
-    LabeledToDoList.objects.get(id=list_id).delete()
-    resp = {}
+    resp = {'success': False}
+    labeled_to_do_list = LabeledToDoList.objects.get(id=list_id)
+
+    if labeled_to_do_list.user != request.user:
+        return ajax_response(resp)
+
+    labeled_to_do_list.delete()
     resp['success'] = True
     return ajax_response(resp)
 

@@ -165,7 +165,7 @@
         <i class="fa fa-caret-down" aria-hidden="true" ng-if="list.collapse"></i>
         <i class="fa fa-caret-right" aria-hidden="true" ng-if="!list.collapse"></i>
         {{list.name}} ({{(list.todos | filter:{'accomplished':false}).length}} todos, {{getNewTodos(list)}} are new)
-        <a href class="btn btn-danger" ng-click="delete_list(list)" ng-if="list.collapse">Delete</a></div>
+        <a href class="btn btn-danger" ng-click="delete_list(list)" ng-if="list.collapse && list.user.id == active_user.id">Delete</a></div>
 
     <div class='panel-body' ng-if="list.collapse">
         <todo ng-model="list.todos" accomplished="false" show-problem="true" is-list="list.id"></todo>

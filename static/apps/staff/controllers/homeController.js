@@ -207,11 +207,16 @@
                     "title": "Are you sure?",
                     "message": "Deleting a todo list is forever. There is no undo."
                 }).then(function (result) {
-                    staffService.deleteToDoList(list).then(function (data) {
-                        var index = $scope.todo_lists.indexOf(list);
-                        $scope.todo_lists.splice(index, 1);
-                        toaster.pop('success', 'Done', 'Todo List removed successfully');
-                    });
+                    staffService.deleteToDoList(list)
+                        .then(function (data) {
+                            if (data.success) {
+                                var index = $scope.todo_lists.indexOf(list);
+                                $scope.todo_lists.splice(index, 1);
+                                toaster.pop('success', 'Done', 'To do list removed successfully');
+                            } else {
+                                toaster.pop('error', 'Error', "You don't have permission to delete");
+                            }
+                        });
                 }, function () {
                     return false;
                 });
