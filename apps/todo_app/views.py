@@ -643,7 +643,7 @@ def add_staff_todo_list(request, user_id):
     # VALIDATE PERMISSIONS
     # 0: Only for me and 1: For all user
     # If other user role rather than Admin / Physician they can not add Labeled to do list for all user
-    if request.user.profile.role not in ['physician', 'admin'] and 1 == visibility:
+    if request.user.profile.role not in ['physician', 'admin'] and 0 == visibility:
         return ajax_response(resp)
 
     # SAVING DATA

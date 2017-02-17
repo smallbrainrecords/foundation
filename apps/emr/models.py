@@ -473,7 +473,7 @@ class LabeledToDoList(models.Model):
     name = models.TextField()
     user = models.ForeignKey(User)  # author
     labels = models.ManyToManyField(Label, blank=True)
-    private = models.BooleanField(default=1)  # 0 is save just for me, 1: is save for all user
+    private = models.BooleanField(default=1)  # 1 is save just for me, 0: is save for all user
     todo_list = ListField(null=True, blank=True)
     expanded = ListField(null=True, blank=True)
 
