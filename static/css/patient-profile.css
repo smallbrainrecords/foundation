@@ -381,4 +381,7 @@ todo .new-tagged-todo {
 #image-info .thumbnail.cover {
   width: 100%; }
 
+#bdfi .form-group input {
+  margin: 5px; }
+
 /*# sourceMappingURL=patient-profile.css.map */

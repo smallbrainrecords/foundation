@@ -44,6 +44,7 @@
         $scope.favorites_collapse = false;
         $scope.problem_term = '';
         $scope.most_recent_encounter_documents = [];
+        $scope.btnBDFISubmitted = false;
 
 
         $scope.updateSummary = updateSummary;
@@ -51,9 +52,9 @@
         $scope.timelineSave = timelineSave;
         $scope.fetchTimeLineProblem = fetchTimeLineProblem;
         $scope.toggle_accomplished_todos = toggle_accomplished_todos;
-        $scope.add_goal = add_goal;
-        $scope.add_todo = add_todo;
-        $scope.set_new_problem = set_new_problem;
+        $scope.add_goal = addGoal;
+        $scope.add_todo = addTodo;
+        $scope.set_new_problem = setNewProblem;
         $scope.unset_new_problem = unset_new_problem;
         $scope.add_problem = add_problem;
         $scope.add_new_problem = add_new_problem;
@@ -98,9 +99,9 @@
         $scope.check_has_data_loinc_code = check_has_data_loinc_code;
         $scope.add_bfdi_value = add_bfdi_value;
         $scope.fileUploadSuccess = fileUploadSuccess;
+        $scope.nurseSubmitBDFI = nurseSubmitBDFI;
 
         init();
-
 
         //INITIALIZE DATA
         function init() {
@@ -535,7 +536,7 @@
             $scope.show_accomplished_todos = flag;
         }
 
-        function add_goal(form) {
+        function addGoal(form) {
 
             form.patient_id = $scope.patient_id;
             patientService.addGoal(form).then(function (data) {
@@ -552,7 +553,7 @@
 
         }
 
-        function add_todo(form) {
+        function addTodo(form) {
             if (form == undefined || form.name.trim().length < 1) {
                 return false;
             }
@@ -615,7 +616,7 @@
             }
         }
 
-        function set_new_problem(problem) {
+        function setNewProblem(problem) {
             $scope.new_problem.set = true;
             $scope.new_problem.active = problem.active;
             $scope.new_problem.term = problem.term;
@@ -1232,45 +1233,54 @@
             return is_inr;
         }
 
-        function add_bfdi_value(component) {
+        function add_bfdi_value(component, resetNewValue) {
+            // Default is true
+            resetNewValue = _.isUndefined(resetNewValue);
+
             var new_data = {};
             new_data.datetime = moment().format("MM/DD/YYYY HH:mm");
-
             new_data.value = component.new_value;
-            dataService.addData($scope.patient_id, component.id, new_data).then(function (data) {
-                if (data['success'] == true) {
-                    toaster.pop('success', 'Done', 'Added data!');
-                    angular.forEach($scope.datas, function (sdata, data_key) {
-                        angular.forEach(sdata.observation_components, function (scomponent, component_key) {
-                            if (scomponent.id == component.id) {
-                                scomponent.observation_component_values.push(data['value']);
-                            }
+
+            dataService.addData($scope.patient_id, component.id, new_data)
+                .then(function (data) {
+                    if (data['success']) {
+                        toaster.pop('success', 'Done', 'Added data!');
+
+                        angular.forEach($scope.datas, function (sdata, data_key) {
+                            angular.forEach(sdata.observation_components, function (scomponent, component_key) {
+                                if (scomponent.id == component.id) {
+                                    scomponent.observation_component_values.push(data['value']);
+                                }
+                            });
+
+                            // Default graph type
+                            if (sdata.graph == null || sdata.graph == undefined)
+                                sdata.graph = 'Line';
+
+                            // Temporary data using for generate graph
+                            var tmpData = angular.copy(sdata);
+                            // Sorting before processing
+                            _.map(tmpData.observation_components, function (item, key) {
+                                item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
+
+                                // Sorting before generating
+                                item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
+                            });
+                            sdata.chartData = dataService.generateChartData(tmpData);
+                            sdata.chartLabel = dataService.generateChartLabel(tmpData);
+                            sdata.mostRecentValue = dataService.generateMostRecentValue(tmpData);
                         });
 
-                        // Default graph type
-                        if (sdata.graph == null || sdata.graph == undefined)
-                            sdata.graph = 'Line';
-
-                        // Temporary data using for generate graph
-                        var tmpData = angular.copy(sdata);
-                        // Sorting before processing
-                        _.map(tmpData.observation_components, function (item, key) {
-                            item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
-
-                            // Sorting before generating
-                            item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
-                        });
-                        sdata.chartData = dataService.generateChartData(tmpData);
-                        sdata.chartLabel = dataService.generateChartLabel(tmpData);
-                        sdata.mostRecentValue = dataService.generateMostRecentValue(tmpData);
-                    });
-                    component.new_value = '';
-                } else if (data['success'] == false) {
-                    toaster.pop('error', 'Error', 'Something went wrong, please try again!');
-                } else {
+                        // Reset component value
+                        // TODO: 2/18/2017 AnhDN temporary disable auto delete new component value
+                        if (resetNewValue)
+                            component.new_value = '';
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                    }
+                }, function (error) {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
+                });
         }
 
         function fileUploadSuccess(resp) {
@@ -1384,6 +1394,30 @@
             patientService.updatePatientSummary(form).then(function (data) {
                 toaster.pop('success', 'Done', 'Patient summary updated!');
             });
+        }
+
+        function nurseSubmitBDFI() {
+            var components = _.pluck($scope.mostCommonData, 'observation_components');
+            angular.forEach(_.flatten(components), function (value, key) {
+                // Only submit data which is not empty
+                if (_.isUndefined(value.new_value) || _.isEmpty(value.new_value)) {
+                    return;
+                }
+                $scope.add_bfdi_value(value,false);
+            });
+
+            $scope.btnBDFISubmitted = true;
+        }
+
+        $scope.bdfiValueIsChanged = function (component) {
+            if ($scope.btnBDFISubmitted) {
+                $scope.btnBDFISubmitted = false;
+                var components = _.pluck($scope.mostCommonData, 'observation_components');
+                angular.forEach(_.flatten(components), function (value, key) {
+                    if (component.id != value.id)
+                        value.new_value = "";
+                });
+            }
         }
     }
 

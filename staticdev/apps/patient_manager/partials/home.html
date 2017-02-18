@@ -1027,23 +1027,24 @@
 </section>
 
 <!--bdfi-->
-<section id="bdfi">
-    <div class='bottom-bar'
-     ng-show="active_user.role=='patient' || active_user.role=='nurse'">
+<section id="bdfi" class='bottom-bar' ng-show="['patient','nurse'].indexOf(active_user.role) !=-1">
     <div class='row'>
-
         <div class='col-md-12'>
-            <form class="form-inline" ng-if="active_user.role=='nurse'">
+            <!--Nurse's bdfi -->
+            <form class="form-inline" ng-if="active_user.role=='nurse'" ng-submit="nurseSubmitBDFI()">
                 <div class="form-group" ng-repeat="data in mostCommonData">
                     <input type='text' class='form-control'
                            placeholder='{{data.name == component.name ? data.ph : data.ph + " " + component.name}}'
                            ng-repeat="component in data.observation_components"
-                           ng-model="component.new_value"
-                           ng-change="add_bfdi_value(component)"
-                           ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                           ng-change="bdfiValueIsChanged(component)"
+                           ng-model="component.new_value">
                 </div>
-
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-block">Submit</button>
+                </div>
             </form>
+
+            <!--Patient's bdfi -->
             <form class="form-inline" ng-if="active_user.role=='patient'">
                 <div class="form-group" ng-repeat="data in mostCommonData">
                     <input type='text' class='form-control'
@@ -1056,5 +1057,4 @@
             </form>
         </div>
     </div>
-</div>
 </section>
