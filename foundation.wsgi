@@ -15,10 +15,19 @@ import os, sys
 # if running multiple sites in the same mod_wsgi process. To fix this, use
 # mod_wsgi daemon mode with each site in its own daemon process, or use
 # os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
-sys.path.append('/home/softdevelop_vd/foundation')
-sys.path.append('/home/softdevelop_vd/foundation/media')
-sys.path.append('/home/softdevelop_vd/foundation/apps')
-sys.path.append('/home/softdevelop_vd/foundation/templates')
+
+#sys.path.append('/home/softdevelop_vd/foundation')
+sys.path.append('/var/www/andromeda/foundation')
+
+#sys.path.append('/home/softdevelop_vd/foundation/media')
+sys.path.append('/var/www/andromeda/foundation/media')
+
+#sys.path.append('/home/softdevelop_vd/foundation/apps')
+sys.path.append('/var/www/andromeda/foundation/apps')
+
+#sys.path.append('/home/softdevelop_vd/foundation/templates')
+sys.path.append('/var/www/andromeda/foundation/templates')
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION
