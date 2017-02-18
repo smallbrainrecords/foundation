@@ -446,8 +446,7 @@ def update_basic_profile(request, patient_id):
 @login_required
 @api_view(["POST"])
 def update_profile(request, patient_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
 
     form = UpdateProfileForm(request.POST, request.FILES)
     if not form.is_valid():
@@ -466,10 +465,14 @@ def update_profile(request, patient_id):
 
     # TODO: Just doing form.save() should work.
     user_profile = UserProfile.objects.get(user_id=user_id)
-    user_profile.phone_number = phone_number
-    user_profile.sex = sex
-    user_profile.summary = summary
-    user_profile.date_of_birth = date_of_birth
+    if phone_number:
+        user_profile.phone_number = phone_number
+    if sex:
+        user_profile.sex = sex
+    if summary:
+        user_profile.summary = summary
+    if date_of_birth:
+        user_profile.date_of_birth = date_of_birth
 
     if cover_image:
         user_profile.cover_image = cover_image

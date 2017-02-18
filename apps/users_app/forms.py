@@ -1,5 +1,3 @@
-
-
 from django import forms
 
 SEX_CHOICES = (
@@ -8,17 +6,16 @@ SEX_CHOICES = (
 
 
 class LoginForm(forms.Form):
-	username = forms.CharField(required=True)
-	password = forms.CharField(required=True)
+    username = forms.CharField(required=True)
+    password = forms.CharField(required=True)
 
 
 class RegisterForm(forms.Form):
-
-	email = forms.EmailField(required=True)
-	password = forms.CharField(required=True)
-	verify_password = forms.CharField(required=True)
-	first_name = forms.CharField(required=False)
-	last_name = forms.CharField(required=False)
+    email = forms.EmailField(required=True)
+    password = forms.CharField(required=True)
+    verify_password = forms.CharField(required=True)
+    first_name = forms.CharField(required=False)
+    last_name = forms.CharField(required=False)
 
 
 class UpdateBasicProfileForm(forms.Form):
@@ -40,4 +37,3 @@ class UpdateProfileForm(forms.Form):
 class UpdateEmailForm(forms.Form):
     user_id = forms.IntegerField(required=True)
     email = forms.EmailField(required=True)
-    

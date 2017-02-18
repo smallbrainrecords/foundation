@@ -1,11 +1,9 @@
-<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
 <div class='row'>
-    <div class='col-md-12'>
+    <div class='col-md-12 text-center'>
         <hr>
-        <center><b> <a href='#/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Manage Patient </a> </b>
-        </center>
+        <b> <a href='#/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Manage Patient </a> </b>
         <hr>
-        <center><b> Edit Patient Profile </b></center>
+        <b> Edit Patient Profile </b>
     </div>
 </div>
 
@@ -26,6 +24,11 @@
                     </button>
                 </li>
 
+                <li>
+                    <button class='btn btn-link' ng-click='navigate("image-info")'>
+                        Update image
+                    </button>
+                </li>
                 <li>
                     <button class='btn btn-link' ng-click='navigate("emailInfo")'>
                         Email Information
@@ -112,16 +115,16 @@
                         <label> Summary </label>
                         <textarea ng-model='user_profile.summary' class='form-control'></textarea>
                     </div>
-                    <div class='form-group'>
-                        <img ng-src='{{ user_profile.cover_image }}' class='thumbnail' alt='Cover Image'>
-                        <label> Cover Image </label>
-                        <input type='file' file-model='files.cover_image'>
-                    </div>
-                    <div class='form-group'>
-                        <img ng-src='{{ user_profile.portrait_image }}' class='thumbnail' alt='Portrait Image'>
-                        <label> Portrait Image </label>
-                        <input type='file' file-model='files.portrait_image'>
-                    </div>
+                    <!--<div class='form-group'>-->
+                        <!--<img ng-src='{{ user_profile.cover_image }}' class='thumbnail' alt='Cover Image'>-->
+                        <!--<label> Cover Image </label>-->
+                        <!--<input type='file' file-model='files.cover_image'>-->
+                    <!--</div>-->
+                    <!--<div class='form-group'>-->
+                        <!--<img ng-src='{{ user_profile.portrait_image }}' class='thumbnail' alt='Portrait Image'>-->
+                        <!--<label> Portrait Image </label>-->
+                        <!--<input type='file' file-model='files.portrait_image'>-->
+                    <!--</div>-->
                     <div class='form-group'>
                         <center>
                             <input type='submit' value='Update' class='btn btn-default btn-lg'>
@@ -130,6 +133,52 @@
                 </form>
             </div>
         </div>
+
+        <div class='panel panel-default' id='image-info'>
+
+            <div class='panel-heading'><b>Update image</b></div>
+
+            <div class='panel-body'>
+
+
+                <form class='form' ng-submit='updateImage()'>
+
+                    <div class='form-group'>
+
+                        <img ng-src='{{ user_profile.cover_image }}' class='thumbnail cover' alt='Cover Image'>
+
+
+                        <label> Cover Image </label>
+
+                        <input type='file' file-model='files.cover_image'>
+                    </div>
+
+
+                    <div class='form-group'>
+
+                        <img ng-src='{{ user_profile.portrait_image }}' class='thumbnail' alt='Portrait Image'>
+
+                        <label> Portrait Image </label>
+
+                        <input type='file' file-model='files.portrait_image'>
+                    </div>
+
+
+                    <div class='form-group text-center'>
+
+                        <input type='submit' value='Update' class='btn btn-default btn-lg'>
+
+
+                    </div>
+
+
+                </form>
+
+
+            </div>
+
+        </div>
+
         <div class='panel panel-default' id='emailInfo'>
             <div class='panel-heading'><b> Email </b></div>
             <div class='panel-body'>

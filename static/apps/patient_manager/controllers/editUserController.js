@@ -4,14 +4,21 @@
 
 
     angular.module('ManagerApp')
-        .controller('EditUserCtrl', function ($scope, $routeParams, ngDialog, sharedService,
-                                              patientService, $location, $anchorScroll, toaster) {
+        .controller('EditUserCtrl', function ($scope, $routeParams, ngDialog, sharedService, patientService, $location, $anchorScroll, toaster) {
 
+            $scope.user_id = $('#patient_id').val();
             $scope.staff_roles = ['nurse', 'secretary', 'mid-level'];
 
-            $scope.init = function () {
+            $scope.updateImage = updateImage;
+            $scope.update_basic_profile = update_basic_profile;
+            $scope.update_profile = update_profile;
+            $scope.update_email = update_email;
+            $scope.update_patient_password = update_patient_password;
+            $scope.navigate = navigate;
 
-                $scope.user_id = $('#patient_id').val();
+            init();
+
+            function init() {
 
                 patientService.fetchActiveUser().then(function (data) {
                     $scope.active_user = data['user_profile'];
@@ -23,13 +30,10 @@
                     $scope.shared_patients = data['shared_patients'];
                 });
 
-
                 $scope.files = {};
-                //sharedService.initHotkey($scope);
-            };
+            }
 
-
-            $scope.update_basic_profile = function () {
+            function update_basic_profile() {
 
                 var form = {};
 
@@ -47,9 +51,9 @@
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
                 });
-            };
+            }
 
-            $scope.update_profile = function () {
+            function update_profile() {
 
                 var form = {};
                 form.user_id = $scope.user_id;
@@ -74,10 +78,9 @@
 
                 });
 
-            };
+            }
 
-
-            $scope.update_email = function () {
+            function update_email() {
 
                 var form = {};
 
@@ -97,11 +100,10 @@
 
                 });
 
-            };
-
+            }
 
             // change patient password
-            $scope.update_patient_password = function () {
+            function update_patient_password() {
 
                 if ($scope.old_password == undefined || $scope.password == undefined || $scope.repassword == undefined) {
                     toaster.pop('error', 'Error', 'Please enter password');
@@ -130,17 +132,30 @@
                     }
                 });
 
-            };
+            }
 
-
-            $scope.navigate = function (l) {
+            function navigate(l) {
                 /* Replace by directive */
-
                 $("html, body").animate({scrollTop: $('#' + l).offset().top - 100}, 500);
-            };
+            }
+
+            function updateImage() {
+                var form = {};
+                form.user_id = $scope.user_id;
+                var files = $scope.files;
 
 
-            $scope.init();
+                patientService.updateProfile(form, files)
+                    .then(function (data) {
+                        if (data['success']) {
+                            toaster.pop('success', 'Done', 'Updated');
+                        } else {
+                            toaster.pop('error', 'Error', 'Update failed');
+                        }
+                    }, function () {
+                        toaster.pop('error', 'Error', 'Something went wrong! We fix ASAP');
+                    });
+            }
 
         });
     /* End of controller */
