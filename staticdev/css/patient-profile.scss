@@ -342,11 +342,24 @@ a.btn-manage {
   top: 50px;
 }
 
+#homepage-data-time-range-header {
+  top: 50px;
+  z-index: 1;
+}
+
+.graph-data-list {
+  margin-top: 60px;
+}
+
 @media (max-width: 768px) {
   .problem-uncontrolled, .problem-controlled {
     max-width: 720px;
   }
   #time-range-select {
+    max-width: 720px;
+  }
+
+  #homepage-data-time-range-header {
     max-width: 720px;
   }
 }
@@ -358,6 +371,10 @@ a.btn-manage {
   #time-range-select {
     max-width: 720px;
   }
+
+  #homepage-data-time-range-header {
+    max-width: 720px;
+  }
 }
 
 @media (min-width: 992px) {
@@ -365,6 +382,10 @@ a.btn-manage {
     min-width: 940px;
   }
   #time-range-select {
+    max-width: 940px;
+  }
+
+  #homepage-data-time-range-header {
     max-width: 940px;
   }
 }
@@ -375,6 +396,10 @@ a.btn-manage {
   }
   #time-range-select {
     max-width: 1140px;
+  }
+
+  #homepage-data-time-range-header {
+    max-width: 570px;
   }
 }
 

@@ -638,6 +638,21 @@
         }
     }]);
 
+    myTools.directive('patientHomepageTimeRangeSelector', ['$parse', function ($parse) {
+
+        return {
+            link: function ($scope, $element, $attrs) {
+                setTimeout(function () {
+
+                    var offset_top = $("#clinical-staff-note").outerHeight(true) + $("#clinical-staff-todo").outerHeight(true) + $("#patient-profile-header").outerHeight(true);
+                    $element.affix({
+                        offset: {top: offset_top}
+                    });
+                }, 3000);
+            }
+        }
+    }]);
+
     /**
      * Filter to convert millisecond to hour:minutes:second format
      */
