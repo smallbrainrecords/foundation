@@ -181,6 +181,7 @@ def get_patient_document(request, patient_id):
 @login_required
 def delete_document(request, document_id):
     """
+    ONLY DELETE DOCUMENT FROM TODO'S PAGE
     A patient can delete a document that they 'attached' to a todo or uploaded.\n
     A patient can NOT delete a document that was attached to a todo or uploaded by any other user.\n
     A patient can NOT delete a document that was uploaded unless the patient uploaded that document himself.\n
@@ -342,6 +343,12 @@ def remove_document(request, document_id):
     resp = {'success': False}
 
     document = Document.objects.filter(id=document_id).get()
+
+    # Patient cannot delete document uploaded by the other
+    if request.user.profile.role == 'patient' and request.user.profile != document.author:
+        resp['message'] = "You don't have permission to do this action"
+        return ajax_response(resp)
+
     document.delete()
 
     resp['success'] = True

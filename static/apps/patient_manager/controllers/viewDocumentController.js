@@ -3,7 +3,7 @@
     angular.module('ManagerApp')
         .controller('ViewDocumentCtrl', ViewDocumentCtrl);
 
-    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', 'patientService', '$location', 'toaster', 'documentService'];
+    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', 'patientService', '$location', 'toaster', 'documentService', 'ngDialog'];
 
     /**
      * WIP: Missing status return
@@ -15,7 +15,7 @@
      * @param toaster
      * @constructor
      */
-    function ViewDocumentCtrl($scope, sharedService, $routeParams, patientService, $location, toaster, documentService) {
+    function ViewDocumentCtrl($scope, sharedService, $routeParams, patientService, $location, toaster, documentService, ngDialog) {
 
         // PROPERTIES DEFINITION
         $scope.patient_id = $('#patient_id').val();     // Patients are being managed
@@ -90,36 +90,39 @@
             })
         };
 
-        // TODO: DRY this method, should move to shared service.
-        // function checkSharedProblem(problem, sharing_patients) {
-        //     if ($scope.patient_id == $scope.user_id || ($scope.active_user.hasOwnProperty('role') && $scope.active_user.role != 'patient')) {
-        //         return true;
-        //     } else {
-        //         var is_existed = false;
-        //         angular.forEach(sharing_patients, function (value, key) {
-        //             if (!is_existed && value.user.id == $scope.user_id) {
-        //                 is_existed = $scope.isInArray(value.problems, problem.id);
-        //             }
-        //         });
-        //         return is_existed;
-        //     }
-        // }
-
         /**
          * Delete document
          * @param document
          */
         function deleteDocument(document) {
-            sharedService.removeDocument(document).then(function (response) {
+            // Ask for delete
+            var deleteConfirmationDialog = ngDialog.open({
+                template: "documentConfirmDialog",
+                showClose: false,
+                closeByDocument: false,
+                closeByNavigation: false
+            });
+
+            deleteConfirmationDialog.closePromise.then(function (data) {
+                if (data.value)
+                    sharedService.removeDocument(document).then(deleteDocumentSuccess, deleteDocumentFailed)
+            });
+
+
+            function deleteDocumentSuccess(response) {
                 if (response.data.success) {
                     toaster.pop('success', 'Done', 'Document is deleted');
 
                     // Go back to previous page
                     $location.path('/');
                 } else {
-                    toaster.pop('error', 'Error', 'Something went wrong!');
+                    toaster.pop('error', 'Error', response.data.message);
                 }
-            })
+            }
+
+            function deleteDocumentFailed(error) {
+                toaster.pop('error', 'Error', 'Something went wrong. We fix this ASAP');
+            }
         }
 
         /**
@@ -154,13 +157,6 @@
          * Initialize data for this view document page
          */
         function init() {
-            //sharedService.initHotkey($scope);
-
-            // patientService.fetchActiveUser().then(function (data) {
-            //     $scope.active_user = data['user_profile'];
-            //     console.log($scope.active_user);
-            // $scope.getPatientInfo($scope.active_user.id);
-            // });
 
             sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
                 $scope.document = resp.data.info;
@@ -178,8 +174,6 @@
                     var patientId = resp.data.info.patient.user.id;
                     $scope.getPatientInfo(patientId);
                 }
-
-                // $scope.getPatientInfo($scope.patient_id);
 
             });
 
