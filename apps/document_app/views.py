@@ -1,10 +1,9 @@
+from django.conf import settings
 from django.db.models import Prefetch
 
 from common.views import *
 from document_app.serializers import *
 from emr.models import Document, DocumentTodo, DocumentProblem, ToDo, Problem, UserProfile, Label
-
-#
 from problems_app.serializers import ProblemInfoSerializer
 from todo_app.serializers import LabelSerializer
 
@@ -350,6 +349,43 @@ def remove_document(request, document_id):
         return ajax_response(resp)
 
     document.delete()
+
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def update_name(request, document_id):
+    """
+    Rename document name
+    :param document_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    document_name = json_body.get('name')
+
+    # Validate new name is not empty
+    if "" == document_name or document_name is None:
+        resp['message'] = "File name is required"
+        return ajax_response(resp)
+
+    document = Document.objects.get(id=document_id)
+    if document:
+        upload_path = 'documents'
+        origin_extension = document.file_extension_lower()
+        dst = "{0}/{1}.{2}".format(upload_path, document_name, origin_extension)
+
+        # Validate new name is not existed
+        if os.path.exists("{0}/{1}".format(settings.MEDIA_ROOT, dst)):
+            resp['message'] = "File name is existed"
+            return ajax_response(resp)
+
+        os.rename(document.__unicode__(), "{0}/{1}".format(settings.MEDIA_ROOT, dst))
+
+        document.document.name = dst
+        document.save()
 
     resp['success'] = True
     return ajax_response(resp)

@@ -3,22 +3,35 @@
         <a href='#/'><b> Back to home page </b></a>
     </div><!-- End of Panel Body -->
 </div>
-
 <hr>
-
 <div class="container-fluid" id="view_document_page">
     <div class="row">
         <div class="col-md-12 ">
-            <span class="pull-left" ng-bind="document.filename"></span>
-            <!--Labels-->
-            <!--</div>-->
-            <!--<div class="col-xs-12  col-sm-12  col-md-4  col-lg-4 text-right">-->
+            <span class="pull-left" ng-bind="document.filename" ng-show="!enableEditDocumentName"></span>
+
+            <div ng-show="enableEditDocumentName" class="pull-left">
+                <input type="text" ng-model="newDocumentName" title="" placeholder="Enter new document's name"
+                       auto-focus="true"
+                       class="form-control">
+            </div>
+
             <div class="pull-right">
+                <span ng-show="enableEditDocumentName">
+                    <button type="button" class="btn btn-primary" ng-click="updateDocumentName()">Save</button>
+                    <button type="button" class="btn btn-danger"
+                            ng-click="enableEditDocumentName=false">
+                        Cancel
+                    </button>
+                </span>
+                <button class="btn btn-default" ng-show="!enableEditDocumentName"
+                        ng-click="enableEditDocumentName=true">Edit
+                </button>
+
                 <button class="btn btn-default" ng-click="enableTodoPin=!enableTodoPin"
                         ng-bind="enableTodoPin ? 'Done todo pin' :'Pin todo'"></button>
                 <button class="btn btn-default" ng-click="enableProblemPin=!enableProblemPin"
                         ng-bind="enableProblemPin ? 'Done problem pin' :'Pin problem'"></button>
-                <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete document</button>
+                <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete</button>
             </div>
         </div>
     </div>
@@ -39,7 +52,7 @@
     <div class="row">
         <div class="col-md-12">
             <span ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list"
-                 ng-class="label.is_pinned ? '' :''">
+                  ng-class="label.is_pinned ? '' :''">
                 <a class="todo-label" ng-class="label.css_class"
                    ng-click="label.is_pinned ? unpinDocumentLabel(document,label) :pinLabelToDocument(document, label)">
                     <span ng-bind="label.name"></span>
@@ -51,7 +64,6 @@
 
     <!--View file content section-->
     <div class="row">
-
         <div class="col-md-12">
             <view-file uri="document.document"
                        content-type="document.file_mime_type[0]"

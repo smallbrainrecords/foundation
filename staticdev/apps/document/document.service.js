@@ -2,7 +2,10 @@
 
     'use strict';
 
-    angular.module('document',['ngFileUpload'])
+    angular.module('document', ['ngFileUpload'])
+        .run(function run($http, $cookies) {
+            $http.defaults.headers.common["X-CSRFToken"] = $cookies.get('csrftoken')
+        })
         .service('documentService', function ($http, $q, $cookies, Upload) {
 
             this.csrf_token = function () {
@@ -118,6 +121,9 @@
                 });
             };
 
-        });
 
+            this.updateDocumentName = function (documentId, formObj) {
+                return $http.patch('/docs/' + documentId + '/name', formObj);
+            };
+        });
 })();

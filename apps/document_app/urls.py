@@ -15,5 +15,6 @@ urlpatterns = patterns('document_app.views',
                        url(r'^(?P<patient_id>\d+)/get_pinned_document', 'get_patient_document'),
                        url(r'^delete/(?P<document_id>\d+)$', 'delete_document'),
                        url(r'^remove/(?P<document_id>\d+)$', 'remove_document'),
-                       url(r'^problem/(?P<problem_id>\d+)$', 'document_list_by_problem')
+                       url(r'^problem/(?P<problem_id>\d+)$', 'document_list_by_problem'),
+                       url(r'^(?P<document_id>\d+)/name$','update_name')
                        )

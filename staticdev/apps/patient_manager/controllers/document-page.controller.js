@@ -13,6 +13,8 @@
      * @param patientService
      * @param $location
      * @param toaster
+     * @param documentService
+     * @param ngDialog
      * @constructor
      */
     function ViewDocumentCtrl($scope, sharedService, $routeParams, patientService, $location, toaster, documentService, ngDialog) {
@@ -20,17 +22,54 @@
         // PROPERTIES DEFINITION
         $scope.patient_id = $('#patient_id').val();     // Patients are being managed
         $scope.user_id = $('#user_id').val();           // Current logged in id
+        $scope.labels = [];
+        $scope.newDocumentName = "";
+        $scope.enableEditDocumentName = false;
         $scope.enableTodoPin = false;
         $scope.enableProblemPin = false;
-        $scope.labels = [];
 
-        $scope.init = init;
         $scope.deleteDocument = deleteDocument;
         $scope.getPatientInfo = getPatientInfo;
         $scope.open_problem = open_problem;
+        $scope.pinTodo2Document = pinTodo2Document;
+        $scope.unpinDocumentTodo = unpinDocumentTodo;
+        $scope.pinProblem2Document = pinProblem2Document;
+        $scope.unpinDocumentProblem = unpinDocumentProblem;
+        $scope.updateDocumentName = updateDocumentName;
 
-        $scope.init();
+        init();
 
+
+        /**
+         * Initialize data for this view document page
+         */
+        function init() {
+
+            sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
+                $scope.document = resp.data.info;
+
+                $scope.labels = resp.data.labels;
+
+                // TODO: Is this task is correct place
+                var document_label_pk = _.pluck($scope.document.labels, 'id');
+                _.map($scope.labels, function (value, key, list) {
+                    value.is_pinned = _.contains(document_label_pk, value.id);
+                });
+
+                // Loading all related
+                if (resp.data.info.patient != null) {
+                    var patientId = resp.data.info.patient.user.id;
+                    $scope.getPatientInfo(patientId);
+                }
+
+            });
+
+            // Refer https://trello.com/c/fDYvV4z6
+            sharedService.getUploadedDocument().then(function (response) {
+                $scope.uploadedDocuments = response.data.documents;
+            });
+
+        }
 
         // METHODS DEFINITION(Only dedicate to service/factory todo business flow)
         function open_problem(problem) {
@@ -38,7 +77,7 @@
         }
 
         // Pin a todo to document
-        $scope.pinTodo2Document = function (document, todo) {
+        function pinTodo2Document(document, todo) {
             documentService.pinTodo2Document(document, todo)
                 .then(function (response) {
                     if (response.data.success) {
@@ -50,9 +89,9 @@
                 }, function (resp) {
                     // error occurred
                 });
-        };
+        }
 
-        $scope.unpinDocumentTodo = function (document, todo) {
+        function unpinDocumentTodo(document, todo) {
             sharedService.unpinDocumentTodo(document, todo).then(function (response) {
                 if (response.data.success) {
                     toaster.pop('success', 'Done', 'Msg when success');
@@ -61,10 +100,10 @@
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 }
             })
-        };
+        }
 
         // Pin a problem to document
-        $scope.pinProblem2Document = function (document, prob) {
+        function pinProblem2Document(document, prob) {
             documentService.pinProblem2Document(document, prob)
                 .then(function (response) {
                     if (response.data.success) {
@@ -76,10 +115,10 @@
                 }, function (response) {
                     // error occurred
                 });
-        };
+        }
 
         // Unpin a problem to document
-        $scope.unpinDocumentProblem = function (document, prob) {
+        function unpinDocumentProblem(document, prob) {
             sharedService.unpinDocumentProblem(document, prob).then(function (response) {
                 if (response.data.success) {
                     toaster.pop('success', 'Done', 'Remove problem successfully');
@@ -88,7 +127,7 @@
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 }
             })
-        };
+        }
 
         /**
          * Delete document
@@ -153,35 +192,25 @@
             });
         }
 
-        /**
-         * Initialize data for this view document page
-         */
-        function init() {
+        function updateDocumentName() {
 
-            sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
-                $scope.document = resp.data.info;
+            documentService.updateDocumentName($scope.document.id, {'name': $scope.newDocumentName})
+                .then(updateNameSuccess, updateNameFailed);
 
-                $scope.labels = resp.data.labels;
-
-                // TODO: Is this task is correct place
-                var document_label_pk = _.pluck($scope.document.labels, 'id');
-                _.map($scope.labels, function (value, key, list) {
-                    value.is_pinned = _.contains(document_label_pk, value.id);
-                });
-
-                // Loading all related
-                if (resp.data.info.patient != null) {
-                    var patientId = resp.data.info.patient.user.id;
-                    $scope.getPatientInfo(patientId);
+            function updateNameSuccess(response) {
+                if (response.data.success) {
+                    toaster.pop('success', 'Done', 'Document renamed success');
+                    $scope.document.filename = angular.copy($scope.newDocumentName);
+                    $scope.enableEditDocumentName = false;
+                    $scope.newDocumentName = "";
+                } else {
+                    toaster.pop('error', 'Error', response.data.message);
                 }
+            }
 
-            });
-
-            // Refer https://trello.com/c/fDYvV4z6
-            sharedService.getUploadedDocument().then(function (response) {
-                $scope.uploadedDocuments = response.data.documents;
-            });
-
+            function updateNameFailed(error) {
+                toaster.pop('error', 'Error', 'Something went wrong. We fix this ASAP');
+            }
         }
     }
 })();
