@@ -335,6 +335,8 @@ a.btn-manage {
     max-width: 570px; } }
 #view_document_page .uploaded_document .document_icon {
   margin-right: 10px; }
+#view_document_page .uploaded_document .document-name {
+  vertical-align: top; }
 
 .inr-component a {
   cursor: pointer; }

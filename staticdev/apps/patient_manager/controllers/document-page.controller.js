@@ -23,7 +23,6 @@
         $scope.patient_id = $('#patient_id').val();     // Patients are being managed
         $scope.user_id = $('#user_id').val();           // Current logged in id
         $scope.document = {};
-        $scope.documentLabels = [];
         $scope.labels = [];
         $scope.newDocumentName = "";
         $scope.enableEditDocumentName = false;
@@ -48,10 +47,9 @@
 
             sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
                 $scope.document = resp.data.info;
-                $scope.documentLabels = resp.data.document_labels;
+
                 $scope.labels = resp.data.labels;
 
-                // TODO: Is this task is correct place
                 var document_label_pk = _.pluck($scope.document.labels, 'id');
                 _.map($scope.labels, function (value, key, list) {
                     value.is_pinned = _.contains(document_label_pk, value.id);
@@ -62,14 +60,7 @@
                     var patientId = resp.data.info.patient.user.id;
                     $scope.getPatientInfo(patientId);
                 }
-
             });
-
-            // Refer https://trello.com/c/fDYvV4z6
-            sharedService.getUploadedDocument().then(function (response) {
-                $scope.uploadedDocuments = response.data.documents;
-            });
-
         }
 
         // METHODS DEFINITION(Only dedicate to service/factory todo business flow)
@@ -230,7 +221,7 @@
 
                     label.is_pinned = true;
 
-                    $scope.documentLabels.push(label);
+                    document.labels.push(label);
                 } else {
                     toaster.pop('error', 'Error', 'Pin label to document failed');
                 }
@@ -256,9 +247,9 @@
                     label.is_pinned = false;
 
                     // Remove label in front-end
-                    _.each($scope.documentLabels , function (ele, idx) {
+                    _.each(document.labels, function (ele, idx) {
                         if (angular.equals(ele.id, label.id))
-                            $scope.documentLabels.splice(idx, 1);
+                            document.labels.splice(idx, 1);
                     });
                 } else {
                     toaster.pop('error', 'Error', "Unpin document's label failed");

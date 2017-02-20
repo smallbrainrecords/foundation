@@ -9,18 +9,20 @@
         <div class="row">
             <div class="col-md-6 col-lg-6">
                 <!--Left part-->
-                <a ng-repeat="label in documentLabels track by $index" class="todo-label-front"
-                   ng-class="label.css_class"></a>
-                <span class="document-name" ng-bind="document.filename" ng-show="!enableEditDocumentName"></span>
-                <div ng-show="enableEditDocumentName">
+                <div>
+                    <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
+                       ng-class="label.css_class"></a>
+                    <span class="document-name" ng-bind="document.filename" ng-show="!enableEditDocumentName"></span>
+                </div>
+                <div ng-show="enableEditDocumentName" class="flex-item ">
                     <input type="text" ng-model="newDocumentName" title="" placeholder="Enter new document's name"
                            auto-focus="true"
                            class="form-control">
                 </div>
             </div>
-
             <!--Right part-->
-            <div class="col-md-6 col-lg-6 text-right">
+            <div class="col-md-6 col-lg-6">
+                <div class="flex-item">
                 <span ng-show="enableEditDocumentName">
                     <button type="button" class="btn btn-primary" ng-click="updateDocumentName()">Save</button>
                     <button type="button" class="btn btn-danger"
@@ -28,18 +30,19 @@
                         Cancel
                     </button>
                 </span>
-                <button class="btn btn-default" ng-show="!enableEditDocumentName"
-                        ng-click="enableEditDocumentName=true">Edit name
-                </button>
+                    <button class="btn btn-default" ng-show="!enableEditDocumentName"
+                            ng-click="enableEditDocumentName=true">Edit name
+                    </button>
 
-                <button class="btn btn-default" ng-click="enableEditLabel=!enableEditLabel"
-                        ng-bind="enableEditLabel ? 'Done edit label' :'Edit label'"></button>
+                    <button class="btn btn-default" ng-click="enableEditLabel=!enableEditLabel"
+                            ng-bind="enableEditLabel ? 'Done edit label' :'Edit label'"></button>
 
-                <button class="btn btn-default" ng-click="enableTodoPin=!enableTodoPin"
-                        ng-bind="enableTodoPin ? 'Done todo pin' :'Pin todo'"></button>
-                <button class="btn btn-default" ng-click="enableProblemPin=!enableProblemPin"
-                        ng-bind="enableProblemPin ? 'Done problem pin' :'Pin problem'"></button>
-                <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete</button>
+                    <button class="btn btn-default" ng-click="enableTodoPin=!enableTodoPin"
+                            ng-bind="enableTodoPin ? 'Done todo pin' :'Pin todo'"></button>
+                    <button class="btn btn-default" ng-click="enableProblemPin=!enableProblemPin"
+                            ng-bind="enableProblemPin ? 'Done problem pin' :'Pin problem'"></button>
+                    <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete</button>
+                </div>
             </div>
         </div>
 

@@ -2,10 +2,8 @@ from django.conf import settings
 from django.db.models import Prefetch
 
 from common.views import *
-from document_app.operations import *
 from document_app.serializers import *
 from emr.models import Document, DocumentTodo, DocumentProblem, ToDo, Problem, UserProfile, Label
-from problems_app.serializers import ProblemInfoSerializer
 from todo_app.serializers import LabelSerializer
 
 
@@ -52,7 +50,6 @@ def document_list(request, page=1):
     return ajax_response(resp)
 
 
-# TODO: Check access here
 @login_required
 def document_info(request, document_id):
     """
@@ -69,7 +66,6 @@ def document_info(request, document_id):
     labels = Label.objects.filter(is_all=True)
 
     resp['info'] = DocumentSerialization(document).data
-    resp['document_labels'] = LabelSerializer(document_labels, many=True).data
     resp['labels'] = LabelSerializer(labels, many=True).data
     resp['success'] = True
     return ajax_response(resp)
@@ -245,21 +241,18 @@ def document_list_by_problem(request, problem_id):
     ).get(id=problem_id)
 
     # Loading document pinned directly to problem
-    document_probs = DocumentProblem.objects.filter(problem=problem_info)
-    document_probs_serialized = DocumentProblemSerialization(document_probs, many=True).data
-    document_probs_list = [doc['document'] for doc in document_probs_serialized]
-    document_probs_pk = [doc['id'] for doc in
-                         document_probs_list]  # Used for remove duplicated document also pinned to the todo
+    problem_document_set = problem_info.document_set.all()
 
-    # Loading document pinned via todo (which is pinned to problem), remove duplicated document already pinned problem.
-    # TODO: Two pinned todos both are pinned same documentation filtering
-    problem_serialized = ProblemInfoSerializer(problem_info).data
-    todos_pk = [todo['id'] for todo in problem_serialized['problem_todos']]
-    document_todos = DocumentTodo.objects.filter(todo_id__in=todos_pk).exclude(document_id__in=document_probs_pk)
-    document_todos_list = [doc['document'] for doc in DocumentTodoSerialization(document_todos, many=True).data]
+    problem_todo_document_set = []
+    problem_todo_set = problem_info.todo_set.all()
+    for problem_todo in problem_todo_set:
+        if problem_todo.document_set.count() != 0:
+            problem_todo_document_set += problem_todo.document_set.all()
+
+    document_result_set = set(list(problem_document_set) + list(problem_todo_document_set))
 
     # Need remove duplicated and sorted by creation date
-    resp['documents'] = document_probs_list + document_todos_list
+    resp['documents'] = DocumentSerialization(document_result_set, many=True).data
     resp['success'] = True
     return ajax_response(resp)
 
@@ -274,8 +267,9 @@ def pin_label_2_document(request):
     resp = {'success': False}
     json_body = json.loads(request.body)
     document_id = json_body.get('document')
-    document = Document.objects.get(id=document_id)
     label_id = json_body.get('label')
+
+    document = Document.objects.get(id=document_id)
     label = Label.objects.get(id=label_id)
     document.labels.add(label)
 
@@ -293,8 +287,9 @@ def remove_document_label(request):
     resp = {'success': False}
     json_body = json.loads(request.body)
     document_id = json_body.get('document')
-    document = Document.objects.get(id=document_id)
     label_id = json_body.get('label')
+
+    document = Document.objects.get(id=document_id)
     label = Label.objects.get(id=label_id)
     document.labels.remove(label)
 
@@ -311,8 +306,10 @@ def unpin_document_todo(request):
     """
     resp = {'success': False}
     json_body = json.loads(request.body)
+    document_id = json_body.get('document')
+    todo_id = json_body.get('todo')
 
-    DocumentTodo.objects.filter(document_id=json_body.get('document')).filter(todo_id=json_body.get('todo')).delete()
+    DocumentTodo.objects.filter(document_id=document_id).filter(todo_id=todo_id).delete()
 
     resp['success'] = True
     return ajax_response(resp)
@@ -321,14 +318,16 @@ def unpin_document_todo(request):
 @login_required
 def unpin_document_problem(request):
     """
-
+    Unpin a problem from document
     :param request:
     :return:
     """
     resp = {'success': False}
     json_body = json.loads(request.body)
+    problem_id = json_body.get('problem')
+    document_id = json_body.get('document')
 
-    DocumentTodo.objects.filter(document_id=json_body.get('document')).filter(todo_id=json_body.get('problem')).delete()
+    DocumentProblem.objects.filter(document_id=document_id).filter(problem_id=problem_id).delete()
 
     resp['success'] = True
     return ajax_response(resp)
@@ -337,7 +336,8 @@ def unpin_document_problem(request):
 @login_required
 def remove_document(request, document_id):
     """
-
+    Delete a document from system
+    TODO: Need to remove file from system
     :param document_id:
     :param request:
     :return:

@@ -22,6 +22,7 @@
         // PROPERTIES DEFINITION
         $scope.patient_id = $('#patient_id').val();     // Patients are being managed
         $scope.user_id = $('#user_id').val();           // Current logged in id
+        $scope.document = {};
         $scope.labels = [];
         $scope.newDocumentName = "";
         $scope.enableEditDocumentName = false;
@@ -49,7 +50,6 @@
 
                 $scope.labels = resp.data.labels;
 
-                // TODO: Is this task is correct place
                 var document_label_pk = _.pluck($scope.document.labels, 'id');
                 _.map($scope.labels, function (value, key, list) {
                     value.is_pinned = _.contains(document_label_pk, value.id);
@@ -60,14 +60,7 @@
                     var patientId = resp.data.info.patient.user.id;
                     $scope.getPatientInfo(patientId);
                 }
-
             });
-
-            // Refer https://trello.com/c/fDYvV4z6
-            sharedService.getUploadedDocument().then(function (response) {
-                $scope.uploadedDocuments = response.data.documents;
-            });
-
         }
 
         // METHODS DEFINITION(Only dedicate to service/factory todo business flow)
