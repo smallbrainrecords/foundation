@@ -61,7 +61,6 @@ def document_info(request, document_id):
     resp = {'success': False}
 
     document = Document.objects.filter(id=document_id).get()
-    document_labels = fetch_document_label_set(document)
 
     labels = Label.objects.filter(is_all=True)
 
