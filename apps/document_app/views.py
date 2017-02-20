@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db.models import Prefetch
 
 from common.views import *
+from document_app.operations import *
 from document_app.serializers import *
 from emr.models import Document, DocumentTodo, DocumentProblem, ToDo, Problem, UserProfile, Label
 from problems_app.serializers import ProblemInfoSerializer
@@ -63,10 +64,12 @@ def document_info(request, document_id):
     resp = {'success': False}
 
     document = Document.objects.filter(id=document_id).get()
-    labels = Label.objects.filter(
-        is_all=True)  # Get all label is saved all for user. Refer to https://trello.com/c/OtAAk09y
+    document_labels = fetch_document_label_set(document)
+
+    labels = Label.objects.filter(is_all=True)
 
     resp['info'] = DocumentSerialization(document).data
+    resp['document_labels'] = LabelSerializer(document_labels, many=True).data
     resp['labels'] = LabelSerializer(labels, many=True).data
     resp['success'] = True
     return ajax_response(resp)

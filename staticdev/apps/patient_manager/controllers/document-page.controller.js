@@ -22,6 +22,8 @@
         // PROPERTIES DEFINITION
         $scope.patient_id = $('#patient_id').val();     // Patients are being managed
         $scope.user_id = $('#user_id').val();           // Current logged in id
+        $scope.document = {};
+        $scope.documentLabels = [];
         $scope.labels = [];
         $scope.newDocumentName = "";
         $scope.enableEditDocumentName = false;
@@ -46,7 +48,7 @@
 
             sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
                 $scope.document = resp.data.info;
-
+                $scope.documentLabels = resp.data.document_labels;
                 $scope.labels = resp.data.labels;
 
                 // TODO: Is this task is correct place
@@ -228,7 +230,7 @@
 
                     label.is_pinned = true;
 
-                    document.labels.push(label);
+                    $scope.documentLabels.push(label);
                 } else {
                     toaster.pop('error', 'Error', 'Pin label to document failed');
                 }
@@ -254,9 +256,9 @@
                     label.is_pinned = false;
 
                     // Remove label in front-end
-                    _.each(document.labels, function (ele, idx) {
+                    _.each($scope.documentLabels , function (ele, idx) {
                         if (angular.equals(ele.id, label.id))
-                            document.labels.splice(idx, 1);
+                            $scope.documentLabels.splice(idx, 1);
                     });
                 } else {
                     toaster.pop('error', 'Error', "Unpin document's label failed");

@@ -9,7 +9,7 @@
         <div class="row">
             <div class="col-md-6 col-lg-6">
                 <!--Left part-->
-                <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
+                <a ng-repeat="label in documentLabels track by $index" class="todo-label-front"
                    ng-class="label.css_class"></a>
                 <span class="document-name" ng-bind="document.filename" ng-show="!enableEditDocumentName"></span>
                 <div ng-show="enableEditDocumentName">
