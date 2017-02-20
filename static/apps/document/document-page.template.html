@@ -1,0 +1,117 @@
+<div class='panel panel-default'>
+    <div class='panel-body'>
+        <a href='#/'><b> Back to home page </b></a>
+    </div><!-- End of Panel Body -->
+</div>
+<hr>
+<div class="container-fluid" id="view_document_page">
+    <section id="document-header">
+        <div class="row">
+            <div class="col-md-6 col-lg-6">
+                <!--Left part-->
+                <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
+                   ng-class="label.css_class"></a>
+                <span class="document-name" ng-bind="document.filename" ng-show="!enableEditDocumentName"></span>
+                <div ng-show="enableEditDocumentName">
+                    <input type="text" ng-model="newDocumentName" title="" placeholder="Enter new document's name"
+                           auto-focus="true"
+                           class="form-control">
+                </div>
+            </div>
+
+            <!--Right part-->
+            <div class="col-md-6 col-lg-6 text-right">
+                <span ng-show="enableEditDocumentName">
+                    <button type="button" class="btn btn-primary" ng-click="updateDocumentName()">Save</button>
+                    <button type="button" class="btn btn-danger"
+                            ng-click="enableEditDocumentName=false">
+                        Cancel
+                    </button>
+                </span>
+                <button class="btn btn-default" ng-show="!enableEditDocumentName"
+                        ng-click="enableEditDocumentName=true">Edit name
+                </button>
+
+                <button class="btn btn-default" ng-click="enableEditLabel=!enableEditLabel"
+                        ng-bind="enableEditLabel ? 'Done edit label' :'Edit label'"></button>
+
+                <button class="btn btn-default" ng-click="enableTodoPin=!enableTodoPin"
+                        ng-bind="enableTodoPin ? 'Done todo pin' :'Pin todo'"></button>
+                <button class="btn btn-default" ng-click="enableProblemPin=!enableProblemPin"
+                        ng-bind="enableProblemPin ? 'Done problem pin' :'Pin problem'"></button>
+                <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete</button>
+            </div>
+        </div>
+
+        <div class="row" ng-if="enableEditLabel">
+            <div class="col-md-12">
+            <span ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list cursor"
+                  ng-class="label.is_pinned ? '' :''">
+                <a class="todo-label" ng-class="label.css_class"
+                   ng-click="label.is_pinned ? unpinDocumentLabel(document,label) :pinLabelToDocument(document, label)">
+                    <span ng-bind="label.name"></span>
+                    <i class="fa fa-check ng-scope" ng-if="label.is_pinned"></i>
+                </a>
+            </span>
+            </div>
+        </div>
+    </section>
+
+    <section id="document-content">
+        <!--View file content section-->
+        <view-file uri="document.document"
+                   content-type="document.file_mime_type[0]"
+                   controls="false"
+                   allow-modal="false"></view-file>
+    </section>
+
+    <!--Pinned todo-->
+    <section id="document-todos">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <p>List of pinned todo</p>
+            </div>
+            <div class="panel-body">
+                <ul class="ul-clean no-padding">
+                    <li ng-repeat="todo in active_todos | filter:(enableTodoPin ? '' :{'is_pinned':true})  track by $index">
+                        <div class="item-box flex-container">
+                            <button ng-if="enableTodoPin"
+                                    ng-click="todo.is_pinned ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo)"
+                                    ng-class="todo.is_pinned ? 'btn-danger':'btn-primary'"
+                                    class="btn dube-btn-pin-unpin flex-item pull-left">
+                                <span ng-bind="todo.is_pinned ? 'Un pin' : 'Pin'"></span>
+                            </button>
+                            <span ng-bind="todo.todo" class="flex-item"></span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!--Pinned problem-->
+    <section id="document-problems">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <p>List of pinned problem</p>
+            </div>
+            <div class="panel-body">
+                <ul class="ul-clean no-padding">
+                    <li ng-repeat="problem in active_probs | filter:(enableProblemPin ? '' :{'is_pinned':true}) track by $index">
+                        <div class="item-box flex-container"
+                             ng-show="problem.is_active"
+                             ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                            <button ng-if="enableProblemPin"
+                                    ng-click="problem.is_pinned ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem)"
+                                    ng-class="problem.is_pinned ? 'btn-danger':'btn-primary'"
+                                    class="btn dube-btn-pin-unpin pull-left flex-item">
+                                <span ng-bind="problem.is_pinned ? 'Un pin' : 'Pin'"></span>
+                            </button>
+                            <span ng-bind="problem.problem_name" class="flex-item"></span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>

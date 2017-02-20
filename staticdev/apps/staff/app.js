@@ -48,15 +48,15 @@
                 controller: 'ManageCommonProblemCtrl'
             })
             .when('/manage/upload_documents', {
-                templateUrl: '/static/apps/staff/partials/upload_documents.html',
+                templateUrl: '/static/apps/document/document-upload-page.template.html',
                 controller: 'UploadDocumentsCtrl'
             })
             .when('/manage/uploaded', {
-                templateUrl: '/static/apps/staff/partials/uploaded_documents.html',
+                templateUrl: '/static/apps/document/document-uploaded-page.template.html',
                 controller: 'UploadedDocumentsPageCtrl'
             })
             .when('/manage/tag_document/:documentId', {
-                templateUrl: '/static/apps/staff/partials/tag_document.html',
+                templateUrl: '/static/apps/document/document-tag-page.template.html',
                 controller: 'TagDocumentCtrl'
             });
     });

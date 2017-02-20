@@ -19,6 +19,37 @@
      */
     function TagDocumentCtrl($scope, documentService, $routeParams, staffService, $http, toaster, $cookies, sharedService) {
 
+        $scope.pinTodo2Document = pinTodo2Document;
+        $scope.unpinDocumentTodo = unpinDocumentTodo;
+        $scope.pinProblem2Document = pinProblem2Document;
+        $scope.unpinDocumentProblem = unpinDocumentProblem;
+        $scope.getPatients = getPatients;
+        $scope.pinPatient2Document = pinPatient2Document;
+        $scope.pinLabelToDocument = pinLabelToDocument;
+        $scope.unpinDocumentLabel = unpinDocumentLabel;
+
+        init();
+
+        function init() {
+            documentService.getDocumentInfo($routeParams.documentId).then(function (resp) {
+                $scope.document = resp.data.info;
+                $scope.labels = resp.data.labels;
+
+                // TODO: Is this task is correct place
+                var document_label_pk = _.pluck($scope.document.labels, 'id');
+                _.map($scope.labels, function (value, key, list) {
+                    value.is_pinned = _.contains(document_label_pk, value.id);
+                });
+
+                // Loading all related
+                if (resp.data.info.patient != null) {
+                    var patientId = resp.data.info.patient.user.id;
+                    getPatientInfo(patientId);
+                }
+            });
+
+        }
+
         function getPatientInfo(patientId) {
             // Fetch user's todos
             staffService.fetchPatientTodos(patientId).then(function (data) {
@@ -43,26 +74,9 @@
             });
         }
 
-        documentService.getDocumentInfo($routeParams.documentId).then(function (resp) {
-            $scope.document = resp.data.info;
-            $scope.labels = resp.data.labels;
-
-            // TODO: Is this task is correct place
-            var document_label_pk = _.pluck($scope.document.labels, 'id');
-            _.map($scope.labels, function (value, key, list) {
-                value.is_pinned = _.contains(document_label_pk, value.id);
-            });
-
-            // Loading all related 
-            if (resp.data.info.patient != null) {
-                var patientId = resp.data.info.patient.user.id;
-                getPatientInfo(patientId);
-            }
-        });
-
 
         // Pin a todo to document
-        $scope.pinTodo2Document = function (document, todo) {
+        function pinTodo2Document(document, todo) {
             documentService.pinTodo2Document(document, todo)
                 .then(function (response) {
                     if (response.data.success) {
@@ -74,9 +88,8 @@
                 }, function (resp) {
                     // error occurred
                 });
-        };
-
-        $scope.unpinDocumentTodo = function (document, todo) {
+        }
+        function unpinDocumentTodo(document, todo) {
             sharedService.unpinDocumentTodo(document, todo).then(function (response) {
                 if (response.data.success) {
                     toaster.pop('success', 'Done', 'Msg when success');
@@ -85,10 +98,9 @@
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 }
             })
-        };
-
+        }
         // Pin a problem to document
-        $scope.pinProblem2Document = function (document, prob) {
+        function pinProblem2Document(document, prob) {
             documentService.pinProblem2Document(document, prob)
                 .then(function (response) {
                     if (response.data.success) {
@@ -100,10 +112,9 @@
                 }, function (response) {
                     // error occurred
                 });
-        };
-
+        }
         // Unpin a problem to document
-        $scope.unpinDocumentProblem = function (document, prob) {
+        function unpinDocumentProblem(document, prob) {
             sharedService.unpinDocumentProblem(document, prob).then(function (response) {
                 if (response.data.success) {
                     toaster.pop('success', 'Done', 'Remove problem successfully');
@@ -112,10 +123,8 @@
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 }
             })
-        };
-
-
-        $scope.getPatients = function (viewValue) {
+        }
+        function getPatients(viewValue) {
             return $http.post('/docs/search_patient', {
                 search_str: viewValue
             }, {
@@ -125,10 +134,9 @@
             }).then(function (response) {
                 return response.data.results;
             });
-        };
-
+        }
         //TODO Implement details here
-        $scope.pinPatient2Document = function (item, model) {
+        function pinPatient2Document(item, model) {
             documentService.pinPatient2Document($scope.document, model)
                 .then(function (response) {
                     if (response.data.success) {
@@ -141,14 +149,12 @@
                 }, function (error) {
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 })
-        };
-
-
+        }
         /**
          * @param document
          * @param label
          */
-        $scope.pinLabelToDocument = function (document, label) {
+        function pinLabelToDocument(document, label) {
             sharedService.pinLabelToDocument(document, label).then(function (response) {
                 if (response.data.success) {
                     toaster.pop('success', 'Done', 'Added label to document');
@@ -157,14 +163,13 @@
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 }
             });
-        };
-
+        }
         /**
          *
          * @param document
          * @param label
          */
-        $scope.unpinDocumentLabel = function (document, label) {
+        function unpinDocumentLabel(document, label) {
             sharedService.unpinDocumentLabel(document, label).then(function (response) {
                 if (response.data.success) {
                     toaster.pop('success', 'Done', "Removed document's label");
@@ -173,6 +178,6 @@
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 }
             });
-        };
+        }
     }
 })();

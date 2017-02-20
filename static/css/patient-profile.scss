@@ -509,3 +509,16 @@ todo {
 #bdfi .form-group input {
   margin: 5px;
 }
+
+.cursor {
+  cursor: pointer;
+}
+
+#document-header {
+  margin-bottom: 20px;
+
+  .document-name {
+    vertical-align: top;
+  }
+
+}

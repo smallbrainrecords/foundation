@@ -27,6 +27,7 @@
         $scope.enableEditDocumentName = false;
         $scope.enableTodoPin = false;
         $scope.enableProblemPin = false;
+        $scope.enableEditLabel = false;
 
         $scope.deleteDocument = deleteDocument;
         $scope.getPatientInfo = getPatientInfo;
@@ -36,13 +37,11 @@
         $scope.pinProblem2Document = pinProblem2Document;
         $scope.unpinDocumentProblem = unpinDocumentProblem;
         $scope.updateDocumentName = updateDocumentName;
+        $scope.pinLabelToDocument = pinLabelToDocument;
+        $scope.unpinDocumentLabel = unpinDocumentLabel;
 
         init();
 
-
-        /**
-         * Initialize data for this view document page
-         */
         function init() {
 
             sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
@@ -209,6 +208,62 @@
             }
 
             function updateNameFailed(error) {
+                toaster.pop('error', 'Error', 'Something went wrong. We fix this ASAP');
+            }
+        }
+
+
+        /**
+         * Pin a label to document
+         * @param document
+         * @param label
+         */
+        function pinLabelToDocument(document, label) {
+            sharedService.pinLabelToDocument(document, label)
+                .then(pinLabelSuccess, pinLabelFailed);
+
+            function pinLabelSuccess(response) {
+                if (response.data.success) {
+                    toaster.pop('success', 'Done', 'Added label to document');
+
+                    label.is_pinned = true;
+
+                    document.labels.push(label);
+                } else {
+                    toaster.pop('error', 'Error', 'Pin label to document failed');
+                }
+            }
+
+            function pinLabelFailed(response) {
+                toaster.pop('error', 'Error', 'Something went wrong. We fix this ASAP');
+            }
+        }
+
+        /**
+         * Remove document labels
+         * @param document
+         * @param label
+         */
+        function unpinDocumentLabel(document, label) {
+            sharedService.unpinDocumentLabel(document, label).then(unPinLabelSuccess, unPinLabelFailed);
+
+            function unPinLabelSuccess(response) {
+                if (response.data.success) {
+                    toaster.pop('success', 'Done', "Removed document's label");
+
+                    label.is_pinned = false;
+
+                    // Remove label in front-end
+                    _.each(document.labels, function (ele, idx) {
+                        if (angular.equals(ele.id, label.id))
+                            document.labels.splice(idx, 1);
+                    });
+                } else {
+                    toaster.pop('error', 'Error', "Unpin document's label failed");
+                }
+            }
+
+            function unPinLabelFailed(response) {
                 toaster.pop('error', 'Error', 'Something went wrong. We fix this ASAP');
             }
         }

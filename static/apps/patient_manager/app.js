@@ -128,7 +128,7 @@
                 controller: 'MedicationCtrl'
             })
             .when('/document/:documentId', {
-                templateUrl: '/static/apps/patient_manager/partials/document/document.html',
+                templateUrl: '/static/apps/document/document-page.template.html',
                 controller: 'ViewDocumentCtrl'
             });
 
