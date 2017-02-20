@@ -29,6 +29,7 @@
         $scope.enableTodoPin = false;
         $scope.enableProblemPin = false;
         $scope.enableEditLabel = false;
+        $scope.new_todo = {};
 
         $scope.deleteDocument = deleteDocument;
         $scope.getPatientInfo = getPatientInfo;
@@ -40,6 +41,8 @@
         $scope.updateDocumentName = updateDocumentName;
         $scope.pinLabelToDocument = pinLabelToDocument;
         $scope.unpinDocumentLabel = unpinDocumentLabel;
+        $scope.permitted = permitted;
+        $scope.addTodo = addTodo;
 
         init();
 
@@ -60,6 +63,15 @@
                     var patientId = resp.data.info.patient.user.id;
                     $scope.getPatientInfo(patientId);
                 }
+            });
+
+            patientService.fetchActiveUser().then(function (data) {
+                // Logged in user profile in Django authentication system
+                $scope.active_user = data['user_profile'];
+            });
+
+            patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+                $scope.patient = data;
             });
         }
 
@@ -258,6 +270,89 @@
 
             function unPinLabelFailed(response) {
                 toaster.pop('error', 'Error', 'Something went wrong. We fix this ASAP');
+            }
+        }
+
+        function permitted(permissions) {
+
+            if ($scope.active_user == undefined) {
+                return false;
+            }
+
+            var user_permissions = $scope.active_user.permissions;
+
+            for (var key in permissions) {
+
+                if (user_permissions.indexOf(permissions[key]) < 0) {
+                    return false;
+                }
+            }
+
+            return true;
+
+        }
+
+        function addTodo(form) {
+            if (form == undefined || form.name.trim().length < 1) {
+                return false;
+            }
+            form.patient_id = $scope.patient_id;
+
+            if ($scope.patient['bleeding_risk']) {
+                var bleedingRiskDialog = ngDialog.open({
+                    template: 'bleedingRiskDialog',
+                    showClose: false,
+                    closeByEscape: false,
+                    closeByDocument: false,
+                    closeByNavigation: false
+                });
+
+                bleedingRiskDialog.closePromise.then(askDueDate);
+            } else {
+                askDueDate();
+            }
+
+            function askDueDate() {
+                var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
+
+                var dueDateDialog = ngDialog.open({
+                    template: 'askDueDateDialog',
+                    showClose: false,
+                    closeByDocument: false,
+                    closeByNavigation: false,
+                    controller: function () {
+                        var vm = this;
+                        vm.dueDate = '';
+                        vm.dueDateIsValid = function () {
+                            var isValid = moment(vm.dueDate, acceptedFormat, true).isValid();
+                            if (!isValid)
+                                toaster.pop('error', 'Error', 'Please enter a valid date!');
+                            return isValid;
+                        };
+                    },
+                    controllerAs: 'vm'
+                });
+
+                dueDateDialog.closePromise.then(function (data) {
+                    if (!_.isUndefined(data.value) && '$escape' != data.value)
+                        form.due_date = moment(data.value, acceptedFormat).toString();
+
+                    patientService.addToDo(form).then(addTodoSuccess);
+                })
+            }
+
+            // Add todo succeeded
+            function addTodoSuccess(data) {
+                toaster.pop('success', 'Done', 'Added Todo!');
+
+                $scope.pinTodo2Document($scope.document, data.todo);
+
+                $scope.active_todos.push(data.todo);
+
+                $scope.new_todo = {};
+
+                $('#todoNameInput').val("");
+                $('#todoNameInput').focus();
             }
         }
     }
