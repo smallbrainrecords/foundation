@@ -30,6 +30,7 @@
         $scope.enableProblemPin = false;
         $scope.enableEditLabel = false;
         $scope.new_todo = {};
+        $scope.new_problem = {set: false};
 
         $scope.deleteDocument = deleteDocument;
         $scope.getPatientInfo = getPatientInfo;
@@ -48,6 +49,13 @@
 
         // TODO: Create problem-add component based
         $scope.addNewCommonProblem = addNewCommonProblem;
+
+
+        $scope.problemTermChanged = problemTermChanged;
+        $scope.set_new_problem = setNewProblem;
+        $scope.unset_new_problem = unset_new_problem;
+        $scope.add_problem = add_problem;
+        $scope.add_new_problem = add_new_problem;
 
         init();
 
@@ -376,7 +384,7 @@
                 if (data.success) {
                     toaster.pop('success', 'Done', 'New problem added successfully');
 
-                    $scope.pinProblem2Document($scope.document, data.problem)
+                    $scope.pinProblem2Document($scope.document, data.problem);
 
                     $scope.active_probs.push(data.problem);
                 } else {
@@ -387,6 +395,104 @@
             function addProblemFailed(error) {
                 toaster.pop('error', 'Error', 'Something went wrong');
 
+            }
+        }
+
+        function problemTermChanged(term) {
+            // $scope.unset_new_problem();
+            $scope.new_problem.set = false;
+
+            if (term.length > 2) {
+                patientService.listTerms(term).then(function (data) {
+                    $scope.problem_terms = data;
+                });
+            } else {
+                $scope.problem_terms = [];
+            }
+        }
+
+
+        function setNewProblem(problem) {
+            $scope.new_problem.set = true;
+            $scope.new_problem.active = problem.active;
+            $scope.new_problem.term = problem.term;
+            $scope.new_problem.code = problem.code;
+
+        }
+
+        function unset_new_problem() {
+            $scope.new_problem.set = false;
+        }
+
+        function add_problem() {
+
+            var c = confirm("Are you sure?");
+
+            if (c == false) {
+                return false;
+            }
+
+            var form = {};
+            form.patient_id = $scope.patient_id;
+            form.term = $scope.new_problem.term;
+            form.code = $scope.new_problem.code;
+            form.active = $scope.new_problem.active;
+
+            exeAddingProblem(form);
+        }
+
+        function add_new_problem(problem_term) {
+            if (problem_term == '' || problem_term == undefined) {
+                return false;
+            }
+
+            var c = confirm("Are you sure?");
+
+            if (c == false) {
+                return false;
+            }
+
+
+            var form = {};
+            form.patient_id = $scope.patient_id;
+            form.term = problem_term;
+
+            exeAddingProblem(form);
+        }
+
+        /**
+         * DRY
+         * Final execution for adding new problem either from free text search or select from search result
+         * @param form
+         */
+        function exeAddingProblem(form) {
+
+            patientService.addProblem(form).then(addProblemSuccess, addProblemFailed);
+
+
+            function addProblemSuccess(data) {
+
+                if (data.success) {
+                    toaster.pop('success', 'Done', 'New Problem added successfully');
+
+                    // Auto-pin
+                    $scope.pinProblem2Document($scope.document, data.problem);
+
+                    // Reset model
+                    $scope.active_probs.push(data.problem);
+                    $scope.problem_term = '';
+                    $scope.new_problem = {set: false};
+
+                    /* Not-angular-way */
+                    $('#problemTermInput').val("");
+                    $('#problemTermInput').focus();
+                } else {
+                    toaster.pop('error', 'Error', data['msg']);
+                }
+            }
+
+            function addProblemFailed(error) {
+                toaster.pop('error', 'Error', 'Something went wrong');
             }
         }
     }

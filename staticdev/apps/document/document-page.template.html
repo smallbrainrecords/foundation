@@ -145,12 +145,12 @@
                         </div>
 
                         <!--Search problem normally-->
-                        <input type='text' ng-model='problem_term' class='form-control'
-                               id='problemTermInput'
+                        <input type='text' class='form-control' id='problemTermInput'
+                               ng-model='problem_term'
+                               ng-model-options="{debounce: 1000}"
                                ng-change="problemTermChanged(problem_term)"
                                placeholder='Search Problem....'>
-                        <button class='btn btn-sm btn-default'
-                                ng-click='add_new_problem(problem_term)'>
+                        <button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
                             Add Problem
                         </button>
                         <br>
@@ -171,7 +171,7 @@
                         </div>
                     </div>
                     <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
-                        <div ng-repeat='problem_term in problem_terms'
+                        <div ng-repeat='problem_term in problem_terms track by $index'
                              style='margin-top:12px;'>
                             <button class='btn btn-sm btn-default'
                                     title='{{ problem_term.code }}'
