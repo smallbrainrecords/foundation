@@ -68,21 +68,6 @@
                    allow-modal="false"></view-file>
     </section>
 
-    <section id="add-todo">
-        <div class='row' ng-show='permitted(["add_todo"])'>
-            <div class='col-md-12'>
-                <form class='form-inline' role='form' ng-submit='addTodo(new_todo)'>
-                    <div class='form-group'>
-                        <label for="todoNameInput"> Todo name </label>
-                        <input type='text' ng-model='new_todo.name' title="Todo name"
-                               class="form-control" id='todoNameInput'>
-                    </div>
-                    <button type='submit' class='btn btn-default'>Add Todo</button>
-                </form>
-            </div>
-        </div>
-    </section>
-
     <!--Pinned todo-->
     <section id="document-todos">
         <div class="panel panel-default">
@@ -90,6 +75,19 @@
                 <p>List of pinned todo</p>
             </div>
             <div class="panel-body">
+                <div class='row' ng-show='permitted(["add_todo"])'>
+                    <div class='col-md-12'>
+                        <form class='form-inline' role='form' ng-submit='addTodo(new_todo)'>
+                            <div class='form-group'>
+                                <label for="todoNameInput"> Todo name </label>
+                                <input type='text' ng-model='new_todo.name' title="Todo name"
+                                       class="form-control" id='todoNameInput'>
+                            </div>
+                            <button type='submit' class='btn btn-default'>Add Todo</button>
+                        </form>
+                    </div>
+                </div>
+
                 <ul class="ul-clean no-padding">
                     <li ng-repeat="todo in active_todos | filter:(enableTodoPin ? '' :{'is_pinned':true})  track by $index">
                         <div class="item-box flex-container">
@@ -107,78 +105,6 @@
         </div>
     </section>
 
-    <section id="add-problem">
-        <div class='row' ng-if='permitted(["add_problem"])'>
-            <div class='col-md-12'>
-                <br>
-                <div ng-if="active_user.role=='physician' || active_user.role=='mid-level'">
-                    <div>
-                        <p>Common problem:</p>
-                        <select class='form-control' ng-model="acute_form">
-                            <option ng-repeat="acute in acutes"
-                                    value="{{ acute.id }}"> {{ acute.problem_name }}
-                            </option>
-                        </select>
-                        <button class='btn btn-sm btn-default'
-                                ng-click='add_new_common_problem(acute_form, "acute")'>
-                            Add acute problem
-                        </button>
-                    </div>
-                    <br>
-                    <div>
-                        <select class='form-control' ng-model="chronic_form">
-                            <option ng-repeat="chronic in chronics"
-                                    value="{{ chronic.id }}"> {{
-                                chronic.problem_name }}
-                            </option>
-                        </select>
-                        <button class='btn btn-sm btn-default'
-                                ng-click='add_new_common_problem(chronic_form, "chronic")'>
-                            Add chronic problem
-                        </button>
-                    </div>
-                    <br>
-                </div>
-
-                <!--Search problem normally-->
-                <input type='text' ng-model='problem_term' class='form-control'
-                       id='problemTermInput'
-                       ng-change="problemTermChanged(problem_term)"
-                       placeholder='Search Problem....'>
-                <button class='btn btn-sm btn-default'
-                        ng-click='add_new_problem(problem_term)'>
-                    Add Problem
-                </button>
-                <br>
-                <!--Problem candidate for -->
-                <div ng-show='new_problem.set==true'>
-                    <hr>
-                    <label ng-bind="new_problem.code"></label><span
-                        ng-bind="new_problem.term "></span>
-                    <br>
-                    <button class='btn btn-sm btn-primary' ng-click='add_problem()'>
-                        Add Problem
-                    </button>
-                    <button class='btn btn-sm btn-danger'
-                            ng-click='unset_new_problem()'>
-                        Cancel
-                    </button>
-                    <hr>
-                </div>
-            </div>
-            <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
-                <div ng-repeat='problem_term in problem_terms'
-                     style='margin-top:12px;'>
-                    <button class='btn btn-sm btn-default'
-                            title='{{ problem_term.code }}'
-                            ng-click='set_new_problem(problem_term)'>
-                        {{ problem_term.term }}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!--Pinned problem-->
     <section id="document-problems">
         <div class="panel panel-default">
@@ -186,6 +112,76 @@
                 <p>List of pinned problem</p>
             </div>
             <div class="panel-body">
+                <div class='row' ng-if='permitted(["add_problem"])'>
+                    <div class='col-md-12'>
+                        <br>
+                        <div ng-if="active_user.role=='physician' || active_user.role=='mid-level'">
+                            <div>
+                                <p>Common problem:</p>
+                                <select class='form-control' ng-model="acuteForm" title="">
+                                    <option ng-repeat="acute in acutes"
+                                            value="{{ acute.id }}"> {{ acute.problem_name }}
+                                    </option>
+                                </select>
+                                <button class='btn btn-sm btn-default'
+                                        ng-click='addNewCommonProblem(acuteForm, "acute")'>
+                                    Add acute problem
+                                </button>
+                            </div>
+                            <br>
+                            <div>
+                                <select class='form-control' ng-model="chronicForm" title="">
+                                    <option ng-repeat="chronic in chronics"
+                                            value="{{ chronic.id }}"> {{
+                                        chronic.problem_name }}
+                                    </option>
+                                </select>
+                                <button class='btn btn-sm btn-default'
+                                        ng-click='addNewCommonProblem(chronicForm, "chronic")'>
+                                    Add chronic problem
+                                </button>
+                            </div>
+                            <br>
+                        </div>
+
+                        <!--Search problem normally-->
+                        <input type='text' ng-model='problem_term' class='form-control'
+                               id='problemTermInput'
+                               ng-change="problemTermChanged(problem_term)"
+                               placeholder='Search Problem....'>
+                        <button class='btn btn-sm btn-default'
+                                ng-click='add_new_problem(problem_term)'>
+                            Add Problem
+                        </button>
+                        <br>
+                        <!--Problem candidate for -->
+                        <div ng-show='new_problem.set==true'>
+                            <hr>
+                            <label ng-bind="new_problem.code"></label><span
+                                ng-bind="new_problem.term "></span>
+                            <br>
+                            <button class='btn btn-sm btn-primary' ng-click='add_problem()'>
+                                Add Problem
+                            </button>
+                            <button class='btn btn-sm btn-danger'
+                                    ng-click='unset_new_problem()'>
+                                Cancel
+                            </button>
+                            <hr>
+                        </div>
+                    </div>
+                    <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
+                        <div ng-repeat='problem_term in problem_terms'
+                             style='margin-top:12px;'>
+                            <button class='btn btn-sm btn-default'
+                                    title='{{ problem_term.code }}'
+                                    ng-click='set_new_problem(problem_term)'>
+                                {{ problem_term.term }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <hr>
                 <ul class="ul-clean no-padding">
                     <li ng-repeat="problem in active_probs | filter:(enableProblemPin ? '' :{'is_pinned':true}) track by $index">
                         <div class="item-box flex-container"

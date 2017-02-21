@@ -42,7 +42,12 @@
         $scope.pinLabelToDocument = pinLabelToDocument;
         $scope.unpinDocumentLabel = unpinDocumentLabel;
         $scope.permitted = permitted;
+
+        // TODO: Create todo-add component based
         $scope.addTodo = addTodo;
+
+        // TODO: Create problem-add component based
+        $scope.addNewCommonProblem = addNewCommonProblem;
 
         init();
 
@@ -72,6 +77,8 @@
 
             patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
                 $scope.patient = data;
+                $scope.acutes = data.acutes_list;
+                $scope.chronics = data.chronics_list;
             });
         }
 
@@ -353,6 +360,33 @@
 
                 $('#todoNameInput').val("");
                 $('#todoNameInput').focus();
+            }
+        }
+
+        function addNewCommonProblem(problem, type) {
+            var form = {};
+            form.patient_id = $scope.patient_id;
+            form.cproblem = problem;
+            form.type = type;
+
+            patientService.addCommonProblem(form).then(addProblemSuccess, addProblemFailed);
+
+            function addProblemSuccess(data) {
+
+                if (data.success) {
+                    toaster.pop('success', 'Done', 'New problem added successfully');
+
+                    $scope.pinProblem2Document($scope.document, data.problem)
+
+                    $scope.active_probs.push(data.problem);
+                } else {
+                    toaster.pop('error', 'Error', data['msg']);
+                }
+            }
+
+            function addProblemFailed(error) {
+                toaster.pop('error', 'Error', 'Something went wrong');
+
             }
         }
     }
