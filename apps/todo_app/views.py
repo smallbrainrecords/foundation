@@ -599,7 +599,7 @@ def get_user_todos(request, user_id):
         item['tagged_status'] = tagged_todo_instance.status
 
     # Load personal todo list
-    personal_todos = ToDo.objects.filter(user_id=user_id).order_by('order', 'due_date')
+    personal_todos = ToDo.objects.filter(user_id=user_id).filter(patient=None).order_by('order', 'due_date')
 
     resp['tagged_todos'] = serialized_data
     resp['new_tagged_todo'] = new_tagged_todo_count
