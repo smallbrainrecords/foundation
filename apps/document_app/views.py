@@ -42,7 +42,7 @@ def document_list(request, page=1):
     page = int(page) - 1
     per_page = 50
 
-    documents = Document.objects.order_by('-patient').all()[page * per_page: page * per_page + per_page]
+    documents = Document.objects.order_by('-patient').order_by('created_on').all()[page * per_page: page * per_page + per_page]
     resp['documents'] = DocumentSerialization(documents, many=True).data
     resp['total'] = Document.objects.count()
     resp['success'] = True
