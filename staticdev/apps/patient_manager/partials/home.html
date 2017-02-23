@@ -865,7 +865,8 @@
                                        ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
                             </div>
 
-                            <ul class='graph-data-list ul-clean no-padding' ui-sortable="sortableOptionsData" ng-model="datas"
+                            <ul class='graph-data-list ul-clean no-padding' ui-sortable="sortableOptionsData"
+                                ng-model="datas"
                                 ng-if="['physician','patient'].indexOf(active_user.role)!=-1">
                                 <li ng-repeat="data in datas"
                                     ng-click='open_data(data)'>
@@ -943,7 +944,8 @@
                             <ul class="ul-clean no-padding">
                                 <li ng-repeat="document in documents track by $index">
                                     <div>
-                                        <i class="fa fa-file-o flex-item document_icon"></i>
+                                        <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
+                                           ng-class="label.css_class"></a>
                                         <a href="#/document/{{document.id}}" class="flex-item document_name"
                                            target="_blank"
                                            ng-bind="document.filename"></a>
