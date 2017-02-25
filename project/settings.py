@@ -17,7 +17,7 @@ APP_PATH = os.path.join(BASE_DIR, 'apps')
 sys.path.append(APP_PATH)
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+    ('AnhDN', 'dinhanh2212@gmail.com'),
 )
 AUTH_PROFILE_MODULE = "account.UserProfile"
 MANAGERS = ADMINS
