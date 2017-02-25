@@ -2,9 +2,24 @@ from rest_framework import serializers
 
 from document_app.operations import fetch_document_label_set
 from emr.models import Document, DocumentProblem, DocumentTodo
-from users_app.serializers import SafeUserSerializer, UserProfileSerializer
-from todo_app.serializers import TodoSerializer, LabelSerializer
 from problems_app.serializers import ProblemSerializer
+from todo_app.serializers import TodoSerializer, LabelSerializer
+from users_app.serializers import UserProfileSerializer
+
+
+class DocumentListSerialization(serializers.ModelSerializer):
+    patient = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = (
+            'id',
+            'filename',
+            'patient',
+        )
+
+    def get_patient(self, obj):
+        return obj.patient_id is None and " " or str(obj.patient)
 
 
 class DocumentSerialization(serializers.ModelSerializer):

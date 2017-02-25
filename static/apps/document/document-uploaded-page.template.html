@@ -1,4 +1,3 @@
-<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
 <section class="text-center">
     <h3>
         <a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
@@ -13,7 +12,10 @@
 <div class="container-fluid">
     <!-- Uploaded document list-->
     <div class='panel panel-default'>
-        <div class='panel-heading'>Uploaded document</div>
+        <div class='panel-heading'>Uploaded document
+            <a class="pull-right" ng-click="togglePinnedDocument()"
+               ng-bind="showPinned?'Hide pinned documents':'Show pinned documents'"></a>
+        </div>
 
         <div class='panel-body'>
 
@@ -21,13 +23,13 @@
                 <thead>
                 <tr>
                     <th>Name</th>
-                    <th></th>
+                    <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr ng-repeat='document in documents track by $index'>
                     <td>
-                        <span ng-if="document.patient">({{document.patient.user.first_name }} {{document.patient.user.last_name }})</span>
+                        <span ng-if="' ' !=document.patient">({{document.patient}})</span>
                         <span ng-bind="document.filename"></span>
                     </td>
                     <td class="text-right">
@@ -39,7 +41,7 @@
                 <tr>
                     <td colspan="2" class="text-center">
                         <ul uib-pagination direction-links="false" boundary-links="false" total-items="totalItems"
-                            ng-model="currentPage" items-per-page="50" ng-change="init(currentPage)"></ul>
+                            ng-model="currentPage" items-per-page="itemPerPage" ng-change="updateSearchTerm()"></ul>
                     </td>
                 </tr>
                 </tfoot>

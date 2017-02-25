@@ -57,8 +57,10 @@
             /**
              * Get list of document user have uploaded
              */
-            this.getUploadedDocument = function () {
-                return $http.get('/docs/list');
+            this.getUploadedDocument = function (params) {
+                return $http.get('/docs', {
+                    params: params
+                });
             };
 
             /**

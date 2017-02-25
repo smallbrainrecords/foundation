@@ -30,7 +30,7 @@ def upload_document(request):
 
 
 @login_required
-def document_list(request, page=1):
+def get_document_list(request):
     """
     Return uploaded document
     :param request:
@@ -38,13 +38,21 @@ def document_list(request, page=1):
     :return:
     """
     resp = {'success': False}
+    page = request.GET['page']
+    show_document_has_patient_pinned = request.GET['show_pinned']
 
     page = int(page) - 1
-    per_page = 50
+    item_per_page = 10
 
-    documents = Document.objects.order_by('-patient').order_by('created_on').all()[page * per_page: page * per_page + per_page]
-    resp['documents'] = DocumentSerialization(documents, many=True).data
-    resp['total'] = Document.objects.count()
+    if 'false' == show_document_has_patient_pinned:
+        documents = Document.objects.filter(patient__isnull=True).order_by('-created_on')
+    else:
+        documents = Document.objects.order_by('-created_on')
+
+    result_set = documents.all()[page * item_per_page: page * item_per_page + item_per_page]
+
+    resp['documents'] = DocumentListSerialization(result_set, many=True).data
+    resp['total'] = documents.count()
     resp['success'] = True
 
     return ajax_response(resp)

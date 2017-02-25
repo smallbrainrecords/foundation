@@ -2,46 +2,42 @@
     'use strict';
     angular.module('StaffApp')
         .controller('UploadedDocumentsPageCtrl', UploadedDocumentsPageCtrl);
-    UploadedDocumentsPageCtrl.$inject = ["$scope", "Upload", "documentService"];
+    UploadedDocumentsPageCtrl.$inject = ["$scope", "documentService"];
 
-    function UploadedDocumentsPageCtrl($scope, Upload, documentService) {
+    function UploadedDocumentsPageCtrl($scope, documentService) {
         // Properties definition
         $scope.user_id = $('#user_id').val();
         $scope.documents = [];
         $scope.currentPage = 1;
+        $scope.itemPerPage = 10;
         $scope.totalItems = 0;
-        $scope.init = init;
-        $scope.pageChanged = pageChanged;
-        $scope.prevPage = prevPage;
-        $scope.gotoPage = gotoPage;
+        $scope.showPinned = false;
 
-        // Init data
-        $scope.init();
+        $scope.togglePinnedDocument = togglePinnedDocument;
+        $scope.updateSearchTerm = updateSearchTerm;
 
-        // Function definition
-        function init(page) {
-            if (page == undefined)
-                page = 1;
+        init();
 
-            documentService.getUploadedDocument(page).then(function (resp) {
+        function init() {
+            $scope.updateSearchTerm();
+        }
+
+        function togglePinnedDocument() {
+            $scope.showPinned = !$scope.showPinned;
+
+            $scope.updateSearchTerm();
+        }
+
+        function updateSearchTerm() {
+            var form = {
+                page: $scope.currentPage,
+                show_pinned: $scope.showPinned
+            };
+
+            documentService.getUploadedDocument(form).then(function (resp) {
                 $scope.documents = resp.data.documents;
                 $scope.totalItems = resp.data.total;
             });
-        }
-
-        function pageChanged() {
-            documentService.getUploadedDocument($scope.currentPage).then(function (resp) {
-                $scope.documents = resp.data.documents;
-                $scope.totalItems = resp.data.total;
-            });
-        }
-
-        function prevPage() {
-
-        }
-
-        function gotoPage() {
-
         }
     }
 })();
