@@ -863,7 +863,7 @@
                         <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
                            ng-class="label.css_class"></a>
                         <a href="#/document/{{document.id}}" class="flex-item document_name"
-                           ng-bind="document.filename"></a>
+                           ng-bind="document.document_name"></a>
                         <span class="flex-item document_uploaded_date pull-right"
                               ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
                     </div>

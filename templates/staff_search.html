@@ -163,7 +163,7 @@
             <ul class='list-group'>
                 {% for document in documents %}
                 <li>
-                    {{document.filename}}
+                    {{document.document_name}}
                     {% if document.patient %}
                     (<a href='/u/patient/manage/{{document.patient.id}}/'>{{document.patient}}</a>)
                     {% endif %}

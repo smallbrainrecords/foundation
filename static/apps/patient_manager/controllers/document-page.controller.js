@@ -219,7 +219,7 @@
             function updateNameSuccess(response) {
                 if (response.data.success) {
                     toaster.pop('success', 'Done', 'Document renamed success');
-                    $scope.document.filename = angular.copy($scope.newDocumentName);
+                    $scope.document.document_name = angular.copy($scope.newDocumentName);
                     $scope.enableEditDocumentName = false;
                     $scope.newDocumentName = "";
                 } else {

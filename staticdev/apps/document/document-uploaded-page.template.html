@@ -30,7 +30,7 @@
                 <tr ng-repeat='document in documents track by $index'>
                     <td>
                         <span ng-if="' ' !=document.patient">({{document.patient}})</span>
-                        <span ng-bind="document.filename"></span>
+                        <span ng-bind="document.document_name"></span>
                     </td>
                     <td class="text-right">
                         <a class="btn btn-default" href="/#/manage/tag_document/{{document.id}}">Tags</a>

@@ -12,7 +12,7 @@
                 <div>
                     <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
                        ng-class="label.css_class"></a>
-                    <span class="document-name" ng-bind="document.filename" ng-show="!enableEditDocumentName"></span>
+                    <span class="document-name" ng-bind="document.document_name" ng-show="!enableEditDocumentName"></span>
                 </div>
                 <div ng-show="enableEditDocumentName" class="flex-item ">
                     <input type="text" ng-model="newDocumentName" title="" placeholder="Enter new document's name"

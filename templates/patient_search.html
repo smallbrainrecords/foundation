@@ -135,7 +135,7 @@
             <ul class='list-group'>
                 {% for document in documents %}
                 <li>
-                    <a href='/u/patient/manage/{{document.patient.id}}/#/document/{{document.id}}/'>{{document.filename}}</a>
+                    <a href='/u/patient/manage/{{document.patient.id}}/#/document/{{document.id}}/'>{{document.document_name}}</a>
                 </li>
                 {% endfor %}
             </ul>

@@ -14,7 +14,7 @@ class DocumentListSerialization(serializers.ModelSerializer):
         model = Document
         fields = (
             'id',
-            'filename',
+            'document_name',
             'patient',
         )
 
@@ -39,7 +39,7 @@ class DocumentSerialization(serializers.ModelSerializer):
             'labels',
             'todos',
             'problems',
-            'filename',
+            'document_name',
             'file_mime_type',
             'created_on'
         )

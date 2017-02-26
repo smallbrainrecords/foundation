@@ -20,10 +20,10 @@ def upload_document(request):
     author = request.POST.get('author', None)
     patient = request.POST.get('patient', None)
 
-    document_dao = Document.objects.create(author_id=author, document=document, patient_id=patient)
+    document_dao = Document.objects.create(author_id=author, document=document, patient_id=patient,
+                                           document_name=document.name)
     document_dao.save()
 
-    # TODO
     resp['document'] = document_dao.id
     resp['success'] = True
     return ajax_response(resp)
@@ -367,7 +367,7 @@ def remove_document(request, document_id):
 @login_required
 def update_name(request, document_id):
     """
-    Rename document name
+    Rename document name. Allow duplicated file name(aka display name)
     :param document_id:
     :param request:
     :return:
@@ -383,18 +383,7 @@ def update_name(request, document_id):
 
     document = Document.objects.get(id=document_id)
     if document:
-        upload_path = 'documents'
-        origin_extension = document.file_extension_lower()
-        dst = "{0}/{1}.{2}".format(upload_path, document_name, origin_extension)
-
-        # Validate new name is not existed
-        if os.path.exists("{0}/{1}".format(settings.MEDIA_ROOT, dst)):
-            resp['message'] = "File name is existed"
-            return ajax_response(resp)
-
-        os.rename(document.__unicode__(), "{0}/{1}".format(settings.MEDIA_ROOT, dst))
-
-        document.document.name = dst
+        document.document_name = "{0}.{1}".format(document_name, document.file_extension_lower())
         document.save()
 
     resp['success'] = True
