@@ -115,29 +115,41 @@
                         var timeline_problems = parseTimelineWithoutSegment($scope.problem);
                     }
 
+                    // TODO: Should be move to general later
+                    $scope.$watch('patient_info', function (nV, oV) {
+                        if ($scope.patient_info) {
+                            $scope.timeline = {
+                                Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
+                                birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
+                                problems: timeline_problems
+                            };
+
+                            $scope.timeline_ready = true;
+                            $scope.timeline_changed = [{changing: new Date().getTime()}];
+                        }
+                    });
 
                     $scope.patient_notes = data['patient_notes'];
                     $scope.physician_notes = data['physician_notes'];
 
                     $scope.problem_goals = data['problem_goals'];
                     $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'], 'accomplished');
-                    $scope.problem_todos = data['problem_todos'];
-                    $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'], 'accomplished');
 
-                    $scope.todos_ready = true;
+                    // $scope.problem_todos = data['problem_todos'];
+                    // $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'], 'accomplished');
+                    // $scope.todos_ready = true;
 
                     $scope.problem_images = data['problem_images'];
 
                     $scope.effecting_problems = data['effecting_problems'];
                     $scope.effected_problems = data['effected_problems'];
 
-                    $scope.history_note = data['history_note'];
-
+                    // Wiki note
                     var wiki_notes = data['wiki_notes'];
-
                     $scope.patient_wiki_notes = wiki_notes['patient'];
                     $scope.physician_wiki_notes = wiki_notes['physician'];
                     $scope.other_wiki_notes = wiki_notes['other'];
+
                     // $scope.related_encounters = data['related_encounters'];
 
                     // $scope.activities = data['activities'];
@@ -161,16 +173,15 @@
                         });
                     }
 
+                    // History note
+                    $scope.history_note = data['history_note'];
                     if ($scope.history_note != null) {
-
                         $scope.history_note_form = {
                             note: $scope.history_note.note
                         };
-
                     }
 
                     var patient_problems = data['patient_problems'];
-
                     for (var index in patient_problems) {
 
                         var id = patient_problems[index].id;
@@ -185,13 +196,11 @@
 
 
                     }
-
                     $scope.patient_problems = patient_problems;
 
-                    $scope.loading = false;
-
-
                     $scope.sharing_patients = data['sharing_patients'];
+
+                    $scope.loading = false;
                 });
 
                 patientService.fetchActiveUser().then(function (data) {
@@ -292,9 +301,15 @@
                     });
                 });
 
-                problemService.trackProblemClickEvent($scope.problem_id).then(function (data) {
-                });
+                problemService.trackProblemClickEvent($scope.problem_id);
 
+                // SECONDARY LOADING
+                // TODO: Optimization should be added todo accomplished filtering on initialize
+                problemService.getRelatedTodos($scope.problem_id).then(function (response) {
+                    $scope.problem_todos = response.data.todos;
+                    $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
+                    $scope.todos_ready = true;
+                });
 
                 patientService.getMedications($scope.patient_id).then(function (data) {
                     if (data['success'] == true) {
@@ -319,8 +334,6 @@
                     }
                 });
 
-                // SECONDARY LOADING
-                // Loading problem activities
                 problemService.getProblemActivity($scope.problem_id, 0).then(function (response) {
                     $scope.activities = response['activities'];
                     if (response['activities'].length) {
@@ -374,21 +387,9 @@
 
                 });
 
+
                 $scope.$on('inrWidgetOrderAdded', function (event, args) {
                     $scope.problem_todos.push(args.order)
-                });
-
-                $scope.$watch('patient_info', function (nV, oV) {
-                    if ($scope.patient_info) {
-                        $scope.timeline = {
-                            Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
-                            birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
-                            problems: timeline_problems
-                        };
-
-                        $scope.timeline_ready = true;
-                        $scope.timeline_changed = [{changing: new Date().getTime()}];
-                    }
                 });
 
                 $interval(function () {

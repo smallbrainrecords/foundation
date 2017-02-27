@@ -20,7 +20,7 @@ from a1c_app.serializers import AOneCSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
 from common.views import *
 from data_app.serializers import ObservationPinToProblemSerializer, ObservationSerializer
-from emr.models import ColonCancerScreening, Medication
+from emr.models import ColonCancerScreening
 from emr.models import Encounter
 from emr.models import Goal, ToDo, TextNote, PatientImage, Label
 from emr.models import MedicationPinToProblem
@@ -77,11 +77,11 @@ def get_problem_info(request, problem_id):
         "goal_set",
         "patientimage_set",
         "target", "source",
-        "problemactivity_set",
-        "problem_encounter_records",
+        # "problemactivity_set",
+        # "problem_encounter_records",
         "problem_aonecs",
-        Prefetch("medications", queryset=Medication.objects.only("id").all()),
-        Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
+        # Prefetch("medications", queryset=Medication.objects.only("id").all()),
+        # Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
     ).get(id=problem_id)
 
     for medication in problem_info.medications.all():
@@ -117,7 +117,7 @@ def get_problem_info(request, problem_id):
         'patient_notes': patient_note_holder,
         'physician_notes': physician_note_holder,
         'problem_goals': serialized_problem["problem_goals"],
-        'problem_todos': serialized_problem["problem_todos"] + TodoSerializer(medication_todo_set, many=True).data,
+        # 'problem_todos': serialized_problem["problem_todos"] + TodoSerializer(medication_todo_set, many=True).data,
         'problem_images': serialized_problem["problem_images"],
         'effecting_problems': serialized_problem["effecting_problems"],
         'effected_problems': serialized_problem["effected_problems"],
@@ -1071,10 +1071,10 @@ def get_related_encounters(request, problem_id):
 def get_related_documents(request, problem_id):
     """
 
-        :param request:
-        :param problem_id:
-        :return:
-        """
+    :param request:
+    :param problem_id:
+    :return:
+    """
     resp = {'success': False}
 
     # Loading problem info
@@ -1095,5 +1095,26 @@ def get_related_documents(request, problem_id):
 
     # Need remove duplicated and sorted by creation date
     resp['documents'] = DocumentSerialization(document_result_set, many=True).data
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def get_problem_todos(request, problem_id):
+    """
+    Loading all problem's todos, which todos generated from problem page and todos from pinned medications
+    :param request:
+    :param problem_id:
+    :return:
+    """
+    resp = {'success': False}
+    medication_todo_set = []
+
+    problem_info = get_object_or_404(Problem, pk=problem_id)
+
+    for medication in problem_info.medications.all():
+        medication_todo_set += medication.todo_set.all()
+
+    resp['todos'] = TodoSerializer(medication_todo_set + list(problem_info.todo_set.all()), many=True).data
     resp['success'] = True
     return ajax_response(resp)

@@ -1,11 +1,12 @@
 from rest_framework import serializers
 
-
 from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel, LabeledProblemList
-from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem, ObservationComponent, ObservationValue
+from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem, ObservationComponent, \
+    ObservationValue
 
 from users_app.serializers import UserProfileSerializer, SafeUserSerializer
 from emr.serializers import TextNoteSerializer
+
 
 class CommonProblemSerializer(serializers.ModelSerializer):
     author = SafeUserSerializer()
@@ -18,7 +19,7 @@ class CommonProblemSerializer(serializers.ModelSerializer):
             'concept_id',
             'problem_type',
             'author',
-            )
+        )
 
 
 class ProblemLabelSerializer(serializers.ModelSerializer):
@@ -33,7 +34,7 @@ class ProblemLabelSerializer(serializers.ModelSerializer):
             'css_class',
             'author',
             'patient',
-            )
+        )
 
 
 class ProblemSegmentSerializer(serializers.ModelSerializer):
@@ -78,7 +79,6 @@ class ProblemSerializer(serializers.ModelSerializer):
 
 
 class PatientImageSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = PatientImage
 
@@ -91,7 +91,6 @@ class PatientImageSerializer(serializers.ModelSerializer):
 
 
 class ProblemRelationshipSerializer(serializers.ModelSerializer):
-
     source = ProblemSerializer()
     target = ProblemSerializer()
 
@@ -104,7 +103,6 @@ class ProblemRelationshipSerializer(serializers.ModelSerializer):
 
 
 class ProblemNoteSerializer(serializers.ModelSerializer):
-
     author = UserProfileSerializer()
 
     class Meta:
@@ -118,7 +116,6 @@ class ProblemNoteSerializer(serializers.ModelSerializer):
 
 
 class ProblemActivitySerializer(serializers.ModelSerializer):
-
     author = UserProfileSerializer()
 
     class Meta:
@@ -135,7 +132,6 @@ class ProblemActivitySerializer(serializers.ModelSerializer):
 
 
 class LabeledProblemListSerializer(serializers.ModelSerializer):
-
     user = SafeUserSerializer()
     patient = SafeUserSerializer()
     labels = ProblemLabelSerializer(many=True)
@@ -151,15 +147,16 @@ class LabeledProblemListSerializer(serializers.ModelSerializer):
             'note',
             'name')
 
+
 class ProblemInfoSerializer(serializers.ModelSerializer):
-    from todo_app.serializers import TodoSerializer
+    # from todo_app.serializers import TodoSerializer
     from goals_app.serializers import GoalSerializer
-    from encounters_app.serializers import EncounterSerializer
+    # from encounters_app.serializers import EncounterSerializer
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
     start_date = serializers.DateField(format='%m/%d/%Y')
     problem_goals = GoalSerializer(many=True, source="goal_set")
-    problem_todos = TodoSerializer(many=True, source="todo_set")
+    # problem_todos = TodoSerializer(many=True, source="todo_set")
     problem_images = PatientImageSerializer(many=True, source="patientimage_set")
     problem_notes = serializers.SerializerMethodField()
     effecting_problems = serializers.SerializerMethodField()
@@ -209,7 +206,6 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         relations = ProblemRelationship.objects.filter(source=obj)
         return [relationship.target.id for relationship in relations]
 
-
     def get_patient_other_problems(self, obj):
         patient_problems = Problem.objects.filter(patient=obj.patient).exclude(id=obj.id)
         patient_problem_serializer = ProblemSerializer(patient_problems, many=True).data
@@ -231,7 +227,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
                 'id': a1c.id,
                 'patient_refused_A1C': a1c.patient_refused_A1C,
                 'effective_datetime': a1c.observation.effective_datetime.isoformat() if a1c.observation.effective_datetime else '',
-                'created_on':  a1c.observation.created_on.isoformat() if a1c.observation.created_on else '',
+                'created_on': a1c.observation.created_on.isoformat() if a1c.observation.created_on else '',
                 'observation': {
                     'observation_components': [],
                 },
@@ -245,15 +241,16 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
                     'observation_component_values': [],
                 }
 
-                observation_component_value = ObservationValue.objects.filter(component=component.id).order_by('-effective_datetime', '-created_on').first()
+                observation_component_value = ObservationValue.objects.filter(component=component.id).order_by(
+                    '-effective_datetime', '-created_on').first()
                 if observation_component_value:
                     observation_component_value_holder = [
-                            {
-                                'id': observation_component_value.id,
-                                'value_quantity': str(observation_component_value.value_quantity),
-                                'effective_datetime':  observation_component_value.effective_datetime.isoformat() if observation_component_value.effective_datetime else '',
-                                'created_on':  observation_component_value.created_on.isoformat() if observation_component_value.created_on else '',
-                            }
+                        {
+                            'id': observation_component_value.id,
+                            'value_quantity': str(observation_component_value.value_quantity),
+                            'effective_datetime': observation_component_value.effective_datetime.isoformat() if observation_component_value.effective_datetime else '',
+                            'created_on': observation_component_value.created_on.isoformat() if observation_component_value.created_on else '',
+                        }
                     ]
 
                     component_dict['observation_component_values'] = observation_component_value_holder
@@ -270,9 +267,9 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
                 'id': colon_cancer.id,
                 'patient_refused': colon_cancer.patient_refused,
                 'not_appropriate': colon_cancer.not_appropriate,
-                'created_on':  colon_cancer.created_on.isoformat() if colon_cancer.created_on else '',
-                'patient_refused_on':  colon_cancer.patient_refused_on.isoformat() if colon_cancer.patient_refused_on else '',
-                'not_appropriate_on':  colon_cancer.not_appropriate_on.isoformat() if colon_cancer.not_appropriate_on else '',
+                'created_on': colon_cancer.created_on.isoformat() if colon_cancer.created_on else '',
+                'patient_refused_on': colon_cancer.patient_refused_on.isoformat() if colon_cancer.patient_refused_on else '',
+                'not_appropriate_on': colon_cancer.not_appropriate_on.isoformat() if colon_cancer.not_appropriate_on else '',
             }
 
             colon_cancer_holder.append(colon_cancer_dict)

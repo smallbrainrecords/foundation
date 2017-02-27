@@ -52,5 +52,6 @@ urlpatterns = patterns('problems_app.views', url(r'^problem/(?P<problem_id>\d+)/
 
                        # API used for optimize problem loading page AND more semantics URLs/RESTFUL
                        url(r'^problem/(?P<problem_id>\d+)/encounters$', 'get_related_encounters'),
-                       url(r'^problem/(?P<problem_id>\d+)/documents$', 'get_related_documents')
+                       url(r'^problem/(?P<problem_id>\d+)/documents$', 'get_related_documents'),
+                       url(r'^problem/(?P<problem_id>\d+)/todos$', 'get_problem_todos'),
                        )

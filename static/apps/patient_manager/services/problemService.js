@@ -233,6 +233,11 @@
             this.getRelatedDocuments = function (problemId) {
                 var url = '/p/problem/' + problemId + '/documents ';
                 return $http.get(url);
-            }
+            };
+
+            this.getRelatedTodos = function (problemId) {
+                var url = '/p/problem/' + problemId + '/todos ';
+                return $http.get(url);
+            };
         });
 })();
