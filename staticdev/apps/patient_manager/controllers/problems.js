@@ -43,6 +43,7 @@
             $scope.medications = [];
             $scope.change_pinned_medication = false;
             $scope.viewMode = 'Year';
+            $scope.activities = [];
 
             // Init hot key binding
             $scope.changeView = changeView;
@@ -99,12 +100,98 @@
             $scope.close_change_medication = close_change_medication;
             $scope.medication_pin_to_problem = medication_pin_to_problem;
             $scope.goToMedicationTab = goToMedicationTab;
-            $scope.init = init;
 
-            // METHOD DEFINITION
+            init();
 
             function init() {
-                //sharedService.initHotkey($scope);
+                patientService.fetchProblemInfo($scope.problem_id).then(function (data) {
+                    $scope.problem = data['info'];
+
+                    // problem timeline
+                    if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {
+                        var timeline_problems = parseTimelineWithSegment($scope.problem);
+                    } else {
+                        var timeline_problems = parseTimelineWithoutSegment($scope.problem);
+                    }
+
+
+                    $scope.patient_notes = data['patient_notes'];
+                    $scope.physician_notes = data['physician_notes'];
+
+                    $scope.problem_goals = data['problem_goals'];
+                    $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'], 'accomplished');
+                    $scope.problem_todos = data['problem_todos'];
+                    $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'], 'accomplished');
+
+                    $scope.todos_ready = true;
+
+                    $scope.problem_images = data['problem_images'];
+
+                    $scope.effecting_problems = data['effecting_problems'];
+                    $scope.effected_problems = data['effected_problems'];
+
+                    $scope.history_note = data['history_note'];
+
+                    var wiki_notes = data['wiki_notes'];
+
+                    $scope.patient_wiki_notes = wiki_notes['patient'];
+                    $scope.physician_wiki_notes = wiki_notes['physician'];
+                    $scope.other_wiki_notes = wiki_notes['other'];
+                    $scope.related_encounters = data['related_encounters'];
+
+                    // $scope.activities = data['activities'];
+                    // if (data['activities'].length) {
+                    //     $scope.current_activity = data['activities'][0].id;
+                    // }
+
+                    // a1c
+                    $scope.a1c = data['a1c'];
+                    if ($scope.a1c) {
+                        problemService.fetchA1c($scope.problem_id).then(function (data2) {
+                            $scope.a1c = data2['a1c'];
+                        });
+                    }
+
+                    // colon_cancers
+                    $scope.colon_cancers = data['colon_cancer'];
+                    if ($scope.colon_cancers.length > 0) {
+                        problemService.fetchColonCancerss($scope.problem_id).then(function (data2) {
+                            $scope.colon_cancers = data2['colon_cancers'];
+                        });
+                    }
+
+                    if ($scope.history_note != null) {
+
+                        $scope.history_note_form = {
+                            note: $scope.history_note.note
+                        };
+
+                    }
+
+                    var patient_problems = data['patient_problems'];
+
+                    for (var index in patient_problems) {
+
+                        var id = patient_problems[index].id;
+
+                        if ($scope.id_exists(id, $scope.effecting_problems) == true) {
+                            patient_problems[index].effecting = true
+                        }
+
+                        if ($scope.id_exists(id, $scope.effected_problems) == true) {
+                            patient_problems[index].effected = true
+                        }
+
+
+                    }
+
+                    $scope.patient_problems = patient_problems;
+
+                    $scope.loading = false;
+
+
+                    $scope.sharing_patients = data['sharing_patients'];
+                });
 
                 patientService.fetchActiveUser().then(function (data) {
                     $scope.active_user = data['user_profile'];
@@ -207,109 +294,6 @@
                 problemService.trackProblemClickEvent($scope.problem_id).then(function (data) {
                 });
 
-                patientService.fetchProblemInfo($scope.problem_id).then(function (data) {
-                    $scope.problem = data['info'];
-
-                    // problem timeline
-                    if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {
-                        var timeline_problems = parseTimelineWithSegment($scope.problem);
-                    } else {
-                        var timeline_problems = parseTimelineWithoutSegment($scope.problem);
-                    }
-
-                    $scope.$watch('patient_info', function (nV, oV) {
-                        if ($scope.patient_info) {
-                            $scope.timeline = {
-                                Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
-                                birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
-                                problems: timeline_problems
-                            };
-
-                            $scope.timeline_ready = true;
-                            $scope.timeline_changed = [{changing: new Date().getTime()}];
-                        }
-                    });
-
-                    $scope.patient_notes = data['patient_notes'];
-                    $scope.physician_notes = data['physician_notes'];
-
-                    $scope.problem_goals = data['problem_goals'];
-                    $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'], 'accomplished');
-                    $scope.problem_todos = data['problem_todos'];
-                    $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'], 'accomplished');
-
-                    $scope.todos_ready = true;
-
-                    $scope.problem_images = data['problem_images'];
-
-                    $scope.effecting_problems = data['effecting_problems'];
-                    $scope.effected_problems = data['effected_problems'];
-
-                    $scope.history_note = data['history_note'];
-
-                    var wiki_notes = data['wiki_notes'];
-
-                    $scope.patient_wiki_notes = wiki_notes['patient'];
-                    $scope.physician_wiki_notes = wiki_notes['physician'];
-                    $scope.other_wiki_notes = wiki_notes['other'];
-                    $scope.related_encounters = data['related_encounters'];
-
-                    $scope.activities = data['activities'];
-                    if (data['activities'].length) {
-                        $scope.current_activity = data['activities'][0].id;
-                    }
-                    $interval(function () {
-                        $scope.refresh_problem_activity();
-                    }, 10000);
-
-                    // a1c
-                    $scope.a1c = data['a1c'];
-                    if ($scope.a1c) {
-                        problemService.fetchA1c($scope.problem_id).then(function (data2) {
-                            $scope.a1c = data2['a1c'];
-                        });
-                    }
-
-                    // colon_cancers
-                    $scope.colon_cancers = data['colon_cancer'];
-                    if ($scope.colon_cancers.length > 0) {
-                        problemService.fetchColonCancerss($scope.problem_id).then(function (data2) {
-                            $scope.colon_cancers = data2['colon_cancers'];
-                        });
-                    }
-
-                    if ($scope.history_note != null) {
-
-                        $scope.history_note_form = {
-                            note: $scope.history_note.note
-                        };
-
-                    }
-
-                    var patient_problems = data['patient_problems'];
-
-                    for (var index in patient_problems) {
-
-                        var id = patient_problems[index].id;
-
-                        if ($scope.id_exists(id, $scope.effecting_problems) == true) {
-                            patient_problems[index].effecting = true
-                        }
-
-                        if ($scope.id_exists(id, $scope.effected_problems) == true) {
-                            patient_problems[index].effected = true
-                        }
-
-
-                    }
-
-                    $scope.patient_problems = patient_problems;
-
-                    $scope.loading = false;
-
-
-                    $scope.sharing_patients = data['sharing_patients'];
-                });
 
                 patientService.getMedications($scope.patient_id).then(function (data) {
                     if (data['success'] == true) {
@@ -337,6 +321,73 @@
                 sharedService.getDocumentByProblem($scope.problem_id).then(function (response) {
                     $scope.pinned_document = response.data.documents;
                 });
+
+                // Secondary loading
+                // Loading problem activities
+                problemService.getProblemActivity($scope.problem_id, 0).then(function (response) {
+                    $scope.activities = response['activities'];
+                    if (response['activities'].length) {
+                        $scope.current_activity = _.first(response['activities']).id;
+                    }
+                });
+
+                // Watcher & callback
+                $scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function (nV, oV) {
+
+                    if ($scope.loading == true) {
+                        return false;
+                    }
+
+                    if (angular.equals(oV, [undefined, undefined, undefined]) == true) {
+                        return false;
+                    }
+
+                    var form = {};
+
+                    form.patient_id = $scope.patient_id;
+                    form.problem_id = $scope.problem.id;
+                    form.is_controlled = $scope.problem.is_controlled;
+                    form.authenticated = $scope.problem.authenticated;
+                    form.is_active = $scope.problem.is_active;
+
+                    var event = getStateChangedEvent($scope.problem);
+                    $scope.timeline.problems[0].events.splice(-1, 1);
+                    $scope.timeline.problems[0].events.push(event);
+
+                    problemService.updateProblemStatus(form).then(function (data) {
+                        var form_problem = {};
+
+                        form_problem.patient_id = $scope.patient_id;
+                        form_problem.timeline_data = $scope.timeline;
+                        $scope.problem.start_date = convertDateTimeBack($scope.timeline.problems[0].events[0].startTime);
+                        problemService.updateStateToPTW(form_problem).then(function (data) {
+                            toaster.pop('success', 'Done', 'Updated Problem Status');
+                        });
+                    });
+
+                });
+
+                $scope.$on('inrWidgetOrderAdded', function (event, args) {
+                    $scope.problem_todos.push(args.order)
+                });
+
+                $scope.$watch('patient_info', function (nV, oV) {
+                    if ($scope.patient_info) {
+                        $scope.timeline = {
+                            Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
+                            birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
+                            problems: timeline_problems
+                        };
+
+                        $scope.timeline_ready = true;
+                        $scope.timeline_changed = [{changing: new Date().getTime()}];
+                    }
+                });
+
+                $interval(function () {
+                    $scope.refresh_problem_activity();
+                }, 10000);
+
             }
 
             function convertDateTime(problem) {
@@ -1226,46 +1277,7 @@
                 $location.path('/');
             }
 
-            $scope.init();
 
-            $scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function (nV, oV) {
-
-                if ($scope.loading == true) {
-                    return false;
-                }
-
-                if (angular.equals(oV, [undefined, undefined, undefined]) == true) {
-                    return false;
-                }
-
-                var form = {};
-
-                form.patient_id = $scope.patient_id;
-                form.problem_id = $scope.problem.id;
-                form.is_controlled = $scope.problem.is_controlled;
-                form.authenticated = $scope.problem.authenticated;
-                form.is_active = $scope.problem.is_active;
-
-                var event = getStateChangedEvent($scope.problem);
-                $scope.timeline.problems[0].events.splice(-1, 1);
-                $scope.timeline.problems[0].events.push(event);
-
-                problemService.updateProblemStatus(form).then(function (data) {
-                    var form_problem = {};
-
-                    form_problem.patient_id = $scope.patient_id;
-                    form_problem.timeline_data = $scope.timeline;
-                    $scope.problem.start_date = convertDateTimeBack($scope.timeline.problems[0].events[0].startTime);
-                    problemService.updateStateToPTW(form_problem).then(function (data) {
-                        toaster.pop('success', 'Done', 'Updated Problem Status');
-                    });
-                });
-
-            });
-
-            $scope.$on('inrWidgetOrderAdded', function (event, args) {
-                $scope.problem_todos.push(args.order)
-            });
         });
     /* End of controller */
 })();

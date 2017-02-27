@@ -66,6 +66,8 @@ def get_problem_info(request, problem_id):
     :param problem_id:
     :return:
     """
+    start_time = datetime.now()
+
     medication_todo_set = []
 
     problem_info = Problem.objects.select_related("patient").prefetch_related(
@@ -75,7 +77,7 @@ def get_problem_info(request, problem_id):
         "problemactivity_set",
         "problem_encounter_records",
         "problem_aonecs",
-        Prefetch("medications",queryset=Medication.objects.only("id").all()),
+        Prefetch("medications", queryset=Medication.objects.only("id").all()),
         Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
     ).get(id=problem_id)
 
@@ -112,20 +114,21 @@ def get_problem_info(request, problem_id):
         'patient_notes': patient_note_holder,
         'physician_notes': physician_note_holder,
         'problem_goals': serialized_problem["problem_goals"],
-        'problem_todos': serialized_problem["problem_todos"] + TodoSerializer(medication_todo_set,many=True).data,
+        'problem_todos': serialized_problem["problem_todos"] + TodoSerializer(medication_todo_set, many=True).data,
         'problem_images': serialized_problem["problem_images"],
         'effecting_problems': serialized_problem["effecting_problems"],
         'effected_problems': serialized_problem["effected_problems"],
         'patient_problems': serialized_problem["patient_other_problems"],
         'history_note': serialized_problem["problem_notes"]["history"],
         'wiki_notes': serialized_problem["problem_notes"]["wiki_notes"],
-        'activities': serialized_problem["activities"],
+        # 'activities': serialized_problem["activities"],
         'related_encounters': serialized_problem["related_encounters"],
         'a1c': serialized_problem["a1c"],
         'colon_cancer': serialized_problem["colon_cancer"],
         'sharing_patients': sharing_patients_list
     }
-
+    end_time = datetime.now()
+    print ("get_problem_info exec time: {0}".format(end_time - start_time))
     return ajax_response(resp)
 
 
@@ -859,7 +862,8 @@ def get_label_problem_lists(request, patient_id, user_id):
                 else:
                     problems.append(problem)
         else:
-            problems = Problem.objects.filter(labels__in=label_list.labels.all()).filter(is_active=True).distinct().order_by('start_date')
+            problems = Problem.objects.filter(labels__in=label_list.labels.all()).filter(
+                is_active=True).distinct().order_by('start_date')
 
         problems_holder = ProblemSerializer(problems, many=True).data
         if not label_list.problem_list:

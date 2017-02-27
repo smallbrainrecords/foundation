@@ -165,7 +165,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
     effecting_problems = serializers.SerializerMethodField()
     effected_problems = serializers.SerializerMethodField()
     patient_other_problems = serializers.SerializerMethodField()
-    activities = ProblemActivitySerializer(many=True, source="problemactivity_set")
+    # activities = ProblemActivitySerializer(many=True, source="problemactivity_set")
     related_encounters = serializers.SerializerMethodField()
     a1c = serializers.SerializerMethodField()
     colon_cancer = serializers.SerializerMethodField()
