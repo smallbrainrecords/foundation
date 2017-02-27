@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 from dateutil import parser
 
+from document_app.serializers import DocumentSerialization
+from encounters_app.serializers import EncounterSerializer
+
 try:
     from PIL import Image, ImageOps
 except ImportError:
@@ -122,7 +125,7 @@ def get_problem_info(request, problem_id):
         'history_note': serialized_problem["problem_notes"]["history"],
         'wiki_notes': serialized_problem["problem_notes"]["wiki_notes"],
         # 'activities': serialized_problem["activities"],
-        'related_encounters': serialized_problem["related_encounters"],
+        # 'related_encounters': serialized_problem["related_encounters"],
         'a1c': serialized_problem["a1c"],
         'colon_cancer': serialized_problem["colon_cancer"],
         'sharing_patients': sharing_patients_list
@@ -1049,4 +1052,48 @@ def delete_problem(request, problem_id):
         op_add_event(physician, problem.patient, summary)
         problem.delete()
 
+    return ajax_response(resp)
+
+
+@login_required
+def get_related_encounters(request, problem_id):
+    resp = {'success': False}
+    problem = get_object_or_404(Problem, pk=problem_id)
+    encounter_records = problem.problem_encounter_records
+    related_encounters = [record.encounter for record in encounter_records.all()]
+
+    resp['encounters'] = EncounterSerializer(related_encounters, many=True).data
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def get_related_documents(request, problem_id):
+    """
+
+        :param request:
+        :param problem_id:
+        :return:
+        """
+    resp = {'success': False}
+
+    # Loading problem info
+    problem_info = Problem.objects.prefetch_related(
+        Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
+    ).get(id=problem_id)
+
+    # Loading document pinned directly to problem
+    problem_document_set = problem_info.document_set.all()
+
+    problem_todo_document_set = []
+    problem_todo_set = problem_info.todo_set.all()
+    for problem_todo in problem_todo_set:
+        if problem_todo.document_set.count() != 0:
+            problem_todo_document_set += problem_todo.document_set.all()
+
+    document_result_set = set(list(problem_document_set) + list(problem_todo_document_set))
+
+    # Need remove duplicated and sorted by creation date
+    resp['documents'] = DocumentSerialization(document_result_set, many=True).data
+    resp['success'] = True
     return ajax_response(resp)

@@ -63,13 +63,6 @@
             })
         };
 
-        /**
-         *
-         * @param problem_id
-         */
-        this.getDocumentByProblem = function (problem_id) {
-            return $http.get('/docs/problem/' + problem_id);
-        };
 
         /**
          * Add a label to document

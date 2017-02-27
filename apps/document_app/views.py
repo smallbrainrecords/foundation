@@ -233,38 +233,6 @@ def delete_document(request, document_id):
 
 
 @login_required
-def document_list_by_problem(request, problem_id):
-    """
-
-    :param request:
-    :param problem_id:
-    :return:
-    """
-    resp = {'success': False}
-
-    # Loading problem info
-    problem_info = Problem.objects.prefetch_related(
-        Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
-    ).get(id=problem_id)
-
-    # Loading document pinned directly to problem
-    problem_document_set = problem_info.document_set.all()
-
-    problem_todo_document_set = []
-    problem_todo_set = problem_info.todo_set.all()
-    for problem_todo in problem_todo_set:
-        if problem_todo.document_set.count() != 0:
-            problem_todo_document_set += problem_todo.document_set.all()
-
-    document_result_set = set(list(problem_document_set) + list(problem_todo_document_set))
-
-    # Need remove duplicated and sorted by creation date
-    resp['documents'] = DocumentSerialization(document_result_set, many=True).data
-    resp['success'] = True
-    return ajax_response(resp)
-
-
-@login_required
 def pin_label_2_document(request):
     """
     Pin a label to a document

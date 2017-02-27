@@ -44,6 +44,7 @@
             $scope.change_pinned_medication = false;
             $scope.viewMode = 'Year';
             $scope.activities = [];
+            $scope.related_encounters = [];
 
             // Init hot key binding
             $scope.changeView = changeView;
@@ -137,7 +138,7 @@
                     $scope.patient_wiki_notes = wiki_notes['patient'];
                     $scope.physician_wiki_notes = wiki_notes['physician'];
                     $scope.other_wiki_notes = wiki_notes['other'];
-                    $scope.related_encounters = data['related_encounters'];
+                    // $scope.related_encounters = data['related_encounters'];
 
                     // $scope.activities = data['activities'];
                     // if (data['activities'].length) {
@@ -318,11 +319,7 @@
                     }
                 });
 
-                sharedService.getDocumentByProblem($scope.problem_id).then(function (response) {
-                    $scope.pinned_document = response.data.documents;
-                });
-
-                // Secondary loading
+                // SECONDARY LOADING
                 // Loading problem activities
                 problemService.getProblemActivity($scope.problem_id, 0).then(function (response) {
                     $scope.activities = response['activities'];
@@ -330,6 +327,16 @@
                         $scope.current_activity = _.first(response['activities']).id;
                     }
                 });
+
+                problemService.getRelatedEncounters($scope.problem_id).then(function (response) {
+                    $scope.related_encounters = response.related_encounters;
+                });
+
+
+                problemService.getRelatedDocuments($scope.problem_id).then(function (response) {
+                    $scope.pinned_document = response.data.documents;
+                });
+
 
                 // Watcher & callback
                 $scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function (nV, oV) {

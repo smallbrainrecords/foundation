@@ -166,7 +166,7 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
     effected_problems = serializers.SerializerMethodField()
     patient_other_problems = serializers.SerializerMethodField()
     # activities = ProblemActivitySerializer(many=True, source="problemactivity_set")
-    related_encounters = serializers.SerializerMethodField()
+    # related_encounters = serializers.SerializerMethodField()
     a1c = serializers.SerializerMethodField()
     colon_cancer = serializers.SerializerMethodField()
 
@@ -215,11 +215,11 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         patient_problem_serializer = ProblemSerializer(patient_problems, many=True).data
         return patient_problem_serializer
 
-    def get_related_encounters(self, obj):
-        from encounters_app.serializers import EncounterSerializer
-        encounter_records = obj.problem_encounter_records
-        related_encounters = [record.encounter for record in encounter_records.all()]
-        return EncounterSerializer(related_encounters, many=True).data
+    # def get_related_encounters(self, obj):
+    #     from encounters_app.serializers import EncounterSerializer
+    #     encounter_records = obj.problem_encounter_records
+    #     related_encounters = [record.encounter for record in encounter_records.all()]
+    #     return EncounterSerializer(related_encounters, many=True).data
 
 
     def get_a1c(self, obj):
