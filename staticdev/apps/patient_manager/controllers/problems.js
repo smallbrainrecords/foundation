@@ -132,8 +132,8 @@
                     $scope.patient_notes = data['patient_notes'];
                     $scope.physician_notes = data['physician_notes'];
 
-                    $scope.problem_goals = data['problem_goals'];
-                    $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'], 'accomplished');
+                    // $scope.problem_goals = data['problem_goals'];
+                    // $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'], 'accomplished');
 
                     // $scope.problem_todos = data['problem_todos'];
                     // $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'], 'accomplished');
@@ -309,6 +309,11 @@
                     $scope.problem_todos = response.data.todos;
                     $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
                     $scope.todos_ready = true;
+                });
+
+                problemService.getRelatedGoals($scope.problem_id).then(function (response) {
+                    $scope.problem_goals = response.data.goals;
+                    $scope.hasAccomplishedGoal = _.pluck(response.data.goals, 'accomplished');
                 });
 
                 patientService.getMedications($scope.patient_id).then(function (data) {

@@ -74,9 +74,10 @@ def get_problem_info(request, problem_id):
     medication_todo_set = []
 
     problem_info = Problem.objects.select_related("patient").prefetch_related(
-        "goal_set",
+        # "goal_set",
         "patientimage_set",
-        "target", "source",
+        "target",
+        "source",
         # "problemactivity_set",
         # "problem_encounter_records",
         "problem_aonecs",
@@ -84,8 +85,8 @@ def get_problem_info(request, problem_id):
         # Prefetch("todo_set", queryset=ToDo.objects.order_by("order"))
     ).get(id=problem_id)
 
-    for medication in problem_info.medications.all():
-        medication_todo_set += medication.todo_set.all()
+    # for medication in problem_info.medications.all():
+    #     medication_todo_set += medication.todo_set.all()
 
     # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
     if problem_info.concept_id in ['73211009', '46635009', '44054006']:
@@ -116,7 +117,7 @@ def get_problem_info(request, problem_id):
         'info': serialized_problem,
         'patient_notes': patient_note_holder,
         'physician_notes': physician_note_holder,
-        'problem_goals': serialized_problem["problem_goals"],
+        # 'problem_goals': serialized_problem["problem_goals"],
         # 'problem_todos': serialized_problem["problem_todos"] + TodoSerializer(medication_todo_set, many=True).data,
         'problem_images': serialized_problem["problem_images"],
         'effecting_problems': serialized_problem["effecting_problems"],
@@ -1116,5 +1117,22 @@ def get_problem_todos(request, problem_id):
         medication_todo_set += medication.todo_set.all()
 
     resp['todos'] = TodoSerializer(medication_todo_set + list(problem_info.todo_set.all()), many=True).data
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def get_problem_goals(request, problem_id):
+    """
+    Loading all problem's goals
+    :param request:
+    :param problem_id:
+    :return:
+    """
+    resp = {'success': False}
+
+    problem_info = get_object_or_404(Problem, pk=problem_id)
+
+    resp['goals'] = GoalSerializer(problem_info.goal_set, many=True).data
     resp['success'] = True
     return ajax_response(resp)

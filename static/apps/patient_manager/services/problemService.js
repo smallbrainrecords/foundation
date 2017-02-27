@@ -239,5 +239,10 @@
                 var url = '/p/problem/' + problemId + '/todos ';
                 return $http.get(url);
             };
+
+            this.getRelatedGoals = function (problemId) {
+                var url = '/p/problem/' + problemId + '/goals ';
+                return $http.get(url);
+            };
         });
 })();

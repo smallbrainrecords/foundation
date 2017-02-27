@@ -54,4 +54,5 @@ urlpatterns = patterns('problems_app.views', url(r'^problem/(?P<problem_id>\d+)/
                        url(r'^problem/(?P<problem_id>\d+)/encounters$', 'get_related_encounters'),
                        url(r'^problem/(?P<problem_id>\d+)/documents$', 'get_related_documents'),
                        url(r'^problem/(?P<problem_id>\d+)/todos$', 'get_problem_todos'),
+                       url(r'^problem/(?P<problem_id>\d+)/goals$', 'get_problem_goals'),
                        )

@@ -150,12 +150,12 @@ class LabeledProblemListSerializer(serializers.ModelSerializer):
 
 class ProblemInfoSerializer(serializers.ModelSerializer):
     # from todo_app.serializers import TodoSerializer
-    from goals_app.serializers import GoalSerializer
+    # from goals_app.serializers import GoalSerializer
     # from encounters_app.serializers import EncounterSerializer
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
     start_date = serializers.DateField(format='%m/%d/%Y')
-    problem_goals = GoalSerializer(many=True, source="goal_set")
+    # problem_goals = GoalSerializer(many=True, source="goal_set")
     # problem_todos = TodoSerializer(many=True, source="todo_set")
     problem_images = PatientImageSerializer(many=True, source="patientimage_set")
     problem_notes = serializers.SerializerMethodField()
