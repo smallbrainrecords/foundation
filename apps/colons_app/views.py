@@ -1,18 +1,13 @@
-from datetime import datetime
-from django.db.models import Max
-from django.core.servers.basehttp import FileWrapper
-from django.http import Http404, HttpResponse
-from django.db.models import Q
-from common.views import *
 from rest_framework.decorators import api_view
 
-from emr.models import ColonCancerScreening, UserProfile, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, Problem, ColonCancerTextNote
-from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySerializer, RiskFactorSerializer, ColonCancerTextNoteSerializer
+from common.views import *
+from emr.models import ColonCancerScreening, UserProfile, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, Problem, \
+    ColonCancerTextNote
 from emr.operations import op_add_event
-
-from problems_app.operations import add_problem_activity
 from users_app.serializers import UserProfileSerializer
 from users_app.views import permissions_accessed
+from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySerializer, RiskFactorSerializer, \
+    ColonCancerTextNoteSerializer, StudyImageSerializer
 
 
 @login_required
@@ -30,6 +25,7 @@ def track_colon_click(request, colon_id):
 
     return ajax_response(resp)
 
+
 @login_required
 def get_colon_info(request, colon_id):
     resp = {}
@@ -42,13 +38,16 @@ def get_colon_info(request, colon_id):
                 colon_info.risk = 'high'
                 colon_info.save()
         if Problem.objects.filter(patient=colon_info.patient.user, id__in=[64766004, 34000006]).exists():
-            if not RiskFactor.objects.filter(colon=colon_info, factor="personal history of ulcerative colitis or Crohn's disease").exists():
-                factor = RiskFactor.objects.create(colon=colon_info, factor="personal history of ulcerative colitis or Crohn's disease")
+            if not RiskFactor.objects.filter(colon=colon_info,
+                                             factor="personal history of ulcerative colitis or Crohn's disease").exists():
+                factor = RiskFactor.objects.create(colon=colon_info,
+                                                   factor="personal history of ulcerative colitis or Crohn's disease")
                 colon_info.risk = 'high'
                 colon_info.save()
         resp['success'] = True
         resp['info'] = ColonCancerScreeningSerializer(colon_info).data
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -61,18 +60,19 @@ def add_study(request, colon_id):
         study_date = datetime.strptime(request.POST.get('date'), '%m/%d/%Y').date()
 
         study = ColonCancerStudy.objects.create(colon=colon,
-                                               finding=request.POST.get("finding", None),
-                                               result=request.POST.get("result", None),
-                                               note=request.POST.get("note", None),
-                                               study_date=study_date,
-                                               last_updated_user=actor_profile,
-                                               author=actor_profile)
+                                                finding=request.POST.get("finding", None),
+                                                result=request.POST.get("result", None),
+                                                note=request.POST.get("note", None),
+                                                study_date=study_date,
+                                                last_updated_user=actor_profile,
+                                                author=actor_profile)
         study.save()
 
         resp['study'] = ColonCancerStudySerializer(study).data
         resp['success'] = True
 
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -87,6 +87,7 @@ def delete_study(request, study_id):
 
     return ajax_response(resp)
 
+
 @login_required
 def get_study_info(request, study_id):
     resp = {}
@@ -95,6 +96,7 @@ def get_study_info(request, study_id):
     if permissions_accessed(request.user, study.author.user.id):
         resp['info'] = ColonCancerStudySerializer(study).data
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -115,24 +117,29 @@ def edit_study(request, study_id):
 
     return ajax_response(resp)
 
+
 @login_required
 def upload_study_image(request, study_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
     if permissions_accessed(request.user, study.author.user.id):
         actor_profile = UserProfile.objects.get(user=request.user)
         study.last_updated_user = actor_profile
         study.save()
 
-        images = request.FILES.getlist('file[]')
-        for image in images:
+        images = request.FILES
+        image_holder = []
+        for dict in images:
+            image = request.FILES[dict]
             study_image = ColonCancerStudyImage(author=actor_profile, study=study, image=image)
             study_image.save()
 
-            resp['success'] = True
+            image_holder.append(study_image)
 
+        resp['images'] = StudyImageSerializer(image_holder, many=True).data
+        resp['success'] = True
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -163,7 +170,8 @@ def add_study_image(request, study_id):
             study.last_updated_user = actor_profile
             study.save()
 
-            image = ColonCancerStudyImage.objects.create(study_id=study_id, author=actor_profile, image=request.FILES['0'])
+            image = ColonCancerStudyImage.objects.create(study_id=study_id, author=actor_profile,
+                                                         image=request.FILES['0'])
 
             image_dict = {
                 'image': image.filename(),
@@ -176,6 +184,7 @@ def add_study_image(request, study_id):
         resp['success'] = True
 
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -197,7 +206,8 @@ def add_factor(request, colon_id):
                 for f in factors:
                     f.delete()
 
-            if RiskFactor.objects.filter(colon=colon).count() == 1 and request.POST.get("value", None) == 'no known risk':
+            if RiskFactor.objects.filter(colon=colon).count() == 1 and request.POST.get("value",
+                                                                                        None) == 'no known risk':
                 colon.risk = 'normal'
             else:
                 colon.risk = 'high'
@@ -210,6 +220,7 @@ def add_factor(request, colon_id):
             resp['success'] = True
 
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -224,7 +235,10 @@ def delete_factor(request, colon_id):
             factor = RiskFactor.objects.get(colon=colon, factor=request.POST.get("value", None))
             factor.delete()
 
-            if not RiskFactor.objects.filter(colon=colon) or (RiskFactor.objects.filter(colon=colon).count() == 1 and RiskFactor.objects.filter(colon=colon, factor='no known risk').exists()):
+            if not RiskFactor.objects.filter(colon=colon) or (
+                            RiskFactor.objects.filter(colon=colon).count() == 1 and RiskFactor.objects.filter(
+                        colon=colon,
+                        factor='no known risk').exists()):
                 colon.risk = 'normal'
                 colon.last_risk_updated_user = actor_profile
                 colon.last_risk_updated_date = datetime.now().date()
@@ -234,6 +248,7 @@ def delete_factor(request, colon_id):
             resp['success'] = True
 
     return ajax_response(resp)
+
 
 @login_required
 @api_view(["POST"])
@@ -254,6 +269,7 @@ def refuse(request, colon_id):
 
     return ajax_response(resp)
 
+
 @login_required
 @api_view(["POST"])
 def not_appropriate(request, colon_id):
@@ -273,6 +289,7 @@ def not_appropriate(request, colon_id):
 
     return ajax_response(resp)
 
+
 # Note
 @login_required
 def add_note(request, colon_id):
@@ -287,6 +304,7 @@ def add_note(request, colon_id):
         resp['success'] = True
     return ajax_response(resp)
 
+
 @login_required
 def edit_note(request, note_id):
     resp = {}
@@ -298,6 +316,7 @@ def edit_note(request, note_id):
         resp['success'] = True
         resp['note'] = ColonCancerTextNoteSerializer(note).data
     return ajax_response(resp)
+
 
 @login_required
 def delete_note(request, note_id):

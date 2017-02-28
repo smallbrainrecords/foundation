@@ -37,7 +37,8 @@ from problems_app.services import ProblemService
 from todo_app.operations import add_todo_activity
 from todo_app.serializers import TodoSerializer
 from users_app.serializers import UserProfileSerializer
-from .serializers import ProblemNoteSerializer, ProblemActivitySerializer, CommonProblemSerializer
+from .serializers import ProblemNoteSerializer, ProblemActivitySerializer, CommonProblemSerializer, \
+    PatientImageSerializer
 from .serializers import ProblemSerializer, ProblemLabelSerializer, \
     LabeledProblemListSerializer, ProblemInfoSerializer
 
@@ -554,9 +555,10 @@ def upload_problem_image(request, problem_id):
     problem.save()
 
     patient = problem.patient
-
-    images = request.FILES.getlist('file[]')
-    for image in images:
+    images = request.FILES
+    image_holder = []
+    for dict in images:
+        image = request.FILES[dict]
         patient_image = PatientImage(patient=patient, problem=problem, image=image)
         patient_image.save()
 
@@ -577,8 +579,10 @@ def upload_problem_image(request, problem_id):
         op_add_event(request.user, patient, summary, problem)
         add_problem_activity(problem, actor_profile, activity, 'input')
 
-        resp['success'] = True
+        image_holder.append(patient_image)
 
+    resp['images'] = PatientImageSerializer(image_holder, many=True).data
+    resp['success'] = True
     return ajax_response(resp)
 
 

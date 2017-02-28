@@ -6,7 +6,7 @@
 
     angular.module('ManagerApp')
         .controller('AddNewStudyCtrl', function ($scope, $routeParams, ngDialog, toaster, $location,
-                                                 sharedService, colonService) {
+                                                 sharedService, colonService, Upload) {
 
 
             var patient_id = $('#patient_id').val();
@@ -108,7 +108,7 @@
 
         }) /* End of controller */
         .controller('EditStudyCtrl', function ($scope, $routeParams, ngDialog, toaster, $location, colonService,
-                                               sharedService, patientService, $cookies) {
+                                               sharedService, patientService, Upload) {
 
 
             var patient_id = $('#patient_id').val();
@@ -122,7 +122,7 @@
                 'fecal occult blood test',
                 'colonoscopy',
                 'fecal immunochemical test',
-                'other',
+                'other'
             ];
 
             $scope.results = [];
@@ -160,12 +160,12 @@
                 } else if (finding == 'fecal immunochemical test') {
                     $scope.results = [
                         'positive',
-                        'negative',
+                        'negative'
                     ];
                 } else if (finding == 'other') {
                     $scope.results = [
                         'positive',
-                        'negative',
+                        'negative'
                     ];
                 }
             };
@@ -187,26 +187,37 @@
                 }
             };
 
-            $scope.image_upload_url = function () {
+            // $scope.image_upload_url = function () {
+            //
+            //     var url = '/colon_cancer/study/' + $scope.study_id + '/upload_image';
+            //     return url;
+            // };
 
+            // $scope.get_csrftoken = function () {
+            //     return $cookies.get('csrftoken');
+            // };
+
+            $scope.open_image_upload_box = function (files) {
                 var url = '/colon_cancer/study/' + $scope.study_id + '/upload_image';
-                return url;
-            };
+                // var url = '/p/problem/' + $scope.problem_id + '/upload_image';
+                $scope.files = files;
+                if (files && files.length) {
+                    Upload.upload({
+                        url: url,
+                        data: {
+                            files: files
+                        },
+                        headers: {'Content-Type': undefined}
+                    }).then(uploadSuccess);
+                }
 
-            $scope.get_csrftoken = function () {
-                return $cookies.get('csrftoken');
-            };
+                function uploadSuccess(response) {
+                    toaster.pop('success', 'Done', 'Image uploaded');
 
-            $scope.open_image_upload_box = function () {
-                ngDialog.open({
-                    template: '/static/apps/patient_manager/partials/modals/upload_image.html',
-                    className: 'ngdialog-theme-default large-modal',
-                    scope: $scope,
-                    cache: false,
-                    controller: ['$scope',
-                        function ($scope) {
-                        }]
-                });
+                    $scope.study.study_images = $scope.study.study_images.concat(response.data.images);
+                }
+
+
             };
 
 

@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
-                                              dataService, medicationService, CollapseService) {
+                                              dataService, medicationService, CollapseService, Upload) {
             $scope.patient_id = $('#patient_id').val();
             $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
             $scope.patient = {}; // All patient's data loaded from server side
@@ -32,7 +32,7 @@
                 {name: 'red', css_class: 'todo-label-red'},
                 {name: 'purple', css_class: 'todo-label-purple'},
                 {name: 'blue', css_class: 'todo-label-blue'},
-                {name: 'sky', css_class: 'todo-label-sky'},
+                {name: 'sky', css_class: 'todo-label-sky'}
             ];
             $scope.isOtherPatientNoteShowing = false;
             $scope.problem_label_component = {};
@@ -76,8 +76,8 @@
             $scope.add_history_note = add_history_note;
             $scope.add_goal = add_goal;
             $scope.add_todo = add_todo;
-            $scope.image_upload_url = image_upload_url;
-            $scope.get_csrftoken = get_csrftoken;
+            // $scope.image_upload_url = image_upload_url;
+            // $scope.get_csrftoken = get_csrftoken;
             $scope.open_image_upload_box = open_image_upload_box;
             $scope.open_image_box = open_image_box;
             $scope.delete_problem_image = delete_problem_image;
@@ -988,28 +988,24 @@
                 }
             }
 
-            function image_upload_url() {
 
-                var patient_id = $scope.patient_id;
-                var problem_id = $scope.problem_id;
-                var url = '/p/problem/' + problem_id + '/upload_image';
-                return url;
-            }
+            function open_image_upload_box(files) {
+                var url = '/p/problem/' + $scope.problem_id + '/upload_image';
+                $scope.files = files;
+                if (files && files.length) {
+                    Upload.upload({
+                        url: url,
+                        data: {
+                            files: files
+                        },
+                        headers: {'Content-Type': undefined}
+                    }).then(uploadSuccess);
+                }
 
-            function get_csrftoken() {
-                return $cookies.get('csrftoken');
-            }
-
-            function open_image_upload_box() {
-                ngDialog.open({
-                    template: '/static/apps/patient_manager/partials/modals/upload_image.html',
-                    className: 'ngdialog-theme-default large-modal',
-                    scope: $scope,
-                    cache: false,
-                    controller: ['$scope',
-                        function ($scope) {
-                        }]
-                });
+                function uploadSuccess(response) {
+                    toaster.pop('success', 'Done', 'Image uploaded');
+                    $scope.problem_images = $scope.problem_images.concat(response.data.images);
+                }
             }
 
             function open_image_box(image) {

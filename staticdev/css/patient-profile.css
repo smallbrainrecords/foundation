@@ -413,4 +413,7 @@ todo .new-tagged-todo {
   #document-header .document-name {
     vertical-align: top; }
 
+#problem-image image {
+  margin: auto; }
+
 /*# sourceMappingURL=patient-profile.css.map */
