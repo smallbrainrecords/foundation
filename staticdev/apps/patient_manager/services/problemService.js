@@ -44,6 +44,7 @@
                 getRelatedTodos: getRelatedTodos,
                 getRelatedGoals: getRelatedGoals,
                 getRelatedWikis: getRelatedWikis,
+                getRelatedImages: getRelatedImages
             };
 
             function updateProblemStatus(form) {
@@ -258,30 +259,36 @@
             }
 
             function getRelatedEncounters(problemId) {
-                var url = '/p/problem/' + problemId + '/encounters ';
+                var url = '/p/problem/' + problemId + '/encounters';
                 var params = {};
 
                 return httpService.get(params, url);
             }
 
             function getRelatedDocuments(problemId) {
-                var url = '/p/problem/' + problemId + '/documents ';
+                var url = '/p/problem/' + problemId + '/documents';
                 return $http.get(url);
             }
 
             function getRelatedTodos(problemId) {
-                var url = '/p/problem/' + problemId + '/todos ';
+                var url = '/p/problem/' + problemId + '/todos';
                 return $http.get(url);
             }
 
             function getRelatedGoals(problemId) {
-                var url = '/p/problem/' + problemId + '/goals ';
+                var url = '/p/problem/' + problemId + '/goals';
                 return $http.get(url);
             }
 
             function getRelatedWikis(problemId) {
-                var url = '/p/problem/' + problemId + '/wikis ';
+                var url = '/p/problem/' + problemId + '/wikis';
                 return $http.get(url);
             }
+
+            function getRelatedImages(problemId) {
+                var url = '/p/problem/' + problemId + '/images';
+                return $http.get(url);
+            }
+
         });
 })();

@@ -150,7 +150,6 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
     start_date = serializers.DateField(format='%m/%d/%Y')
-    problem_images = PatientImageSerializer(many=True, source="patientimage_set")
     effecting_problems = serializers.SerializerMethodField()
     effected_problems = serializers.SerializerMethodField()
     patient_other_problems = serializers.SerializerMethodField()

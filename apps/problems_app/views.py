@@ -74,7 +74,7 @@ def get_problem_info(request, problem_id):
 
     sharing_patients_list = []
 
-    problem_info = Problem.objects.select_related("patient").prefetch_related("patientimage_set", "target", "source",
+    problem_info = Problem.objects.select_related("patient").prefetch_related("target", "source",
                                                                               "problem_aonecs", ).get(id=problem_id)
 
     # Add a1c widget to problems that have concept id 73211009, 46635009, 44054006
@@ -98,7 +98,6 @@ def get_problem_info(request, problem_id):
     resp = {
         'success': True,
         'info': serialized_problem,
-        'problem_images': serialized_problem["problem_images"],
         'effecting_problems': serialized_problem["effecting_problems"],
         'effected_problems': serialized_problem["effected_problems"],
         'patient_problems': serialized_problem["patient_other_problems"],
@@ -1169,6 +1168,23 @@ def get_problem_wikis(request, problem_id):
 
     resp['wiki_notes'] = problem_notes['wiki_notes']
     resp['history_note'] = problem_notes['history']
+    resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def get_problem_images(request, problem_id):
+    """
+    Loading all problem's images
+    :param request:
+    :param problem_id:
+    :return:
+    """
+    resp = {'success': False}
+    problem_images = PatientImage.objects.filter(problem_id=problem_id)
+
+    resp['images'] = PatientImageSerializer(problem_images, many=True).data
     resp['success'] = True
 
     return ajax_response(resp)

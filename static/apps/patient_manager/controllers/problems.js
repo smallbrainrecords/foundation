@@ -129,7 +129,6 @@
                         }
                     });
 
-                    $scope.problem_images = data['problem_images'];
 
                     $scope.effecting_problems = data['effecting_problems'];
                     $scope.effected_problems = data['effected_problems'];
@@ -323,6 +322,11 @@
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
+                });
+
+                // Image
+                problemService.getRelatedImages($scope.problem_id).then(function (response) {
+                    $scope.problem_images = response.data['images'];
                 });
 
                 // Activity
