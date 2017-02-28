@@ -129,8 +129,6 @@
                         }
                     });
 
-                    $scope.patient_notes = data['patient_notes'];
-                    $scope.physician_notes = data['physician_notes'];
 
                     // $scope.problem_goals = data['problem_goals'];
                     // $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'], 'accomplished');
@@ -144,11 +142,13 @@
                     $scope.effecting_problems = data['effecting_problems'];
                     $scope.effected_problems = data['effected_problems'];
 
-                    // Wiki note
-                    var wiki_notes = data['wiki_notes'];
-                    $scope.patient_wiki_notes = wiki_notes['patient'];
-                    $scope.physician_wiki_notes = wiki_notes['physician'];
-                    $scope.other_wiki_notes = wiki_notes['other'];
+                    // $scope.patient_notes = data['patient_notes'];
+                    // $scope.physician_notes = data['physician_notes'];
+
+                    // var wiki_notes = data['wiki_notes'];
+                    // $scope.patient_wiki_notes = wiki_notes['patient'];
+                    // $scope.physician_wiki_notes = wiki_notes['physician'];
+                    // $scope.other_wiki_notes = wiki_notes['other'];
 
                     // $scope.related_encounters = data['related_encounters'];
 
@@ -207,6 +207,11 @@
                     $scope.active_user = data['user_profile'];
                 });
 
+                patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+                    $scope.patient_info = data['info'];
+                    $scope.patient = data;
+                });
+
                 todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                     $scope.members = data['members'];
                 });
@@ -217,11 +222,6 @@
 
                 problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function (data) {
                     $scope.problem_labels = data['labels'];
-                });
-
-                patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                    $scope.patient_info = data['info'];
-                    $scope.patient = data;
                 });
 
                 problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
@@ -311,11 +311,24 @@
                     $scope.todos_ready = true;
                 });
 
+                // Wiki note
+                problemService.getRelatedWikis($scope.problem_id).then(function (response) {
+                    // $scope.patient_notes = response.data['patient_notes'];
+                    // $scope.physician_notes = response.data['physician_notes'];
+
+                    var wiki_notes = response.data['wiki_notes'];
+                    $scope.patient_wiki_notes = wiki_notes['patient'];
+                    $scope.physician_wiki_notes = wiki_notes['physician'];
+                    $scope.other_wiki_notes = wiki_notes['other'];
+                });
+
+                // Goal
                 problemService.getRelatedGoals($scope.problem_id).then(function (response) {
                     $scope.problem_goals = response.data.goals;
                     $scope.hasAccomplishedGoal = _.pluck(response.data.goals, 'accomplished');
                 });
 
+                // Medication
                 patientService.getMedications($scope.patient_id).then(function (data) {
                     if (data['success'] == true) {
                         $scope.medications = data['info'];
@@ -339,6 +352,7 @@
                     }
                 });
 
+                // Activity
                 problemService.getProblemActivity($scope.problem_id, 0).then(function (response) {
                     $scope.activities = response['activities'];
                     if (response['activities'].length) {
@@ -346,15 +360,15 @@
                     }
                 });
 
+                // Encounter
                 problemService.getRelatedEncounters($scope.problem_id).then(function (response) {
                     $scope.related_encounters = response.related_encounters;
                 });
 
-
+                // Document
                 problemService.getRelatedDocuments($scope.problem_id).then(function (response) {
                     $scope.pinned_document = response.data.documents;
                 });
-
 
                 // Watcher & callback
                 $scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function (nV, oV) {
@@ -391,7 +405,6 @@
                     });
 
                 });
-
 
                 $scope.$on('inrWidgetOrderAdded', function (event, args) {
                     $scope.problem_todos.push(args.order)
