@@ -282,7 +282,7 @@
 
                 // Wiki note
                 problemService.getRelatedWikis($scope.problem_id).then(function (response) {
-                    $scope.history_note = data['history_note'];
+                    $scope.history_note = response.data['history_note'];
                     if ($scope.history_note != null) {
                         $scope.history_note_form = {
                             note: $scope.history_note.note
