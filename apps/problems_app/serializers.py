@@ -3,9 +3,7 @@ from rest_framework import serializers
 from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel, LabeledProblemList
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem, ObservationComponent, \
     ObservationValue
-
 from users_app.serializers import UserProfileSerializer, SafeUserSerializer
-from emr.serializers import TextNoteSerializer
 
 
 class CommonProblemSerializer(serializers.ModelSerializer):
@@ -149,56 +147,23 @@ class LabeledProblemListSerializer(serializers.ModelSerializer):
 
 
 class ProblemInfoSerializer(serializers.ModelSerializer):
-    # from todo_app.serializers import TodoSerializer
-    # from goals_app.serializers import GoalSerializer
-    # from encounters_app.serializers import EncounterSerializer
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
     start_date = serializers.DateField(format='%m/%d/%Y')
-    # problem_goals = GoalSerializer(many=True, source="goal_set")
-    # problem_todos = TodoSerializer(many=True, source="todo_set")
     problem_images = PatientImageSerializer(many=True, source="patientimage_set")
-    problem_notes = serializers.SerializerMethodField()
     effecting_problems = serializers.SerializerMethodField()
     effected_problems = serializers.SerializerMethodField()
     patient_other_problems = serializers.SerializerMethodField()
-    # activities = ProblemActivitySerializer(many=True, source="problemactivity_set")
-    # related_encounters = serializers.SerializerMethodField()
     a1c = serializers.SerializerMethodField()
     colon_cancer = serializers.SerializerMethodField()
 
     class Meta:
         model = Problem
 
-    def get_problem_notes(self, obj):
-        history_note = ProblemNote.objects.filter(
-            note_type='history', problem=obj).order_by(
-            '-created_on').first()
-
-        if history_note is not None:
-            history_note_holder = ProblemNoteSerializer(history_note).data
-        else:
-            history_note_holder = None
-
-        wiki_notes = ProblemNote.objects.filter(note_type='wiki', problem=obj).order_by('-created_on')
-        patient_wiki_notes = [note for note in wiki_notes if note.author.role == "patient"]
-        physician_wiki_notes = [note for note in wiki_notes if note.author.role == "physician"]
-        other_wiki_notes = [note for note in wiki_notes if note.author.role not in ("patient", "physician")]
-        problem_notes = {
-            'history': ProblemNoteSerializer(history_note).data,
-            'wiki_notes': {
-                'patient': ProblemNoteSerializer(patient_wiki_notes, many=True).data,
-                'physician': ProblemNoteSerializer(physician_wiki_notes, many=True).data,
-                'other': ProblemNoteSerializer(other_wiki_notes, many=True).data
-            }
-        }
-        return problem_notes
-
     def get_effecting_problems(self, obj):
         from emr.models import ProblemRelationship
         relations = ProblemRelationship.objects.filter(target=obj)
         effecting_problems = [relationship.source.id for relationship in relations]
-        print "Effecting Problems: " + str(effecting_problems)
         return effecting_problems
 
     def get_effected_problems(self, obj):
@@ -210,13 +175,6 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
         patient_problems = Problem.objects.filter(patient=obj.patient).exclude(id=obj.id)
         patient_problem_serializer = ProblemSerializer(patient_problems, many=True).data
         return patient_problem_serializer
-
-    # def get_related_encounters(self, obj):
-    #     from encounters_app.serializers import EncounterSerializer
-    #     encounter_records = obj.problem_encounter_records
-    #     related_encounters = [record.encounter for record in encounter_records.all()]
-    #     return EncounterSerializer(related_encounters, many=True).data
-
 
     def get_a1c(self, obj):
         a1c_dict = {}

@@ -129,33 +129,10 @@
                         }
                     });
 
-
-                    // $scope.problem_goals = data['problem_goals'];
-                    // $scope.hasAccomplishedGoal = _.pluck(data['problem_goals'], 'accomplished');
-
-                    // $scope.problem_todos = data['problem_todos'];
-                    // $scope.hasAccomplishedTodo = _.pluck(data['problem_todos'], 'accomplished');
-                    // $scope.todos_ready = true;
-
                     $scope.problem_images = data['problem_images'];
 
                     $scope.effecting_problems = data['effecting_problems'];
                     $scope.effected_problems = data['effected_problems'];
-
-                    // $scope.patient_notes = data['patient_notes'];
-                    // $scope.physician_notes = data['physician_notes'];
-
-                    // var wiki_notes = data['wiki_notes'];
-                    // $scope.patient_wiki_notes = wiki_notes['patient'];
-                    // $scope.physician_wiki_notes = wiki_notes['physician'];
-                    // $scope.other_wiki_notes = wiki_notes['other'];
-
-                    // $scope.related_encounters = data['related_encounters'];
-
-                    // $scope.activities = data['activities'];
-                    // if (data['activities'].length) {
-                    //     $scope.current_activity = data['activities'][0].id;
-                    // }
 
                     // a1c
                     $scope.a1c = data['a1c'];
@@ -171,14 +148,6 @@
                         problemService.fetchColonCancerss($scope.problem_id).then(function (data2) {
                             $scope.colon_cancers = data2['colon_cancers'];
                         });
-                    }
-
-                    // History note
-                    $scope.history_note = data['history_note'];
-                    if ($scope.history_note != null) {
-                        $scope.history_note_form = {
-                            note: $scope.history_note.note
-                        };
                     }
 
                     var patient_problems = data['patient_problems'];
@@ -304,7 +273,7 @@
                 problemService.trackProblemClickEvent($scope.problem_id);
 
                 // SECONDARY LOADING
-                // TODO: Optimization should be added todo accomplished filtering on initialize
+
                 problemService.getRelatedTodos($scope.problem_id).then(function (response) {
                     $scope.problem_todos = response.data.todos;
                     $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
@@ -313,8 +282,12 @@
 
                 // Wiki note
                 problemService.getRelatedWikis($scope.problem_id).then(function (response) {
-                    // $scope.patient_notes = response.data['patient_notes'];
-                    // $scope.physician_notes = response.data['physician_notes'];
+                    $scope.history_note = data['history_note'];
+                    if ($scope.history_note != null) {
+                        $scope.history_note_form = {
+                            note: $scope.history_note.note
+                        };
+                    }
 
                     var wiki_notes = response.data['wiki_notes'];
                     $scope.patient_wiki_notes = wiki_notes['patient'];
