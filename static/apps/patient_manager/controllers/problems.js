@@ -130,9 +130,6 @@
                     });
 
 
-                    $scope.effecting_problems = data['effecting_problems'];
-                    $scope.effected_problems = data['effected_problems'];
-
                     // a1c
                     $scope.a1c = data['a1c'];
                     if ($scope.a1c) {
@@ -149,22 +146,6 @@
                         });
                     }
 
-                    var patient_problems = data['patient_problems'];
-                    for (var index in patient_problems) {
-
-                        var id = patient_problems[index].id;
-
-                        if ($scope.id_exists(id, $scope.effecting_problems) == true) {
-                            patient_problems[index].effecting = true
-                        }
-
-                        if ($scope.id_exists(id, $scope.effected_problems) == true) {
-                            patient_problems[index].effected = true
-                        }
-
-
-                    }
-                    $scope.patient_problems = patient_problems;
 
                     $scope.sharing_patients = data['sharing_patients'];
 
@@ -328,6 +309,24 @@
                 problemService.getRelatedImages($scope.problem_id).then(function (response) {
                     $scope.problem_images = response.data['images'];
                 });
+
+                problemService.getProblemRelationships($scope.problem_id).then(function (response) {
+                    $scope.effecting_problems = response.data['effecting_problems'];
+                    $scope.effected_problems = response.data['effected_problems'];
+                    var patient_problems = response.data['patient_problems'];
+                    for (var index in patient_problems) {
+                        var id = patient_problems[index].id;
+                        if ($scope.id_exists(id, $scope.effecting_problems) == true) {
+                            patient_problems[index].effecting = true
+                        }
+
+                        if ($scope.id_exists(id, $scope.effected_problems) == true) {
+                            patient_problems[index].effected = true
+                        }
+                    }
+                    $scope.patient_problems = patient_problems;
+                });
+
 
                 // Activity
                 problemService.getProblemActivity($scope.problem_id, 0).then(function (response) {

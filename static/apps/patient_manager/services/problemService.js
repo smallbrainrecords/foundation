@@ -44,7 +44,8 @@
                 getRelatedTodos: getRelatedTodos,
                 getRelatedGoals: getRelatedGoals,
                 getRelatedWikis: getRelatedWikis,
-                getRelatedImages: getRelatedImages
+                getRelatedImages: getRelatedImages,
+                getProblemRelationships: getProblemRelationships
             };
 
             function updateProblemStatus(form) {
@@ -287,6 +288,11 @@
 
             function getRelatedImages(problemId) {
                 var url = '/p/problem/' + problemId + '/images';
+                return $http.get(url);
+            }
+
+            function getProblemRelationships(problemId) {
+                var url = '/p/problem/' + problemId + '/relationships';
                 return $http.get(url);
             }
 

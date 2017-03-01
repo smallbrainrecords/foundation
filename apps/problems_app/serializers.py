@@ -150,30 +150,11 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
     start_date = serializers.DateField(format='%m/%d/%Y')
-    effecting_problems = serializers.SerializerMethodField()
-    effected_problems = serializers.SerializerMethodField()
-    patient_other_problems = serializers.SerializerMethodField()
     a1c = serializers.SerializerMethodField()
     colon_cancer = serializers.SerializerMethodField()
 
     class Meta:
         model = Problem
-
-    def get_effecting_problems(self, obj):
-        from emr.models import ProblemRelationship
-        relations = ProblemRelationship.objects.filter(target=obj)
-        effecting_problems = [relationship.source.id for relationship in relations]
-        return effecting_problems
-
-    def get_effected_problems(self, obj):
-        from emr.models import ProblemRelationship
-        relations = ProblemRelationship.objects.filter(source=obj)
-        return [relationship.target.id for relationship in relations]
-
-    def get_patient_other_problems(self, obj):
-        patient_problems = Problem.objects.filter(patient=obj.patient).exclude(id=obj.id)
-        patient_problem_serializer = ProblemSerializer(patient_problems, many=True).data
-        return patient_problem_serializer
 
     def get_a1c(self, obj):
         a1c_dict = {}

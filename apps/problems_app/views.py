@@ -74,8 +74,7 @@ def get_problem_info(request, problem_id):
 
     sharing_patients_list = []
 
-    problem_info = Problem.objects.select_related("patient").prefetch_related("target", "source",
-                                                                              "problem_aonecs", ).get(id=problem_id)
+    problem_info = Problem.objects.select_related("patient").prefetch_related("problem_aonecs").get(id=problem_id)
 
     # Add a1c widget to problems that have concept id 73211009, 46635009, 44054006
     if problem_info.concept_id in ['73211009', '46635009', '44054006']:
@@ -98,9 +97,6 @@ def get_problem_info(request, problem_id):
     resp = {
         'success': True,
         'info': serialized_problem,
-        'effecting_problems': serialized_problem["effecting_problems"],
-        'effected_problems': serialized_problem["effected_problems"],
-        'patient_problems': serialized_problem["patient_other_problems"],
         'a1c': serialized_problem["a1c"],
         'colon_cancer': serialized_problem["colon_cancer"],
         'sharing_patients': sharing_patients_list
@@ -176,7 +172,6 @@ def add_patient_problem(request, patient_id):
 
 @permissions_required(["add_problem"])
 @login_required
-# @api_view(["POST"])
 def add_patient_common_problem(request, patient_id):
     resp = {'success': False}
 
@@ -1185,6 +1180,33 @@ def get_problem_images(request, problem_id):
     problem_images = PatientImage.objects.filter(problem_id=problem_id)
 
     resp['images'] = PatientImageSerializer(problem_images, many=True).data
+    resp['success'] = True
+
+    return ajax_response(resp)
+
+
+@login_required
+def get_problem_relationships(request, problem_id):
+    """
+    Loading problem's relationships
+    :param request:
+    :param problem_id:
+    :return:
+    """
+    resp = {'success': False}
+    problem_info = Problem.objects.get(id=problem_id)
+
+    effecting_relations = ProblemRelationship.objects.filter(target_id=problem_id)
+    effecting_problems = [relationship.source.id for relationship in effecting_relations]
+
+    effected_relations = ProblemRelationship.objects.filter(source_id=problem_id)
+    effected_problems = [relationship.target.id for relationship in effected_relations]
+
+    patient_problems = Problem.objects.filter(patient=problem_info.patient).exclude(id=problem_id)
+
+    resp['effecting_problems'] = effecting_problems
+    resp['effected_problems'] = effected_problems
+    resp['patient_problems'] = ProblemSerializer(patient_problems, many=True).data
     resp['success'] = True
 
     return ajax_response(resp)
