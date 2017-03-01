@@ -339,7 +339,7 @@
 
                 // Encounter
                 problemService.getRelatedEncounters($scope.problem_id).then(function (response) {
-                    $scope.related_encounters = response.related_encounters;
+                    $scope.related_encounters = response.encounters;
                 });
 
                 // Document
