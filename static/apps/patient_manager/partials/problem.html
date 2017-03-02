@@ -367,17 +367,29 @@
             </div>
         </div>
     </div>
-    <div class='row' ng-if="a1c">
-        <a1c ng-model="a1c"></a1c>
-    </div>
-    <div class='row' ng-if="colon_cancers.length > 0">
-        <div ng-repeat="colon_cancer in colon_cancers">
-            <colon-cancer ng-model="colon_cancer"></colon-cancer>
-            <br>
+
+    <!--A1C widget-->
+    <div class="row" ng-if="availableWidgets.indexOf('a1c') != -1">
+        <div class="col-md-12">
+            <a1c ng-model="a1c"></a1c>
         </div>
     </div>
-    <!-- Problem's INR widget -->
-    <inr ng-if="inrWidgetExist"></inr>
+
+    <!--Colon cancer widget-->
+    <div class='row' ng-if="availableWidgets.indexOf('colon_cancers') != -1">
+        <div class="col-md-12">
+            <colon-cancer ng-model="colon_cancer"
+                          ng-repeat="colon_cancer in colon_cancers track by $index"></colon-cancer>
+        </div>
+    </div>
+
+    <!-- INR widget -->
+    <div class="row" ng-if="availableWidgets.indexOf('inr') != -1">
+        <div class="col-md-12">
+            <inr></inr>
+        </div>
+    </div>
+
     <div class='panel panel-default' ng-show="problem.old_problem_name">
         <div class='panel-body'>
             This problem was previously named "{{ problem.old_problem_name }}"
@@ -564,7 +576,8 @@
         <div class='panel-heading'>
             Images
             <span ng-show='permitted(["add_problem_image"])'>
-				<button class='btn btn-sm btn-default' ngf-select="open_image_upload_box($files)" multiple ngf-max-files="5"
+				<button class='btn btn-sm btn-default' ngf-select="open_image_upload_box($files)" multiple
+                        ngf-max-files="5"
                         accept="image/*"> Upload </button>
 			</span>
         </div>

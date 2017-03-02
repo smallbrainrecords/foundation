@@ -307,8 +307,7 @@ class ProblemLabel(models.Model):
 
 class Problem(MPTTModel):
     patient = models.ForeignKey(User)
-    parent = TreeForeignKey(
-        'self', null=True, blank=True, related_name='children')
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
     problem_name = models.CharField(max_length=200)
     concept_id = models.CharField(max_length=20, blank=True, null=True)
     is_controlled = models.BooleanField(default=False)
@@ -320,6 +319,7 @@ class Problem(MPTTModel):
 
     labels = models.ManyToManyField(ProblemLabel, blank=True)
     medications = models.ManyToManyField('Medication', through='MedicationPinToProblem')
+    observations = models.ManyToManyField('Observation',through='ObservationPinToProblem')
 
     objects = ProblemManager()
 

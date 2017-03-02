@@ -11,7 +11,6 @@
             $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
             $scope.patient = {}; // All patient's data loaded from server side
             $scope.user_id = $('#user_id').val();
-            $scope.inrWidgetExist = false;
             $scope.problem_id = $routeParams.problem_id;
             $scope.show_accomplished_todos = false;
             $scope.show_accomplished_goals = false;
@@ -45,6 +44,7 @@
             $scope.viewMode = 'Year';
             $scope.activities = [];
             $scope.related_encounters = [];
+            $scope.availableWidgets = [];
 
             // Init hot key binding
             $scope.changeView = changeView;
@@ -76,8 +76,6 @@
             $scope.add_history_note = add_history_note;
             $scope.add_goal = add_goal;
             $scope.add_todo = add_todo;
-            // $scope.image_upload_url = image_upload_url;
-            // $scope.get_csrftoken = get_csrftoken;
             $scope.open_image_upload_box = open_image_upload_box;
             $scope.open_image_box = open_image_box;
             $scope.delete_problem_image = delete_problem_image;
@@ -105,6 +103,16 @@
             init();
 
             function init() {
+                // TODO: Should moved to shared/common across the application(SPA)
+                patientService.fetchActiveUser().then(function (data) {
+                    $scope.active_user = data['user_profile'];
+                });
+
+                patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+                    $scope.patient_info = data['info'];
+                    $scope.patient = data;
+                });
+
                 patientService.fetchProblemInfo($scope.problem_id).then(function (data) {
                     $scope.problem = data['info'];
 
@@ -115,7 +123,24 @@
                         var timeline_problems = parseTimelineWithoutSegment($scope.problem);
                     }
 
-                    // TODO: Should be move to general later
+                    $scope.availableWidgets = data['available_widgets'];
+                    if (_.contains($scope.availableWidgets, 'a1c')) {
+                        problemService.fetchA1c($scope.problem_id).then(function (response) {
+                            $scope.a1c = response['a1c'];
+                        });
+                    }
+
+                    if (_.contains($scope.availableWidgets, 'colon_cancers')) {
+                        problemService.fetchColonCancerss($scope.problem_id).then(function (response) {
+                            $scope.colon_cancers = response['colon_cancers'];
+                        });
+                    }
+
+                    $scope.sharing_patients = data['sharing_patients'];
+
+                    $scope.loading = false;
+
+                    // TODO: 02/03/2017 Should be move to general later
                     $scope.$watch('patient_info', function (nV, oV) {
                         if ($scope.patient_info) {
                             $scope.timeline = {
@@ -128,37 +153,6 @@
                             $scope.timeline_changed = [{changing: new Date().getTime()}];
                         }
                     });
-
-
-                    // a1c
-                    $scope.a1c = data['a1c'];
-                    if ($scope.a1c) {
-                        problemService.fetchA1c($scope.problem_id).then(function (data2) {
-                            $scope.a1c = data2['a1c'];
-                        });
-                    }
-
-                    // colon_cancers
-                    $scope.colon_cancers = data['colon_cancer'];
-                    if ($scope.colon_cancers.length > 0) {
-                        problemService.fetchColonCancerss($scope.problem_id).then(function (data2) {
-                            $scope.colon_cancers = data2['colon_cancers'];
-                        });
-                    }
-
-
-                    $scope.sharing_patients = data['sharing_patients'];
-
-                    $scope.loading = false;
-                });
-
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-                });
-
-                patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                    $scope.patient_info = data['info'];
-                    $scope.patient = data;
                 });
 
                 todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
@@ -173,6 +167,32 @@
                     $scope.problem_labels = data['labels'];
                 });
 
+                problemService.trackProblemClickEvent($scope.problem_id);
+
+                // SECONDARY LOADING
+                // Todo
+                problemService.getRelatedTodos($scope.problem_id).then(function (response) {
+                    $scope.problem_todos = response.data.todos;
+                    $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
+                    $scope.todos_ready = true;
+                });
+
+                // Wiki note
+                problemService.getRelatedWikis($scope.problem_id).then(function (response) {
+                    $scope.history_note = response.data['history_note'];
+                    if ($scope.history_note != null) {
+                        $scope.history_note_form = {
+                            note: $scope.history_note.note
+                        };
+                    }
+
+                    var wiki_notes = response.data['wiki_notes'];
+                    $scope.patient_wiki_notes = wiki_notes['patient'];
+                    $scope.physician_wiki_notes = wiki_notes['physician'];
+                    $scope.other_wiki_notes = wiki_notes['other'];
+                });
+
+                // Pinned observation component (aka data)
                 problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
                     $scope.pins = data['pins'];
                     $scope.problem_pins = data['problem_pins'];
@@ -192,13 +212,6 @@
                                     }
                                 });
                                 data.pin = is_pin;
-
-                                // Determine if the data is pinned. Ignore if already found one
-                                // Refer https://trello.com/c/ViCG6rzS
-                                if (data.pin & !$scope.inrWidgetExist) {
-                                    var component_code = _.pluck(data.observation_components, 'component_code');
-                                    $scope.inrWidgetExist = _.contains(component_code, '6301-6');
-                                }
 
                                 // Default graph type
                                 if (data.graph == null || data.graph == undefined)
@@ -250,38 +263,7 @@
                     });
                 });
 
-                problemService.trackProblemClickEvent($scope.problem_id);
-
-                // SECONDARY LOADING
-
-                problemService.getRelatedTodos($scope.problem_id).then(function (response) {
-                    $scope.problem_todos = response.data.todos;
-                    $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
-                    $scope.todos_ready = true;
-                });
-
-                // Wiki note
-                problemService.getRelatedWikis($scope.problem_id).then(function (response) {
-                    $scope.history_note = response.data['history_note'];
-                    if ($scope.history_note != null) {
-                        $scope.history_note_form = {
-                            note: $scope.history_note.note
-                        };
-                    }
-
-                    var wiki_notes = response.data['wiki_notes'];
-                    $scope.patient_wiki_notes = wiki_notes['patient'];
-                    $scope.physician_wiki_notes = wiki_notes['physician'];
-                    $scope.other_wiki_notes = wiki_notes['other'];
-                });
-
-                // Goal
-                problemService.getRelatedGoals($scope.problem_id).then(function (response) {
-                    $scope.problem_goals = response.data.goals;
-                    $scope.hasAccomplishedGoal = _.pluck(response.data.goals, 'accomplished');
-                });
-
-                // Medication
+                // Medication TODO 02/03/2017 refactor to problem service
                 patientService.getMedications($scope.patient_id).then(function (data) {
                     if (data['success'] == true) {
                         $scope.medications = data['info'];
@@ -305,11 +287,18 @@
                     }
                 });
 
+                // Goal
+                problemService.getRelatedGoals($scope.problem_id).then(function (response) {
+                    $scope.problem_goals = response.data.goals;
+                    $scope.hasAccomplishedGoal = _.pluck(response.data.goals, 'accomplished');
+                });
+
                 // Image
                 problemService.getRelatedImages($scope.problem_id).then(function (response) {
                     $scope.problem_images = response.data['images'];
                 });
 
+                // Effecting & Effected problems
                 problemService.getProblemRelationships($scope.problem_id).then(function (response) {
                     $scope.effecting_problems = response.data['effecting_problems'];
                     $scope.effected_problems = response.data['effected_problems'];
@@ -326,7 +315,6 @@
                     }
                     $scope.patient_problems = patient_problems;
                 });
-
 
                 // Activity
                 problemService.getProblemActivity($scope.problem_id, 0).then(function (response) {
@@ -1274,8 +1262,6 @@
                 CollapseService.ChangeHomepageTab('medication');
                 $location.path('/');
             }
-
-
         });
     /* End of controller */
 })();

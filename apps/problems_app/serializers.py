@@ -150,8 +150,6 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
     start_date = serializers.DateField(format='%m/%d/%Y')
-    a1c = serializers.SerializerMethodField()
-    colon_cancer = serializers.SerializerMethodField()
 
     class Meta:
         model = Problem

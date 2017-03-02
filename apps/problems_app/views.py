@@ -71,24 +71,28 @@ def get_problem_info(request, problem_id):
     :return:
     """
     start_time = datetime.now()
-
     sharing_patients_list = []
+    availableWidgets = []
+    problem_info = Problem.objects.select_related("patient").get(id=problem_id)
 
-    problem_info = Problem.objects.select_related("patient").prefetch_related("problem_aonecs").get(id=problem_id)
-
+    # Load all available widget within the problems
     # Add a1c widget to problems that have concept id 73211009, 46635009, 44054006
     if problem_info.concept_id in ['73211009', '46635009', '44054006']:
         AOneC.objects.create_if_not_exist(problem_info)
+        availableWidgets.append('a1c')
 
     # Add colon cancer widget to problems that have concept id 102499006
     if problem_info.concept_id in ['102499006']:
         ColonCancerScreening.objects.create_if_not_exist(problem_info)
+        availableWidgets.append('colon_cancers')
 
-    serialized_problem = ProblemInfoSerializer(problem_info).data
+    # Check inr widget is available
+    if problem_info.observations.filter(observation_components__component_code="6301-6").exists():
+        availableWidgets.append('inr')
 
+    # Loading sharing patient info
     sharing_patients = SharingPatient.objects.filter(
         shared=problem_info.patient).order_by('sharing__first_name', 'sharing__last_name')
-
     for sharing_patient in sharing_patients:
         user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
         user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
@@ -96,9 +100,8 @@ def get_problem_info(request, problem_id):
 
     resp = {
         'success': True,
-        'info': serialized_problem,
-        'a1c': serialized_problem["a1c"],
-        'colon_cancer': serialized_problem["colon_cancer"],
+        'info': ProblemInfoSerializer(problem_info).data,
+        'available_widgets': availableWidgets,
         'sharing_patients': sharing_patients_list
     }
     end_time = datetime.now()

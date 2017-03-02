@@ -1,137 +1,154 @@
-<div class='col-md-12'>
-	<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-		<div class="panel panel-default">
-			<div class="panel-heading" role="tab" id="headingOne" ng-click="open_a1c()">
-				<div ng-show="!show_a1c_collapse" ng-class="{'text-danger': last_value.value_quantity > 7.5}">
-  					<i class="fa fa-caret-right" aria-hidden="true"></i>
-					A1C: 
-					<span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
-					<span ng-if="first_component.observation_component_values.length && !a1c.patient_refused_A1C">
+<div class="row">
+    <div class='col-md-12'>
+        <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingOne" ng-click="open_a1c()">
+                    <div ng-show="!show_a1c_collapse" ng-class="{'text-danger': last_value.value_quantity > 7.5}">
+                        <i class="fa fa-caret-right" aria-hidden="true"></i>
+                        A1C:
+                        <span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
+                        <span ng-if="first_component.observation_component_values.length && !a1c.patient_refused_A1C">
 						{{last_value.value_quantity| number:1}}% on {{last_value.effective_datetime|date:'M/d/yyyy'}}
 						<span ng-if="a1c_date <= today">past due</span>
 					</span>
-				</div>
-				<div ng-show="show_a1c_collapse"><i class="fa fa-caret-down" aria-hidden="true"></i> Hide</div>
-			</div>
-			<div ng-show="show_a1c_collapse">
-				<div class="panel-body">
-					<div class='row'>
+                    </div>
+                    <div ng-show="show_a1c_collapse"><i class="fa fa-caret-down" aria-hidden="true"></i> Hide</div>
+                </div>
+                <div ng-show="show_a1c_collapse">
+                    <div class="panel-body">
+                        <div class='row'>
 
-						<div class='col-md-12' ng-class="{'text-danger': last_value.value_quantity > 7.5}">
-							A1C: 
-							<span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
-							<span ng-if="first_component.observation_component_values.length && !a1c.patient_refused_A1C">
+                            <div class='col-md-12' ng-class="{'text-danger': last_value.value_quantity > 7.5}">
+                                A1C:
+                                <span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
+                                <span ng-if="first_component.observation_component_values.length && !a1c.patient_refused_A1C">
 								{{last_value.value_quantity| number:1}}% on {{last_value.effective_datetime|date:'M/d/yyyy'}}
 								<span ng-if="a1c_date <= today">past due</span>
 							</span>
-						</div>
-					</div>
-					</br>
-					<div class='row'>
-						<div class='col-md-6'>
-							<div class="row">
-								<div class='col-md-12'>
-									<a href="#/a1c/{{a1c.id}}/enter_new_value" class='btn btn-default'>Enter new value</a>
-								</div>
-							</div>
-							</br>
-							<div class="row">
-								<div class='col-md-12'>
-									<a href="#/a1c/{{a1c.id}}/edit_or_delete_values" class='btn btn-default'>Edit values</a>
-								</div>
-							</div>
-							</br>
-							<div class="row" ng-show="see_past_values">
-								<div class='col-md-12'>
-									<h2>Past values:</h2>
-								</div>
-								<div class='col-md-12' ng-repeat="value in first_component.observation_component_values|orderBy:['effective_datetime','created_on']:true" ng-class="{'text-danger': component.value_quantity > 7.5}">
-									A1C: 
-										{{value.value_quantity| number:1}}% on {{value.effective_datetime|date:'M/d/yyyy'}}.
+                            </div>
+                        </div>
+                        </br>
+                        <div class='row'>
+                            <div class='col-md-6'>
+                                <div class="row">
+                                    <div class='col-md-12'>
+                                        <a href="#/a1c/{{a1c.id}}/enter_new_value" class='btn btn-default'>Enter new
+                                            value</a>
+                                    </div>
+                                </div>
+                                </br>
+                                <div class="row">
+                                    <div class='col-md-12'>
+                                        <a href="#/a1c/{{a1c.id}}/edit_or_delete_values" class='btn btn-default'>Edit
+                                            values</a>
+                                    </div>
+                                </div>
+                                </br>
+                                <div class="row" ng-show="see_past_values">
+                                    <div class='col-md-12'>
+                                        <h2>Past values:</h2>
+                                    </div>
+                                    <div class='col-md-12'
+                                         ng-repeat="value in first_component.observation_component_values|orderBy:['effective_datetime','created_on']:true"
+                                         ng-class="{'text-danger': component.value_quantity > 7.5}">
+                                        A1C:
+                                        {{value.value_quantity| number:1}}% on
+                                        {{value.effective_datetime|date:'M/d/yyyy'}}.
 
-										<span ng-if="value.observation_value_notes.length">
+                                        <span ng-if="value.observation_value_notes.length">
 											Note: 
 											<span ng-repeat="note in value.observation_value_notes">
 												{{note.note}}.
 											</span>
 										</span>
-										<span ng-if="value.author">Author: {{value.author.user.username}}.</span>
-										<span ng-if="value.created_on">Date added: {{value.created_on|date:'M/d/yyyy'}}.</span>
-								</div>
-							</div>
-							</br>
-							<div class="row" ng-init="see_past_values=false">
-								<div class='col-md-12'>
-									<button class='btn btn-default' ng-click="see_past_values=!see_past_values">See past values</button>
-								</div>
-							</div>
-							</br>
-							<div class="row" ng-if="a1c.a1c_notes.length">
-								<div class='col-md-12' ng-repeat="note in a1c.a1c_notes">
-									<div ng-show="$index == 0 || show_note">
-										<span ng-show="!note.edit">{{note.author.user.username}}: {{note.note}} {{note.datetime|date:'M/d/yyyy'}}</span>
-										<div ng-if="active_user.role == 'physician' || active_user.role == 'admin'">
-											<div class="comment-box" ng-show="note.edit">
-												<input type='text' ng-model='note.note'>
-											</div>
-											<div ng-show="!note.edit">
-												<a href ng-click="toggleEditNote(note)">Edit</a>
-												<a href ng-click="deleteNote(note)">Delete</a>
-											</div>
-											<p ng-show="note.edit"><a href ng-click="toggleSaveNote(note)">Save</a></p>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="row" ng-init="show_note=false">
-								<div class='col-md-12'>
-									<button class='btn btn-default' ng-click="show_note=!show_note">
-										<span ng-if="!show_note">Show more notes</span>
-										<span ng-if="show_note">Show less notes</span>
-									</button>
-								</div>
-							</div>
-							</br>
-							<div class="row" ng-init="toggle_add_note=false">
-								<div class='col-md-12'>
-									<button class='btn btn-default' ng-click="toggle_add_note=!toggle_add_note">Add note</button>
-								</div>
-							</div>
-							<div class="row" ng-show="toggle_add_note">
-								<div class='col-md-12'>
-									<form class='form-inline' ng-submit='toggle_add_note=!toggle_add_note; add_note(note_form)' >
-										<div class='form-group'>
-											<label> Add </label>
-											<input type='text' class='form-control' ng-model='note_form.note'>
-										</div>
-										<div class='form-group'>
-											<input type='submit' value='Submit' class='btn btn-default'>
-										</div>
-									</form>
-								</div>
-							</div>
-						</div>
-						<div class='col-md-6'>
-							<div class="row">
-								<div class='col-md-12'>
-									<p>Pending order:</p>
-									<p ng-if='!a1c.a1c_todos || a1c.a1c_todos.length == 0'> No pending order</p>
-									<div ng-if="a1c.a1c_todos.length">
-										<todo ng-model="a1c.a1c_todos" accomplished="false" show-problem="false"></todo>
-									</div>
-									<a href="#/a1c/{{a1c.id}}/add_different_order" class='btn btn-default'>Add a different task</a>
-								</div>
-							</div>
-							</br>
-							<div class="row">
-								<div class='col-md-12'>
-									<button class='btn btn-default' ng-click="repeatThreeMonths()">Repeat in 3 months</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                                        <span ng-if="value.author">Author: {{value.author.user.username}}.</span>
+                                        <span ng-if="value.created_on">Date added: {{value.created_on|date:'M/d/yyyy'}}.</span>
+                                    </div>
+                                </div>
+                                </br>
+                                <div class="row" ng-init="see_past_values=false">
+                                    <div class='col-md-12'>
+                                        <button class='btn btn-default' ng-click="see_past_values=!see_past_values">See
+                                            past values
+                                        </button>
+                                    </div>
+                                </div>
+                                </br>
+                                <div class="row" ng-if="a1c.a1c_notes.length">
+                                    <div class='col-md-12' ng-repeat="note in a1c.a1c_notes">
+                                        <div ng-show="$index == 0 || show_note">
+                                            <span ng-show="!note.edit">{{note.author.user.username}}: {{note.note}} {{note.datetime|date:'M/d/yyyy'}}</span>
+                                            <div ng-if="active_user.role == 'physician' || active_user.role == 'admin'">
+                                                <div class="comment-box" ng-show="note.edit">
+                                                    <input type='text' ng-model='note.note'>
+                                                </div>
+                                                <div ng-show="!note.edit">
+                                                    <a href ng-click="toggleEditNote(note)">Edit</a>
+                                                    <a href ng-click="deleteNote(note)">Delete</a>
+                                                </div>
+                                                <p ng-show="note.edit"><a href ng-click="toggleSaveNote(note)">Save</a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" ng-init="show_note=false">
+                                    <div class='col-md-12'>
+                                        <button class='btn btn-default' ng-click="show_note=!show_note">
+                                            <span ng-if="!show_note">Show more notes</span>
+                                            <span ng-if="show_note">Show less notes</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                </br>
+                                <div class="row" ng-init="toggle_add_note=false">
+                                    <div class='col-md-12'>
+                                        <button class='btn btn-default' ng-click="toggle_add_note=!toggle_add_note">Add
+                                            note
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="row" ng-show="toggle_add_note">
+                                    <div class='col-md-12'>
+                                        <form class='form-inline'
+                                              ng-submit='toggle_add_note=!toggle_add_note; add_note(note_form)'>
+                                            <div class='form-group'>
+                                                <label> Add </label>
+                                                <input type='text' class='form-control' ng-model='note_form.note'>
+                                            </div>
+                                            <div class='form-group'>
+                                                <input type='submit' value='Submit' class='btn btn-default'>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class='col-md-6'>
+                                <div class="row">
+                                    <div class='col-md-12'>
+                                        <p>Pending order:</p>
+                                        <p ng-if='!a1c.a1c_todos || a1c.a1c_todos.length == 0'> No pending order</p>
+                                        <div ng-if="a1c.a1c_todos.length">
+                                            <todo ng-model="a1c.a1c_todos" accomplished="false"
+                                                  show-problem="false"></todo>
+                                        </div>
+                                        <a href="#/a1c/{{a1c.id}}/add_different_order" class='btn btn-default'>Add a
+                                            different task</a>
+                                    </div>
+                                </div>
+                                </br>
+                                <div class="row">
+                                    <div class='col-md-12'>
+                                        <button class='btn btn-default' ng-click="repeatThreeMonths()">Repeat in 3
+                                            months
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
