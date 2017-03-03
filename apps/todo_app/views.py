@@ -10,6 +10,7 @@ from emr.models import ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRe
 from emr.operations import op_add_event, op_add_todo_event
 from problems_app.operations import add_problem_activity
 from todo_app.operations import *
+from users_app.serializers import SafeUserSerializer
 from .serializers import ToDoCommentSerializer, TodoActivitySerializer, LabeledToDoListSerializer
 
 
