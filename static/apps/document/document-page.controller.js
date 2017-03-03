@@ -1,23 +1,23 @@
 (function () {
     'use strict';
-    angular.module('ManagerApp')
+    angular.module('document')
         .controller('ViewDocumentCtrl', ViewDocumentCtrl);
 
-    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', 'patientService', '$location', 'toaster', 'documentService', 'ngDialog'];
+    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', '$location', 'toaster', 'documentService', 'ngDialog', '$http', '$cookies'];
 
     /**
-     * WIP: Missing status return
      * @param $scope
      * @param sharedService
      * @param $routeParams
-     * @param patientService
      * @param $location
      * @param toaster
      * @param documentService
      * @param ngDialog
+     * @param $http
+     * @param $cookies
      * @constructor
      */
-    function ViewDocumentCtrl($scope, sharedService, $routeParams, patientService, $location, toaster, documentService, ngDialog) {
+    function ViewDocumentCtrl($scope, sharedService, $routeParams, $location, toaster, documentService, ngDialog, $http, $cookies) {
 
         // PROPERTIES DEFINITION
         $scope.patient_id = $('#patient_id').val();     // Patients are being managed
@@ -25,10 +25,12 @@
         $scope.document = {};
         $scope.labels = [];
         $scope.newDocumentName = "";
+        $scope.patientSearchString = "";
         $scope.enableEditDocumentName = false;
         $scope.enableTodoPin = false;
         $scope.enableProblemPin = false;
         $scope.enableEditLabel = false;
+        $scope.enableEditPatient = false;
         $scope.new_todo = {};
         $scope.new_problem = {set: false};
 
@@ -42,6 +44,8 @@
         $scope.updateDocumentName = updateDocumentName;
         $scope.pinLabelToDocument = pinLabelToDocument;
         $scope.unpinDocumentLabel = unpinDocumentLabel;
+        $scope.getPatients = getPatients;
+        $scope.pinPatient2Document = pinPatient2Document;
         $scope.permitted = permitted;
 
         // TODO: Create todo-add component based
@@ -63,7 +67,7 @@
 
             sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
                 $scope.document = resp.data.info;
-
+                $scope.newDocumentName = $scope.document.document_name;
                 $scope.labels = resp.data.labels;
 
                 var document_label_pk = _.pluck($scope.document.labels, 'id');
@@ -72,22 +76,24 @@
                 });
 
                 // Loading all related
-                if (resp.data.info.patient != null) {
-                    var patientId = resp.data.info.patient.user.id;
-                    $scope.getPatientInfo(patientId);
+                if ($scope.document.patient != null) {
+                    $scope.patient_id = $scope.document.patient.user.id;
+                    $scope.getPatientInfo($scope.patient_id);
+
+                    sharedService.fetchPatientInfo($scope.patient_id).then(function (response) {
+                        $scope.patient = response.data;
+                        $scope.acutes = response.data.acutes_list;
+                        $scope.chronics = response.data.chronics_list;
+                    });
                 }
             });
 
-            patientService.fetchActiveUser().then(function (data) {
+            sharedService.fetchActiveUser().then(function (response) {
                 // Logged in user profile in Django authentication system
-                $scope.active_user = data['user_profile'];
+                $scope.active_user = response.data['user_profile'];
             });
 
-            patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                $scope.patient = data;
-                $scope.acutes = data.acutes_list;
-                $scope.chronics = data.chronics_list;
-            });
+
         }
 
         // METHODS DEFINITION(Only dedicate to service/factory todo business flow)
@@ -189,8 +195,8 @@
          */
         function getPatientInfo(patientId) {
 
-            patientService.fetchPatientTodos(patientId).then(function (data) {
-                $scope.active_todos = data['pending_todos']; // aka active todo
+            sharedService.fetchPatientTodos(patientId).then(function (response) {
+                $scope.active_todos = response.data['pending_todos']; // aka active todo
 
                 // TODO: Is this task is correct place
                 var document_todo_pk = _.pluck($scope.document.todos, 'id');
@@ -200,8 +206,8 @@
             });
 
             // Fetch user's problem
-            patientService.fetchProblems(patientId).then(function (response) {
-                $scope.active_probs = response.problems;
+            sharedService.fetchProblems(patientId).then(function (response) {
+                $scope.active_probs = response.data.problems;
 
                 // TODO: Is this task is correct place
                 var document_problem_pk = _.pluck($scope.document.problems, 'id');
@@ -352,17 +358,17 @@
                     if (!_.isUndefined(data.value) && '$escape' != data.value)
                         form.due_date = moment(data.value, acceptedFormat).toString();
 
-                    patientService.addToDo(form).then(addTodoSuccess);
+                    sharedService.addToDo(form).then(addTodoSuccess);
                 })
             }
 
             // Add todo succeeded
-            function addTodoSuccess(data) {
+            function addTodoSuccess(response) {
                 toaster.pop('success', 'Done', 'Added Todo!');
 
-                $scope.pinTodo2Document($scope.document, data.todo);
+                $scope.pinTodo2Document($scope.document, response.todo);
 
-                $scope.active_todos.push(data.todo);
+                $scope.active_todos.push(response.todo);
 
                 $scope.new_todo = {};
 
@@ -377,16 +383,16 @@
             form.cproblem = problem;
             form.type = type;
 
-            patientService.addCommonProblem(form).then(addProblemSuccess, addProblemFailed);
+            sharedService.addCommonProblem(form).then(addProblemSuccess, addProblemFailed);
 
-            function addProblemSuccess(data) {
+            function addProblemSuccess(response) {
 
                 if (data.success) {
                     toaster.pop('success', 'Done', 'New problem added successfully');
 
-                    $scope.pinProblem2Document($scope.document, data.problem);
+                    $scope.pinProblem2Document($scope.document, response.problem);
 
-                    $scope.active_probs.push(data.problem);
+                    $scope.active_probs.push(response.problem);
                 } else {
                     toaster.pop('error', 'Error', data['msg']);
                 }
@@ -403,7 +409,7 @@
             $scope.new_problem.set = false;
 
             if (term.length > 2) {
-                patientService.listTerms(term).then(function (data) {
+                sharedService.listTerms(term).then(function (data) {
                     $scope.problem_terms = data;
                 });
             } else {
@@ -467,7 +473,7 @@
          */
         function exeAddingProblem(form) {
 
-            patientService.addProblem(form).then(addProblemSuccess, addProblemFailed);
+            sharedService.addProblem(form).then(addProblemSuccess, addProblemFailed);
 
 
             function addProblemSuccess(data) {
@@ -494,6 +500,33 @@
             function addProblemFailed(error) {
                 toaster.pop('error', 'Error', 'Something went wrong');
             }
+        }
+
+        function getPatients(viewValue) {
+            return $http.post('/docs/search_patient', {
+                search_str: viewValue
+            }, {
+                headers: {
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            }).then(function (response) {
+                return response.data.results;
+            });
+        }
+
+        function pinPatient2Document(item, model) {
+            documentService.pinPatient2Document($scope.document, model)
+                .then(function (response) {
+                    if (response.data.success) {
+                        toaster.pop('success', 'Done', 'Added label to document. Loading patient todo and patient');
+                        $scope.document = response.data.info;
+                        $scope.getPatientInfo(response.data.info.patient.user.id);
+                    } else {
+                        toaster.pop('error', 'Error', 'Something went wrong!');
+                    }
+                }, function (error) {
+                    toaster.pop('error', 'Error', 'Something went wrong!');
+                })
         }
     }
 })();

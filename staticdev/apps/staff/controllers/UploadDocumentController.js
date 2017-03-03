@@ -5,6 +5,9 @@
     UploadDocumentsCtrl.$inject = ["$scope", "documentService"];
 
     function UploadDocumentsCtrl($scope, documentService) {
+        $scope.user_id = $('#user_id').val();
+        $scope.logs = [];
+
         init();
 
         function init() {

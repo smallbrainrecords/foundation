@@ -55,16 +55,12 @@
                 templateUrl: '/static/apps/document/document-uploaded-page.template.html',
                 controller: 'UploadedDocumentsPageCtrl'
             })
-            .when('/manage/tag_document/:documentId', {
-                templateUrl: '/static/apps/document/document-tag-page.template.html',
-                controller: 'TagDocumentCtrl'
+            .when('/manage/document/:documentId', {
+                templateUrl: '/static/apps/document/document-page.template.html',
+                controller: 'ViewDocumentCtrl'
             });
     });
 
     StaffApp.run(function (staffService) {
-        // staffService.fetchActiveUser($('#user_id').val()).then(function (data) {
-        //     staffService.user = data;
-        //     console.log(data);
-        // });
     })
 })();

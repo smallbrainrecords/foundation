@@ -1284,7 +1284,7 @@
         }
 
         function fileUploadSuccess(resp) {
-            $window.open('/#/manage/tag_document/' + resp.data.document, '_blank');
+            $window.open('/#/manage/document/' + resp.data.document, '_blank');
         }
 
         //Anonymous function (will be hoisting)

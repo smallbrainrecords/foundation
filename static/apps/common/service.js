@@ -5,10 +5,29 @@
     angular.module('sharedModule', ['ngFileUpload', 'httpModule', 'cfp.hotkeys'])
         .service('sharedService', sharedService);
 
-    sharedService.$inject = ['$http', '$cookies', 'Upload', 'hotkeys', '$location'];
+    sharedService.$inject = ['$http', '$cookies', 'Upload', 'hotkeys', '$location', 'httpService'];
 
-    function sharedService($http, $cookies, Upload, hotkeys, $location) {
-        this.settings = {};
+    function sharedService($http, $cookies, Upload, hotkeys, $location, httpService) {
+        return {
+            settings: {},
+            uploadDocument: uploadDocument,
+            deleteDocumentTag: deleteDocumentTag,
+            pinLabelToDocument: pinLabelToDocument,
+            unpinDocumentLabel: unpinDocumentLabel,
+            unpinDocumentProblem: unpinDocumentProblem,
+            unpinDocumentTodo: unpinDocumentTodo,
+            getDocumentInfo: getDocumentInfo,
+            removeDocument: removeDocument,
+            getUploadedDocument: getUploadedDocument,
+            getSettings: getSettings,
+            updateSettings: updateSettings,
+            fetchPatientInfo: fetchPatientInfo,
+            fetchActiveUser: fetchActiveUser,
+            fetchPatientTodos: fetchPatientTodos,
+            fetchProblems: fetchProblems,
+            addToDo: addToDo,
+            addProblem: addProblem
+        };
 
         /**
          * Upload multiple documentation
@@ -17,7 +36,7 @@
          * @param patient
          * @param callback
          */
-        this.uploadDocument = function (files, author, patient, callback) {
+        function uploadDocument(files, author, patient, callback) {
             if (files && files.length) {
                 for (var i = 0; i < files.length; i++) {
                     var file = files[i];
@@ -40,7 +59,7 @@
                     }
                 }
             }
-        };
+        }
 
         /**
          *
@@ -49,7 +68,7 @@
          * @param tag_type      Type of tagging document 'problem' or 'todo'
          * @param del_in_sys    Flag indicate will file be deleted in system or not
          */
-        this.deleteDocumentTag = function (document, tag_id, tag_type, del_in_sys) {
+        function deleteDocumentTag(document, tag_id, tag_type, del_in_sys) {
             del_in_sys = del_in_sys == undefined ? false : del_in_sys;
             return $http.post('/docs/delete/' + document.id, {
                 'document': document.id,
@@ -61,15 +80,14 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             })
-        };
-
+        }
 
         /**
          * Add a label to document
          * @param document
          * @param label
          */
-        this.pinLabelToDocument = function (document, label) {
+        function pinLabelToDocument(document, label) {
             return $http.post('/docs/pin/label', {
                 document: document.id,
                 label: label.id
@@ -78,14 +96,14 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          * Remove a label in document
          * @param document
          * @param label
          */
-        this.unpinDocumentLabel = function (document, label) {
+        function unpinDocumentLabel(document, label) {
             return $http.post('/docs/remove/label', {
                 document: document.id,
                 label: label.id
@@ -94,14 +112,14 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          * Remove an pinned problem in document
          * @param document
          * @param problem
          */
-        this.unpinDocumentProblem = function (document, problem) {
+        function unpinDocumentProblem(document, problem) {
             return $http.post('/docs/unpin/problem', {
                 document: document.id,
                 problem: problem.id
@@ -110,14 +128,14 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          * Remove an pinned todo in document
          * @param document
          * @param todo
          */
-        this.unpinDocumentTodo = function (document, todo) {
+        function unpinDocumentTodo(document, todo) {
             return $http.post('/docs/unpin/todo', {
                 document: document.id,
                 todo: todo.id
@@ -126,46 +144,88 @@
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          *
          * @param documentId
          */
-        this.getDocumentInfo = function (documentId) {
+        function getDocumentInfo(documentId) {
             return $http.get('/docs/info/' + documentId);
-        };
-
+        }
 
         /**
          *
          * @param document
          */
-        this.removeDocument = function (document) {
+        function removeDocument(document) {
             return $http.post('/docs/remove/' + document.id, null, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
-        };
+        }
 
         /**
          * Get list of document user have uploaded
          */
-        this.getUploadedDocument = function () {
+        function getUploadedDocument() {
             return $http.get('/docs/list');
-        };
+        }
 
-        this.getSettings = function () {
+        function getSettings() {
             return $http.get('/u/setting');
-        };
+        }
 
-        this.updateSettings = function (settingObj) {
+        function updateSettings(settingObj) {
             return $http.post('/u/update_setting', settingObj, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
             });
+        }
+
+        function fetchPatientInfo(patient_id) {
+            var url = '/u/patient/' + patient_id + '/info';
+
+            return $http.get(url);
+
+        }
+
+        function fetchActiveUser() {
+            var url = '/u/active/user/';
+            return $http.get(url);
+        }
+
+        function fetchPatientTodos(patient_id) {
+            var url = '/u/patient/' + patient_id + '/patient_todos_info';
+
+            return $http.get(url);
+
+        }
+
+        function fetchProblems(patient_id) {
+            var url = '/p/problem/' + patient_id + '/getproblems';
+            return $http.get(url);
+        }
+
+        function addToDo(form) {
+
+            var url = '/todo/patient/' + form.patient_id + '/todos/add/new_todo';
+
+            return httpService.post(form, url);
+
+
+        }
+
+
+        function addProblem(form) {
+
+            var url = '/p/patient/' + form.patient_id + '/problems/add/new_problem';
+
+            return httpService.post(form, url);
+
+
         }
     }
 })();
