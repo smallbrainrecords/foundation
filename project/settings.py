@@ -1,6 +1,6 @@
 # Django settings for emr project.
 
-DEBUG = False
+DEBUG = False    # Never set 'DEBUG = True' in production environment
 TEMPLATE_DEBUG = True
 
 # toggle experimental features
@@ -16,34 +16,23 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 APP_PATH = os.path.join(BASE_DIR, 'apps')
 sys.path.append(APP_PATH)
 
-ADMINS = (
-    ('AnhDN', 'dinhanh2212@gmail.com'),
-)
 AUTH_PROFILE_MODULE = "account.UserProfile"
-MANAGERS = ADMINS
-# try:
-#     f = open(os.path.join(BASE_DIR, '../db_password.txt'))
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-#             'NAME': 'smallbrain',                      # Or path to database file if using sqlite3.
-#             'USER': 'root',                      # Not used with sqlite3.
-#             'PASSWORD': f.read().strip(),                  # Not used with sqlite3.
-#             'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-#             'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-#         }
-#     }
-# except:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-#             'NAME': os.path.join(BASE_DIR, '../dev.db'),                      # Or path to database file if using sqlite3.
-#             'USER': '',                      # Not used with sqlite3.
-#             'PASSWORD': '',                  # Not used with sqlite3.
-#             'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-#             'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-#         }
-#     }
+
+# ADMINS = (
+#     ('', ''),('', ''),
+# )
+#    Imported from local_settings.py
+
+
+# MANAGERS =
+#    Imported from local_settings.py
+
+
+# DATABASES = {
+#       
+# }
+#    Imported from local_settings.py
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -105,10 +94,8 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
+# SECRET_KEY = ''   # Imported from local_settings.py
 
-# SECRET_KEY = ''
-# with open('/home/secret_key.txt') as f:
-#    SECRET_KEY = f.read().strip()
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -171,16 +158,16 @@ INSTALLED_APPS = (
 )
 
 AUTHENTICATION_BACKENDS = (
-    'social_auth.backends.google.GoogleOAuth2Backend',
+#    'social_auth.backends.google.GoogleOAuth2Backend',
     'django.contrib.auth.backends.ModelBackend',
 )
-LOGIN_REDIRECT_URL = '/'
 
-GOOGLE_OAUTH2_CLIENT_ID = '574847173199-vnvlnuvr5n5vuasvb28moqp1i80eqbsl.apps.googleusercontent.com'
-GOOGLE_OAUTH2_CLIENT_SECRET = 'faqH3LrYNErmcirkXleeCvMn'
-GOOGLE_WHITE_LISTED_DOMAINS = []
-SOCIAL_AUTH_USER_MODEL = 'auth.User'
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+
+# GOOGLE_OAUTH2_CLIENT_ID = ''
+# GOOGLE_OAUTH2_CLIENT_SECRET = ''
+# GOOGLE_WHITE_LISTED_DOMAINS = []
+# SOCIAL_AUTH_USER_MODEL = 'auth.User'
+# SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -189,6 +176,10 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_SECURITY_WARN_AFTER = 1740
 SESSION_SECURITY_EXPIRE_AFTER = 1800
 SESSION_SECURITY_PASSIVE_URLS = {}
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
 
 # LOGIN_URL          = '/login/google-oauth2/'
 LOGIN_URL = '/u/login/'
@@ -228,23 +219,21 @@ SNOMEDCT = {}
 
 PROBLEMS_PATH = '/root/core/static/js/problems/'
 
-# ALLOWED_HOSTS = [
-#     '192.210.207.188', # Allow domain and subdomains
+ALLOWED_HOSTS = [
 #     '146.148.52.187',
-#     'andromedahealth.com',
-#     ]
-ALLOWED_HOSTS = ['*']
+     'andromedahealth.com',
+     ]
 
 try:
     from local_settings import *
 except ImportError as e:
     pass
 
-
-EMAIL_USE_TLS = True
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_PASSWORD = 'anhdan221291' #my gmail password
-EMAIL_HOST_USER = 'chiase.tmp@gmail.com' #my gmail username
-EMAIL_PORT = 587
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# The following is imported from local_settings.py
+# EMAIL_USE_TLS = True
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_HOST_PASSWORD = ''
+# EMAIL_HOST_USER = ''
+# EMAIL_PORT = 587
+# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
