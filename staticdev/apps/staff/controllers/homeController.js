@@ -21,6 +21,7 @@
             $scope.active_user = null;
             $scope.show_all = false;
             $scope.show_accomplished_personal_todos = false;
+            $scope.showLabeledTodoList = false;
             $scope.reverse = false;
 
             // Function definitions
