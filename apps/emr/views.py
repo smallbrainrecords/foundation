@@ -1,14 +1,14 @@
-from common.views import *
+import datetime
 
-from models import UserProfile, AccessLog, Problem, \
- Goal, ToDo, Guideline, TextNote, PatientImage, \
- Encounter, EncounterEvent, Sharing, Viewer, \
- ViewStatus, ProblemRelationship
-from pain.models import PainAvatar
+from django.views.static import serve
 
 import project.settings as settings
-
-import datetime
+from common.views import *
+from models import UserProfile, Problem, \
+    Goal, ToDo, Guideline, TextNote, PatientImage, \
+    Encounter, EncounterEvent, Sharing, Viewer, \
+    ViewStatus, ProblemRelationship
+from pain.models import PainAvatar
 
 
 # OLD
@@ -48,7 +48,7 @@ def register(request):
             return HttpResponseRedirect('/')
         u, created = User.objects.get_or_create(username=email, email=email)
         if created:
-            u.set_password(password) 
+            u.set_password(password)
             u.first_name = request.POST['first_name']
             u.last_name = request.POST['last_name']
             u.save()
@@ -150,8 +150,12 @@ def is_patient(user):
 
 @login_required
 def list_users(request):
-
-    users = [{'is_patient': is_patient(user), 'username': user.username, 'firstname': user.first_name, 'lastname': user.last_name, 'id': user.id, 'sex': UserProfile.objects.get(user=user).sex, 'contact_number': UserProfile.objects.get(user=user).phone_number, 'birthday': UserProfile.objects.get(user=user).date_of_birth.strftime('%m/%d/%Y') if UserProfile.objects.get(user=user).date_of_birth else ''} for user in User.objects.all().order_by('first_name') if UserProfile.objects.filter(user=user)]
+    users = [{'is_patient': is_patient(user), 'username': user.username, 'firstname': user.first_name,
+              'lastname': user.last_name, 'id': user.id, 'sex': UserProfile.objects.get(user=user).sex,
+              'contact_number': UserProfile.objects.get(user=user).phone_number,
+              'birthday': UserProfile.objects.get(user=user).date_of_birth.strftime(
+                  '%m/%d/%Y') if UserProfile.objects.get(user=user).date_of_birth else ''} for user in
+             User.objects.all().order_by('first_name') if UserProfile.objects.filter(user=user)]
     return HttpResponse(json.dumps(users), content_type="application/json")
 
 
@@ -160,12 +164,15 @@ def view_patient(request, user_id):
     role = UserProfile.objects.get(user=request.user).role
     user = User.objects.get(id=user_id)
     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
-    if (not ((request.user == user) or (role in ['admin', 'physician']) or (Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
+    if (not ((request.user == user) or (role in ['admin', 'physician']) or (
+            Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
         return HttpResponse("Not allowed")
     if (not is_patient(user)):
         return HttpResponse("Error: this user isn't a patient")
-    context = {'patient': user, 'user_role': UserProfile.objects.get(user=request.user).role, 'patient_profile': UserProfile.objects.get(user=user), 'problems': Problem.objects.filter(patient=user)}
-    context['user_role'] = context['user_role'] if not UserProfile.objects.get(user=request.user).role == 'admin' else 'physician'
+    context = {'patient': user, 'user_role': UserProfile.objects.get(user=request.user).role,
+               'patient_profile': UserProfile.objects.get(user=user), 'problems': Problem.objects.filter(patient=user)}
+    context['user_role'] = context['user_role'] if not UserProfile.objects.get(
+        user=request.user).role == 'admin' else 'physician'
     context.update({'pain_avatars': PainAvatar.objects.filter(patient=user).order_by('-datetime')})
     context['encounters'] = Encounter.objects.filter(patient=user).order_by('-starttime')
 
@@ -181,7 +188,9 @@ def view_patient(request, user_id):
         pass
     import os
     import re
-    context['problem_elements'] = [ re.search('problem_(?P<element>\w+)', f).group('element') for f in os.listdir('/root/core/static/js/problems/') if not (f == 'problem_element_template.js' or f == 'problems.js')]
+    context['problem_elements'] = [re.search('problem_(?P<element>\w+)', f).group('element') for f in
+                                   os.listdir('/root/core/static/js/problems/') if
+                                   not (f == 'problem_element_template.js' or f == 'problems.js')]
     return render_to_response("patient.html", context)
 
 
@@ -199,11 +208,12 @@ def get_patient_data(request, patient_id):
     viewers = []
 
     time_threshold = datetime.datetime.now() - timedelta(seconds=5)
-    viewers = list(set([viewer.viewer for viewer in Viewer.objects.filter(patient=patient, datetime__gte=time_threshold)]))
+    viewers = list(
+        set([viewer.viewer for viewer in Viewer.objects.filter(patient=patient, datetime__gte=time_threshold)]))
     raw_viewers = []
-    print 'viewers: '+str(viewers)
+    print 'viewers: ' + str(viewers)
     for viewer in viewers:
-        print 'viewer: '+str(viewer)
+        print 'viewer: ' + str(viewer)
         raw_viewers.append({'user_id': viewer.id, 'full_name': viewer.get_full_name()})
     viewers = raw_viewers
     view_status = {}
@@ -230,23 +240,26 @@ def get_patient_data(request, patient_id):
         p.save()
 
     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
-    if (not ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician']) or (Sharing.objects.filter(patient=patient, other_patient=request.user)))):
+    if (not ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician']) or (
+            Sharing.objects.filter(patient=patient, other_patient=request.user)))):
         return HttpResponse("Not allowed")
     # Right now only users with role == patient have a patient page
     if (not is_patient(patient)):
         return HttpResponse("Error: this user isn't a patient")
 
-    data = {'problems': {'is_active': [], 'not_active': []}, 'goals': {'not_accomplished': [], 'accomplished': []}, 'notes': [], 'todos': {'not_accomplished': [], 'accomplished': []}, 'concept_ids': {}, 'viewers': viewers, 'view_status': view_status}
+    data = {'problems': {'is_active': [], 'not_active': []}, 'goals': {'not_accomplished': [], 'accomplished': []},
+            'notes': [], 'todos': {'not_accomplished': [], 'accomplished': []}, 'concept_ids': {}, 'viewers': viewers,
+            'view_status': view_status}
     if 'get_only_status' in request.GET:
         return HttpResponse(json.dumps(data), content_type="application/json")
-    # At this point we know the user is allowed to view this patient. 
-    # Now we have to detrimine what data can be provided to the requesting user
-    # If the user requesting the patient data is the targeted patient or an admin or physician then we know it's OK to provide all the data
-    # if ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician'])):
+        # At this point we know the user is allowed to view this patient.
+        # Now we have to detrimine what data can be provided to the requesting user
+        # If the user requesting the patient data is the targeted patient or an admin or physician then we know it's OK to provide all the data
+        # if ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician'])):
         # Get all problems for the patient 
-        #problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
-    # Otherwise the requesting user is only allowed to see some of the patient's info    
-    #else:
+        # problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
+        # Otherwise the requesting user is only allowed to see some of the patient's info
+        # else:
         # Get just the problems shared to the user
     #    problems_query = [i.item for i in Sharing.objects.filter(content_type=ContentType.objects.get(app_label="emr", model="problem"), patient=patient, other_patient=request.user)]
     problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
@@ -274,22 +287,33 @@ def get_patient_data(request, patient_id):
             else:
                 affects[int(i.id)] = False
         d['affects'] = affects
-        d['problem_name'] = problem.problem_name 
+        d['problem_name'] = problem.problem_name
         d['images'] = [g.image.url for g in PatientImage.objects.filter(problem=problem)]
-        d['guidelines'] = [{'guideline': g.guideline, 'reference_url': g.reference_url, 'form': g.get_form()} for g in Guideline.objects.filter(concept_id=problem.concept_id)]
+        d['guidelines'] = [{'guideline': g.guideline, 'reference_url': g.reference_url, 'form': g.get_form()} for g in
+                           Guideline.objects.filter(concept_id=problem.concept_id)]
         d['is_controlled'] = problem.is_controlled
         d['is_authenticated'] = problem.authenticated
         d['is_active'] = problem.is_active
-        d['goals'] = [{'id': g.id, 'start_date': g.start_date.strftime('%m/%d/%Y'), 'goal': g.goal, 'is_controlled': g.is_controlled, 'accomplished': g.accomplished, 'notes': [{'note': n.note} for n in g.notes.all().order_by('-datetime')]} for g in Goal.objects.filter(problem=problem, accomplished=False)]
-        d['todos'] = [{'todo': g.todo, 'id': g.id, 'accomplished': g.accomplished} for g in ToDo.objects.filter(problem=problem, accomplished=False)]
-        d['notes'] = {'by_physician': [{'note': g.note} for g in TextNote.objects.filter(problem=problem, by__in=['physician', 'admin']).order_by('-datetime')], 'by_patient': [{'note': g.note} for g in TextNote.objects.filter(problem=problem, by='patient').order_by('-datetime')], 'all': [{'by': g.by, 'note': g.note} for g in TextNote.objects.filter(problem=problem)]}
+        d['goals'] = [{'id': g.id, 'start_date': g.start_date.strftime('%m/%d/%Y'), 'goal': g.goal,
+                       'is_controlled': g.is_controlled, 'accomplished': g.accomplished,
+                       'notes': [{'note': n.note} for n in g.notes.all().order_by('-datetime')]} for g in
+                      Goal.objects.filter(problem=problem, accomplished=False)]
+        d['todos'] = [{'todo': g.todo, 'id': g.id, 'accomplished': g.accomplished} for g in
+                      ToDo.objects.filter(problem=problem, accomplished=False)]
+        d['notes'] = {'by_physician': [{'note': g.note} for g in
+                                       TextNote.objects.filter(problem=problem, by__in=['physician', 'admin']).order_by(
+                                           '-datetime')], 'by_patient': [{'note': g.note} for g in
+                                                                         TextNote.objects.filter(problem=problem,
+                                                                                                 by='patient').order_by(
+                                                                             '-datetime')],
+                      'all': [{'by': g.by, 'note': g.note} for g in TextNote.objects.filter(problem=problem)]}
         data['problems']['is_active'].append(d)
         try:
             data['concept_ids'][problem.concept_id] = problem.id
 
-            for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
+            for j in [i.__dict__ for i in snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
                 data['concept_ids'][j['code']] = problem.id
-            for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].children]:
+            for j in [i.__dict__ for i in snomedct.SNOMEDCT[int(problem.concept_id)].children]:
                 data['concept_ids'][j['code']] = problem.id
         except:
             pass
@@ -302,20 +326,31 @@ def get_patient_data(request, patient_id):
         d['affects'] = [{'problem_id': g.id, 'problem_name': g.problem_name} for g in problem.get_children()]
         d['problem_name'] = problem.problem_name
         d['images'] = [g.image.url for g in PatientImage.objects.filter(problem=problem)]
-        d['guidelines'] = [{'guideline': g.guideline, 'reference_url': g.reference_url} for g in Guideline.objects.filter(concept_id=problem.concept_id)]
+        d['guidelines'] = [{'guideline': g.guideline, 'reference_url': g.reference_url} for g in
+                           Guideline.objects.filter(concept_id=problem.concept_id)]
         d['is_controlled'] = problem.is_controlled
         d['is_authenticated'] = problem.authenticated
         d['is_active'] = problem.is_active
-        d['goals'] = [{'id': g.id, 'start_date': g.start_date.strftime('%m/%d/%Y'), 'goal': g.goal, 'is_controlled': g.is_controlled, 'accomplished': g.accomplished, 'notes': [{'note': n.note} for n in g.notes.all().order_by('-datetime')]} for g in Goal.objects.filter(problem=problem, accomplished=False)]
-        d['todos'] = [{'todo': g.todo, 'id': g.id, 'accomplished': g.accomplished} for g in ToDo.objects.filter(problem=problem, accomplished=False)]
-        d['notes'] = {'by_physician': [{'note': g.note} for g in TextNote.objects.filter(problem=problem, by__in=['physician', 'admin']).order_by('-datetime')], 'by_patient': [{'note': g.note} for g in TextNote.objects.filter(problem=problem, by='patient').order_by('-datetime')], 'all': [{'by': g.by, 'note': g.note} for g in TextNote.objects.filter(problem=problem)]}
+        d['goals'] = [{'id': g.id, 'start_date': g.start_date.strftime('%m/%d/%Y'), 'goal': g.goal,
+                       'is_controlled': g.is_controlled, 'accomplished': g.accomplished,
+                       'notes': [{'note': n.note} for n in g.notes.all().order_by('-datetime')]} for g in
+                      Goal.objects.filter(problem=problem, accomplished=False)]
+        d['todos'] = [{'todo': g.todo, 'id': g.id, 'accomplished': g.accomplished} for g in
+                      ToDo.objects.filter(problem=problem, accomplished=False)]
+        d['notes'] = {'by_physician': [{'note': g.note} for g in
+                                       TextNote.objects.filter(problem=problem, by__in=['physician', 'admin']).order_by(
+                                           '-datetime')], 'by_patient': [{'note': g.note} for g in
+                                                                         TextNote.objects.filter(problem=problem,
+                                                                                                 by='patient').order_by(
+                                                                             '-datetime')],
+                      'all': [{'by': g.by, 'note': g.note} for g in TextNote.objects.filter(problem=problem)]}
         data['problems']['not_active'].append(d)
         try:
             data['concept_ids'][problem.concept_id] = problem.id
 
-            for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
+            for j in [i.__dict__ for i in snomedct.SNOMEDCT[int(problem.concept_id)].parents]:
                 data['concept_ids'][j['code']] = problem.id
-            for j in [i.__dict__ for i in  snomedct.SNOMEDCT[int(problem.concept_id)].children]:
+            for j in [i.__dict__ for i in snomedct.SNOMEDCT[int(problem.concept_id)].children]:
                 data['concept_ids'][j['code']] = problem.id
         except:
             pass
@@ -376,7 +411,7 @@ def change_status(request):
             goal.problem.authenticated = authenticated
             goal.problem.save()
         value = True if request.POST['value'] == 'true' else False
-        setattr(goal,'is_controlled', value)
+        setattr(goal, 'is_controlled', value)
         goal.save()
     elif request.POST['target'] == 'todo':
         todo = ToDo.objects.get(id=request.POST['id'])
@@ -384,27 +419,31 @@ def change_status(request):
             todo.problem.authenticated = authenticated
             todo.problem.save()
         value = True if request.POST['value'] == 'true' else False
-        setattr(todo,'accomplished', value)
+        setattr(todo, 'accomplished', value)
         todo.save()
     elif request.POST['attr'] == 'effected_by':
         problem = Problem.objects.get(id=request.POST['id'])
         problem.authenticated = authenticated
         problem.save()
         if request.POST['value'] == 'true':
-            pr = ProblemRelationship(source=Problem.objects.get(id=request.POST['target']), target=Problem.objects.get(id=request.POST['id']))
+            pr = ProblemRelationship(source=Problem.objects.get(id=request.POST['target']),
+                                     target=Problem.objects.get(id=request.POST['id']))
             pr.save()
         else:
-            pr = ProblemRelationship.objects.get(source=Problem.objects.get(id=request.POST['target']), target=Problem.objects.get(id=request.POST['id']))
+            pr = ProblemRelationship.objects.get(source=Problem.objects.get(id=request.POST['target']),
+                                                 target=Problem.objects.get(id=request.POST['id']))
             pr.delete()
     elif request.POST['attr'] == 'affects':
         problem = Problem.objects.get(id=request.POST['id'])
         problem.authenticated = authenticated
         problem.save()
         if request.POST['value'] == 'true':
-            pr = ProblemRelationship(source=Problem.objects.get(id=request.POST['id']), target=Problem.objects.get(id=request.POST['target']))
+            pr = ProblemRelationship(source=Problem.objects.get(id=request.POST['id']),
+                                     target=Problem.objects.get(id=request.POST['target']))
             pr.save()
         else:
-            pr = ProblemRelationship.objects.get(source=Problem.objects.get(id=request.POST['id']), target=Problem.objects.get(id=request.POST['target']))
+            pr = ProblemRelationship.objects.get(source=Problem.objects.get(id=request.POST['id']),
+                                                 target=Problem.objects.get(id=request.POST['target']))
             pr.delete()
     return HttpResponse('saved')
 
@@ -432,7 +471,7 @@ def submit_data_for_problem(request, problem_id):
             problem.parent = Problem.objects.get(id=request.POST['data'])
         problem.save()
     elif request.POST['type'] == 'problem_start_date':
-        print 'problem_start_date: '+str(request.POST)
+        print 'problem_start_date: ' + str(request.POST)
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
 
@@ -464,10 +503,10 @@ def submit_data_for_problem(request, problem_id):
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
         problem.save()
-        model = get_model('emr', request.POST['type'].capitalize()) 
-    
+        model = get_model('emr', request.POST['type'].capitalize())
+
         m = model(patient=problem.patient, problem=problem)
-        setattr(m,request.POST['type'], request.POST['data'] ) 
+        setattr(m, request.POST['type'], request.POST['data'])
         m.save()
         return HttpResponse(m.id)
     return HttpResponse('saved')
@@ -478,7 +517,8 @@ def add_problem(request, patient_id):
     role = UserProfile.objects.get(user=request.user).role
     authenticated = True if (role == 'physician' or role == 'admin') else False
     if 'problem_name' in request.POST:
-        problem = Problem(patient=User.objects.get(id=patient_id), problem_name=request.POST['problem_name'], concept_id=request.POST['concept_id'], authenticated=authenticated)
+        problem = Problem(patient=User.objects.get(id=patient_id), problem_name=request.POST['problem_name'],
+                          concept_id=request.POST['concept_id'], authenticated=authenticated)
         problem.save()
     elif 'goal' in request.POST:
         goal = Goal(patient=User.objects.get(id=patient_id), goal=request.POST['goal'])
@@ -500,7 +540,8 @@ def upload_image_to_problem(request, problem_id):
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
         problem.save()
-        patient_image = PatientImage(patient=Problem.objects.get(id=problem_id).patient, problem=Problem.objects.get(id=problem_id), image=request.FILES['file'])
+        patient_image = PatientImage(patient=Problem.objects.get(id=problem_id).patient,
+                                     problem=Problem.objects.get(id=problem_id), image=request.FILES['file'])
         patient_image.save()
         try:
             summary = 'Physician added image<br/><a href="/media/%s"><img src="/media/%s" style="max-width:100px; max-height:100px" /></a>' % (
@@ -632,6 +673,7 @@ def list_snomed_terms(request):
 
     return HttpResponse(results_holder, content_type="application/json")
 
+
 # @login_required
 # def list_snomed_terms(request):
 #     from pymedtermino import *
@@ -659,3 +701,22 @@ def list_snomed_terms(request):
 #     results_holder = json.dumps(results_holder)
 
 #     return HttpResponse(results_holder, content_type="application/json")
+
+def has_read_permission(request, path):
+    """ Only show to authenticated users"""
+    # Note this could allow access to paths including ../..
+    # Don't use this simple check in production!
+    return request.user.is_authenticated()
+
+
+def serve_private_file(request, path):
+    """
+    Simple example of a view to serve private files with xsendfile"
+    :param request:
+    :param path:
+    :return:
+    """
+    if has_read_permission(request, path):
+        return serve(request, path, settings.MEDIA_ROOT, show_indexes=False)
+    else:
+        return HttpResponseForbidden()

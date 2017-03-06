@@ -42,12 +42,6 @@ urlpatterns = patterns('',
                        url(r'^submit_data_for_problem/(?P<problem_id>\d+)/$', 'emr.views.submit_data_for_problem'),
                        url(r'^update/$', 'emr.views.update'),
 
-                       # these urls should be removed
-                       # url(r'^create_encounter/(?P<patient_id>\d+)/$', 'emr.views.create_encounter'),
-                       # url(r'^stop_encounter/(?P<encounter_id>\d+)/$', 'emr.views.stop_encounter'),
-                       # url(r'^save_encounter_event/$', 'emr.views.save_event_summary'),
-                       # url(r'^encounter/(?P<encounter_id>\d+)/$', 'emr.views.encounter'),
-
                        # New URLS
                        url(r'^list_terms/$', 'emr.views.list_snomed_terms'),
 
@@ -92,8 +86,7 @@ urlpatterns = patterns('',
                        url(r'session_security/', include('session_security.urls')),
 
                        # MEDIA AND STATIC FILES
-                       (r'^media/(?P<path>.*)$', 'django.views.static.serve',
-                        {'document_root': settings.MEDIA_ROOT, 'show_indexes': False}),
+                       (r'^media/(?P<path>.*)$', 'emr.views.serve_private_file'),
                        (r'^static/(?P<path>.*)$', 'django.views.static.serve',
                         {'document_root': settings.STATIC_ROOT, 'show_indexes': True}),
                        )
