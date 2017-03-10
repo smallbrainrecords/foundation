@@ -559,15 +559,6 @@ def upload_problem_image(request, problem_id):
         patient_image = PatientImage(patient=patient, problem=problem, image=image)
         patient_image.save()
 
-        # filename = str(patient_image.image.path)
-        # img = Image.open(filename)
-        #
-        # if img.mode not in ('L', 'RGB'):
-        #     img = img.convert('RGB')
-        #
-        # img.thumbnail((160, 160), Image.ANTIALIAS)
-        # img.save(filename)
-
         activity = summary = '''
         Physician added <u>image</u> to <u>problem</u> <b>%s</b> <br/><a href="/media/%s">
         <img src="/media/%s" class="thumbnail thumbnail-custom" /></a>
