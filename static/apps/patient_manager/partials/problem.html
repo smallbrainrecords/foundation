@@ -578,6 +578,7 @@
             <span ng-show='permitted(["add_problem_image"])'>
 				<button class='btn btn-sm btn-default' ngf-select="open_image_upload_box($files)" multiple
                         ngf-max-files="5"
+                        ngf-resize="{width: 160, height: 160}"
                         accept="image/*"> Upload </button>
 			</span>
         </div>

@@ -399,8 +399,12 @@ todo .new-tagged-todo {
     font-size: 2em;
     top: 10px; }
 
-#image-info .thumbnail.cover {
-  width: 100%; }
+#image-info .cover {
+  width: 100%;
+  max-height: 315px; }
+#image-info .thumbnail {
+  width: 160px;
+  height: 160px; }
 
 #bdfi .form-group input {
   margin: 5px; }
