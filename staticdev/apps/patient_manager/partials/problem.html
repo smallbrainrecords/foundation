@@ -424,9 +424,8 @@
                                         </div>
                                         <div class="col-md-6 text-right">
                                             <h3>
-                                                            <span
-                                                                    ng-bind="data.mostRecentValue"></span>
-                                                <span ng-bind="data.observation_units[0].value_unit"></span>
+                                                <span ng-bind="data.mostRecentValue"></span>
+                                                <span ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}}</span>
                                             </h3>
                                             <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                                         </div>

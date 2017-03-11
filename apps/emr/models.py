@@ -97,6 +97,7 @@ OBSERVATION_TYPES = [
     {
         'name': 'height',
         'unit': [
+            'in',
             'ft',
             'cm',
         ],

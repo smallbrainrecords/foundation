@@ -10,17 +10,18 @@
         <!--Time range selector-->
         <div>
 
-        <div class="btn-group btn-group-justified graph-view-mode" fixed-zone offset-orientation='top' offset-top='50'
-             id="time-range-select">
-            <label class="btn btn-default" ng-click="viewMode='Week'"
-                   ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
-            <label class="btn btn-default" ng-click="viewMode='Month'"
-                   ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
-            <label class="btn btn-default" ng-click="viewMode='Year'"
-                   ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
-            <label class="btn btn-default" ng-click="viewMode='All'"
-                   ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
-        </div>
+            <div class="btn-group btn-group-justified graph-view-mode" fixed-zone offset-orientation='top'
+                 offset-top='50'
+                 id="time-range-select">
+                <label class="btn btn-default" ng-click="viewMode='Week'"
+                       ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
+                <label class="btn btn-default" ng-click="viewMode='Month'"
+                       ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
+                <label class="btn btn-default" ng-click="viewMode='Year'"
+                       ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
+                <label class="btn btn-default" ng-click="viewMode='All'"
+                       ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
+            </div>
         </div>
 
         <!--Graph-->
@@ -31,9 +32,9 @@
                 </div>
                 <div class="col-md-6 text-right">
                     <h3>
-                                                            <span
-                                                                    ng-bind="data.mostRecentValue || 0"></span>
-                        <span ng-bind="data.observation_units[0].value_unit"></span>
+                        <span ng-bind="data.mostRecentValue || 0"></span>
+                        <span ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}}</span>
+
                     </h3>
                     <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                 </div>
