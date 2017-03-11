@@ -1,6 +1,6 @@
 # Django settings for emr project.
 
-DEBUG = False    # Never set 'DEBUG = True' in production environment
+DEBUG = False  # Never set 'DEBUG = True' in production environment
 TEMPLATE_DEBUG = True
 
 # toggle experimental features
@@ -158,10 +158,9 @@ INSTALLED_APPS = (
 )
 
 AUTHENTICATION_BACKENDS = (
-#    'social_auth.backends.google.GoogleOAuth2Backend',
+    #    'social_auth.backends.google.GoogleOAuth2Backend',
     'django.contrib.auth.backends.ModelBackend',
 )
-
 
 # GOOGLE_OAUTH2_CLIENT_ID = ''
 # GOOGLE_OAUTH2_CLIENT_SECRET = ''
@@ -179,7 +178,6 @@ SESSION_SECURITY_PASSIVE_URLS = {}
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-
 
 # LOGIN_URL          = '/login/google-oauth2/'
 LOGIN_URL = '/u/login/'
@@ -200,6 +198,10 @@ LOGGING = {
         }
     },
     'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
@@ -207,6 +209,10 @@ LOGGING = {
         }
     },
     'loggers': {
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
@@ -220,20 +226,20 @@ SNOMEDCT = {}
 PROBLEMS_PATH = '/root/core/static/js/problems/'
 
 ALLOWED_HOSTS = [
-#     '146.148.52.187',
-     'andromedahealth.com',
-     ]
+    #     '146.148.52.187',
+    'andromedahealth.com',
+]
 
 try:
     from local_settings import *
 except ImportError as e:
     pass
 
-# The following is imported from local_settings.py
-# EMAIL_USE_TLS = True
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_HOST_PASSWORD = ''
-# EMAIL_HOST_USER = ''
-# EMAIL_PORT = 587
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+    # The following is imported from local_settings.py
+    # EMAIL_USE_TLS = True
+    # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    # EMAIL_HOST = 'smtp.gmail.com'
+    # EMAIL_HOST_PASSWORD = ''
+    # EMAIL_HOST_USER = ''
+    # EMAIL_PORT = 587
+    # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
