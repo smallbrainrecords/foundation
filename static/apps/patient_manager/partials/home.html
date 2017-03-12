@@ -599,44 +599,43 @@
 
         <!-- Story tab -->
         <div role="tabpanel" class="tab-pane tab-mystory"
-             ng-class="collapse.show_homepage_tab=='mystory' ? 'active': ''"
-             ng-if="checkSharedMyStory();">
+             ng-class="collapse.show_homepage_tab=='mystory' ? 'active': ''" ng-if="checkSharedMyStory();">
             <h3>My Story</h3>
             <br>
             <div class="row my-story">
                 <div class="col-sm-3 my-story-left">
                     <!--Available tabs-->
-                    <div>
-                        <ul class='ul-clean my-story-list' style="padding-left: 0;">
-                            <li ng-repeat="tab in my_story_tabs"
-                                ng-if="tab.private==false || active_user.role=='patient' || active_user.user.id==tab.author.id">
-                                <button class="btn-link"
-                                        ng-click="view_my_story_tab(tab);"
-                                        ng-class="{'active': tab==selected_tab}"
-                                        ng-hide="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
-                                    {{ tab.name }}
+                    <ul class='ul-clean my-story-list no-padding'>
+                        <li ng-repeat="tab in my_story_tabs"
+                            ng-if="tab.private==false || active_user.role=='patient' || active_user.user.id==tab.author.id">
+                            <button class="btn-link"
+                                    ng-click="view_my_story_tab(tab);"
+                                    ng-class="{'active': tab==selected_tab}"
+                                    ng-hide="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
+                                {{ tab.name }}
+                            </button>
+                            <div class="row"
+                                 ng-show="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
+                                <input type="text" ng-model="selected_tab.name" title="{{selected_tab.name}}">
+                                <button class="btn btn-default"
+                                        ng-click="save_my_story_tab(selected_tab);">Save
                                 </button>
-                                <span class="row"
-                                      ng-show="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
-                                        <input type="text" ng-model="selected_tab.name">
-                                        <button class="btn btn-default"
-                                                ng-click="save_my_story_tab(selected_tab);">Save</button>
-                                    </span>
-                            </li>
-                        </ul>
-                    </div>
+                            </div>
+                        </li>
+                    </ul>
 
                     <!--Inline form-->
                     <div class="row">
                         <div class="col-md-12 text-right">
-                            <button class="btn btn-default"
+                            <button class="btn btn-primary"
                                     ng-click="toggle_add_my_story_tab();"
                                     ng-show="!show_add_my_story_tab"
                                     ng-if="enableMyStoryEdit && (active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin')">
                                 Add Tab
                             </button>
-                            <button ng-click="enableMyStoryEdit = !enableMyStoryEdit"
-                                    class="btn btn-default">Edit
+                            <button ng-click="enableMyStoryEdit = !enableMyStoryEdit" class="btn"
+                                    ng-class="enableMyStoryEdit ?'btn-danger':'btn-default'"
+                                    ng-bind="enableMyStoryEdit ? 'Exit' :'Edit'">
                             </button>
                         </div>
 
@@ -685,57 +684,54 @@
                                 </div>
                             </form>
                         </div>
-
                     </div>
                 </div>
 
                 <div class="col-sm-9 my-story-right">
-                    <div ng-show="selected_tab">
+                    <!-- Display all component-->
+                    <div ng-repeat="(tabIdx,tab) in my_story_tabs" ng-show="selected_tab == tab">
                         <div class="row"
-                             ng-repeat="component in selected_tab.my_story_tab_components"
+                             ng-repeat="(textComponentIdx,component) in tab.my_story_tab_components"
                              ng-if="component.private==false || active_user.role=='patient' || active_user.user.id==component.author.id">
                             <div class="col-sm-12">
-                                <div>
-                                    <b ng-hide="show_edit_my_story_tab && active_user.user.id==component.author.id">{{
-                                        component.name }}</b>
+                                <!--Editing section-->
+                                <div class="text-component-edit-form">
+                                    <b ng-hide="show_edit_my_story_tab && active_user.user.id==component.author.id">
+                                        {{ component.name }}
+                                    </b>
                                     <span ng-show="show_edit_my_story_tab && active_user.user.id==component.author.id">
-                                            <b>Name: </b><input type="text" ng-model="component.name">
-                                            <b>Concept ID: </b><input type="text" ng-model="component.concept_id">
-                                            <button class="btn btn-default" ng-click="save_my_story_text(component);">Save</button>
-                                            <button class="btn btn-default"
+                                            <b>Name: </b><input type="text" ng-model="component.name" title="Name">
+                                            <b>Concept ID: </b><input type="text" ng-model="component.concept_id"
+                                                                      title="Concept ID">
+                                            <button class="btn btn-primary" ng-click="save_my_story_text(component);">Save</button>
+                                            <button class="btn btn-danger"
                                                     ng-click="delete_my_story_text(component);"
                                                     ng-if="active_user.user.id==component.author.id">Delete</button>
                                         </span>
                                 </div>
-                                <div ng-repeat="entry in component.text_component_entries"
-                                     ng-if="$first">
-                                        <textarea class="form-control" ng-model="entry.text"
-                                                  ng-change="change_component_text(component, entry, oldText)"
-                                                  ng-click="oldText = entry.text"
-                                                  ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
+
+                                <!-- Last text entried-->
+                                <div ng-repeat="(entriesIdx,entry) in component.text_component_entries" ng-if="$first">
+                                    <textarea class="tab-components form-control"
+                                              id="{{myStoryTabTextComponentArray.indexOf(component) + 1}}"
+                                              ng-model="entry.text"
+                                              ng-change="change_component_text(component, entry, oldText)"
+                                              ng-click="oldText = entry.text"
+                                              ng-model-options="{updateOn: 'blur', debounce: 1000}" title=""></textarea>
 
                                     <p>Last edited by: {{ entry.author.username }}
                                         on {{ entry.datetime|date:'M/d/yyyy' }}
-                                        <button class="btn btn-link" ng-click="see_previous_entries()">see
-                                            previous
-                                            entries
-                                            ({{ component.text_component_entries.length - 1 }})
+                                        <button class="btn btn-link" ng-click="see_previous_entries()" tabindex="-1">
+                                            See previous entries ({{ component.text_component_entries.length - 1 }})
                                         </button>
                                     </p>
                                 </div>
-                                <div ng-if="component.text_component_entries.length == 0">
-                                        <textarea class="form-control" ng-model="entry.text"
-                                                  ng-change="change_component_text(component, entry, oldText)"
-                                                  ng-click="oldText = entry.text"
-                                                  ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
-                                </div>
 
+                                <!-- Entries history -->
                                 <div ng-show="show_previous_entries">
-                                    <div ng-repeat="entry in component.text_component_entries"
-                                         ng-if="!$first">
-                                        {{ entry.text }}
-                                        <p>by {{ entry.author.username }}
-                                            on {{ entry.datetime|date:'M/d/yyyy' }}</p>
+                                    <div ng-repeat="entry in component.text_component_entries" ng-if="!$first">
+                                        <span ng-bind="entry.text"></span>
+                                        <p>by {{ entry.author.username }} on {{ entry.datetime|date:'M/d/yyyy' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -799,7 +795,7 @@
                                         <div class="col-sm-10">
                                             <div class="radio">
                                                 <label>
-                                                    <input type="radio" ng-value="true" checked
+                                                    <input type="radio" ng-value="true" checked class="styled"
                                                            ng-model="new_text.private">
                                                     keep it private
                                                 </label>
@@ -818,7 +814,7 @@
                                         <div class="col-sm-10">
                                             <button class="btn btn-default"
                                                     ng-click="toggle_add_my_story_text();">
-                                                cancel
+                                                Cancel
                                             </button>
                                             <button class="btn btn-default"
                                                     ng-click="add_my_story_text(selected_tab, new_text);">Save
@@ -879,7 +875,8 @@
                                             <div class="col-md-6 text-right">
                                                 <h3>
                                                     <span ng-bind="data.mostRecentValue"></span>
-                                                    <span ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}}</span>
+                                                    <span ng-repeat='unit in data.observation_units'
+                                                          ng-if="unit.is_used"> {{unit.value_unit}}</span>
 
                                                 </h3>
                                                 <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
@@ -912,7 +909,8 @@
                                             <div class="col-md-6 text-right">
                                                 <h3>
                                                     <span ng-bind="data.mostRecentValue"></span>
-                                                    <span ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}}</span>
+                                                    <span ng-repeat='unit in data.observation_units'
+                                                          ng-if="unit.is_used"> {{unit.value_unit}}</span>
                                                 </h3>
                                                 <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                                             </div>

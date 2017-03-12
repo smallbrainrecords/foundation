@@ -1,19 +1,12 @@
 (function () {
-
     'use strict';
-
-
     var ManagerApp = angular.module('ManagerApp',
         ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
-
             'httpModule', 'sharedModule', 'colon_cancers', 'a1c', 'medication', 'problems',
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
-
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
             'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment']);
-
-
     ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider) {
         /**
          * Configuration for recording service
@@ -22,45 +15,35 @@
             .withMp3Conversion(true, {
                 bitRate: 64
             });
-
         /**
          * Global chart configuration
          */
         ChartJsProvider.setOptions({
             chartColors: ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF']
         });
-
         /**
          * Application route
          */
         $routeProvider
             .when('/', {
-
                 templateUrl: '/static/apps/patient_manager/partials/home.html',
                 controller: 'HomeCtrl'
             })
             .when('/edit/', {
-
                 templateUrl: '/static/apps/patient_manager/partials/edit.html',
                 controller: 'EditUserCtrl'
             })
             .when('/problem/:problem_id', {
-
                 templateUrl: '/static/apps/patient_manager/partials/problem.html',
                 controller: 'ProblemsCtrl'
-
             })
             .when('/goal/:goal_id', {
-
                 templateUrl: '/static/apps/patient_manager/partials/goal.html',
                 controller: 'GoalsCtrl'
-
             })
             .when('/encounter/:encounter_id', {
-
                 templateUrl: '/static/apps/patient_manager/partials/encounter-page.template.html',
                 controller: 'EncounterPageCtrl'
-
             })
             .when("/todo/:todo_id", {
                 templateUrl: '/static/apps/patient_manager/partials/patient-todo-page.template.html',
@@ -83,12 +66,10 @@
                 controller: 'EditValueCtrl'
             })
             .when('/manage/sharing', {
-
                 templateUrl: '/static/apps/patient_manager/partials/manage_sharing_patient.html',
                 controller: 'ManageSharingPatientCtrl'
             })
             .when('/manage/sharing/problem/:sharing_patient_id', {
-
                 templateUrl: '/static/apps/patient_manager/partials/manage_sharing_problem.html',
                 controller: 'ManageSharingProblemCtrl'
             })
@@ -132,9 +113,7 @@
                 templateUrl: '/static/apps/document/document-page.template.html',
                 controller: 'ViewDocumentCtrl'
             });
-
     });
-
     ManagerApp.run(function (CollapseService, sharedService) {
         // Loading general setting, risk setting is failed to load -> deferred setting value
         sharedService.getSettings().then(function (response) {
@@ -144,8 +123,6 @@
         });
         CollapseService.initHotKey();
     });
-
-
     ManagerApp.factory('CollapseService', function (hotkeys, $location, $timeout, $rootScope) {
         var CollapseService = {
             show_colon_collapse: false,
@@ -160,7 +137,6 @@
             initHotKey: initHotKey
         };
         return CollapseService;
-
         function ChangeColonCollapse() {
             CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
         }
@@ -187,17 +163,18 @@
                     $location.path('/');
                 }
             });
-
             hotkeys.add({
                 combo: 'ctrl+s',
                 description: 'Go to My story tab',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
                     CollapseService.ChangeHomepageTab('mystory');
+
                     $location.path('/');
+
+                    $rootScope.$broadcast('tabPressed', {});
                 }
             });
-
             hotkeys.add({
                 combo: 'ctrl+d',
                 description: 'Go to Data tab',
@@ -207,18 +184,15 @@
                     $location.path('/');
                 }
             });
-
             hotkeys.add({
                 combo: 'ctrl+m',
                 description: 'Go to Medication tab',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
                     CollapseService.ChangeHomepageTab('medication');
-
                     $location.path('/');
                 }
             });
-
             hotkeys.add({
                 combo: 'ctrl+shift+i',
                 description: 'Go to add new problem',
@@ -229,7 +203,6 @@
                     $location.path('/');
                 }
             });
-
             hotkeys.add({
                 combo: 'ctrl+shift+m',
                 description: 'Go to add new medication',
@@ -242,15 +215,21 @@
                     }, 500);
                 }
             });
-
             hotkeys.add({
                 combo: 'ctrl+c',
                 description: 'Copy most recent encounter to clipboard',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
                     $location.path('/');
-
                     $rootScope.$broadcast('copyEncounter', {});
+                }
+            });
+            hotkeys.add({
+                combo: 'tab',
+                description: 'Navigate through My Story text component',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $rootScope.$broadcast('tabPressed', null);
                 }
             });
         }

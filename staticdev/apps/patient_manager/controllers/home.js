@@ -1,8 +1,5 @@
 (function () {
-
     'use strict';
-
-
     angular.module('ManagerApp')
         .controller('HomeCtrl', HomeCtrl);
     HomeCtrl.$inject = ['$scope', '$routeParams', 'patientService', 'problemService', 'encounterService',
@@ -15,141 +12,100 @@
 
         $scope.patient_id = $('#patient_id').val(); // Patients are being managed
         $scope.user_id = $('#user_id').val(); // Current logged in id
-        $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
-        $scope.patient = {}; // All patient's data loaded from server side
-        $scope.show_accomplished_todos = false;
-        $scope.problem_terms = [];
-        $scope.new_problem = {set: false};
+
+        $scope.btnBDFISubmitted = false;
+        $scope.collapse = CollapseService;
+        $scope.datas = [];
+        $scope.favorites_collapse = false;
+        $scope.is_home = true;
+        $scope.most_recent_encounter_documents = [];
+        $scope.my_story_tabs = [];
+        $scope.myStoryTabTextComponentArray = [];
+        $scope.new_data_type = {};
         $scope.new_list = {};
         $scope.new_list.labels = [];
-        $scope.problem_lists = [];
-        $scope.is_home = true;
-        $scope.viewMode = 'Year';
-        $scope.collapse = CollapseService;
-        $scope.my_story_tabs = [];
-        $scope.selected_tab = null;
-        $scope.new_data_type = {};
-        $scope.show_add_new_data_type = false;
-        $scope.datas = [];
-        $scope.show_previous_entries = false;
-        $scope.show_add_my_story_tab = false;
+        $scope.new_problem = {set: false};
         $scope.new_tab = {};
-        $scope.new_tab.private = true;
         $scope.new_tab.all_patients = true;
-        $scope.show_add_my_story_text = false;
+        $scope.new_tab.private = true;
         $scope.new_text = {};
-        $scope.new_text.private = true;
         $scope.new_text.all_patients = true;
-        $scope.show_edit_my_story_tab = false;
-        $scope.favorites_collapse = false;
+        $scope.new_text.private = true;
+        $scope.patient = {}; // All patient's data loaded from server side
+        $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
+        $scope.problem_lists = [];
         $scope.problem_term = '';
-        $scope.most_recent_encounter_documents = [];
-        $scope.btnBDFISubmitted = false;
+        $scope.problem_terms = [];
+        $scope.selected_tab = null;
+        $scope.show_accomplished_todos = false;
+        $scope.show_add_my_story_tab = false;
+        $scope.show_add_my_story_text = false;
+        $scope.show_add_new_data_type = false;
+        $scope.show_edit_my_story_tab = false;
+        $scope.show_previous_entries = false;
+        $scope.viewMode = 'Year';
 
-
-        $scope.updateSummary = updateSummary;
-        $scope.problemTermChanged = problemTermChanged;
-        $scope.timelineSave = timelineSave;
-        $scope.fetchTimeLineProblem = fetchTimeLineProblem;
-        $scope.toggle_accomplished_todos = toggle_accomplished_todos;
+        $scope.add_bfdi_value = add_bfdi_value;
         $scope.add_goal = addGoal;
-        $scope.add_todo = addTodo;
-        $scope.set_new_problem = setNewProblem;
-        $scope.unset_new_problem = unset_new_problem;
-        $scope.add_problem = add_problem;
-        $scope.add_new_problem = add_new_problem;
+        $scope.add_my_story_tab = add_my_story_tab;
+        $scope.add_my_story_text = add_my_story_text;
         $scope.add_new_common_problem = add_new_common_problem;
-        $scope.update_todo_status = update_todo_status;
-        $scope.open_problem = open_problem;
-        $scope.permitted = permitted;
+        $scope.add_new_data_type = add_new_data_type;
         $scope.add_new_list_label = add_new_list_label;
+        $scope.add_new_problem = add_new_problem;
+        $scope.add_problem = add_problem;
         $scope.add_problem_list = add_problem_list;
-        $scope.set_collapse = set_collapse;
-        $scope.delete_list = delete_list;
-        $scope.rename_list = rename_list;
-        $scope.update_problem_list_note = update_problem_list_note;
+        $scope.add_todo = addTodo;
+        $scope.change_component_text = change_component_text;
+        $scope.change_homepage_tab = change_homepage_tab;
+        $scope.check_has_data_loinc_code = check_has_data_loinc_code;
         $scope.check_problem_list_authenticated = check_problem_list_authenticated;
         $scope.check_problem_list_controlled = check_problem_list_controlled;
+        $scope.checkSharedMyStory = checkSharedMyStory;
+        $scope.checkSharedProblem = checkSharedProblem;
+        $scope.delete_list = delete_list;
+        $scope.delete_my_story_tab = delete_my_story_tab;
+        $scope.delete_my_story_text = delete_my_story_text;
+        $scope.edit_my_story_tab = edit_my_story_tab;
+        $scope.fetchTimeLineProblem = fetchTimeLineProblem;
+        $scope.fileUploadSuccess = fileUploadSuccess;
         $scope.inArray = inArray;
         $scope.isInArray = isInArray;
-        $scope.checkSharedProblem = checkSharedProblem;
-        $scope.update_patient_note = update_patient_note;
-        $scope.unmarkFavoriteEvent = unmarkFavoriteEvent;
         $scope.nameFavoriteEvent = nameFavoriteEvent;
-        $scope.on_cover_picture_upload = on_cover_picture_upload;
-        $scope.on_cover_picture_reposition = on_cover_picture_reposition;
-        $scope.on_cover_picture_remove = on_cover_picture_remove;
-        $scope.updateProfilePicture = updateProfilePicture;
-        $scope.change_homepage_tab = change_homepage_tab;
-        $scope.toggle_add_my_story_tab = toggle_add_my_story_tab;
-        $scope.add_my_story_tab = add_my_story_tab;
-        $scope.view_my_story_tab = view_my_story_tab;
-        $scope.toggle_add_my_story_text = toggle_add_my_story_text;
-        $scope.add_my_story_text = add_my_story_text;
-        $scope.edit_my_story_tab = edit_my_story_tab;
-        $scope.delete_my_story_tab = delete_my_story_tab;
-        $scope.save_my_story_tab = save_my_story_tab;
-        $scope.delete_my_story_text = delete_my_story_text;
-        $scope.save_my_story_text = save_my_story_text;
-        $scope.change_component_text = change_component_text;
-        $scope.see_previous_entries = see_previous_entries;
-        $scope.checkSharedMyStory = checkSharedMyStory;
-        $scope.toggle_add_new_data_type = toggle_add_new_data_type;
-        $scope.add_new_data_type = add_new_data_type;
-        $scope.check_has_data_loinc_code = check_has_data_loinc_code;
-        $scope.add_bfdi_value = add_bfdi_value;
-        $scope.fileUploadSuccess = fileUploadSuccess;
         $scope.nurseSubmitBDFI = nurseSubmitBDFI;
+        $scope.on_cover_picture_remove = on_cover_picture_remove;
+        $scope.on_cover_picture_reposition = on_cover_picture_reposition;
+        $scope.on_cover_picture_upload = on_cover_picture_upload;
+        $scope.open_problem = open_problem;
+        $scope.permitted = permitted;
+        $scope.problemTermChanged = problemTermChanged;
+        $scope.rename_list = rename_list;
+        $scope.save_my_story_tab = save_my_story_tab;
+        $scope.save_my_story_text = save_my_story_text;
+        $scope.see_previous_entries = see_previous_entries;
+        $scope.set_collapse = set_collapse;
+        $scope.set_new_problem = setNewProblem;
+        $scope.timelineSave = timelineSave;
+        $scope.toggle_accomplished_todos = toggle_accomplished_todos;
+        $scope.toggle_add_my_story_tab = toggle_add_my_story_tab;
+        $scope.toggle_add_my_story_text = toggle_add_my_story_text;
+        $scope.toggle_add_new_data_type = toggle_add_new_data_type;
+        $scope.unmarkFavoriteEvent = unmarkFavoriteEvent;
+        $scope.unset_new_problem = unset_new_problem;
+        $scope.update_patient_note = update_patient_note;
+        $scope.update_problem_list_note = update_problem_list_note;
+        $scope.update_todo_status = update_todo_status;
+        $scope.updateProfilePicture = updateProfilePicture;
+        $scope.updateSummary = updateSummary;
+        $scope.view_my_story_tab = view_my_story_tab;
 
         init();
 
         //INITIALIZE DATA
         function init() {
-
             patientService.fetchActiveUser().then(function (data) {
                 // Logged in user profile in Django authentication system
                 $scope.active_user = data['user_profile'];
-            });
-
-            patientService.getMedications($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
-                    $scope.medications = data['info'];
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
-
-            // Documentation
-            patientService.getDocuments($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
-                    $scope.documents = data['info'];
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
-
-            todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
-                $scope.members = data['members'];
-            });
-
-            todoService.fetchLabels($scope.patient_id).then(function (data) {
-                $scope.labels = data['labels'];
-            });
-
-            problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function (data) {
-                $scope.problem_labels = data['labels'];
-            });
-
-            problemService.fetchLabeledProblemList($scope.patient_id, $scope.user_id).then(function (data) {
-                $scope.problem_lists = data['problem_lists'];
-                $scope.problems_ready = true;
-            });
-
-            patientService.fetchPatientTodos($scope.patient_id).then(function (data) {
-                $scope.pending_todos = data['pending_todos'];
-                $scope.accomplished_todos = data['accomplished_todos'];
-                $scope.problem_todos = data['problem_todos'];
-                $scope.todos_ready = true;
             });
 
             patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
@@ -159,7 +115,6 @@
                 $scope.inactive_problems = data['inactive_problems'];
                 $scope.goals = data['goals'];
                 $scope.completed_goals = data['completed_goals'];
-
                 $scope.encounters = data['encounters'];
                 $scope.favorites = data['favorites'];
                 $scope.most_recent_encounter_summaries = data['most_recent_encounter_summaries'];
@@ -169,13 +124,9 @@
                 $scope.sharing_patients = data['sharing_patients'];
                 $scope.acutes = data['acutes_list'];
                 $scope.chronics = data['chronics_list'];
-
                 // problem timeline
                 $scope.fetchTimeLineProblem(data);
-
-
                 var tmpListProblem = $scope.problems;
-
                 $scope.sortingLogProblem = [];
                 $scope.sortedProblem = false;
                 $scope.draggedProblem = false;
@@ -194,10 +145,8 @@
                                 $scope.sortingLogProblem.push(i.id);
                             });
                             var form = {};
-
                             form.problems = $scope.sortingLogProblem;
                             form.patient_id = $scope.patient_id;
-
                             patientService.updateProblemOrder(form).then(function (data) {
                                 toaster.pop('success', 'Done', 'Updated Problem Order');
                             });
@@ -210,6 +159,37 @@
                 }
             });
 
+            problemService.fetchLabeledProblemList($scope.patient_id, $scope.user_id).then(function (data) {
+                $scope.problem_lists = data['problem_lists'];
+                $scope.problems_ready = true;
+            });
+
+            patientService.fetchPatientTodos($scope.patient_id).then(function (data) {
+                $scope.pending_todos = data['pending_todos'];
+                $scope.accomplished_todos = data['accomplished_todos'];
+                $scope.problem_todos = data['problem_todos'];
+                $scope.todos_ready = true;
+            });
+
+            // Documentation
+            patientService.getDocuments($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.documents = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
+
+            todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
+                $scope.members = data['members'];
+            });
+            todoService.fetchLabels($scope.patient_id).then(function (data) {
+                $scope.labels = data['labels'];
+            });
+            problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function (data) {
+                $scope.problem_labels = data['labels'];
+            });
+
             patientService.fetchPainAvatars($scope.patient_id).then(function (data) {
                 $scope.pain_avatars = data['pain_avatars'];
             });
@@ -218,6 +198,7 @@
                 if (data['success'] == true) {
                     $scope.my_story_tabs = data['info'];
                     $scope.selected_tab = $scope.my_story_tabs[0];
+                    $scope.myStoryTabTextComponentArray = _.flatten(_.pluck($scope.my_story_tabs, 'my_story_tab_components'));
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
@@ -226,28 +207,23 @@
             patientService.getDatas($scope.patient_id).then(function (data) {
                 if (data['success'] == true) {
                     $scope.datas = data['info'];
-
                     // TODO: DRY
                     angular.forEach($scope.datas, function (data, key) {
                         // Default graph type
                         if (data.graph == null || data.graph == undefined)
                             data.graph = 'Line';
-
                         // Temporary data using for generate graph
                         var tmpData = angular.copy(data);
                         // Sorting before processing
                         _.map(tmpData.observation_components, function (item, key) {
                             item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
-
                             // Sorting before generating
                             item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
                         });
                         data.chartData = dataService.generateChartData(tmpData);
                         data.chartLabel = dataService.generateChartLabel(tmpData);
-
                         data.chartSeries = dataService.generateChartSeries(tmpData);
                         data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
-
                         // TODO: Manipulate DOM manually and inside JS code. Need to refine this
                         if (data.name == 'weight') {
                             // $scope.vitals.weight = data;
@@ -259,7 +235,6 @@
                             var dom = '<a href="#/data/' + data.id + '">T:' + data.mostRecentValue + '</a>';
                             $("#vitals_body_temperature").html(dom);
                         }
-
                         if (data.name == 'blood pressure') {
                             // $scope.vitals.blood_pressure = data;
                             var dom = '<a href="#/data/' + data.id + '">BP:' + data.mostRecentValue + '</a>';
@@ -271,12 +246,10 @@
                             $("#vitals_heart_rate ").html(dom);
                         }
                     });
-
                     if ($scope.active_user) {
                         if ($scope.active_user.role == 'patient') {
                             $scope.mostCommonData = dataService.generateMostCommonData($scope.datas);
                         }
-
                         if ($scope.active_user.role == 'nurse') {
                             $scope.mostCommonData = [];
                             angular.forEach($scope.datas, function (data, key) {
@@ -292,7 +265,6 @@
                                     data.ph = 'RR';
                                     $scope.mostCommonData.push(data);
                                 }
-
                                 if (data.name == 'blood pressure') {
                                     data.ph = 'BP';
                                     $scope.mostCommonData.push(data);
@@ -310,7 +282,6 @@
                             });
                         }
                     }
-
                     var tmpListData = $scope.datas;
                     $scope.sortingLogData = [];
                     $scope.sortedData = false;
@@ -330,10 +301,8 @@
                                     $scope.sortingLogData.push(i.id);
                                 });
                                 var form = {};
-
                                 form.datas = $scope.sortingLogData;
                                 form.patient_id = $scope.patient_id;
-
                                 patientService.updateDataOrder(form).then(function (data) {
                                     toaster.pop('success', 'Done', 'Updated Data Order');
                                 });
@@ -344,7 +313,6 @@
                             }, 100);
                         }
                     };
-
                     /*
                      * open data page
                      */
@@ -354,17 +322,22 @@
                             form.patient_id = $scope.patient_id;
                             form.observation_id = data.id;
                             patientService.trackDataClickEvent(form).then(function (data) {
-
                             });
                             $location.path('/data/' + data.id);
                         }
                     };
-
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
             });
 
+            patientService.getMedications($scope.patient_id).then(function (data) {
+                if (data['success'] == true) {
+                    $scope.medications = data['info'];
+                } else {
+                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
+                }
+            });
 
             $scope.$watch("viewMode", function (newVal, oldVal) {
                 if (newVal != oldVal) {
@@ -372,13 +345,11 @@
                         // Default graph type
                         if (data.graph == null || data.graph == undefined)
                             data.graph = 'Line';
-
                         // Temporary data using for generate graph
                         var tmpData = angular.copy(data);
                         // Sorting before processing
                         _.map(tmpData.observation_components, function (item, key) {
                             item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
-
                             // Sorting before generating
                             item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
                         });
@@ -398,7 +369,6 @@
                     var form = {
                         'event': "Medication list was accessed"
                     };
-
                     encounterService.addEncounterEvent(encounterService.activeEncounter.id, form);
                 }
             });
@@ -410,37 +380,30 @@
             $scope.$on('copyEncounter', function (event, args) {
                 // So every page will have current patient $user
                 var text = '';
-
                 // TODO: Check whether or not data is ready
                 if (_.isUndefined($scope.most_recent_encounter_summaries) || _.isUndefined($scope.most_recent_encounter_related_problems) || _.isUndefined($scope.pending_todos)) {
                     alert("Data is not loading. Try again in few seconds");
                     return;
                 }
-
-
                 if ($scope.most_recent_encounter_summaries.length > 0) {
                     text += "All the encounter summaries from the most recent encounter: \r\n";
                     angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
                         var container = $("<div/>");
                         container.append(value);
-
                         text += container.text() + '\r\n';
                     });
                     text += '\r\n';
                 }
-
                 // Refer https://trello.com/c/cFylaLdv
                 if ($scope.most_recent_encounter_documents.length > 0) {
                     text += "List of encounter document: \r\n";
                     angular.forEach($scope.most_recent_encounter_documents, function (value, key) {
                         var container = $("<div/>");
                         container.append(value.name + ': ' + value.value + " at " + $filter('date')(value.effective, 'dd/MM/yyyy h:mm'));
-
                         text += container.text() + '\r\n';
                     });
                     text += '\r\n';
                 }
-
                 if ($scope.most_recent_encounter_related_problems.length > 0) {
                     text += "List of related problems : \r\n";
                     angular.forEach($scope.most_recent_encounter_related_problems, function (value, key) {
@@ -448,14 +411,12 @@
                     });
                     text += '\r\n';
                 }
-
                 if ($scope.pending_todos.length > 0) {
                     text += "List of all active todos : \r\n";
                     angular.forEach($scope.pending_todos, function (value, key) {
                         text += value.todo + '\r\n';
                     });
                 }
-
                 // Copy to clipboard
                 var $temp = $("<textarea/>");
                 $("body").append($temp);
@@ -463,11 +424,45 @@
                 document.execCommand("copy");
                 $temp.remove();
             });
+
+            $scope.$on('tabPressed', function (event, args) {
+                if ('mystory' == $scope.collapse.show_homepage_tab) {
+                    // Finding current DOM element which is focused
+                    var activeElement = document.activeElement;
+                    if (activeElement && _.contains(activeElement.classList, 'tab-components')) {
+                        var nextFocusedComponentId = parseInt(activeElement.id) + 1;
+                        var currentComponent = $scope.myStoryTabTextComponentArray[activeElement.id - 1];
+                        var nextComponent = $scope.myStoryTabTextComponentArray[activeElement.id];
+                        if (nextComponent.tab != currentComponent.tab) {
+                            var nexTabToBeActivated = _.find($scope.my_story_tabs, function (tab) {
+                                return nextComponent.tab == tab.id;
+                            });
+                            $scope.view_my_story_tab(nexTabToBeActivated)
+                        }
+                    } else {
+                        // Finding next tab which have at least one component after the selected tabs which does not have any text component
+                        while ($scope.selected_tab.my_story_tab_components.length == 0) {
+                            $scope.selected_tab = _.find($scope.my_story_tabs, function (tab) {
+                                return tab.my_story_tab_components.length > 0 && tab.id >= $scope.selected_tab.id
+                            });
+                        }
+                        $scope.view_my_story_tab($scope.selected_tab);
+
+                        // Finding first component of actived tab
+                        var component = _.find($scope.myStoryTabTextComponentArray, function (component) {
+                            return component.tab == $scope.selected_tab.id;
+                        });
+                        var nextFocusedComponentId = $scope.myStoryTabTextComponentArray.indexOf(component) + 1;
+                    }
+
+                    setTimeout(function () {
+                        $('.tab-components#' + nextFocusedComponentId).focus();
+                    }, 0);
+                }
+            });
         }
 
-
         // METHOD DEFINITION
-
         /**
          *
          * @param term
@@ -485,72 +480,54 @@
 
         function timelineSave(newData) {
             var form = {};
-
             form.patient_id = $scope.patient_id;
             form.timeline_data = newData;
-
             problemService.updateByPTW(form).then(function (data) {
-
                 toaster.pop('success', 'Done', 'Updated Problems');
             });
         }
 
         function fetchTimeLineProblem(data) {
-
             patientService.fetchTimeLineProblem($scope.patient_id).then(function (data2) {
                 var timeline_problems = [];
                 angular.forEach(data2['timeline_problems'], function (value, key) {
-
                     if (value.problem_segment.length !== undefined && value.problem_segment.length > 0) {
                         var timeline_problem = parseTimelineWithSegment(value);
                     } else {
                         var timeline_problem = parseTimelineWithoutSegment(value);
                     }
-
                     if ($scope.checkSharedProblem(timeline_problem, $scope.sharing_patients))
                         timeline_problems.push(timeline_problem);
                 });
-
                 $scope.timeline = {
                     Name: data['info']['user']['first_name'] + data['info']['user']['last_name'],
                     birthday: convertDateTimeBirthday(data['info']['date_of_birth']),
                     problems: timeline_problems
                 };
-
                 $scope.timeline_ready = true;
                 $scope.timeline_changed = [{changing: new Date().getTime()}];
             });
         }
 
         function toggle_accomplished_todos() {
-
             var flag = $scope.show_accomplished_todos;
-
             // TODO: Refactor/Simplify block code later
             if (flag == true) {
                 flag = false;
             } else {
                 flag = true;
             }
-
             $scope.show_accomplished_todos = flag;
         }
 
         function addGoal(form) {
-
             form.patient_id = $scope.patient_id;
             patientService.addGoal(form).then(function (data) {
-
-
                 var new_goal = data['goal'];
-
                 $scope.goals.push(new_goal);
-
                 toaster.pop('success', "Done", "New goal created successfully!");
                 console.log('pop');
-
             });
-
         }
 
         function addTodo(form) {
@@ -558,7 +535,6 @@
                 return false;
             }
             form.patient_id = $scope.patient_id;
-
             if ($scope.patient['bleeding_risk']) {
                 var bleedingRiskDialog = ngDialog.open({
                     template: 'bleedingRiskDialog',
@@ -567,15 +543,12 @@
                     closeByDocument: false,
                     closeByNavigation: false
                 });
-
                 bleedingRiskDialog.closePromise.then(askDueDate);
             } else {
                 askDueDate();
             }
-
             function askDueDate() {
                 var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
-
                 var dueDateDialog = ngDialog.open({
                     template: 'askDueDateDialog',
                     showClose: false,
@@ -593,11 +566,9 @@
                     },
                     controllerAs: 'vm'
                 });
-
                 dueDateDialog.closePromise.then(function (data) {
                     if (!_.isUndefined(data.value) && '$escape' != data.value)
                         form.due_date = moment(data.value, acceptedFormat).toString();
-
                     patientService.addToDo(form).then(addTodoSuccess);
                 })
             }
@@ -607,9 +578,7 @@
                 var new_todo = data['todo'];
                 $scope.pending_todos.push(new_todo);
                 $scope.problem_todos.push(new_todo);
-
                 $scope.new_todo = {};
-
                 $('#todoNameInput').val("");
                 $('#todoNameInput').focus();
                 toaster.pop('success', 'Done', 'Added Todo!');
@@ -621,7 +590,6 @@
             $scope.new_problem.active = problem.active;
             $scope.new_problem.term = problem.term;
             $scope.new_problem.code = problem.code;
-
         }
 
         function unset_new_problem() {
@@ -629,21 +597,16 @@
         }
 
         function add_problem() {
-
             var c = confirm("Are you sure?");
-
             if (c == false) {
                 return false;
             }
-
             var form = {};
             form.patient_id = $scope.patient_id;
             form.term = $scope.new_problem.term;
             form.code = $scope.new_problem.code;
             form.active = $scope.new_problem.active;
-
             patientService.addProblem(form).then(function (data) {
-
                 if (data['success'] == true) {
                     toaster.pop('success', 'Done', 'New Problem added successfully');
                     $scope.problems.push(data['problem']);
@@ -651,37 +614,26 @@
                     $scope.unset_new_problem();
                     /* Not-angular-way */
                     $('#problemTermInput').focus();
-
                 } else if (data['success'] == false) {
                     alert(data['msg']);
                 } else {
                     alert("Something went wrong");
                 }
-
-
             });
-
-
         }
 
         function add_new_problem(problem_term) {
             if (problem_term == '' || problem_term == undefined) {
                 return false;
             }
-
             var c = confirm("Are you sure?");
-
             if (c == false) {
                 return false;
             }
-
-
             var form = {};
             form.patient_id = $scope.patient_id;
             form.term = problem_term;
-
             patientService.addProblem(form).then(function (data) {
-
                 if (data['success'] == true) {
                     toaster.pop('success', 'Done', 'New Problem added successfully');
                     $scope.problems.push(data['problem']);
@@ -702,9 +654,7 @@
             form.patient_id = $scope.patient_id;
             form.cproblem = problem;
             form.type = type;
-
             patientService.addCommonProblem(form).then(function (data) {
-
                 if (data['success'] == true) {
                     toaster.pop('success', 'Done', 'New Problem added successfully');
                     $scope.problems.push(data['problem']);
@@ -717,9 +667,7 @@
         }
 
         function update_todo_status(todo) {
-
             patientService.updateTodoStatus(todo).then(function (data) {
-
                 if (data['success'] == true) {
                     $scope.pending_todos = data['pending_todos'];
                     $scope.accomplished_todos = data['accomplished_todos'];
@@ -727,35 +675,26 @@
                 } else {
                     alert("Something went wrong!");
                 }
-
             });
-
         }
 
         function open_problem(problem) {
-
             if (!$scope.draggedProblem) {
                 $location.path('/problem/' + problem.id);
             }
         }
 
         function permitted(permissions) {
-
             if ($scope.active_user == undefined) {
                 return false;
             }
-
             var user_permissions = $scope.active_user.permissions;
-
             for (var key in permissions) {
-
                 if (user_permissions.indexOf(permissions[key]) < 0) {
                     return false;
                 }
             }
-
             return true;
-
         }
 
         // label problem list
@@ -768,7 +707,6 @@
         }
 
         function add_problem_list(form) {
-
             form.user_id = $scope.user_id;
             form.patient_id = $scope.patient_id;
             if (form.name && form.labels.length > 0) {
@@ -813,20 +751,16 @@
             } else {
                 toaster.pop('error', 'Error', 'Please input name!');
             }
-
         }
 
         function update_problem_list_note(list) {
-
             var form = {
                 'list_id': list.id,
                 'note': list.note
             };
-
             problemService.updateProblemListNote(form).then(function (data) {
                 toaster.pop('success', 'Done', 'Problem list note updated!');
             });
-
         }
 
         function check_problem_list_authenticated(list) {
@@ -881,27 +815,22 @@
                         is_existed = $scope.isInArray(p.problems, problem.id);
                     }
                 });
-
                 return is_existed;
             }
         }
 
         // note on header of page
         function update_patient_note() {
-
             var form = {
                 'patient_id': $scope.patient_id,
                 'note': $scope.patient_info.note
             };
-
             patientService.updatePatientNote(form).then(function (data) {
                 toaster.pop('success', 'Done', 'Patient note updated!');
             });
-
         }
 
         // encounter
-
         function unmarkFavoriteEvent(encounter_event) {
             var form = {};
             form.encounter_event_id = encounter_event.id;
@@ -934,9 +863,7 @@
             form.summary = $scope.patient_info.summary;
             form.date_of_birth = $scope.patient_info.date_of_birth;
             var files = {cover_image: file[0]};
-
             patientService.updateProfile(form, files).then(function (data) {
-
                 if (data['success'] == true) {
                     toaster.pop('success', 'Done', 'Patient updated!');
                     $scope.patient_info = data['info'];
@@ -945,7 +872,6 @@
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
-
             });
         }
 
@@ -979,13 +905,17 @@
         /*
          *   handle cache homepage tabs
          */
-
         function change_homepage_tab(tab) {
+
             CollapseService.ChangeHomepageTab(tab);
+
             if ($scope.collapse.show_homepage_tab == "data") {
                 var form = {};
                 form.patient_id = $scope.patient_id;
                 patientService.trackDataClickEvent(form);
+            }
+            if ($scope.collapse.show_homepage_tab == "mystory") {
+                $scope.$broadcast('tabPressed', null);
             }
         }
 
@@ -1021,7 +951,6 @@
         /*
          *   toggle view my story tab
          */
-
         function view_my_story_tab(tab) {
             var form = {};
             form.patient_id = $scope.patient_id;
@@ -1035,7 +964,6 @@
         /*
          *   toggle add my story text
          */
-
         function toggle_add_my_story_text() {
             $scope.show_add_my_story_text = !$scope.show_add_my_story_text;
         }
@@ -1069,7 +997,6 @@
         /*
          *   toggle edit my story tab
          */
-
         function edit_my_story_tab() {
             $scope.show_edit_my_story_tab = !$scope.show_edit_my_story_tab;
         }
@@ -1086,7 +1013,6 @@
                     if (data['success'] == true) {
                         var index = $scope.my_story_tabs.indexOf(selected_tab);
                         $scope.my_story_tabs.splice(index, 1);
-
                         if ($scope.my_story_tabs.length > 0)
                             $scope.selected_tab = $scope.my_story_tabs[0];
                         $scope.show_edit_my_story_tab = false;
@@ -1131,7 +1057,6 @@
                     if (data['success'] == true) {
                         var index = $scope.selected_tab.my_story_tab_components.indexOf(component);
                         $scope.selected_tab.my_story_tab_components.splice(index, 1);
-
                         toaster.pop('success', "Done", "Deleted text component successfully!");
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -1236,33 +1161,27 @@
         function add_bfdi_value(component, resetNewValue) {
             // Default is true
             resetNewValue = _.isUndefined(resetNewValue);
-
             var new_data = {};
             new_data.datetime = moment().format("MM/DD/YYYY HH:mm");
             new_data.value = component.new_value;
-
             dataService.addData($scope.patient_id, component.id, new_data)
                 .then(function (data) {
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Added data!');
-
                         angular.forEach($scope.datas, function (sdata, data_key) {
                             angular.forEach(sdata.observation_components, function (scomponent, component_key) {
                                 if (scomponent.id == component.id) {
                                     scomponent.observation_component_values.push(data['value']);
                                 }
                             });
-
                             // Default graph type
                             if (sdata.graph == null || sdata.graph == undefined)
                                 sdata.graph = 'Line';
-
                             // Temporary data using for generate graph
                             var tmpData = angular.copy(sdata);
                             // Sorting before processing
                             _.map(tmpData.observation_components, function (item, key) {
                                 item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
-
                                 // Sorting before generating
                                 item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
                             });
@@ -1270,7 +1189,6 @@
                             sdata.chartLabel = dataService.generateChartLabel(tmpData);
                             sdata.mostRecentValue = dataService.generateMostRecentValue(tmpData);
                         });
-
                         // Reset component value
                         // TODO: 2/18/2017 AnhDN temporary disable auto delete new component value
                         if (resetNewValue)
@@ -1295,11 +1213,9 @@
                 var yyyy = date[2];
                 var mm = date[0];
                 var dd = date[1];
-
                 if (problem.start_time) {
                     return dd + '/' + mm + '/' + yyyy + ' ' + problem.start_time;
                 }
-
                 return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
             }
             return '30/11/1970 00:00:00';
@@ -1311,7 +1227,6 @@
                 var yyyy = date[2];
                 var mm = date[0];
                 var dd = date[1];
-
                 return dd + '/' + mm + '/' + yyyy + ' 00:00:00';
             }
             return '30/11/1970 00:00:00';
@@ -1329,7 +1244,6 @@
 
         function parseTimelineWithoutSegment(problem) {
             var state = getTimelineWidgetState(problem);
-
             var timeline_problem = {
                 'name': problem.problem_name,
                 'id': problem.id,
@@ -1341,7 +1255,6 @@
                     },
                 ]
             };
-
             return timeline_problem;
         }
 
@@ -1349,12 +1262,10 @@
             var events = [];
             var event;
             var temp;
-
             angular.forEach(problem.problem_segment, function (value, key) {
                 event = {};
                 event['event_id'] = value.event_id;
                 event['state'] = getTimelineWidgetState(value);
-
                 if (key == 0) {
                     event['startTime'] = convertDateTime(problem);
                 } else {
@@ -1363,7 +1274,6 @@
                 temp = value;
                 events.push(event);
             });
-
             if (temp) {
                 events.push({
                     event_id: new Date().getTime(),
@@ -1371,13 +1281,11 @@
                     state: getTimelineWidgetState(problem)
                 });
             }
-
             var timeline_problem = {
                 'name': problem.problem_name,
                 'id': problem.id,
                 events: events
             };
-
             return timeline_problem;
         }
 
@@ -1390,7 +1298,6 @@
                 'patient_id': $scope.patient_id,
                 'summary': $scope.patient_info.summary
             };
-
             patientService.updatePatientSummary(form).then(function (data) {
                 toaster.pop('success', 'Done', 'Patient summary updated!');
             });
@@ -1403,9 +1310,8 @@
                 if (_.isUndefined(value.new_value) || _.isEmpty(value.new_value)) {
                     return;
                 }
-                $scope.add_bfdi_value(value,false);
+                $scope.add_bfdi_value(value, false);
             });
-
             $scope.btnBDFISubmitted = true;
         }
 
@@ -1423,4 +1329,3 @@
 
     /* End of controller */
 })();
-
