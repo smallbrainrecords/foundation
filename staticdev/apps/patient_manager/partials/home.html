@@ -646,33 +646,33 @@
                                     <input type="text" name="new-tab" ng-model="new_tab.name"
                                            class="form-control">
                                 </div>
-                                <div ng-if="active_user.role=='physician' || active_user.role=='admin'">
+                                <div ng-if="['physician','admin'].indexOf(active_user.role)!=-1">
                                     <div class="radio">
-                                        <label>
-                                            <input type="radio" ng-value="true" checked
-                                                   ng-model="new_tab.all_patients">
+                                        <input type="radio" ng-value="true" checked id="public"
+                                               ng-model="new_tab.all_patients">
+                                        <label for="public">
                                             All patients
                                         </label>
                                     </div>
                                     <div class="radio">
-                                        <label>
-                                            <input type="radio" ng-value="" ng-model="new_tab.all_patients">
+                                        <input id="private" type="radio" ng-value="" ng-model="new_tab.all_patients">
+                                        <label for="private">
                                             Only current patient
                                         </label>
                                     </div>
                                 </div>
                                 <div ng-if="active_user.role=='patient'">
                                     <div class="radio">
-                                        <label>
-                                            <input type="radio" ng-value="true" checked
-                                                   ng-model="new_tab.private">
-                                            keep it private
+                                        <input id="patient-private" type="radio" ng-value="true" checked
+                                               ng-model="new_tab.private">
+                                        <label for="patient-private">
+                                            Keep it private
                                         </label>
                                     </div>
                                     <div class="radio">
-                                        <label>
-                                            <input type="radio" ng-value="" ng-model="new_tab.private">
-                                            share with doctor
+                                        <input id="patient-shared" type="radio" ng-value="" ng-model="new_tab.private">
+                                        <label for="patient-shared">
+                                            Share with doctor
                                         </label>
                                     </div>
                                 </div>
@@ -750,14 +750,14 @@
                                     <div class="form-group">
                                         <label class="col-sm-2 control-label">Name</label>
                                         <div class="col-sm-10">
-                                            <input type="text" class="form-control" ng-model="new_text.name">
+                                            <input type="text" class="form-control" ng-model="new_text.name" title="">
                                         </div>
                                     </div>
 
                                     <div class="form-group">
                                         <label class="col-sm-2 control-label">Text</label>
                                         <div class="col-sm-10">
-                                            <input type="text" class="form-control" ng-model="new_text.text">
+                                            <input type="text" class="form-control" ng-model="new_text.text" title="">
                                         </div>
                                     </div>
 
@@ -765,25 +765,25 @@
                                         <label class="col-sm-2 control-label">Snomed concept id</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control"
-                                                   ng-model="new_text.concept_id">
+                                                   ng-model="new_text.concept_id" title="">
                                         </div>
                                     </div>
 
                                     <div class="form-group"
-                                         ng-if="selected_tab.is_all && (active_user.role=='physician' || active_user.role=='admin')">
+                                         ng-if="selected_tab.is_all && ['physician','admin'].indexOf(active_user.role)!= -1">
                                         <div class="col-sm-2"></div>
                                         <div class="col-sm-10">
                                             <div class="radio">
-                                                <label>
-                                                    <input type="radio" ng-value="true" checked
-                                                           ng-model="new_text.all_patients">
+                                                <input id="component-public" type="radio" ng-value="true" checked
+                                                       ng-model="new_text.all_patients" title="">
+                                                <label for="component-public">
                                                     All patients
                                                 </label>
                                             </div>
                                             <div class="radio">
-                                                <label>
-                                                    <input type="radio" ng-value=""
-                                                           ng-model="new_text.all_patients">
+                                                <input id="component-private" type="radio" ng-value=""
+                                                       ng-model="new_text.all_patients">
+                                                <label for="component-private">
                                                     Only current patient
                                                 </label>
                                             </div>
@@ -794,16 +794,18 @@
                                         <div class="col-sm-2"></div>
                                         <div class="col-sm-10">
                                             <div class="radio">
-                                                <label>
-                                                    <input type="radio" ng-value="true" checked class="styled"
-                                                           ng-model="new_text.private">
-                                                    keep it private
+                                                <input id="patient-component-private" type="radio" ng-value="true"
+                                                       checked
+                                                       ng-model="new_text.private">
+                                                <label for="patient-component-private">
+                                                    Keep it private
                                                 </label>
                                             </div>
                                             <div class="radio">
-                                                <label>
-                                                    <input type="radio" ng-value="" ng-model="new_text.private">
-                                                    share with doctor
+                                                <input type="radio" ng-value="" ng-model="new_text.private" title=""
+                                                       id="patient-component-shared">
+                                                <label for="patient-component-shared">
+                                                    Share with doctor
                                                 </label>
                                             </div>
                                         </div>
