@@ -2,12 +2,14 @@
 
 DEBUG = False  # Never set 'DEBUG = True' in production environment
 TEMPLATE_DEBUG = True
+COMPRESS_ENABLED = True
 
 # toggle experimental features
 VOICE_CONTROL = False
 SYNCING = False
 
-import os, sys;
+import os
+import sys
 
 os.environ['LANG'] = 'en_US.UTF-8'
 # BASE_DIR = os.getcwd()

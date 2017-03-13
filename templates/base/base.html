@@ -36,6 +36,12 @@
     <link rel="stylesheet" href="/static/css/main.css" type="text/css" charset="utf-8">
     <link rel="stylesheet" href="/static/css/patient-profile.css" type="text/css" charset="utf-8">
     {% endcompress %}
+
+    <!-- Install sentry tracker -->
+    <script src="https://cdn.ravenjs.com/3.9.1/angular/raven.min.js" crossorigin="anonymous"></script>
+    <script>Raven.config('https://d71f6e59381c4a4caff011cbe970b229@sentry.io/127883').install();</script>
+
+    <!-- Vendor compressed-->
     {% compress js %}
     <script src="/static/bower_components/jquery/dist/jquery.js" type="text/javascript" charset="utf-8"></script>
     <script src="/static/bower_components/jquery-ui/jquery-ui.min.js" type="text/javascript"
@@ -101,9 +107,8 @@
     <script src="/static/bower_components/angular-moment/angular-moment.min.js"></script>
     <script src="/static/bower_components/checklist-model/checklist-model.js"></script>
     <!--<script src="//vjs.zencdn.net/4.12/video.js"></script>-->
-    <!-- Install sentry tracker -->
-    <script src="https://cdn.ravenjs.com/3.9.1/angular/raven.min.js" crossorigin="anonymous"></script>
-    <script>Raven.config('https://d71f6e59381c4a4caff011cbe970b229@sentry.io/127883').install();</script>
+    {% endcompress %}
+
     <!--Common service shared across whole system-->
     <script src="/static/apps/common/template.module.js" type="text/javascript" charset="utf-8"></script>
     <script src="/static/apps/common/httpModule.js" type="text/javascript" charset="utf-8"></script>
@@ -119,7 +124,6 @@
     <!--Medication component-->
     <script src="/static/apps/medication/medication-search.component.js" type="text/javascript"
             charset="utf-8"></script>
-    {% endcompress %}
     {% include 'session_security/all.html' %}
 </head>
 <body>
