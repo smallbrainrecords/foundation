@@ -707,7 +707,7 @@
                                             <button class="btn btn-danger"
                                                     ng-click="delete_my_story_text(component);"
                                                     ng-if="active_user.user.id==component.author.id">Delete</button>
-                                        </span>
+                                    </span>
                                 </div>
 
                                 <!-- Last text entried-->
@@ -726,7 +726,14 @@
                                         </button>
                                     </p>
                                 </div>
-
+                                <!-- In case there is nothing already entry-->
+                                <div ng-if="component.text_component_entries.length == 0">
+                                        <textarea class="tab-components form-control" ng-model="entry.text"
+                                                  id="{{myStoryTabTextComponentArray.indexOf(component) + 1}}"
+                                                  ng-change="change_component_text(component, entry, oldText)"
+                                                  ng-click="oldText = entry.text"
+                                                  ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
+                                </div>
                                 <!-- Entries history -->
                                 <div ng-show="show_previous_entries">
                                     <div ng-repeat="entry in component.text_component_entries" ng-if="!$first">
