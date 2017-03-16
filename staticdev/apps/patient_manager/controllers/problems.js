@@ -11,19 +11,32 @@
             $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
             $scope.patient = {}; // All patient's data loaded from server side
             $scope.user_id = $('#user_id').val();
-            $scope.problem_id = $routeParams.problem_id;
-            $scope.show_accomplished_todos = false;
-            $scope.show_accomplished_goals = false;
+            $scope.activities = [];
+            $scope.availableWidgets = [];
+            $scope.change_pinned_data = false;
+            $scope.change_pinned_medication = false;
+            $scope.change_problem_label = false;
+            $scope.create_label_problems_list = false;
+            $scope.create_problem_label = false;
+            $scope.current_activity = 0;
+            $scope.hasAccess = false;
+            $scope.history_note_form = {};
+            $scope.isOtherPatientNoteShowing = false;
             $scope.loading = true;
+            $scope.medications = [];
+            $scope.new_list = {};
+            $scope.new_list.labels = [];
+            $scope.new_problem = {set: false};
+            $scope.problem_id = $routeParams.problem_id;
+            $scope.problem_label_component = {};
+            $scope.problem_terms = [];
+            $scope.related_encounters = [];
+            $scope.show_accomplished_goals = false;
+            $scope.show_accomplished_todos = false;
             $scope.show_other_notes = false;
             $scope.show_physician_notes = false;
-            $scope.history_note_form = {};
+            $scope.viewMode = 'Year';
             $scope.wiki_note_form = {};
-            $scope.current_activity = 0;
-            $scope.problem_terms = [];
-            $scope.new_problem = {set: false};
-            $scope.change_problem_label = false;
-            $scope.create_problem_label = false;
             $scope.problem_labels_component = [
                 {name: 'green', css_class: 'todo-label-green'},
                 {name: 'yellow', css_class: 'todo-label-yellow'},
@@ -33,72 +46,59 @@
                 {name: 'blue', css_class: 'todo-label-blue'},
                 {name: 'sky', css_class: 'todo-label-sky'}
             ];
-            $scope.isOtherPatientNoteShowing = false;
-            $scope.problem_label_component = {};
-            $scope.create_label_problems_list = false;
-            $scope.new_list = {};
-            $scope.new_list.labels = [];
-            $scope.change_pinned_data = false;
-            $scope.medications = [];
-            $scope.change_pinned_medication = false;
-            $scope.viewMode = 'Year';
-            $scope.activities = [];
-            $scope.related_encounters = [];
-            $scope.availableWidgets = [];
 
             // Init hot key binding
-            $scope.changeView = changeView;
-            $scope.timelineSave = timelineSave;
-            $scope.delete_problem = delete_problem;
-            $scope.problem_name_changed = problem_name_changed;
-            $scope.set_new_problem = set_new_problem;
-            $scope.unset_new_problem = unset_new_problem;
-            $scope.change_problem_name = change_problem_name;
-            $scope.change_new_problem_name = change_new_problem_name;
-            $scope.open_change_problem_label = open_change_problem_label;
-            $scope.close_change_problem_label = close_change_problem_label;
-            $scope.open_create_problem_label = open_create_problem_label;
-            $scope.close_create_problem_label = close_create_problem_label;
-            $scope.selectProblemLabelComponent = selectProblemLabelComponent;
-            $scope.saveCreateProblemLabel = saveCreateProblemLabel;
-            $scope.editProblemLabel = editProblemLabel;
-            $scope.selectEditProblemLabelComponent = selectEditProblemLabelComponent;
-            $scope.saveEditProblemLabel = saveEditProblemLabel;
-            $scope.changeProblemLabel = changeProblemLabel;
-            $scope.deleteEditProblemLabel = deleteEditProblemLabel;
-            $scope.open_create_label_problems_list = open_create_label_problems_list;
-            $scope.close_create_label_problems_list = close_create_label_problems_list;
+            $scope.add_goal = add_goal;
+            $scope.add_history_note = add_history_note;
             $scope.add_new_list_label = add_new_list_label;
             $scope.add_problem_list = add_problem_list;
-            $scope.set_authentication_false = set_authentication_false;
-            $scope.update_start_date = update_start_date;
-            $scope.add_wiki_note = add_wiki_note;
-            $scope.add_history_note = add_history_note;
-            $scope.add_goal = add_goal;
             $scope.add_todo = add_todo;
-            $scope.open_image_upload_box = open_image_upload_box;
-            $scope.open_image_box = open_image_box;
-            $scope.delete_problem_image = delete_problem_image;
-            $scope.id_exists = id_exists;
-            $scope.change_effecting_problem = change_effecting_problem;
+            $scope.add_wiki_note = add_wiki_note;
             $scope.change_effected_problem = change_effected_problem;
+            $scope.change_effecting_problem = change_effecting_problem;
+            $scope.change_new_problem_name = change_new_problem_name;
+            $scope.change_problem_name = change_problem_name;
+            $scope.changeProblemLabel = changeProblemLabel;
+            $scope.changeView = changeView;
+            $scope.close_change_data = close_change_data;
+            $scope.close_change_medication = close_change_medication;
+            $scope.close_change_problem_label = close_change_problem_label;
+            $scope.close_create_label_problems_list = close_create_label_problems_list;
+            $scope.close_create_problem_label = close_create_problem_label;
+            $scope.data_pin_to_problem = data_pin_to_problem;
+            $scope.delete_problem = delete_problem;
+            $scope.delete_problem_image = delete_problem_image;
+            $scope.deleteEditProblemLabel = deleteEditProblemLabel;
+            $scope.editProblemLabel = editProblemLabel;
+            $scope.goToMedicationTab = goToMedicationTab;
+            $scope.id_exists = id_exists;
+            $scope.isInArray = isInArray;
+            $scope.medication_pin_to_problem = medication_pin_to_problem;
+            $scope.open_change_data = open_change_data;
+            $scope.open_change_medication = open_change_medication;
+            $scope.open_change_problem_label = open_change_problem_label;
+            $scope.open_create_label_problems_list = open_create_label_problems_list;
+            $scope.open_create_problem_label = open_create_problem_label;
+            $scope.open_data = open_data;
+            $scope.open_image_box = open_image_box;
+            $scope.open_image_upload_box = open_image_upload_box;
+            $scope.open_medication = open_medication;
             $scope.permitted = permitted;
+            $scope.problem_name_changed = problem_name_changed;
+            $scope.refresh_problem_activity = refresh_problem_activity;
+            $scope.saveCreateProblemLabel = saveCreateProblemLabel;
+            $scope.saveEditProblemLabel = saveEditProblemLabel;
+            $scope.selectEditProblemLabelComponent = selectEditProblemLabelComponent;
+            $scope.selectProblemLabelComponent = selectProblemLabelComponent;
+            $scope.set_authentication_false = set_authentication_false;
+            $scope.set_new_problem = set_new_problem;
+            $scope.timelineSave = timelineSave;
+            $scope.toggle_accomplished_goals = toggle_accomplished_goals;
+            $scope.toggle_accomplished_todos = toggle_accomplished_todos;
             $scope.toggle_other_notes = toggle_other_notes;
             $scope.toggle_physician_notes = toggle_physician_notes;
-            $scope.refresh_problem_activity = refresh_problem_activity;
-            $scope.toggle_accomplished_todos = toggle_accomplished_todos;
-            $scope.toggle_accomplished_goals = toggle_accomplished_goals;
-            $scope.isInArray = isInArray;
-            $scope.checkSharedProblem = checkSharedProblem;
-            $scope.open_data = open_data;
-            $scope.open_change_data = open_change_data;
-            $scope.close_change_data = close_change_data;
-            $scope.data_pin_to_problem = data_pin_to_problem;
-            $scope.open_medication = open_medication;
-            $scope.open_change_medication = open_change_medication;
-            $scope.close_change_medication = close_change_medication;
-            $scope.medication_pin_to_problem = medication_pin_to_problem;
-            $scope.goToMedicationTab = goToMedicationTab;
+            $scope.unset_new_problem = unset_new_problem;
+            $scope.update_start_date = update_start_date;
 
             init();
 
@@ -113,47 +113,53 @@
                     $scope.patient = data;
                 });
 
-                patientService.fetchProblemInfo($scope.problem_id).then(function (data) {
-                    $scope.problem = data['info'];
+                // TODO: This should be top priority loading & check access
+                patientService.fetchProblemInfo($scope.problem_id)
+                    .then(function (data) {
+                        $scope.loading = false;
 
-                    // problem timeline
-                    if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {
-                        var timeline_problems = parseTimelineWithSegment($scope.problem);
-                    } else {
-                        var timeline_problems = parseTimelineWithoutSegment($scope.problem);
-                    }
+                        if (data.success) {
+                            // $scope.hasAccess = false;
+                            // }
+                            $scope.hasAccess = true;
 
-                    $scope.availableWidgets = data['available_widgets'];
-                    if (_.contains($scope.availableWidgets, 'a1c')) {
-                        problemService.fetchA1c($scope.problem_id).then(function (response) {
-                            $scope.a1c = response['a1c'];
-                        });
-                    }
+                            $scope.problem = data['info'];
 
-                    if (_.contains($scope.availableWidgets, 'colon_cancers')) {
-                        problemService.fetchColonCancerss($scope.problem_id).then(function (response) {
-                            $scope.colon_cancers = response['colon_cancers'];
-                        });
-                    }
+                            // problem time line
+                            if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {
+                                var timeline_problems = parseTimelineWithSegment($scope.problem);
+                            } else {
+                                var timeline_problems = parseTimelineWithoutSegment($scope.problem);
+                            }
 
-                    $scope.sharing_patients = data['sharing_patients'];
+                            $scope.availableWidgets = data['available_widgets'];
+                            if (_.contains($scope.availableWidgets, 'a1c')) {
+                                problemService.fetchA1c($scope.problem_id).then(function (response) {
+                                    $scope.a1c = response['a1c'];
+                                });
+                            }
 
-                    $scope.loading = false;
+                            if (_.contains($scope.availableWidgets, 'colon_cancers')) {
+                                problemService.fetchColonCancerss($scope.problem_id).then(function (response) {
+                                    $scope.colon_cancers = response['colon_cancers'];
+                                });
+                            }
 
-                    // TODO: 02/03/2017 Should be move to general later
-                    $scope.$watch('patient_info', function (nV, oV) {
-                        if ($scope.patient_info) {
-                            $scope.timeline = {
-                                Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
-                                birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
-                                problems: timeline_problems
-                            };
+                            // TODO: 02/03/2017 Should be move to general later
+                            $scope.$watch('patient_info', function (nV, oV) {
+                                if ($scope.patient_info) {
+                                    $scope.timeline = {
+                                        Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
+                                        birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
+                                        problems: timeline_problems
+                                    };
 
-                            $scope.timeline_ready = true;
-                            $scope.timeline_changed = [{changing: new Date().getTime()}];
+                                    $scope.timeline_ready = true;
+                                    $scope.timeline_changed = [{changing: new Date().getTime()}];
+                                }
+                            });
                         }
                     });
-                });
 
                 todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                     $scope.members = data['members'];
@@ -1173,23 +1179,6 @@
                 return is_existed;
             }
 
-            function checkSharedProblem(problem, sharing_patients) {
-                if ($scope.active_user) {
-
-                    if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
-                        return true;
-                    } else {
-                        var is_existed = false;
-                        angular.forEach(sharing_patients, function (p, key) {
-                            if (!is_existed && p.user.id == $scope.user_id) {
-                                is_existed = $scope.isInArray(p.problems, problem.id);
-                            }
-                        });
-
-                        return is_existed;
-                    }
-                }
-            }
 
             function open_data(data) {
                 $location.path('/data/' + data.id);

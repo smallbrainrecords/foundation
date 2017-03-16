@@ -8,3 +8,5 @@ templates_bk/*
 *.db
 media
 Icon
+static/CACHE
+staticdev/CACHE

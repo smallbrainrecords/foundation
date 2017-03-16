@@ -1,6 +1,9 @@
 <a href='#/'><b> Manage Patient </b></a>
-<div ng-if="!checkSharedProblem(problem, sharing_patients) && !loading">You can not access this page</div>
-<div ng-if="checkSharedProblem(problem, sharing_patients)">
+<div ng-if="!hasAccess && !loading">
+    <h3 class="text-center">You can not access this page.</h3>
+</div>
+
+<div ng-if="hasAccess">
     <div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100'
          ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'
          ng-init="edit_problem=false;">
