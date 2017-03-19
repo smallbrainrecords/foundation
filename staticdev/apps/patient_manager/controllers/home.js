@@ -398,9 +398,9 @@
                 if ($scope.most_recent_encounter_documents.length > 0) {
                     text += "List of encounter document: \r\n";
                     angular.forEach($scope.most_recent_encounter_documents, function (value, key) {
-                        var container = $("<div/>");
-                        container.append(value.name + ': ' + value.value + " at " + $filter('date')(value.effective, 'dd/MM/yyyy h:mm'));
-                        text += container.text() + '\r\n';
+                        let container = $("<div/>");
+                        container.append(`${value.name} : ${value.value}`);
+                        text += `${container.text()} \r\n`;
                     });
                     text += '\r\n';
                 }
@@ -411,10 +411,12 @@
                     });
                     text += '\r\n';
                 }
+
                 if ($scope.pending_todos.length > 0) {
                     text += "List of all active todos : \r\n";
                     angular.forEach($scope.pending_todos, function (value, key) {
-                        text += value.todo + '\r\n';
+                        debugger;
+                        text += `${value.todo} ${value.problem ? 'for problem ' + value.problem.problem_name : ''}\r\n`;
                     });
                 }
                 // Copy to clipboard
