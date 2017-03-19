@@ -226,33 +226,33 @@
             </table>
         </div>
     </div>
-    <div class='panel panel-default' id='patientsAssignedInfo'>
-        <div class='panel-heading'> Patients Assigned</div>
-        <div class='panel-body'>
-            <table class='table'>
-                <thead>
-                <tr>
-                    <th> Name</th>
-                    <th> Username</th>
-                    <th> Contact Number</th>
-                    <th> Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr ng-repeat='patient in patients'>
-                    <td> {{patient.user.first_name}} {{patient.user.last_name}}</td>
-                    <td> {{patient.user.username}}</td>
-                    <td> {{patient.phone_number}}</td>
-                    <td><a href='/u/patient/manage/{{patient.user.id}}/' class='btn btn-sm btn-default'
-                           ng-show='patient.role=="patient"'>
-                        Manage
-                    </a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <!--<div class='panel panel-default' id='patientsAssignedInfo'>-->
+        <!--<div class='panel-heading'> Patients Assigned</div>-->
+        <!--<div class='panel-body'>-->
+            <!--<table class='table'>-->
+                <!--<thead>-->
+                <!--<tr>-->
+                    <!--<th> Name</th>-->
+                    <!--<th> Username</th>-->
+                    <!--<th> Contact Number</th>-->
+                    <!--<th> Actions</th>-->
+                <!--</tr>-->
+                <!--</thead>-->
+                <!--<tbody>-->
+                <!--<tr ng-repeat='patient in patients'>-->
+                    <!--<td> {{patient.user.first_name}} {{patient.user.last_name}}</td>-->
+                    <!--<td> {{patient.user.username}}</td>-->
+                    <!--<td> {{patient.phone_number}}</td>-->
+                    <!--<td><a href='/u/patient/manage/{{patient.user.id}}/' class='btn btn-sm btn-default'-->
+                           <!--ng-show='patient.role=="patient"'>-->
+                        <!--Manage-->
+                    <!--</a>-->
+                    <!--</td>-->
+                <!--</tr>-->
+                <!--</tbody>-->
+            <!--</table>-->
+        <!--</div>-->
+    <!--</div>-->
     <div class='panel panel-default' id='nursesAssignedInfo'>
         <div class='panel-heading'> Nurses Assigned</div>
         <div class='panel-body'>
