@@ -614,6 +614,9 @@
                     $scope.unset_new_problem();
                     /* Not-angular-way */
                     $('#problemTermInput').focus();
+
+                    //
+                    $scope.open_problem(data['problem']);
                 } else if (data['success'] == false) {
                     alert(data['msg']);
                 } else {
@@ -641,6 +644,9 @@
                     $scope.unset_new_problem();
                     /* Not-angular-way */
                     $('#problemTermInput').focus();
+
+                    $scope.open_problem(data['problem']);
+
                 } else if (data['success'] == false) {
                     toaster.pop('error', 'Error', data['msg']);
                 } else {
@@ -658,6 +664,9 @@
                 if (data['success'] == true) {
                     toaster.pop('success', 'Done', 'New Problem added successfully');
                     $scope.problems.push(data['problem']);
+
+                    $scope.open_problem(data['problem']);
+
                 } else if (data['success'] == false) {
                     toaster.pop('error', 'Error', data['msg']);
                 } else {
