@@ -18,3 +18,4 @@ wsgiref==0.1.2
 django-cronjobs==0.2.3
 python-dateutil==2.6.0
 django-session-security==2.4.0
+djangorestframework==3.4.7

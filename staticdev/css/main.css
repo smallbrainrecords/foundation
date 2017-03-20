@@ -138,8 +138,9 @@
 }
 
 .problem-uncontrolled {
-    background-color: red !important;
-    color: white !important;
+    background-color: #f2dede !important;
+    border-color: #ebccd1 !important;
+    color: #a94442 !important;
 }
 
 .btn-custom:hover {
