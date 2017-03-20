@@ -55,14 +55,14 @@
                     };
 
                     if ($scope.active_user.role == 'physician') {
-                        physicianService.getUsersList(role_form).then(function (data) {
-                            $scope.users = data;
-                        });
+                        // physicianService.getUsersList(role_form).then(function (data) {
+                        //     $scope.users = data;
+                        // });
 
                         var form = {'physician_id': $scope.active_user.user.id};
                         physicianService.getPhysicianData(form).then(function (data) {
 
-                            $scope.patients = data['patients'];
+                            // $scope.patients = data['patients'];
                             $scope.team = data['team'];
 
                         });
