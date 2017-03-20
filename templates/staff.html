@@ -59,12 +59,12 @@
                 <a class='btn btn-default btn-manage' href='/project/admin/#/add/user'>Add User</a>
 
                 <a class='btn btn-default btn-manage' href='/#/manage/sharing'>
-                    Manage sharing between patients
+                    Manage patient sharing
                 </a>
 
                 {% if user_profile.role == 'mid-level' or user_profile.role == 'physician' %}
                 <a class='btn btn-default btn-manage' href='/#/manage/common_problems'>
-                    Adding common problems
+                    Add common problems
                 </a>
 
                 {% endif %}
@@ -79,7 +79,7 @@
                 {% if user_profile.role == 'admin' or user_profile.role == 'physician' %}
 
                 <a class='btn btn-default btn-manage' href='/#/manage/setting'>
-                    Setting
+                    Settings
                 </a>
                 {% endif %}
                 {% endif %}
