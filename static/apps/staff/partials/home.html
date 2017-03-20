@@ -183,49 +183,49 @@
     </div>
 </div>
 <div ng-if="active_user.role=='physician'" class="physician-view">
-    <div class='panel panel-default'>
-        <div class='panel-heading'>
-            Registered Users
-        </div>
-        <div class='panel-body'>
-            <h4 class='text-info text-center'> Registered Users </h4>
-            <hr>
-            <input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>
-            <hr>
-            <table class='table'>
-                <thead>
-                <tr>
-                    <th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>
-                    <th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>
-                    <th class="sort " sortBy='login' sortOrder="desc">Username</th>
-                    <th class="sort " sortBy='birthDate' sortOrder="desc">Role</th>
-                    <th class="sort " sortBy='sex' sortOrder="desc">Sex</th>
-                    <th>Contact Number</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr ng-repeat='user in users|filter:query_users'>
-                    <td> {{user.user.first_name}}</td>
-                    <td> {{user.user.last_name}}</td>
-                    <td> {{user.user.username}}</td>
-                    <td> {{user.role}}</td>
-                    <td> {{user.sex}}</td>
-                    <td> {{user.phone_number}}</td>
-                    <td>
-                        <a href='/project/admin/#/edit/{{user.user.id}}/' class='btn btn-sm btn-default'>
-                            Edit
-                        </a>
-                        <a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'
-                           ng-show='user.role=="patient"'>
-                            Manage
-                        </a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <!--<div class='panel panel-default'>-->
+        <!--<div class='panel-heading'>-->
+            <!--Registered Users-->
+        <!--</div>-->
+        <!--<div class='panel-body'>-->
+            <!--<h4 class='text-info text-center'> Registered Users </h4>-->
+            <!--<hr>-->
+            <!--<input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>-->
+            <!--<hr>-->
+            <!--<table class='table'>-->
+                <!--<thead>-->
+                <!--<tr>-->
+                    <!--<th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>-->
+                    <!--<th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>-->
+                    <!--<th class="sort " sortBy='login' sortOrder="desc">Username</th>-->
+                    <!--<th class="sort " sortBy='birthDate' sortOrder="desc">Role</th>-->
+                    <!--<th class="sort " sortBy='sex' sortOrder="desc">Sex</th>-->
+                    <!--<th>Contact Number</th>-->
+                    <!--<th>Action</th>-->
+                <!--</tr>-->
+                <!--</thead>-->
+                <!--<tbody>-->
+                <!--<tr ng-repeat='user in users|filter:query_users'>-->
+                    <!--<td> {{user.user.first_name}}</td>-->
+                    <!--<td> {{user.user.last_name}}</td>-->
+                    <!--<td> {{user.user.username}}</td>-->
+                    <!--<td> {{user.role}}</td>-->
+                    <!--<td> {{user.sex}}</td>-->
+                    <!--<td> {{user.phone_number}}</td>-->
+                    <!--<td>-->
+                        <!--<a href='/project/admin/#/edit/{{user.user.id}}/' class='btn btn-sm btn-default'>-->
+                            <!--Edit-->
+                        <!--</a>-->
+                        <!--<a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'-->
+                           <!--ng-show='user.role=="patient"'>-->
+                            <!--Manage-->
+                        <!--</a>-->
+                    <!--</td>-->
+                <!--</tr>-->
+                <!--</tbody>-->
+            <!--</table>-->
+        <!--</div>-->
+    <!--</div>-->
     <!--<div class='panel panel-default' id='patientsAssignedInfo'>-->
         <!--<div class='panel-heading'> Patients Assigned</div>-->
         <!--<div class='panel-body'>-->
