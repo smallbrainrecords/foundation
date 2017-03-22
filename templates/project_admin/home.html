@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block content %}
-<script src="/static/apps/common/httpModule.js" type="text/javascript" charset="utf-8"></script>
+<!--<script src="/static/apps/common/httpModule.js" type="text/javascript" charset="utf-8"></script>-->
 <script src="/static/apps/admin/app.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/admin/directives/directives.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/admin/controllers/globalController.js" type="text/javascript" charset="utf-8"></script>
@@ -22,19 +22,15 @@
 <script src="/static/apps/admin/services/adminService.js" type="text/javascript" charset="utf-8"></script>
 
 <div id='ng-app' ng-app='AdminApp' class='no-js' lang="en">
-
-    <div ng-controller='GlobalCtrl'>
+    <div>
         <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
-
-        <center>
+        <p class="text-center">
             <a href='/old/home'> Go to old Physician/Admin Dashboard </a>
-        </center>
-
+        </p>
 
         <div ng-view>
             Loading...
         </div>
-
     </div>
 
 </div>

@@ -21,6 +21,7 @@
             $scope.update_active = update_active;
             $scope.update_deceased_date = update_deceased_date;
             $scope.updateImage = updateImage;
+
             init();
 
             function init() {
