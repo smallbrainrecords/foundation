@@ -71,14 +71,25 @@ def get_problem_info(request, problem_id):
     :return:
     """
     resp = {'success': False}
+    sharing_patients_list = []
+
     problem_info = Problem.objects.select_related("patient").get(id=problem_id)
     hasProblemAccess = check_problem_access(request.user, problem_info)
+
+    # Loading sharing patient list
+    sharing_patients = SharingPatient.objects.filter(
+        shared=problem_info.patient).order_by('sharing__first_name', 'sharing__last_name')
+    for sharing_patient in sharing_patients:
+        user_dict = UserProfileSerializer(sharing_patient.sharing.profile).data
+        user_dict['problems'] = [x.id for x in sharing_patient.problems.all()]
+        sharing_patients_list.append(user_dict)
 
     if hasProblemAccess:
         resp = {
             'success': True,
             'info': ProblemInfoSerializer(problem_info).data,
             'available_widgets': get_available_widget(problem_info),
+            'sharing_patients' : sharing_patients_list
         }
 
     return ajax_response(resp)

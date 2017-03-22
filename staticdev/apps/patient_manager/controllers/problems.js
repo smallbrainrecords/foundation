@@ -60,6 +60,7 @@
             $scope.change_problem_name = change_problem_name;
             $scope.changeProblemLabel = changeProblemLabel;
             $scope.changeView = changeView;
+            $scope.checkSharedProblem = checkSharedProblem;
             $scope.close_change_data = close_change_data;
             $scope.close_change_medication = close_change_medication;
             $scope.close_change_problem_label = close_change_problem_label;
@@ -124,6 +125,8 @@
                             $scope.hasAccess = true;
 
                             $scope.problem = data['info'];
+
+                            $scope.sharing_patients = data['sharing_patients'];
 
                             // problem time line
                             if ($scope.problem.problem_segment !== undefined && $scope.problem.problem_segment.length > 0) {
@@ -1167,6 +1170,24 @@
                 }
 
                 $scope.show_accomplished_goals = flag;
+            }
+
+            function checkSharedProblem(problem, sharing_patients) {
+                if ($scope.active_user) {
+
+                    if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
+                        return true;
+                    } else {
+                        var is_existed = false;
+                        angular.forEach(sharing_patients, function (p, key) {
+                            if (!is_existed && p.user.id == $scope.user_id) {
+                                is_existed = $scope.isInArray(p.problems, problem.id);
+                            }
+                        });
+
+                        return is_existed;
+                    }
+                }
             }
 
             function isInArray(array, item) {
