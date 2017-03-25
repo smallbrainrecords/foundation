@@ -150,7 +150,7 @@
 
                             // TODO: 02/03/2017 Should be move to general later
                             $scope.$watch('patient_info', function (nV, oV) {
-                                if ($scope.patient_info) {
+                                if (nV !== oV) {
                                     $scope.timeline = {
                                         Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
                                         birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
