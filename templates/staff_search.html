@@ -22,17 +22,13 @@
                 <li>
                     <div class="row">
                         <div class="col-md-8">
-
-                            {{patient}}
+                            <a href='/u/patient/manage/{{patient.user_id}}/'>
+                                {{patient}}
+                            </a>
                         </div>
                         <div class="col-md-4 text-right">
-
                             <a href='/project/admin/#/edit/{{patient.user_id}}/' class='btn btn-sm btn-default'>
                                 Edit
-                            </a>
-
-                            <a href='/u/patient/manage/{{patient.user_id}}/' class='btn btn-sm btn-default'>
-                                Manage
                             </a>
                         </div>
                     </div>
