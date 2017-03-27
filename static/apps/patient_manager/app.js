@@ -97,8 +97,8 @@
                 templateUrl: '/static/apps/patient_manager/partials/data/show_all_data.html',
                 controller: 'ShowAllDataCtrl'
             })
-            .when('/data/individual_data/:individual_data_id', {
-                templateUrl: '/static/apps/patient_manager/partials/data/individual_data.html',
+            .when('/data/:dataId/edit/:componentValueIds', {
+                templateUrl: '/static/apps/patient_manager/partials/data/edit_data.html',
                 controller: 'IndividualDataCtrl'
             })
             .when('/data/:data_id/settings', {
@@ -124,10 +124,10 @@
         CollapseService.initHotKey();
     });
     ManagerApp.factory('CollapseService', function (hotkeys, $location, $timeout, $rootScope) {
-        var CollapseService = {
+        let CollapseService = {
+            show_homepage_tab: 'problems',
             show_colon_collapse: false,
             show_a1c_collapse: false,
-            show_homepage_tab: 'problems',
             show_inr_collapse: false,
             innerProblemTabSetActive: 0,
             ChangeColonCollapse: ChangeColonCollapse,

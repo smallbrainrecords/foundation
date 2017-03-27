@@ -5,81 +5,100 @@
     angular.module('ManagerApp').service('dataService',
         function ($http, $q, $cookies, httpService) {
 
-            this.csrf_token = function () {
-
-                var token = $cookies.get('csrftoken');
-                return token;
+            return {
+                csrf_token: csrf_token,
+                fetchDataInfo: fetchDataInfo,
+                fetchPinToProblem: fetchPinToProblem,
+                dataPinToProblem: dataPinToProblem,
+                addData: addData,
+                fetchIndividualDataInfo: fetchIndividualDataInfo,
+                deleteIndividualData: deleteIndividualData,
+                saveData: saveData,
+                saveDataType: saveDataType,
+                deleteData: deleteData,
+                updateGraphType: updateGraphType,
+                generateChartData: generateChartData,
+                generateChartLabel: generateChartLabel,
+                generateChartSeries: generateChartSeries,
+                generateMostRecentValue: generateMostRecentValue,
+                updateViewMode: updateViewMode,
+                getValueCount: getValueCount,
+                generateMostCommonData: generateMostCommonData,
+                deleteComponentValues: deleteComponentValues
             };
 
-            this.fetchDataInfo = function (data_id) {
+            function csrf_token() {
+                return $cookies.get('csrftoken');
+            }
+
+            function fetchDataInfo(data_id) {
                 var url = "/data/" + data_id + "/info";
                 var params = {};
 
                 return httpService.get(params, url);
 
-            };
+            }
 
-            this.fetchPinToProblem = function (data_id) {
+            function fetchPinToProblem(data_id) {
                 var url = "/data/" + data_id + "/get_pins";
                 var params = {};
 
                 return httpService.get(params, url);
 
-            };
+            }
 
-            this.dataPinToProblem = function (patient_id, form) {
+            function dataPinToProblem(patient_id, form) {
                 var url = '/data/' + patient_id + '/pin_to_problem';
                 return httpService.post(form, url);
-            };
+            }
 
-            this.addData = function (patient_id, component_id, form) {
+            function addData(patient_id, component_id, form) {
                 var url = '/data/' + patient_id + '/' + component_id + '/add_new_data';
                 return httpService.post(form, url);
-            };
+            }
 
-            this.fetchIndividualDataInfo = function (patient_id, component_id) {
+            function fetchIndividualDataInfo(patient_id, component_id) {
                 var url = "/data/" + patient_id + "/" + component_id + "/individual_data_info";
                 var params = {};
 
                 return httpService.get(params, url);
 
-            };
+            }
 
-            this.deleteIndividualData = function (patient_id, component_id) {
+            function deleteIndividualData(patient_id, component_id) {
                 var form = {};
                 var url = "/data/" + patient_id + "/" + component_id + "/delete_individual_data";
                 return httpService.post(form, url);
-            };
+            }
 
-            this.saveData = function (patient_id, component_id, form) {
+            function saveData(patient_id, component_id, form) {
                 var url = '/data/' + patient_id + '/' + component_id + '/save_data';
                 return httpService.post(form, url);
-            };
+            }
 
-            this.saveDataType = function (form) {
+            function saveDataType(form) {
                 var url = '/data/' + form.patient_id + '/' + form.data_id + '/save_data_type';
 
                 return httpService.post(form, url);
-            };
+            }
 
-            this.deleteData = function (patient_id, data_id) {
+            function deleteData(patient_id, data_id) {
                 var form = {};
                 var url = "/data/" + patient_id + "/" + data_id + "/delete_data";
                 return httpService.post(form, url);
-            };
+            }
 
             /**
              * Update displayed graph type for each data type
              * @returns {*}
              */
-            this.updateGraphType = function (form) {
+            function updateGraphType(form) {
                 var url = '/data/update_graph';
 
                 return httpService.post(form, url);
-            };
+            }
 
-
-            this.generateChartData = function (observation) {
+            function generateChartData(observation) {
                 var result = [];
 
                 // Generate data point(s)
@@ -89,22 +108,22 @@
                 });
 
                 return result;
-            };
+            }
 
-            this.generateChartLabel = function (observation) {
+            function generateChartLabel(observation) {
                 if (observation.observation_components.length == 0)
                     return [];
                 // Generate data point(s)
                 return _.pluck(observation.observation_components[0].observation_component_values, 'date');
-            };
+            }
 
-            this.generateChartSeries = function (observation) {
+            function generateChartSeries(observation) {
                 if (observation.observation_components.length == 0)
                     return [];
                 return _.pluck(observation.observation_components, 'name');
-            };
+            }
 
-            this.generateMostRecentValue = function (observation) {
+            function generateMostRecentValue(observation) {
                 var result = [];
                 if (observation.observation_components.length == 0)
                     return result.toString();
@@ -140,9 +159,9 @@
                 });
 
                 return result.join(" / ");
-            };
+            }
 
-            this.updateViewMode = function (viewMode, data) {
+            function updateViewMode(viewMode, data) {
                 var now = moment().utc();
 
                 // TODO: It's should be limited from server side
@@ -175,9 +194,9 @@
                         return data;
                         break;
                 }
-            };
+            }
 
-            this.getValueCount = function (data) {
+            function getValueCount(data) {
                 var now = moment().utc();
                 var yearAgo = now.subtract(1, 'year');
                 var count = 0;
@@ -190,9 +209,9 @@
                 });
 
                 return count;
-            };
+            }
 
-            this.generateMostCommonData = function (datas) {
+            function generateMostCommonData(datas) {
                 var mostCommonData = _.sortBy(datas, function (data) {
                     var now = moment().utc();
                     var yearAgo = now.subtract(1, 'year');
@@ -216,7 +235,21 @@
                 }
 
                 return _.last(mostCommonData, 3);
-            };
+            }
+
+            /**
+             * Request to delete multiple observation component value
+             * TODO: Implement detail here
+             * @param patientId
+             * @param idArray
+             */
+            function deleteComponentValues(patientId, idArray) {
+                return $http.delete(`/data/${patientId}/delete`, {
+                    data: {
+                        component_values: idArray
+                    }
+                });
+            }
         });
 
 })();

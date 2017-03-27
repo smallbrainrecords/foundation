@@ -13,8 +13,7 @@ from .serializers import ObservationSerializer, ObservationPinToProblemSerialize
 
 @login_required
 def track_observation_click(request):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
 
     actor = request.user
     if request.POST.get("patient_id", None):
@@ -33,11 +32,11 @@ def track_observation_click(request):
 
 @login_required
 def get_datas(request, patient_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
 
     if permissions_accessed(request.user, int(patient_id)):
-        # add default datas: heart rate, blood pressure, respiratory rate, body temperature, height, weight, body mass index
+        # Add default datas: heart rate, blood pressure, respiratory rate, body temperature, height, weight,
+        # body mass index
         patient_user = User.objects.get(id=patient_id)
         for data in OBSERVATION_TYPES:
             if not data['name'] == 'a1c' and not Observation.objects.filter(name=data['name'], author=None,
@@ -106,9 +105,7 @@ def get_datas(request, patient_id):
 @login_required
 def get_observation_info(request, observation_id):
     observation = Observation.objects.get(id=observation_id)
-    resp = {}
-    resp['success'] = True
-    resp['info'] = ObservationSerializer(observation).data
+    resp = {'success': True, 'info': ObservationSerializer(observation).data}
     return ajax_response(resp)
 
 
@@ -116,8 +113,7 @@ def get_observation_info(request, observation_id):
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
 def add_new_data_type(request, patient_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         patient = User.objects.get(id=int(patient_id))
         observation = Observation.objects.create(subject=patient.profile,
@@ -148,8 +144,7 @@ def add_new_data_type(request, patient_id):
 @permissions_required(["set_data_order"])
 @login_required
 def update_order(request):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
 
     datas = json.loads(request.body)
     if datas.has_key('patient_id'):
@@ -171,17 +166,14 @@ def update_order(request):
 @login_required
 def get_pins(request, observation_id):
     pins = ObservationPinToProblem.objects.filter(observation_id=observation_id)
-    resp = {}
-    resp['success'] = True
-    resp['pins'] = ObservationPinToProblemSerializer(pins, many=True).data
+    resp = {'success': True, 'pins': ObservationPinToProblemSerializer(pins, many=True).data}
     return ajax_response(resp)
 
 
 @login_required
 @api_view(["POST"])
 def obseration_pin_to_problem(request, patient_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)) or True:
         observation_id = request.POST.get("data_id", None)
         problem_id = request.POST.get("problem_id", None)
@@ -234,8 +226,7 @@ def obseration_pin_to_problem(request, patient_id):
 @login_required
 @api_view(["POST"])
 def add_new_data(request, patient_id, component_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         effective_datetime = request.POST.get("datetime", None)
         if effective_datetime:
@@ -261,8 +252,7 @@ def add_new_data(request, patient_id, component_id):
 
 @login_required
 def get_individual_data_info(request, patient_id, value_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         value = ObservationValue.objects.get(id=value_id)
         if not value.component.observation.name == OBSERVATION_TYPES[0]['name']:
@@ -273,8 +263,7 @@ def get_individual_data_info(request, patient_id, value_id):
 
 @login_required
 def delete_individual_data(request, patient_id, value_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         value = ObservationValue.objects.get(id=value_id)
         value.delete()
@@ -284,8 +273,7 @@ def delete_individual_data(request, patient_id, value_id):
 
 @login_required
 def save_data(request, patient_id, value_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         value = ObservationValue.objects.get(id=value_id)
 
@@ -307,8 +295,7 @@ def save_data(request, patient_id, value_id):
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
 def save_data_type(request, patient_id, observation_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         observation = Observation.objects.get(id=observation_id)
         if not observation.author == None:  # prevent default datas
@@ -339,8 +326,7 @@ def save_data_type(request, patient_id, observation_id):
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
 def delete_data(request, patient_id, observation_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         observation = Observation.objects.get(id=observation_id)
         if not observation.author == None:  # prevent default datas
@@ -360,13 +346,11 @@ def delete_data(request, patient_id, observation_id):
     return ajax_response(resp)
 
 
-# TODO: AnhDN Check this working flow
 @login_required
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
 def update_graph(request):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     # If user have access to this data
     if permissions_accessed(request.user, int(request.POST.get('patient_id'))):
         observation = Observation.objects.get(id=request.POST.get('data_id'))
@@ -374,4 +358,22 @@ def update_graph(request):
         observation.save()
         resp['success'] = True
 
+    return ajax_response(resp)
+
+
+@login_required
+def delete_component_values(request, patient_id):
+    """
+    Delete observation component values    
+    :param patient_id: 
+    :param request: 
+    :return: 
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+    observation_value_ids = json_body.get('component_values')
+
+    if permissions_accessed(request.user, int(patient_id)):
+        ObservationValue.objects.filter(id__in=observation_value_ids).delete()
+        resp['success'] = True
     return ajax_response(resp)
