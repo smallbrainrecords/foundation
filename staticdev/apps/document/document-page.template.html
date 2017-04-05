@@ -40,7 +40,7 @@
                     <button class="btn btn-default" ng-click="enableEditLabel=!enableEditLabel"
                             ng-bind="enableEditLabel ? 'Done edit label' :'Edit label'"></button>
                     <button class="btn btn-default" ng-click="enableEditPatient=!enableEditPatient"
-                            ng-show="['physician','admin'].indexOf(active_user.role)!=-1"
+                            ng-show="['physician','admin','nurse','secretary'].indexOf(active_user.role)!=-1"
                             ng-bind="enableEditPatient ? 'Done edit patient' :'Edit patient'"></button>
                     <button ng-show="document.patient" class="btn btn-default" ng-click="enableTodoPin=!enableTodoPin"
                             ng-bind="enableTodoPin ? 'Done todo pin' :'Pin todo'"></button>
