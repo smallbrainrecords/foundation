@@ -22,6 +22,9 @@
             ];
             $scope.label_component = {};
             $scope.allowDueDateNotification = true;
+            $scope.new_comment = {
+                comment: ""
+            };
 
             $scope.isDueDate = isDueDate;
             $scope.add_comment = addComment;
@@ -116,8 +119,8 @@
                 todoService.addComment(form).then(function (data) {
                     var comment = data['comment'];
                     $scope.comments.push(comment);
+                    $scope.new_comment.comment = "";
 
-                    $scope.new_comment = {};
                     toaster.pop('success', 'Done', 'New Comment added successfully');
                 });
             }
