@@ -157,13 +157,16 @@
                                 <a href ng-click="close_change_data(); $event.stopPropagation();"><i
                                         class="fa fa-close"></i></a>
                             </div>
-                            <p ng-repeat="data in datas">
+                            <div class="checkbox" ng-repeat="data in datas track by $index">
                                 <input type="checkbox"
+                                       id="{{data.id}}"
                                        ng-model="data.pin"
                                        ng-change="data_pin_to_problem(data.id, problem.id);"
-                                       ng-disabled="active_user.role == 'patient' && active_user.id != data.pin_author && data.pin_author != null">
-                                {{ data.name }}
-                            </p>
+                                       ng-disabled="active_user.role == 'patient' && active_user.id != data.pin_author && data.pin_author != null"
+                                       title="{{data.name}}">
+                                <label for="{{data.id}}" ng-bind="data.name">
+                                </label>
+                            </div>
                         </div>
                         <!-- end change data -->
                         <!-- begin change medication -->
@@ -172,13 +175,15 @@
                                 <a href ng-click="close_change_medication(); $event.stopPropagation();"><i
                                         class="fa fa-close"></i></a>
                             </div>
-                            <p ng-repeat="medication in medications">
+                            <div class="checkbox" ng-repeat="medication in medications track by $index">
                                 <input type="checkbox"
+                                       id="{{medication.id}}"
+                                       title="{{medication.name}}"
                                        ng-model="medication.pin"
                                        ng-change="medication_pin_to_problem(medication, problem.id);"
                                        ng-disabled="active_user.role == 'patient' && (active_user.id != medication.pin_author || medication.pin_author != null)">
-                                {{ medication.name }}
-                            </p>
+                                <label for="{{medication.id}}">{{ medication.name }}</label>
+                            </div>
                         </div>
                         <!-- end change medication -->
                     </div>
@@ -606,18 +611,22 @@
             <div class='row'>
                 <div class='col-md-4'>
                     <h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i></h4>
-                    <div class='row no-margin'
+                    <div class='row no-margin' ng-class=" editMode ? 'checkbox' :''"
                          ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effecting: true}'>
                         <!--Only show if edit mode is enabled-->
-                        <input ng-if="editMode" type='checkbox' ng-model='eff_problem.effecting'
+                        <input type='checkbox'
+                               id="eff{{eff_problem.id}}"
+                               title="{{ eff_problem.problem_name }}" ng-if="editMode"
+                               ng-model='eff_problem.effecting'
                                ng-change='change_effecting_problem(eff_problem, problem)'
                                ng-disabled='!permitted(["relate_problem"])'>
-                        <span ng-if='eff_problem.effecting==true' style='font-size:14px; font-weight:bold'>
-							<a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
-						</span>
-                        <span ng-if='eff_problem.effecting!=true'>
-							{{ eff_problem.problem_name }}
-						</span>
+                        <label for="eff{{eff_problem.id}}" ng-if='eff_problem.effecting==true'
+                               style='font-size:14px; font-weight:bold'>
+                            <a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
+                        </label>
+                        <label for="eff{{eff_problem.id}}" ng-if='eff_problem.effecting!=true'>
+                            {{ eff_problem.problem_name }}
+                        </label>
                     </div>
                 </div>
                 <div class='col-md-4 text-center'>
@@ -625,18 +634,22 @@
                 </div>
                 <div class='col-md-4'>
                     <h4><i class='glyphicon glyphicon-arrow-right'></i> EffectedProblems </h4>
-                    <div class='row no-margin'
+                    <div class='row no-margin' ng-class=" editMode ? 'checkbox' :''"
                          ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effected: true}'>
                         <!--Only show if edit mode is enabled-->
-                        <input ng-if="editMode" type='checkbox' ng-model='eff_problem.effected'
+                        <input type='checkbox'
+                               id="effected_{{eff_problem.id}}"
+                               title="{{ eff_problem.problem_name }}"
+                               ng-if="editMode" ng-model='eff_problem.effected'
                                ng-change='change_effected_problem(problem, eff_problem)'
                                ng-disabled='!permitted(["relate_problem"])'>
-                        <span ng-if='eff_problem.effected==true' style='font-size:14px; font-weight:bold'>
-							<a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
-						</span>
-                        <span ng-if='eff_problem.effected!=true'>
-							{{ eff_problem.problem_name }}
-						</span>
+                        <label for="effected_{{eff_problem.id}}" ng-if='eff_problem.effected==true'
+                               style='font-size:14px; font-weight:bold'>
+                            <a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
+                        </label>
+                        <label for="effected_{{eff_problem.id}}" ng-if='eff_problem.effected!=true'>
+                            {{ eff_problem.problem_name }}
+                        </label>
                     </div>
                 </div>
             </div>

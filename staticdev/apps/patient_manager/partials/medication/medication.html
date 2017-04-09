@@ -136,12 +136,12 @@
             </div>
 
             <div class='panel-body'>
-                <p ng-repeat="problem in problems">
-                    <input type="checkbox"
-                           ng-model="problem.pin"
-                           ng-change="medicationPinToProblem(medication.id, problem.id);" title="">
-                    <span ng-bind="problem.problem_name "></span>
-                </p>
+                <div class="checkbox" ng-repeat="problem in problems track by $index">
+                    <input type="checkbox" ng-model="problem.pin" title="{{problem.problem_name}}"
+                           id="{{problem.id}}"
+                           ng-change="medicationPinToProblem(medication.id, problem.id);">
+                    <label for="{{problem.id}}" ng-bind="problem.problem_name"></label>
+                </div>
             </div>
         </div>
     </div>

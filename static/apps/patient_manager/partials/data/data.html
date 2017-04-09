@@ -3,13 +3,10 @@
         <a href='#/'><b> Back to home page </b></a>
     </div>
 </div>
-
 <div class='panel panel-default'>
-
     <div class='panel-body no-padding'>
         <!--Time range selector-->
         <div>
-
             <div class="btn-group btn-group-justified graph-view-mode" fixed-zone offset-orientation='top'
                  offset-top='50'
                  id="time-range-select">
@@ -23,7 +20,6 @@
                        ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
             </div>
         </div>
-
         <!--Graph-->
         <div class='item-box data-frame' ng-style="{'background-color': data.color}">
             <div class="row graph-header">
@@ -33,13 +29,12 @@
                 <div class="col-md-6 text-right">
                     <h3>
                         <span ng-bind="data.mostRecentValue || 0"></span>
-                        <span ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}}</span>
-
+                        <span ng-repeat='unit in data.observation_units'
+                              ng-if="unit.is_used"> {{unit.value_unit}}</span>
                     </h3>
                     <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                 </div>
             </div>
-
             <canvas ng-if="data.graph=='Line'" class="chart chart-line"
                     chart-data="data.chartData"
                     chart-series="data.chartSeries"
@@ -51,13 +46,9 @@
         </div>
     </div>
 </div>
-
 <div class='panel panel-default'>
-
     <div class='panel-body'>
-
         <div class='row'>
-
             <div class='col-md-12'>
                 <a href="#/data/{{ data.id }}/show_all_data" class="btn btn-default">Show all data</a>
                 <a href="#/data/{{ data.id }}/add_data" class="btn btn-default">Add data point</a>
@@ -70,16 +61,12 @@
         </div>
     </div>
 </div>
-
 <div class='panel panel-default'>
     <div class='panel-heading'>
-        <h3>List of pinned problems</h3>
+        List of pinned problems
     </div>
-
     <div class='panel-body'>
-
         <div class='row'>
-
             <div class='col-md-12'>
                 <div style='max-height:375px; overflow-y:auto;'>
                     <ul class='ul-clean'>
@@ -88,7 +75,6 @@
                             <div class='item-box'
                                  ng-class='problem.is_controlled==true ? "green-box" : "red-box" '
                                  ng-click="open_problem(problem);">
-
                                 {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
                             </div>
                         </li>
@@ -98,23 +84,17 @@
         </div>
     </div>
 </div>
-
 <div class='panel panel-default' ng-show="show_pin_to_new_problem"
      ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.id || true">
     <div class='panel-heading'>
-        <h3>List of current problems</h3>
+        List of current problems
     </div>
-
     <div class='panel-body'>
-
-        <div class='row'>
-
-            <div class='col-md-12'>
-                <p ng-repeat="problem in problems">
-                    <input type="checkbox" ng-model="problem.pin"
-                           ng-change="data_pin_to_problem($index, data.id, problem.id);"> {{ problem.problem_name }}
-                </p>
-            </div>
+        <div class="checkbox" ng-repeat="problem in problems track by $index">
+            <input type="checkbox" ng-model="problem.pin" title="{{problem.problem_name}}"
+                   id="{{problem.id}}"
+                   ng-change="data_pin_to_problem($index, data.id, problem.id);">
+            <label for="{{problem.id}}" ng-bind="problem.problem_name"></label>
         </div>
     </div>
 </div>
