@@ -1,4 +1,3 @@
-<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
 <div class="todos-container" ng-show='problem_todos.length'>
     <!-- begin sortable -->
     <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
@@ -38,7 +37,6 @@
                 <p>
                     <span ng-repeat="member in item.members" class="todo-member">{{ member.username }}</span>
                 </p>
-
                 <a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>
             </div>
             <!-- end show item -->
@@ -65,7 +63,9 @@
                         <a href ng-click="changeLabel(item)"><i class="fa fa-tags"></i>Edit label</a>
 
                         <a href ng-click="changeDueDate(item)"><i class="fa fa-clock-o"></i>Change Due Date</a>
-                        <!-- <a href ng-click="changeMember(item)"><i class="fa fa-user"></i>Members</a> -->
+
+                        <!-- On Staff homepage todo's member edit is enabled on tagged todo list only, the staff personal todo will be opt-out-->
+                        <a href ng-if="is_tagged" ng-click="changeMember(item)"><i class="fa fa-user"></i>Members</a>
                     </div>
                     <!-- end buttons -->
                     <!-- begin change label -->

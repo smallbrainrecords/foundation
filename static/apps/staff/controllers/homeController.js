@@ -91,11 +91,6 @@
                     $scope.newTaggedTodo = data['new_tagged_todo'];
                 });
 
-
-                todoService.fetchTodoMembers($scope.user_id).then(function (data) {
-                    $scope.members = data['members'];
-                });
-
                 todoService.fetchLabels($scope.user_id).then(function (data) {
                     $scope.labels = data['labels'];
                 });

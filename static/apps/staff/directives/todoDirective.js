@@ -119,6 +119,12 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                         todoService.addTodoAccessEncounter(todo.id).then(function () {
                             todo.changed = true;
                         });
+
+                        if (scope.is_tagged) {
+                            todoService.fetchTodoMembers(todo.patient.id).then(function (data) {
+                                scope.members = data['members'];
+                            });
+                        }
                     };
 
                     scope.closeThisTodo = function (todo) {
