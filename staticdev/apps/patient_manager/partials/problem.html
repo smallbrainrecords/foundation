@@ -5,8 +5,7 @@
 
 <div ng-if="hasAccess">
     <div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100'
-         ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'
-         ng-init="edit_problem=false;">
+         ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'>
         <div class="col-md-6">
             <div class="todo">
                 <h4 ng-show="!edit_problem">
@@ -14,18 +13,18 @@
                     <span ng-if="problem && !problem.authenticated">(not authenticated)</span>
                     <!-- begin label -->
                     <span class="quick-card-editor-label">
-					<a ng-repeat="label in problem.labels" href class="todo-label" ng-class="label.css_class"
-                       ng-if="label.author.id==user_id"></a>
-				</span>
+                        <a ng-repeat="label in problem.labels" href class="todo-label" ng-class="label.css_class"
+                           ng-if="label.author.id==user_id"></a>
+                    </span>
                     <!-- end label -->
                     <!-- begin sharing patients -->
-                    <span ng-repeat="p in sharing_patients"
-                          ng-if="isInArray(p.problems, problem.id)">
-					<img ng-src="{{ p.portrait_image }}" class='tiny-img' title="{{ p.user.first_name }}">
-				</span>
+                    <span ng-repeat="p in sharing_patients" ng-if="isInArray(p.problems, problem.id)">
+                        <img ng-src="{{ p.portrait_image }}" class='tiny-img' title="{{ p.user.first_name }}">
+                    </span>
                     <!-- end sharing patients -->
                     <a href class="btn-custom" ng-click="edit_problem=!edit_problem"><i class="fa fa-pencil"></i></a>
                 </h4>
+
                 <!-- begin change item -->
                 <div class="quick-card-editor" id="main-menu" ng-show='edit_problem'>
                     <!-- show label and text in edit mode -->
@@ -191,6 +190,7 @@
                 <!-- end change item -->
             </div>
         </div>
+
         <div class='col-md-6 text-right'>
             <form class='form form-inline'>
                 <div class='form-group'>
@@ -205,7 +205,9 @@
             </form>
         </div>
     </div>
+
     <hr>
+
     <div class='row'>
         <div class='col-md-12'>
             <div class='panel panel-default'>
@@ -232,6 +234,7 @@
             </div>
         </div>
     </div>
+
     <div class="row">
         <div class="col-md-6">
             <div class='panel panel-default'>
@@ -403,6 +406,7 @@
             This problem was previously named "{{ problem.old_problem_name }}"
         </div>
     </div>
+
     <div class="row">
         <div ng-if="hasPinnedGraph" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-6'">
             <div class='panel panel-default'>
@@ -516,6 +520,7 @@
             </div>
         </div>
     </div>
+
     <div class='panel panel-default'>
         <div class='panel-heading'> Problem History</div>
         <div class='panel-body'>
@@ -536,6 +541,7 @@
 			</span>
         </div>
     </div>
+
     <div class='panel panel-default'>
         <div class='panel-heading'> Goals</div>
         <div class='panel-body'>
@@ -579,6 +585,7 @@
             </div>
         </div>
     </div>
+
     <div class='panel panel-default' id="problem-image">
         <div class='panel-heading'>
             Images
@@ -604,6 +611,7 @@
             </div>
         </div>
     </div>
+
     <!-- Relationships -->
     <div class='panel panel-default'>
         <div class='panel-heading'> Relationships</div>
@@ -660,6 +668,7 @@
             </button>
         </div>
     </div>
+
     <div class='row'>
         <div class='col-md-12'>
             <div class='panel panel-default'>
@@ -670,7 +679,9 @@
             </div>
         </div>
     </div>
+
     <hr>
+
     <div class='row' ng-init="problem_activity_collapse=false;problem_activity_see_all=false;">
         <div class='col-md-12'>
             <div class='panel panel-default'>
@@ -706,6 +717,7 @@
             </div>
         </div>
     </div>
+
     <div class='row' ng-init="encounter_collapse=false;">
         <div class='col-md-12'>
             <div class='panel panel-default'>
@@ -728,6 +740,7 @@
             </div>
         </div>
     </div>
+
     <!--Uploaded document-->
     <div class="panel panel-default uploaded_document">
         <div class="panel-heading">
@@ -748,9 +761,13 @@
             </ul>
         </div>
     </div>
+
     <script type='text/javascript'>
         $(document).ready(function () {
             $("#start_date").datepicker({dateFormat: 'mm/dd/yy'});
         });
     </script>
+
+    <div class="overlay" ng-show="edit_problem" ng-click="edit_problem = false"></div>
 </div>
+

@@ -46,6 +46,7 @@
                 {name: 'blue', css_class: 'todo-label-blue'},
                 {name: 'sky', css_class: 'todo-label-sky'}
             ];
+            $scope.edit_problem = false;
 
             // Init hot key binding
             $scope.add_goal = add_goal;
