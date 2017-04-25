@@ -69,7 +69,7 @@
                                     <p class="comment-content" ng-bind="comment.comment"></p>
                                 </div>
 
-                                <div ng-if="comment.user.id == active_user.user.id || ['physician','admin'].indexOf(active_user.role) != -1">
+                                <div>
                                     <p ng-show="!comment.edit">
                                         <span am-time-ago="comment.datetime"></span>
                                         <span ng-if="comment.user.id == active_user.user.id">-

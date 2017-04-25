@@ -8,7 +8,8 @@
         <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
             <div class="io-box">
                 <input ng-model='item.accomplished' type='checkbox' ng-change='update_todo_status(todo)' title="">
-                <span class="todo-name" ng-bind="todo.todo" ng-click="changeText(todo)" ng-if="!todo.change_text"></span>
+                <span class="todo-name" ng-bind="todo.todo" ng-click="changeText(todo)"
+                      ng-if="!todo.change_text"></span>
                 <div class="quick-card-editor-text" ng-if="todo.change_text">
                     <input type="text" ng-model="todo.todo" title="{{todo.todo}}" class="form-control">
                     <button class="btn btn-default" ng-click="saveTodoText(todo)">Save</button>
@@ -70,8 +71,7 @@
                             <div ng-show="!comment.edit" class="comment-content-wrapper">
                                 <p class="comment-content" ng-bind="comment.comment"></p>
                             </div>
-                            <div ng-if="comment.user.id == active_user.user.id || ['physician','admin'].indexOf(active_user.role) != -1">
-
+                            <div>
                                 <p ng-show="!comment.edit">
                                     <span am-time-ago="comment.datetime"></span>
                                     <span ng-if="comment.user.id == active_user.user.id">-
