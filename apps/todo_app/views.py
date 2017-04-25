@@ -301,14 +301,23 @@ def delete_todo_comment(request, comment_id):
 @permissions_required(["add_todo"])
 @login_required
 def change_todo_text(request, todo_id):
-    resp = {}
-    todo_text = request.POST.get('todo')
+    resp = {'success': False}
+
+    # Gather input and calculate info
     todo = ToDo.objects.get(id=todo_id)
+    todo_text = request.POST.get('todo')
+    activity = 'Todo name changed from <b>{0}</b> to <b>{1}</b>'.format(todo.todo, todo_text)
+
+    # Update todo itself
     todo.todo = todo_text
     todo.save(update_fields=["todo"])
 
-    # set problem authentication
+    # Save todo activity
+    add_todo_activity(todo, request.user.profile, activity)
+
+    # Set problem authentication
     set_problem_authentication_false(request, todo)
+
     resp['success'] = True
     return ajax_response(resp)
 

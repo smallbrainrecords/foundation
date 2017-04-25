@@ -159,7 +159,8 @@
 
             function saveTodoText(todo) {
                 todoService.changeTodoText(todo).then(function (data) {
-                    if (data['success'] == true) {
+                    if (data['success']) {
+                        todo.change_text = false;
                         toaster.pop('success', "Done", "Updated Todo text!");
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
