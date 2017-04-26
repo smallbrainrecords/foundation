@@ -1,6 +1,8 @@
+import math
 from rest_framework.decorators import api_view
 
 from common.views import *
+from data_app.operations import get_observation_most_common_value
 from emr.models import OBSERVATION_TYPES
 from emr.models import Observation, ObservationComponent, ObservationOrder, \
     PhysicianTeam, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue, \
@@ -35,6 +37,7 @@ def get_datas(request, patient_id):
     resp = {'success': False}
 
     if permissions_accessed(request.user, int(patient_id)):
+        # TODO: This initial data should be added when a patient is REGISTERED | ACTIVED
         # Add default datas: heart rate, blood pressure, respiratory rate, body temperature, height, weight,
         # body mass index
         patient_user = User.objects.get(id=patient_id)
@@ -228,22 +231,53 @@ def obseration_pin_to_problem(request, patient_id):
 def add_new_data(request, patient_id, component_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
-        effective_datetime = request.POST.get("datetime", None)
+        # Get user submit data
+        effective_datetime = request.POST.get("datetime", datetime.now())
         if effective_datetime:
             effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
-        else:
-            effective_datetime = datetime.now()
-        value = request.POST.get("value", None)
+        valueQuantity = request.POST.get("value", None)
 
+        # DB stuff
         value = ObservationValue(author=request.user.profile, component_id=component_id,
-                                 effective_datetime=effective_datetime, value_quantity=value)
-        value.save()
+                                 effective_datetime=effective_datetime, value_quantity=valueQuantity).save()
 
-        summary = "A value of <b>%s</b> was added for <b>%s</b>" % (
-            value.value_quantity, value.component.observation.name)
+        # Auto add bmi data if observation component is weight or height
+        # TODO: Need to improve this block of code - https://trello.com/c/PaSdgs3k
+        bmiComponent = ObservationComponent.objects.filter(component_code='39156-5').filter(
+            observation__subject=patient_id).first()
+        if value.component.name == 'weight':
+            # Calculation
+            heightComponent = ObservationComponent.objects.filter(component_code='8302-2').filter(
+                observation__subject=patient_id).get()
+            height = get_observation_most_common_value(heightComponent, effective_datetime)
+            bmiValue = round(float(value.value_quantity) * 703 / math.pow(height, 2), 2)
+
+            # DB stuff transaction
+            ObservationValue(author=request.user.profile, component=bmiComponent,
+                             effective_datetime=effective_datetime, value_quantity=bmiValue).save()
+            # Save log
+            summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
+            op_add_event(request.user, value.component.observation.subject.user, summary)
+
+        if value.component.name == 'height':
+            # Calculation
+            weightComponent = ObservationComponent.objects.filter(component_code='3141-9').filter(
+                observation__subject=patient_id).get()
+            weight = get_observation_most_common_value(weightComponent, effective_datetime)
+            bmiValue = round(weight * 703 / math.pow(float(value.value_quantity), 2), 2)
+
+            # DB stuff transaction
+            ObservationValue(author=request.user.profile, component=bmiComponent,
+                             effective_datetime=effective_datetime, value_quantity=bmiValue).save()
+            # Save log
+            summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
+            op_add_event(request.user, value.component.observation.subject.user, summary)
+
+        # Save log
+        summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(value.value_quantity,
+                                                                          value.component.observation.name)
         op_add_event(request.user, value.component.observation.subject.user, summary)
 
-        value.effective_datetime = ObservationValue.objects.get(id=value.id).effective_datetime
         resp['value'] = ObservationValueSerializer(value).data
         resp['success'] = True
 
