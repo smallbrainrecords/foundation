@@ -138,7 +138,7 @@
 
             function add_data(new_data) {
                 if (new_data.time == "" || new_data.time == undefined) {
-                    new_data.time = "12:00";
+                    new_data.time = moment().format("HH:mm");
                 }
                 if (!moment(new_data.time, "HH:mm").isValid()) {
                     toaster.pop('error', 'Error', 'Please enter time!');
@@ -261,7 +261,7 @@
 
             function saveData() {
                 if (_.isEmpty($scope.editForm.time) || _.isUndefined($scope.editForm.time)) {
-                    $scope.editForm.time = "12:00";
+                    $scope.editForm.time = moment().format("HH:mm");
                 }
                 if (!moment($scope.editForm.time, "HH:mm").isValid()) {
                     toaster.pop('error', 'Error', 'Please enter time!');

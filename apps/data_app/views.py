@@ -239,7 +239,8 @@ def add_new_data(request, patient_id, component_id):
 
         # DB stuff
         value = ObservationValue(author=request.user.profile, component_id=component_id,
-                                 effective_datetime=effective_datetime, value_quantity=valueQuantity).save()
+                                 effective_datetime=effective_datetime, value_quantity=valueQuantity)
+        value.save()
 
         # Auto add bmi data if observation component is weight or height
         # TODO: Need to improve this block of code - https://trello.com/c/PaSdgs3k
