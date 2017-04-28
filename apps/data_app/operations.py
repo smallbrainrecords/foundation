@@ -14,5 +14,5 @@ def get_observation_most_common_value(component, effective_datetime):
     if observation_component.exists():
         return float(observation_component.first().value_quantity)
     else:
-        most_recent_value = ObservationValue.objects.filter(component=component).first()
+        most_recent_value = ObservationValue.objects.filter(component=component).order_by('-effective_datetime').first()
         return float(most_recent_value.value_quantity)
