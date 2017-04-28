@@ -459,10 +459,19 @@
                 </div>
             </div>
         </div>
-        <div ng-if="hasPinnedMedication" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-12'">
+        <div ng-show="hasPinnedMedication" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-12'">
             <div class='panel panel-default'>
-                <div class='panel-heading'><a ng-click="goToMedicationTab()">Medications</a></div>
+                <div class='panel-heading clearfix'>
+                    <a ng-click="goToMedicationTab()" class="pull-left">Medications</a>
+                    <i id="addMedicationBtn" ng-click="showMedicationSearch = !showMedicationSearch"
+                       class="fa pull-right"
+                       ng-class='showMedicationSearch ? "fa-minus":"fa-plus"'></i>
+                </div>
+                <!--Problem's active medication -->
                 <div class='panel-body'>
+                    <medication-search ng-show="showMedicationSearch"
+                                       on-update="addMedication(value)"></medication-search>
+
                     <div class="row">
                         <div class='col-md-12'>
                             <table class="table table-striped">
@@ -488,18 +497,21 @@
                             </table>
                         </div>
                     </div>
-                    <hr ng-init="show_inactive_medications=false;">
+                    <hr>
+                    <!-- Inactive medication toggle button-->
                     <a class='btn btn-default btn-md' ng-click='show_inactive_medications=!show_inactive_medications;'>
-                        <span ng-if='show_inactive_medications==false'>Show inactive medications </span>
-                        <span ng-if='show_inactive_medications==true'>Hide inactive medications </span>
+                        <span ng-bind='show_inactive_medications? "Hide inactive medications":"Show inactive medications"'></span>
                     </a>
                     <hr>
+                    <!--Problem's inactive medication -->
                     <div class="row" ng-show="show_inactive_medications">
                         <div class='col-md-12'>
                             <table class="table table-striped">
                                 <thead>
-                                <th>Medication</th>
-                                <th>Note</th>
+                                <tr>
+                                    <th>Medication</th>
+                                    <th>Note</th>
+                                </tr>
                                 </thead>
                                 <tbody>
                                 <tr ng-repeat='medication in medications'

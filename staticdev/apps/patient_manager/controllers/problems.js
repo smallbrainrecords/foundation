@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
-                                              dataService, medicationService, CollapseService, Upload) {
+                                              dataService, medicationService, CollapseService, Upload, $timeout) {
             $scope.patient_id = $('#patient_id').val();
             $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
             $scope.patient = {}; // All patient's data loaded from server side
@@ -47,6 +47,8 @@
                 {name: 'sky', css_class: 'todo-label-sky'}
             ];
             $scope.edit_problem = false;
+            $scope.show_inactive_medications = false;
+            $scope.showMedicationSearch = false;
 
             // Init hot key binding
             $scope.add_goal = add_goal;
@@ -101,6 +103,7 @@
             $scope.toggle_physician_notes = toggle_physician_notes;
             $scope.unset_new_problem = unset_new_problem;
             $scope.update_start_date = update_start_date;
+            $scope.addMedication = addMedication;
 
             init();
 
@@ -1272,6 +1275,33 @@
             function goToMedicationTab() {
                 CollapseService.ChangeHomepageTab('medication');
                 $location.path('/');
+            }
+
+            function addMedication(medication) {
+                medication.patient_id = $scope.patient_id;
+
+                medicationService.addMedication(medication).then(addMedicationProblemSuccessCallback);
+
+                function addMedicationProblemSuccessCallback(data) {
+                    if (data.success) {
+                        $timeout(() => {
+                            $("#addMedicationBtn").click();
+                        }, 100);
+
+
+                        // Medication pin/unpin pen action
+                        data.medication.pin = true;
+                        $scope.medications.push(data.medication);
+
+                        // Medication widget
+                        $scope.medication_pins.push(data.medication);
+
+                        // Auto pin
+                        $scope.medication_pin_to_problem(data.medication, $scope.problem_id);
+                    } else {
+                        toaster.pop('error', 'Error', 'Failed to add medication. Please try again!');
+                    }
+                }
             }
         });
     /* End of controller */
