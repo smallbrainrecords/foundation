@@ -237,50 +237,58 @@
                                         </ul>
                                     </div>
                                 </uib-tab>
-                                <uib-tab index="2" heading="Add Problem">
+                                <uib-tab index="2" heading="Add Problem" select="addProblemIsSelected()">
                                     <div class='row' ng-if='permitted(["add_problem"])'>
                                         <div class='col-md-12'>
-                                            <br>
-                                            <div ng-if="active_user.role=='physician' || active_user.role=='mid-level'">
-                                                <div>
-                                                    <p>Common problem:</p>
-                                                    <select class='form-control' ng-model="acute_form">
-                                                        <option ng-repeat="acute in acutes"
+                                            <div ng-if="['physician','mid-level'].indexOf(active_user.role) != -1">
+                                                <p>Common problem:</p>
+                                                <div class="input-group">
+                                                    <select class='form-control' ng-model="acute_form"
+                                                            title="Acute Problem">
+                                                        <option ng-repeat="acute in acutes track by $index"
                                                                 value="{{ acute.id }}"> {{ acute.problem_name }}
                                                         </option>
                                                     </select>
-                                                    <button class='btn btn-sm btn-default'
-                                                            ng-click='add_new_common_problem(acute_form, "acute")'>
-                                                        Add acute problem
-                                                    </button>
+                                                    <span class="input-group-btn">
+                                                        <button class='btn btn-default'
+                                                                ng-click='add_new_common_problem(acute_form, "acute")'>
+                                                            Add acute problem
+                                                        </button>
+                                                    </span>
                                                 </div>
                                                 <br>
-                                                <div>
-                                                    <select class='form-control' ng-model="chronic_form">
-                                                        <option ng-repeat="chronic in chronics"
+                                                <div class="input-group">
+                                                    <select class='form-control' ng-model="chronic_form"
+                                                            title="Chronic Problem">
+                                                        <option ng-repeat="chronic in chronics  track by $index"
                                                                 value="{{ chronic.id }}"> {{
                                                             chronic.problem_name }}
                                                         </option>
                                                     </select>
-                                                    <button class='btn btn-sm btn-default'
-                                                            ng-click='add_new_common_problem(chronic_form, "chronic")'>
-                                                        Add chronic problem
-                                                    </button>
+                                                    <span class="input-group-btn">
+                                                        <button class='btn btn-default'
+                                                                ng-click='add_new_common_problem(chronic_form, "chronic")'>
+                                                            Add chronic problem
+                                                        </button>
+                                                    </span>
                                                 </div>
                                                 <br>
                                             </div>
 
                                             <!--Search problem normally-->
-                                            <input type='text' ng-model='problem_term' class='form-control'
-                                                   id='problemTermInput'
-                                                   ng-change="problemTermChanged(problem_term)"
-                                                   placeholder='Search Problem....'>
-                                            <button class='btn btn-sm btn-default'
-                                                    ng-click='add_new_problem(problem_term)'>
-                                                Add Problem
-                                            </button>
-                                            <br>
-                                            <!--Problem candidate for -->
+                                            <div class="input-group">
+                                                <input type='text' ng-model='problem_term' class='form-control'
+                                                       id='problemTermInput'
+                                                       auto-focus
+                                                       ng-change="problemTermChanged(problem_term)"
+                                                       placeholder='Search Problem....'>
+                                                <span class="input-group-btn">
+                                                    <button class='btn btn-default'
+                                                            ng-click='add_new_problem(problem_term)'> Add Problem</button>
+                                                 </span>
+                                            </div>
+
+                                            <!--Problem candidate from search result -->
                                             <div ng-show='new_problem.set==true'>
                                                 <hr>
                                                 <label ng-bind="new_problem.code"></label><span

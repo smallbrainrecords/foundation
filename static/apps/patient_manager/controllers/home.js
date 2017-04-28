@@ -98,6 +98,8 @@
         $scope.updateProfilePicture = updateProfilePicture;
         $scope.updateSummary = updateSummary;
         $scope.view_my_story_tab = view_my_story_tab;
+        $scope.addProblemIsSelected = addProblemIsSelected;
+        $scope.bdfiValueIsChanged = bdfiValueIsChanged;
 
         init();
 
@@ -1326,7 +1328,16 @@
             $scope.btnBDFISubmitted = true;
         }
 
-        $scope.bdfiValueIsChanged = function (component) {
+        /**
+         * TODO: Shouldn't manipulate DOM element in the controller
+         * */
+        function addProblemIsSelected() {
+            $timeout(() => {
+                $("#problemTermInput").focus();
+            }, 200)
+        }
+
+        function bdfiValueIsChanged(component) {
             if ($scope.btnBDFISubmitted) {
                 $scope.btnBDFISubmitted = false;
                 var components = _.pluck($scope.mostCommonData, 'observation_components');
@@ -1336,6 +1347,8 @@
                 });
             }
         }
+
+
     }
 
     /* End of controller */
