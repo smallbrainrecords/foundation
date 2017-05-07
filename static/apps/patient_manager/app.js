@@ -155,7 +155,7 @@
 
         function initHotKey() {
             hotkeys.add({
-                combo: 'ctrl+i',
+                combo: 'ctrl+p',
                 description: 'Go to Problem tab',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
