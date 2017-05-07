@@ -969,7 +969,7 @@ def add_new_common_problem(request, staff_id):
 def get_common_problems(request, staff_id):
     resp = {'success': False}
 
-    problems = CommonProblem.objects.filter(author=request.user)
+    problems = CommonProblem.objects.filter(author=request.user).order_by('problem_name')
     common_problems = CommonProblemSerializer(problems, many=True).data
     resp['problems'] = common_problems
     resp['success'] = True

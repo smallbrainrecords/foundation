@@ -331,8 +331,8 @@ def get_patient_info(request, patient_id):
         sharing_patients_list.append(user_dict)
 
     # common problems
-    acutes = CommonProblem.objects.filter(author=request.user, problem_type="acute")
-    chronics = CommonProblem.objects.filter(author=request.user, problem_type="chronic")
+    acutes = CommonProblem.objects.filter(author=request.user, problem_type="acute").order_by('problem_name')
+    chronics = CommonProblem.objects.filter(author=request.user, problem_type="chronic").order_by('problem_name')
 
     resp['info'] = UserProfileSerializer(patient_profile).data
     resp['problems'] = problem_list
