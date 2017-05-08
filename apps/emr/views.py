@@ -84,9 +84,9 @@ def home(request):
         context = {}
         context['role'] = role
         context = RequestContext(request, context)
-        if (role == 'patient'):
+        # if (role == 'patient'):
             # BAD
-            return view_patient(request, request.user.id)
+            # return view_patient(request, request.user.id)
         return render_to_response("home.html", context)
 
     except:
@@ -159,39 +159,39 @@ def list_users(request):
     return HttpResponse(json.dumps(users), content_type="application/json")
 
 
-@login_required
-def view_patient(request, user_id):
-    role = UserProfile.objects.get(user=request.user).role
-    user = User.objects.get(id=user_id)
-    # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
-    if (not ((request.user == user) or (role in ['admin', 'physician']) or (
-            Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
-        return HttpResponse("Not allowed")
-    if (not is_patient(user)):
-        return HttpResponse("Error: this user isn't a patient")
-    context = {'patient': user, 'user_role': UserProfile.objects.get(user=request.user).role,
-               'patient_profile': UserProfile.objects.get(user=user), 'problems': Problem.objects.filter(patient=user)}
-    context['user_role'] = context['user_role'] if not UserProfile.objects.get(
-        user=request.user).role == 'admin' else 'physician'
-    context.update({'pain_avatars': PainAvatar.objects.filter(patient=user).order_by('-datetime')})
-    context['encounters'] = Encounter.objects.filter(patient=user).order_by('-starttime')
-
-    context['voice_control'] = settings.VOICE_CONTROL
-    context['syncing'] = settings.SYNCING
-    if (request.user == user):
-        context['shared_patients'] = list(set([i.patient for i in Sharing.objects.filter(other_patient=user)]))
-    context = RequestContext(request, context)
-    try:
-        encounter = Encounter.objects.filter(patient=user, stoptime__isnull=True).order_by('-starttime')[0]
-        context['current_encounter'] = encounter
-    except:
-        pass
-    import os
-    import re
-    context['problem_elements'] = [re.search('problem_(?P<element>\w+)', f).group('element') for f in
-                                   os.listdir('/root/core/static/js/problems/') if
-                                   not (f == 'problem_element_template.js' or f == 'problems.js')]
-    return render_to_response("patient.html", context)
+# @login_required
+# def view_patient(request, user_id):
+#     role = UserProfile.objects.get(user=request.user).role
+#     user = User.objects.get(id=user_id)
+#     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
+#     if (not ((request.user == user) or (role in ['admin', 'physician']) or (
+#             Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
+#         return HttpResponse("Not allowed")
+#     if (not is_patient(user)):
+#         return HttpResponse("Error: this user isn't a patient")
+#     context = {'patient': user, 'user_role': UserProfile.objects.get(user=request.user).role,
+#                'patient_profile': UserProfile.objects.get(user=user), 'problems': Problem.objects.filter(patient=user)}
+#     context['user_role'] = context['user_role'] if not UserProfile.objects.get(
+#         user=request.user).role == 'admin' else 'physician'
+#     context.update({'pain_avatars': PainAvatar.objects.filter(patient=user).order_by('-datetime')})
+#     context['encounters'] = Encounter.objects.filter(patient=user).order_by('-starttime')
+#
+#     context['voice_control'] = settings.VOICE_CONTROL
+#     context['syncing'] = settings.SYNCING
+#     if (request.user == user):
+#         context['shared_patients'] = list(set([i.patient for i in Sharing.objects.filter(other_patient=user)]))
+#     context = RequestContext(request, context)
+#     try:
+#         encounter = Encounter.objects.filter(patient=user, stoptime__isnull=True).order_by('-starttime')[0]
+#         context['current_encounter'] = encounter
+#     except:
+#         pass
+#     import os
+#     import re
+#     context['problem_elements'] = [re.search('problem_(?P<element>\w+)', f).group('element') for f in
+#                                    os.listdir('/root/core/static/js/problems/') if
+#                                    not (f == 'problem_element_template.js' or f == 'problems.js')]
+#     return render_to_response("patient.html", context)
 
 
 @login_required
