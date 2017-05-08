@@ -3,6 +3,10 @@
     'use strict';
 
     angular.module('document', ['ngFileUpload', 'toaster', 'sharedModule', 'httpModule'])
+        .config(function ($routeProvider, $httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        })
         .run(function run($http, $cookies) {
             $http.defaults.headers.common["X-CSRFToken"] = $cookies.get('csrftoken')
         })

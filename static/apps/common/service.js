@@ -3,6 +3,10 @@
     'use strict';
 
     angular.module('sharedModule', ['ngFileUpload', 'httpModule', 'cfp.hotkeys'])
+        .config(function ($httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        })
         .service('sharedService', sharedService);
 
     sharedService.$inject = ['$http', '$cookies', 'Upload', 'hotkeys', '$location', 'httpService'];

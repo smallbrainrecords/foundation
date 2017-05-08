@@ -7,7 +7,10 @@
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
             'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment']);
-    ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider) {
+    ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider,$httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+
         /**
          * Configuration for recording service
          */

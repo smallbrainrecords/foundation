@@ -2,6 +2,10 @@
     "use strict";
 
     angular.module('medication-component', [])
+        .config(function ($routeProvider, $httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        })
         .component('medicationSearch', {
             bindings: {
                 searchTerm: '<',

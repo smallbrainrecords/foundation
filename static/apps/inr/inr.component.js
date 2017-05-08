@@ -3,6 +3,10 @@
 
     angular.module('inr', ['ui.bootstrap', 'sharedModule', 'xeditable', 'angular-spinkit',
         'httpModule', 'ngDialog', 'toaster', 'monospaced.elastic'])
+        .config(function ($routeProvider, $httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        })
         .directive('inr', INR);
 
     INR.$inject = ['uibDateParser', 'toaster', 'ngDialog', '$routeParams', '$filter', 'inrService', 'patientService'];

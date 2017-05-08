@@ -2,7 +2,10 @@
 
     'use strict';
 
-    var myTools = angular.module('myTools', []);
+    var myTools = angular.module('myTools', []).config(function($httpProvider){
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    });
 
 
     var bodyParts = [{

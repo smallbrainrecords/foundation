@@ -1,4 +1,7 @@
-var medication = angular.module('medication', []);
+var medication = angular.module('medication', []).config(function($httpProvider){
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    });
 
 medication.directive('medication', ['CollapseService', 'toaster', '$location', '$timeout', 'prompt', 'medicationService', medicationDirective]);
 

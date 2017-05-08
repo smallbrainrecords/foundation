@@ -1,4 +1,7 @@
-var problems = angular.module('problems', []);
+var problems = angular.module('problems', []).config(function($httpProvider){
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    });
 
 problems.directive('problem', ['problemService', 'patientService', 'toaster', '$location', '$timeout', problemDirective]);
 

@@ -1,4 +1,7 @@
-var timeLine = angular.module('timeLine', []);
+var timeLine = angular.module('timeLine', []).config(function($httpProvider){
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    });
 
 timeLine.directive('problemTimeline', ['$location', timelineDirective]);
 

@@ -5,7 +5,10 @@
      * Directive that executes an expression when the element it is applied to gets
      * an `escape` keydown event.
      */
-    var myTools = angular.module('myTools', []);
+    var myTools = angular.module('myTools', []).config(function($httpProvider){
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    });
 
 
 

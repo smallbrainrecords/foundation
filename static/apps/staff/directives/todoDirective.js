@@ -1,4 +1,8 @@
 angular.module('todos', [])
+    .config(function ($routeProvider, $httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    })
     .directive('todo', todoDirective);
 
 todoDirective.$inject = ['todoService', 'staffService', 'toaster', '$location', '$timeout', 'prompt'];

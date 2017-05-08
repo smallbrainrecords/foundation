@@ -1,7 +1,12 @@
 (function () {
 
     'use strict';
-    angular.module('a1c', []).directive('a1c', a1cDirective);
+    angular.module('a1c', [])
+        .config(function ($routeProvider, $httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    })
+        .directive('a1c', a1cDirective);
     a1cDirective.$inject = ['CollapseService', 'a1cService', 'toaster', '$location', '$timeout', 'problemService', 'prompt', 'todoService'];
 
     /**

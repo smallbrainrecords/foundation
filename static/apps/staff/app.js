@@ -3,16 +3,17 @@
     'use strict';
 
 
-    var StaffApp = angular.module('StaffApp',
-        ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', // Core module along with angularJS
+    var StaffApp = angular.module('StaffApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', // Core module along with angularJS
 
-            'sharedModule', 'httpModule', 'myTools', 'inr', 'todos','document', 'TemplateCache',  // Development module
+        'sharedModule', 'httpModule', 'myTools', 'inr', 'todos', 'document', 'TemplateCache',  // Development module
 
-            'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', // 3rd party module
-            'ui.bootstrap', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file', 'angularMoment', 'checklist-model']);
+        'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', // 3rd party module
+        'ui.bootstrap', 'angular-click-outside', 'pickadate', 'cgPrompt', 'view.file', 'angularMoment', 'checklist-model']);
 
 
-    StaffApp.config(function ($routeProvider) {
+    StaffApp.config(function ($routeProvider, $httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 
         $routeProvider
             .when('/', {

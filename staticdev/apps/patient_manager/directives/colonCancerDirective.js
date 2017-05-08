@@ -1,4 +1,7 @@
-var colon_cancers = angular.module('colon_cancers', []);
+var colon_cancers = angular.module('colon_cancers', []).config(function ($httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+});
 
 colon_cancers.directive('colonCancer', ['toaster', '$location', '$timeout', 'prompt', 'CollapseService', 'colonService', 'problemService', colonCancerDirective]);
 

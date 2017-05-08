@@ -1,8 +1,10 @@
 (function () {
     'use strict';
-    angular.module('AdminApp',
-        ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster'])
-        .config(function ($routeProvider) {
+    angular.module('AdminApp', ['ngRoute', 'ngCookies', 'ngDialog', 'httpModule', 'myTools', 'toaster'])
+        .config(function ($routeProvider, $httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+
             $routeProvider
                 .when('/', {
                     templateUrl: '/static/apps/admin/partials/home.html',

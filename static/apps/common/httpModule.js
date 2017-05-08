@@ -2,7 +2,10 @@
 
     'use strict';
 
-    var module = angular.module('httpModule', []);
+    var module = angular.module('httpModule', []).config(function($httpProvider){
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    });
 
     module.service('httpService',
         function ($http, $q, $cookies) {

@@ -3,6 +3,10 @@
     'use strict';
 
     angular.module('todos', ['sharedModule', 'ngDialog'])
+        .config(function ($routeProvider, $httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        })
         .directive('todo', todoDirective);
 
     todoDirective.$inject = ['todoService', 'patientService', 'toaster', '$location', '$timeout', 'sharedService', 'ngDialog'];
