@@ -188,6 +188,9 @@ def home(request):
 # Users
 @login_required
 def manage_patient(request, user_id):
+    context = {}
+    allowed = False
+
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -195,18 +198,28 @@ def manage_patient(request, user_id):
     actor_profile = UserProfile.objects.get(user=request.user)
     patient_profile = UserProfile.objects.get(user=user)
 
-    # Allowed viewers
+    # Access right checking
     # The patient, admin/physician, and other patients the patient has shared
-    allowed = False
     allowed = check_access(patient_profile.user, actor_profile)
-
     if not allowed:
         return HttpResponse("Not allowed")
     if not is_patient(user):
         return HttpResponse("Error: this user isn't a patient")
 
-    context = {}
+    # TODO- AnhDN: Seed default data:
+    # 1. "Fit & Well" problem
+        # add Fit and Well: 102499006 by default
+    if not Problem.objects.filter(patient=user, concept_id='102499006'):
+        problem = Problem()
+        problem.concept_id = '102499006'
+        problem.problem_name = 'Fit and well (finding)'
+        problem.patient = user
+        problem.save()
+    else:
+        problem = Problem.objects.filter(patient=user, concept_id='102499006').first()
+    print(problem.id)
 
+    context['fit_and_well'] = problem.id
     context['patient'] = user
     context['user_role'] = actor_profile.role
     context['patient_profile'] = patient_profile
@@ -222,14 +235,6 @@ def get_patient_info(request, patient_id):
     resp = {}
     patient_user = User.objects.get(id=patient_id)
     patient_profile = UserProfile.objects.get(user=patient_user)
-
-    # add Fit and Well: 102499006 by default
-    if not Problem.objects.filter(patient=patient_user, concept_id='102499006'):
-        problem = Problem()
-        problem.concept_id = '102499006'
-        problem.problem_name = 'Fit and well (finding)'
-        problem.patient = patient_user
-        problem.save()
 
     # Active Problems
     if request.user.profile.role == 'nurse' or request.user.profile.role == 'secretary':
@@ -588,7 +593,7 @@ def get_patients_list(request):
         patient["todo"] = todo_count
         patient["problem"] = problem_count
         patient['multiply'] = (todo_count if todo_count != 0 else 1) * (problem_count if problem_count != 0 else 1) * (
-        encounter_count if encounter_count != 0 else 1)
+            encounter_count if encounter_count != 0 else 1)
 
     resp = {'patients_list': sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)}
     return ajax_response(resp)

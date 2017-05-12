@@ -7,7 +7,7 @@
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
             'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment']);
-    ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider,$httpProvider) {
+    ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 
@@ -158,6 +158,15 @@
 
         function initHotKey() {
             hotkeys.add({
+                combo: 'ctrl+h',
+                description: 'Open Fil & Well',
+                allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
+                callback: function (event, hotkey) {
+                    $location.path(`/problem/${$('#fit_and_well').val()}`);
+                }
+            });
+
+            hotkeys.add({
                 combo: 'ctrl+p',
                 description: 'Go to Problem tab',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
@@ -166,6 +175,7 @@
                     $location.path('/');
                 }
             });
+
             hotkeys.add({
                 combo: 'ctrl+s',
                 description: 'Go to My story tab',
