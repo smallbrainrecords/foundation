@@ -446,7 +446,7 @@ tbody button {
     border-radius: 4px;
     border-top: none;
     margin-bottom: 40px;
-    margin-top: -50px;
+    /*margin-top: -50px;*/
 }
 
 .medication-page-tabs .nav {

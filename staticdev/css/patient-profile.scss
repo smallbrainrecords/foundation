@@ -51,11 +51,6 @@ body {
     }
   }
 
-  .patient-name {
-    color: #fff;
-    font-size: 56px;
-  }
-
   .btn-cover-picture-edit {
     left: 20px;
     &:hover {
@@ -114,6 +109,10 @@ body {
     padding: 5px 10px;
     border: none;
     width: 75%;
+    .patient-name {
+      color: #fff;
+      font-size: 56px;
+    }
   }
 
   .btn-camera {
@@ -142,8 +141,22 @@ body {
       }
     }
   }
-
 }
+
+.bottom-info {
+    line-height: 30px;
+    //margin-left: 180px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 5px 10px;
+    border: none;
+    width: 75%;
+    .patient-name {
+      color: #fff;
+      font-size: 56px;
+    }
+  }
 
 .float-right {
   float: right;
@@ -505,7 +518,6 @@ todo {
 }
 
 #image-info {
-
 
   .cover {
     width: 100%;

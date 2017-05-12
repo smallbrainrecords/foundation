@@ -87,9 +87,6 @@ body {
         font-size: 1em; }
       .profile-section .cover-image:hover + .dropdown .btn-camera .btn-text {
         display: inline-block; }
-  .profile-section .patient-name {
-    color: #fff;
-    font-size: 56px; }
   .profile-section .btn-cover-picture-edit {
     left: 20px; }
     .profile-section .btn-cover-picture-edit:hover {
@@ -131,6 +128,9 @@ body {
     padding: 5px 10px;
     border: none;
     width: 75%; }
+    .profile-section .bottom-info .patient-name {
+      color: #fff;
+      font-size: 56px; }
   .profile-section .btn-camera {
     color: #c2c1c0;
     position: absolute;
@@ -150,6 +150,18 @@ body {
         font-size: 1em; }
       .profile-section .btn-camera:hover .btn-text {
         display: inline-block; }
+
+.bottom-info {
+  line-height: 30px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 5px 10px;
+  border: none;
+  width: 75%; }
+  .bottom-info .patient-name {
+    color: #fff;
+    font-size: 56px; }
 
 .float-right {
   float: right; }

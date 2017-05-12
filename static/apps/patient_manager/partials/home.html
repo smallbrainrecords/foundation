@@ -1,5 +1,5 @@
 <!--Note for clinical staff user only-->
-<section id="clinical-staff-note">
+<section id="clinical-staff-note" ng-show="['problems','mystory'].indexOf(collapse.show_homepage_tab) != -1">
     <div class='panel panel-default' ng-if="active_user.role!='patient'">
         <div class='panel-heading'>Note (office users only)</div>
         <div class='panel-body'>
@@ -54,7 +54,8 @@
 
 <!-- Facebook like cover & profile image -->
 <section id="patient-profile-header">
-    <div class='panel panel-default profile-section'>
+    <div class='panel panel-default profile-section no-margin'
+         ng-show="['problems','mystory'].indexOf(collapse.show_homepage_tab) != -1">
         <div class='panel-body'>
             <img ng-src='{{ patient_info.cover_image }}' class='cover-image'>
             <div class="dropdown">
@@ -87,16 +88,17 @@
                     <span class="btn-text float-right">Update Profile Picture</span>
                 </a>
             </div>
+
             <div class="bottom-info">
                 <span class="patient-name float-left"><strong> {{ patient_info.user.first_name }} {{ patient_info.user.last_name }}  {{ patient_info.date_of_birth | age}} </strong></span>
             </div>
-
         </div><!-- End of Panel Body -->
     </div>
 
     <!-- Begin tabs selection-->
     <div class='row'>
         <div class='col-md-12 text-center home-page-tabs'>
+
             <ul class="nav nav-pills" role="tablist">
                 <li role="presentation" ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
                     <a role="tab" data-toggle="tab" ng-click="change_homepage_tab('problems');">Problems</a>
@@ -118,7 +120,7 @@
     </div>
 
     <!-- Profile summary-->
-    <div class='row' id="profile-summary">
+    <div class='row' id="profile-summary" ng-show="['problems','mystory'].indexOf(collapse.show_homepage_tab) != -1">
         <div class="col-md-12">
             <label> Who I am</label>
             <textarea ng-model='patient_info.summary' class='form-control' title="Who I am"></textarea>
