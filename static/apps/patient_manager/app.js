@@ -167,12 +167,18 @@
             });
 
             hotkeys.add({
-                combo: 'ctrl+p',
+                combo: 'ctrl+i',
                 description: 'Go to Problem tab',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
                     CollapseService.ChangeHomepageTab('problems');
+                    CollapseService.innerProblemTabSetActive = 0;
+
                     $location.path('/');
+
+                    setTimeout(() => {
+                        window.scrollTo(0, $(".tab-problems").position().top);
+                    }, 100);
                 }
             });
 
