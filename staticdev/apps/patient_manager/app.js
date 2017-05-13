@@ -158,8 +158,8 @@
 
         function initHotKey() {
             hotkeys.add({
-                combo: 'ctrl+h',
-                description: 'Open Fil & Well',
+                combo: 'ctrl+shift+h',
+                description: 'Open Fit & Well',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
                     $location.path(`/problem/${$('#fit_and_well').val()}`);
