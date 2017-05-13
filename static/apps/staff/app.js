@@ -59,7 +59,7 @@
             .when('/manage/document/:documentId', {
                 templateUrl: '/static/apps/document/document-page.template.html',
                 controller: 'ViewDocumentCtrl'
-            });
+            }).otherwise('/');
     });
 
     StaffApp.run(function (staffService) {

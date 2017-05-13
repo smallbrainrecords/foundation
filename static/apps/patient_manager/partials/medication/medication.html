@@ -17,10 +17,7 @@
                     <button class="btn btn-default" ng-click="showMedicationSearch =!showMedicationSearch">Change dosage
                     </button>
                     <button class="btn btn-default" ng-click="seeMedicationHistory();">See medication history</button>
-
-                    <button class="btn btn-default"
-                            ng-click="togglePinToNewProblem();"
-                            ng-if="active_user.role == 'admin' || active_user.id== medication.author.id">
+                    <button class="btn btn-default" ng-click="togglePinToNewProblem();">
                         Pin to new problem
                     </button>
                 </div>

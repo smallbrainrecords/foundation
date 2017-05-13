@@ -115,7 +115,8 @@
             .when('/document/:documentId', {
                 templateUrl: '/static/apps/document/document-page.template.html',
                 controller: 'ViewDocumentCtrl'
-            });
+            })
+            .otherwise('/');
     });
     ManagerApp.run(function (CollapseService, sharedService) {
         // Loading general setting, risk setting is failed to load -> deferred setting value
