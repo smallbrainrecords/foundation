@@ -31,7 +31,7 @@ def get_medications(request, patient_id):
     resp = {'success': False}
 
     if permissions_accessed(request.user, int(patient_id)):
-        medications = Medication.objects.filter(patient__user__id=patient_id)
+        medications = Medication.objects.filter(patient__user__id=patient_id).order_by('name')
 
         resp['success'] = True
         resp['info'] = MedicationSerializer(medications, many=True).data
