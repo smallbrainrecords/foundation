@@ -428,4 +428,7 @@ todo .new-tagged-todo {
 #problem-image image {
   margin: auto; }
 
+.ngdialog-buttons .btn {
+  margin-right: 5px; }
+
 /*# sourceMappingURL=patient-profile.css.map */

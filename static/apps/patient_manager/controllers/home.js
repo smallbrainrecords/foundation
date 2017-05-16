@@ -1317,15 +1317,34 @@
         }
 
         function nurseSubmitBDFI() {
-            var components = _.pluck($scope.mostCommonData, 'observation_components');
-            angular.forEach(_.flatten(components), function (value, key) {
-                // Only submit data which is not empty
-                if (_.isUndefined(value.new_value) || _.isEmpty(value.new_value)) {
-                    return;
-                }
-                $scope.add_bfdi_value(value, false);
-            });
-            $scope.btnBDFISubmitted = true;
+            // Last submitted value is haven't modified yet. So user will be asked for confirmation
+            if ($scope.btnBDFISubmitted) {
+                let reSubmitConfirmationDialogPromise = ngDialog.openConfirm({
+                    template: 'reSubmitConfirmDialog',
+                    showClose: false,
+                    closeByDocument: false,
+                    closeByEscape: false
+                });
+
+                // If user is confirmed then do submit, otherwise ignored it
+                reSubmitConfirmationDialogPromise.then(doSubmitVitals, () => {
+                })
+            } else {
+                doSubmitVitals();
+            }
+
+            function doSubmitVitals() {
+
+                let components = _.pluck($scope.mostCommonData, 'observation_components');
+                angular.forEach(_.flatten(components), function (value, key) {
+                    // Only submit data which is not empty
+                    if (_.isUndefined(value.new_value) || _.isEmpty(value.new_value)) {
+                        return;
+                    }
+                    $scope.add_bfdi_value(value, false);
+                });
+                $scope.btnBDFISubmitted = true;
+            }
         }
 
         /**
@@ -1340,15 +1359,13 @@
         function bdfiValueIsChanged(component) {
             if ($scope.btnBDFISubmitted) {
                 $scope.btnBDFISubmitted = false;
-                var components = _.pluck($scope.mostCommonData, 'observation_components');
+                let components = _.pluck($scope.mostCommonData, 'observation_components');
                 angular.forEach(_.flatten(components), function (value, key) {
                     if (component.id != value.id)
                         value.new_value = "";
                 });
             }
         }
-
-
     }
 
     /* End of controller */

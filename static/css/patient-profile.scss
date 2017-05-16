@@ -144,19 +144,19 @@ body {
 }
 
 .bottom-info {
-    line-height: 30px;
-    //margin-left: 180px;
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    padding: 5px 10px;
-    border: none;
-    width: 75%;
-    .patient-name {
-      color: #fff;
-      font-size: 56px;
-    }
+  line-height: 30px;
+  //margin-left: 180px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 5px 10px;
+  border: none;
+  width: 75%;
+  .patient-name {
+    color: #fff;
+    font-size: 56px;
   }
+}
 
 .float-right {
   float: right;
@@ -550,5 +550,11 @@ todo {
 #problem-image {
   image {
     margin: auto;
+  }
+}
+
+.ngdialog-buttons {
+  .btn {
+    margin-right: 5px;
   }
 }
