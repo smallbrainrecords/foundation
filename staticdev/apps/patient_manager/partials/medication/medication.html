@@ -126,8 +126,7 @@
                 </div>
             </div>
         </div>
-        <div class='panel panel-default'
-             ng-if="(active_user.role == 'admin' || active_user.id== medication.author.id) && showPinToNewProblem">
+        <div class='panel panel-default' ng-show="showPinToNewProblem">
             <div class='panel-heading'>
                 List of current problems
             </div>
