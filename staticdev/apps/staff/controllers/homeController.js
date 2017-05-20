@@ -24,6 +24,9 @@
             $scope.showLabeledTodoList = false;
             $scope.reverse = false;
 
+            $scope.sortingKey = "";
+            $scope.isDescending = true;
+
             // Function definitions
             $scope.openTaggedTodo = openTaggedTodo;
             $scope.closeTaggedTodo = closeTaggedTodo;
@@ -35,6 +38,7 @@
             $scope.orderByDate = orderByDate;
             $scope.getNewTodos = getNewTodos;
             $scope.openTodoList = openTodoList;
+            $scope.sortBy = sortBy;
 
             init();
 
@@ -298,6 +302,16 @@
                 $scope.taggedTodoCollapsed = true;
             }
 
+            function sortBy(sortKey) {
+                // If sorting same column then reverse the sorting order, otherwise set default sorting order is descending
+                $scope.isDescending = (_.isEqual($scope.sortingKey, sortKey)) ? !$scope.isDescending : true;
+                // Update sorting key
+                $scope.sortingKey = sortKey;
+                staffService.getTopPatientList($scope.sortingKey, $scope.isDescending)
+                    .then(function (data) {
+                        $scope.patients_list = data['patients_list'];
+                    });
+            }
         });
     /* End of controller */
 

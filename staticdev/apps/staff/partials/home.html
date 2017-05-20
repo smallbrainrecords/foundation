@@ -24,9 +24,18 @@
             <thead>
             <tr>
                 <th> Name</th>
-                <th> P</th>
-                <th> T</th>
-                <th> E</th>
+                <th class="cursor-pointer" ng-click="sortBy('problem')"> P
+                    <i class="fa pull-right" ng-if="'problem'== sortingKey"
+                       ng-class="isDescending ? 'fa-caret-down':'fa-caret-up'"></i>
+                </th>
+                <th class="cursor-pointer" ng-click="sortBy('todo')"> T
+                    <i class="fa pull-right" ng-if="'todo'== sortingKey"
+                       ng-class="isDescending ? 'fa-caret-down':'fa-caret-up'"></i>
+                </th>
+                <th class="cursor-pointer" ng-click="sortBy('encounter')"> E
+                    <i class="fa pull-right" ng-if="'encounter'== sortingKey"
+                       ng-class="isDescending ? 'fa-caret-down':'fa-caret-up'"></i>
+                </th>
                 <th> Multiply</th>
             </tr>
             </thead>
@@ -184,74 +193,74 @@
 </div>
 <div ng-if="active_user.role=='physician'" class="physician-view">
     <!--<div class='panel panel-default'>-->
-        <!--<div class='panel-heading'>-->
-            <!--Registered Users-->
-        <!--</div>-->
-        <!--<div class='panel-body'>-->
-            <!--<h4 class='text-info text-center'> Registered Users </h4>-->
-            <!--<hr>-->
-            <!--<input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>-->
-            <!--<hr>-->
-            <!--<table class='table'>-->
-                <!--<thead>-->
-                <!--<tr>-->
-                    <!--<th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>-->
-                    <!--<th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>-->
-                    <!--<th class="sort " sortBy='login' sortOrder="desc">Username</th>-->
-                    <!--<th class="sort " sortBy='birthDate' sortOrder="desc">Role</th>-->
-                    <!--<th class="sort " sortBy='sex' sortOrder="desc">Sex</th>-->
-                    <!--<th>Contact Number</th>-->
-                    <!--<th>Action</th>-->
-                <!--</tr>-->
-                <!--</thead>-->
-                <!--<tbody>-->
-                <!--<tr ng-repeat='user in users|filter:query_users'>-->
-                    <!--<td> {{user.user.first_name}}</td>-->
-                    <!--<td> {{user.user.last_name}}</td>-->
-                    <!--<td> {{user.user.username}}</td>-->
-                    <!--<td> {{user.role}}</td>-->
-                    <!--<td> {{user.sex}}</td>-->
-                    <!--<td> {{user.phone_number}}</td>-->
-                    <!--<td>-->
-                        <!--<a href='/project/admin/#/edit/{{user.user.id}}/' class='btn btn-sm btn-default'>-->
-                            <!--Edit-->
-                        <!--</a>-->
-                        <!--<a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'-->
-                           <!--ng-show='user.role=="patient"'>-->
-                            <!--Manage-->
-                        <!--</a>-->
-                    <!--</td>-->
-                <!--</tr>-->
-                <!--</tbody>-->
-            <!--</table>-->
-        <!--</div>-->
+    <!--<div class='panel-heading'>-->
+    <!--Registered Users-->
+    <!--</div>-->
+    <!--<div class='panel-body'>-->
+    <!--<h4 class='text-info text-center'> Registered Users </h4>-->
+    <!--<hr>-->
+    <!--<input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>-->
+    <!--<hr>-->
+    <!--<table class='table'>-->
+    <!--<thead>-->
+    <!--<tr>-->
+    <!--<th class="sort selected" sortBy='givenName' sortOrder="desc">First Name</th>-->
+    <!--<th class="sort " sortBy='familyName' sortOrder="desc">Last Name</th>-->
+    <!--<th class="sort " sortBy='login' sortOrder="desc">Username</th>-->
+    <!--<th class="sort " sortBy='birthDate' sortOrder="desc">Role</th>-->
+    <!--<th class="sort " sortBy='sex' sortOrder="desc">Sex</th>-->
+    <!--<th>Contact Number</th>-->
+    <!--<th>Action</th>-->
+    <!--</tr>-->
+    <!--</thead>-->
+    <!--<tbody>-->
+    <!--<tr ng-repeat='user in users|filter:query_users'>-->
+    <!--<td> {{user.user.first_name}}</td>-->
+    <!--<td> {{user.user.last_name}}</td>-->
+    <!--<td> {{user.user.username}}</td>-->
+    <!--<td> {{user.role}}</td>-->
+    <!--<td> {{user.sex}}</td>-->
+    <!--<td> {{user.phone_number}}</td>-->
+    <!--<td>-->
+    <!--<a href='/project/admin/#/edit/{{user.user.id}}/' class='btn btn-sm btn-default'>-->
+    <!--Edit-->
+    <!--</a>-->
+    <!--<a href='/u/patient/manage/{{user.user.id}}/' class='btn btn-sm btn-default'-->
+    <!--ng-show='user.role=="patient"'>-->
+    <!--Manage-->
+    <!--</a>-->
+    <!--</td>-->
+    <!--</tr>-->
+    <!--</tbody>-->
+    <!--</table>-->
+    <!--</div>-->
     <!--</div>-->
     <!--<div class='panel panel-default' id='patientsAssignedInfo'>-->
-        <!--<div class='panel-heading'> Patients Assigned</div>-->
-        <!--<div class='panel-body'>-->
-            <!--<table class='table'>-->
-                <!--<thead>-->
-                <!--<tr>-->
-                    <!--<th> Name</th>-->
-                    <!--<th> Username</th>-->
-                    <!--<th> Contact Number</th>-->
-                    <!--<th> Actions</th>-->
-                <!--</tr>-->
-                <!--</thead>-->
-                <!--<tbody>-->
-                <!--<tr ng-repeat='patient in patients'>-->
-                    <!--<td> {{patient.user.first_name}} {{patient.user.last_name}}</td>-->
-                    <!--<td> {{patient.user.username}}</td>-->
-                    <!--<td> {{patient.phone_number}}</td>-->
-                    <!--<td><a href='/u/patient/manage/{{patient.user.id}}/' class='btn btn-sm btn-default'-->
-                           <!--ng-show='patient.role=="patient"'>-->
-                        <!--Manage-->
-                    <!--</a>-->
-                    <!--</td>-->
-                <!--</tr>-->
-                <!--</tbody>-->
-            <!--</table>-->
-        <!--</div>-->
+    <!--<div class='panel-heading'> Patients Assigned</div>-->
+    <!--<div class='panel-body'>-->
+    <!--<table class='table'>-->
+    <!--<thead>-->
+    <!--<tr>-->
+    <!--<th> Name</th>-->
+    <!--<th> Username</th>-->
+    <!--<th> Contact Number</th>-->
+    <!--<th> Actions</th>-->
+    <!--</tr>-->
+    <!--</thead>-->
+    <!--<tbody>-->
+    <!--<tr ng-repeat='patient in patients'>-->
+    <!--<td> {{patient.user.first_name}} {{patient.user.last_name}}</td>-->
+    <!--<td> {{patient.user.username}}</td>-->
+    <!--<td> {{patient.phone_number}}</td>-->
+    <!--<td><a href='/u/patient/manage/{{patient.user.id}}/' class='btn btn-sm btn-default'-->
+    <!--ng-show='patient.role=="patient"'>-->
+    <!--Manage-->
+    <!--</a>-->
+    <!--</td>-->
+    <!--</tr>-->
+    <!--</tbody>-->
+    <!--</table>-->
+    <!--</div>-->
     <!--</div>-->
     <div class='panel panel-default' id='nursesAssignedInfo'>
         <div class='panel-heading'> Nurses Assigned</div>

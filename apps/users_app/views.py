@@ -7,15 +7,13 @@ except ImportError:
     import Image
     import ImageOps
 import operator
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from django.db.models import Q
 from common.views import *
 # from django.shortcuts import render
-from emr.models import UserProfile, Problem, TaggedToDoOrder, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting, \
+from emr.models import UserProfile, Problem, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting, \
     Document
 from emr.models import Goal, ToDo
-from emr.models import Encounter, Sharing, EncounterEvent, EncounterProblemRecord
+from emr.models import Encounter, EncounterEvent, EncounterProblemRecord
 
 from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
 from emr.models import SharingPatient, CommonProblem
@@ -206,8 +204,8 @@ def manage_patient(request, user_id):
     if not is_patient(user):
         return HttpResponse("Error: this user isn't a patient")
 
-    # TODO- AnhDN: Seed default data:
-    # 1. "Fit & Well" problem
+        # TODO- AnhDN: Seed default data:
+        # 1. "Fit & Well" problem
         # add Fit and Well: 102499006 by default
     if not Problem.objects.filter(patient=user, concept_id='102499006'):
         problem = Problem()
@@ -536,16 +534,14 @@ def staff(request):
 
     physicians = [x.physician for x in physicians]
 
-    content = {}
-    content['physicians'] = physicians
-    content['patients'] = patients
-    content['user'] = user
-    content['user_profile'] = user_profile
+    content = {'physicians': physicians, 'patients': patients, 'user': user, 'user_profile': user_profile}
     return render(request, 'staff.html', content)
 
 
 @login_required
 def get_patient_members(request, user_id):
+    resp = {}
+
     controllers = PatientController.objects.filter(patient_id=user_id)
     physician_ids = [x.physician.id for x in controllers]
 
@@ -554,14 +550,22 @@ def get_patient_members(request, user_id):
     ids = physician_ids + member_ids
     users = UserProfile.objects.filter(user__id__in=ids)
 
-    resp = {}
     resp['members'] = UserProfileSerializer(users, many=True).data
     return ajax_response(resp)
 
 
 @login_required
 def get_patients_list(request):
+    """
+    Get top patient list data
+    :param request: 
+    :return: 
+    """
     user_profile = UserProfile.objects.get(user=request.user)
+    sort_by = request.POST.get('sortBy', None)
+    # Parsing javascript boolean value python boolean supported value
+    is_descending = True if (request.POST.get('isDescending', 'true') == 'true') else False
+
     if user_profile.role == 'admin':
         patients = UserProfile.objects.filter(role='patient').filter(user__is_active=True)
 
@@ -589,13 +593,19 @@ def get_patients_list(request):
         encounter_count = Encounter.objects.filter(patient__id=patient['user']['id'],
                                                    starttime__gte=six_weeks_earlier).count()
 
-        patient["encounter"] = encounter_count
-        patient["todo"] = todo_count
         patient["problem"] = problem_count
-        patient['multiply'] = ((todo_count if todo_count != 0 else 1)/3) * (problem_count if problem_count != 0 else 1) * (
-            encounter_count if encounter_count != 0 else 1)
+        patient["todo"] = todo_count
+        patient["encounter"] = encounter_count
+        patient['multiply'] = ((todo_count if todo_count != 0 else 1) / 3) * (
+            problem_count if problem_count != 0 else 1) * (
+                                  encounter_count if encounter_count != 0 else 1)
 
-    resp = {'patients_list': sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)}
+    # Will sort patient list by providing sort_by otherwise will sort by 'multiply' key
+    resp = {
+        'patients_list': sorted(patients_list,
+                                key=operator.itemgetter(sort_by if sort_by is not None else 'multiply'),
+                                reverse=is_descending if sort_by is not None else True)
+    }
     return ajax_response(resp)
 
 
@@ -604,6 +614,7 @@ def get_patients_list(request):
 @api_view(["POST"])
 def add_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {}
+
     to_sharing_patient_profile = UserProfile.objects.get(user_id=sharing_patient_id)
     sharing_patient = SharingPatient.objects.create(sharing_id=sharing_patient_id, shared_id=patient_id)
 
@@ -620,9 +631,11 @@ def add_sharing_patient(request, patient_id, sharing_patient_id):
 @login_required
 @api_view(["POST"])
 def remove_sharing_patient(request, patient_id, sharing_patient_id):
+    resp = {}
+
     sharing_patient = SharingPatient.objects.get(sharing_id=sharing_patient_id, shared_id=patient_id)
     sharing_patient.delete()
-    resp = {}
+
     resp['success'] = True
     return ajax_response(resp)
 
