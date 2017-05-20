@@ -592,7 +592,7 @@ def get_patients_list(request):
         patient["encounter"] = encounter_count
         patient["todo"] = todo_count
         patient["problem"] = problem_count
-        patient['multiply'] = (todo_count if todo_count != 0 else 1) * (problem_count if problem_count != 0 else 1) * (
+        patient['multiply'] = ((todo_count if todo_count != 0 else 1)/3) * (problem_count if problem_count != 0 else 1) * (
             encounter_count if encounter_count != 0 else 1)
 
     resp = {'patients_list': sorted(patients_list, key=operator.itemgetter('multiply'), reverse=True)}
