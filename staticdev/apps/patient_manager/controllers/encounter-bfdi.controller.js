@@ -1,5 +1,7 @@
 (function () {
-
+    /***
+     * DISCLAIMER This component is under development
+     */
     'use strict';
 
     angular.module('ManagerApp')
@@ -7,25 +9,30 @@
                                                     encounterService, recorderService, toaster, $interval, $rootScope,
                                                     encounterRecorderFailSafeService, $window, sharedService) {
 
-            $scope.patient_id = $('#patient_id').val();
-            $scope.encounterUploading = false;
-            $scope.unsavedBlob = encounterRecorderFailSafeService.restoreUnsavedBlob();
-            $scope.blobs = [];
-            $scope.elapsedTime = 0; //encounterRecorderFailSafeService.restoreUnsavedDuration();
-            $scope.limitTime = 5400;
-            $scope.convert_flag = false;
-            $scope.show_encounter_ui = false;
-            $rootScope.encounter_flag = $scope.encounter_flag = false;
             $scope.settings = sharedService.settings;
 
-            $scope.start_encounter = start_encounter;
-            $scope.stop_encounter = stop_encounter;
-            $scope.convert_is_finished = convert_is_finished;
-            $scope.auto_upload = auto_upload;
-            $scope.toggle_recorder = toggle_recorder;
-            $scope.record_start = record_start;
-            $scope.view_encounter = view_encounter;
-            $scope.add_event_summary = add_event_summary;
+            $scope.patient_id = $('#patient_id').val();
+            $scope.encounterUploading = false;
+
+            $scope.elapsedTime = 0;
+            $scope.limitTime = 5400;
+
+            $scope.convert_flag = false;
+            $scope.unsavedBlob = encounterRecorderFailSafeService.restoreUnsavedBlob();
+            $scope.blobs = [];
+            $scope.show_encounter_ui = false;
+            $rootScope.encounter_flag = $scope.encounter_flag = false;
+            // Flag which determine is this tab
+            $scope.isPrimaryEncounterRecording = false;
+
+            $scope.start_encounter = startEncounter;
+            $scope.stop_encounter = stopEncounter;
+            $scope.convert_is_finished = convertIsFinished;
+            $scope.auto_upload = autoUpload;
+            $scope.toggle_recorder = toggleRecorder;
+            $scope.record_start = recordStart;
+            $scope.view_encounter = viewEncounter;
+            $scope.add_event_summary = addEventSummary;
             $window.onbeforeunload = onbeforeunload;
 
             init();
@@ -33,27 +40,42 @@
             function init() {
 
                 /* Get Status of any running encounters */
-                patientService.getEncounterStatus($scope.patient_id)
-                    .then(function (data) {
+                function uiStartEncounter(data) {
+                    $scope.encounter_flag = $rootScope.encounter_flag = true;
+                    encounterService.activeEncounter = $scope.encounter = data['current_encounter'];
+                    $scope.elapsedTime = moment().diff($scope.encounter.starttime, 'seconds');
+                    $scope.blobs.push($scope.unsavedBlob);
+                }
 
-                        $scope.show_encounter_ui = data['permitted'];
 
-                        if (data['encounter_active'] == true) {
-                            $scope.encounter_flag = true;
-                            $rootScope.encounter_flag = true;
-                            encounterService.activeEncounter = $scope.encounter = data['current_encounter'];
-                            $scope.elapsedTime = moment().diff($scope.encounter.starttime, 'seconds');
-                            $scope.blobs.push($scope.unsavedBlob);
-                        } else {
-                            $scope.encounter_flag = false;
-                            $rootScope.encounter_flag = false;
-                            encounterRecorderFailSafeService.clearUnsavedData();
-                        }
+                patientService.getEncounterStatus($scope.patient_id).then(function (data) {
+                    $scope.show_encounter_ui = data['permitted'];
 
-                    });
+                    if (data.encounter_active) {
+                        uiStartEncounter(data);
+                    } else {
+                        uiStopEncounter();
+                    }
 
-                $interval(function (newVal, oldVal) {
+                });
+
+                $interval(function () {
                     $scope.elapsedTime++;
+
+                    // Periodic checking encounter recording status
+                    // TODO: Later this should be changed to Pub-Sub mechanism
+                    patientService.getEncounterStatus($scope.patient_id).then(function (data) {
+                        if (data.encounter_active) {
+                            uiStartEncounter(data);
+                        } else {
+                            if ($scope.isPrimaryEncounterRecording)
+                                $scope.stop_encounter();
+
+                            // Must be followed after doing converting & upload work cuz use of
+                            // this flag $scope.isPrimaryEncounterRecording = false;
+                            uiStopEncounter();
+                        }
+                    });
                 }, 1000);
 
                 /**
@@ -65,21 +87,26 @@
                 });
             }
 
-            function start_encounter() {
+            function uiStopEncounter() {
+                $scope.encounter_flag = $rootScope.encounter_flag = false;
+                encounterRecorderFailSafeService.clearUnsavedData();
+                // TODO: Becareful while using this flag it may cause some function not working
+                // $scope.isPrimaryEncounterRecording = false;
+            }
 
-                if ($scope.encounter_flag == true) {
+            function startEncounter() {
+                if ($scope.encounter_flag) {
                     alert("An encounter is already running!");
                 } else {
                     /* Send Request is Backend */
-
                     patientService.startNewEncounter($scope.patient_id)
                         .then(function (response) {
                             if (response.success) {
                                 toaster.pop('success', 'Done', 'New Encounter Started');
 
+                                $scope.isPrimaryEncounterRecording = true;
+                                $scope.encounter_flag = $rootScope.encounter_flag = true;
                                 encounterService.activeEncounter = $scope.encounter = response.encounter;
-                                $scope.encounter_flag = true;
-                                $rootScope.encounter_flag = true;
 
                                 // This section is control under general site setting
                                 if (sharedService.settings.browser_audio_recording) {
@@ -106,31 +133,28 @@
                 }
             }
 
-            function stop_encounter() {
-                if ($scope.encounter_flag == true) {
-                    var encounter_id = $scope.encounter.id;
-
-                    patientService.stopEncounter(encounter_id).then(function (data) {
-
-                        if (data['success'] == true) {
-                            alert(data['msg']);
-                            /* Encounter Stopped */
-                            $scope.encounter_flag = false;
-                            $rootScope.encounter_flag = false;
-
-                            // This section is controlled under general site setting
-                            if (sharedService.settings.browser_audio_recording) {
+            function stopEncounter() {
+                patientService.stopEncounter($scope.encounter.id)
+                    .then(function (data) {
+                        if (data.success) {
+                            // This section is controlled under general site setting only request to upload and convert
+                            if (sharedService.settings.browser_audio_recording && $scope.isPrimaryEncounterRecording) {
                                 if ($scope.encounterCtrl.status.isRecording) {
                                     $scope.encounterCtrl.stopRecord();
                                 } else {
                                     $scope.auto_upload();
                                 }
+
+                                $scope.isPrimaryEncounterRecording = false;
                             }
+
+                            // Encounter Stopped update UI page. Reset flag(s)
+                            uiStopEncounter();
+
                         } else {
                             alert(data['msg']);
                         }
                     });
-                }
             }
 
             /**
@@ -138,7 +162,7 @@
              * and upload audio to server
              * This will not fired if the main audio is on paused state
              */
-            function convert_is_finished() {
+            function convertIsFinished() {
                 $scope.blobs.push($scope.encounterCtrl.audioModel);
 
                 // Store for recovering session
@@ -153,12 +177,12 @@
             /**
              * Automatically upload file
              */
-            function auto_upload() {
-                var form = {};
+            function autoUpload() {
+                let form = {};
                 form.encounter_id = $scope.encounter.id;
                 form.patient_id = $scope.patient_id;
 
-                var file = new File($scope.blobs, Date.now() + ".mp3");
+                let file = new File($scope.blobs, Date.now() + ".mp3");
                 $scope.encounterUploading = true;
                 encounterService.uploadAudio(form, file)
                     .then(function (data) {
@@ -175,26 +199,26 @@
              * Pause or Resume recorder while encounter
              * Add new time stamp for later
              */
-            function toggle_recorder() {
+            function toggleRecorder() {
                 // Stop & convert the minor audio file
                 $scope.encounterCtrl = $scope.encounterCtrl || recorderService.controller("audioInput");
                 $scope.encounterCtrl.status.isRecording ? $scope.encounterCtrl.stopRecord() : $scope.encounterCtrl.startRecord();
 
                 // Create new timestamp for this encounter too
-                var form = {};
-                form.encounter_id = $scope.encounter.id;
-                form.patient_id = $scope.patient_id;
-                form.timestamp = $scope.elapsedTime;
-                form.summary = $scope.encounterCtrl.status.isRecording ? "Encounter recorder paused" : "Encounter recorder resumed";
+                let form = {
+                    encounter_id: $scope.encounter.id,
+                    patient_id: $scope.patient_id,
+                    timestamp: $scope.elapsedTime,
+                    summary: $scope.encounterCtrl.status.isRecording ? "Encounter recorder paused" : "Encounter recorder resumed"
+                };
                 encounterService.addTimestamp(form).then(function (data) {
-                    if (data['success'] == true) {
+                    if (data.success) {
                         $rootScope.encounter_events.push(data['encounter_event']);
                         toaster.pop('success', 'Done', 'Added timestamp!');
                     } else {
                         toaster.pop('error', 'Warning', 'Something went wrong!');
                     }
                 });
-
 
             }
 
@@ -203,17 +227,15 @@
              * Getting the ngRecordAudioController for globally using
              * @deprecated
              */
-            function record_start() {
+            function recordStart() {
                 $scope.encounterCtrl = recorderService.controller("audioInput");
             }
 
-            function view_encounter() {
-                var encounter_id = $scope.encounter.id;
-                $location.path('/encounter/' + encounter_id);
-
+            function viewEncounter() {
+                $location.path('/encounter/' + $scope.encounter.id);
             }
 
-            function add_event_summary() {
+            function addEventSummary() {
 
                 if ($scope.event_summary.length < 1) {
 
@@ -221,7 +243,7 @@
                     return false;
                 }
 
-                var form = {
+                let form = {
                     'event_summary': $scope.event_summary,
                     'encounter_id': $scope.encounter.id
                 };
@@ -247,7 +269,7 @@
             function onbeforeunload(e) {
                 if ($scope.encounterCtrl.status.isRecording) {
 
-                    var confirmationMessage = "\o/"; // Due to browser security we cannot customize user message here
+                    let confirmationMessage = "\o/"; // Due to browser security we cannot customize user message here
 
                     e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
                     return confirmationMessage;              // Gecko, WebKit, Chrome <34
@@ -256,6 +278,4 @@
 
         });
     /* End of controller */
-
-
 })();

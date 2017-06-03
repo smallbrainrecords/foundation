@@ -45,9 +45,8 @@
                         // If encounter include any audio automatically playing this audio
                         if ($scope.encounter.audio != null) {
                             $timeout(function () {
-                                var myAudio = document.getElementById('audio1');
+                                let myAudio = document.getElementById('audio1');
                                 myAudio.onplay = function () {
-                                    console.log('abc');
                                     encounterService.updateAudioPlayedCount($scope.encounter_id);
                                 };
                             }, 1000);
