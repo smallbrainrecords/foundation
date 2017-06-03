@@ -596,7 +596,7 @@ def get_patients_list(request):
         patient["problem"] = problem_count
         patient["todo"] = todo_count
         patient["encounter"] = encounter_count
-        patient['multiply'] = ((todo_count if todo_count != 0 else 1) / 3) * (
+        patient['multiply'] = ((todo_count if todo_count != 0 else 1) * 2 / 3) * (
             problem_count if problem_count != 0 else 1) * (
                                   encounter_count if encounter_count != 0 else 1)
 
