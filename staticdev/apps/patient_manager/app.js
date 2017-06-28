@@ -141,6 +141,7 @@
             initHotKey: initHotKey
         };
         return CollapseService;
+
         function ChangeColonCollapse() {
             CollapseService.show_colon_collapse = !CollapseService.show_colon_collapse;
         }
@@ -254,4 +255,9 @@
             });
         }
     });
+    ManagerApp.constant('RECORDER_STATUS', {
+        isRecording: 0,
+        isPaused: 1,
+        isStopped: 2
+    })
 })();

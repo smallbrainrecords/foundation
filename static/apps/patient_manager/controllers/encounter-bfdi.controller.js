@@ -1,197 +1,208 @@
 (function () {
-    /***
-     * DISCLAIMER This component is under development
-     */
     'use strict';
 
     angular.module('ManagerApp')
-        .controller('EncountersMainCtrl', function ($scope, $routeParams, patientService, ngDialog, $location, Upload,
-                                                    encounterService, recorderService, toaster, $interval, $rootScope,
-                                                    encounterRecorderFailSafeService, $window, sharedService) {
+        .controller('EncountersMainCtrl', function ($scope, $routeParams, $interval, $rootScope, $window, $location,
+                                                    ngDialog, recorderService, toaster, patientService, encounterService,
+                                                    encounterRecorderFailSafeService, sharedService, RECORDER_STATUS) {
 
             $scope.settings = sharedService.settings;
-
             $scope.patient_id = $('#patient_id').val();
-            $scope.encounterUploading = false;
-
-            $scope.elapsedTime = 0;
             $scope.limitTime = 5400;
 
-            $scope.convert_flag = false;
+            $scope.activeEncounter = null;
+            $scope.isEncounterBDFIPermitted = false; // Flag store whether or not current user can use encounter bdfi
+
+            // $scope.encounterConverting = false;
+            $scope.encounterUploading = false;
+            $scope.elapsedTime = 0;
+            $rootScope.encounter_flag = false;
+
+            // Store data
+            $scope.encounterCtrl = null;
             $scope.unsavedBlob = encounterRecorderFailSafeService.restoreUnsavedBlob();
             $scope.blobs = [];
-            $scope.show_encounter_ui = false;
-            $rootScope.encounter_flag = $scope.encounter_flag = false;
-            // Flag which determine is this tab
-            $scope.isPrimaryEncounterRecording = false;
 
             $scope.start_encounter = startEncounter;
             $scope.stop_encounter = stopEncounter;
-            $scope.convert_is_finished = convertIsFinished;
-            $scope.auto_upload = autoUpload;
             $scope.toggle_recorder = toggleRecorder;
-            $scope.record_start = recordStart;
+            $scope.auto_upload = autoUpload;
             $scope.view_encounter = viewEncounter;
+            $scope.conversionComplete = conversionComplete;
             $scope.add_event_summary = addEventSummary;
             $window.onbeforeunload = onbeforeunload;
 
             init();
 
+            /**
+             * Possible unhandled exception
+             * $scope.patient_id is null
+             * patientService.getEncounterStatus response is missing data.permitted and data.current_encounter
+             */
             function init() {
-
-                /* Get Status of any running encounters */
-                function uiStartEncounter(data) {
-                    $scope.encounter_flag = $rootScope.encounter_flag = true;
-                    encounterService.activeEncounter = $scope.encounter = data['current_encounter'];
-                    $scope.elapsedTime = moment().diff($scope.encounter.starttime, 'seconds');
-                    $scope.blobs.push($scope.unsavedBlob);
-                }
-
-
-                patientService.getEncounterStatus($scope.patient_id).then(function (data) {
-                    $scope.show_encounter_ui = data['permitted'];
-
-                    if (data.encounter_active) {
-                        uiStartEncounter(data);
-                    } else {
-                        uiStopEncounter();
-                    }
-
-                });
-
                 $interval(function () {
-                    $scope.elapsedTime++;
+                    // Periodic update encounter-bdfi recorder(this should be changed to Pub-Sub mechanism)
+                    // Fetch backend command either start form tab have recorder or tab(s) don't have recorder
+                    patientService.getEncounterStatus($scope.patient_id).then(data => {
+                        // Logged in user access validation
+                        if (data !== null) {
+                            $scope.isEncounterBDFIPermitted = data.permitted;
+                            if (data.current_encounter === null) {
+                                // Stop command from server
+                                // Fired stop command -> check if there is already an working worker then
+                                // worker start -> worker conversion finished -> worker auto upload -> dispose in context encounter variable
+                                if ($scope.encounterCtrl !== null) {
+                                    // Tab have recorder.
+                                    $scope.activeEncounter.recorder_status = encounterService.activeEncounter.recorder_status = RECORDER_STATUS.isStopped;
+                                    if ($scope.encounterCtrl.isAvailable) {
+                                        if ($scope.encounterCtrl.status.isRecording) {
+                                            $scope.encounterCtrl.stopRecord();
+                                        }
+                                        if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting) {
+                                            autoUpload();
+                                        }
+                                    }
+                                } else {
+                                    // Tab(s) don't have recorder
+                                    $scope.activeEncounter = encounterService.activeEncounter = null;
+                                    $scope.elapsedTime = 0
+                                }
+                            } else {
+                                // Encounter is started(resumed) or in paused status
+                                // Both either tab have or don't have recorder they will update scope variable
+                                $scope.activeEncounter = encounterService.activeEncounter = data.current_encounter;
+                                // This should be on very first time update encounter object
+                                if ($scope.elapsedTime === 0)
+                                    $scope.elapsedTime = moment().diff(data.current_encounter.starttime, 'seconds');
 
-                    // Periodic checking encounter recording status
-                    // TODO: Later this should be changed to Pub-Sub mechanism
-                    patientService.getEncounterStatus($scope.patient_id).then(function (data) {
-                        if (data.encounter_active) {
-                            uiStartEncounter(data);
-                        } else {
-                            if ($scope.isPrimaryEncounterRecording)
-                                $scope.stop_encounter();
+                                // Pause command from server
+                                if (data.current_encounter.recorder_status === RECORDER_STATUS.isPaused) {
+                                    if ($scope.encounterCtrl !== null) {
+                                        // Tab have recorder then if recording stop it. if converting do nothing if not recording or converting
+                                        if ($scope.encounterCtrl.status.isRecording)
+                                            $scope.encounterCtrl.stopRecord();
+                                    } else {
+                                        // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
+                                    }
+                                }
 
-                            // Must be followed after doing converting & upload work cuz use of
-                            // this flag $scope.isPrimaryEncounterRecording = false;
-                            uiStopEncounter();
+                                // Resume or Start command from server
+                                // How to verify resume command or start command
+                                // What frontend do if it is a resume command -> start encounter recorder
+                                // What frontend do if is is a start command -> start encounter recorder if it is available
+                                if (data.current_encounter.recorder_status === RECORDER_STATUS.isRecording) {
+                                    if ($scope.encounterCtrl !== null) {
+                                        // Tab have recorder
+                                        if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting && $scope.encounterCtrl.isAvailable) {
+                                            $scope.encounterCtrl.startRecord();
+                                        }
+                                    } else {
+                                        // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
+                                    }
+                                }
+                            }
                         }
                     });
+
+                    if ($scope.activeEncounter)
+                        $scope.elapsedTime++;
+
+                    // Stop encounter recorder if recorded time is reaching limitted time
+                    if ($scope.elapsedTime > $scope.limitTime && $scope.encounterCtrl.status.isRecording)
+                        stopEncounter();
                 }, 1000);
 
-                /**
-                 * Track total recorded time of encounter
-                 */
-                $scope.$watch('elapsedTime', function (newVal, oldVal) {
-                    if (newVal >= $scope.limitTime)
-                        $scope.stop_encounter();
+                // Update rootScope encounter status to able using in other page.
+                // TODO(AnhDN): Later should be migrate to encounterService
+                $scope.$watch("activeEncounter", (newVal, oldVal) => {
+                    $rootScope.encounter_flag = _.isNull(newVal) ? false : _.isEqual(RECORDER_STATUS.isRecording, newVal.recorder_status);
                 });
-            }
-
-            function uiStopEncounter() {
-                $scope.encounter_flag = $rootScope.encounter_flag = false;
-                encounterRecorderFailSafeService.clearUnsavedData();
-                // TODO: Becareful while using this flag it may cause some function not working
-                // $scope.isPrimaryEncounterRecording = false;
             }
 
             function startEncounter() {
-                if ($scope.encounter_flag) {
+                if ($scope.activeEncounter !== null) {
                     alert("An encounter is already running!");
                 } else {
                     /* Send Request is Backend */
-                    patientService.startNewEncounter($scope.patient_id)
-                        .then(function (response) {
-                            if (response.success) {
-                                toaster.pop('success', 'Done', 'New Encounter Started');
+                    patientService.startNewEncounter($scope.patient_id).then(response => {
+                        if (response.success) {
+                            // 1st Notify that encounter is create successfully in server side and load object to scope and service
+                            toaster.pop('success', 'Done', 'New Encounter Started');
+                            $scope.activeEncounter = encounterService.activeEncounter = response.encounter;
+                            $scope.elapsedTime = 0; // This is out of encounter recorder
 
-                                $scope.isPrimaryEncounterRecording = true;
-                                $scope.encounter_flag = $rootScope.encounter_flag = true;
-                                encounterService.activeEncounter = $scope.encounter = response.encounter;
+                            // 2nd Doing recorder task. This section is controlled under general site setting
+                            if (sharedService.settings.browser_audio_recording) {
+                                // Reset fronend encounter recorder data object
+                                encounterRecorderFailSafeService.clearUnsavedData();
+                                $scope.blobs = [];
 
-                                // This section is control under general site setting
-                                if (sharedService.settings.browser_audio_recording) {
-                                    $scope.encounterCtrl = recorderService.controller("audioInput");
-                                    if ($scope.encounterCtrl.status.isRecording) {
-                                        $scope.encounterCtrl.stopRecord();
-                                    }
-                                    // Remove last saved session for safe
-                                    encounterRecorderFailSafeService.clearUnsavedData();
-                                    $scope.blobs = [];
-                                    $scope.elapsedTime = 0;
+                                $scope.encounterCtrl = recorderService.controller("audioInput");
+                                if ($scope.encounterCtrl.isAvailable)
                                     $scope.encounterCtrl.startRecord();
-                                }
-                            } else {
-                                ngDialog.open({
-                                    template: response.message,
-                                    plain: true
-
-                                });
                             }
-                        }, function () {
-                            alert("Something are went wrong, we are fixing ASAP!");
-                        });
+                        } else {
+                            ngDialog.open({
+                                template: response.message,
+                                plain: true
+                            });
+                        }
+                    }, function () {
+                        alert("Something are went wrong, we are fixing ASAP!");
+                    });
                 }
             }
 
+            /**
+             * Whatever stop encounter button is clicked then send command to BE to stop encounter
+             * Only fired command to backend
+             *
+             */
             function stopEncounter() {
-                patientService.stopEncounter($scope.encounter.id)
-                    .then(function (data) {
-                        if (data.success) {
-                            // This section is controlled under general site setting only request to upload and convert
-                            if (sharedService.settings.browser_audio_recording && $scope.isPrimaryEncounterRecording) {
-                                if ($scope.encounterCtrl.status.isRecording) {
-                                    $scope.encounterCtrl.stopRecord();
-                                } else {
-                                    $scope.auto_upload();
-                                }
-
-                                $scope.isPrimaryEncounterRecording = false;
-                            }
-
-                            // Encounter Stopped update UI page. Reset flag(s)
-                            uiStopEncounter();
-
-                        } else {
-                            alert(data['msg']);
-                        }
-                    });
+                encounterService.stopEncounter(encounterService.activeEncounter.id);
             }
 
             /**
-             * Callback when recorder have finished convert dataUrl to Blob
-             * and upload audio to server
+             * Case encounter is finished
+             * Case encounter is just pause
+             * Callback when recorder have finished convert dataUrl to Blob then upload audio to server
              * This will not fired if the main audio is on paused state
              */
-            function convertIsFinished() {
+            function conversionComplete() {
+                // Push data to blob
                 $scope.blobs.push($scope.encounterCtrl.audioModel);
 
                 // Store for recovering session
                 encounterRecorderFailSafeService.storeBlob($scope.encounterCtrl.audioModel, $scope.elapsedTime);
 
-                // Will upload if the encounter is finished otherwise it will not uploaded
-                if (!$scope.encounter_flag) {
-                    $scope.auto_upload();
+                // If current active encounter is stopped then frontend recorder will start conversion and upload worker
+                if ($scope.activeEncounter.recorder_status === RECORDER_STATUS.isStopped) {
+                    autoUpload();
                 }
             }
 
             /**
-             * Automatically upload file
+             * Automatically upload encounter audio file and dispose in context encounter object to update encounter-bdfi UI
              */
             function autoUpload() {
-                let form = {};
-                form.encounter_id = $scope.encounter.id;
-                form.patient_id = $scope.patient_id;
-
-                let file = new File($scope.blobs, Date.now() + ".mp3");
                 $scope.encounterUploading = true;
-                encounterService.uploadAudio(form, file)
-                    .then(function (data) {
-                        $scope.encounterUploading = false;
+                let form = {
+                    encounter_id: $scope.activeEncounter.id,
+                    patient_id: $scope.patient_id
+                };
+                let file = new File($scope.blobs, Date.now() + ".mp3");
+                encounterService.uploadAudio(form, file).then(data => {
+                    $scope.encounterUploading = false;
+                    if (data.success) {
+                        toaster.pop('success', 'Done', 'Uploaded Audio!');
 
-                        if (data['success'] == true) {
-                            toaster.pop('success', 'Done', 'Uploaded Audio!');
-                        }
-                    });
+                        // Only dispose encounter object in tab having encounter recorder while worker success finished convert & uploaded audio file
+                        $scope.activeEncounter = encounterService.activeEncounter = null;
+                        encounterRecorderFailSafeService.clearUnsavedData();
+                        $scope.encounterCtrl = null;
+                        $scope.blobs = [];
+                    }
+                });
             }
 
             /**
@@ -200,64 +211,55 @@
              * Add new time stamp for later
              */
             function toggleRecorder() {
-                // Stop & convert the minor audio file
-                $scope.encounterCtrl = $scope.encounterCtrl || recorderService.controller("audioInput");
-                $scope.encounterCtrl.status.isRecording ? $scope.encounterCtrl.stopRecord() : $scope.encounterCtrl.startRecord();
-
-                // Create new timestamp for this encounter too
-                let form = {
-                    encounter_id: $scope.encounter.id,
-                    patient_id: $scope.patient_id,
+                // Update encounter bdfi
+                let uiForm = {
+                    status: $scope.activeEncounter.recorder_status === RECORDER_STATUS.isPaused ? RECORDER_STATUS.isRecording : RECORDER_STATUS.isPaused,
                     timestamp: $scope.elapsedTime,
-                    summary: $scope.encounterCtrl.status.isRecording ? "Encounter recorder paused" : "Encounter recorder resumed"
+                    summary: $scope.activeEncounter.recorder_status === RECORDER_STATUS.isPaused ? "Encounter recorder is resumed" : "Encounter recorder is paused"
                 };
-                encounterService.addTimestamp(form).then(function (data) {
-                    if (data.success) {
-                        $rootScope.encounter_events.push(data['encounter_event']);
-                        toaster.pop('success', 'Done', 'Added timestamp!');
-                    } else {
-                        toaster.pop('error', 'Warning', 'Something went wrong!');
-                    }
+                encounterService.toggleRecorder($scope.activeEncounter.id, uiForm).then(data => {
+                    $scope.activeEncounter = encounterService.activeEncounter = data.current_encounter;
                 });
+
+                // if ($scope.encounterCtrl !== null) {
+                // Tab have recorder
+                // $scope.encounterCtrl.status.isRecording ? $scope.encounterCtrl.stopRecord() : $scope.encounterCtrl.startRecord();
+                // } else {
+                //    Tab(s) don't have recorder
+                // }
 
             }
 
             /**
-             * Callback when recorder starting
-             * Getting the ngRecordAudioController for globally using
-             * @deprecated
+             * Go to patient's active encounter detail page
              */
-            function recordStart() {
-                $scope.encounterCtrl = recorderService.controller("audioInput");
-            }
-
             function viewEncounter() {
-                $location.path('/encounter/' + $scope.encounter.id);
+                $location.path('/encounter/' + encounterService.activeEncounter.id);
             }
 
+            /**
+             * Add an event summary to patient active encounter
+             * @returns {boolean}
+             */
             function addEventSummary() {
 
+                // Validate data in client
                 if ($scope.event_summary.length < 1) {
-
                     alert("Please enter summary");
                     return false;
                 }
 
+                // Save data to server
                 let form = {
                     'event_summary': $scope.event_summary,
-                    'encounter_id': $scope.encounter.id
+                    'encounter_id': encounterService.activeEncounter.id
                 };
-
                 patientService.addEventSummary(form).then(function (data) {
-
-                    if (data['success'] == true) {
-                        console.log("Added event summary");
-
+                    if (data.success) {
                         $scope.event_summary = '';
                     } else {
-                        alert("Failed");
+                        alert("You don't have permission to do this action!");
                     }
-
                 });
             }
 
@@ -276,6 +278,8 @@
                 }
             }
 
-        });
+        })
+    ;
     /* End of controller */
-})();
+})
+();

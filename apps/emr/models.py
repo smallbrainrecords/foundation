@@ -133,6 +133,11 @@ VIEW_STATUS = (
     (2, 'Viewed')
 )
 
+RECORDER_STATUS = (
+    (0, 'isRecording'),
+    (1, 'isPaused'),
+    (2, 'isStopped')
+)
 # Medication concept id set used on INR related problem
 MEDICATION_BLEEDING_RISK = {375383004, 375379004, 375378007, 319735007, 375374009, 319734006, 375380001, 375375005,
                             319733000, 319736008}
@@ -231,6 +236,7 @@ class Encounter(models.Model):
     stoptime = models.DateTimeField(null=True, blank=True)
     audio = models.FileField(upload_to=get_path, blank=True)
     audio_played_count = models.IntegerField(default=0)
+    recorder_status = models.IntegerField(choices=RECORDER_STATUS, default=0)
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
     encounter_document = models.ManyToManyField('ObservationValue', through='EncounterObservationValue')
@@ -320,7 +326,7 @@ class Problem(MPTTModel):
 
     labels = models.ManyToManyField(ProblemLabel, blank=True)
     medications = models.ManyToManyField('Medication', through='MedicationPinToProblem')
-    observations = models.ManyToManyField('Observation',through='ObservationPinToProblem')
+    observations = models.ManyToManyField('Observation', through='ObservationPinToProblem')
 
     objects = ProblemManager()
 

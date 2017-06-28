@@ -98,6 +98,10 @@
             };
 
 
+            /**
+             * @deprecated
+             * @param encounter_id
+             */
             this.stopEncounter = function (encounter_id) {
 
                 var url = "/enc/encounter/" + encounter_id + "/stop";

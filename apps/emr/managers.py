@@ -55,6 +55,7 @@ class EncounterManager(models.Manager):
 
         latest_encounter = self.get(physician=physician, id=encounter_id)
         latest_encounter.stoptime = datetime.now()
+        latest_encounter.recorder_status = 2
         latest_encounter.save()
 
         event_summary = 'Stopped encounter by <b>%s</b>' % physician.username
@@ -71,8 +72,7 @@ class EncounterManager(models.Manager):
         from emr.models import EncounterEvent
         from emr.models import Encounter
 
-
-
+        # encounter = self.create(patient_id=patient_id, physician=physician, recorder_status=0)
         encounter = self.create(patient_id=patient_id, physician=physician)
         # Add event started encounter
         event_summary = 'Started encounter by <b>%s</b>' % (physician.username)

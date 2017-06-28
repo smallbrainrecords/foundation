@@ -2,7 +2,6 @@ from django.db.models import F
 from rest_framework.decorators import api_view
 
 from common.views import *
-from data_app.serializers import ObservationValueSerializer
 from emr.models import Encounter, EncounterEvent
 from emr.models import EncounterProblemRecord
 from problems_app.serializers import ProblemSerializer
@@ -44,14 +43,19 @@ def get_encounter_info(request, encounter_id):
 @login_required
 @permissions_required(["add_encounter"])
 def patient_encounter_status(request, patient_id):
+    """
+    Get patient latest encounter information
+    :param request:
+    :param patient_id:
+    :return:
+    """
     resp = {}
     encounter_active = False
     current_encounter = None
 
     physician = request.user
-    latest_encounter = Encounter.objects.filter(physician=physician,
-                                                patient_id=patient_id
-                                                ).order_by('-starttime').first()
+    latest_encounter = Encounter.objects.filter(physician=physician, patient_id=patient_id).order_by(
+        '-starttime').first()
 
     if latest_encounter and latest_encounter.stoptime is None:
         encounter_active = True
@@ -226,4 +230,31 @@ def add_encounter_event(request, encounter_id):
     EncounterEvent.objects.create(encounter_id=encounter_id, summary=summary)
 
     resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def toggle_encounter_recorder(request, encounter_id):
+    """
+    Update encounter's recorder status and make a timestamp
+    :param request:
+    :param encounter_id:
+    :return:
+    """
+    resp = {'success': False}
+    status = request.POST.get('status')
+    timestamp = request.POST.get('timestamp', 0)
+    summary = request.POST.get('summary', "")
+
+    # Update status
+    Encounter.objects.filter(id=encounter_id).update(recorder_status=status)
+
+    # Create a timestamp object
+    encounter = Encounter.objects.get(id=encounter_id)
+    EncounterEvent.objects.create(encounter=encounter, summary=summary,
+                                  timestamp=encounter.starttime + timedelta(seconds=round(float(timestamp))))
+
+    # Return object data
+    resp['success'] = True
+    resp['current_encounter'] = EncounterSerializer(encounter).data
     return ajax_response(resp)

@@ -15,6 +15,7 @@ class EncounterSerializer(serializers.ModelSerializer):
             'stoptime',
             'audio',
             'audio_played_count',
+            'recorder_status',
             'video',
             'note',
             'duration',

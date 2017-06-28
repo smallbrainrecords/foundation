@@ -103,66 +103,68 @@
     </div>
 
     {% verbatim %}
-    <div id='encounter-bar' class='bottom-bar' ng-controller='EncountersMainCtrl' ng-show='show_encounter_ui==true'>
-        <ng-audio-recorder ng-if="settings.browser_audio_recording" id='audioInput' audio-model='recordedInput'
-                           show-player="false"
-                           on-conversion-complete="convert_is_finished()"
-                           on-record-start="record_start()">
-            <div ng-if="!recorder.isAvailable">
-                Your browser is not support recording
-            </div>
-        </ng-audio-recorder>
+    <div id='encounter-bar' class='bottom-bar' ng-controller='EncountersMainCtrl' ng-show="isEncounterBDFIPermitted">
 
+
+        <!-- Client UI response for recording states-->
         <div class='row' id='encounter-box'>
-            <div class='col-md-12' ng-show='!encounter_flag'>
-                <button class='btn btn-warning btn-md' ng-click='start_encounter()'
-                        ng-if="!encounterCtrl.status.isConverting && !encounterUploading">
+            <!-- Don't have an active encounter-->
+            <div class='col-md-12' ng-show='activeEncounter == null'>
+                <button class='btn btn-warning btn-md' ng-click='start_encounter()'>
                     Start Encounter
                 </button>
-                <!--Audio conversion & uploading status-->
-                <div ng-if="settings.browser_audio_recording">
-                    <label ng-if="encounterCtrl.status.isConverting">Converting encounter...</label>
-                    <label ng-if="encounterUploading">Uploading encounter...</label>
-                </div>
             </div>
 
-            <div class='col-md-12' ng-show='encounter_flag'>
+            <!-- Having an active encounter-->
+            <div class='col-md-12' ng-show='activeEncounter != null'>
                 <div class='row'>
                     <div class='col-md-6'>
-                        <button class='btn btn-warning btn-md' ng-click='stop_encounter()'>
-                            Stop Encounter
-                        </button>
-                        <button class='btn btn-default btn-md' ng-click='view_encounter()'>
-                            View Encounter
-                        </button>
+                        <div ng-show="activeEncounter.recorder_status != 2">
+                            <button class='btn btn-warning btn-md' ng-click='stop_encounter()'> Stop Encounter</button>
 
-                        <span>Recorded time: {{ elapsedTime*1000 | duration }}</span>
+                            <!--<span ng-if="settings.browser_audio_recording">-->
+                            <!--</span>-->
 
-                        <!-- Pause/Resume recorder while encountering | Disable while converting -->
-                        <div ng-if="settings.browser_audio_recording">
-                            <button type="button" class="btn btn-default" aria-label="Left Align"
-                                    ng-if="!encounterCtrl.status.isConverting"
-                                    ng-click='toggle_recorder()'>
-                                <span ng-if="!encounterCtrl.status.isRecording" class="glyphicon glyphicon-play"
-                                      aria-hidden="true"></span>
-                                <span ng-if="encounterCtrl.status.isRecording" class="glyphicon glyphicon-pause"
-                                      aria-hidden="true"></span>
+                            <span ng-show="settings.browser_audio_recording">
+                            <!-- This is control used to record audio in client side-->
+                            <ng-audio-recorder id='audioInput' show-player="false" audio-model='recordedInput'
+                                               style="display: none" on-conversion-complete="conversionComplete()">
+                                 <!--"-->
+                                <div ng-if="!recorder.isAvailable"> Your browser is not support recording</div>
+                            </ng-audio-recorder>
+
+
+                                <!-- Pause/Resume recorder while encountering | Disable while converting -->
+                            <button type="button" class="btn btn-default" ng-click='toggle_recorder()'>
+                                <span ng-if="activeEncounter.recorder_status==1" class="glyphicon glyphicon-play"
+                                      title="Resume" aria-hidden="true"></span>
+                                <span ng-if="activeEncounter.recorder_status==0" class="glyphicon glyphicon-pause"
+                                      title="Pause" aria-hidden="true"></span>
                             </button>
+                        </span>
+
+                            <button class='btn btn-default btn-md' ng-click='view_encounter()'> View Encounter</button>
+
+                            <span>Recorded time: {{ elapsedTime*1000 | duration }}</span>
                         </div>
 
+                        <!--Audio conversion & uploading status only if there is stop command-->
+                        <div ng-show="activeEncounter.recorder_status == 2">
+                            <label ng-if="encounterCtrl.status.isConverting">Converting encounter...</label>
+                            <label ng-if="encounterUploading">Uploading encounter...</label>
+                        </div>
                     </div>
 
-                    <div class='col-md-4'>
-
-                        <input type='text'
-                               placeholder='What are you doing right now ?' class='form-control'
-                               ng-model='event_summary'>
-                    </div>
-
-                    <div class='col-md-2'>
-                        <button class='btn btn-default btn-block' ng-click='add_event_summary()'>
-                            Add Event Summary
-                        </button>
+                    <div class='col-md-6'>
+                        <div class="input-group">
+                            <input type='text' ng-model='event_summary'
+                                   placeholder='What are you doing right now ?' class='form-control'>
+                            <span class="input-group-btn">
+                                <button class='btn btn-default' ng-click='add_event_summary()'>
+                                    Add Event Summary
+                                </button>
+                          </span>
+                        </div><!-- /input-group -->
                     </div>
                 </div>
 
