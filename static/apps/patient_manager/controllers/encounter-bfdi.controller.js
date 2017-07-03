@@ -104,7 +104,7 @@
                         }
                     });
 
-                    if ($scope.activeEncounter)
+                    if (RECORDER_STATUS.isRecording === $scope.activeEncounter.recorder_status)
                         $scope.elapsedTime++;
 
                     // Stop encounter recorder if recorded time is reaching limitted time
