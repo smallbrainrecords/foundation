@@ -572,38 +572,35 @@
                 </div>
                 <!--End encounter favorite-->
 
-                <div class='col-md-12'>
-                    <div class='panel panel-default'>
-
-                        <div class='panel-heading'> Pain History</div>
-
-                        <div class='panel-body'>
-
+                <!--Start graphic section-->
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" ng-click="graphicFrameIsCollapsed = !graphicFrameIsCollapsed">
+                            <i class="fa" ng-class="graphicFrameIsCollapsed?'fa-caret-right':'fa-caret-down'"></i>
+                            Graphics
+                        </div>
+                        <div class="panel-body" ng-show="!graphicFrameIsCollapsed">
+                            <!--Start Pain avatar-->
+                            <h4>Pain history</h4>
                             <a href="/patient/{{ patient_id }}/pain/add_pain_avatar"
                                class='btn btn-default pull-right'
                                ng-show='permitted(["update_pain"])'>
                                 Update Pain
                             </a>
                             <div pain-avatar pain-data='pain_avatars'></div>
+                            <!-- Stop pain avatar-->
 
-                        </div>
-                    </div>
-                </div>
+                            <hr>
 
-                <div class='col-md-12'>
-
-                    <div class='panel panel-default'>
-
-                        <div class='panel-heading'> Problems</div>
-
-                        <div class='panel-body'>
+                            <!--Start problem timeline-->
+                            <h4>Problems timeline</h4>
                             <problem-timeline ng-model="timeline"></problem-timeline>
+                            <!--End problem timeline-->
                         </div>
                     </div>
                 </div>
+                <!--End graphic section-->
             </div>
-
-            <hr>
         </div>
         <!-- End Problems tab -->
 
