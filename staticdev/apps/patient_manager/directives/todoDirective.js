@@ -125,6 +125,7 @@
                         } else {
                             acceptedChangeTodoStatus()
                         }
+
                         function acceptedChangeTodoStatus() {
                             patientService.updateTodoStatus(todo)
                                 .then(function (data) {
@@ -317,7 +318,6 @@
                                 }
                             });
                         }
-
                     };
 
                     scope.deleteEditLabel = function (label) {
@@ -397,6 +397,18 @@
                             scope.current_todo.create_label = false;
                             scope.current_todo == null;
                         }
+                    };
+
+                    scope.removeMember = function (todo, member, memberIdx) {
+                        todo.members.splice(memberIdx, 1);
+                        todoService.removeTodoMember(todo, member).then((data) => {
+                            if (data.success) {
+                                toaster.pop('success', "Done", "Removed member!");
+                                scope.set_authentication_false();
+                            } else {
+                                toaster.pop('error', 'Warning', 'Something went wrong!');
+                            }
+                        });
                     }
                 }
             }, true);

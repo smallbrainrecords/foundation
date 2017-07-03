@@ -63,6 +63,7 @@
             $scope.checkSharedProblem = checkSharedProblem;
             $scope.deleteDocumentTag = deleteDocumentTag;
             $scope.deleteDocument = deleteDocument;
+            $scope.removeMember = removeMember;
 
             init();
 
@@ -541,6 +542,18 @@
                         }, function (error) {
                             toaster.pop('error', 'Error', 'Document remove failed');
                         })
+                });
+            }
+
+            function removeMember(todo, member,memberIdx) {
+                todo.members.splice(memberIdx, 1);
+                todoService.removeTodoMember(todo, member).then((data) => {
+                    if (data.success) {
+                        toaster.pop('success', "Done", "Removed member!");
+                        scope.set_authentication_false();
+                    } else {
+                        toaster.pop('error', 'Warning', 'Something went wrong!');
+                    }
                 });
             }
         });
