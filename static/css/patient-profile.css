@@ -431,4 +431,30 @@ todo .new-tagged-todo {
 .ngdialog-buttons .btn {
   margin-right: 5px; }
 
+.member-tagging {
+  display: block;
+  padding: 5px;
+  text-decoration: none;
+  color: #444; }
+  .member-tagging:hover, .member-tagging:active, .member-tagging:focus {
+    text-decoration: none; }
+  .member-tagging .fa-check {
+    color: #999; }
+  .member-tagging:hover {
+    background: #298FCA;
+    color: white;
+    text-decoration: none; }
+    .member-tagging:hover .fa-check {
+      color: white; }
+
+.hint {
+  font-size: 10px;
+  font-style: italic; }
+
+.member-search-box {
+  margin-bottom: 5px; }
+
+.ngdialog-buttons {
+  margin-top: 10px; }
+
 /*# sourceMappingURL=patient-profile.css.map */

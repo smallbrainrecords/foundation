@@ -24,10 +24,12 @@ def get_todo_activity(request, todo_id, last_id):
 @permissions_required(["add_todo"])
 @login_required
 def add_patient_todo(request, patient_id):
+    # Get post params
     todo_name = request.POST.get('name')
     due_date = request.POST.get('due_date', None)
     if due_date:
         due_date = parser.parse(due_date, dayfirst=False).date()
+    members = request.POST.getlist('members[]', [])
 
     patient = User.objects.get(id=patient_id)
     physician = request.user
@@ -39,12 +41,24 @@ def add_patient_todo(request, patient_id):
         problem_name = ''
     summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (
         new_todo.id, todo_name, problem_name)
-
     op_add_todo_event(physician, patient, summary, new_todo)
 
+    #  Todo activities
     actor_profile = UserProfile.objects.get(user=request.user)
-    activity = "Added this todo."
-    add_todo_activity(new_todo, actor_profile, activity)
+    add_todo_activity(new_todo, actor_profile, "Added this todo.")
+
+    # Add tagged member
+    for profile_id in members:
+        member = UserProfile.objects.get(id=int(profile_id))
+        TaggedToDoOrder.objects.create(todo=new_todo, user=member.user)
+
+        # Set problem authentication
+        set_problem_authentication_false(request, new_todo)
+
+        # Save activity
+        log = "<b>{0} {1} - {2}</b> joined this todo.".format(member.user.first_name, member.user.last_name,
+                                                              member.role)
+        add_todo_activity(new_todo, request.user.profile, log)
 
     resp = {'todo': TodoSerializer(new_todo).data, 'success': True}
     return ajax_response(resp)
@@ -534,6 +548,7 @@ def add_todo_member(request, todo_id):
     :return:
     """
     resp = {}
+
     todo = ToDo.objects.get(id=todo_id)
     member_id = request.POST.get('id')
     member = UserProfile.objects.get(id=int(member_id))

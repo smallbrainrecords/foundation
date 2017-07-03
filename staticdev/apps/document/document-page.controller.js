@@ -3,7 +3,7 @@
     angular.module('document')
         .controller('ViewDocumentCtrl', ViewDocumentCtrl);
 
-    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', '$location', 'toaster', 'documentService', 'ngDialog', '$http', '$cookies'];
+    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', '$location', 'toaster', 'documentService', 'ngDialog', '$http', '$cookies', 'todoService'];
 
     /**
      * @param $scope
@@ -17,7 +17,7 @@
      * @param $cookies
      * @constructor
      */
-    function ViewDocumentCtrl($scope, sharedService, $routeParams, $location, toaster, documentService, ngDialog, $http, $cookies) {
+    function ViewDocumentCtrl($scope, sharedService, $routeParams, $location, toaster, documentService, ngDialog, $http, $cookies, todoService) {
 
         // PROPERTIES DEFINITION
         $scope.patient_id = $('#patient_id').val();     // Patients are being managed
@@ -93,7 +93,9 @@
                 $scope.active_user = response.data['user_profile'];
             });
 
-
+            todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
+                $scope.members = data['members'];
+            });
         }
 
         // METHODS DEFINITION(Only dedicate to service/factory todo business flow)
@@ -337,29 +339,63 @@
                 var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
 
                 var dueDateDialog = ngDialog.open({
-                    template: 'askDueDateDialog',
+                    template: 'postAddTodoDialog',
                     showClose: false,
                     closeByDocument: false,
                     closeByNavigation: false,
+                    closeByEscape: false,// Added ignore close by escape to prevent user can not see the tag member step,
+                    scope: $scope,
                     controller: function () {
                         var vm = this;
-                        vm.dueDate = '';
-                        vm.dueDateIsValid = function () {
-                            var isValid = moment(vm.dueDate, acceptedFormat, true).isValid();
-                            if (!isValid)
-                                toaster.pop('error', 'Error', 'Please enter a valid date!');
-                            return isValid;
+                        vm.step = 0;
+                        vm.form = {
+                            dueDate: "",
+                            taggedMembers: []
                         };
+
+                        vm.dueDateIsValid = true;
+                        vm.memberSearch = "";
+                        // Member will be passed down from parent controller
+                        vm.memberList = $scope.members;
+
+                        vm.dueDateValidation = dueDateValidation;
+                        vm.toggleTaggedMember = toggleTaggedMember;
+                        vm.memberFilter = memberFilter;
+
+                        /**
+                         * Filter is case sensitive
+                         * @param item
+                         * @returns {boolean}
+                         */
+                        function memberFilter(item) {
+                            return item.user.first_name.indexOf(vm.memberSearch) !== -1 || item.user.last_name.indexOf(vm.memberSearch) !== -1;
+                        }
+
+                        /**
+                         *
+                         * @param member
+                         */
+                        function toggleTaggedMember(member) {
+                            let idx = vm.form.taggedMembers.indexOf(member.id);
+                            idx === -1 ? vm.form.taggedMembers.push(member.id) : vm.form.taggedMembers.splice(idx, 1);
+                        }
+
+                        /**
+                         * Validate user entried todo's due date
+                         */
+                        function dueDateValidation() {
+                            vm.dueDateIsValid = _.isEmpty(vm.form.dueDate) ? true : moment(vm.form.dueDate, acceptedFormat, true).isValid();
+                        }
                     },
                     controllerAs: 'vm'
                 });
-
-                dueDateDialog.closePromise.then(function (data) {
-                    if (!_.isUndefined(data.value) && '$escape' != data.value)
-                        form.due_date = moment(data.value, acceptedFormat).toString();
+                dueDateDialog.closePromise.then(data => {
+                    if (data.value.due_date)
+                        form.due_date = moment(data.value.dueDate, acceptedFormat).toString();
+                    form.members = data.value.taggedMembers;
 
                     sharedService.addToDo(form).then(addTodoSuccess);
-                })
+                });
             }
 
             // Add todo succeeded

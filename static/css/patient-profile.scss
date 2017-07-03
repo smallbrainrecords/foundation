@@ -558,3 +558,40 @@ todo {
     margin-right: 5px;
   }
 }
+
+.member-tagging {
+  display: block;
+  padding: 5px;
+  text-decoration: none;
+  color: #444;
+
+  &:hover, &:active, &:focus {
+    text-decoration: none;
+  }
+
+  .fa-check {
+    color: #999;
+  }
+
+  &:hover {
+    background: #298FCA;
+    color: white;
+    text-decoration: none;
+    .fa-check {
+      color: white;
+    }
+  }
+}
+
+.hint {
+  font-size: 10px;
+  font-style: italic;
+}
+
+.member-search-box {
+  margin-bottom: 5px;
+}
+
+.ngdialog-buttons {
+  margin-top: 10px;
+}
