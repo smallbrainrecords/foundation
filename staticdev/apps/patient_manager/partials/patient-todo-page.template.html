@@ -119,7 +119,7 @@
                     <!-- end attachments -->
 
                     <!-- begin document -->
-                    <div class="panel panel-default uploaded_document">
+                    <div class="panel panel-default uploaded_document" ng-if="documents.length != 0">
                         <div class="panel-heading">
                             <p>Pinned documents</p>
                         </div>
@@ -470,26 +470,4 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
     <!-- end delete label modal -->
-
-    <!-- Ask by default-->
-    <script id="delete-document-tag" type="text/ng-template">
-        <div class="dialog-contents text-center">
-            <p>Remove this document from the todo only</p>
-            <div>
-                <button class="btn btn-danger" ng-click="confirm()">Confirm</button>
-                <button class="btn btn-primary" ng-click="closeThisDialog()">Cancel</button>
-            </div>
-        </div>
-    </script>
-
-    <!-- Ask delete in system-->
-    <script id="delete-document" type="text/ng-template">
-        <div class="dialog-contents text-center">
-            <p>Delete this document from the todo and the system</p>
-            <div>
-                <button class="btn btn-danger" ng-click="confirm()">Confirm</button>
-                <button class="btn btn-primary" ng-click="closeThisDialog()">Cancel</button>
-            </div>
-        </div>
-    </script>
 </div>

@@ -1,17 +1,18 @@
 <div class="todos-container" ng-show='problem_todos.length'>
     <!-- begin sortable -->
     <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
-        <li ng-repeat="item in problem_todos track by $index" class="list-group-item todo"
-            ng-show="item.accomplished==accomplished && checkSharedProblem(item.problem, sharing_patients)"
-            ng-click="open_todo(item)">
+        <li ng-repeat="item in problem_todos track by $index"
+            class="list-group-item todo patient-todo" ng-click="open_todo(item)"
+            ng-show="item.accomplished==accomplished && checkSharedProblem(item.problem, sharing_patients)">
+
             <!-- begin show item -->
             <div ng-show='!item.changed'>
 
-                <input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'> {{item.todo}}
+                <input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)' title="">
+                {{item.todo}}
                 <span ng-if="item.due_date"> due by <span
                         ng-class="isDueDate(item.due_date)">{{item.due_date}}</span></span>
-                <span ng-if="item.problem && show_problem"> for problem
-						<a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a>
+                <span ng-if="item.problem && show_problem"> for problem <a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a>
 					</span>
                 <!-- begin label -->
                 <span class="quick-card-editor-label">
@@ -29,7 +30,9 @@
                 </p>
 
                 <p>
-                    <span ng-repeat="member in item.members" class="todo-member">{{member.username}}</span>
+                    <span ng-repeat="member in item.members" class="todo-member"
+                          title="Remove this member"
+                          ng-click="removeMember(item,member,$index);$event.stopPropagation();">{{member.username}}</span>
                 </p>
 
                 <a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>

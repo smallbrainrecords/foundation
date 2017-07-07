@@ -11,7 +11,8 @@
                 <div class="io-box">
                     <input ng-model='todo.accomplished' type='checkbox' ng-change='updateTodoStatus(todo)' title="">
 
-                    <span class="todo-name" ng-bind="todo.todo" ng-click="changeText(todo)" ng-if="!todo.change_text"></span>
+                    <span class="todo-name" ng-bind="todo.todo" ng-click="changeText(todo)"
+                          ng-if="!todo.change_text"></span>
                     <div class="quick-card-editor-text" ng-if="todo.change_text">
                         <input type="text" ng-model="todo.todo" title="{{todo.todo}}" class="form-control">
                         <button class="btn btn-default" ng-click="saveTodoText(todo)">Save</button>
@@ -40,7 +41,9 @@
                     </div>
 
                     <div class="tagged-member">
-                        <span ng-repeat="member in todo.members track by $index" class="todo-member">{{ member.username }}</span>
+                        <span ng-repeat="member in todo.members track by $index" class="todo-member"
+                              title="Remove this member"
+                              ng-click="removeMember(todo,member,$index)">{{ member.username }}</span>
                     </div>
                 </div>
             </div>
@@ -61,7 +64,8 @@
                         </div>
                     </div>
                     <p>Comments:</p>
-                    <div class="row comment-history" ng-repeat="comment in comments | orderBy:'datetime':true track by $index">
+                    <div class="row comment-history"
+                         ng-repeat="comment in comments | orderBy:'datetime':true track by $index">
                         <div class="col-xs-12">
                             <div class="comment">
                                 <p class="username">{{comment.user.first_name}} {{comment.user.last_name}}</p>
@@ -115,7 +119,7 @@
                     <!-- end attachments -->
 
                     <!-- begin document -->
-                    <div class="panel panel-default uploaded_document">
+                    <div class="panel panel-default uploaded_document" ng-if="documents.length != 0">
                         <div class="panel-heading">
                             <p>Pinned documents</p>
                         </div>
@@ -377,7 +381,9 @@
                 <!-- begin members -->
                 <div class="todo-component" ng-if="todo.members.length > 0">
                     <div class="quick-card-editor-label">
-                        <span ng-repeat="member in todo.members" class="todo-member">{{member.username}}</span>
+                        <span ng-repeat="member in todo.members" class="todo-member"
+                              title="Remove this member"
+                              ng-click="removeMember(todo,member,$index)">{{member.username}}</span>
                         <a href ng-click="changeMember2(todo)"><i class="fa fa-plus"></i></a>
                     </div>
 
@@ -464,26 +470,4 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
     <!-- end delete label modal -->
-
-    <!-- Ask by default-->
-    <script id="delete-document-tag" type="text/ng-template">
-        <div class="dialog-contents text-center">
-            <p>Remove this document from the todo only</p>
-            <div>
-                <button class="btn btn-danger" ng-click="confirm()">Confirm</button>
-                <button class="btn btn-primary" ng-click="closeThisDialog()">Cancel</button>
-            </div>
-        </div>
-    </script>
-
-    <!-- Ask delete in system-->
-    <script id="delete-document" type="text/ng-template">
-        <div class="dialog-contents text-center">
-            <p>Delete this document from the todo and the system</p>
-            <div>
-                <button class="btn btn-danger" ng-click="confirm()">Confirm</button>
-                <button class="btn btn-primary" ng-click="closeThisDialog()">Cancel</button>
-            </div>
-        </div>
-    </script>
 </div>

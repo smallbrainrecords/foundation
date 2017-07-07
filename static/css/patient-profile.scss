@@ -595,3 +595,9 @@ todo {
 .ngdialog-buttons {
   margin-top: 10px;
 }
+
+.todo-member:hover {
+  background: red;
+  color: white;
+  cursor: pointer;
+}
