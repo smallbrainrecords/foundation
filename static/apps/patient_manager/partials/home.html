@@ -28,12 +28,14 @@
             <div class='row' ng-show='permitted(["add_todo"])'>
                 <div class='col-md-12'>
                     <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
-                        <div class='form-group'>
-                            <label> Todo Name </label>
-                            <input type='text' ng-model='new_todo.name' title="Todo name" class="form-control"
-                                   id='todoNameInput'>
+                        <label> Todo Name </label>
+                        <div class='input-group'>
+                            <input type='text' ng-model='new_todo.name' title="Todo name"
+                                   class="form-control" id='todoNameInput'>
+                            <span class="input-group-btn">
+                                <button type='submit' class='btn btn-default'> Add Todo</button>
+                            </span>
                         </div>
-                        <button type='submit' class='btn btn-default'> Add Todo</button>
                     </form>
                 </div>
             </div>
@@ -466,12 +468,14 @@
                             <div class='row' ng-show='permitted(["add_todo"])'>
                                 <div class='col-md-12'>
                                     <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
-                                        <div class='form-group'>
-                                            <label> Todo name </label>
+                                        <label> Todo Name </label>
+                                        <div class='input-group'>
                                             <input type='text' ng-model='new_todo.name' title="Todo name"
                                                    class="form-control" id='todoNameInput'>
+                                            <span class="input-group-btn">
+                                                <button type='submit' class='btn btn-default'> Add Todo</button>
+                                            </span>
                                         </div>
-                                        <button type='submit' class='btn btn-default'> Add Todo</button>
                                     </form>
                                 </div>
                             </div>

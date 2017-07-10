@@ -569,91 +569,99 @@
             }
             form.patient_id = $scope.patient_id;
             if ($scope.patient['bleeding_risk']) {
-                var bleedingRiskDialog = ngDialog.open({
+                ngDialog.open({
                     template: 'bleedingRiskDialog',
                     showClose: false,
-                    closeByEscape: false,
-                    closeByDocument: false,
-                    closeByNavigation: false
-                });
-                bleedingRiskDialog.closePromise.then(postAddTodo);
+                    // closeByEscape: false,
+                    // closeByDocument: false,
+                    // closeByNavigation: false
+                }).closePromise.then(askDueDate);
             } else {
-                postAddTodo();
+                askDueDate();
             }
 
-            function postAddTodo() {
+            function askDueDate() {
                 var acceptedFormat = ['MM/DD/YYYY', "M/D/YYYY", "MM/YYYY", "M/YYYY", "MM/DD/YY", "M/D/YY", "MM/YY", "M/YY"];
-                var dueDateDialog = ngDialog.open({
-                    template: 'postAddTodoDialog',
+                ngDialog.open({
+                    template: 'askDueDateDialog',
                     showClose: false,
-                    closeByDocument: false,
-                    closeByNavigation: false,
-                    closeByEscape: false,// Added ignore close by escape to prevent user can not see the tag member step,
-                    scope: $scope,
                     controller: function () {
                         var vm = this;
-                        vm.step = 0;
-                        vm.form = {
-                            dueDate: "",
-                            taggedMembers: []
-                        };
+                        vm.dueDate = "";
+                        vm.dueDateIsValid = dueDateIsValid;
 
-                        vm.dueDateIsValid = true;
-                        vm.memberSearch = "";
-                        // Member will be passed down from parent controller
-                        vm.memberList = $scope.members;
-
-                        vm.dueDateValidation = dueDateValidation;
-                        vm.toggleTaggedMember = toggleTaggedMember;
-                        vm.memberFilter = memberFilter;
-
-                        /**
-                         * Filter is case sensitive
-                         * @param item
-                         * @returns {boolean}
-                         */
-                        function memberFilter(item) {
-                            return item.user.first_name.indexOf(vm.memberSearch) !== -1 || item.user.last_name.indexOf(vm.memberSearch) !== -1;
-                        }
-
-                        /**
-                         *
-                         * @param member
-                         */
-                        function toggleTaggedMember(member) {
-                            let idx = vm.form.taggedMembers.indexOf(member.id);
-                            idx === -1 ? vm.form.taggedMembers.push(member.id) : vm.form.taggedMembers.splice(idx, 1);
-                        }
-
-                        /**
-                         * Validate user entried todo's due date
-                         */
-                        function dueDateValidation() {
-                            vm.dueDateIsValid = _.isEmpty(vm.form.dueDate) ? true : moment(vm.form.dueDate, acceptedFormat, true).isValid();
+                        function dueDateIsValid() {
+                            let isValid = moment(vm.dueDate, acceptedFormat, true).isValid();
+                            if (!isValid)
+                                toaster.pop('error', 'Error', 'Please enter a valid date!');
+                            return isValid;
                         }
                     },
                     controllerAs: 'vm'
-                });
-                dueDateDialog.closePromise.then(data => {
-                    if (data.value.due_date)
-                        form.due_date = moment(data.value.dueDate, acceptedFormat).toString();
-                    form.members = data.value.taggedMembers;
-
-                    sharedService.addToDo(form).then(addTodoSuccess);
+                }).closePromise.then(function (data) {
+                    if (!_.isUndefined(data.value) && '$escape' !== data.value && '$document' !== data.value)
+                        form.due_date = moment(data.value, acceptedFormat).toString();
+                    sharedService.addToDo(form).then(postAddTodo);
                 });
             }
 
-            // Add todo succeeded
-            function addTodoSuccess(data) {
-                let new_todo = data['todo'];
-                $scope.pending_todos.push(new_todo);
-                $scope.problem_todos.push(new_todo);
-                $scope.new_todo = {};
+            // Going to
+            function postAddTodo(response) {
+                if (response.success) {
+                    toaster.pop('success', 'Done', 'Added Todo!');
 
-                $('#todoNameInput').val("");
-                $('#todoNameInput').focus();
+                    var addedTodo = response.todo;
+                    $scope.pending_todos.push(addedTodo);
+                    $scope.problem_todos.push(addedTodo);
+                    $scope.new_todo = {};
 
-                toaster.pop('success', 'Done', 'Added Todo!');
+                    // Showing tag member dialog
+                    ngDialog.open({
+                        template: 'postAddTodoDialog',
+                        showClose: false,
+                        scope: $scope,
+                        controller: function () {
+                            var vm = this;
+                            vm.taggedMembers = [];
+
+                            vm.memberSearch = "";
+                            vm.memberList = $scope.members;
+
+                            vm.toggleTaggedMember = toggleTaggedMember;
+                            vm.memberFilter = memberFilter;
+
+                            function memberFilter(item) {
+                                return item.user.first_name.indexOf(vm.memberSearch) !== -1 || item.user.last_name.indexOf(vm.memberSearch) !== -1;
+                            }
+
+                            function toggleTaggedMember(member) {
+                                let idx = vm.taggedMembers.indexOf(member.id);
+                                idx === -1 ? vm.taggedMembers.push(member.id) : vm.taggedMembers.splice(idx, 1);
+                            }
+
+                        },
+                        controllerAs: 'vm'
+                    }).closePromise.then(data => {
+                        if (!_.isUndefined(data.value) && "$escape" !== data.value && "$document" !== data.value) {
+                            // Added tagged member to previous added todo
+                            _.each(data.value, (memberID) => {
+                                let member = _.find($scope.members, (member) => member.id === memberID);
+                                addedTodo.members.push(member.user);
+                                todoService.addTodoMember(addedTodo, member).then(() => {
+                                    toaster.pop('success', 'Done', `Add ${member.user.first_name} ${member.user.last_name} succeeded!`);
+                                }, () => {
+                                    toaster.pop('error', 'Error', `Add ${member.user.first_name} ${member.user.last_name}  failed!`);
+                                });
+                            });
+                        }
+
+                        // Comeback to normal state
+                        $('#todoNameInput').val("");
+                        $('#todoNameInput').focus();
+                    });
+                } else {
+                    toaster.pop('error', 'Error', "Failed to add todo");
+                }
             }
         }
 
