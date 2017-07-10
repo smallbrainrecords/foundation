@@ -115,6 +115,10 @@
             }
 
             function addComment(form) {
+                if (_.isEmpty(form.comment)) {
+                    return;
+                }
+
                 form.todo_id = $scope.todo_id;
                 todoService.addComment(form).then((data) => {
                     $scope.comments.push(data.comment);
@@ -125,9 +129,7 @@
                     ngDialog.open({
                         template: "postTodoCommentDialog",
                         showClose: false,
-                        closeByDocument: false,
-                        closeByNavigation: false,
-                        closeByEscape: false,// Added ignore close by escape to prevent user can not see the tag member step,
+                        closeByNavigation: true,
                         scope: $scope,
                         controller: function () {
                             var vm = this;
@@ -152,8 +154,7 @@
                         controllerAs: 'vm'
                     }).closePromise.then((response) => {
                         // Calling tagged members service. Produce new list of members who will be tagged into this todo
-                        // In case enable close by document and
-                        if (!_.isUndefined(response.value)) {
+                        if (!_.isUndefined(response.value) && "$escape" !== response.value && "$document" !== response.value) {
                             var originMembers = angular.copy($scope.todo.members);
                             var originalMembersID = _.map(originMembers, (member) => member.id);
 
@@ -487,27 +488,9 @@
                     }
                 });
                 if (!is_existed) {
-                    // console.log(member);
                     addMember(todo, member);
-                    // todo.members.push(member.user);
-                    // todoService.addTodoMember(todo, member).then(function (data) {
-                    //     if (data['success'] == true) {
-                    //         toaster.pop('success', "Done", "Added member!");
-                    //     } else {
-                    //         toaster.pop('error', 'Warning', 'Something went wrong!');
-                    //     }
-                    // });
-
                 } else {
                     removeMember(todo, member, existed_key);
-                    // todo.members.splice(existed_key, 1);
-                    // todoService.removeTodoMember(todo, member).then(function (data) {
-                    //     if (data['success'] == true) {
-                    //         toaster.pop('success', "Done", "Removed member!");
-                    //     } else {
-                    //         toaster.pop('error', 'Warning', 'Something went wrong!');
-                    //     }
-                    // });
                 }
 
             }
