@@ -435,7 +435,8 @@ todo .new-tagged-todo {
   display: block;
   padding: 5px;
   text-decoration: none;
-  color: #444; }
+  color: #444;
+  cursor: pointer; }
   .member-tagging:hover, .member-tagging:active, .member-tagging:focus {
     text-decoration: none; }
   .member-tagging .fa-check {

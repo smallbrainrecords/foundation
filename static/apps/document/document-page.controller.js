@@ -385,9 +385,12 @@
                                 return item.user.first_name.indexOf(vm.memberSearch) !== -1 || item.user.last_name.indexOf(vm.memberSearch) !== -1;
                             }
 
-                            function toggleTaggedMember(member) {
+                            function toggleTaggedMember(member, event) {
                                 let idx = vm.taggedMembers.indexOf(member.id);
                                 idx === -1 ? vm.taggedMembers.push(member.id) : vm.taggedMembers.splice(idx, 1);
+
+                                // Refocus to form search to enable handle enter press key
+                                $(event.currentTarget.parentElement).find("input").focus();
                             }
 
                         },
