@@ -210,6 +210,7 @@
                                 <span ng-bind="problem.is_pinned ? 'Un pin' : 'Pin'"></span>
                             </button>
                             <span ng-bind="problem.problem_name" class="flex-item"></span>
+                            <span ng-show="problem.authenticated==false" class="flex-item">(not authenticated)</span>
                         </div>
                     </li>
                 </ul>
