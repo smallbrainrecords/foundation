@@ -964,7 +964,8 @@
                                 <li ng-repeat="document in documents track by $index">
                                     <div>
                                         <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
-                                           ng-class="label.css_class"></a>
+                                           ng-class="label.css_class"><span ng-bind="label.name"
+                                                                            class="todo-label-name"></span></a>
                                         <a href="#/document/{{document.id}}" class="flex-item document_name"
                                            target="_blank"
                                            ng-bind="document.document_name"></a>

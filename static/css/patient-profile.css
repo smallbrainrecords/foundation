@@ -462,4 +462,18 @@ todo .new-tagged-todo {
   color: white;
   cursor: pointer; }
 
+.todo-label-front {
+  cursor: pointer;
+  text-decoration: none;
+  vertical-align: text-bottom; }
+  .todo-label-front .todo-label-name {
+    display: none; }
+  .todo-label-front:hover {
+    width: auto;
+    height: auto;
+    padding: 2px 5px; }
+    .todo-label-front:hover .todo-label-name {
+      color: white;
+      display: inline-block; }
+
 /*# sourceMappingURL=patient-profile.css.map */

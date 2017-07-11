@@ -601,3 +601,21 @@ todo {
   color: white;
   cursor: pointer;
 }
+
+.todo-label-front {
+  cursor: pointer;
+  text-decoration: none;
+  vertical-align: text-bottom;
+  .todo-label-name {
+    display: none;
+  }
+  &:hover {
+    width: auto;
+    height: auto;
+    padding: 2px 5px;
+    .todo-label-name {
+      color: white;
+      display: inline-block;
+    }
+  }
+}
