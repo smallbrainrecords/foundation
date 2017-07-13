@@ -309,7 +309,7 @@
                                             </div>
                                         </div>
                                         <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
-                                            <div ng-repeat='problem_term in problem_terms'
+                                            <div ng-repeat='problem_term in problem_terms track by $index'
                                                  style='margin-top:12px;'>
                                                 <button class='btn btn-sm btn-default'
                                                         title='{{ problem_term.code }}'

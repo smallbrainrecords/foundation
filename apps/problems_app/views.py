@@ -20,7 +20,7 @@ from a1c_app.serializers import AOneCSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
 from common.views import *
 from data_app.serializers import ObservationPinToProblemSerializer, ObservationSerializer
-from emr.models import ColonCancerScreening
+from emr.models import ColonCancerScreening, Observation, ObservationUnit, ObservationComponent
 from emr.models import Encounter
 from emr.models import Goal, ToDo, TextNote, PatientImage, Label
 from emr.models import MedicationPinToProblem
@@ -89,7 +89,7 @@ def get_problem_info(request, problem_id):
             'success': True,
             'info': ProblemInfoSerializer(problem_info).data,
             'available_widgets': get_available_widget(problem_info),
-            'sharing_patients' : sharing_patients_list
+            'sharing_patients': sharing_patients_list
         }
 
     return ajax_response(resp)
@@ -140,16 +140,50 @@ def add_patient_problem(request, patient_id):
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
     term = request.POST.get('term')
-
     concept_id = request.POST.get('code', None)
+    physician = request.user
+    patient = User.objects.get(id=int(patient_id))
+
     if Problem.objects.filter(problem_name=term, patient__id=patient_id).exists():
-        return ajax_response({"msg": "Problem already added"})
+        resp["msg"] = "Problem already being added"
+        return ajax_response(resp)
 
     new_problem = Problem.objects.create_new_problem(patient_id, term, concept_id, actor_profile)
-    physician = request.user
 
+    # https://trello.com/c/0OlwGwCB
+    # Only add if problem is diabetes and patient have not
+    if "44054006" == concept_id:
+        if not ObservationComponent.objects.filter(component_code="2345-7",
+                                                   observation__subject=patient.profile).exists():
+            # Add data type
+            observation = Observation.objects.create(subject=patient.profile, author=request.user.profile,
+                                                     name="Glucose",
+                                                     color="#FFD2D2")
+
+            observation.save()
+
+            #  Add data unit
+            observation_unit = ObservationUnit.objects.create(observation=observation, value_unit="mg/dL")
+            observation_unit.is_used = True  # will be changed in future when having conversion
+            observation_unit.save()
+
+            #  Add data component
+            observation_component = ObservationComponent()
+            observation_component.observation = observation
+            observation_component.component_code = "2345-7"
+            observation_component.name = "Glucose"
+            observation_component.save()
+        else:
+            observation = ObservationComponent.objects.get(component_code="2345-7",
+                                                           observation__subject=patient.profile)
+        # Pin to problem
+        ObservationPinToProblem.objects.create(author_id=request.user.id, observation=observation, problem=new_problem)
+
+    # Event
     summary = 'Added <u>problem</u> <b>%s</b>' % term
     op_add_event(physician, new_problem.patient, summary, new_problem)
+
+    # Activity
     activity = "Added <u>problem</u>: <b>%s</b>" % term
     add_problem_activity(new_problem, actor_profile, activity)
 
