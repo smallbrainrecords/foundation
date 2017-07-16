@@ -49,7 +49,7 @@ def patient_encounter_status(request, patient_id):
     :param patient_id:
     :return:
     """
-    resp = {}
+    resp = {'success': False}
     encounter_active = False
     current_encounter = None
 
@@ -61,6 +61,7 @@ def patient_encounter_status(request, patient_id):
         encounter_active = True
         current_encounter = EncounterSerializer(latest_encounter).data
 
+    resp['success'] = True
     resp['current_encounter'] = current_encounter
     resp['encounter_active'] = encounter_active
     resp['permitted'] = True

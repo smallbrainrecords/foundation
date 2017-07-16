@@ -38,6 +38,7 @@
              * Possible unhandled exception
              * $scope.patient_id is null
              * patientService.getEncounterStatus response is missing data.permitted and data.current_encounter
+             * TODO: Should be implement in an more explixit way
              */
             function init() {
                 $interval(function () {
@@ -45,59 +46,61 @@
                     // Fetch backend command either start form tab have recorder or tab(s) don't have recorder
                     patientService.getEncounterStatus($scope.patient_id).then(data => {
                         // Logged in user access validation
-                        if (data !== null) {
+                        if (data.success) {
                             $scope.isEncounterBDFIPermitted = data.permitted;
-                            if (data.current_encounter === null) {
-                                // Stop command from server
-                                // Fired stop command -> check if there is already an working worker then
-                                // worker start -> worker conversion finished -> worker auto upload -> dispose in context encounter variable
-                                if ($scope.encounterCtrl !== null) {
-                                    // Tab have recorder.
-                                    $scope.activeEncounter.recorder_status = encounterService.activeEncounter.recorder_status = RECORDER_STATUS.isStopped;
-                                    if ($scope.encounterCtrl.isAvailable) {
-                                        if ($scope.encounterCtrl.status.isRecording) {
-                                            $scope.encounterCtrl.stopRecord();
+                            if (data.permitted) {
+                                if (data.current_encounter === null) {
+                                    // Stop command from server
+                                    // Fired stop command -> check if there is already an working worker then
+                                    // worker start -> worker conversion finished -> worker auto upload -> dispose in context encounter variable
+                                    if ($scope.encounterCtrl !== null) {
+                                        // Tab have recorder.
+                                        $scope.activeEncounter.recorder_status = encounterService.activeEncounter.recorder_status = RECORDER_STATUS.isStopped;
+                                        if ($scope.encounterCtrl.isAvailable) {
+                                            if ($scope.encounterCtrl.status.isRecording) {
+                                                $scope.encounterCtrl.stopRecord();
+                                            }
+                                            if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting) {
+                                                autoUpload();
+                                            }
                                         }
-                                        if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting) {
-                                            autoUpload();
-                                        }
+                                    } else {
+                                        // Tab(s) don't have recorder
+                                        $scope.activeEncounter = encounterService.activeEncounter = null;
+                                        $scope.elapsedTime = 0
                                     }
                                 } else {
-                                    // Tab(s) don't have recorder
-                                    $scope.activeEncounter = encounterService.activeEncounter = null;
-                                    $scope.elapsedTime = 0
-                                }
-                            } else {
-                                // Encounter is started(resumed) or in paused status
-                                // Both either tab have or don't have recorder they will update scope variable
-                                $scope.activeEncounter = encounterService.activeEncounter = data.current_encounter;
-                                // This should be on very first time update encounter object
-                                if ($scope.elapsedTime === 0)
-                                    $scope.elapsedTime = moment().diff(data.current_encounter.starttime, 'seconds');
+                                    // Encounter is started(resumed) or in paused status
+                                    // Both either tab have or don't have recorder they will update scope variable
+                                    $scope.activeEncounter = encounterService.activeEncounter = data.current_encounter;
+                                    // This should be on very first time update encounter object
+                                    if ($scope.elapsedTime === 0)
+                                        $scope.elapsedTime = moment().diff(data.current_encounter.starttime, 'seconds');
 
-                                // Pause command from server
-                                if (data.current_encounter.recorder_status === RECORDER_STATUS.isPaused) {
-                                    if ($scope.encounterCtrl !== null) {
-                                        // Tab have recorder then if recording stop it. if converting do nothing if not recording or converting
-                                        if ($scope.encounterCtrl.status.isRecording)
-                                            $scope.encounterCtrl.stopRecord();
-                                    } else {
-                                        // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
-                                    }
-                                }
-
-                                // Resume or Start command from server
-                                // How to verify resume command or start command
-                                // What frontend do if it is a resume command -> start encounter recorder
-                                // What frontend do if is is a start command -> start encounter recorder if it is available
-                                if (data.current_encounter.recorder_status === RECORDER_STATUS.isRecording) {
-                                    if ($scope.encounterCtrl !== null) {
-                                        // Tab have recorder
-                                        if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting && $scope.encounterCtrl.isAvailable) {
-                                            $scope.encounterCtrl.startRecord();
+                                    // Pause command from server
+                                    if (data.current_encounter.recorder_status === RECORDER_STATUS.isPaused) {
+                                        if ($scope.encounterCtrl !== null) {
+                                            // Tab have recorder then if recording stop it. if converting do nothing if not recording or converting
+                                            if ($scope.encounterCtrl.status.isRecording)
+                                                $scope.encounterCtrl.stopRecord();
+                                        } else {
+                                            // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
                                         }
-                                    } else {
-                                        // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
+                                    }
+
+                                    // Resume or Start command from server
+                                    // How to verify resume command or start command
+                                    // What frontend do if it is a resume command -> start encounter recorder
+                                    // What frontend do if is is a start command -> start encounter recorder if it is available
+                                    if (data.current_encounter.recorder_status === RECORDER_STATUS.isRecording) {
+                                        if ($scope.encounterCtrl !== null) {
+                                            // Tab have recorder
+                                            if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting && $scope.encounterCtrl.isAvailable) {
+                                                $scope.encounterCtrl.startRecord();
+                                            }
+                                        } else {
+                                            // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
+                                        }
                                     }
                                 }
                             }
