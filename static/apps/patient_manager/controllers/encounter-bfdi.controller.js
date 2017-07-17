@@ -50,21 +50,26 @@
                             $scope.isEncounterBDFIPermitted = data.permitted;
                             if (data.permitted) {
                                 if (data.current_encounter === null) {
+
                                     // Stop command from server
                                     // Fired stop command -> check if there is already an working worker then
                                     // worker start -> worker conversion finished -> worker auto upload -> dispose in context encounter variable
                                     if ($scope.encounterCtrl !== null) {
+
                                         // Tab have recorder.
                                         $scope.activeEncounter.recorder_status = encounterService.activeEncounter.recorder_status = RECORDER_STATUS.isStopped;
                                         if ($scope.encounterCtrl.isAvailable) {
-                                            if ($scope.encounterCtrl.status.isRecording) {
+                                            // Only stop if there encounter is recording and not in converting status
+                                            if ($scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting) {
                                                 $scope.encounterCtrl.stopRecord();
                                             }
+                                            // Only upload if not recording and not converting
                                             if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting) {
                                                 autoUpload();
                                             }
                                         }
                                     } else {
+
                                         // Tab(s) don't have recorder
                                         $scope.activeEncounter = encounterService.activeEncounter = null;
                                         $scope.elapsedTime = 0
@@ -74,14 +79,18 @@
                                     // Both either tab have or don't have recorder they will update scope variable
                                     $scope.activeEncounter = encounterService.activeEncounter = data.current_encounter;
                                     // This should be on very first time update encounter object
+
                                     if ($scope.elapsedTime === 0)
+
                                         $scope.elapsedTime = moment().diff(data.current_encounter.starttime, 'seconds');
 
                                     // Pause command from server
                                     if (data.current_encounter.recorder_status === RECORDER_STATUS.isPaused) {
+
                                         if ($scope.encounterCtrl !== null) {
+
                                             // Tab have recorder then if recording stop it. if converting do nothing if not recording or converting
-                                            if ($scope.encounterCtrl.status.isRecording)
+                                            if ($scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting)
                                                 $scope.encounterCtrl.stopRecord();
                                         } else {
                                             // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
@@ -93,9 +102,13 @@
                                     // What frontend do if it is a resume command -> start encounter recorder
                                     // What frontend do if is is a start command -> start encounter recorder if it is available
                                     if (data.current_encounter.recorder_status === RECORDER_STATUS.isRecording) {
+
+
                                         if ($scope.encounterCtrl !== null) {
                                             // Tab have recorder
+
                                             if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting && $scope.encounterCtrl.isAvailable) {
+
                                                 $scope.encounterCtrl.startRecord();
                                             }
                                         } else {
@@ -172,11 +185,15 @@
              * This will not fired if the main audio is on paused state
              */
             function conversionComplete() {
+
+
                 // Push data to blob
                 $scope.blobs.push($scope.encounterCtrl.audioModel);
 
-                // Store for recovering session
-                encounterRecorderFailSafeService.storeBlob($scope.encounterCtrl.audioModel, $scope.elapsedTime);
+                // Store for recovering session only storing this if the encounter is on paused
+                if ($scope.activeEncounter.recorder_status === RECORDER_STATUS.isPaused) {
+                    encounterRecorderFailSafeService.storeBlob($scope.encounterCtrl.audioModel, $scope.elapsedTime);
+                }
 
                 // If current active encounter is stopped then frontend recorder will start conversion and upload worker
                 if ($scope.activeEncounter.recorder_status === RECORDER_STATUS.isStopped) {

@@ -39,14 +39,15 @@
              * @param duration    Total duration recorded in this encounter session
              */
             this.storeBlob = function (blob, duration) {
+                console.log('store blob data');
                 var reader = new window.FileReader();
                 reader.readAsDataURL(blob);
                 reader.onloadend = function () {
                     var base64data = reader.result;
+                    //  TODO: Finding a solution to replace storage
                     localStorage.setItem('cached-data', base64data);
                 };
 
-                //
                 localStorage.setItem('cached-duration', duration);
             };
 
