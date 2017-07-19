@@ -129,7 +129,11 @@
                             <span ng-show="settings.browser_audio_recording">
                             <!-- This is control used to record audio in client side-->
                             <ng-audio-recorder id='audioInput' show-player="false" audio-model='recordedInput'
-                                               style="display: none" on-conversion-complete="conversionComplete()">
+                                               style="display: none"
+                                               on-record-start="recordStart()"
+                                               on-record-complete="recordComplete()"
+                                               on-conversion-start="conversionStart()"
+                                               on-conversion-complete="conversionComplete()">
                                  <!--"-->
                                 <div ng-if="!recorder.isAvailable"> Your browser is not support recording</div>
                             </ng-audio-recorder>

@@ -16,7 +16,7 @@
          */
         recorderServiceProvider.forceSwf(false)
             .withMp3Conversion(true, {
-                bitRate: 64
+                bitRate: 32
             });
         /**
          * Global chart configuration
