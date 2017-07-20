@@ -4,8 +4,7 @@
     angular.module('ManagerApp')
         .controller('EncountersMainCtrl', function ($scope, $routeParams, $interval, $rootScope, $window, $location,
                                                     ngDialog, recorderService, toaster, patientService, encounterService,
-                                                    encounterRecorderFailSafeService, sharedService, RECORDER_STATUS) {
-
+                                                    encounterRecorderFailSafeService, sharedService, RECORDER_STATUS, $indexedDB) {
             $scope.settings = sharedService.settings;
             $scope.patient_id = $('#patient_id').val();
             $scope.limitTime = 5400;
@@ -34,7 +33,7 @@
             $scope.recordComplete = recordComplete;
             $scope.conversionStart = conversionStart;
             $scope.conversionComplete = conversionComplete;
-            $scope.auto_upload = autoUpload;
+            $scope.uploadAudio = uploadAudio;
 
             $window.onbeforeunload = onbeforeunload;
 
@@ -71,11 +70,12 @@
                                             $scope.recorderLocked = true;
                                             $scope.encounterCtrl.stopRecord();
                                         }
-                                        // Only upload if not recording and not converting
-                                        // if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting) {
-                                        //     console.warn("Fetching upload");
-                                        //     autoUpload();
-                                        // }
+
+                                        // Case STOP encounter from PAUSED STATE
+                                        if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting) {
+                                            console.warn("Upload audio");
+                                            uploadAudio();
+                                        }
                                     }
                                 }
                             } else { // PAUSE/RESUME/STARTING
@@ -108,43 +108,9 @@
                                             }
                                         }
                                         break;
-
                                 }
-                                // //PAUSE command from server
-                                // if (data.current_encounter.recorder_status === RECORDER_STATUS.isPaused) {
-                                //     if (_.isNull($scope.encounterCtrl)) {
-                                //         // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
-                                //     } else {
-                                //
-                                //         // Tab have recorder then if recording stop it. if converting do nothing if not recording or converting
-                                //         if ($scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting && !$scope.recorderLocked) {
-                                //             console.warn("Fetching paused");
-                                //             console.warn("Setting flag that recorder is received PAUSE the command");
-                                //             $scope.recorderLocked = true;
-                                //             $scope.encounterCtrl.stopRecord();
-                                //         }
-                                //     }
-                                // }
-
-                                // // Resume or Start command from server
-                                // // How to verify resume command or start command
-                                // // What frontend do if it is a resume command -> start encounter recorder
-                                // // What frontend do if is is a start command -> start encounter recorder if it is available
-                                // if (data.current_encounter.recorder_status === RECORDER_STATUS.isRecording) {
-                                //     if ($scope.encounterCtrl !== null) {
-                                //         // Tab have recorder
-                                //         if (!$scope.encounterCtrl.status.isRecording && !$scope.encounterCtrl.status.isConverting && $scope.encounterCtrl.isAvailable) {
-                                //             console.warn("Fetching resume");
-                                //
-                                //             $scope.encounterCtrl.startRecord();
-                                //         }
-                                //     } else {
-                                //         // Tab(s) don't have recorder then do nothing. Actually it will update scope variable but we did it earlier
-                                //     }
-                                // }
                             }
                         }
-                        // }
                     });
                 }, 500);
 
@@ -166,7 +132,7 @@
             }
 
             function startEncounter() {
-                if ($scope.activeEncounter !== null) {
+                if (!_.isNull($scope.activeEncounter)) {
                     alert("An encounter is already running!");
                 } else {
                     console.warn("startEncounter");
@@ -181,10 +147,6 @@
 
                             // 2nd Doing recorder task. This section is controlled under general site setting
                             if (sharedService.settings.browser_audio_recording) {
-                                // Reset fronend encounter recorder data object
-                                encounterRecorderFailSafeService.clearUnsavedData();
-                                $scope.blobs = [];
-
                                 $scope.encounterCtrl = recorderService.controller("audioInput");
                                 if ($scope.encounterCtrl.isAvailable) {
                                     $scope.encounterCtrl.startRecord();
@@ -226,41 +188,29 @@
 
             function conversionComplete() {
                 console.warn("conversionComplete");
-                console.warn("Reset recorder locked flag");
-
                 $scope.recorderLocked = false;
-
-                // Push data to blob
 
                 switch ($scope.activeEncounter.recorder_status) {
                     case RECORDER_STATUS.isPaused:
-                        encounterRecorderFailSafeService.storeBlob($scope.encounterCtrl.audioModel, $scope.elapsedTime);
+                        encounterRecorderFailSafeService.storeBlob($scope.patient_id, $scope.encounterCtrl.audioModel, $scope.elapsedTime);
                         break;
                     case RECORDER_STATUS.isStopped:
-                        autoUpload();
+                        uploadAudio();
                         break;
                 }
-                // Store for recovering session only storing this if the encounter is on paused
-                // if ($scope.activeEncounter.recorder_status === RECORDER_STATUS.isPaused) {
-                //
-                // }
-
-                // If current active encounter is stopped then frontend recorder will start conversion and upload worker
-                // if ($scope.activeEncounter.recorder_status === RECORDER_STATUS.isStopped) {
-                //
-                // }
             }
 
             /**
              * Automatically upload encounter audio file and dispose in context encounter object to update encounter-bdfi UI
              */
-            function autoUpload() {
+            function uploadAudio() {
                 $scope.encounterUploading = true;
                 let form = {
                     encounter_id: $scope.activeEncounter.id,
                     patient_id: $scope.patient_id
                 };
 
+                $scope.blobs.push(encounterRecorderFailSafeService.restoreUnsavedBlob($scope.patient_id));
                 $scope.blobs.push($scope.encounterCtrl.audioModel);
                 let file = new File($scope.blobs, Date.now() + ".mp3");
                 encounterService.uploadAudio(form, file).then(data => {
@@ -270,10 +220,11 @@
 
                         // Only dispose encounter object in tab having encounter recorder while worker success finished convert & uploaded audio file
                         $scope.activeEncounter = encounterService.activeEncounter = null;
-                        encounterRecorderFailSafeService.clearUnsavedData();
-                        $scope.encounterCtrl = null;
                         $scope.blobs = [];
+                        $scope.encounterCtrl = null;
                         $scope.recorderLocked = false;
+
+                        encounterRecorderFailSafeService.clearUnsavedData($scope.patient_id);
                     }
                 });
             }
@@ -354,5 +305,4 @@
         })
     ;
     /* End of controller */
-})
-();
+})();

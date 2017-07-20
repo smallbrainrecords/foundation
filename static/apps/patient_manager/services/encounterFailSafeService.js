@@ -6,20 +6,20 @@
      *
      */
     angular.module('ManagerApp')
-        .service('encounterRecorderFailSafeService', function () {
+        .service('encounterRecorderFailSafeService', function ($indexedDB) {
 
             /**
              * Create new blob arrays or recover from last unsaved session
+             * @param patientID
              * @returns {Blob}
              */
-            this.restoreUnsavedBlob = function () {
-                // Get last store session
-                var cached = localStorage.getItem('cached-data');
-                if (cached !== null) {
-                    return this.dataURItoBlob(cached);
-                }
+            this.restoreUnsavedBlob = function (patientID) {
+                $indexedDB.openStore("encounter", (store) => {
+                    store.find(patientID).then((e) => {
+                        return this.dataURItoBlob(e.audio);
+                    })
+                });
             };
-
 
             /**
              * Restore total time recorded
@@ -27,25 +27,29 @@
              * @deprecated
              */
             this.restoreUnsavedDuration = function () {
-                var duration = localStorage.getItem('cached-duration');
-                return duration == null ? 0 : duration;
+                let duration = localStorage.getItem('cached-duration');
+                return _.isNull(duration) ? 0 : duration;
             };
 
             /**
              * Store the blob to localStorage as base64string
              * Store data
              * Store information last duration also
+             * @param patientID
              * @param blob         Array of blob storages
              * @param duration    Total duration recorded in this encounter session
              */
-            this.storeBlob = function (blob, duration) {
-                console.log('store blob data');
-                var reader = new window.FileReader();
+            this.storeBlob = function (patientID, blob, duration) {
+                let reader = new window.FileReader();
                 reader.readAsDataURL(blob);
                 reader.onloadend = function () {
-                    var base64data = reader.result;
-                    //  TODO: Finding a solution to replace storage
-                    localStorage.setItem('cached-data', base64data);
+                    let base64data = reader.result;
+                    $indexedDB.openStore('encounter', function (store) {
+                        store.insert({"id": patientID, "audio": base64data}).then((e) => {
+                        }, (e) => {
+                            console.log(e);
+                        });
+                    });
                 };
 
                 localStorage.setItem('cached-duration', duration);
@@ -77,11 +81,14 @@
                 return new Blob([ab]);
             };
 
-              /**
+            /**
              * Remove last stored session
              */
-            this.clearUnsavedData = function () {
-                localStorage.removeItem('cached-data');
+            this.clearUnsavedData = function (patientID, authorID) {
+                // localStorage.removeItem('cached-data');
+                $indexedDB.openStore("encounter", (store) => {
+                    store.delete(patientID);
+                });
                 localStorage.removeItem('cached-duration');
             };
         });

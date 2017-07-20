@@ -6,8 +6,13 @@
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
-            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment']);
-    ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider) {
+            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB']);
+    ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
+        $indexedDBProvider.connection('andromedaHealthIndexedDB')
+            .upgradeDatabase(1, function (event, db, tx) {
+                let objStore = db.createObjectStore('encounter',{keyPath: 'id'});
+                objStore.createIndex('audio_idx', 'audio', {unique: false});
+            });
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 

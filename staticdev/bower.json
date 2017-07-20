@@ -38,6 +38,7 @@
     "angular-spinkit": "^0.3.4",
     "angular-moment": "^1.0.1",
     "awesome-bootstrap-checkbox": "^0.3.7",
-    "checklist-model": "^0.10.0"
+    "checklist-model": "^0.10.0",
+    "angular-indexedDB": "angular-indexed-db#^1.1.4"
   }
 }
