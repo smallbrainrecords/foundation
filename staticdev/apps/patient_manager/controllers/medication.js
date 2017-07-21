@@ -8,8 +8,8 @@
                                                 toaster, $location, patientService, $filter, medicationService, prompt) {
             // Properties
             // TODO: DRY
-            $scope.user_id = $('#user_id').val();
-            $scope.patient_id = $('#patient_id').val();
+            // $scope.user_id = $('#user_id').val();
+            // $scope.patient_id = $('#patient_id').val();
 
 
             $scope.showMedicationSearch = false;
@@ -35,9 +35,9 @@
             ////////////////////////
 
             function init() {
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-                });
+                // patientService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                // });
 
                 medicationService.fetchMedicationInfo($scope.patient_id, $scope.medication_id).then(function (data) {
                     $scope.medication = data['info'];

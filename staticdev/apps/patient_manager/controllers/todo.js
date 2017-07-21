@@ -6,8 +6,8 @@
         .controller('TodoCtrl', function ($scope, $routeParams, $interval, patientService, ngDialog,
                                           todoService, toaster, sharedService) {
 
-            $scope.patient_id = $('#patient_id').val();
-            $scope.user_id = $('#user_id').val();
+            // $scope.patient_id = $('#patient_id').val();
+            // $scope.user_id = $('#user_id').val();
             $scope.loading = true;
             $scope.todo_id = $routeParams.todo_id;
             $scope.current_activity = 0;
@@ -89,9 +89,9 @@
                     $scope.loading = false;
                 });
 
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-                });
+                // patientService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                // });
 
                 todoService.addTodoAccessEncounter($scope.todo_id).then(function () {
                 });

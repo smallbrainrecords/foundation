@@ -7,10 +7,11 @@
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
                                               dataService, medicationService, CollapseService, Upload, $timeout) {
-            $scope.patient_id = $('#patient_id').val();
+            // $scope.patient_id = $('#patient_id').val();
+            // $scope.user_id = $('#user_id').val();
+
             $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
             $scope.patient = {}; // All patient's data loaded from server side
-            $scope.user_id = $('#user_id').val();
             $scope.activities = [];
             $scope.availableWidgets = [];
             $scope.change_pinned_data = false;
@@ -37,6 +38,7 @@
             $scope.show_physician_notes = false;
             $scope.viewMode = 'Year';
             $scope.wiki_note_form = {};
+            // TODO: Common usage . Moving to other
             $scope.problem_labels_component = [
                 {name: 'green', css_class: 'todo-label-green'},
                 {name: 'yellow', css_class: 'todo-label-yellow'},
@@ -109,14 +111,14 @@
 
             function init() {
                 // TODO: Should moved to shared/common across the application(SPA)
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-                });
+                // patientService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                // });
 
-                patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                    $scope.patient_info = data['info'];
-                    $scope.patient = data;
-                });
+                // patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+                //     $scope.patient_info = data['info'];
+                //     $scope.patient = data;
+                // });
 
                 // TODO: This should be top priority loading & check access
                 patientService.fetchProblemInfo($scope.problem_id)
@@ -934,7 +936,7 @@
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
 
-                if ($scope.patient['bleeding_risk']) {
+                if ($scope.bleeding_risk) {
                     ngDialog.open({
                         template: 'bleedingRiskDialog',
                         showClose: false,

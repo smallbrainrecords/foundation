@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('EditUserCtrl', function ($scope, $routeParams, ngDialog, sharedService, patientService, $location, $anchorScroll, toaster) {
 
-            $scope.user_id = $('#patient_id').val();
+            // $scope.user_id = $('#patient_id').val();
             $scope.staff_roles = ['nurse', 'secretary', 'mid-level'];
 
             $scope.updateImage = updateImage;
@@ -20,12 +20,12 @@
 
             function init() {
 
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-                });
+                // patientService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                // });
 
                 patientService.fetchPatientInfo($scope.user_id).then(function (data) {
-                    $scope.user_profile = data['info'];
+                    // $scope.user_profile = data['info'];
                     $scope.sharing_patients = data['sharing_patients'];
                     $scope.shared_patients = data['shared_patients'];
                 });

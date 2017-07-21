@@ -64,7 +64,7 @@
 
                         <label> First Name </label>
 
-                        <input type='text' ng-model='user_profile.user.first_name' class='form-control'>
+                        <input type='text' ng-model='patient_info.user.first_name' class='form-control'>
 
                     </div>
 
@@ -72,7 +72,7 @@
 
                         <label> Last Name </label>
 
-                        <input type='text' ng-model='user_profile.user.last_name' class='form-control'>
+                        <input type='text' ng-model='patient_info.user.last_name' class='form-control'>
 
                     </div>
 
@@ -97,15 +97,15 @@
                 <form class='form' ng-submit='update_profile()'>
                     <div class='form-group'>
                         <label> Date of birth </label>
-                        <input type='text' ng-model='user_profile.date_of_birth' class='form-control' required id='dob'>
+                        <input type='text' ng-model='patient_info.date_of_birth' class='form-control' required id='dob'>
                     </div>
                     <div class='form-group'>
                         <label> Phone/Contact </label>
-                        <input type='text' ng-model='user_profile.phone_number' class='form-control'>
+                        <input type='text' ng-model='patient_info.phone_number' class='form-control'>
                     </div>
                     <div class='form-group'>
                         <label> Sex </label>
-                        <select ng-model='user_profile.sex' class='form-control'>
+                        <select ng-model='patient_info.sex' class='form-control'>
                             <option value=''> ----</option>
                             <option value='male'> Male</option>
                             <option value='female'> Female</option>
@@ -113,15 +113,15 @@
                     </div>
                     <div class='form-group'>
                         <label> Summary </label>
-                        <textarea ng-model='user_profile.summary' class='form-control'></textarea>
+                        <textarea ng-model='patient_info.summary' class='form-control'></textarea>
                     </div>
                     <!--<div class='form-group'>-->
-                        <!--<img ng-src='{{ user_profile.cover_image }}' class='thumbnail' alt='Cover Image'>-->
+                        <!--<img ng-src='{{ patient_info.cover_image }}' class='thumbnail' alt='Cover Image'>-->
                         <!--<label> Cover Image </label>-->
                         <!--<input type='file' file-model='files.cover_image'>-->
                     <!--</div>-->
                     <!--<div class='form-group'>-->
-                        <!--<img ng-src='{{ user_profile.portrait_image }}' class='thumbnail' alt='Portrait Image'>-->
+                        <!--<img ng-src='{{ patient_info.portrait_image }}' class='thumbnail' alt='Portrait Image'>-->
                         <!--<label> Portrait Image </label>-->
                         <!--<input type='file' file-model='files.portrait_image'>-->
                     <!--</div>-->
@@ -145,7 +145,7 @@
 
                     <div class='form-group'>
 
-                        <img ng-src='{{ user_profile.cover_image }}' class='cover' alt='Cover Image'>
+                        <img ng-src='{{ patient_info.cover_image }}' class='cover' alt='Cover Image'>
 
 
                         <label> Cover Image </label>
@@ -156,7 +156,7 @@
 
                     <div class='form-group'>
 
-                        <img ng-src='{{ user_profile.portrait_image }}' class='thumbnail' alt='Portrait Image'>
+                        <img ng-src='{{ patient_info.portrait_image }}' class='thumbnail' alt='Portrait Image'>
 
                         <label> Portrait Image </label>
 
@@ -187,7 +187,7 @@
 
                     <div class='form-group'>
                         <label> Email </label>
-                        <input type='text' class='form-control' ng-model='user_profile.user.email'>
+                        <input type='text' class='form-control' ng-model='patient_info.user.email'>
                     </div>
 
                     <div class='form-group'>

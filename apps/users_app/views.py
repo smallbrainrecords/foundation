@@ -222,6 +222,13 @@ def manage_patient(request, user_id):
     context['user_role'] = actor_profile.role
     context['patient_profile'] = patient_profile
 
+    # TODO: Perfomances improvement
+    user_profile_serialized = UserProfileSerializer(actor_profile).data
+    user_profile_serialized['permissions'] = ROLE_PERMISSIONS[actor_profile.role]
+    context['active_user'] = json.dumps(user_profile_serialized)
+    context['patient_info'] = json.dumps(UserProfileSerializer(patient_profile).data)
+    context['bleeding_risk'] =json.dumps(Medication.objects.filter(current=True).filter(
+        concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=patient_profile).exists())
     context = RequestContext(request, context)
     return render_to_response("manage_patient.html", context)
 
@@ -339,20 +346,26 @@ def get_patient_info(request, patient_id):
 
     resp['info'] = UserProfileSerializer(patient_profile).data
     resp['problems'] = problem_list
-    resp['goals'] = GoalSerializer(goals, many=True).data
     resp['inactive_problems'] = ProblemSerializer(inactive_problems, many=True).data
+
+    resp['goals'] = GoalSerializer(goals, many=True).data
     resp['completed_goals'] = GoalSerializer(completed_goals, many=True).data
+
     resp['encounters'] = EncounterSerializer(encounters, many=True).data
     resp['favorites'] = EncounterEventSerializer(favorites, many=True).data
+
     resp['most_recent_encounter_summaries'] = most_recent_encounter_summaries
     resp['most_recent_encounter_related_problems'] = related_problem_holder
     resp['most_recent_encounter_documents'] = most_recent_encounter_documents_holder
+
     resp['shared_patients'] = patients_list
     resp['sharing_patients'] = sharing_patients_list
+
     resp['acutes_list'] = CommonProblemSerializer(acutes, many=True).data
     resp['chronics_list'] = CommonProblemSerializer(chronics, many=True).data
     resp['bleeding_risk'] = Medication.objects.filter(current=True).filter(
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=patient_profile).exists()
+
     return ajax_response(resp)
 
 
@@ -360,20 +373,21 @@ def get_patient_info(request, patient_id):
 def get_timeline_info(request, patient_id):
     # Timeline Problems
     timeline_problems = Problem.objects.filter(patient_id=patient_id)
-    resp = {}
-    resp['timeline_problems'] = ProblemSerializer(timeline_problems, many=True).data
+    resp = {'timeline_problems': ProblemSerializer(timeline_problems, many=True).data}
     return ajax_response(resp)
 
 
 @login_required
 def get_patient_todos_info(request, patient_id):
+    resp = {}
     todos = ToDo.objects.filter(patient_id=patient_id).order_by("order")
     pending_todos = [todo for todo in todos if todo.accomplished is False]
     accomplished_todos = [todo for todo in todos if todo.accomplished is True]
-    resp = {}
+
     resp['pending_todos'] = TodoSerializer(pending_todos, many=True).data
     resp['accomplished_todos'] = TodoSerializer(accomplished_todos, many=True).data
     resp['problem_todos'] = TodoSerializer(todos, many=True).data
+
     return ajax_response(resp)
 
 
@@ -381,11 +395,11 @@ def get_patient_todos_info(request, patient_id):
 @permissions_required(["update_patient_profile"])
 @login_required
 def update_patient_summary(request, patient_id):
+    resp = {}
     new_summary = request.POST.get('summary')
     patient_profile = UserProfile.objects.get(user_id=patient_id, role='patient')
     patient_profile.summary = new_summary
     patient_profile.save()
-    resp = {}
     resp['success'] = True
     return ajax_response(resp)
 
@@ -405,9 +419,7 @@ def update_patient_note(request, patient_id):
 @permissions_required(["update_patient_profile"])
 @login_required
 def update_patient_password(request, patient_id):
-    resp = {}
-    resp['success'] = False
-    resp['message'] = ''
+    resp = {'success': False, 'message': ''}
 
     old_password = request.POST.get('old_password')
     password = request.POST.get('password')
@@ -425,8 +437,7 @@ def update_patient_password(request, patient_id):
 @login_required
 @api_view(["POST"])
 def update_basic_profile(request, patient_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
 
     form = UpdateBasicProfileForm(request.POST)
     if not form.is_valid():

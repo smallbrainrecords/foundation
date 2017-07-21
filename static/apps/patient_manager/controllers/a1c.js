@@ -17,9 +17,9 @@
                 $scope.a1c = data['info'];
             });
 
-            patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                $scope.patient = data;
-            });
+            // patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+            //     $scope.patient = data;
+            // });
 
             $scope.add_todo = function (form) {
                 if (form == undefined) {
@@ -39,7 +39,7 @@
                 form.problem_id = $scope.a1c.problem.id;
                 form.a1c_id = $scope.a1c.id;
 
-                if ($scope.patient['bleeding_risk']) {
+                if ($scope.bleeding_risk) {
                     var bleedingRiskDialog = ngDialog.open({
                         template: 'bleedingRiskDialog',
                         showClose: false,
@@ -79,11 +79,11 @@
                 $scope.a1c = data['info'];
             });
 
-            patientService.fetchActiveUser().then(function (data) {
-
-                $scope.active_user = data['user_profile'];
-
-            });
+            // patientService.fetchActiveUser().then(function (data) {
+            //
+            //     $scope.active_user = data['user_profile'];
+            //
+            // });
 
             $scope.addValue = function (value) {
                 if (value == undefined) {
@@ -164,9 +164,9 @@
             $scope.a1c_id = $routeParams.a1c_id;
             //sharedService.initHotkey($scope);
 
-            patientService.fetchActiveUser().then(function (data) {
-                $scope.active_user = data['user_profile'];
-            });
+            // patientService.fetchActiveUser().then(function (data) {
+            //     $scope.active_user = data['user_profile'];
+            // });
 
             a1cService.fetchA1cInfo($scope.a1c_id).then(function (data) {
                 $scope.a1c = data['info'];
@@ -199,9 +199,9 @@
             $scope.patient_id = patient_id;
             $scope.value_id = $routeParams.value_id;
             //sharedService.initHotkey($scope);
-            patientService.fetchActiveUser().then(function (data) {
-                $scope.active_user = data['user_profile'];
-            });
+            // patientService.fetchActiveUser().then(function (data) {
+            //     $scope.active_user = data['user_profile'];
+            // });
 
             a1cService.fetchObservationValueInfo($scope.value_id).then(function (data) {
                 $scope.value = data['info'];

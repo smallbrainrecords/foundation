@@ -2,16 +2,15 @@
     'use strict';
     angular.module('ManagerApp')
         .controller('HomeCtrl', HomeCtrl);
-    HomeCtrl.$inject = ['$scope', '$routeParams', 'patientService', 'problemService', 'encounterService',
+    HomeCtrl.$inject = ['$scope', 'patientService', 'problemService', 'encounterService',
         'ngDialog', 'sharedService', 'dataService', 'toaster', '$location', 'todoService',
         'prompt', '$timeout', 'CollapseService', '$filter', '$window'];
 
-    function HomeCtrl($scope, $routeParams, patientService, problemService, encounterService,
-                      ngDialog, sharedService, dataService, toaster, $location, todoService,
-                      prompt, $timeout, CollapseService, $filter, $window) {
+    function HomeCtrl($scope, patientService, problemService, encounterService, ngDialog, sharedService, dataService,
+                      toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
 
-        $scope.patient_id = $('#patient_id').val(); // Patients are being managed
-        $scope.user_id = $('#user_id').val(); // Current logged in id
+        // $scope.patient_id = $('#patient_id').val(); // Patients are being managed
+        // $scope.user_id = $('#user_id').val(); // Current logged in id
 
         $scope.btnBDFISubmitted = false;
         $scope.collapse = CollapseService;
@@ -31,8 +30,8 @@
         $scope.new_text = {};
         $scope.new_text.all_patients = true;
         $scope.new_text.private = true;
-        $scope.patient = {}; // All patient's data loaded from server side
-        $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
+        // $scope.patient = {}; // All patient's data loaded from server side
+        // $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
         $scope.problem_lists = [];
         $scope.problem_term = '';
         $scope.problem_terms = [];
@@ -106,29 +105,32 @@
 
         //INITIALIZE DATA
         function init() {
-            patientService.fetchActiveUser().then(function (data) {
+            // patientService.fetchActiveUser().then(function (data) {
                 // Logged in user profile in Django authentication system
-                $scope.active_user = data['user_profile'];
-            });
+                // $scope.active_user = data['user_profile'];
+            // });
 
+            // DOES THEY REALLY NEED TO TODO THIS ONE
             patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                $scope.patient = data;
-                $scope.patient_info = data['info'];
+                // $scope.patient = data;
+                // $scope.patient_info = data['info'];
                 $scope.problems = data['problems'];
                 $scope.inactive_problems = data['inactive_problems'];
+                $scope.acutes = data['acutes_list'];
+                $scope.chronics = data['chronics_list'];
+
                 $scope.goals = data['goals'];
                 $scope.completed_goals = data['completed_goals'];
+
                 $scope.encounters = data['encounters'];
                 $scope.favorites = data['favorites'];
+
                 $scope.most_recent_encounter_summaries = data['most_recent_encounter_summaries'];
                 $scope.most_recent_encounter_related_problems = data['most_recent_encounter_related_problems'];
                 $scope.most_recent_encounter_documents = data['most_recent_encounter_documents'];
                 $scope.shared_patients = data['shared_patients'];
                 $scope.sharing_patients = data['sharing_patients'];
-                $scope.acutes = data['acutes_list'];
-                $scope.chronics = data['chronics_list'];
-                // problem timeline what the hell is this?
-                // $scope.fetchTimeLineProblem(data);
+
                 var tmpListProblem = $scope.problems;
                 $scope.sortingLogProblem = [];
                 $scope.sortedProblem = false;
@@ -162,16 +164,16 @@
                 }
             });
 
-            problemService.fetchLabeledProblemList($scope.patient_id, $scope.user_id).then(function (data) {
-                $scope.problem_lists = data['problem_lists'];
-                $scope.problems_ready = true;
-            });
-
             patientService.fetchPatientTodos($scope.patient_id).then(function (data) {
                 $scope.pending_todos = data['pending_todos'];
                 $scope.accomplished_todos = data['accomplished_todos'];
                 $scope.problem_todos = data['problem_todos'];
                 $scope.todos_ready = true;
+            });
+
+            problemService.fetchLabeledProblemList($scope.patient_id, $scope.user_id).then(function (data) {
+                $scope.problem_lists = data['problem_lists'];
+                $scope.problems_ready = true;
             });
 
             // Documentation
@@ -568,13 +570,10 @@
                 return false;
             }
             form.patient_id = $scope.patient_id;
-            if ($scope.patient['bleeding_risk']) {
+            if ($scope.bleeding_risk) {
                 ngDialog.open({
                     template: 'bleedingRiskDialog',
                     showClose: false,
-                    // closeByEscape: false,
-                    // closeByDocument: false,
-                    // closeByNavigation: false
                 }).closePromise.then(askDueDate);
             } else {
                 askDueDate();

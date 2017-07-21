@@ -127,9 +127,9 @@
 
             $scope.results = [];
 
-            patientService.fetchActiveUser().then(function (data) {
-                $scope.active_user = data['user_profile'];
-            });
+            // patientService.fetchActiveUser().then(function (data) {
+            //     $scope.active_user = data['user_profile'];
+            // });
 
             colonService.fetchColonCancerInfo($scope.colon_id).then(function (data) {
                 $scope.colon_cancer = data['info'];
@@ -280,17 +280,17 @@
             $scope.colon_id = $routeParams.colon_id;
             //sharedService.initHotkey($scope);
 
-            patientService.fetchActiveUser().then(function (data) {
-                $scope.active_user = data['user_profile'];
-            });
+            // patientService.fetchActiveUser().then(function (data) {
+            //     $scope.active_user = data['user_profile'];
+            // });
 
             colonService.fetchColonCancerInfo($scope.colon_id).then(function (data) {
                 $scope.colon_cancer = data['info'];
             });
 
-            patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                $scope.patient = data;
-            });
+            // patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+            //     $scope.patient = data;
+            // });
 
             $scope.add_todo = function (form) {
                 if (form == undefined && form.name.trim().length < 1) {
@@ -301,7 +301,8 @@
                 form.problem_id = $scope.colon_cancer.problem.id;
                 form.colon_cancer_id = $scope.colon_cancer.id;
 
-                if ($scope.patient['bleeding_risk']) {
+                // TODO: Performances report
+                if ($scope.bleeding_risk) {
                     var bleedingRiskDialog = ngDialog.open({
                         template: 'bleedingRiskDialog',
                         showClose: false,

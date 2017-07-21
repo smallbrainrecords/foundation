@@ -4,7 +4,7 @@
     angular.module('ManagerApp')
         .controller('DataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, $location, sharedService, dataService, patientService, $filter) {
 
-            $scope.patient_id = $('#patient_id').val();
+            // $scope.patient_id = $('#patient_id').val();
             $scope.data_id = $routeParams.data_id;
             $scope.viewMode = 'Year';
             $scope.show_pin_to_new_problem = false;
@@ -42,10 +42,10 @@
                     }
                 });
 
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-
-                });
+                // patientService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                //
+                // });
 
                 dataService.fetchDataInfo($scope.data_id).then(function (data) {
                     $scope.data = data['info'];
@@ -155,7 +155,7 @@
 
         })
         .controller('AddDataCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, sharedService, $location, dataService, patientService) {
-            $scope.patient_id = $('#patient_id').val();
+            // $scope.patient_id = $('#patient_id').val();
             $scope.data_id = $routeParams.data_id;
             $scope.new_data = {};
             $scope.new_data.date = moment().format("MM/DD/YYYY");
@@ -165,10 +165,10 @@
 
             function init() {
 
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-
-                });
+                // patientService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                //
+                // });
 
                 dataService.fetchDataInfo($scope.data_id).then(function (data) {
                     $scope.data = data['info'];
@@ -227,7 +227,7 @@
             }
         })
         .controller('IndividualDataCtrl', function ($scope, $routeParams, ngDialog, problemService, sharedService, toaster, $location, dataService, patientService) {
-            $scope.patient_id = $('#patient_id').val();
+            // $scope.patient_id = $('#patient_id').val();
             // List of all observation component value pair is requested for editing
             $scope.dataID = $routeParams.dataId;
             $scope.componentValueIds = $routeParams.componentValueIds.split('&');
@@ -244,9 +244,9 @@
 
             function init() {
 
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-                });
+                // patientService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                // });
 
                 dataService.fetchDataInfo($scope.dataID).then(function (data) {
                     $scope.data = data['info'];
@@ -324,7 +324,7 @@
         })
         .controller('DataSettingsCtrl', function ($scope, $routeParams, ngDialog, problemService, toaster, sharedService, $location, dataService, patientService) {
 
-            $scope.patient_id = $('#patient_id').val();
+            // $scope.patient_id = $('#patient_id').val();
             $scope.data_id = $routeParams.data_id;
             $scope.show_edit_data = false;
 
@@ -336,9 +336,9 @@
             init();
 
             function init() {
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
-                });
+                // patientService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                // });
 
                 dataService.fetchDataInfo($scope.data_id).then(function (data) {
                     $scope.data = data['info'];

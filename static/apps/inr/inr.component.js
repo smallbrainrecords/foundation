@@ -108,9 +108,9 @@
                     scope.totalNote = response.data.total;
                 });
 
-                patientService.fetchPatientInfo(scope.patientId).then(function (data) {
-                    scope.patient = data;
-                });
+                // patientService.fetchPatientInfo(scope.patientId).then(function (data) {
+                //     scope.patient = data;
+                // });
             }
 
             /**
@@ -262,7 +262,7 @@
              */
             function addOrder(title, repeat) {
                 // Bleeding risk dialog
-                if (scope.patient['bleeding_risk']) {
+                if (scope.bleeding_risk) {
                     var bleedingRiskDialog = ngDialog.open({
                         template: 'bleedingRiskDialog',
                         showClose: false,

@@ -20,8 +20,8 @@
     function ViewDocumentCtrl($scope, sharedService, $routeParams, $location, toaster, documentService, ngDialog, $http, $cookies, todoService) {
 
         // PROPERTIES DEFINITION
-        $scope.patient_id = $('#patient_id').val();     // Patients are being managed
-        $scope.user_id = $('#user_id').val();           // Current logged in id
+        // $scope.patient_id = $('#patient_id').val();     // Patients are being managed
+        // $scope.user_id = $('#user_id').val();           // Current logged in id
         $scope.document = {};
         $scope.labels = [];
         $scope.newDocumentName = "";
@@ -81,17 +81,17 @@
                     $scope.getPatientInfo($scope.patient_id);
 
                     sharedService.fetchPatientInfo($scope.patient_id).then(function (response) {
-                        $scope.patient = response.data;
+                        // $scope.patient = response.data;
                         $scope.acutes = response.data.acutes_list;
                         $scope.chronics = response.data.chronics_list;
                     });
                 }
             });
 
-            sharedService.fetchActiveUser().then(function (response) {
-                // Logged in user profile in Django authentication system
-                $scope.active_user = response.data['user_profile'];
-            });
+            // sharedService.fetchActiveUser().then(function (response) {
+            //     Logged in user profile in Django authentication system
+                // $scope.active_user = response.data['user_profile'];
+            // });
 
             todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                 $scope.members = data['members'];
@@ -319,7 +319,7 @@
                 return false;
             }
             form.patient_id = $scope.patient_id;
-            if ($scope.patient['bleeding_risk']) {
+            if ($scope.bleeding_risk) {
                 ngDialog.open({
                     template: 'bleedingRiskDialog',
                     showClose: false,
