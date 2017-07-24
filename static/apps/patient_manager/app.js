@@ -10,7 +10,7 @@
     ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
         $indexedDBProvider.connection('andromedaHealthIndexedDB')
             .upgradeDatabase(1, function (event, db, tx) {
-                let objStore = db.createObjectStore('encounter',{keyPath: 'id'});
+                let objStore = db.createObjectStore('encounter', {keyPath: 'id'});
                 objStore.createIndex('audio_idx', 'audio', {unique: false});
             });
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
@@ -264,5 +264,10 @@
         isRecording: 0,
         isPaused: 1,
         isStopped: 2
-    })
+    });
+    ManagerApp.constant('AUDIO_UPLOAD_STATUS', {
+        isInitialize: 0,
+        isUploading: 1,
+        isUploaded: 2
+    });
 })();

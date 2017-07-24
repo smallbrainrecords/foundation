@@ -101,7 +101,10 @@ def create_new_encounter(request, patient_id):
 @permissions_required(["add_encounter"])
 @login_required
 def stop_patient_encounter(request, encounter_id):
-    resp = {}
+    resp = {'success': False}
+    if not Encounter.objects.filter(id=encounter_id, stoptime=None).exists():
+        resp['msg'] = 'Encounter is already stopped'
+        return ajax_response(resp)
 
     Encounter.objects.stop_patient_encounter(request.user, encounter_id)
 
