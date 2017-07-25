@@ -20,7 +20,8 @@ from a1c_app.serializers import AOneCSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
 from common.views import *
 from data_app.serializers import ObservationPinToProblemSerializer, ObservationSerializer
-from emr.models import ColonCancerScreening, Observation, ObservationUnit, ObservationComponent
+from emr.models import ColonCancerScreening, Observation, ObservationUnit, ObservationComponent, TaggedToDoOrder, \
+    PatientController
 from emr.models import Encounter
 from emr.models import Goal, ToDo, TextNote, PatientImage, Label
 from emr.models import MedicationPinToProblem
@@ -347,21 +348,62 @@ def add_history_note(request, problem_id):
     except Problem.DoesNotExist:
         return ajax_response(resp)
 
+    # Get params
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
     note = request.POST.get('note')
-    new_note = ProblemNote.objects.create_history_note(actor_profile, problem, note)
-
-    activity = 'Added History Note  <b>%s</b>' % note
-    add_problem_activity(problem, actor_profile, activity, 'input')
-
     physician = request.user
     patient = problem.patient
+
+    # Save note
+    new_note = ProblemNote.objects.create_history_note(actor_profile, problem, note)
+
+    # Save problem log
+    activity = "Added History Note  <b>{}</b>".format(note)
+    add_problem_activity(problem, actor_profile, activity, 'input')
+
+    # Save system log
     op_add_event(physician, patient, activity, problem)
 
+    # https://trello.com/c/hkdbHZjw
+    auto_generate_note_todo(actor_profile, patient, problem, request, resp)
+
+    # Build response
     resp['success'] = True
     resp['note'] = ProblemNoteSerializer(new_note).data
+
     return ajax_response(resp)
+
+
+def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
+    if 'patient' == actor_profile.role or 'nurse' == actor_profile.role or 'secretary' == actor_profile.role:
+        # Create todo and Pin to problem
+        note_auto_generated_todo = ToDo(patient=patient, problem=problem, todo="A note was added")
+        order = ToDo.objects.all().aggregate(Max('order'))
+        if not order['order__max']:
+            order = 1
+        else:
+            order = order['order__max'] + 1
+        note_auto_generated_todo.order = order
+        note_auto_generated_todo.save()
+
+        summary = '''Added <u>todo</u> <a href="#/todo/{}"><b>{}</b></a> for <u>problem</u> <b>{}</b>'''.format(
+            note_auto_generated_todo.id, "A note was added", problem.problem_name)
+        op_add_todo_event(request.user, patient, summary, note_auto_generated_todo)
+
+        add_todo_activity(note_auto_generated_todo, actor_profile, "Added this todo.")
+
+        # Tag associated physician
+        # Find all associated physician(s) with this patient
+        patient_controller = PatientController.objects.filter(patient=patient).all()
+        for doctor in patient_controller:
+            TaggedToDoOrder.objects.create(todo=note_auto_generated_todo, user=doctor.physician)
+            log = "<b>{0} {1} - {2}</b> joined this todo.".format(doctor.physician.first_name,
+                                                                  doctor.physician.last_name,
+                                                                  doctor.physician.profile.role)
+            add_todo_activity(note_auto_generated_todo, request.user.profile, log)
+
+            resp['todo'] = TodoSerializer(note_auto_generated_todo).data
 
 
 # Add Wiki Note
@@ -370,26 +412,29 @@ def add_history_note(request, problem_id):
 def add_wiki_note(request, problem_id):
     resp = {'success': False}
 
-    # Check if user is able to view patient
-    # Todo
-    actor = request.user
-    actor_profile = UserProfile.objects.get(user=actor)
-
-    note = request.POST.get('note')
     try:
         problem = Problem.objects.get(id=problem_id)
         author = UserProfile.objects.get(user=request.user)
     except (Problem.DoesNotExist, UserProfile.DoesNotExist) as e:
         return ajax_response(resp)
 
+    # Check if user is able to view patient
+    # Todo
+    actor = request.user
+    actor_profile = UserProfile.objects.get(user=actor)
+    note = request.POST.get('note')
+    physician = request.user
+    patient = problem.patient
+
     new_note = ProblemNote.objects.create_wiki_note(author, problem, note)
 
     activity = 'Added wiki note: <b>%s</b>' % note
     add_problem_activity(problem, actor_profile, activity, 'input')
 
-    physician = request.user
-    patient = problem.patient
     op_add_event(physician, patient, activity, problem)
+
+    # https://trello.com/c/hkdbHZjw
+    auto_generate_note_todo(actor_profile, patient, problem, request, resp)
 
     resp['note'] = ProblemNoteSerializer(new_note).data
     resp['success'] = True

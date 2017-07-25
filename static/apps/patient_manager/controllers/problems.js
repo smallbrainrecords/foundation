@@ -827,9 +827,9 @@
 
                 problemService.addWikiNote(form).then(function (data) {
 
-                    if (data['success'] == true) {
-
+                    if (data.success) {
                         toaster.pop('success', 'Done', 'Added Wiki Note');
+
                         var note = data['note'];
                         if ($scope.active_user.role == 'patient') {
                             $scope.patient_wiki_notes.unshift(note);
@@ -840,18 +840,22 @@
                             $scope.show_other_notes = true;
                             $scope.other_wiki_notes.unshift(note);
                         }
-
                         form.note = '';
+
                         $scope.set_authentication_false();
 
                         // https://trello.com/c/ZFlgZLOz. Move cursor to todo input text field
                         $('#todoNameInput').focus();
-                    } else if (data['success'] == false) {
-                        toaster.pop('error', 'Warning', 'Action Failed');
+
+                        // Push newly added todo to active todo list
+                        if (data.hasOwnProperty('todo'))
+                            $scope.active_todos.push(data.todo);
                     } else {
-                        toaster.pop('error', 'Warning', 'Something went wrong!');
+                        toaster.pop('error', 'Warning', 'Action Failed');
                     }
 
+                }, function (error) {
+                    toaster.pop('error', 'Warning', 'Something went wrong!');
 
                 });
 
@@ -868,6 +872,9 @@
 
                         $scope.history_note = data['note'];
                         $scope.set_authentication_false();
+
+                        if (data.hasOwnProperty('todo'))
+                            $scope.active_todos.push(data.todo);
 
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Warning', 'Action Failed');
