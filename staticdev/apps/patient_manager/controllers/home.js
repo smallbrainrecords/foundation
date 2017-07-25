@@ -403,7 +403,7 @@
                 }
                 // Refer https://trello.com/c/cFylaLdv
                 if ($scope.most_recent_encounter_documents.length > 0) {
-                    text += "List of encounter document: \r\n";
+                    text += "Measured today: \r\n";
                     angular.forEach($scope.most_recent_encounter_documents, function (value, key) {
                         let container = $("<div/>");
                         container.append(`${value.name} : ${value.value}`);
@@ -422,7 +422,6 @@
                 if ($scope.pending_todos.length > 0) {
                     text += "List of all active todos : \r\n";
                     angular.forEach($scope.pending_todos, function (value, key) {
-                        debugger;
                         text += `${value.todo} ${value.problem ? 'for problem ' + value.problem.problem_name : ''}\r\n`;
                     });
                 }
