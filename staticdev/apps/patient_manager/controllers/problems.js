@@ -7,11 +7,7 @@
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
                                               dataService, medicationService, CollapseService, Upload, $timeout) {
-            // $scope.patient_id = $('#patient_id').val();
-            // $scope.user_id = $('#user_id').val();
 
-            $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
-            $scope.patient = {}; // All patient's data loaded from server side
             $scope.activities = [];
             $scope.availableWidgets = [];
             $scope.change_pinned_data = false;
@@ -110,16 +106,6 @@
             init();
 
             function init() {
-                // TODO: Should moved to shared/common across the application(SPA)
-                // patientService.fetchActiveUser().then(function (data) {
-                //     $scope.active_user = data['user_profile'];
-                // });
-
-                // patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                //     $scope.patient_info = data['info'];
-                //     $scope.patient = data;
-                // });
-
                 // TODO: This should be top priority loading & check access
                 patientService.fetchProblemInfo($scope.problem_id)
                     .then(function (data) {
@@ -154,19 +140,15 @@
                                 });
                             }
 
-                            // TODO: 02/03/2017 Should be move to general later
-                            $scope.$watch('patient_info', function (nV, oV) {
-                                if (nV !== oV) {
-                                    $scope.timeline = {
-                                        Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
-                                        birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
-                                        problems: timeline_problems
-                                    };
 
-                                    $scope.timeline_ready = true;
-                                    $scope.timeline_changed = [{changing: new Date().getTime()}];
-                                }
-                            });
+                            $scope.timeline = {
+                                Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
+                                birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
+                                problems: timeline_problems
+                            };
+
+                            $scope.timeline_ready = true;
+                            $scope.timeline_changed = [{changing: new Date().getTime()}];
                         }
                     });
 
