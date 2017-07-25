@@ -545,7 +545,14 @@ def staff(request):
 
     physicians = [x.physician for x in physicians]
 
+
     content = {'physicians': physicians, 'patients': patients, 'user': user, 'user_profile': user_profile}
+
+    # TODO
+    user_profile_serialized = UserProfileSerializer(user_profile).data
+    user_profile_serialized['permissions'] = ROLE_PERMISSIONS[user_profile.role]
+    content['active_user'] = json.dumps(user_profile_serialized)
+
     return render(request, 'staff.html', content)
 
 

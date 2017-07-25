@@ -93,7 +93,7 @@
     </div>
 
     <div class='col-md-9'>
-        <div id='ng-app' ng-app='StaffApp' class='no-js' lang="en">
+        <div id='ng-app' ng-app='StaffApp' class='no-js' lang="en" ng-init="active_user={{active_user}};user_id={{user.id}};">
             <div ng-view>
                 Loading...
             </div>
@@ -110,37 +110,6 @@
                 {% endfor %}
             </div>
         </div>
-
-        <!--<div class='panel panel-default'>-->
-        <!--<div class='panel-heading'>-->
-        <!--Patients Assigned-->
-        <!--</div>-->
-        <!--<div class='panel-body'>-->
-        <!--<table class='table'>-->
-        <!--<thead>-->
-        <!--<tr>-->
-        <!--<th> Name</th>-->
-        <!--<th> Username</th>-->
-        <!--<th> Actions</th>-->
-        <!--</tr>-->
-        <!--</thead>-->
-
-        <!--<tbody>-->
-        <!--{% for patient in patients %}-->
-        <!--<tr>-->
-        <!--<td> {{patient.first_name}} {{patient.last_name}}</td>-->
-        <!--<td> {{patient.username}}</td>-->
-        <!--<td>-->
-        <!--<a href='/u/patient/manage/{{patient.id}}/'>-->
-        <!--Manage Patient-->
-        <!--</a>-->
-        <!--</td>-->
-        <!--</tr>-->
-        <!--{% endfor %}-->
-        <!--</tbody>-->
-        <!--</table>-->
-        <!--</div>-->
-        <!--</div>-->
         {% endif %}
     </div>
 </div>
