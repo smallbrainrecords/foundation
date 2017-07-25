@@ -1,15 +1,11 @@
 <a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
-
+<hr>
 <section id="encounter-info">
-    <hr>
     <h4> Encounter : <span ng-if="encounter.starttime">{{ encounter.starttime | date:'medium' }}</span> <span
             ng-if="encounter.stoptime">to {{ encounter.stoptime | date:'medium' }}</span></h4>
-    <div>
-        <button class="btn btn-danger"
-                ng-if="active_user.role=='admin' || active_user.role=='physician'"
-                ng-click="deleteEncounter();">Delete
-        </button>
-    </div>
+    <button class="btn btn-danger" ng-if="['admin','physician'].indexOf(active_user.role) != -1"
+            ng-click="deleteEncounter();">Delete
+    </button>
 </section>
 
 <section class="encounter-metadata">

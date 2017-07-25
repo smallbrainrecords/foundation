@@ -8,13 +8,11 @@
                                                    $location, toaster, encounterService, ngAudio, prompt, $timeout) {
 
 
-            // $scope.patient_id = $('#patient_id').val();
             $scope.encounter_id = $routeParams.encounter_id;
             $scope.encounter = {};
             $scope.encounterDocuments = [];
             $scope.related_problems = [];
             $scope.related_problems = {};
-            $scope.active_user = {};
 
             $scope.update_note = updateNote;
             $scope.upload_video = uploadVideo;
@@ -29,12 +27,6 @@
             init();
 
             function init() {
-
-                // patientService.fetchActiveUser().then(function (data) {
-                //     $scope.active_user = data['user_profile'];
-                //
-                // });
-
                 patientService.fetchEncounterInfo($scope.encounter_id)
                     .then(function (data) {
                         $scope.encounter = data['encounter'];
