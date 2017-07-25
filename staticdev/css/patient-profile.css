@@ -55,9 +55,6 @@ todo .new-tagged-todo {
 body {
   padding-top: 70px; }
 
-.nav > li > a {
-  padding: 10px; }
-
 #dvmain {
   min-height: 550px; }
 
@@ -237,20 +234,33 @@ body {
 
 .headerWrap {
   padding: 10px 15px;
-  display: block; }
+  display: block;
+  vertical-align: middle; }
   .headerWrap a {
     color: #000;
     cursor: pointer;
     font-weight: 700; }
-  .headerWrap span {
-    padding-left: 10px; }
 
 .profileThumb {
   border-radius: 2px;
-  height: 24px;
-  margin: 2px -2px 0 -8px;
-  vertical-align: inherit;
-  width: 24px; }
+  width: 20px;
+  height: 20px;
+  margin-right: 10px; }
+
+.vitals_info div.vital-wrapper {
+  width: 100%;
+  min-width: 300px; }
+  .vitals_info div.vital-wrapper div.vital-item {
+    width: 24%;
+    display: inline-block;
+    text-align: center;
+    border-right: 1px solid #C2C2C2;
+    cursor: pointer; }
+    .vitals_info div.vital-wrapper div.vital-item:last-child {
+      border-color: #FFFFFF; }
+    .vitals_info div.vital-wrapper div.vital-item a {
+      padding: 0;
+      text-decoration: none; }
 
 a.btn-manage {
   margin-bottom: 20px; }

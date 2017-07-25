@@ -106,8 +106,8 @@
         //INITIALIZE DATA
         function init() {
             // patientService.fetchActiveUser().then(function (data) {
-                // Logged in user profile in Django authentication system
-                // $scope.active_user = data['user_profile'];
+            // Logged in user profile in Django authentication system
+            // $scope.active_user = data['user_profile'];
             // });
 
             // DOES THEY REALLY NEED TO TODO THIS ONE
@@ -232,25 +232,17 @@
                         data.chartSeries = dataService.generateChartSeries(tmpData);
                         data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
                         // TODO: Manipulate DOM manually and inside JS code. Need to refine this
-                        if (data.name == 'weight') {
-                            // $scope.vitals.weight = data;
-                            var dom = '<a href="#/data/' + data.id + '">W:' + data.mostRecentValue + '</a>';
-                            $("#vitals_weight").html(dom);
+                        if ("weight" === data.name) {
+                            $("#vitals_weight").html(`<a href="#/data/${data.id}">${data.mostRecentValue}</a>`);
                         }
-                        if (data.name == 'body temperature') {
-                            // $scope.vitals.body_temperature = data;
-                            var dom = '<a href="#/data/' + data.id + '">T:' + data.mostRecentValue + '</a>';
-                            $("#vitals_body_temperature").html(dom);
+                        if ("body temperature" === data.name) {
+                            $("#vitals_body_temperature").html(`<a href="#/data/${data.id}">${data.mostRecentValue}</a>`);
                         }
-                        if (data.name == 'blood pressure') {
-                            // $scope.vitals.blood_pressure = data;
-                            var dom = '<a href="#/data/' + data.id + '">BP:' + data.mostRecentValue + '</a>';
-                            $("#vitals_blood_pressure").html(dom);
+                        if ("blood pressure" === data.name) {
+                            $("#vitals_blood_pressure").html(`<a href="#/data/${data.id}">${data.mostRecentValue}</a>`);
                         }
-                        if (data.name == 'heart rate') {
-                            // $scope.vitals.heart_rate = data;
-                            var dom = '<a href="#/data/' + data.id + '">P:' + data.mostRecentValue + '</a>';
-                            $("#vitals_heart_rate ").html(dom);
+                        if ("heart rate" === data.name) {
+                            $("#vitals_heart_rate ").html(`<a href="#/data/${data.id}">${data.mostRecentValue}</a>`);
                         }
                     });
                     if ($scope.active_user) {

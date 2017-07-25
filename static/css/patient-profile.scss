@@ -6,9 +6,9 @@ body {
   padding-top: 70px;
 }
 
-.nav > li > a {
-  padding: 10px;
-}
+//.nav > li > a {
+//  padding: 10px;
+//}
 
 #dvmain {
   min-height: 550px;
@@ -270,17 +270,35 @@ body {
     cursor: pointer;
     font-weight: 700;
   }
-  span {
-    padding-left: 10px;
-  }
+  vertical-align: middle;
 }
 
 .profileThumb {
   border-radius: 2px;
-  height: 24px;
-  margin: 2px -2px 0 -8px;
-  vertical-align: inherit;
-  width: 24px;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.vitals_info {
+  div.vital-wrapper {
+    width: 100%;
+    min-width: 300px;
+    div.vital-item {
+      width: 24%;
+      display: inline-block;
+      text-align: center;
+      border-right: 1px solid #C2C2C2;
+      cursor: pointer;
+      &:last-child {
+        border-color: #FFFFFF;
+      }
+      a {
+        padding: 0;
+        text-decoration: none;
+      }
+    }
+  }
 }
 
 a.btn-manage {
