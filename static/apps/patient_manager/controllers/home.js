@@ -233,16 +233,16 @@
                         data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
                         // TODO: Manipulate DOM manually and inside JS code. Need to refine this
                         if ("weight" === data.name) {
-                            $("#vitals_weight").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ?'N/A' :data.mostRecentValue }</a>`);
+                            $("#vitals_weight").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
                         }
                         if ("body temperature" === data.name) {
-                            $("#vitals_body_temperature").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ?'N/A' :data.mostRecentValue }</a>`);
+                            $("#vitals_body_temperature").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
                         }
                         if ("blood pressure" === data.name) {
-                            $("#vitals_blood_pressure").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ?'N/A' :data.mostRecentValue }</a>`);
+                            $("#vitals_blood_pressure").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
                         }
                         if ("heart rate" === data.name) {
-                            $("#vitals_heart_rate ").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ?'N/A' :data.mostRecentValue }</a>`);
+                            $("#vitals_heart_rate ").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
                         }
                     });
                     if ($scope.active_user) {
@@ -251,36 +251,44 @@
                         }
                         if ($scope.active_user.role == 'nurse') {
                             $scope.mostCommonData = [];
+                            // Related to https://trello.com/c/0aJybixw
+                            // Pick  most common data with sorted order weight data first
+                            let weight = _.findWhere($scope.datas, {'name': 'weight'});
+                            weight.ph = 'W';
+                            $scope.mostCommonData.push(weight);
+
+                            let blood_pressure = _.findWhere($scope.datas, {'name': 'blood pressure'});
+                            blood_pressure.ph = 'BP';
+                            $scope.mostCommonData.push(blood_pressure);
+
+                            let body_temperature = _.findWhere($scope.datas, {'name': 'body temperature'});
+                            body_temperature.ph = 'T';
+                            $scope.mostCommonData.push(body_temperature);
+
+
+                            let heart_rate = _.findWhere($scope.datas, {'name': 'heart rate'});
+                            heart_rate.ph = 'Pulse';
+                            $scope.mostCommonData.push(heart_rate);
+
+
+                            let respiratory_rate = _.findWhere($scope.datas, {'name': 'respiratory rate'});
+                            respiratory_rate.ph = 'RR';
+                            $scope.mostCommonData.push(respiratory_rate);
+
+
                             angular.forEach($scope.datas, function (data, key) {
-                                if (data.name == 'weight') {
-                                    data.ph = 'W';
-                                    $scope.mostCommonData.push(data);
+                                if (['weight', 'body temperature', 'respiratory rate', 'blood pressure', 'heart rate'].indexOf(data.name) === -1) {
+                                    angular.forEach(data.observation_components, function (component, component_key) {
+                                        if ('6301-6' === component.component_code) {
+                                            data.ph = 'INR';
+                                            $scope.mostCommonData.push(data);
+                                        }
+                                    });
                                 }
-                                if (data.name == 'body temperature') {
-                                    data.ph = 'T';
-                                    $scope.mostCommonData.push(data);
-                                }
-                                if (data.name == 'respiratory rate') {
-                                    data.ph = 'RR';
-                                    $scope.mostCommonData.push(data);
-                                }
-                                if (data.name == 'blood pressure') {
-                                    data.ph = 'BP';
-                                    $scope.mostCommonData.push(data);
-                                }
-                                if (data.name == 'heart rate') {
-                                    data.ph = 'pulse';
-                                    $scope.mostCommonData.push(data);
-                                }
-                                angular.forEach(data.observation_components, function (component, component_key) {
-                                    if (component.component_code == '6301-6') {
-                                        data.ph = 'INR';
-                                        $scope.mostCommonData.push(data);
-                                    }
-                                });
                             });
                         }
                     }
+
                     var tmpListData = $scope.datas;
                     $scope.sortingLogData = [];
                     $scope.sortedData = false;
