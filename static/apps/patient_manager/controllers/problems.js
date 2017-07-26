@@ -27,6 +27,7 @@
             $scope.problem_id = $routeParams.problem_id;
             $scope.problem_label_component = {};
             $scope.problem_terms = [];
+            // $scope.problem_todos = [];
             $scope.related_encounters = [];
             $scope.show_accomplished_goals = false;
             $scope.show_accomplished_todos = false;
@@ -170,6 +171,7 @@
                 // Todo
                 problemService.getRelatedTodos($scope.problem_id).then(function (response) {
                     $scope.problem_todos = response.data.todos;
+                    // $scope.problem_todos.push(response.data.todos);
                     $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
                     $scope.todos_ready = true;
                 });
@@ -848,8 +850,14 @@
                         $('#todoNameInput').focus();
 
                         // Push newly added todo to active todo list
-                        if (data.hasOwnProperty('todo'))
-                            $scope.active_todos.push(data.todo);
+                        if (data.hasOwnProperty('todo')) {
+                            let wikiNoteTodo = $interval(() => {
+                                if ($scope.todos_ready) {
+                                    $scope.problem_todos.push(data.todo);
+                                    $interval.cancel(wikiNoteTodo);
+                                }
+                            }, 500)
+                        }
                     } else {
                         toaster.pop('error', 'Warning', 'Action Failed');
                     }
@@ -867,20 +875,27 @@
 
                 problemService.addHistoryNote(form).then(function (data) {
 
-                    if (data['success'] == true) {
+                    if (data['success']) {
                         toaster.pop('success', 'Done', 'Added History Note');
 
                         $scope.history_note = data['note'];
                         $scope.set_authentication_false();
 
-                        if (data.hasOwnProperty('todo'))
-                            $scope.active_todos.push(data.todo);
+                        if (data.hasOwnProperty('todo')) {
+                            let wikiNoteTodo = $interval(() => {
+                                if ($scope.todos_ready) {
+                                    $scope.problem_todos.push(data.todo);
+                                    $interval.cancel(wikiNoteTodo);
+                                }
+                            }, 500)
+                        }
 
-                    } else if (data['success'] == false) {
-                        toaster.pop('error', 'Warning', 'Action Failed');
                     } else {
-                        toaster.pop('error', 'Warning', 'Something went wrong!');
+                        toaster.pop('error', 'Warning', 'Action Failed');
                     }
+
+                }, (e) => {
+                    toaster.pop('error', 'Warning', 'Something went wrong!');
 
                 });
 
