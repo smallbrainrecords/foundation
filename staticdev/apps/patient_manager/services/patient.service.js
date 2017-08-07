@@ -5,67 +5,117 @@
 
     angular.module('ManagerApp').service('patientService',
         function ($http, $q, $cookies, httpService) {
+            const base_url = 'u/patient/';
+            return {
+                csrf_token: csrf_token,
+                fetchPatientInfo: fetchPatientInfo,
+                fetchTimeLineProblem: fetchTimeLineProblem,
+                fetchPatientTodos: fetchPatientTodos,
+                fetchProblems: fetchProblems,
+                fetchProblemInfo: fetchProblemInfo,
+                fetchGoalInfo: fetchGoalInfo,
+                fetchEncounterInfo: fetchEncounterInfo,
+                getEncounterStatus: getEncounterStatus,
+                startNewEncounter: startNewEncounter,
+                stopEncounter: stopEncounter,
+                addEventSummary: addEventSummary,
+                fetchPainAvatars: fetchPainAvatars,
+                listTerms: listTerms,
+                addGoal: addGoal,
+                addToDo: addToDo,
+                addProblem: addProblem,
+                updatePatientSummary: updatePatientSummary,
+                updateTodoStatus: updateTodoStatus,
+                fetchActiveUser: fetchActiveUser,
+                updatePatientPassword: updatePatientPassword,
+                updateBasicProfile: updateBasicProfile,
+                updateProfile: updateProfile,
+                updateEmail: updateEmail,
+                updateTodoOrder: updateTodoOrder,
+                updateProblemOrder: updateProblemOrder,
+                updatePatientNote: updatePatientNote,
+                getPatientsList: getPatientsList,
+                getSharingPatients: getSharingPatients,
+                addSharingPatient: addSharingPatient,
+                removeSharingPatient: removeSharingPatient,
+                changeSharingMyStory: changeSharingMyStory,
+                getUserInfo: getUserInfo,
+                addCommonProblem: addCommonProblem,
+                getMyStory: getMyStory,
+                addMyStoryTab: addMyStoryTab,
+                addMyStoryText: addMyStoryText,
+                getDatas: getDatas,
+                addNewDataType: addNewDataType,
+                updateDataOrder: updateDataOrder,
+                trackDataClickEvent: trackDataClickEvent,
+                deleteMyStoryTab: deleteMyStoryTab,
+                saveMyStoryTab: saveMyStoryTab,
+                deleteMyStoryText: deleteMyStoryText,
+                saveMyStoryText: saveMyStoryText,
+                saveMyStoryTextEntry: saveMyStoryTextEntry,
+                trackTabClickEvent: trackTabClickEvent,
+                getMedications: getMedications,
+                getDocuments: getDocuments,
+                getToDo: getToDo,
+            };
 
-
-            this.csrf_token = function () {
+            function csrf_token() {
 
                 var token = $cookies.get('csrftoken');
                 return token;
-            };
+            }
 
-            this.fetchPatientInfo = function (patient_id) {
+            function fetchPatientInfo(patient_id) {
 
                 var params = {};
                 var url = '/u/patient/' + patient_id + '/info';
 
                 return httpService.get(params, url);
 
-            };
+            }
 
-            this.fetchTimeLineProblem = function (patient_id) {
+            function fetchTimeLineProblem(patient_id) {
 
                 var params = {};
                 var url = '/u/patient/' + patient_id + '/timelineinfo';
 
                 return httpService.get(params, url);
 
-            };
+            }
 
-            this.fetchPatientTodos = function (patient_id) {
+            function fetchPatientTodos(patient_id) {
 
                 var params = {};
                 var url = '/u/patient/' + patient_id + '/patient_todos_info';
 
                 return httpService.get(params, url);
 
-            };
+            }
 
-             this.fetchProblems = function (patient_id) {
+            function fetchProblems(patient_id) {
                 var params = {};
                 var url = '/p/problem/' + patient_id + '/getproblems';
                 return httpService.get(params, url);
-            };
+            }
 
-            this.fetchProblemInfo = function (problem_id) {
+            function fetchProblemInfo(problem_id) {
 
                 var url = "/p/problem/" + problem_id + "/info";
                 var params = {};
 
                 return httpService.get(params, url);
 
-            };
+            }
 
-
-            this.fetchGoalInfo = function (goal_id) {
+            function fetchGoalInfo(goal_id) {
 
                 var url = "/g/goal/" + goal_id + "/info";
                 var params = {};
 
                 return httpService.get(params, url);
-            };
+            }
 
-
-            this.fetchEncounterInfo = function (encounter_id) {
+            function fetchEncounterInfo(encounter_id) {
 
                 var url = "/enc/encounter/" + encounter_id + "/info";
                 var params = {};
@@ -73,10 +123,9 @@
                 return httpService.get(params, url);
 
 
-            };
+            }
 
-
-            this.getEncounterStatus = function (patient_id) {
+            function getEncounterStatus(patient_id) {
 
                 var url = "/enc/patient/" + patient_id + "/encounter/status";
                 var params = {};
@@ -84,9 +133,9 @@
                 return httpService.get(params, url);
 
 
-            };
+            }
 
-            this.startNewEncounter = function (patient_id) {
+            function startNewEncounter(patient_id) {
 
 
                 var url = '/enc/patient/' + patient_id + '/encounter/start';
@@ -95,14 +144,13 @@
                 return httpService.post(form, url);
 
 
-            };
-
+            }
 
             /**
              * @deprecated
              * @param encounter_id
              */
-            this.stopEncounter = function (encounter_id) {
+            function stopEncounter(encounter_id) {
 
                 var url = "/enc/encounter/" + encounter_id + "/stop";
                 var params = {};
@@ -110,19 +158,17 @@
                 return httpService.get(params, url);
 
 
-            };
+            }
 
-
-            this.addEventSummary = function (form) {
+            function addEventSummary(form) {
 
                 var url = '/enc/encounter/add/event_summary';
 
                 return httpService.post(form, url);
 
-            };
+            }
 
-
-            this.fetchPainAvatars = function (patient_id) {
+            function fetchPainAvatars(patient_id) {
 
                 var url = "/patient/" + patient_id + "/pain_avatars";
                 var params = {};
@@ -130,10 +176,9 @@
                 return httpService.get(params, url);
 
 
-            };
+            }
 
-
-            this.listTerms = function (query) {
+            function listTerms(query) {
 
                 var params = {'query': query};
                 var url = "/list_terms/";
@@ -141,81 +186,74 @@
                 return httpService.get(params, url);
 
 
-            };
+            }
 
-
-            this.addGoal = function (form) {
+            function addGoal(form) {
 
                 var url = '/g/patient/' + form.patient_id + '/goals/add/new_goal';
 
                 return httpService.post(form, url);
 
-            };
+            }
 
-
-            this.addToDo = function (form) {
+            function addToDo(form) {
 
                 var url = '/todo/patient/' + form.patient_id + '/todos/add/new_todo';
 
                 return httpService.post(form, url);
 
 
-            };
+            }
 
-
-            this.addProblem = function (form) {
+            function addProblem(form) {
 
                 var url = '/p/patient/' + form.patient_id + '/problems/add/new_problem';
 
                 return httpService.post(form, url);
 
 
-            };
+            }
 
-
-            this.updatePatientSummary = function (form) {
+            function updatePatientSummary(form) {
 
                 var url = '/u/patient/' + form.patient_id + '/profile/update_summary';
 
                 return httpService.post(form, url);
 
-            };
+            }
 
-
-            this.updateTodoStatus = function (form) {
+            function updateTodoStatus(form) {
 
                 var url = '/todo/todo/' + form.id + '/update/';
 
                 return httpService.post(form, url);
 
 
-            };
+            }
 
-
-            this.fetchActiveUser = function () {
+            function fetchActiveUser() {
 
                 var url = '/u/active/user/';
                 var params = {};
 
                 return httpService.get(params, url);
 
-            };
+            }
 
-
-            this.updatePatientPassword = function (form) {
+            function updatePatientPassword(form) {
 
                 var url = '/u/patient/' + form.patient_id + '/profile/update_password';
 
                 return httpService.post(form, url);
 
-            };
+            }
 
-            this.updateBasicProfile = function (form) {
+            function updateBasicProfile(form) {
                 var url = '/u/patient/' + form.user_id + '/update/basic';
                 return httpService.post(form, url);
-            };
+            }
 
-            this.updateProfile = function (form, files) {
+            function updateProfile(form, files) {
 
 
                 var deferred = $q.defer();
@@ -248,164 +286,174 @@
                     });
 
                 return deferred.promise;
-            };
+            }
 
-            this.updateEmail = function (form) {
+            function updateEmail(form) {
                 var url = '/u/patient/' + form.user_id + '/update/email';
                 return httpService.post(form, url);
-            };
+            }
 
-            this.updateTodoOrder = function (form) {
+            function updateTodoOrder(form) {
                 var url = '/todo/todo/updateOrder/';
                 return httpService.postJson(form, url);
-            };
+            }
 
-            this.updateProblemOrder = function (form) {
+            function updateProblemOrder(form) {
                 var url = '/p/problem/updateOrder/';
                 return httpService.postJson(form, url);
-            };
+            }
 
-            this.updatePatientNote = function (form) {
+            function updatePatientNote(form) {
 
                 var url = '/u/patient/' + form.patient_id + '/profile/update_note';
 
                 return httpService.post(form, url);
 
-            };
+            }
 
-            this.getPatientsList = function () {
+            function getPatientsList() {
                 var form = {};
                 var url = '/u/patients/';
                 return httpService.post(form, url);
-            };
+            }
 
-            this.getSharingPatients = function (patient_id) {
+            function getSharingPatients(patient_id) {
                 var form = {};
                 var url = '/u/sharing_patients/' + patient_id;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.addSharingPatient = function (form) {
+            function addSharingPatient(form) {
                 var url = '/u/patient/add_sharing_patient/' + form.patient_id + '/' + form.sharing_patient_id;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.removeSharingPatient = function (patient_id, sharing_patient_id) {
+            function removeSharingPatient(patient_id, sharing_patient_id) {
                 var form = {};
                 var url = '/u/patient/remove_sharing_patient/' + patient_id + '/' + sharing_patient_id;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.changeSharingMyStory = function (patient_id, sharing_patient_id) {
+            function changeSharingMyStory(patient_id, sharing_patient_id) {
                 var form = {};
                 var url = '/u/patient/change_sharing_my_story/' + patient_id + '/' + sharing_patient_id;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.getUserInfo = function (user_id) {
+            function getUserInfo(user_id) {
 
                 var params = {};
                 var url = '/u/user_info/' + user_id + '/info/';
                 return httpService.get(params, url);
 
-            };
+            }
 
-            this.addCommonProblem = function (form) {
+            function addCommonProblem(form) {
                 var url = '/p/patient/' + form.patient_id + '/problems/add/new_common_problem';
 
                 return httpService.post(form, url);
-            };
+            }
 
-            this.getMyStory = function (patient_id) {
+            function getMyStory(patient_id) {
                 var params = {};
                 var url = '/my_story/' + patient_id + '/get_my_story';
                 return httpService.get(params, url);
-            };
+            }
 
-            this.addMyStoryTab = function (form) {
+            function addMyStoryTab(form) {
                 var url = '/my_story/' + form.patient_id + '/add_tab';
 
                 return httpService.post(form, url);
-            };
+            }
 
-            this.addMyStoryText = function (form) {
+            function addMyStoryText(form) {
                 var url = '/my_story/' + form.patient_id + '/' + form.tab_id + '/add_text';
 
                 return httpService.post(form, url);
-            };
+            }
 
-            this.getDatas = function (patient_id) {
+            function getDatas(patient_id) {
                 var params = {};
                 var url = '/data/' + patient_id + '/get_datas';
                 return httpService.get(params, url);
-            };
+            }
 
-            this.addNewDataType = function (form) {
+            function addNewDataType(form) {
                 var url = '/data/' + form.patient_id + '/add_new_data_type';
 
                 return httpService.post(form, url);
-            };
+            }
 
-            this.updateDataOrder = function (form) {
+            function updateDataOrder(form) {
                 var url = '/data/updateOrder';
                 return httpService.postJson(form, url);
-            };
+            }
 
-            this.trackDataClickEvent = function (form) {
+            function trackDataClickEvent(form) {
                 var url = '/data/track/click';
                 return httpService.post(form, url);
-            };
+            }
 
-            this.deleteMyStoryTab = function (patient_id, tab_id) {
+            function deleteMyStoryTab(patient_id, tab_id) {
                 var form = {};
                 var url = '/my_story/' + patient_id + '/delete_tab/' + tab_id;
 
                 return httpService.post(form, url);
-            };
+            }
 
-            this.saveMyStoryTab = function (form) {
+            function saveMyStoryTab(form) {
                 var url = '/my_story/' + form.patient_id + '/save_tab/' + form.tab_id;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.deleteMyStoryText = function (patient_id, component_id) {
+            function deleteMyStoryText(patient_id, component_id) {
                 var form = {};
                 var url = '/my_story/' + patient_id + '/delete_text_component/' + component_id;
 
                 return httpService.post(form, url);
-            };
+            }
 
-            this.saveMyStoryText = function (form) {
+            function saveMyStoryText(form) {
                 var url = '/my_story/' + form.patient_id + '/save_text_component/' + form.component_id;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.saveMyStoryTextEntry = function (form) {
+            function saveMyStoryTextEntry(form) {
                 var url = '/my_story/' + form.patient_id + '/save_text_component_entry/' + form.component_id;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.trackTabClickEvent = function (form) {
+            function trackTabClickEvent(form) {
                 var url = '/my_story/track/click';
                 return httpService.post(form, url);
-            };
+            }
 
-            this.getMedications = function (patient_id) {
+            function getMedications(patient_id) {
                 var params = {};
                 var url = '/medication/' + patient_id + '/get_medications';
                 return httpService.get(params, url);
-            };
-
+            }
 
             /**
              * Get list of document(s) which have ben pinned to this patient
              * by either clinical staff or patient them self
              * @param patient_id
              */
-            this.getDocuments = function (patient_id) {
+            function getDocuments(patient_id) {
                 var params = {};
                 var url = '/docs/' + patient_id + '/get_pinned_document';
                 return httpService.post(params, url);
+            }
+
+
+            /**
+             * API to get todo by patient
+             * @param patient_id
+             * @param is_accomplished
+             * @returns {HttpPromise}
+             */
+            function getToDo(patient_id, is_accomplished = false) {
+                return httpService.get({accomplished: is_accomplished}, `/u/users/${patient_id}/todos`)
             }
         });
 

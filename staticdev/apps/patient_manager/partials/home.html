@@ -17,7 +17,7 @@
     </div>
 </section>
 
-<!--Todos list position is depend on user role-->
+<!--TODO: August 01 2017:  Todos list position is depend on user role-->
 <section id="clinical-staff-todo">
     <div class='panel panel-default' ng-if="['secretary','nurse'].indexOf(active_user.role) != -1">
 
@@ -39,17 +39,18 @@
                     </form>
                 </div>
             </div>
-
-            <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
-            <hr>
-            <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
-                <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
-                <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
-            </a>
-            <hr>
-            <div class="col-md-12" ng-show='show_accomplished_todos==true'>
-                <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+            <div class="todo-list-wrapper">
+                <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
+                <hr>
+                <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
+                        ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
+                </button>
+                <hr>
+                <div class="col-md-12" ng-show='show_accomplished_todos==true'>
+                    <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+                </div>
             </div>
+
         </div>
     </div>
 </section>
@@ -458,13 +459,12 @@
                 <!--End goal section-->
 
                 <!--Todos list position is depend on user role-->
-                <div class='col-md-12' ng-if="'secretary' != active.user.role || 'nurse' != active.user.role">
+                <div class='col-md-12' ng-if="['secretary','nurse'].indexOf(active.user.role ) ==-1">
                     <div class='panel panel-default'>
 
                         <div class='panel-heading'> Todos</div>
 
                         <div class='panel-body'>
-
                             <div class='row' ng-show='permitted(["add_todo"])'>
                                 <div class='col-md-12'>
                                     <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
@@ -480,15 +480,18 @@
                                 </div>
                             </div>
 
-                            <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
-                            <hr>
-                            <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
-                                <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
-                                <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
-                            </a>
-                            <hr>
-                            <div class="col-md-12" ng-show='show_accomplished_todos==true'>
-                                <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+                            <div class="todo-list-wrapper">
+                                <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
+                                <hr>
+
+                                <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
+                                        ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
+                                </button>
+                                <hr>
+
+                                <div ng-show='show_accomplished_todos'>
+                                    <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+                                </div>
                             </div>
                         </div>
                     </div>

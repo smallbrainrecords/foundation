@@ -44,6 +44,9 @@
         $scope.show_previous_entries = false;
         $scope.graphicFrameIsCollapsed = true;
         $scope.viewMode = 'Year';
+        $scope.sortingLogProblem = [];
+        $scope.sortedProblem = false;
+        $scope.draggedProblem = false;
 
         $scope.add_bfdi_value = add_bfdi_value;
         $scope.add_goal = addGoal;
@@ -86,7 +89,7 @@
         $scope.set_collapse = set_collapse;
         $scope.set_new_problem = setNewProblem;
         $scope.timelineSave = timelineSave;
-        $scope.toggle_accomplished_todos = toggle_accomplished_todos;
+        $scope.toggle_accomplished_todos = toggleAccomplishedTodos;
         $scope.toggle_add_my_story_tab = toggle_add_my_story_tab;
         $scope.toggle_add_my_story_text = toggle_add_my_story_text;
         $scope.toggle_add_new_data_type = toggle_add_new_data_type;
@@ -103,17 +106,13 @@
 
         init();
 
-        //INITIALIZE DATA
         function init() {
-            // patientService.fetchActiveUser().then(function (data) {
-            // Logged in user profile in Django authentication system
-            // $scope.active_user = data['user_profile'];
-            // });
+            // Patient's todo list is already loaded with patient page
+            $scope.pending_todos = _.where($scope.problem_todos, {accomplished: false});
+            $scope.accomplished_todos = _.where($scope.problem_todos, {accomplished: true});
+            $scope.todos_ready = true;
 
-            // DOES THEY REALLY NEED TO TODO THIS ONE
             patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                // $scope.patient = data;
-                // $scope.patient_info = data['info'];
                 $scope.problems = data['problems'];
                 $scope.inactive_problems = data['inactive_problems'];
                 $scope.acutes = data['acutes_list'];
@@ -132,9 +131,6 @@
                 $scope.sharing_patients = data['sharing_patients'];
 
                 var tmpListProblem = $scope.problems;
-                $scope.sortingLogProblem = [];
-                $scope.sortedProblem = false;
-                $scope.draggedProblem = false;
                 $scope.sortableOptionsProblem = {
                     update: function (e, ui) {
                         $scope.sortedProblem = true;
@@ -161,14 +157,7 @@
                             $scope.draggedProblem = false;
                         }, 100);
                     }
-                }
-            });
-
-            patientService.fetchPatientTodos($scope.patient_id).then(function (data) {
-                $scope.pending_todos = data['pending_todos'];
-                $scope.accomplished_todos = data['accomplished_todos'];
-                $scope.problem_todos = data['problem_todos'];
-                $scope.todos_ready = true;
+                };
             });
 
             problemService.fetchLabeledProblemList($scope.patient_id, $scope.user_id).then(function (data) {
@@ -196,10 +185,6 @@
             problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function (data) {
                 $scope.problem_labels = data['labels'];
             });
-
-            // patientService.fetchPainAvatars($scope.patient_id).then(function (data) {
-            //     $scope.pain_avatars = data['pain_avatars'];
-            // });
 
             patientService.getMyStory($scope.patient_id).then(function (data) {
                 if (data['success'] == true) {
@@ -320,9 +305,7 @@
                             }, 100);
                         }
                     };
-                    /*
-                     * open data page
-                     */
+
                     $scope.open_data = function open_data(data) {
                         if (!$scope.draggedData) {
                             var form = {};
@@ -470,7 +453,6 @@
             });
 
             // Load graphics frame only when it is opened
-            // TODO: This should be controlled that only load one time
             $scope.$watch('graphicFrameIsCollapsed', (newVal, oldVal) => {
                 if (!newVal) {
                     patientService.fetchPainAvatars($scope.patient_id).then((data) => {
@@ -493,10 +475,10 @@
                         $scope.timeline_changed = [{changing: new Date().getTime()}];
                     });
                 }
-            })
+            });
         }
 
-        // METHOD DEFINITION
+
         /**
          *
          * @param term
@@ -543,15 +525,12 @@
             });
         }
 
-        function toggle_accomplished_todos() {
-            var flag = $scope.show_accomplished_todos;
-            // TODO: Refactor/Simplify block code later
-            if (flag == true) {
-                flag = false;
-            } else {
-                flag = true;
-            }
-            $scope.show_accomplished_todos = flag;
+        /**
+         * Load accomplished todo
+         */
+        function toggleAccomplishedTodos() {
+            $scope.show_accomplished_todos = !$scope.show_accomplished_todos;
+            // $scope.todos_ready = false;
         }
 
         function addGoal(form) {

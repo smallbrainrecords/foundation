@@ -32,5 +32,8 @@ urlpatterns = patterns('users_app.views',
                        url(r'^todos_physicians/(?P<user_id>\d+)$', 'get_todos_physicians'),
                        url(r'^(?P<user_id>\d+)/profile/last_access_tagged_todo', 'update_last_access_tagged_todo'),
                        url(r'^setting', 'get_general_setting'),
-                       url(r'^update_setting', 'update_general_setting')
+                       url(r'^update_setting', 'update_general_setting'),
+
+                       # URL for API patterns
+                       url(r'^users/(?P<patient_id>\d+)/todos','get_user_todos')
                        )

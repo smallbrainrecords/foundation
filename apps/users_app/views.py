@@ -227,8 +227,12 @@ def manage_patient(request, user_id):
     user_profile_serialized['permissions'] = ROLE_PERMISSIONS[actor_profile.role]
     context['active_user'] = json.dumps(user_profile_serialized)
     context['patient_info'] = json.dumps(UserProfileSerializer(patient_profile).data)
-    context['bleeding_risk'] =json.dumps(Medication.objects.filter(current=True).filter(
+    context['bleeding_risk'] = json.dumps(Medication.objects.filter(current=True).filter(
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=patient_profile).exists())
+
+    todo = ToDo.objects.filter(patient_id=user_id).order_by("order")
+    context['todo'] = json.dumps(TodoSerializer(todo, many=True).data)
+
     context = RequestContext(request, context)
     return render_to_response("manage_patient.html", context)
 
@@ -544,7 +548,6 @@ def staff(request):
     patients = User.objects.filter(id__in=patient_ids).filter(is_active=True)
 
     physicians = [x.physician for x in physicians]
-
 
     content = {'physicians': physicians, 'patients': patients, 'user': user, 'user_profile': user_profile}
 
@@ -883,4 +886,27 @@ def update_general_setting(request):
         GeneralSetting.objects.filter(setting_key=key).update(setting_value=value)
         resp['success'] = True
 
+    return ajax_response(resp)
+
+
+@login_required()
+def get_user_todos(request, patient_id):
+    """
+    API for querying patient todo
+    TODO:
+    * Add pagination
+    * Check for relation data loading/serializing performances
+    :param request:
+    :param patient_id:
+    :return:
+    """
+    resp = {'success': False}
+    is_accomplished = request.GET.get('accomplished') == 'true'
+
+    todo = ToDo.objects.filter(patient_id=patient_id, accomplished=is_accomplished).order_by("order").prefetch_related(
+        'members').select_related(
+        'patient')
+
+    resp['success'] = True
+    resp['data'] = TodoSerializer(todo, many=True).data
     return ajax_response(resp)

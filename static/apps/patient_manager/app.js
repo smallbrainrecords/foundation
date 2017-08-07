@@ -6,7 +6,7 @@
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
-            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB']);
+            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB','angular-spinkit']);
     ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
         $indexedDBProvider.connection('andromedaHealthIndexedDB')
             .upgradeDatabase(1, function (event, db, tx) {
