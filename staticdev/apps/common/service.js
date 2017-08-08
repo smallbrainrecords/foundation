@@ -7,8 +7,22 @@
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
         })
+        .constant('LABELS', [
+            {name: 'green', css_class: 'todo-label-green'},
+            {name: 'yellow', css_class: 'todo-label-yellow'},
+            {name: 'orange', css_class: 'todo-label-orange'},
+            {name: 'red', css_class: 'todo-label-red'},
+            {name: 'purple', css_class: 'todo-label-purple'},
+            {name: 'blue', css_class: 'todo-label-blue'},
+            {name: 'sky', css_class: 'todo-label-sky'},
+        ])
+        .constant('VIEW_MODES', [
+            {label: 'All', value: 0},
+            {label: 'Week', value: 1},
+            {label: 'Month', value: 2},
+            {label: 'Year', value: 3},
+        ])
         .service('sharedService', sharedService);
-
     sharedService.$inject = ['$http', '$cookies', 'Upload', 'hotkeys', '$location', 'httpService'];
 
     function sharedService($http, $cookies, Upload, hotkeys, $location, httpService) {

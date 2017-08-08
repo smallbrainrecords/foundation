@@ -6,7 +6,7 @@
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
-            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB','angular-spinkit']);
+            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB', 'angular-spinkit', 'infinite-scroll']);
     ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
         $indexedDBProvider.connection('andromedaHealthIndexedDB')
             .upgradeDatabase(1, function (event, db, tx) {
@@ -264,10 +264,22 @@
         isRecording: 0,
         isPaused: 1,
         isStopped: 2
-    });
-    ManagerApp.constant('AUDIO_UPLOAD_STATUS', {
+    }).constant('AUDIO_UPLOAD_STATUS', {
         isInitialize: 0,
         isUploading: 1,
         isUploaded: 2
-    });
+    }).constant('LABELS', [
+        {name: 'green', css_class: 'todo-label-green'},
+        {name: 'yellow', css_class: 'todo-label-yellow'},
+        {name: 'orange', css_class: 'todo-label-orange'},
+        {name: 'red', css_class: 'todo-label-red'},
+        {name: 'purple', css_class: 'todo-label-purple'},
+        {name: 'blue', css_class: 'todo-label-blue'},
+        {name: 'sky', css_class: 'todo-label-sky'},
+    ]).constant('VIEW_MODES', [
+        {label: 'All', value: 0},
+        {label: 'Week', value: 1},
+        {label: 'Month', value: 2},
+        {label: 'Year', value: 3},
+    ]);
 })();

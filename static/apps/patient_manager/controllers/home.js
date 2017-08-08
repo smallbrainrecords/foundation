@@ -9,9 +9,6 @@
     function HomeCtrl($scope, patientService, problemService, encounterService, ngDialog, sharedService, dataService,
                       toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
 
-        // $scope.patient_id = $('#patient_id').val(); // Patients are being managed
-        // $scope.user_id = $('#user_id').val(); // Current logged in id
-
         $scope.btnBDFISubmitted = false;
         $scope.collapse = CollapseService;
         $scope.datas = [];
@@ -30,8 +27,6 @@
         $scope.new_text = {};
         $scope.new_text.all_patients = true;
         $scope.new_text.private = true;
-        // $scope.patient = {}; // All patient's data loaded from server side
-        // $scope.patient_info = {}; // Only a chunk of patient's data loaded from server side
         $scope.problem_lists = [];
         $scope.problem_term = '';
         $scope.problem_terms = [];
@@ -47,6 +42,14 @@
         $scope.sortingLogProblem = [];
         $scope.sortedProblem = false;
         $scope.draggedProblem = false;
+
+        $scope.pending_todos = [];
+        $scope.accomplished_todos = [];
+        $scope.todoIsLoading = false;
+        $scope.pendingTodoPage = 1;
+        $scope.accomplishedTodoPage = 1;
+        $scope.accomplishedTodoLoaded = false;
+        $scope.pendingTodoLoaded = false;
 
         $scope.add_bfdi_value = add_bfdi_value;
         $scope.add_goal = addGoal;
@@ -104,13 +107,16 @@
         $scope.addProblemIsSelected = addProblemIsSelected;
         $scope.bdfiValueIsChanged = bdfiValueIsChanged;
 
+        $scope.loadMoreTodo = loadMoreTodo;
+
+
         init();
 
         function init() {
             // Patient's todo list is already loaded with patient page
-            $scope.pending_todos = _.where($scope.problem_todos, {accomplished: false});
-            $scope.accomplished_todos = _.where($scope.problem_todos, {accomplished: true});
-            $scope.todos_ready = true;
+            // $scope.pending_todos = _.where($scope.problem_todos, {accomplished: false});
+            // $scope.accomplished_todos = _.where($scope.problem_todos, {accomplished: true});
+            // $scope.todos_ready = true;
 
             patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
                 $scope.problems = data['problems'];
@@ -478,11 +484,22 @@
             });
         }
 
+        function loadMoreTodo(accomplished) {
+            // Only load more if there is no request in progress OR all data is loaded
+            if (!$scope.todoIsLoading && !$scope.pendingTodoLoaded) {
+                $scope.todoIsLoading = true;
+                patientService.getToDo($scope.patient_id, accomplished, $scope.pendingTodoPage).then((resp) => {
+                    $scope.todoIsLoading = false;
+                    if (resp.success) {
+                        $scope.pendingTodoPage = $scope.pendingTodoPage + 1;
+                        $scope.pending_todos = $scope.pending_todos.concat(resp.data);
+                        $scope.pendingTodoLoaded = resp.data.length === 0;
+                    }
+                });
+            }
+        }
 
-        /**
-         *
-         * @param term
-         */
+
         function problemTermChanged(term) {
             $scope.unset_new_problem();
             if (term.length > 2) {
@@ -531,6 +548,14 @@
         function toggleAccomplishedTodos() {
             $scope.show_accomplished_todos = !$scope.show_accomplished_todos;
             // $scope.todos_ready = false;
+            if (!$scope.accomplishedTodoLoaded) {
+                patientService.getToDo($scope.patient_id, true, $scope.accomplishedTodoPage, true).then((resp) => {
+                    if (resp.success) {
+                        $scope.accomplished_todos = $scope.accomplished_todos.concat(resp.data);
+                        $scope.accomplishedTodoLoaded = true;
+                    }
+                });
+            }
         }
 
         function addGoal(form) {

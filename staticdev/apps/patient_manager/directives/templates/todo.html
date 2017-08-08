@@ -1,24 +1,25 @@
-<div class="todos-container" ng-show='problem_todos.length'>
+<!--{{list}}-->
+<div class="todos-container" ng-show='todoList.length'>
     <!-- begin sortable -->
-    <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
-        <li ng-repeat="item in problem_todos track by $index"
-            class="list-group-item todo patient-todo" ng-click="open_todo(item)"
-            ng-show="item.accomplished==accomplished && checkSharedProblem(item.problem, sharing_patients)">
+    <ul ui-sortable="sortableOptions" ng-model="todoList" class="no-padding">
+        <li ng-repeat="item in todoList track by $index" class="list-group-item todo patient-todo"
+            ng-click="open_todo(item)" ng-show="checkSharedProblem(item.problem, sharing_patients)">
 
             <!-- begin show item -->
             <div ng-show='!item.changed'>
-
                 <input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)' title="">
-                {{item.todo}}
-                <span ng-if="item.due_date"> due by <span
-                        ng-class="isDueDate(item.due_date)">{{item.due_date}}</span></span>
-                <span ng-if="item.problem && show_problem"> for problem <a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a>
-					</span>
+                <span ng-bind="item.todo"></span>
+                <span ng-if="item.due_date"> due by
+                    <span ng-class="isDueDate(item.due_date)" ng-bind="item.due_date"></span>
+                </span>
+                <span ng-if="item.problem && showProblem">
+                    for problem <a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a>
+                </span>
                 <!-- begin label -->
                 <span class="quick-card-editor-label">
-						<a ng-repeat="label in item.labels" href class="todo-label" ng-class="label.css_class"
-                           ng-if="label.author.id==user_id || label.is_all"></a>
-					</span>
+                    <a ng-repeat="label in item.labels" href class="todo-label" ng-class="label.css_class"
+                       ng-if="label.author.id==user_id || label.is_all"></a>
+                </span>
                 <!-- end label -->
                 <p>
                     <span ng-if="item.comments.length > 0"><i
@@ -30,14 +31,14 @@
                 </p>
 
                 <p>
-                    <span ng-repeat="member in item.members" class="todo-member"
-                          title="Remove this member"
+                    <span ng-repeat="member in item.members" class="todo-member" title="Remove this member"
                           ng-click="removeMember(item,member,$index);$event.stopPropagation();">{{member.username}}</span>
                 </p>
 
                 <a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>
             </div>
             <!-- end show item -->
+
             <!-- begin change item -->
             <div class="quick-card-editor" id="main-menu" ng-show='item.changed'>
 
@@ -47,7 +48,7 @@
                         <a ng-repeat="label in item.labels" href class="todo-label" ng-class="label.css_class"
                            ng-if="label.author.id==user_id || label.is_all"></a>
                     </div>
-                    <input type="text" ng-model="item.todo">
+                    <input type="text" ng-model="item.todo" title="">
                     <button class="btn btn-default" ng-click="saveTodoText(item)">Save</button>
                 </div>
                 <!-- end show label and text in edit mode -->
@@ -86,7 +87,7 @@
                                     <a href ng-click="editLabel(label); $event.stopPropagation();"><i
                                             class="fa fa-close"></i></a>
                                 </div>
-                                <input type="text" ng-model="label.name">
+                                <input type="text" ng-model="label.name" title="">
                                 <a ng-repeat="component in labels_component" href class="todo-label"
                                    ng-class="component.css_class" ng-click="selectEditLabelComponent(label, component)">
                                     <i class="fa fa-check" ng-if="component.css_class==label.css_class"></i>
@@ -104,7 +105,7 @@
                         <div class="quick-card-editor-lv2-header">
                             <a href ng-click="createLabel(item); $event.stopPropagation();"><i class="fa fa-close"></i></a>
                         </div>
-                        <input type="text" ng-model="label_component.name">
+                        <input type="text" ng-model="label_component.name" title="">
                         <a ng-repeat="component in labels_component" href class="todo-label"
                            ng-class="component.css_class" ng-click="selectLabelComponent(component)">
                             <i class="fa fa-check" ng-if="component.css_class==label_component.css_class"></i>
@@ -122,7 +123,7 @@
                         </div>
                         <p>
                             <input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)"
-                                   ng-model-options="{ updateOn: 'default blur', debounce: { default: 30000, blur: 1000 } }">
+                                   ng-model-options="{ updateOn: 'default blur', debounce: { default: 30000, blur: 1000 } }" title="">
                         </p>
                         <div ng-model="item.due_date" ng-change="saveTodoDueDate(item)" pickadate
                              format="MM/dd/yyyy"></div>
@@ -148,13 +149,14 @@
 </div>
 
 <div class="overlay" ng-show="todo_changed" ng-click="clickOutSide()"></div>
-<!-- begin delete label modal -->
+
 <div class="modal fade" id="deleteLabelModal">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                        aria-hidden="true">&times;</span></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
                 <h4>Are you sure?</h4>
             </div>
             <div class="modal-body">
@@ -165,7 +167,6 @@
                     </div>
                 </div>
             </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-<!-- end delete label modal -->
+        </div>
+    </div>
+</div>

@@ -230,8 +230,8 @@ def manage_patient(request, user_id):
     context['bleeding_risk'] = json.dumps(Medication.objects.filter(current=True).filter(
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=patient_profile).exists())
 
-    todo = ToDo.objects.filter(patient_id=user_id).order_by("order")
-    context['todo'] = json.dumps(TodoSerializer(todo, many=True).data)
+    # todo = ToDo.objects.filter(patient_id=user_id, accomplished=False).order_by("order")[0:5]
+    # context['todo'] = json.dumps(TodoSerializer(todo, many=True).data)
 
     context = RequestContext(request, context)
     return render_to_response("manage_patient.html", context)
@@ -890,22 +890,24 @@ def update_general_setting(request):
 
 
 @login_required()
-def get_user_todos(request, patient_id):
+def get_user_todo(request, patient_id):
     """
     API for querying patient todo
-    TODO:
-    * Add pagination
-    * Check for relation data loading/serializing performances
     :param request:
     :param patient_id:
     :return:
     """
     resp = {'success': False}
     is_accomplished = request.GET.get('accomplished') == 'true'
+    page = int(request.GET.get('page', 1))
+    load_all = request.GET.get('all', 'false') == 'true'
+    per_page = 5  # Default
 
-    todo = ToDo.objects.filter(patient_id=patient_id, accomplished=is_accomplished).order_by("order").prefetch_related(
-        'members').select_related(
-        'patient')
+    # Filter todo type and pagination
+    todo = ToDo.objects.filter(patient_id=patient_id, accomplished=is_accomplished).order_by("order")
+    # If request load all todo at once
+    if not load_all:
+        todo = todo[per_page * (page - 1):per_page * page]
 
     resp['success'] = True
     resp['data'] = TodoSerializer(todo, many=True).data

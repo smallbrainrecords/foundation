@@ -450,10 +450,16 @@
              * API to get todo by patient
              * @param patient_id
              * @param is_accomplished
+             * @param page
+             * @param loadAll
              * @returns {HttpPromise}
              */
-            function getToDo(patient_id, is_accomplished = false) {
-                return httpService.get({accomplished: is_accomplished}, `/u/users/${patient_id}/todos`)
+            function getToDo(patient_id, is_accomplished = false, page = 1, loadAll = false) {
+                return httpService.get({
+                    accomplished: is_accomplished,
+                    page: page,
+                    all: loadAll
+                }, `/u/users/${patient_id}/todos`)
             }
         });
 

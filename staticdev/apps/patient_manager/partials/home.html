@@ -40,17 +40,27 @@
                 </div>
             </div>
             <div class="todo-list-wrapper">
-                <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
+                <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
+                    <todo todo-list="pending_todos" accomplished="false" show-problem="true"
+                          labels="labels" members="members"
+                          patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
+                    <wave-spinner ng-if="todoIsLoading"></wave-spinner>
+                </div>
                 <hr>
+
                 <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
                         ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
                 </button>
                 <hr>
-                <div class="col-md-12" ng-show='show_accomplished_todos==true'>
-                    <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+
+                <div ng-show='show_accomplished_todos'>
+                    <todo todo-list="accomplished_todos" accomplished="true" show-problem="true"
+                          labels="labels" members="members"
+                          patient-id="patient_id" user-id="patient_id"
+                          active-user="active_user"></todo>
+                    <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
                 </div>
             </div>
-
         </div>
     </div>
 </section>
@@ -461,9 +471,7 @@
                 <!--Todos list position is depend on user role-->
                 <div class='col-md-12' ng-if="['secretary','nurse'].indexOf(active.user.role ) ==-1">
                     <div class='panel panel-default'>
-
                         <div class='panel-heading'> Todos</div>
-
                         <div class='panel-body'>
                             <div class='row' ng-show='permitted(["add_todo"])'>
                                 <div class='col-md-12'>
@@ -481,7 +489,12 @@
                             </div>
 
                             <div class="todo-list-wrapper">
-                                <todo ng-model="problem_todos" accomplished="false" show-problem="true"></todo>
+                                <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
+                                    <todo todo-list="pending_todos" accomplished="false" show-problem="true"
+                                          labels="labels" members="members"
+                                          patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
+                                    <wave-spinner ng-if="todoIsLoading"></wave-spinner>
+                                </div>
                                 <hr>
 
                                 <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
@@ -490,7 +503,12 @@
                                 <hr>
 
                                 <div ng-show='show_accomplished_todos'>
-                                    <todo ng-model="problem_todos" accomplished="true" show-problem="true"></todo>
+                                    <todo todo-list="accomplished_todos" accomplished="true" show-problem="true"
+                                          labels="labels" members="members"
+                                          patient-id="patient_id" user-id="patient_id"
+                                          active-user="active_user"></todo>
+                                    <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
+
                                 </div>
                             </div>
                         </div>
