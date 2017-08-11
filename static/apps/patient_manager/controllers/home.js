@@ -100,7 +100,7 @@
         $scope.unset_new_problem = unset_new_problem;
         $scope.update_patient_note = update_patient_note;
         $scope.update_problem_list_note = update_problem_list_note;
-        $scope.update_todo_status = update_todo_status;
+        $scope.updateStatusCallback = changeTodoList;
         $scope.updateProfilePicture = updateProfilePicture;
         $scope.updateSummary = updateSummary;
         $scope.view_my_story_tab = view_my_story_tab;
@@ -551,7 +551,8 @@
             if (!$scope.accomplishedTodoLoaded) {
                 patientService.getToDo($scope.patient_id, true, $scope.accomplishedTodoPage, true).then((resp) => {
                     if (resp.success) {
-                        $scope.accomplished_todos = $scope.accomplished_todos.concat(resp.data);
+                        // if loading from remote then replace it cuz it fresh & trusted data source
+                        $scope.accomplished_todos = resp.data;
                         $scope.accomplishedTodoLoaded = true;
                     }
                 });
@@ -612,9 +613,9 @@
                 if (response.success) {
                     toaster.pop('success', 'Done', 'Added Todo!');
 
-                    var addedTodo = response.todo;
+                    let addedTodo = response.todo;
                     $scope.pending_todos.push(addedTodo);
-                    $scope.problem_todos.push(addedTodo);
+                    // $scope.problem_todos.push(addedTodo);
                     $scope.new_todo = {};
 
                     // Showing tag member dialog
@@ -623,7 +624,7 @@
                         showClose: false,
                         scope: $scope,
                         controller: function () {
-                            var vm = this;
+                            let vm = this;
                             vm.taggedMembers = [];
 
                             vm.memberSearch = "";
@@ -760,16 +761,22 @@
             });
         }
 
-        function update_todo_status(todo) {
-            patientService.updateTodoStatus(todo).then(function (data) {
-                if (data['success'] == true) {
-                    $scope.pending_todos = data['pending_todos'];
-                    $scope.accomplished_todos = data['accomplished_todos'];
-                    toaster.pop('success', "Done", "Updated Todo status !");
-                } else {
-                    alert("Something went wrong!");
-                }
-            });
+        /**
+         * Callback after todo have success change it status from accomplished <-> pending
+         * @param list
+         * @param todo
+         */
+        function changeTodoList(list, todo) {
+            let todoIdx = list.indexOf(todo);
+            if (todo.accomplished) {
+                $scope.pending_todos.splice(todoIdx, 1);
+                $scope.accomplished_todos.push(todo);
+            } else {
+                // let todoIdx = $scope.accomplished_todos.indexOf(todo);
+                $scope.accomplished_todos.splice(todoIdx, 1);
+                $scope.pending_todos.push(todo);
+            }
+
         }
 
         function open_problem(problem) {
@@ -817,7 +824,7 @@
         }
 
         function set_collapse(list) {
-            if (list.rename == false)
+            if (list.rename === false)
                 list.collapse = !list.collapse;
         }
 

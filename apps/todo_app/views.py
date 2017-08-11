@@ -68,7 +68,11 @@ def add_patient_todo(request, patient_id):
 @login_required
 @api_view(["POST"])
 def update_todo_status(request, todo_id):
+    resp = {'success': False}
+
     accomplished = request.POST.get('accomplished') == 'true'
+    physician = request.user
+    # patient = todo.patient
 
     todo = ToDo.objects.get(id=todo_id)
     todo.accomplished = accomplished
@@ -76,37 +80,34 @@ def update_todo_status(request, todo_id):
     # set problem authentication
     set_problem_authentication_false(request, todo)
 
-    physician = request.user
-    patient = todo.patient
-
     problem_name = todo.problem.problem_name if todo.problem else ""
     accomplished_label = 'accomplished' if accomplished else "not accomplished"
 
     summary = """
-    Updated status of <u>todo</u> : <a href="#/todo/%s"><b>%s</b></a> ,
-    <u>problem</u> <b>%s</b> to <b>%s</b>
-    """ % (todo.id, todo.todo, problem_name, accomplished_label)
+    Updated status of <u>todo</u> : <a href="#/todo/{}"><b>{}</b></a> ,
+    <u>problem</u> <b>{}</b> to <b>{}</b>
+    """.format(todo.id, todo.todo, problem_name, accomplished_label)
 
-    op_add_todo_event(physician, patient, summary, todo)
+    op_add_todo_event(physician, todo.patient, summary, todo)
 
     actor_profile = UserProfile.objects.get(user=request.user)
     if todo.problem:
         add_problem_activity(todo.problem, actor_profile, summary, 'output')
         if accomplished:
-            op_add_event(physician, patient, summary, todo.problem, True)
+            op_add_event(physician, todo.patient, summary, todo.problem, True)
 
     # todo activity
-    activity = "Updated status of this todo to <b>%s</b>." % (accomplished_label)
+    activity = "Updated status of this todo to <b>{}</b>.".format(accomplished_label)
     add_todo_activity(todo, actor_profile, activity)
 
-    todos = ToDo.objects.filter(patient=patient)
-    accomplished_todos = [todo for todo in todos if todo.accomplished]
-    pending_todos = [todo for todo in todos if not todo.accomplished]
+    # todos = ToDo.objects.filter(patient=patient)
+    # accomplished_todos = [todo for todo in todos if todo.accomplished]
+    # pending_todos = [todo for todo in todos if not todo.accomplished]
 
-    resp = {}
     resp['success'] = True
-    resp['accomplished_todos'] = TodoSerializer(accomplished_todos, many=True).data
-    resp['pending_todos'] = TodoSerializer(pending_todos, many=True).data
+    resp['todo'] = TodoSerializer(todo).data
+    # resp['accomplished_todos'] = TodoSerializer(accomplished_todos, many=True).data
+    # resp['pending_todos'] = TodoSerializer(pending_todos, many=True).data
     return ajax_response(resp)
 
 

@@ -30,36 +30,20 @@
                 userId: "=",
                 activeUser: "=",
                 labels: "=",
-                members: "="
+                members: "=",
+                onStatusChangedSuccess: "=onStatusChangedSuccess"
             },
             link: link
         };
 
         function link(scope, element, attr, model) {
-            // Missing these scope parameters
-            // console.log(scope.patientId);
-            // console.log(scope.userId);
-            // console.log(scope.activeUser);
-            // scope.$watch('todos_ready', function (newVal, oldVal) {
-            //     if (newVal) {
-
             scope.allowDueDateNotification = true;
-
-            // if (scope.todos_ready) {
             var currentTodo;
-            // scope.accomplished = scope.$eval(attr.accomplished);
-            // scope.show_problem = scope.$eval(attr.showProblem);
             scope.current_todo = null;
-
-            // scope.todoList = scope.todoList;
-            // debugger;
             var tmpList = scope.todoList;
-
             scope.sortingLog = [];
             scope.sorted = false;
             scope.dragged = false;
-
-            // label
             scope.labels_component = LABELS;
             scope.label_component = {};
 
@@ -133,7 +117,7 @@
                 // Because default ui checkbox behaviour the todo's accomplished status will be updated before confirm popup display
                 // so we have to used todo's accomplished value changed already in frontend at this point
                 if (todo.accomplished && _.contains(sharedService.settings.todo_popup_confirm, scope.activeUser.role)) {
-                    var confirmationPopup = ngDialog.open({
+                    let confirmationPopup = ngDialog.open({
                         template: 'todoPopupConfirmDialog',
                         showClose: false,
                         closeByEscape: false,
@@ -158,6 +142,7 @@
                         .then(function (data) {
                             if (data['success']) {
                                 toaster.pop('success', "Done", "Updated Todo status !");
+                                scope.onStatusChangedSuccess(scope.todoList, todo);
                                 scope.set_authentication_false();
                             } else {
                                 toaster.pop('error', 'Warning', 'Something went wrong!');

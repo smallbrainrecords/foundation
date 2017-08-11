@@ -1,13 +1,13 @@
-<!--{{list}}-->
 <div class="todos-container" ng-show='todoList.length'>
     <!-- begin sortable -->
     <ul ui-sortable="sortableOptions" ng-model="todoList" class="no-padding">
+        <!--ng-click="open_todo(item)" -->
         <li ng-repeat="item in todoList track by $index" class="list-group-item todo patient-todo"
-            ng-click="open_todo(item)" ng-show="checkSharedProblem(item.problem, sharing_patients)">
-
+            ng-show="checkSharedProblem(item.problem, sharing_patients)">
             <!-- begin show item -->
             <div ng-show='!item.changed'>
-                <input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)' title="">
+                <input type='checkbox' ng-model='item.accomplished' ng-change='update_todo_status(item)'
+                       title="Accomplished">
                 <span ng-bind="item.todo"></span>
                 <span ng-if="item.due_date"> due by
                     <span ng-class="isDueDate(item.due_date)" ng-bind="item.due_date"></span>
@@ -123,7 +123,8 @@
                         </div>
                         <p>
                             <input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)"
-                                   ng-model-options="{ updateOn: 'default blur', debounce: { default: 30000, blur: 1000 } }" title="">
+                                   ng-model-options="{ updateOn: 'default blur', debounce: { default: 30000, blur: 1000 } }"
+                                   title="">
                         </p>
                         <div ng-model="item.due_date" ng-change="saveTodoDueDate(item)" pickadate
                              format="MM/dd/yyyy"></div>
