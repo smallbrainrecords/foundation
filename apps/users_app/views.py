@@ -905,7 +905,6 @@ def get_user_todo(request, patient_id):
 
     # Filter todo type and pagination
     todo = ToDo.objects.filter(patient_id=patient_id, accomplished=is_accomplished).order_by("order")
-    # If request load all todo at once
     if not load_all:
         todo = todo[per_page * (page - 1):per_page * page]
 

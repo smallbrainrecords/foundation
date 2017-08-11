@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
-from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel, LabeledProblemList
+from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel, LabeledProblemList, ToDo
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem, ObservationComponent, \
     ObservationValue
+from todo_app.serializers import LabelSerializer, CommentToDoSerializer, AttachmentToDoSerializer
 from users_app.serializers import UserProfileSerializer, SafeUserSerializer
 
 
@@ -210,3 +211,29 @@ class ProblemInfoSerializer(serializers.ModelSerializer):
 
             colon_cancer_holder.append(colon_cancer_dict)
         return colon_cancer_holder
+
+
+class ProblemTodoSerializer(serializers.ModelSerializer):
+    labels = LabelSerializer(many=True)
+    comments = CommentToDoSerializer(many=True)
+    attachments = AttachmentToDoSerializer(many=True)
+    patient = SafeUserSerializer()
+    members = SafeUserSerializer(many=True)
+    due_date = serializers.DateField(format='%m/%d/%Y')
+
+    class Meta:
+        model = ToDo
+
+        fields = (
+            'id',
+            'patient',
+            'user',
+            'todo',
+            'accomplished',
+            'due_date',
+            'labels',
+            'comments',
+            'attachments',
+            'members',
+            'document_set',
+        )

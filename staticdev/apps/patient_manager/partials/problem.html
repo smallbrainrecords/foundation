@@ -254,27 +254,32 @@
                                 </div>
                             </form>
                             <hr>
-                            <ul class='list-group'>
-                                <li ng-show='!problem_todos.length'> No Todos</li>
-                            </ul>
-                            <todo ng-model="problem_todos" accomplished="false" show-problem="false"></todo>
+                            <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
+                                <todo todo-list="pending_todos" accomplished="false" show-problem="false"
+                                      on-status-changed-success="updateStatusCallback"
+                                      labels="labels" members="members"
+                                      patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
+                                <wave-spinner ng-if="todoIsLoading"></wave-spinner>
+                            </div>
                             <hr>
-                            <a class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'>
-                                <span ng-if='show_accomplished_todos==false'>Show accomplished Todos </span>
-                                <span ng-if='show_accomplished_todos==true'>Hide accomplished Todos </span>
-                            </a>
+                            <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
+                                    ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
+                            </button>
                             <hr>
-                            <div ng-if='show_accomplished_todos==true'>
-                                <ul class='list-group'>
-                                    <li ng-show='!problem_todos.length'> No Todos</li>
-                                </ul>
-                                <todo ng-model="problem_todos" accomplished="true" show-problem="false"></todo>
+                            <div ng-show='show_accomplished_todos'>
+                                <todo todo-list="accomplished_todos" accomplished="true" show-problem="false"
+                                      on-status-changed-success="updateStatusCallback"
+                                      labels="labels" members="members"
+                                      patient-id="patient_id" user-id="patient_id"
+                                      active-user="active_user"></todo>
+                                <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
         <div class="col-md-6">
             <div class='panel panel-default'>
                 <div class='panel-heading'>Notes</div>

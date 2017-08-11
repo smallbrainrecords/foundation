@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
-                                              dataService, medicationService, CollapseService, Upload, $timeout) {
+                                              dataService, medicationService, CollapseService, Upload, $timeout, LABELS) {
 
             $scope.activities = [];
             $scope.availableWidgets = [];
@@ -35,26 +35,25 @@
             $scope.show_physician_notes = false;
             $scope.viewMode = 'Year';
             $scope.wiki_note_form = {};
-            // TODO: Common usage . Moving to other
-            $scope.problem_labels_component = [
-                {name: 'green', css_class: 'todo-label-green'},
-                {name: 'yellow', css_class: 'todo-label-yellow'},
-                {name: 'orange', css_class: 'todo-label-orange'},
-                {name: 'red', css_class: 'todo-label-red'},
-                {name: 'purple', css_class: 'todo-label-purple'},
-                {name: 'blue', css_class: 'todo-label-blue'},
-                {name: 'sky', css_class: 'todo-label-sky'}
-            ];
+            $scope.problem_labels_component = LABELS;
             $scope.edit_problem = false;
             $scope.show_inactive_medications = false;
             $scope.showMedicationSearch = false;
+
+            $scope.pending_todos = [];
+            $scope.accomplished_todos = [];
+            $scope.todoIsLoading = false;
+            $scope.pendingTodoPage = 1;
+            $scope.accomplishedTodoPage = 1;
+            $scope.accomplishedTodoLoaded = false;
+            $scope.pendingTodoLoaded = false;
 
             // Init hot key binding
             $scope.add_goal = add_goal;
             $scope.add_history_note = add_history_note;
             $scope.add_new_list_label = add_new_list_label;
             $scope.add_problem_list = add_problem_list;
-            $scope.add_todo = add_todo;
+            $scope.add_todo = addTodo;
             $scope.add_wiki_note = add_wiki_note;
             $scope.change_effected_problem = change_effected_problem;
             $scope.change_effecting_problem = change_effecting_problem;
@@ -103,6 +102,25 @@
             $scope.unset_new_problem = unset_new_problem;
             $scope.update_start_date = update_start_date;
             $scope.addMedication = addMedication;
+            $scope.updateStatusCallback = changeTodoList;
+            $scope.loadMoreTodo = loadMoreTodo;
+
+            function loadMoreTodo() {
+                // Only load more if there is no request in progress OR all data is loaded
+                if (!$scope.todoIsLoading && !$scope.pendingTodoLoaded) {
+                    $scope.todoIsLoading = true;
+                    problemService.getRelatedTodos($scope.problem_id, false, $scope.pendingTodoPage)
+                        .then((resp) => {
+                            debugger;
+                            $scope.todoIsLoading = false;
+                            if (resp.success) {
+                                $scope.pendingTodoPage = $scope.pendingTodoPage + 1;
+                                $scope.pending_todos = $scope.pending_todos.concat(resp.data);
+                                $scope.pendingTodoLoaded = resp.data.length === 0;
+                            }
+                        });
+                }
+            }
 
             init();
 
@@ -168,13 +186,13 @@
                 problemService.trackProblemClickEvent($scope.problem_id);
 
                 // SECONDARY LOADING
-                // Todo
-                problemService.getRelatedTodos($scope.problem_id).then(function (response) {
-                    $scope.problem_todos = response.data.todos;
-                    // $scope.problem_todos.push(response.data.todos);
-                    $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
-                    $scope.todos_ready = true;
-                });
+                // TODO
+                // problemService.getRelatedTodos($scope.problem_id).then(function (response) {
+                //     $scope.problem_todos = response.data.todos;
+                //     // $scope.problem_todos.push(response.data.todos);
+                //     $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
+                //     $scope.todos_ready = true;
+                // });
 
                 // Wiki note
                 problemService.getRelatedWikis($scope.problem_id).then(function (response) {
@@ -361,12 +379,31 @@
                 });
 
                 $scope.$on('inrWidgetOrderAdded', function (event, args) {
-                    $scope.problem_todos.push(args.order)
+                    // $scope.problem_todos.push(args.order)
+                    $scope.pending_todos.push(args.order)
                 });
 
                 $interval(function () {
                     $scope.refresh_problem_activity();
                 }, 10000);
+
+            }
+
+            /**
+             * Callback after todo have success change it status from accomplished <-> pending
+             * @param list
+             * @param todo
+             */
+            function changeTodoList(list, todo) {
+                let todoIdx = list.indexOf(todo);
+                if (todo.accomplished) {
+                    $scope.pending_todos.splice(todoIdx, 1);
+                    $scope.accomplished_todos.push(todo);
+                } else {
+                    // let todoIdx = $scope.accomplished_todos.indexOf(todo);
+                    $scope.accomplished_todos.splice(todoIdx, 1);
+                    $scope.pending_todos.push(todo);
+                }
 
             }
 
@@ -851,12 +888,13 @@
 
                         // Push newly added todo to active todo list
                         if (data.hasOwnProperty('todo')) {
-                            let wikiNoteTodo = $interval(() => {
-                                if ($scope.todos_ready) {
-                                    $scope.problem_todos.push(data.todo);
-                                    $interval.cancel(wikiNoteTodo);
-                                }
-                            }, 500)
+                            // let wikiNoteTodo = $interval(() => {
+                                // if ($scope.todos_ready) {
+                                    // $scope.problem_todos.push(data.todo);
+                                    $scope.pending_todos.push(data.todo);
+                                    // $interval.cancel(wikiNoteTodo);
+                                // }
+                            // }, 500)
                         }
                     } else {
                         toaster.pop('error', 'Warning', 'Action Failed');
@@ -882,12 +920,13 @@
                         $scope.set_authentication_false();
 
                         if (data.hasOwnProperty('todo')) {
-                            let wikiNoteTodo = $interval(() => {
-                                if ($scope.todos_ready) {
-                                    $scope.problem_todos.push(data.todo);
-                                    $interval.cancel(wikiNoteTodo);
-                                }
-                            }, 500)
+                            // let wikiNoteTodo = $interval(() => {
+                            //     if ($scope.todos_ready) {
+                            //         $scope.problem_todos.push(data.todo);
+                                    $scope.pending_todos.push(data.todo);
+                                    // $interval.cancel(wikiNoteTodo);
+                                // }
+                            // }, 500)
                         }
 
                     } else {
@@ -924,7 +963,7 @@
                 });
             }
 
-            function add_todo(form) {
+            function addTodo(form) {
                 if (_.isUndefined(form) || form.name.trim().length < 1) {
                     return false;
                 }
@@ -934,7 +973,7 @@
                 if ($scope.bleeding_risk) {
                     ngDialog.open({
                         template: 'bleedingRiskDialog',
-                        showClose: false,
+                        showClose: false
                     }).closePromise.then(askDueDate);
                 } else {
                     askDueDate();
@@ -973,7 +1012,7 @@
 
                         var addedTodo = response.todo;
                         form.name = '';
-                        $scope.problem_todos.push(addedTodo);
+                        $scope.pending_todos.push(addedTodo);
                         $scope.set_authentication_false();
 
                         // Showing tag member dialog
@@ -1189,15 +1228,28 @@
 
             function toggle_accomplished_todos() {
 
-                var flag = $scope.show_accomplished_todos;
+                // var flag = $scope.show_accomplished_todos;
+                //
+                // if (flag == true) {
+                //     flag = false;
+                // } else {
+                //     flag = true;
+                // }
+                //
+                // $scope.show_accomplished_todos = flag;
+                // $scope.todos_ready = false;
 
-                if (flag == true) {
-                    flag = false;
-                } else {
-                    flag = true;
+                $scope.show_accomplished_todos = !$scope.show_accomplished_todos;
+                if (!$scope.accomplishedTodoLoaded) {
+                    problemService.getRelatedTodos($scope.problem_id, true, $scope.accomplishedTodoPage, true)
+                        .then((resp) => {
+                            if (resp.success) {
+                                // if loading from remote then replace it cuz it fresh & trusted data source
+                                $scope.accomplished_todos = resp.data;
+                                $scope.accomplishedTodoLoaded = true;
+                            }
+                        });
                 }
-
-                $scope.show_accomplished_todos = flag;
             }
 
             function toggle_accomplished_goals() {

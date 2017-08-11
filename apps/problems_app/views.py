@@ -39,7 +39,7 @@ from todo_app.operations import add_todo_activity
 from todo_app.serializers import TodoSerializer
 from users_app.serializers import UserProfileSerializer
 from .serializers import ProblemNoteSerializer, ProblemActivitySerializer, CommonProblemSerializer, \
-    PatientImageSerializer
+    PatientImageSerializer, ProblemTodoSerializer
 from .serializers import ProblemSerializer, ProblemLabelSerializer, \
     LabeledProblemListSerializer, ProblemInfoSerializer
 
@@ -1158,20 +1158,24 @@ def get_related_documents(request, problem_id):
 @login_required
 def get_problem_todos(request, problem_id):
     """
-    Loading all problem's todos, which todos generated from problem page and todos from pinned medications
+    Loading all todo which have been pinned to the problem and
+    todos which have medication pinned to this problem also
     :param request:
     :param problem_id:
     :return:
     """
     resp = {'success': False}
-    medication_todo_set = []
+    is_accomplished = request.GET.get('accomplished') == 'true'
+    page = int(request.GET.get('page', 1))
+    load_all = request.GET.get('all', 'false') == 'true'
+    per_page = 5
 
-    problem_info = get_object_or_404(Problem, pk=problem_id)
+    todo = ToDo.objects.filter(accomplished=is_accomplished).filter(
+        Q(problem_id=problem_id) | Q(medication__medication_pin_medications__problem_id=problem_id))
+    if not load_all:
+        todo = todo[per_page * (page - 1):per_page * page]
 
-    for medication in problem_info.medications.all():
-        medication_todo_set += medication.todo_set.all()
-
-    resp['todos'] = TodoSerializer(medication_todo_set + list(problem_info.todo_set.all()), many=True).data
+    resp['data'] = ProblemTodoSerializer(todo, many=True).data
     resp['success'] = True
     return ajax_response(resp)
 
