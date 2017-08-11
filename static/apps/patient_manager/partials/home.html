@@ -42,6 +42,7 @@
             <div class="todo-list-wrapper">
                 <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
                     <todo todo-list="pending_todos" accomplished="false" show-problem="true"
+                          on-status-changed-success="updateStatusCallback"
                           labels="labels" members="members"
                           patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
                     <wave-spinner ng-if="todoIsLoading"></wave-spinner>
