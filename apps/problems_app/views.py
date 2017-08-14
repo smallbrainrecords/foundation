@@ -98,12 +98,17 @@ def get_problem_info(request, problem_id):
 
 @login_required
 def get_a1c(request, problem_id):
-    problem = get_object_or_404(Problem, pk=problem_id)
+    """
+    A1C load todo is not accomplished only
+    :param request:
+    :param problem_id:
+    :return:
+    """
     resp = {'success': False}
-    if hasattr(problem, 'problem_aonecs'):
-        a1c = problem.problem_aonecs
-        serialized_a1c = AOneCSerializer(a1c).data
-        resp = {'success': True, 'a1c': serialized_a1c}
+    a1c = AOneC.objects.filter(problem__id=problem_id).get()#.a1c_todos.filter(accomplished=False)#.select_related('a1c_todos').get()
+    a1c.a1c_todos = a1c.a1c_todos.filter(accomplished=False)
+    resp['success'] = True
+    resp['a1c'] = AOneCSerializer(a1c).data
     return ajax_response(resp)
 
 

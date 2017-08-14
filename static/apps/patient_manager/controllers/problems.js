@@ -104,6 +104,28 @@
             $scope.addMedication = addMedication;
             $scope.updateStatusCallback = changeTodoList;
             $scope.loadMoreTodo = loadMoreTodo;
+            $scope.A1COrderAdded = A1COrderAdded;
+            $scope.A1COrderStatusChanged = A1COrderStatusChanged;
+
+            function A1COrderStatusChanged(todo) {
+                $scope.accomplished_todos.push(todo);
+
+                // Problem page overall pending todo list
+                var idx = -1;
+                _.each($scope.pending_todos, (element, index, list) => {
+                    if (element.id === todo.id) {
+                        idx = index;
+                    }
+                });
+                debugger;
+                if (idx !== -1) {
+                    $scope.pending_todos.splice(idx, 1);
+                }
+            }
+
+            function A1COrderAdded(todo) {
+                $scope.pending_todos.push(todo);
+            }
 
             function loadMoreTodo() {
                 // Only load more if there is no request in progress OR all data is loaded
@@ -111,7 +133,6 @@
                     $scope.todoIsLoading = true;
                     problemService.getRelatedTodos($scope.problem_id, false, $scope.pendingTodoPage)
                         .then((resp) => {
-                            debugger;
                             $scope.todoIsLoading = false;
                             if (resp.success) {
                                 $scope.pendingTodoPage = $scope.pendingTodoPage + 1;
@@ -399,10 +420,29 @@
                 if (todo.accomplished) {
                     $scope.pending_todos.splice(todoIdx, 1);
                     $scope.accomplished_todos.push(todo);
+                    if (todo.a1c !== null) {
+                        let todoWidgetIdx = $scope.a1c.a1c_todos.indexOf(todo);
+                        $scope.a1c.a1c_todos.splice(todoWidgetIdx, 1);
+                    }
+
+                    if (todo.colon_cancer !== null) {
+                        let todoWidgetIdx = $scope.colon_cancers.colon_cancer_todos.indexOf(todo);
+                        $scope.colon_cancers.colon_cancer_todos.splice(todoWidgetIdx, 1);
+                    }
+
                 } else {
                     // let todoIdx = $scope.accomplished_todos.indexOf(todo);
                     $scope.accomplished_todos.splice(todoIdx, 1);
                     $scope.pending_todos.push(todo);
+                    if (todo.a1c !== null) {
+                        $scope.a1c.a1c_todos.push(todo);
+                        debugger;
+                    }
+
+                    if (todo.colon_cancer !== null) {
+                        $scope.colon_cancers.colon_cancer_todos.push(todo);
+                        debugger;
+                    }
                 }
 
             }
@@ -889,11 +929,11 @@
                         // Push newly added todo to active todo list
                         if (data.hasOwnProperty('todo')) {
                             // let wikiNoteTodo = $interval(() => {
-                                // if ($scope.todos_ready) {
-                                    // $scope.problem_todos.push(data.todo);
-                                    $scope.pending_todos.push(data.todo);
-                                    // $interval.cancel(wikiNoteTodo);
-                                // }
+                            // if ($scope.todos_ready) {
+                            // $scope.problem_todos.push(data.todo);
+                            $scope.pending_todos.push(data.todo);
+                            // $interval.cancel(wikiNoteTodo);
+                            // }
                             // }, 500)
                         }
                     } else {
@@ -923,9 +963,9 @@
                             // let wikiNoteTodo = $interval(() => {
                             //     if ($scope.todos_ready) {
                             //         $scope.problem_todos.push(data.todo);
-                                    $scope.pending_todos.push(data.todo);
-                                    // $interval.cancel(wikiNoteTodo);
-                                // }
+                            $scope.pending_todos.push(data.todo);
+                            // $interval.cancel(wikiNoteTodo);
+                            // }
                             // }, 500)
                         }
 

@@ -231,6 +231,8 @@ class ProblemTodoSerializer(serializers.ModelSerializer):
             'todo',
             'accomplished',
             'due_date',
+            'a1c',
+            'colon_cancer',
             'labels',
             'comments',
             'attachments',

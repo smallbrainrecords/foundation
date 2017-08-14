@@ -383,9 +383,10 @@
     </div>
 
     <!--A1C widget-->
-    <div class="row" ng-if="availableWidgets.indexOf('a1c') != -1">
+    <div class="row" ng-if="availableWidgets.indexOf('a1c') != -1 && a1c != null">
         <div class="col-md-12">
-            <a1c ng-model="a1c"></a1c>
+            <a1c a1c="a1c" order-added="A1COrderAdded" order-status-changed="A1COrderStatusChanged"
+                 labels="labels" members="members"></a1c>
         </div>
     </div>
 

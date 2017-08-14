@@ -376,7 +376,6 @@
                     }
                 });
                 if (!is_existed) {
-                    debugger;
                     todo.members.push(member.user);
                     todoService.addTodoMember(todo, member).then(function (data) {
                         if (data['success']) {
