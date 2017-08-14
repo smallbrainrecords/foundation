@@ -106,6 +106,8 @@
             $scope.loadMoreTodo = loadMoreTodo;
             $scope.A1COrderAdded = A1COrderAdded;
             $scope.A1COrderStatusChanged = A1COrderStatusChanged;
+            $scope.colonCancersOrderAdded = A1COrderAdded;
+            $scope.colonCancersOrderStatusChanged = A1COrderStatusChanged;
 
             function A1COrderStatusChanged(todo) {
                 $scope.accomplished_todos.push(todo);
@@ -117,7 +119,6 @@
                         idx = index;
                     }
                 });
-                debugger;
                 if (idx !== -1) {
                     $scope.pending_todos.splice(idx, 1);
                 }

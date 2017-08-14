@@ -385,16 +385,22 @@
     <!--A1C widget-->
     <div class="row" ng-if="availableWidgets.indexOf('a1c') != -1 && a1c != null">
         <div class="col-md-12">
-            <a1c a1c="a1c" order-added="A1COrderAdded" order-status-changed="A1COrderStatusChanged"
+            <a1c a1c="a1c"
+                 active-user="active_user"
+                 order-added="A1COrderAdded"
+                 order-status-changed="A1COrderStatusChanged"
                  labels="labels" members="members"></a1c>
         </div>
     </div>
 
     <!--Colon cancer widget-->
-    <div class='row' ng-if="availableWidgets.indexOf('colon_cancers') != -1">
+    <div class='row' ng-if="availableWidgets.indexOf('colon_cancers') != -1 && colon_cancers!=null">
         <div class="col-md-12">
-            <colon-cancer ng-model="colon_cancer"
-                          ng-repeat="colon_cancer in colon_cancers track by $index"></colon-cancer>
+            <colon-cancer colon-cancer="colon_cancers"
+                          active-user="active_user"
+                          order-added="colonCancersOrderAdded"
+                          order-status-changed="colonCancersOrderStatusChanged"
+                          labels="labels" members="members"></colon-cancer>
         </div>
     </div>
 

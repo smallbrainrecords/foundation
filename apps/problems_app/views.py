@@ -105,8 +105,9 @@ def get_a1c(request, problem_id):
     :return:
     """
     resp = {'success': False}
-    a1c = AOneC.objects.filter(problem__id=problem_id).get()#.a1c_todos.filter(accomplished=False)#.select_related('a1c_todos').get()
+    a1c = AOneC.objects.filter(problem__id=problem_id).get()
     a1c.a1c_todos = a1c.a1c_todos.filter(accomplished=False)
+
     resp['success'] = True
     resp['a1c'] = AOneCSerializer(a1c).data
     return ajax_response(resp)
@@ -114,13 +115,19 @@ def get_a1c(request, problem_id):
 
 @login_required
 def get_colon_cancers(request, problem_id):
+    """
+    Get problem colon cancer widget
+    :param request:
+    :param problem_id:
+    :return:
+    """
     resp = {'success': False}
 
-    colon_cancers = ColonCancerScreening.objects.filter(problem__id=problem_id)
-    serialized_colon_cancers = ColonCancerScreeningSerializer(colon_cancers, many=True).data
+    colon_cancers = ColonCancerScreening.objects.filter(problem__id=problem_id).get()
+    colon_cancers.colon_cancer_todos = colon_cancers.colon_cancer_todos.filter(accomplished=False)
 
     resp['success'] = True
-    resp['colon_cancers'] = serialized_colon_cancers
+    resp['colon_cancers'] = ColonCancerScreeningSerializer(colon_cancers).data
     return ajax_response(resp)
 
 
