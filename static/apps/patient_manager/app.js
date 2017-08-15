@@ -281,5 +281,10 @@
         {label: 'Week', value: 1},
         {label: 'Month', value: 2},
         {label: 'Year', value: 3},
-    ]);
+    ]).constant('TODO_LIST', {
+        'NONE': 0,
+        'INR': 1,
+        'A1C': 2,
+        'COLON_CANCER_SCREENING': 3
+    });
 })();

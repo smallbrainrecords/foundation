@@ -238,4 +238,6 @@ class ProblemTodoSerializer(serializers.ModelSerializer):
             'attachments',
             'members',
             'document_set',
+            'created_at',
+            'created_on',
         )

@@ -9,7 +9,6 @@
 
     function inrService($http, $q, $cookies, httpService) {
         return {
-            csrf_token: csrf_token,
             getINRTarget: getINRTarget,
             getINRs: getINRs,
             setINRTarget: setINRTarget,
@@ -25,9 +24,6 @@
             findPatient: findPatient
         };
 
-        function csrf_token() {
-            return $cookies.get('csrftoken');
-        }
 
         /**
          *  Get patient's goal range for INR value.
@@ -37,7 +33,7 @@
          * @param patientId
          */
         function getINRTarget(patientId) {
-            return $http.get('/inr/' + patientId + '/target/get');
+            return $http.get(`/inr/${patientId}/target/get`);
         }
 
         /**
@@ -46,12 +42,8 @@
          * @param numberOfRow
          */
         function getINRs(patientId, numberOfRow) {
-            return $http.post('/inr/' + patientId + '/inrs/', {
+            return $http.post(`/inr/${patientId}/inrs/`, {
                 row: numberOfRow
-            }, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
             });
         }
 
@@ -61,12 +53,8 @@
          * @param inr
          */
         function setINRTarget(patientId, inr) {
-            return $http.post('/inr/' + patientId + '/target/set', {
+            return $http.post(`/inr/${patientId}/target/set`, {
                 value: inr
-            }, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
             });
         }
 
@@ -76,11 +64,7 @@
          * @param inrObj
          */
         function addINR(patientId, inrObj) {
-            return $http.post('/inr/' + patientId + '/inr/add', inrObj, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
-            });
+            return $http.post(`/inr/${patientId}/inr/add`, inrObj);
         }
 
         /**
@@ -89,11 +73,7 @@
          * @param inrObj
          */
         function updateINR(patientId, inrObj) {
-            return $http.post('/inr/' + patientId + '/inr/update', inrObj, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
-            });
+            return $http.post(`/inr/${patientId}/inr/update`, inrObj);
         }
 
         /**
@@ -102,11 +82,7 @@
          * @param inrObj
          */
         function deleteINR(patientId, inrObj) {
-            return $http.post('/inr/' + patientId + '/inr/delete', inrObj, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
-            });
+            return $http.post(`/inr/${patientId}/inr/delete`, inrObj);
         }
 
         /**
@@ -114,7 +90,7 @@
          * @param patientId
          */
         function getProblems(patientId) {
-            return $http.get('/inr/' + patientId + '/problems');
+            return $http.get(`/inr/${patientId}/problems`);
         }
 
         /**
@@ -125,16 +101,17 @@
          * @param patientId
          */
         function getMedications(patientId) {
-            return $http.get('/inr/' + patientId + '/medications');
+            return $http.get(`/inr/${patientId}/medications`);
         }
 
         /**
          * Get all order related(generated) to this INR widget
          * Should be filtered by problem
          * @param patientId
+         * @param problemId
          */
         function getOrders(patientId, problemId) {
-            return $http.get('/inr/' + patientId + '/' + problemId + '/orders');
+            return $http.get(`/inr/${patientId}/${problemId}/orders`);
         }
 
         /**
@@ -143,11 +120,7 @@
          * @param orderObj
          */
         function addOrder(patientId, orderObj) {
-            return $http.post('/inr/' + patientId + '/order/add', orderObj, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
-            });
+            return $http.post(`/inr/${patientId}/order/add`, orderObj);
         }
 
         /**
@@ -156,11 +129,7 @@
          * @param noteObj
          */
         function addNote(patientId, noteObj) {
-            return $http.post('/inr/' + patientId + '/note/add', noteObj, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
-            });
+            return $http.post(`/inr/${patientId}/note/add`, noteObj);
         }
 
         /**
@@ -169,12 +138,8 @@
          * @param numberOfRow
          */
         function loadNotes(patientId, numberOfRow) {
-            return $http.post('/inr/' + patientId + '/notes/', {
+            return $http.post(`/inr/${patientId}/notes/`, {
                 row: numberOfRow
-            }, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
             });
         }
 
@@ -183,12 +148,8 @@
          * @param viewValue
          */
         function findPatient(viewValue) {
-            return $http.post('/inr/patients', {
+            return $http.post(`/inr/patients`, {
                 search_str: viewValue
-            }, {
-                headers: {
-                    'X-CSRFToken': $cookies.get('csrftoken')
-                }
             });
         }
     }

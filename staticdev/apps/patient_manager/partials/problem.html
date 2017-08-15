@@ -407,7 +407,11 @@
     <!-- INR widget -->
     <div class="row" ng-if="availableWidgets.indexOf('inr') != -1">
         <div class="col-md-12">
-            <inr></inr>
+            <inr order-added="INROrderAdded"
+                 active-user="active_user"
+                 patient-id="patient_id"
+                 labels="labels" members="members"
+                 order-status-changed="INROrderStatusChanged"></inr>
         </div>
     </div>
 

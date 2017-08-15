@@ -6,7 +6,7 @@
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
-                                              dataService, medicationService, CollapseService, Upload, $timeout, LABELS) {
+                                              dataService, medicationService, CollapseService, Upload, $timeout, LABELS, TODO_LIST) {
 
             $scope.activities = [];
             $scope.availableWidgets = [];
@@ -104,50 +104,17 @@
             $scope.addMedication = addMedication;
             $scope.updateStatusCallback = changeTodoList;
             $scope.loadMoreTodo = loadMoreTodo;
-            $scope.A1COrderAdded = A1COrderAdded;
-            $scope.A1COrderStatusChanged = A1COrderStatusChanged;
-            $scope.colonCancersOrderAdded = A1COrderAdded;
-            $scope.colonCancersOrderStatusChanged = A1COrderStatusChanged;
+            $scope.A1COrderAdded = widgetTodoAdded;
+            $scope.A1COrderStatusChanged = widgetTodoStatusChanged;
+            $scope.colonCancersOrderAdded = widgetTodoAdded;
+            $scope.colonCancersOrderStatusChanged = widgetTodoStatusChanged;
+            $scope.INROrderAdded = widgetTodoAdded;
+            $scope.INROrderStatusChanged = widgetTodoStatusChanged;
 
-            function A1COrderStatusChanged(todo) {
-                $scope.accomplished_todos.push(todo);
-
-                // Problem page overall pending todo list
-                var idx = -1;
-                _.each($scope.pending_todos, (element, index, list) => {
-                    if (element.id === todo.id) {
-                        idx = index;
-                    }
-                });
-                if (idx !== -1) {
-                    $scope.pending_todos.splice(idx, 1);
-                }
-            }
-
-            function A1COrderAdded(todo) {
-                $scope.pending_todos.push(todo);
-            }
-
-            function loadMoreTodo() {
-                // Only load more if there is no request in progress OR all data is loaded
-                if (!$scope.todoIsLoading && !$scope.pendingTodoLoaded) {
-                    $scope.todoIsLoading = true;
-                    problemService.getRelatedTodos($scope.problem_id, false, $scope.pendingTodoPage)
-                        .then((resp) => {
-                            $scope.todoIsLoading = false;
-                            if (resp.success) {
-                                $scope.pendingTodoPage = $scope.pendingTodoPage + 1;
-                                $scope.pending_todos = $scope.pending_todos.concat(resp.data);
-                                $scope.pendingTodoLoaded = resp.data.length === 0;
-                            }
-                        });
-                }
-            }
 
             init();
 
             function init() {
-                // TODO: This should be top priority loading & check access
                 patientService.fetchProblemInfo($scope.problem_id)
                     .then(function (data) {
                         $scope.loading = false;
@@ -208,13 +175,6 @@
                 problemService.trackProblemClickEvent($scope.problem_id);
 
                 // SECONDARY LOADING
-                // TODO
-                // problemService.getRelatedTodos($scope.problem_id).then(function (response) {
-                //     $scope.problem_todos = response.data.todos;
-                //     // $scope.problem_todos.push(response.data.todos);
-                //     $scope.hasAccomplishedTodo = _.pluck(response.data.todos, 'accomplished');
-                //     $scope.todos_ready = true;
-                // });
 
                 // Wiki note
                 problemService.getRelatedWikis($scope.problem_id).then(function (response) {
@@ -400,10 +360,10 @@
 
                 });
 
-                $scope.$on('inrWidgetOrderAdded', function (event, args) {
-                    // $scope.problem_todos.push(args.order)
-                    $scope.pending_todos.push(args.order)
-                });
+                // $scope.$on('inrWidgetOrderAdded', function (event, args) {
+                // $scope.problem_todos.push(args.order)
+                // $scope.pending_todos.push(args.order)
+                // });
 
                 $interval(function () {
                     $scope.refresh_problem_activity();
@@ -435,15 +395,19 @@
                     // let todoIdx = $scope.accomplished_todos.indexOf(todo);
                     $scope.accomplished_todos.splice(todoIdx, 1);
                     $scope.pending_todos.push(todo);
+
                     if (todo.a1c !== null) {
                         $scope.a1c.a1c_todos.push(todo);
-                        debugger;
                     }
 
                     if (todo.colon_cancer !== null) {
                         $scope.colon_cancers.colon_cancer_todos.push(todo);
-                        debugger;
                     }
+                }
+
+                // Notify all child widget that parent to do list is changed
+                if (TODO_LIST.INR === todo.created_at) {
+                    $scope.$broadcast('todoStatusChanged', {'data': todo});
                 }
 
             }
@@ -1431,6 +1395,41 @@
                     } else {
                         toaster.pop('error', 'Error', 'Failed to add medication. Please try again!');
                     }
+                }
+            }
+
+            function widgetTodoAdded(todo) {
+                $scope.pending_todos.push(todo);
+            }
+
+            function widgetTodoStatusChanged(todo) {
+                $scope.accomplished_todos.push(todo);
+
+                // Problem page overall pending todo list
+                var idx = -1;
+                _.each($scope.pending_todos, (element, index, list) => {
+                    if (element.id === todo.id) {
+                        idx = index;
+                    }
+                });
+                if (idx !== -1) {
+                    $scope.pending_todos.splice(idx, 1);
+                }
+            }
+
+            function loadMoreTodo() {
+                // Only load more if there is no request in progress OR all data is loaded
+                if (!$scope.todoIsLoading && !$scope.pendingTodoLoaded) {
+                    $scope.todoIsLoading = true;
+                    problemService.getRelatedTodos($scope.problem_id, false, $scope.pendingTodoPage)
+                        .then((resp) => {
+                            $scope.todoIsLoading = false;
+                            if (resp.success) {
+                                $scope.pendingTodoPage = $scope.pendingTodoPage + 1;
+                                $scope.pending_todos = $scope.pending_todos.concat(resp.data);
+                                $scope.pendingTodoLoaded = resp.data.length === 0;
+                            }
+                        });
                 }
             }
         });
