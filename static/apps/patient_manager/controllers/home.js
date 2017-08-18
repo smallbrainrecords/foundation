@@ -376,11 +376,26 @@
             $scope.$on('copyEncounter', function (event, args) {
                 // So every page will have current patient $user
                 var text = '';
-                // TODO: Check whether or not data is ready
-                if (_.isUndefined($scope.most_recent_encounter_summaries) || _.isUndefined($scope.most_recent_encounter_related_problems) || _.isUndefined($scope.pending_todos)) {
+                // TODO: If todo list is not fully loaded then create an recursive loading to load all todo before
+                var load2End = null;
+                if (!$scope.pendingTodoLoaded) {
+                    alert("Generating data. Click OK to continue");
+                    load2End = setInterval(() => {
+                        loadMoreTodo(false);
+                        if ($scope.pendingTodoLoaded) {
+                            clearInterval(load2End);
+                            alert("Data is ready. Press Ctrl+C to copy to clipboard");
+                        }
+                    }, 500);
+                    return;
+                }
+
+                if (_.isUndefined($scope.most_recent_encounter_summaries) || _.isUndefined($scope.most_recent_encounter_related_problems)) {
                     alert("Data is not loading. Try again in few seconds");
                     return;
                 }
+
+                // Copy encounter summaries
                 if ($scope.most_recent_encounter_summaries.length > 0) {
                     text += "All the encounter summaries from the most recent encounter: \r\n";
                     angular.forEach($scope.most_recent_encounter_summaries, function (value, key) {
@@ -390,6 +405,7 @@
                     });
                     text += '\r\n';
                 }
+
                 // Refer https://trello.com/c/cFylaLdv
                 if ($scope.most_recent_encounter_documents.length > 0) {
                     text += "Measured today: \r\n";
@@ -400,6 +416,8 @@
                     });
                     text += '\r\n';
                 }
+
+                // Copy related problem
                 if ($scope.most_recent_encounter_related_problems.length > 0) {
                     text += "List of related problems : \r\n";
                     angular.forEach($scope.most_recent_encounter_related_problems, function (value, key) {
@@ -408,12 +426,14 @@
                     text += '\r\n';
                 }
 
+                // Copy pending all todo
                 if ($scope.pending_todos.length > 0) {
                     text += "List of all active todos : \r\n";
                     angular.forEach($scope.pending_todos, function (value, key) {
                         text += `${value.todo} ${value.problem ? 'for problem ' + value.problem.problem_name : ''}\r\n`;
                     });
                 }
+
                 // Copy to clipboard
                 var $temp = $("<textarea/>");
                 $("body").append($temp);
@@ -421,6 +441,7 @@
                 document.execCommand("copy");
                 $temp.remove();
             });
+
 
             $scope.$on('tabPressed', function (event, args) {
                 if ('mystory' == $scope.collapse.show_homepage_tab) {
