@@ -359,6 +359,8 @@ a.btn-manage {
   margin-right: 10px; }
 #view_document_page .uploaded_document .document-name {
   vertical-align: top; }
+#view_document_page a {
+  text-decoration: none; }
 
 .inr-component a {
   cursor: pointer; }

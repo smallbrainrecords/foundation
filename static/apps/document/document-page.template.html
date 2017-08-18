@@ -106,15 +106,15 @@
                 </div>
                 <ul class="ul-clean no-padding">
                     <li ng-repeat="todo in active_todos | filter:(enableTodoPin ? '' :{'is_pinned':true})  track by $index">
-                        <div class="item-box flex-container">
-                            <button ng-if="enableTodoPin"
-                                    ng-click="todo.is_pinned ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo)"
-                                    ng-class="todo.is_pinned ? 'btn-danger':'btn-primary'"
-                                    class="btn dube-btn-pin-unpin flex-item pull-left">
-                                <span ng-bind="todo.is_pinned ? 'Un pin' : 'Pin'"></span>
-                            </button>
+                        <button ng-if="enableTodoPin"
+                                ng-click="todo.is_pinned ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo)"
+                                ng-class="todo.is_pinned ? 'btn-danger':'btn-primary'"
+                                class="btn dube-btn-pin-unpin flex-item pull-left">
+                            <span ng-bind="todo.is_pinned ? 'Un pin' : 'Pin'"></span>
+                        </button>
+                        <a class="item-box flex-container" href="#/todo/{{todo.id}}">
                             <span ng-bind="todo.todo" class="flex-item"></span>
-                        </div>
+                        </a>
                     </li>
                 </ul>
             </div>
@@ -200,18 +200,19 @@
                 <hr>
                 <ul class="ul-clean no-padding">
                     <li ng-repeat="problem in active_probs | filter:(enableProblemPin ? '' :{'is_pinned':true}) track by $index">
-                        <div class="item-box flex-container"
-                             ng-show="problem.is_active"
-                             ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
-                            <button ng-if="enableProblemPin"
-                                    ng-click="problem.is_pinned ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem)"
-                                    ng-class="problem.is_pinned ? 'btn-danger':'btn-primary'"
-                                    class="btn dube-btn-pin-unpin pull-left flex-item">
-                                <span ng-bind="problem.is_pinned ? 'Un pin' : 'Pin'"></span>
-                            </button>
+                        <button ng-if="enableProblemPin"
+                                ng-click="problem.is_pinned ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem)"
+                                ng-class="problem.is_pinned ? 'btn-danger':'btn-primary'"
+                                class="btn dube-btn-pin-unpin pull-left flex-item">
+                            <span ng-bind="problem.is_pinned ? 'Un pin' : 'Pin'"></span>
+                        </button>
+                        <a class="item-box flex-container"
+                           href="#/problem/{{problem.id}}"
+                           ng-show="problem.is_active"
+                           ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
                             <span ng-bind="problem.problem_name" class="flex-item"></span>
                             <span ng-show="problem.authenticated==false" class="flex-item">(not authenticated)</span>
-                        </div>
+                        </a>
                     </li>
                 </ul>
             </div>
