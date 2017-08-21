@@ -83,36 +83,35 @@
     </section>
 
     <!--Pinned todo-->
-    <section ng-show="document.patient" id="document-todos">
+    <section ng-show="document.patient" id="document-todos" ng-click="enableTodoPin=!enableTodoPin">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <p>List of pinned todo</p>
+                List of pinned todo
             </div>
             <div class="panel-body">
-                <div class='row' ng-show='permitted(["add_todo"])'>
-                    <div class='col-md-12'>
-                        <form class='form-inline' role='form' ng-submit='addTodo(new_todo)'>
-                            <label for="todoNameInput"> Todo name </label>
-                            <div class='input-group'>
-                                <input type='text' ng-model='new_todo.name' title="Todo name"
-                                       class="form-control" id='todoNameInput'>
-                                <span class="input-group-btn">
-
-                            <button type='submit' class='btn btn-default'>Add Todo</button>
-                                </span>
-                            </div>
-                        </form>
+                <!--Add todo form-->
+                <div class='form-inline' ng-show='permitted(["add_todo"])'>
+                    <label for="todoNameInput"> Todo name </label>
+                    <div class='input-group'>
+                        <input type='text' ng-model='new_todo.name' title="Todo name"
+                               class="form-control" id='todoNameInput' ng-click="$event.stopPropagation();">
+                        <span class="input-group-btn">
+                            <button type='submit' class='btn btn-default'
+                                    ng-click="addToDo(new_todo);$event.stopPropagation();">Add Todo</button>
+                        </span>
                     </div>
                 </div>
+                <!-- List of pinned todo-->
                 <ul class="ul-clean no-padding">
                     <li ng-repeat="todo in active_todos | filter:(enableTodoPin ? '' :{'is_pinned':true})  track by $index">
-                        <button ng-if="enableTodoPin"
-                                ng-click="todo.is_pinned ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo)"
-                                ng-class="todo.is_pinned ? 'btn-danger':'btn-primary'"
-                                class="btn dube-btn-pin-unpin flex-item pull-left">
+                        <button ng-if="enableTodoPin" class="btn dube-btn-pin-unpin flex-item pull-left"
+                                ng-click="todo.is_pinned ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo);$event.stopPropagation();"
+                                ng-class="todo.is_pinned ? 'btn-danger':'btn-primary'">
                             <span ng-bind="todo.is_pinned ? 'Un pin' : 'Pin'"></span>
                         </button>
-                        <a class="item-box flex-container" href="#/todo/{{todo.id}}">
+                        <a class="item-box flex-container"
+                           href="/u/patient/manage/{{todo.patient.id}}/#/todo/{{todo.id}}"
+                           ng-click="$event.stopPropagation();">
                             <span ng-bind="todo.todo" class="flex-item"></span>
                         </a>
                     </li>
@@ -122,38 +121,38 @@
     </section>
 
     <!--Pinned problem-->
-    <section ng-show="document.patient" id="document-problems">
+    <section ng-show="document.patient" id="document-problems" ng-click="enableProblemPin=!enableProblemPin">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <p>List of pinned problem</p>
+                List of pinned problem
             </div>
             <div class="panel-body">
                 <div class='row' ng-if='permitted(["add_problem"])'>
                     <div class='col-md-12'>
                         <br>
-                        <div ng-if="active_user.role=='physician' || active_user.role=='mid-level'">
+                        <div ng-if="['physician','mid-level'].indexOf(active_user.role) !=-1">
                             <div>
                                 <p>Common problem:</p>
-                                <select class='form-control' ng-model="acuteForm" title="">
-                                    <option ng-repeat="acute in acutes"
-                                            value="{{ acute.id }}"> {{ acute.problem_name }}
+                                <select class='form-control' ng-model="acuteForm" title=""
+                                        ng-click="$event.stopPropagation();">
+                                    <option ng-repeat="acute in acutes" value="{{ acute.id }}"> {{ acute.problem_name }}
                                     </option>
                                 </select>
                                 <button class='btn btn-sm btn-default'
-                                        ng-click='addNewCommonProblem(acuteForm, "acute")'>
+                                        ng-click='addNewCommonProblem(acuteForm, "acute");$event.stopPropagation();'>
                                     Add acute problem
                                 </button>
                             </div>
                             <br>
                             <div>
-                                <select class='form-control' ng-model="chronicForm" title="">
-                                    <option ng-repeat="chronic in chronics"
-                                            value="{{ chronic.id }}"> {{
-                                        chronic.problem_name }}
+                                <select class='form-control' ng-model="chronicForm" title=""
+                                        ng-click="$event.stopPropagation();">
+                                    <option ng-repeat="chronic in chronics" value="{{ chronic.id }}">
+                                        {{chronic.problem_name }}
                                     </option>
                                 </select>
                                 <button class='btn btn-sm btn-default'
-                                        ng-click='addNewCommonProblem(chronicForm, "chronic")'>
+                                        ng-click='addNewCommonProblem(chronicForm, "chronic");$event.stopPropagation();'>
                                     Add chronic problem
                                 </button>
                             </div>
@@ -165,49 +164,52 @@
                                ng-model='problem_term'
                                ng-model-options="{debounce: 1000}"
                                ng-change="problemTermChanged(problem_term)"
+                               ng-click="$event.stopPropagation();"
                                placeholder='Search Problem....'>
-                        <button class='btn btn-sm btn-default' ng-click='add_new_problem(problem_term)'>
+                        <button class='btn btn-sm btn-default'
+                                ng-click='add_new_problem(problem_term);$event.stopPropagation();'>
                             Add Problem
                         </button>
-                        <br>
+                        <hr>
                         <!--Problem candidate for -->
                         <div ng-show='new_problem.set==true'>
-                            <hr>
-                            <label ng-bind="new_problem.code"></label><span
-                                ng-bind="new_problem.term "></span>
-                            <br>
-                            <button class='btn btn-sm btn-primary' ng-click='add_problem()'>
+                            <p>
+                                <b ng-bind="new_problem.code"></b>&nbsp;<span ng-bind="new_problem.term "></span>
+                            </p>
+                            <button class='btn btn-sm btn-primary' ng-click='add_problem();$event.stopPropagation();'>
                                 Add Problem
                             </button>
                             <button class='btn btn-sm btn-danger'
-                                    ng-click='unset_new_problem()'>
+                                    ng-click='unset_new_problem();$event.stopPropagation();'>
                                 Cancel
                             </button>
                             <hr>
                         </div>
                     </div>
+
+                    <!--Problem search result-->
                     <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
-                        <div ng-repeat='problem_term in problem_terms track by $index'
-                             style='margin-top:12px;'>
-                            <button class='btn btn-sm btn-default'
-                                    title='{{ problem_term.code }}'
-                                    ng-click='set_new_problem(problem_term)'>
+                        <div ng-repeat='problem_term in problem_terms track by $index' style='margin-top:12px;'>
+                            <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
+                                    ng-click='set_new_problem(problem_term);$event.stopPropagation();'>
                                 {{ problem_term.term }}
                             </button>
                         </div>
                     </div>
                 </div>
                 <hr>
+
+                <!-- Pinned problem list-->
                 <ul class="ul-clean no-padding">
                     <li ng-repeat="problem in active_probs | filter:(enableProblemPin ? '' :{'is_pinned':true}) track by $index">
-                        <button ng-if="enableProblemPin"
-                                ng-click="problem.is_pinned ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem)"
+                        <button ng-if="enableProblemPin" ng-show="problem.is_active"
                                 ng-class="problem.is_pinned ? 'btn-danger':'btn-primary'"
-                                class="btn dube-btn-pin-unpin pull-left flex-item">
+                                class="btn dube-btn-pin-unpin pull-left flex-item"
+                                ng-click="problem.is_pinned ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem);$event.stopPropagation();">
                             <span ng-bind="problem.is_pinned ? 'Un pin' : 'Pin'"></span>
                         </button>
                         <a class="item-box flex-container"
-                           href="#/problem/{{problem.id}}"
+                           href="/u/patient/manage/{{problem.patient}}/#/problem/{{problem.id}}"
                            ng-show="problem.is_active"
                            ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
                             <span ng-bind="problem.problem_name" class="flex-item"></span>

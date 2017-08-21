@@ -427,7 +427,7 @@
 
             sharedService.addCommonProblem(form).then(addProblemSuccess, addProblemFailed);
 
-            function addProblemSuccess(response) {
+            function addProblemSuccess(data) {
 
                 if (data.success) {
                     toaster.pop('success', 'Done', 'New problem added successfully');

@@ -29,6 +29,7 @@
         return {
             settings: {},
             uploadDocument: uploadDocument,
+            addCommonProblem:addCommonProblem,
             deleteDocumentTag: deleteDocumentTag,
             pinLabelToDocument: pinLabelToDocument,
             unpinDocumentLabel: unpinDocumentLabel,
@@ -44,7 +45,9 @@
             fetchPatientTodos: fetchPatientTodos,
             fetchProblems: fetchProblems,
             addToDo: addToDo,
-            addProblem: addProblem
+            addProblem: addProblem,
+            listTerms: listTerms,
+
         };
 
         /**
@@ -244,6 +247,22 @@
             return httpService.post(form, url);
 
 
+        }
+
+        function listTerms(query) {
+
+            var params = {'query': query};
+            var url = "/list_terms/";
+
+            return httpService.get(params, url);
+
+
+        }
+
+        function addCommonProblem(form) {
+            var url = '/p/patient/' + form.patient_id + '/problems/add/new_common_problem';
+
+            return httpService.post(form, url);
         }
     }
 })();
