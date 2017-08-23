@@ -2,7 +2,7 @@
 
     'use strict';
 
-    var module = angular.module('httpModule', []).config(function($httpProvider){
+    var module = angular.module('httpModule', []).config(function ($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     });
@@ -64,9 +64,9 @@
 
             };
 
-            this.get = function (params, url) {
+            this.get = function (params, url, cache = false) {
 
-                var deferred = $q.defer();
+                let deferred = $q.defer();
 
                 $http({
                     'method': 'GET',
@@ -75,7 +75,8 @@
                     'headers': {
                         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                         'X-CSRFToken': this.csrf_token()
-                    }
+                    },
+                    'cache': cache
                 }).success(function (data) {
                     deferred.resolve(data);
                 }).error(function (data) {

@@ -106,7 +106,6 @@
         $scope.view_my_story_tab = view_my_story_tab;
         $scope.addProblemIsSelected = addProblemIsSelected;
         $scope.bdfiValueIsChanged = bdfiValueIsChanged;
-
         $scope.loadMoreTodo = loadMoreTodo;
 
 

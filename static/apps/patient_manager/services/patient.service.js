@@ -459,7 +459,7 @@
                     accomplished: is_accomplished,
                     page: page,
                     all: loadAll
-                }, `/u/users/${patient_id}/todos`)
+                }, `/u/users/${patient_id}/todos`, true)
             }
         });
 
