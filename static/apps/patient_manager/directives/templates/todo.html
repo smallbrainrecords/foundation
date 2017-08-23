@@ -1,7 +1,8 @@
 <div class="todos-container" ng-show='todoList.length'>
     <!-- begin sortable -->
     <ul ui-sortable="sortableOptions" ng-model="todoList" class="no-padding">
-        <li ng-repeat="item in todoList track by $index" class="list-group-item todo patient-todo" ng-click="open_todo(item)"
+        <li ng-repeat="item in todoList track by $index" class="list-group-item todo patient-todo"
+            ng-click="open_todo(item)"
             ng-show="checkSharedProblem(item.problem, sharing_patients)">
             <!-- begin show item -->
             <div ng-show='!item.changed'>
@@ -123,9 +124,9 @@
                         <p>
                             <input type="text" ng-model="item.due_date" ng-change="saveTodoDueDate(item)"
                                    ng-model-options="{ updateOn: 'default blur', debounce: { default: 30000, blur: 1000 } }"
-                                   title="">
+                                   title="" class="form-control">
                         </p>
-                        <div ng-model="item.due_date" ng-change="saveTodoDueDate(item)" pickadate
+                        <div ng-model="item.due_date" ng-change="saveTodoDueDate(item)" pickadate class="pickadate"
                              format="MM/dd/yyyy"></div>
                     </div>
                     <!-- end change due date -->
