@@ -3,7 +3,7 @@
     angular.module('document')
         .controller('ViewDocumentCtrl', ViewDocumentCtrl);
 
-    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', '$location', 'toaster', 'documentService', 'ngDialog', '$http', '$cookies', 'todoService'];
+    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', '$location', 'toaster', 'documentService', 'ngDialog', '$http', '$cookies', 'todoService', '$window'];
 
     /**
      * @param $scope
@@ -15,9 +15,11 @@
      * @param ngDialog
      * @param $http
      * @param $cookies
+     * @param todoService
+     * @param $window
      * @constructor
      */
-    function ViewDocumentCtrl($scope, sharedService, $routeParams, $location, toaster, documentService, ngDialog, $http, $cookies, todoService) {
+    function ViewDocumentCtrl($scope, sharedService, $routeParams, $location, toaster, documentService, ngDialog, $http, $cookies, todoService, $window) {
 
         // PROPERTIES DEFINITION
         // $scope.patient_id = $('#patient_id').val();     // Patients are being managed
@@ -47,14 +49,8 @@
         $scope.getPatients = getPatients;
         $scope.pinPatient2Document = pinPatient2Document;
         $scope.permitted = permitted;
-
-        // TODO: Create todo-add component based
         $scope.addTodo = addTodo;
-
-        // TODO: Create problem-add component based
         $scope.addNewCommonProblem = addNewCommonProblem;
-
-
         $scope.problemTermChanged = problemTermChanged;
         $scope.set_new_problem = setNewProblem;
         $scope.unset_new_problem = unset_new_problem;
@@ -88,14 +84,11 @@
                 }
             });
 
-            // sharedService.fetchActiveUser().then(function (response) {
-            //     Logged in user profile in Django authentication system
-                // $scope.active_user = response.data['user_profile'];
-            // });
-
-            todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
-                $scope.members = data['members'];
-            });
+            // TODO: Why member is not exists here?
+            if ($scope.patient_id)
+                todoService.fetchTodoMembers($scope.patient_id).then((data) => {
+                    $scope.members = data['members'];
+                });
         }
 
         // METHODS DEFINITION(Only dedicate to service/factory todo business flow)
@@ -557,16 +550,21 @@
         }
 
         function pinPatient2Document(item, model) {
+            $scope.enableEditPatient = false;
+
             documentService.pinPatient2Document($scope.document, model)
-                .then(function (response) {
+                .then((response) => {
                     if (response.data.success) {
                         toaster.pop('success', 'Done', 'Added label to document. Loading patient todo and patient');
                         $scope.document = response.data.info;
                         $scope.getPatientInfo(response.data.info.patient.user.id);
+
+                        $window.location.href = `/u/patient/manage/${response.data.info.patient.user.id}/#/document/${$scope.document.id}`;
+                        $window.reload();
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong!');
                     }
-                }, function (error) {
+                }, (error) => {
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 })
         }

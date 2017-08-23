@@ -80,6 +80,7 @@
                    content-type="document.file_mime_type[0]"
                    controls="false"
                    allow-modal="false"></view-file>
+        <br>
     </section>
 
     <!--Pinned todo-->
@@ -96,8 +97,8 @@
                         <input type='text' ng-model='new_todo.name' title="Todo name"
                                class="form-control" id='todoNameInput' ng-click="$event.stopPropagation();">
                         <span class="input-group-btn">
-                            <button type='submit' class='btn btn-default'
-                                    ng-click="addToDo(new_todo);$event.stopPropagation();">Add Todo</button>
+                            <button type='button' class='btn btn-default'
+                                    ng-click="addTodo(new_todo);$event.stopPropagation();">Add Todo</button>
                         </span>
                     </div>
                 </div>
@@ -131,45 +132,56 @@
                     <div class='col-md-12'>
                         <br>
                         <div ng-if="['physician','mid-level'].indexOf(active_user.role) !=-1">
-                            <div>
-                                <p>Common problem:</p>
+                            <p>Common problem:</p>
+                            <div class="input-group">
                                 <select class='form-control' ng-model="acuteForm" title=""
                                         ng-click="$event.stopPropagation();">
-                                    <option ng-repeat="acute in acutes" value="{{ acute.id }}"> {{ acute.problem_name }}
+                                    <option ng-repeat="acute in acutes" value="{{ acute.id }}"> {{
+                                        acute.problem_name }}
                                     </option>
                                 </select>
-                                <button class='btn btn-sm btn-default'
+                                <span class="input-group-btn">
+
+                                <button class='btn btn-default'
                                         ng-click='addNewCommonProblem(acuteForm, "acute");$event.stopPropagation();'>
                                     Add acute problem
                                 </button>
+                                    </span>
                             </div>
                             <br>
-                            <div>
+                            <div class="input-group">
                                 <select class='form-control' ng-model="chronicForm" title=""
                                         ng-click="$event.stopPropagation();">
                                     <option ng-repeat="chronic in chronics" value="{{ chronic.id }}">
                                         {{chronic.problem_name }}
                                     </option>
                                 </select>
-                                <button class='btn btn-sm btn-default'
+                                <span class="input-group-btn">
+                                <button class='btn btn-default'
                                         ng-click='addNewCommonProblem(chronicForm, "chronic");$event.stopPropagation();'>
                                     Add chronic problem
                                 </button>
+                                    </span>
                             </div>
                             <br>
                         </div>
 
                         <!--Search problem normally-->
-                        <input type='text' class='form-control' id='problemTermInput'
-                               ng-model='problem_term'
-                               ng-model-options="{debounce: 1000}"
-                               ng-change="problemTermChanged(problem_term)"
-                               ng-click="$event.stopPropagation();"
-                               placeholder='Search Problem....'>
-                        <button class='btn btn-sm btn-default'
-                                ng-click='add_new_problem(problem_term);$event.stopPropagation();'>
+                        <div class="input-group">
+
+                            <input type='text' class='form-control' id='problemTermInput'
+                                   ng-model='problem_term'
+                                   ng-model-options="{debounce: 1000}"
+                                   ng-change="problemTermChanged(problem_term)"
+                                   ng-click="$event.stopPropagation();"
+                                   placeholder='Search Problem....'>
+                            <span class="input-group-btn">
+                            <button class='btn btn-default'
+                                    ng-click='add_new_problem(problem_term);$event.stopPropagation();'>
                             Add Problem
-                        </button>
+                            </button>
+                            </span>
+                        </div>
                         <hr>
                         <!--Problem candidate for -->
                         <div ng-show='new_problem.set==true'>
