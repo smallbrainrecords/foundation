@@ -8,7 +8,7 @@ from users_app.serializers import UserProfileSerializer
 
 
 class DocumentListSerialization(serializers.ModelSerializer):
-    patient = serializers.SerializerMethodField()
+    patient = UserProfileSerializer()
 
     class Meta:
         model = Document
@@ -17,10 +17,6 @@ class DocumentListSerialization(serializers.ModelSerializer):
             'document_name',
             'patient',
         )
-
-    def get_patient(self, obj):
-        return obj.patient_id is None and " " or str(obj.patient)
-
 
 class DocumentSerialization(serializers.ModelSerializer):
     author = UserProfileSerializer()
