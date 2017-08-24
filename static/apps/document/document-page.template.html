@@ -53,11 +53,11 @@
 
             <div class="col-md-12" ng-show="enableEditLabel">
                 <span ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list cursor"
-                      ng-class="label.is_pinned ? '' :''">
+                      ng-class="label.pin ? '' :''">
                     <a class="todo-label" ng-class="label.css_class"
-                       ng-click="label.is_pinned ? unpinDocumentLabel(document,label) :pinLabelToDocument(document, label)">
+                       ng-click="label.pin ? unpinDocumentLabel(document,label) :pinLabelToDocument(document, label)">
                         <span ng-bind="label.name"></span>
-                        <i class="fa fa-check ng-scope" ng-if="label.is_pinned"></i>
+                        <i class="fa fa-check ng-scope" ng-if="label.pin"></i>
                     </a>
                 </span>
             </div>
@@ -83,44 +83,6 @@
         <br>
     </section>
 
-    <!--Pinned todo-->
-    <section ng-show="document.patient" id="document-todos" ng-click="enableTodoPin=!enableTodoPin">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                List of pinned todo
-            </div>
-            <div class="panel-body">
-                <!--Add todo form-->
-                <div class='form-inline' ng-show='permitted(["add_todo"])'>
-                    <label for="todoNameInput"> Todo name </label>
-                    <div class='input-group'>
-                        <input type='text' ng-model='new_todo.name' title="Todo name"
-                               class="form-control" id='todoNameInput' ng-click="$event.stopPropagation();">
-                        <span class="input-group-btn">
-                            <button type='button' class='btn btn-default'
-                                    ng-click="addTodo(new_todo);$event.stopPropagation();">Add Todo</button>
-                        </span>
-                    </div>
-                </div>
-                <!-- List of pinned todo-->
-                <ul class="ul-clean no-padding">
-                    <li ng-repeat="todo in active_todos | filter:(enableTodoPin ? '' :{'is_pinned':true})  track by $index">
-                        <button ng-if="enableTodoPin" class="btn dube-btn-pin-unpin flex-item pull-left"
-                                ng-click="todo.is_pinned ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo);$event.stopPropagation();"
-                                ng-class="todo.is_pinned ? 'btn-danger':'btn-primary'">
-                            <span ng-bind="todo.is_pinned ? 'Un pin' : 'Pin'"></span>
-                        </button>
-                        <a class="item-box flex-container"
-                           href="/u/patient/manage/{{todo.patient.id}}/#/todo/{{todo.id}}"
-                           ng-click="$event.stopPropagation();">
-                            <span ng-bind="todo.todo" class="flex-item"></span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
     <!--Pinned problem-->
     <section ng-show="document.patient" id="document-problems" ng-click="enableProblemPin=!enableProblemPin">
         <div class="panel panel-default">
@@ -130,7 +92,6 @@
             <div class="panel-body">
                 <div class='row' ng-if='permitted(["add_problem"])'>
                     <div class='col-md-12'>
-                        <br>
                         <div ng-if="['physician','mid-level'].indexOf(active_user.role) !=-1">
                             <p>Common problem:</p>
                             <div class="input-group">
@@ -168,7 +129,6 @@
 
                         <!--Search problem normally-->
                         <div class="input-group">
-
                             <input type='text' class='form-control' id='problemTermInput'
                                    ng-model='problem_term'
                                    ng-model-options="{debounce: 1000}"
@@ -209,23 +169,63 @@
                         </div>
                     </div>
                 </div>
-                <hr>
+
+                <!-- List of active problem-->
+                <div class="checkbox" ng-repeat="problem in active_probs track by $index" ng-show="enableProblemPin"
+                     ng-click="$event.stopPropagation();">
+                    <input type="checkbox" ng-model="problem.pin" title="{{problem.problem_name}}" id="{{problem.id}}"
+                           ng-change="!problem.pin ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem);$event.stopPropagation();">
+                    <label for="{{problem.id}}" ng-bind="problem.problem_name"></label>
+                </div>
 
                 <!-- Pinned problem list-->
-                <ul class="ul-clean no-padding">
-                    <li ng-repeat="problem in active_probs | filter:(enableProblemPin ? '' :{'is_pinned':true}) track by $index">
-                        <button ng-if="enableProblemPin" ng-show="problem.is_active"
-                                ng-class="problem.is_pinned ? 'btn-danger':'btn-primary'"
-                                class="btn dube-btn-pin-unpin pull-left flex-item"
-                                ng-click="problem.is_pinned ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem);$event.stopPropagation();">
-                            <span ng-bind="problem.is_pinned ? 'Un pin' : 'Pin'"></span>
-                        </button>
-                        <a class="item-box flex-container"
-                           href="/u/patient/manage/{{problem.patient}}/#/problem/{{problem.id}}"
-                           ng-show="problem.is_active"
-                           ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                <ul class="ul-clean no-padding" ng-show="!enableProblemPin">
+                    <li ng-repeat="problem in active_probs | filter:{'pin':true} track by $index">
+                        <a class="item-box flex-container" ng-class='problem.is_controlled ? "green-box" : "red-box" '
+                           href="/u/patient/manage/{{problem.patient}}/#/problem/{{problem.id}}">
                             <span ng-bind="problem.problem_name" class="flex-item"></span>
-                            <span ng-show="problem.authenticated==false" class="flex-item">(not authenticated)</span>
+                            <span ng-show="!problem.authenticated" class="flex-item">(not authenticated)</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!--Pinned todo-->
+    <section ng-show="document.patient" id="document-todos" ng-click="enableTodoPin=!enableTodoPin">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                List of pinned todo
+            </div>
+            <div class="panel-body">
+                <!--Add todo form-->
+                <div class='form-inline' ng-show='permitted(["add_todo"])'>
+                    <label for="todoNameInput"> Todo name </label>
+                    <div class='input-group'>
+                        <input type='text' ng-model='new_todo.name' title="Todo name"
+                               class="form-control" id='todoNameInput' ng-click="$event.stopPropagation();">
+                        <span class="input-group-btn">
+                            <button type='button' class='btn btn-default'
+                                    ng-click="addTodo(new_todo);$event.stopPropagation();">Add Todo</button>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- List of active problem-->
+                <div class="checkbox" ng-repeat="todo in active_todos track by $index" ng-show="enableTodoPin"
+                     ng-click="$event.stopPropagation();">
+                    <input type="checkbox" ng-model="todo.pin" title="{{todo.todo}}" id="{{todo.id}}"
+                           ng-change="!todo.pin ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo);$event.stopPropagation();">
+                    <label for="{{todo.id}}" ng-bind="todo.todo"></label>
+                </div>
+
+                <!-- List of pinned todo-->
+                <ul class="ul-clean no-padding" ng-show="!enableTodoPin">
+                    <li ng-repeat="todo in active_todos | filter:{'pin':true} track by $index">
+                        <a class="item-box flex-container" ng-click="$event.stopPropagation();"
+                           href="/u/patient/manage/{{todo.patient.id}}/#/todo/{{todo.id}}">
+                            <span ng-bind="todo.todo" class="flex-item"></span>
                         </a>
                     </li>
                 </ul>
