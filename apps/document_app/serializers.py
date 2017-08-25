@@ -18,6 +18,7 @@ class DocumentListSerialization(serializers.ModelSerializer):
             'patient',
         )
 
+
 class DocumentSerialization(serializers.ModelSerializer):
     author = UserProfileSerializer()
     patient = UserProfileSerializer()

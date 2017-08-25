@@ -23,13 +23,13 @@
             {label: 'Year', value: 3},
         ])
         .service('sharedService', sharedService);
-    sharedService.$inject = ['$http', '$cookies', 'Upload', 'hotkeys', '$location', 'httpService'];
+    sharedService.$inject = ['$http', '$cookies', 'Upload', 'httpService'];
 
-    function sharedService($http, $cookies, Upload, hotkeys, $location, httpService) {
+    function sharedService($http, $cookies, Upload, httpService) {
         return {
             settings: {},
             uploadDocument: uploadDocument,
-            addCommonProblem:addCommonProblem,
+            addCommonProblem: addCommonProblem,
             deleteDocumentTag: deleteDocumentTag,
             pinLabelToDocument: pinLabelToDocument,
             unpinDocumentLabel: unpinDocumentLabel,
@@ -47,7 +47,7 @@
             addToDo: addToDo,
             addProblem: addProblem,
             listTerms: listTerms,
-
+            getTodoList: getTodoList
         };
 
         /**
@@ -90,8 +90,8 @@
          * @param del_in_sys    Flag indicate will file be deleted in system or not
          */
         function deleteDocumentTag(document, tag_id, tag_type, del_in_sys) {
-            del_in_sys = del_in_sys == undefined ? false : del_in_sys;
-            return $http.post('/docs/delete/' + document.id, {
+            del_in_sys = del_in_sys === undefined ? false : del_in_sys;
+            return $http.post(`/docs/delete/${document.id}`, {
                 'document': document.id,
                 'del_tag_id': tag_id.id,
                 'del_tag_type': tag_type,
@@ -172,7 +172,7 @@
          * @param documentId
          */
         function getDocumentInfo(documentId) {
-            return $http.get('/docs/info/' + documentId);
+            return $http.get(`/docs/info/${documentId}`);
         }
 
         /**
@@ -180,7 +180,7 @@
          * @param document
          */
         function removeDocument(document) {
-            return $http.post('/docs/remove/' + document.id, null, {
+            return $http.post(`/docs/remove/${document.id}`, null, {
                 headers: {
                     'X-CSRFToken': $cookies.get('csrftoken')
                 }
@@ -207,7 +207,7 @@
         }
 
         function fetchPatientInfo(patient_id) {
-            var url = '/u/patient/' + patient_id + '/info';
+            var url = `/u/patient/${patient_id}/info`;
 
             return $http.get(url);
 
@@ -219,20 +219,20 @@
         }
 
         function fetchPatientTodos(patient_id) {
-            var url = '/u/patient/' + patient_id + '/patient_todos_info';
+            var url = `/u/patient/${patient_id}/patient_todos_info`;
 
             return $http.get(url);
 
         }
 
         function fetchProblems(patient_id) {
-            var url = '/p/problem/' + patient_id + '/getproblems';
+            var url = `/p/problem/${patient_id}/getproblems`;
             return $http.get(url);
         }
 
         function addToDo(form) {
 
-            var url = '/todo/patient/' + form.patient_id + '/todos/add/new_todo';
+            var url = `/todo/patient/${form.patient_id}/todos/add/new_todo`;
 
             return httpService.post(form, url);
 
@@ -242,7 +242,7 @@
 
         function addProblem(form) {
 
-            var url = '/p/patient/' + form.patient_id + '/problems/add/new_problem';
+            var url = `/p/patient/${form.patient_id}/problems/add/new_problem`;
 
             return httpService.post(form, url);
 
@@ -260,9 +260,22 @@
         }
 
         function addCommonProblem(form) {
-            var url = '/p/patient/' + form.patient_id + '/problems/add/new_common_problem';
+            var url = `/p/patient/${form.patient_id}/problems/add/new_common_problem`;
 
             return httpService.post(form, url);
+        }
+
+        /**
+         * Condition
+         * @param userID
+         * @param isAccomplished
+         * @param loadAll
+         */
+        function getTodoList(userID, isAccomplished = false, loadAll = false) {
+            return httpService.get({
+                accomplished: isAccomplished,
+                all: true
+            }, `/u/users/${userID}/todos`, true)
         }
     }
 })();

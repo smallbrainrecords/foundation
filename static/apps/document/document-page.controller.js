@@ -33,6 +33,7 @@
         $scope.enableEditPatient = false;
         $scope.new_todo = {};
         $scope.new_problem = {set: false};
+        $scope.indirectPinnedProblem = [];
 
         $scope.deleteDocument = deleteDocument;
         $scope.getPatientInfo = getPatientInfo;
@@ -68,6 +69,12 @@
                     value.pin = _.contains(document_label_pk, value.id);
                 });
 
+                // Get all indirect problem pinned to the document
+                _.map($scope.document.todos, (ele, idx) => {
+                    if (ele.problem && !_.contains($scope.indirectPinnedProblem, ele.problem.id))
+                        $scope.indirectPinnedProblem.push(ele.problem.id);
+                });
+
                 // Loading all related
                 if ($scope.document.patient !== null) {
                     $scope.patient_id = $scope.document.patient.user.id;
@@ -96,9 +103,18 @@
          */
         function pinTodo2Document(document, todo) {
             todo.pin = true;
+            document.todos.push(todo);
+
             documentService.pinTodo2Document(document, todo)
                 .then((response) => {
                     response.data.success ? toaster.pop('success', 'Done', 'Added todo to document') : toaster.pop('error', 'Warning', 'Something went wrong!');
+
+                    // If todo is pined to a problem then display the problem in pinned list
+                    if (todo.problem !== null) {
+                        _.map($scope.active_probs, (ele, idx) => {
+                            ele.pin = ele.id === todo.problem.id;
+                        })
+                    }
                 });
         }
 
@@ -109,8 +125,38 @@
          */
         function unpinDocumentTodo(document, todo) {
             todo.pin = false;
+
+            // Remove in document array
+            _.map(document.todos, (ele, idx) => {
+                if (ele.id === todo.id)
+                    document.todos.splice(idx, 1);
+            });
+
+            // Request to backend stuff
             sharedService.unpinDocumentTodo(document, todo).then(function (response) {
-                response.data.success ? toaster.pop('success', 'Done', 'Msg when success') : toaster.pop('error', 'Error', 'Something went wrong!');
+                response.data.success ? toaster.pop('success', 'Done', 'Unpin success') : toaster.pop('error', 'Error', 'Something went wrong!');
+
+                // If todo is pined to a problem and no other document's todo have sample problem
+                if (todo.problem !== null) {
+                    let todoProblemIsNotIndirectToDocumentByOtherTodo = true;
+                    _.map($scope.document.todos, (ele, idx) => {
+                        if (ele.problem !== null && ele.problem.id === todo.problem.id)
+                            todoProblemIsNotIndirectToDocumentByOtherTodo = false;
+                    });
+
+                    let todoProblemIsNotPinDirectly = true;
+                    _.map($scope.document.problems, (ele, idx) => {
+                        if (ele.id === todo.problem.id)
+                            todoProblemIsNotPinDirectly = false;
+                    });
+
+                    if (todoProblemIsNotIndirectToDocumentByOtherTodo && todoProblemIsNotPinDirectly) {
+                        _.map($scope.active_probs, (ele, idx) => {
+                            if (ele.id === todo.problem.id)
+                                ele.pin = false;
+                        })
+                    }
+                }
             })
         }
 
@@ -121,10 +167,12 @@
          */
         function pinProblem2Document(document, prob) {
             prob.pin = true;
+
+            document.problems.push(prob);
+
             documentService.pinProblem2Document(document, prob)
                 .then((response) => {
                     response.data.success ? toaster.pop('success', 'Done', 'Document is pinned to problem') : toaster.pop('error', 'Error', 'Something went wrong!');
-
                 });
         }
 
@@ -135,6 +183,13 @@
          */
         function unpinDocumentProblem(document, prob) {
             prob.pin = false;
+
+            // Remove in document array
+            _.map(document.problems, (ele, idx) => {
+                if (ele.id === prob.id)
+                    document.problems.splice(idx, 1);
+            });
+
             sharedService.unpinDocumentProblem(document, prob)
                 .then((response) => {
                     response.data.success ? toaster.pop('success', 'Done', 'Remove problem successfully') : toaster.pop('error', 'Error', 'Something went wrong!');
@@ -181,28 +236,28 @@
          * @param patientId
          */
         function getPatientInfo(patientId) {
-            sharedService.fetchPatientTodos(patientId)
-                .then(function (response) {
-                    // TODO: AnhDN in case active_todos is not fully loaded.
-                    $scope.active_todos = response.data['pending_todos']; // aka active todo
+            sharedService.getTodoList(patientId, false, true)
+                .then((response) => {
+                    $scope.active_todos = response.data;
 
-                    // TODO: Is this task is correct place
-                    var document_todo_pk = _.pluck($scope.document.todos, 'id');
+                    // Direct pinned todo
+                    let document_todo_pk = _.pluck($scope.document.todos, 'id');
                     _.map($scope.active_todos, function (value, key) {
                         value.pin = _.contains(document_todo_pk, value.id);
                     })
                 });
 
             // Fetch user's problem
-            sharedService.fetchProblems(patientId).then(function (response) {
-                $scope.active_probs = response.data.problems;
+            sharedService.fetchProblems(patientId)
+                .then((response) => {
+                    $scope.active_probs = response.data.problems;
 
-                // TODO: Is this task is correct place
-                var document_problem_pk = _.pluck($scope.document.problems, 'id');
-                _.map($scope.active_probs, function (value, key) {
-                    value.pin = _.contains(document_problem_pk, value.id)
+                    // Direct pinned problem and Indirect(via todo's problem) pinned problem
+                    let document_problem_pk = _.pluck($scope.document.problems, 'id');
+                    _.map($scope.active_probs, function (value, key) {
+                        value.pin = _.contains(document_problem_pk, value.id) || _.contains($scope.indirectPinnedProblem, value.id);
+                    });
                 });
-            });
         }
 
         /**
@@ -296,7 +351,7 @@
                 return false;
             }
 
-            var user_permissions = $scope.active_user.permissions;
+            let user_permissions = $scope.active_user.permissions;
 
             for (var key in permissions) {
 
