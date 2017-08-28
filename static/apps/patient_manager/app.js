@@ -114,7 +114,7 @@
                 controller: 'DataSettingsCtrl'
             })
             .when('/medication/:medication_id', {
-                templateUrl: '/static/apps/patient_manager/partials/medication/medication.html',
+                templateUrl: '/static/apps/patient_manager/partials/medication-page.html',
                 controller: 'MedicationCtrl'
             })
             .when('/document/:documentId', {

@@ -1018,7 +1018,7 @@
         function updateProfilePicture() {
             ngDialog.open({
                 controller: 'PortraitUpdCtrl',
-                template: '/static/apps/patient_manager/partials/modals/update_profile_picture.html',
+                template: 'portraitUpdateDialog',
                 scope: $scope
             });
         }

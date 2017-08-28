@@ -224,7 +224,7 @@
             $scope.open_image_box = function (image) {
 
                 ngDialog.open({
-                    template: '/static/apps/patient_manager/partials/modals/image.html',
+                    template: 'imageBoxDialog',
                     className: 'ngdialog-theme-default large-modal',
                     scope: $scope,
                     cache: false,
