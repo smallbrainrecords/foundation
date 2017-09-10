@@ -4,9 +4,111 @@
 
 
     angular.module('ManagerApp').service('patientService',
-        function ($http, $q, $cookies, httpService) {
+        function ($http, $q, $cookies, $rootScope, $filter, httpService) {
             const base_url = 'u/patient/';
             return {
+                activeUser: null,
+                patientInfo: null,
+                bleedingRisk: null,
+                patientID: null,
+                userID: null,
+                pendingTodo: [],
+                accomplishedTodo: [],
+                pendingTodoPage: 1,
+                accomplishedTodoPage: 1,
+                accomplishedTodoLoaded: false,
+                pendingTodoLoaded: false,
+                loadMoreTodo: function (patientID) {
+                    // Ignore if todo is fully loaded
+                    if (this.pendingTodoLoaded) {
+                        $rootScope.$broadcast('todoListUpdated');
+                        return;
+                    }
+
+                    httpService.get({
+                        accomplished: false,
+                        page: this.pendingTodoPage,
+                        all: false
+                    }, `/u/users/${patientID}/todos`, true)
+                        .then((resp) => {
+                            if (resp.success) {
+                                this.pendingTodoPage++;
+                                // Save data to global storage
+                                this.pendingTodo = this.pendingTodo.concat(resp.data);
+                                this.pendingTodoLoaded = resp.data.length === 0;
+
+                                $rootScope.$broadcast('todoListUpdated');
+                            }
+                        });
+                },
+                addINRTodo: function (patientId, todo) {
+                    return $http.post(`/inr/${patientId}/order/add`, todo).then((resp) => {
+                        this.pendingTodo.unshift(resp.data.order);
+
+                        $rootScope.$broadcast('todoAdded');
+
+                        return resp;
+                    });
+                },
+                addProblemTodo: function (form) {
+                    let url = `/p/problem/${form.problem_id}/add_todo`;
+                    return httpService.post(form, url).then((resp) => {
+                        this.pendingTodo.unshift(resp.todo);
+
+                        $rootScope.$broadcast('todoAdded');
+
+                        return resp;
+                    });
+                },
+                getProblemTodo: function (problemID) {
+                    return $filter('filter')(this.pendingTodo, {problem: {id: parseInt(problemID)}}, true);
+                },
+                getColonCancerToDo: function (problemID) {
+                    return _.filter(this.pendingTodo, (ele, idx) => {
+                        return !_.isNull(ele.colon_cancer) && !_.isNull(ele.problem) && _.isEqual(ele.problem.id, parseInt(problemID));
+                    });
+                },
+                getA1CToDo: function (problemID) {
+                    return _.filter(this.pendingTodo, (ele, idx) => {
+                        return !_.isNull(ele.a1c) && !_.isNull(ele.problem) && _.isEqual(ele.problem.id, parseInt(problemID));
+                    });
+                },
+                getINRToDo: function (problemID) {
+                    return $filter('filter')(this.pendingTodo, {
+                        created_at: 1,
+                        problem: {id: parseInt(problemID)}
+                    }, true);
+                },
+                toggleTodoStatus: function (todo) {
+                    // Update UI data
+                    if (todo.accomplished) {
+                        // Item is change state from pending -> accomplished
+                        _.map(this.pendingTodo, (ele, idx) => {
+                            if (!_.isUndefined(ele) && todo.id == ele.id) {
+                                this.pendingTodo.splice(idx, 1);
+                                this.accomplishedTodo.push(todo);
+                            }
+                        });
+                    } else {
+                        _.map(this.accomplishedTodo, (ele, idx) => {
+                            if (!_.isUndefined(ele) && todo.id == ele.id) {
+                                this.accomplishedTodo.splice(idx, 1);
+                                this.pendingTodo.push(todo);
+                            }
+                        });
+                    }
+
+                    // Then update API
+                    this.updateTodoStatus(todo).then((response) => {
+                        $rootScope.$broadcast('todoListUpdated');
+                    });
+                },
+                changeMember: function () {
+                },
+                changeLabel: function () {
+                },
+                changeDueDate: function () {
+                },
                 csrf_token: csrf_token,
                 fetchPatientInfo: fetchPatientInfo,
                 fetchTimeLineProblem: fetchTimeLineProblem,
@@ -60,15 +162,13 @@
             };
 
             function csrf_token() {
-
-                var token = $cookies.get('csrftoken');
-                return token;
+                return $cookies.get('csrftoken');
             }
 
             function fetchPatientInfo(patient_id) {
 
-                var params = {};
-                var url = '/u/patient/' + patient_id + '/info';
+                let params = {};
+                let url = `/u/patient/${patient_id}/info`;
 
                 return httpService.get(params, url);
 
@@ -76,8 +176,8 @@
 
             function fetchTimeLineProblem(patient_id) {
 
-                var params = {};
-                var url = '/u/patient/' + patient_id + '/timelineinfo';
+                let params = {};
+                let url = `/u/patient/${patient_id}/timelineinfo`;
 
                 return httpService.get(params, url);
 
@@ -85,23 +185,23 @@
 
             function fetchPatientTodos(patient_id) {
 
-                var params = {};
-                var url = '/u/patient/' + patient_id + '/patient_todos_info';
+                let params = {};
+                let url = `/u/patient/${patient_id}/patient_todos_info`;
 
                 return httpService.get(params, url);
 
             }
 
             function fetchProblems(patient_id) {
-                var params = {};
-                var url = '/p/problem/' + patient_id + '/getproblems';
+                let params = {};
+                let url = `/p/problem/${patient_id}/getproblems`;
                 return httpService.get(params, url);
             }
 
             function fetchProblemInfo(problem_id) {
 
-                var url = "/p/problem/" + problem_id + "/info";
-                var params = {};
+                let url = `/p/problem/${problem_id}/info`;
+                let params = {};
 
                 return httpService.get(params, url);
 
@@ -109,16 +209,16 @@
 
             function fetchGoalInfo(goal_id) {
 
-                var url = "/g/goal/" + goal_id + "/info";
-                var params = {};
+                let url = `/g/goal/${goal_id}/info`;
+                let params = {};
 
                 return httpService.get(params, url);
             }
 
             function fetchEncounterInfo(encounter_id) {
 
-                var url = "/enc/encounter/" + encounter_id + "/info";
-                var params = {};
+                let url = `/enc/encounter/${encounter_id}/info`;
+                let params = {};
 
                 return httpService.get(params, url);
 
@@ -127,8 +227,8 @@
 
             function getEncounterStatus(patient_id) {
 
-                var url = "/enc/patient/" + patient_id + "/encounter/status";
-                var params = {};
+                let url = `/enc/patient/${patient_id}/encounter/status`;
+                let params = {};
 
                 return httpService.get(params, url);
 
@@ -138,8 +238,8 @@
             function startNewEncounter(patient_id) {
 
 
-                var url = '/enc/patient/' + patient_id + '/encounter/start';
-                var form = {'patient_id': patient_id};
+                let url = `/enc/patient/${patient_id}/encounter/start`;
+                let form = {'patient_id': patient_id};
 
                 return httpService.post(form, url);
 
@@ -152,8 +252,8 @@
              */
             function stopEncounter(encounter_id) {
 
-                var url = "/enc/encounter/" + encounter_id + "/stop";
-                var params = {};
+                let url = "/enc/encounter/" + encounter_id + "/stop";
+                let params = {};
 
                 return httpService.get(params, url);
 
@@ -162,7 +262,7 @@
 
             function addEventSummary(form) {
 
-                var url = '/enc/encounter/add/event_summary';
+                let url = '/enc/encounter/add/event_summary';
 
                 return httpService.post(form, url);
 
@@ -170,8 +270,8 @@
 
             function fetchPainAvatars(patient_id) {
 
-                var url = "/patient/" + patient_id + "/pain_avatars";
-                var params = {};
+                let url = `/patient/${patient_id}/pain_avatars`;
+                let params = {};
 
                 return httpService.get(params, url);
 
@@ -180,8 +280,8 @@
 
             function listTerms(query) {
 
-                var params = {'query': query};
-                var url = "/list_terms/";
+                let params = {'query': query};
+                let url = "/list_terms/";
 
                 return httpService.get(params, url);
 
@@ -190,7 +290,7 @@
 
             function addGoal(form) {
 
-                var url = '/g/patient/' + form.patient_id + '/goals/add/new_goal';
+                let url = `/g/patient/${form.patient_id}/goals/add/new_goal`;
 
                 return httpService.post(form, url);
 
@@ -198,16 +298,19 @@
 
             function addToDo(form) {
 
-                var url = '/todo/patient/' + form.patient_id + '/todos/add/new_todo';
+                let url = `/todo/patient/${form.patient_id}/todos/add/new_todo`;
+                return httpService.post(form, url).then((resp) => {
+                    this.pendingTodo.unshift(resp.todo);
 
-                return httpService.post(form, url);
+                    $rootScope.$broadcast('todoAdded');
 
-
+                    return resp;
+                });
             }
 
             function addProblem(form) {
 
-                var url = '/p/patient/' + form.patient_id + '/problems/add/new_problem';
+                let url = `/p/patient/${form.patient_id}/problems/add/new_problem`;
 
                 return httpService.post(form, url);
 
@@ -216,7 +319,7 @@
 
             function updatePatientSummary(form) {
 
-                var url = '/u/patient/' + form.patient_id + '/profile/update_summary';
+                let url = `/u/patient/${form.patient_id}/profile/update_summary`;
 
                 return httpService.post(form, url);
 
@@ -224,7 +327,7 @@
 
             function updateTodoStatus(form) {
 
-                var url = '/todo/todo/' + form.id + '/update/';
+                let url = `/todo/todo/${form.id}/update/`;
 
                 return httpService.post(form, url);
 
@@ -233,8 +336,8 @@
 
             function fetchActiveUser() {
 
-                var url = '/u/active/user/';
-                var params = {};
+                let url = '/u/active/user/';
+                let params = {};
 
                 return httpService.get(params, url);
 
@@ -242,25 +345,25 @@
 
             function updatePatientPassword(form) {
 
-                var url = '/u/patient/' + form.patient_id + '/profile/update_password';
+                let url = `/u/patient/${form.patient_id}/profile/update_password`;
 
                 return httpService.post(form, url);
 
             }
 
             function updateBasicProfile(form) {
-                var url = '/u/patient/' + form.user_id + '/update/basic';
+                let url = `/u/patient/${form.user_id}/update/basic`;
                 return httpService.post(form, url);
             }
 
             function updateProfile(form, files) {
 
 
-                var deferred = $q.defer();
+                let deferred = $q.defer();
 
-                var uploadUrl = '/u/patient/' + form.user_id + '/update/profile';
+                let uploadUrl = `/u/patient/${form.user_id}/update/profile`;
 
-                var fd = new FormData();
+                let fd = new FormData();
 
                 fd.append('csrfmiddlewaretoken', this.csrf_token());
 
@@ -289,148 +392,148 @@
             }
 
             function updateEmail(form) {
-                var url = '/u/patient/' + form.user_id + '/update/email';
+                let url = `/u/patient/${form.user_id}/update/email`;
                 return httpService.post(form, url);
             }
 
             function updateTodoOrder(form) {
-                var url = '/todo/todo/updateOrder/';
+                let url = '/todo/todo/updateOrder/';
                 return httpService.postJson(form, url);
             }
 
             function updateProblemOrder(form) {
-                var url = '/p/problem/updateOrder/';
+                let url = '/p/problem/updateOrder/';
                 return httpService.postJson(form, url);
             }
 
             function updatePatientNote(form) {
 
-                var url = '/u/patient/' + form.patient_id + '/profile/update_note';
+                let url = `/u/patient/${form.patient_id}/profile/update_note`;
 
                 return httpService.post(form, url);
 
             }
 
             function getPatientsList() {
-                var form = {};
-                var url = '/u/patients/';
+                let form = {};
+                let url = '/u/patients/';
                 return httpService.post(form, url);
             }
 
             function getSharingPatients(patient_id) {
-                var form = {};
-                var url = '/u/sharing_patients/' + patient_id;
+                let form = {};
+                let url = `/u/sharing_patients/${patient_id}`;
                 return httpService.post(form, url);
             }
 
             function addSharingPatient(form) {
-                var url = '/u/patient/add_sharing_patient/' + form.patient_id + '/' + form.sharing_patient_id;
+                let url = `/u/patient/add_sharing_patient/${form.patient_id}/${form.sharing_patient_id}`;
                 return httpService.post(form, url);
             }
 
             function removeSharingPatient(patient_id, sharing_patient_id) {
-                var form = {};
-                var url = '/u/patient/remove_sharing_patient/' + patient_id + '/' + sharing_patient_id;
+                let form = {};
+                let url = `/u/patient/remove_sharing_patient/${patient_id}/${sharing_patient_id}`;
                 return httpService.post(form, url);
             }
 
             function changeSharingMyStory(patient_id, sharing_patient_id) {
-                var form = {};
-                var url = '/u/patient/change_sharing_my_story/' + patient_id + '/' + sharing_patient_id;
+                let form = {};
+                let url = `/u/patient/change_sharing_my_story/${patient_id}/${sharing_patient_id}`;
                 return httpService.post(form, url);
             }
 
             function getUserInfo(user_id) {
 
-                var params = {};
-                var url = '/u/user_info/' + user_id + '/info/';
+                let params = {};
+                let url = `/u/user_info/${user_id}/info/`;
                 return httpService.get(params, url);
 
             }
 
             function addCommonProblem(form) {
-                var url = '/p/patient/' + form.patient_id + '/problems/add/new_common_problem';
+                let url = `/p/patient/${form.patient_id}/problems/add/new_common_problem`;
 
                 return httpService.post(form, url);
             }
 
             function getMyStory(patient_id) {
-                var params = {};
-                var url = '/my_story/' + patient_id + '/get_my_story';
+                let params = {};
+                let url = `/my_story/${patient_id}/get_my_story`;
                 return httpService.get(params, url);
             }
 
             function addMyStoryTab(form) {
-                var url = '/my_story/' + form.patient_id + '/add_tab';
+                let url = `/my_story/${form.patient_id}/add_tab`;
 
                 return httpService.post(form, url);
             }
 
             function addMyStoryText(form) {
-                var url = '/my_story/' + form.patient_id + '/' + form.tab_id + '/add_text';
+                let url = `/my_story/${form.patient_id}/${form.tab_id}/add_text`;
 
                 return httpService.post(form, url);
             }
 
             function getDatas(patient_id) {
-                var params = {};
-                var url = '/data/' + patient_id + '/get_datas';
+                let params = {};
+                let url = `/data/${patient_id}/get_datas`;
                 return httpService.get(params, url);
             }
 
             function addNewDataType(form) {
-                var url = '/data/' + form.patient_id + '/add_new_data_type';
+                let url = `/data/${form.patient_id}/add_new_data_type`;
 
                 return httpService.post(form, url);
             }
 
             function updateDataOrder(form) {
-                var url = '/data/updateOrder';
+                let url = '/data/updateOrder';
                 return httpService.postJson(form, url);
             }
 
             function trackDataClickEvent(form) {
-                var url = '/data/track/click';
+                let url = '/data/track/click';
                 return httpService.post(form, url);
             }
 
             function deleteMyStoryTab(patient_id, tab_id) {
-                var form = {};
-                var url = '/my_story/' + patient_id + '/delete_tab/' + tab_id;
+                let form = {};
+                let url = `/my_story/${patient_id}/delete_tab/${tab_id}`;
 
                 return httpService.post(form, url);
             }
 
             function saveMyStoryTab(form) {
-                var url = '/my_story/' + form.patient_id + '/save_tab/' + form.tab_id;
+                let url = `/my_story/${form.patient_id}/save_tab/${form.tab_id}`;
                 return httpService.post(form, url);
             }
 
             function deleteMyStoryText(patient_id, component_id) {
-                var form = {};
-                var url = '/my_story/' + patient_id + '/delete_text_component/' + component_id;
+                let form = {};
+                let url = `/my_story/${patient_id}/delete_text_component/${component_id}`;
 
                 return httpService.post(form, url);
             }
 
             function saveMyStoryText(form) {
-                var url = '/my_story/' + form.patient_id + '/save_text_component/' + form.component_id;
+                let url = `/my_story/${form.patient_id}/save_text_component/${form.component_id}`;
                 return httpService.post(form, url);
             }
 
             function saveMyStoryTextEntry(form) {
-                var url = '/my_story/' + form.patient_id + '/save_text_component_entry/' + form.component_id;
+                let url = `/my_story/${form.patient_id}/save_text_component_entry/${form.component_id}`;
                 return httpService.post(form, url);
             }
 
             function trackTabClickEvent(form) {
-                var url = '/my_story/track/click';
+                let url = '/my_story/track/click';
                 return httpService.post(form, url);
             }
 
             function getMedications(patient_id) {
-                var params = {};
-                var url = '/medication/' + patient_id + '/get_medications';
+                let params = {};
+                let url = `/medication/${patient_id}/get_medications`;
                 return httpService.get(params, url);
             }
 
@@ -440,8 +543,8 @@
              * @param patient_id
              */
             function getDocuments(patient_id) {
-                var params = {};
-                var url = '/docs/' + patient_id + '/get_pinned_document';
+                let params = {};
+                let url = `/docs/${patient_id}/get_pinned_document`;
                 return httpService.post(params, url);
             }
 

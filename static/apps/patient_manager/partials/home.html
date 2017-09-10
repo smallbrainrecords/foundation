@@ -491,7 +491,7 @@
 
                             <div class="todo-list-wrapper">
                                 <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
-                                    <todo todo-list="pending_todos" accomplished="false" show-problem="true"
+                                    <todo todo-list="pending_todos" show-problem="true"
                                           on-status-changed-success="updateStatusCallback"
                                           labels="labels" members="members"
                                           patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
@@ -505,13 +505,12 @@
                                 <hr>
 
                                 <div ng-show='show_accomplished_todos'>
-                                    <todo todo-list="accomplished_todos" accomplished="true" show-problem="true"
+                                    <todo todo-list="accomplished_todos" show-problem="true"
                                           on-status-changed-success="updateStatusCallback"
                                           labels="labels" members="members"
                                           patient-id="patient_id" user-id="patient_id"
                                           active-user="active_user"></todo>
                                     <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
-
                                 </div>
                             </div>
                         </div>

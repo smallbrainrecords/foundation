@@ -43,13 +43,15 @@
         $scope.sortedProblem = false;
         $scope.draggedProblem = false;
 
-        $scope.pending_todos = [];
-        $scope.accomplished_todos = [];
+
+        // Used to passing to the view
+        // $scope.pending_todos = angular.copy(patientService.pendingTodo, $scope.pending_todos);
+        // $scope.accomplished_todos = angular.copy(patientService.accomplishedTodo, $scope.accomplished_todos);
         $scope.todoIsLoading = false;
-        $scope.pendingTodoPage = 1;
-        $scope.accomplishedTodoPage = 1;
-        $scope.accomplishedTodoLoaded = false;
-        $scope.pendingTodoLoaded = false;
+        // $scope.pendingTodoPage = 1;
+        // $scope.accomplishedTodoPage = 1;
+        // $scope.accomplishedTodoLoaded = false;
+        // $scope.pendingTodoLoaded = false;
 
         $scope.add_bfdi_value = add_bfdi_value;
         $scope.add_goal = addGoal;
@@ -108,14 +110,11 @@
         $scope.bdfiValueIsChanged = bdfiValueIsChanged;
         $scope.loadMoreTodo = loadMoreTodo;
 
-
         init();
 
         function init() {
-            // Patient's todo list is already loaded with patient page
-            // $scope.pending_todos = _.where($scope.problem_todos, {accomplished: false});
-            // $scope.accomplished_todos = _.where($scope.problem_todos, {accomplished: true});
-            // $scope.todos_ready = true;
+            $scope.pending_todos = patientService.pendingTodo;// angular.copy(patientService.pendingTodo, $scope.pending_todos);
+            $scope.accomplished_todos = patientService.accomplishedTodo;// angular.copy(patientService.accomplishedTodo, $scope.accomplished_todos);
 
             patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
                 $scope.problems = data['problems'];
@@ -179,20 +178,24 @@
                 }
             });
 
+            // TODO: This should be set to global usage
             todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
                 $scope.members = data['members'];
             });
 
+            // TODO: This should be set to global usage
             todoService.fetchLabels($scope.patient_id).then(function (data) {
                 $scope.labels = data['labels'];
             });
 
-            problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function (data) {
-                $scope.problem_labels = data['labels'];
-            });
+            // TODO: This is unused
+            // problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function (data) {
+            //     $scope.problem_labels = data['labels'];
+            // });
 
+            // TODO: Low priority load
             patientService.getMyStory($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
+                if (data['success']) {
                     $scope.my_story_tabs = data['info'];
                     $scope.selected_tab = $scope.my_story_tabs[0];
                     $scope.myStoryTabTextComponentArray = _.flatten(_.pluck($scope.my_story_tabs, 'my_story_tab_components'));
@@ -201,8 +204,9 @@
                 }
             });
 
+            // TODO: Low priority load
             patientService.getDatas($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
+                if (data['success']) {
                     $scope.datas = data['info'];
                     // TODO: DRY
                     angular.forEach($scope.datas, function (data, key) {
@@ -326,8 +330,9 @@
                 }
             });
 
+            // TODO: Low priority load
             patientService.getMedications($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
+                if (data['success']) {
                     $scope.medications = data['info'];
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -335,10 +340,10 @@
             });
 
             $scope.$watch("viewMode", function (newVal, oldVal) {
-                if (newVal != oldVal) {
+                if (newVal !== oldVal) {
                     angular.forEach($scope.datas, function (data, key) {
                         // Default graph type
-                        if (data.graph == null || data.graph == undefined)
+                        if (data.graph === null || data.graph === undefined)
                             data.graph = 'Line';
                         // Temporary data using for generate graph
                         var tmpData = angular.copy(data);
@@ -355,7 +360,7 @@
             });
 
             $scope.$watch('files', function () {
-                if ($scope.files != undefined)
+                if ($scope.files !== undefined)
                     sharedService.uploadDocument($scope.files, $scope.user_id, $scope.patient_id, $scope.fileUploadSuccess);
             });
 
@@ -441,7 +446,6 @@
                 $temp.remove();
             });
 
-
             $scope.$on('tabPressed', function (event, args) {
                 if ('mystory' == $scope.collapse.show_homepage_tab) {
                     // Finding current DOM element which is focused
@@ -504,18 +508,18 @@
             });
         }
 
+        $scope.$on('todoListUpdated', function (event, args) {
+            $scope.pending_todos = patientService.pendingTodo;
+            $scope.todoIsLoading = false;
+        });
+
         function loadMoreTodo(accomplished) {
             // Only load more if there is no request in progress OR all data is loaded
-            if (!$scope.todoIsLoading && !$scope.pendingTodoLoaded) {
+            if (!$scope.todoIsLoading) {
+                // patientService.pendingTodoLoaded -> data/service flag
                 $scope.todoIsLoading = true;
-                patientService.getToDo($scope.patient_id, accomplished, $scope.pendingTodoPage).then((resp) => {
-                    $scope.todoIsLoading = false;
-                    if (resp.success) {
-                        $scope.pendingTodoPage = $scope.pendingTodoPage + 1;
-                        $scope.pending_todos = $scope.pending_todos.concat(resp.data);
-                        $scope.pendingTodoLoaded = resp.data.length === 0;
-                    }
-                });
+
+                patientService.loadMoreTodo($scope.patient_id);
             }
         }
 
@@ -767,13 +771,13 @@
             form.cproblem = problem;
             form.type = type;
             patientService.addCommonProblem(form).then(function (data) {
-                if (data['success'] == true) {
+                if (data['success']) {
                     toaster.pop('success', 'Done', 'New Problem added successfully');
                     $scope.problems.push(data['problem']);
 
                     $scope.open_problem(data['problem']);
 
-                } else if (data['success'] == false) {
+                } else if (!data['success']) {
                     toaster.pop('error', 'Error', data['msg']);
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong');
@@ -787,16 +791,20 @@
          * @param todo
          */
         function changeTodoList(list, todo) {
-            let todoIdx = list.indexOf(todo);
-            if (todo.accomplished) {
-                $scope.pending_todos.splice(todoIdx, 1);
-                $scope.accomplished_todos.push(todo);
-            } else {
-                // let todoIdx = $scope.accomplished_todos.indexOf(todo);
-                $scope.accomplished_todos.splice(todoIdx, 1);
-                $scope.pending_todos.push(todo);
-            }
+            patientService.toggleTodoStatus(todo);
+            // Manipulate the single data source
+            // let todoIdx = list.indexOf(todo);
+            // if (todo.accomplished) {
+            //     patientService.pendingTodo.splice(todoIdx, 1);
+            //     patientService.accomplishedTodo.push(todo);
+            // } else {
+            //     patientService.accomplishedTodo.splice(todoIdx, 1);
+            //     patientService.pendingTodo.push(todo);
+            // }
 
+            // Update view scope variables
+            // angular.copy(patientService.pendingTodo, $scope.pending_todos);
+            // angular.copy(patientService.accomplishedTodo, $scope.accomplished_todos);
         }
 
         function open_problem(problem) {

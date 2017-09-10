@@ -122,29 +122,29 @@
                         </div>
                     </div>
                     <div class='col-md-6'>
-                        <div class="row">
-                            <div class='col-md-12'>
-                                <p>Pending order:</p>
-                                <p ng-if='!a1c.a1c_todos || a1c.a1c_todos.length == 0'> No pending order</p>
-                                <div ng-if="a1c.a1c_todos.length">
-                                    <todo todo-list="a1c.a1c_todos" accomplished="false" show-problem="false"
+                        <div>
+                            <!--<div class='col-md-12'>-->
+                            <p>Pending order:</p>
+                            <p ng-if='orders.length == 0'> No pending order</p>
+                            <div ng-if="orders.length > 0">
+                                <todo todo-list="orders" accomplished="false" show-problem="false"
                                           on-status-changed-success="a1cTodoStatusChangedCallback"
                                           labels="labels" members="members"
                                           patient-id="patient_id" user-id="patient_id"
                                           active-user="active_user"></todo>
-                                    <wave-spinner ng-if="todoIsLoading"></wave-spinner>
-                                </div>
-                                <a href="#/a1c/{{a1c.id}}/add_different_order" class='btn btn-default'>Add a
-                                    different task</a>
+                                <wave-spinner ng-if="todoIsLoading"></wave-spinner>
                             </div>
+                            <!--</div>-->
                         </div>
-                        <div class="row">
-                            <div class='col-md-12'>
-                                <button class='btn btn-default' ng-click="repeatThreeMonths()">Repeat in 3
+                        <a href="#/a1c/{{a1c.id}}/add_different_order" class='btn btn-default btn-block'>Add a
+                            different task</a>
+                        <!--<div class="row">-->
+                        <!--<div class='col-md-12'>-->
+                        <button class='btn btn-default btn-block' ng-click="repeatThreeMonths()">Repeat in 3
                                     months
                                 </button>
-                            </div>
-                        </div>
+                        <!--</div>-->
+                        <!--</div>-->
                     </div>
                 </div>
             </div>

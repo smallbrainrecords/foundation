@@ -271,6 +271,9 @@
             };
 
         }) /* End of controller */
+        /**
+         * @deprecated
+         */
         .controller('AddNewOrderCtrl', function ($scope, $routeParams, colonService, ngDialog, problemService,
                                                  sharedService, toaster, $location, patientService) {
 

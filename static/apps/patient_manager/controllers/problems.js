@@ -111,10 +111,20 @@
             $scope.INROrderAdded = widgetTodoAdded;
             $scope.INROrderStatusChanged = widgetTodoStatusChanged;
 
+            $scope.$on('todoListUpdated', (event, args) => {
+                $scope.pending_todos = patientService.getProblemTodo($scope.problem_id);
+                $scope.todoIsLoading = false;
+            });
+
+            $scope.$on('todoAdded', (event, args) => {
+                $scope.pending_todos = patientService.getProblemTodo($scope.problem_id);
+            });
 
             init();
 
             function init() {
+                $scope.pending_todos = patientService.getProblemTodo($scope.problem_id);
+
                 patientService.fetchProblemInfo($scope.problem_id)
                     .then(function (data) {
                         $scope.loading = false;
@@ -286,6 +296,7 @@
                 // Image
                 problemService.getRelatedImages($scope.problem_id).then(function (response) {
                     $scope.problem_images = response.data['images'];
+
                 });
 
                 // Effecting & Effected problems
@@ -360,11 +371,6 @@
 
                 });
 
-                // $scope.$on('inrWidgetOrderAdded', function (event, args) {
-                // $scope.problem_todos.push(args.order)
-                // $scope.pending_todos.push(args.order)
-                // });
-
                 $interval(function () {
                     $scope.refresh_problem_activity();
                 }, 10000);
@@ -377,39 +383,7 @@
              * @param todo
              */
             function changeTodoList(list, todo) {
-                let todoIdx = list.indexOf(todo);
-                if (todo.accomplished) {
-                    $scope.pending_todos.splice(todoIdx, 1);
-                    $scope.accomplished_todos.push(todo);
-                    if (todo.a1c !== null) {
-                        let todoWidgetIdx = $scope.a1c.a1c_todos.indexOf(todo);
-                        $scope.a1c.a1c_todos.splice(todoWidgetIdx, 1);
-                    }
-
-                    if (todo.colon_cancer !== null) {
-                        let todoWidgetIdx = $scope.colon_cancers.colon_cancer_todos.indexOf(todo);
-                        $scope.colon_cancers.colon_cancer_todos.splice(todoWidgetIdx, 1);
-                    }
-
-                } else {
-                    // let todoIdx = $scope.accomplished_todos.indexOf(todo);
-                    $scope.accomplished_todos.splice(todoIdx, 1);
-                    $scope.pending_todos.push(todo);
-
-                    if (todo.a1c !== null) {
-                        $scope.a1c.a1c_todos.push(todo);
-                    }
-
-                    if (todo.colon_cancer !== null) {
-                        $scope.colon_cancers.colon_cancer_todos.push(todo);
-                    }
-                }
-
-                // Notify all child widget that parent to do list is changed
-                if (TODO_LIST.INR === todo.created_at) {
-                    $scope.$broadcast('todoStatusChanged', {'data': todo});
-                }
-
+                patientService.toggleTodoStatus(todo);
             }
 
             function convertDateTime(problem) {
@@ -1006,7 +980,8 @@
                         if (!_.isUndefined(data.value) && '$escape' !== data.value && '$document' !== data.value)
                             form.due_date = moment(data.value, acceptedFormat).toString();
                         // Is this should be called from problem service or todo service or shared/common service
-                        problemService.addTodo(form).then(postAddTodo);
+                        patientService.addProblemTodo(form).then(postAddTodo);
+                        // problemService.addTodo(form).then(postAddTodo);
                     });
                 }
 
@@ -1017,7 +992,7 @@
 
                         var addedTodo = response.todo;
                         form.name = '';
-                        $scope.pending_todos.push(addedTodo);
+                        // $scope.pending_todos.push(addedTodo);
                         $scope.set_authentication_false();
 
                         // Showing tag member dialog
@@ -1418,18 +1393,10 @@
             }
 
             function loadMoreTodo() {
-                // Only load more if there is no request in progress OR all data is loaded
-                if (!$scope.todoIsLoading && !$scope.pendingTodoLoaded) {
+                if (!$scope.todoIsLoading) {
                     $scope.todoIsLoading = true;
-                    problemService.getRelatedTodos($scope.problem_id, false, $scope.pendingTodoPage)
-                        .then((resp) => {
-                            $scope.todoIsLoading = false;
-                            if (resp.success) {
-                                $scope.pendingTodoPage = $scope.pendingTodoPage + 1;
-                                $scope.pending_todos = $scope.pending_todos.concat(resp.data);
-                                $scope.pendingTodoLoaded = resp.data.length === 0;
-                            }
-                        });
+
+                    patientService.loadMoreTodo($scope.patient_id);
                 }
             }
         });

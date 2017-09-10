@@ -255,8 +255,8 @@
                             </form>
                             <hr>
                             <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
-                                <todo todo-list="pending_todos" accomplished="false" show-problem="false"
-                                      on-status-changed-success="updateStatusCallback"
+                                      <!--on-status-changed-success="updateStatusCallback"-->
+                                <todo todo-list="pending_todos" show-problem="false"
                                       labels="labels" members="members"
                                       patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
                                 <wave-spinner ng-if="todoIsLoading"></wave-spinner>
@@ -267,8 +267,8 @@
                             </button>
                             <hr>
                             <div ng-show='show_accomplished_todos'>
-                                <todo todo-list="accomplished_todos" accomplished="true" show-problem="false"
-                                      on-status-changed-success="updateStatusCallback"
+                                      <!--on-status-changed-success="updateStatusCallback"-->
+                                <todo todo-list="accomplished_todos" show-problem="false"
                                       labels="labels" members="members"
                                       patient-id="patient_id" user-id="patient_id"
                                       active-user="active_user"></todo>
@@ -624,6 +624,7 @@
         </div>
         <div class='panel-body' ng-show="problem_images.length > 0">
             <div class='row'>
+                {{problem_images.length}}
                 <div class='col-md-2' ng-repeat='image in problem_images track by $index'>
                     <img ng-src='{{ image.image }}' class='thumbnail small-img' ng-click='open_image_box(image)'>
                     <br>
