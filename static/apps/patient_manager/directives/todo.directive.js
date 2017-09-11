@@ -56,6 +56,7 @@
             scope.label_component = {};
             scope.todos_ready = false;
             scope.sortableOptions = {
+                disabled: false,
                 update: function (e, ui) {
                     scope.sorted = true;
                 },
@@ -176,7 +177,14 @@
                 }
             }
 
+            /**
+             * Start editing todo item
+             * @param todo
+             */
             function todoChange(todo) {
+                // Disable sortable while editing item
+                scope.sortableOptions.disabled = true;
+
                 scope.current_todo = todo;
                 currentTodo = todo.todo;
                 scope.todo_changed = true;
@@ -185,7 +193,13 @@
                 });
             }
 
+            /**
+             * Finish editing by click close button on top right
+             * @param todo
+             */
             function closeThisTodo(todo) {
+                scope.sortableOptions.disabled = false;
+
                 if (currentTodo !== undefined)
                     todo.todo = currentTodo;
                 todo.changed = false;
@@ -206,6 +220,8 @@
                     }
 
                 });
+
+                scope.sortableOptions.disabled = false
             }
 
             function changeDueDate(todo) {
@@ -412,6 +428,7 @@
                     scope.current_todo.change_member = false;
                     scope.current_todo.create_label = false;
                     scope.current_todo = null;
+                    scope.sortableOptions.disabled = false
                 }
             }
 
