@@ -55,6 +55,7 @@
 
 {% block content %}
 <script src="/static/apps/patient_manager/app.js" type="text/javascript" charset="utf-8"></script>
+
 <script src="/static/apps/patient_manager/controllers/home.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/patient_manager/controllers/problems.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/patient_manager/controllers/goals.js" type="text/javascript" charset="utf-8"></script>
@@ -65,10 +66,21 @@
 <script src="/static/apps/patient_manager/controllers/todo.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/patient_manager/controllers/editUserController.js" type="text/javascript"
         charset="utf-8"></script>
-<script src="/static/apps/patient_manager/controllers/a1c.js" type="text/javascript"
+
+<!--A1C module's components-->
+<script src="/static/apps/a1c/a1c-new-order.controller.js" type="text/javascript"
         charset="utf-8"></script>
+<script src="/static/apps/a1c/a1c-new-value.controller.js" type="text/javascript"
+        charset="utf-8"></script>
+<script src="/static/apps/a1c/a1c-edit-delete-value.controller.js" type="text/javascript"
+        charset="utf-8"></script>
+<script src="/static/apps/a1c/a1c-edit-value.controller.js" type="text/javascript"
+        charset="utf-8"></script>
+
 <script src="/static/apps/patient_manager/controllers/manageSharingController.js" type="text/javascript"
         charset="utf-8"></script>
+
+<!--Services-->
 <script src="/static/apps/patient_manager/controllers/colon.js" type="text/javascript"
         charset="utf-8"></script>
 <script src="/static/apps/patient_manager/controllers/portraitUpdateDialogController.js" type="text/javascript"
@@ -83,7 +95,7 @@
 <script src="/static/apps/patient_manager/services/goalService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/patient_manager/services/encounterService.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/patient_manager/services/todoService.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/patient_manager/services/a1cService.js" type="text/javascript"
+<script src="/static/apps/patient_manager/services/a1c.service.js" type="text/javascript"
         charset="utf-8"></script>
 <script src="/static/apps/patient_manager/services/colonService.js" type="text/javascript"
         charset="utf-8"></script>
@@ -92,6 +104,7 @@
 <script src="/static/apps/patient_manager/services/medicationService.js" type="text/javascript"
         charset="utf-8"></script>
 
+<!--Directives-->
 <script src="/static/apps/patient_manager/directives/directives.js" type="text/javascript" charset="utf-8"></script>
 <script src="/static/apps/patient_manager/directives/timeline.directive.js" type="text/javascript"
         charset="utf-8"></script>

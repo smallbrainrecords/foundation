@@ -79,7 +79,7 @@
             $scope.open_change_data = open_change_data;
             $scope.open_change_medication = open_change_medication;
             $scope.open_change_problem_label = open_change_problem_label;
-            $scope.open_create_label_problems_list = open_create_label_problems_list;
+            $scope.open_create_label_problems_list = openCreateLabelProblemsList;
             $scope.open_create_problem_label = open_create_problem_label;
             $scope.open_data = open_data;
             $scope.open_image_box = open_image_box;
@@ -781,7 +781,7 @@
                 });
             }
 
-            function open_create_label_problems_list() {
+            function openCreateLabelProblemsList() {
                 $scope.create_label_problems_list = true;
             }
 
@@ -867,13 +867,7 @@
 
                         // Push newly added todo to active todo list
                         if (data.hasOwnProperty('todo')) {
-                            // let wikiNoteTodo = $interval(() => {
-                            // if ($scope.todos_ready) {
-                            // $scope.problem_todos.push(data.todo);
-                            $scope.pending_todos.push(data.todo);
-                            // $interval.cancel(wikiNoteTodo);
-                            // }
-                            // }, 500)
+                            patientService.addTodoCallback(data.todo);
                         }
                     } else {
                         toaster.pop('error', 'Warning', 'Action Failed');
@@ -899,13 +893,7 @@
                         $scope.set_authentication_false();
 
                         if (data.hasOwnProperty('todo')) {
-                            // let wikiNoteTodo = $interval(() => {
-                            //     if ($scope.todos_ready) {
-                            //         $scope.problem_todos.push(data.todo);
-                            $scope.pending_todos.push(data.todo);
-                            // $interval.cancel(wikiNoteTodo);
-                            // }
-                            // }, 500)
+                            patientService.addTodoCallback(data.todo);
                         }
 
                     } else {

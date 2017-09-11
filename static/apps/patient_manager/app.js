@@ -58,19 +58,19 @@
                 controller: 'TodoCtrl'
             })
             .when("/a1c/:a1c_id/add_different_order", {
-                templateUrl: '/static/apps/patient_manager/partials/a1c/add_different_order.html',
+                templateUrl: '/static/apps/a1c/add_different_order.html',
                 controller: 'AddDifferentOrderCtrl'
             })
             .when("/a1c/:a1c_id/enter_new_value", {
-                templateUrl: '/static/apps/patient_manager/partials/a1c/enter_new_value.html',
+                templateUrl: '/static/apps/a1c/enter_new_value.html',
                 controller: 'EnterNewValueCtrl'
             })
             .when("/a1c/:a1c_id/edit_or_delete_values", {
-                templateUrl: '/static/apps/patient_manager/partials/a1c/edit_or_delete_values.html',
+                templateUrl: '/static/apps/a1c/edit_or_delete_values.html',
                 controller: 'EditOrDeleteValuesCtrl'
             })
             .when("/observation_value/:value_id/edit_value", {
-                templateUrl: '/static/apps/patient_manager/partials/a1c/edit_value.html',
+                templateUrl: '/static/apps/a1c/edit_value.html',
                 controller: 'EditValueCtrl'
             })
             .when('/manage/sharing', {
@@ -88,10 +88,6 @@
             .when("/colon_cancer/:colon_id/edit_study/:study_id", {
                 templateUrl: '/static/apps/patient_manager/partials/colon_cancer/edit_study.html',
                 controller: 'EditStudyCtrl'
-            })
-            .when("/colon_cancer/:colon_id/add_new_order", {
-                templateUrl: '/static/apps/patient_manager/partials/colon_cancer/add_new_order.html',
-                controller: 'AddNewOrderCtrl'
             })
             .when('/data/:data_id', {
                 templateUrl: '/static/apps/patient_manager/partials/data/data.html',

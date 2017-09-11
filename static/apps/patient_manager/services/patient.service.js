@@ -60,6 +60,14 @@
                         return resp;
                     });
                 },
+                addTodoCallback: function (todo) {
+                    /**
+                     * Used to add new todo to shared store
+                     * **/
+                    this.pendingTodo.unshift(todo);
+
+                    $rootScope.$broadcast('todoListUpdated');
+                },
                 getProblemTodo: function (problemID) {
                     return $filter('filter')(this.pendingTodo, {problem: {id: parseInt(problemID)}}, true);
                 },

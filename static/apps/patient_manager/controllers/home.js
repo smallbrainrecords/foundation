@@ -42,16 +42,7 @@
         $scope.sortingLogProblem = [];
         $scope.sortedProblem = false;
         $scope.draggedProblem = false;
-
-
-        // Used to passing to the view
-        // $scope.pending_todos = angular.copy(patientService.pendingTodo, $scope.pending_todos);
-        // $scope.accomplished_todos = angular.copy(patientService.accomplishedTodo, $scope.accomplished_todos);
         $scope.todoIsLoading = false;
-        // $scope.pendingTodoPage = 1;
-        // $scope.accomplishedTodoPage = 1;
-        // $scope.accomplishedTodoLoaded = false;
-        // $scope.pendingTodoLoaded = false;
 
         $scope.add_bfdi_value = add_bfdi_value;
         $scope.add_goal = addGoal;
@@ -113,8 +104,8 @@
         init();
 
         function init() {
-            $scope.pending_todos = patientService.pendingTodo;// angular.copy(patientService.pendingTodo, $scope.pending_todos);
-            $scope.accomplished_todos = patientService.accomplishedTodo;// angular.copy(patientService.accomplishedTodo, $scope.accomplished_todos);
+            $scope.pending_todos = patientService.pendingTodo;
+            $scope.accomplished_todos = patientService.accomplishedTodo;
 
             patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
                 $scope.problems = data['problems'];
