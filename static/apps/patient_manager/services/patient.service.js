@@ -68,6 +68,9 @@
 
                     $rootScope.$broadcast('todoListUpdated');
                 },
+                updateTodoCallback: function (todo) {
+                    angular.copy(todo, _.findWhere(this.pendingTodo, {id: parseInt(todo.id)}));
+                },
                 getProblemTodo: function (problemID) {
                     return $filter('filter')(this.pendingTodo, {problem: {id: parseInt(problemID)}}, true);
                 },
