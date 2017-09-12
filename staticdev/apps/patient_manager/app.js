@@ -82,11 +82,11 @@
                 controller: 'ManageSharingProblemCtrl'
             })
             .when("/colon_cancer/:colon_id/add_new_study", {
-                templateUrl: '/static/apps/patient_manager/partials/colon_cancer/add_new_study.html',
+                templateUrl: '/static/apps/colon_cancer/add_new_study.html',
                 controller: 'AddNewStudyCtrl'
             })
             .when("/colon_cancer/:colon_id/edit_study/:study_id", {
-                templateUrl: '/static/apps/patient_manager/partials/colon_cancer/edit_study.html',
+                templateUrl: '/static/apps/colon_cancer/edit_study.html',
                 controller: 'EditStudyCtrl'
             })
             .when('/data/:data_id', {
