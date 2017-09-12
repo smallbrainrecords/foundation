@@ -90,23 +90,23 @@
                 controller: 'EditStudyCtrl'
             })
             .when('/data/:data_id', {
-                templateUrl: '/static/apps/patient_manager/partials/data/data.html',
+                templateUrl: '/static/apps/observation/data.html',
                 controller: 'DataCtrl'
             })
             .when('/data/:data_id/add_data', {
-                templateUrl: '/static/apps/patient_manager/partials/data/add_data.html',
+                templateUrl: '/static/apps/observation/add_data.html',
                 controller: 'AddDataCtrl'
             })
             .when('/data/:data_id/show_all_data', {
-                templateUrl: '/static/apps/patient_manager/partials/data/show_all_data.html',
+                templateUrl: '/static/apps/observation/show_all_data.html',
                 controller: 'ShowAllDataCtrl'
             })
             .when('/data/:dataId/edit/:componentValueIds', {
-                templateUrl: '/static/apps/patient_manager/partials/data/edit_data.html',
+                templateUrl: '/static/apps/observation/edit_data.html',
                 controller: 'IndividualDataCtrl'
             })
             .when('/data/:data_id/settings', {
-                templateUrl: '/static/apps/patient_manager/partials/data/settings.html',
+                templateUrl: '/static/apps/observation/settings.html',
                 controller: 'DataSettingsCtrl'
             })
             .when('/medication/:medication_id', {
