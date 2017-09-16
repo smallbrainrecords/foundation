@@ -7,6 +7,41 @@ todo .new-tagged-todo {
     font-size: 2em;
     top: 10px; }
 
+todo-item .label-wrapper {
+  display: inline-block;
+  margin-bottom: -6px;
+  overflow: hidden;
+  position: relative; }
+  todo-item .label-wrapper a.todo-label {
+    float: left;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    padding: 0;
+    display: block;
+    margin: 0 2px;
+    clear: none; }
+  todo-item .label-wrapper a.todo-label-name {
+    color: #fff;
+    width: auto;
+    padding: 0 10px;
+    text-decoration: none; }
+todo-item .attachment-glance {
+  margin-bottom: 10px; }
+todo-item .members-wrapper {
+  margin-bottom: 10px; }
+todo-item .quick-card-editor {
+  padding-right: 150px; }
+  todo-item .quick-card-editor .quick-card-editor-label {
+    margin-bottom: initial !important;
+    z-index: 99 !important; }
+  todo-item .quick-card-editor .input-group {
+    z-index: 99; }
+  todo-item .quick-card-editor .quick-card-editor-lv2 {
+    border-radius: 3px; }
+  todo-item .quick-card-editor .quick-card-editor-lv3 a.todo-label {
+    width: 100%; }
+
 .todo-label-front {
   width: 20px;
   height: 20px;

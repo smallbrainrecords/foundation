@@ -71,6 +71,27 @@
                 updateTodoCallback: function (todo) {
                     angular.copy(todo, _.findWhere(this.pendingTodo, {id: parseInt(todo.id)}));
                 },
+                updateTodoLabel: function (label, isDeleted = false) {
+                    _.each(this.pendingTodo, function (todo, key) {
+                        if (isDeleted) {
+                            todo.labels = _.reject(todo.labels, (ele) => {
+                                return ele.id === parseInt(label.id)
+                            });
+                        } else {
+                            angular.copy(label, _.findWhere(todo.labels, {id: parseInt(label.id)}));
+                        }
+                    });
+
+                    _.each(this.accomplishedTodo, function (todo, key) {
+                        if (isDeleted) {
+                            todo.labels = _.reject(todo.labels, (ele) => {
+                                return ele.id === parseInt(label.id)
+                            });
+                        } else {
+                            angular.copy(label, _.findWhere(todo.labels, {id: parseInt(label.id)}));
+                        }
+                    });
+                },
                 getProblemTodo: function (problemID) {
                     return $filter('filter')(this.pendingTodo, {problem: {id: parseInt(problemID)}}, true);
                 },
