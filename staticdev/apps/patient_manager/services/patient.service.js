@@ -18,129 +18,17 @@
                 accomplishedTodoPage: 1,
                 accomplishedTodoLoaded: false,
                 pendingTodoLoaded: false,
-                loadMoreTodo: function (patientID) {
-                    // Ignore if todo is fully loaded
-                    if (this.pendingTodoLoaded) {
-                        $rootScope.$broadcast('todoListUpdated');
-                        return;
-                    }
-
-                    httpService.get({
-                        accomplished: false,
-                        page: this.pendingTodoPage,
-                        all: false
-                    }, `/u/users/${patientID}/todos`, true)
-                        .then((resp) => {
-                            if (resp.success) {
-                                this.pendingTodoPage++;
-                                // Save data to global storage
-                                this.pendingTodo = this.pendingTodo.concat(resp.data);
-                                this.pendingTodoLoaded = resp.data.length === 0;
-
-                                $rootScope.$broadcast('todoListUpdated');
-                            }
-                        });
-                },
-                addINRTodo: function (patientId, todo) {
-                    return $http.post(`/inr/${patientId}/order/add`, todo).then((resp) => {
-                        this.pendingTodo.unshift(resp.data.order);
-
-                        $rootScope.$broadcast('todoAdded');
-
-                        return resp;
-                    });
-                },
-                addProblemTodo: function (form) {
-                    let url = `/p/problem/${form.problem_id}/add_todo`;
-                    return httpService.post(form, url).then((resp) => {
-                        this.pendingTodo.unshift(resp.todo);
-
-                        $rootScope.$broadcast('todoAdded');
-
-                        return resp;
-                    });
-                },
-                addTodoCallback: function (todo) {
-                    /**
-                     * Used to add new todo to shared store
-                     * **/
-                    this.pendingTodo.unshift(todo);
-
-                    $rootScope.$broadcast('todoListUpdated');
-                },
-                updateTodoCallback: function (todo) {
-                    angular.copy(todo, _.findWhere(this.pendingTodo, {id: parseInt(todo.id)}));
-                },
-                updateTodoLabel: function (label, isDeleted = false) {
-                    _.each(this.pendingTodo, function (todo, key) {
-                        if (isDeleted) {
-                            todo.labels = _.reject(todo.labels, (ele) => {
-                                return ele.id === parseInt(label.id)
-                            });
-                        } else {
-                            angular.copy(label, _.findWhere(todo.labels, {id: parseInt(label.id)}));
-                        }
-                    });
-
-                    _.each(this.accomplishedTodo, function (todo, key) {
-                        if (isDeleted) {
-                            todo.labels = _.reject(todo.labels, (ele) => {
-                                return ele.id === parseInt(label.id)
-                            });
-                        } else {
-                            angular.copy(label, _.findWhere(todo.labels, {id: parseInt(label.id)}));
-                        }
-                    });
-                },
-                getProblemTodo: function (problemID) {
-                    return $filter('filter')(this.pendingTodo, {problem: {id: parseInt(problemID)}}, true);
-                },
-                getColonCancerToDo: function (problemID) {
-                    return _.filter(this.pendingTodo, (ele, idx) => {
-                        return !_.isNull(ele.colon_cancer) && !_.isNull(ele.problem) && _.isEqual(ele.problem.id, parseInt(problemID));
-                    });
-                },
-                getA1CToDo: function (problemID) {
-                    return _.filter(this.pendingTodo, (ele, idx) => {
-                        return !_.isNull(ele.a1c) && !_.isNull(ele.problem) && _.isEqual(ele.problem.id, parseInt(problemID));
-                    });
-                },
-                getINRToDo: function (problemID) {
-                    return $filter('filter')(this.pendingTodo, {
-                        created_at: 1,
-                        problem: {id: parseInt(problemID)}
-                    }, true);
-                },
-                toggleTodoStatus: function (todo) {
-                    // Update UI data
-                    if (todo.accomplished) {
-                        // Item is change state from pending -> accomplished
-                        _.map(this.pendingTodo, (ele, idx) => {
-                            if (!_.isUndefined(ele) && todo.id == ele.id) {
-                                this.pendingTodo.splice(idx, 1);
-                                this.accomplishedTodo.push(todo);
-                            }
-                        });
-                    } else {
-                        _.map(this.accomplishedTodo, (ele, idx) => {
-                            if (!_.isUndefined(ele) && todo.id == ele.id) {
-                                this.accomplishedTodo.splice(idx, 1);
-                                this.pendingTodo.push(todo);
-                            }
-                        });
-                    }
-
-                    // Then update API
-                    this.updateTodoStatus(todo).then((response) => {
-                        $rootScope.$broadcast('todoListUpdated');
-                    });
-                },
-                changeMember: function () {
-                },
-                changeLabel: function () {
-                },
-                changeDueDate: function () {
-                },
+                loadMoreTodo: loadMoreTodo,
+                addINRTodo: addINRTodo,
+                addProblemTodo: addProblemTodo,
+                addTodoCallback: addTodoCallback,
+                updateTodoCallback: updateTodoCallback,
+                updateTodoLabel: updateTodoLabel,
+                getProblemTodo: getProblemTodo,
+                getColonCancerToDo: getColonCancerToDo,
+                getA1CToDo: getA1CToDo,
+                getINRToDo: getINRToDo,
+                toggleTodoStatus: toggleTodoStatus,
                 csrf_token: csrf_token,
                 fetchPatientInfo: fetchPatientInfo,
                 fetchTimeLineProblem: fetchTimeLineProblem,
@@ -595,6 +483,134 @@
                     page: page,
                     all: loadAll
                 }, `/u/users/${patient_id}/todos`, true)
+            }
+
+            function loadMoreTodo(patientID) {
+                // Ignore if todo is fully loaded
+                if (this.pendingTodoLoaded) {
+                    $rootScope.$broadcast('todoListUpdated');
+                    return;
+                }
+
+                httpService.get({
+                    accomplished: false,
+                    page: this.pendingTodoPage,
+                    all: false
+                }, `/u/users/${patientID}/todos`, true)
+                    .then((resp) => {
+                        if (resp.success) {
+                            this.pendingTodoPage++;
+                            // Save data to global storage
+                            this.pendingTodo = this.pendingTodo.concat(resp.data);
+                            this.pendingTodoLoaded = resp.data.length === 0;
+
+                            $rootScope.$broadcast('todoListUpdated');
+                        }
+                    });
+            }
+
+            function addINRTodo(patientId, todo) {
+                return $http.post(`/inr/${patientId}/order/add`, todo).then((resp) => {
+                    this.pendingTodo.unshift(resp.data.order);
+
+                    $rootScope.$broadcast('todoAdded');
+
+                    return resp;
+                });
+            }
+
+            function addProblemTodo(form) {
+                let url = `/p/problem/${form.problem_id}/add_todo`;
+                return httpService.post(form, url).then((resp) => {
+                    this.pendingTodo.unshift(resp.todo);
+
+                    $rootScope.$broadcast('todoAdded');
+
+                    return resp;
+                });
+            }
+
+            function addTodoCallback(todo) {
+                /**
+                 * Used to add new todo to shared store
+                 * **/
+                this.pendingTodo.unshift(todo);
+
+                $rootScope.$broadcast('todoListUpdated');
+            }
+
+            function updateTodoCallback(todo) {
+                angular.copy(todo, _.findWhere(this.pendingTodo, {id: parseInt(todo.id)}));
+            }
+
+            function updateTodoLabel(label, isDeleted = false) {
+                _.each(this.pendingTodo, function (todo, key) {
+                    if (isDeleted) {
+                        todo.labels = _.reject(todo.labels, (ele) => {
+                            return ele.id === parseInt(label.id)
+                        });
+                    } else {
+                        angular.copy(label, _.findWhere(todo.labels, {id: parseInt(label.id)}));
+                    }
+                });
+
+                _.each(this.accomplishedTodo, function (todo, key) {
+                    if (isDeleted) {
+                        todo.labels = _.reject(todo.labels, (ele) => {
+                            return ele.id === parseInt(label.id)
+                        });
+                    } else {
+                        angular.copy(label, _.findWhere(todo.labels, {id: parseInt(label.id)}));
+                    }
+                });
+            }
+
+            function getProblemTodo(problemID) {
+                return $filter('filter')(this.pendingTodo, {problem: {id: parseInt(problemID)}}, true);
+            }
+
+            function getColonCancerToDo(problemID) {
+                return _.filter(this.pendingTodo, (ele, idx) => {
+                    return !_.isNull(ele.colon_cancer) && !_.isNull(ele.problem) && _.isEqual(ele.problem.id, parseInt(problemID));
+                });
+            }
+
+            function getA1CToDo(problemID) {
+                return _.filter(this.pendingTodo, (ele, idx) => {
+                    return !_.isNull(ele.a1c) && !_.isNull(ele.problem) && _.isEqual(ele.problem.id, parseInt(problemID));
+                });
+            }
+
+            function getINRToDo(problemID) {
+                return $filter('filter')(this.pendingTodo, {
+                    created_at: 1,
+                    problem: {id: parseInt(problemID)}
+                }, true);
+            }
+
+            function toggleTodoStatus(todo) {
+                // Update UI data
+                if (todo.accomplished) {
+                    // Item is change state from pending -> accomplished
+                    _.map(this.pendingTodo, (ele, idx) => {
+                        if (!_.isUndefined(ele) && todo.id == ele.id) {
+                            this.pendingTodo.splice(idx, 1);
+                            this.accomplishedTodo.push(todo);
+                        }
+                    });
+                } else {
+                    _.map(this.accomplishedTodo, (ele, idx) => {
+                        if (!_.isUndefined(ele) && todo.id == ele.id) {
+                            this.accomplishedTodo.splice(idx, 1);
+                            this.pendingTodo.push(todo);
+                        }
+                    });
+                }
+
+                // Then update API
+                this.updateTodoStatus(todo).then((response) => {
+                    $rootScope.$broadcast('todoListUpdated');
+                });
             }
         });
 

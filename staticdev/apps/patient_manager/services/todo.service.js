@@ -4,96 +4,117 @@
 
 	angular.module('ManagerApp').service('todoService',
 		function($http, $q, $cookies, httpService){
+            return {
+                csrf_token: csrf_token,
+                fetchTodoInfo: fetchTodoInfo,
+                addComment: addComment,
+                editComment: editComment,
+                deleteComment: deleteComment,
+                changeTodoText: changeTodoText,
+                changeTodoDueDate: changeTodoDueDate,
+                addTodoLabel: addTodoLabel,
+                removeTodoLabel: removeTodoLabel,
+                saveCreateLabel: saveCreateLabel,
+                saveEditLabel: saveEditLabel,
+                deleteLabel: deleteLabel,
+                addTodoAccessEncounter: addTodoAccessEncounter,
+                addAttachment: addAttachment,
+                deleteAttachment: deleteAttachment,
+                getTodoActivity: getTodoActivity,
+                fetchTodoMembers: fetchTodoMembers,
+                addTodoMember: addTodoMember,
+                removeTodoMember: removeTodoMember,
+                fetchLabels: fetchLabels,
+            };
 
-			this.csrf_token = function(){
+            function csrf_token() {
 
-				var token = $cookies.get('csrftoken');
-				return token;
-			};
+                return $cookies.get('csrftoken');
+            }
 
-			this.fetchTodoInfo = function(todo_id){
-				var url = "/todo/todo/"+todo_id+"/info";
-				var params = {};
+            function fetchTodoInfo(todo_id) {
+                let url = `/todo/todo/${todo_id}/info`;
+                let params = {};
 
 				return httpService.get(params, url);
 
-			};
+            }
 
-			this.addComment = function(form){
-				var url = '/todo/todo/'+form.todo_id+'/comment';
-
-				return httpService.post(form, url);
-			};
-
-			this.editComment = function(form) {
-				var url = '/todo/todo/'+form.id+'/edit';
+            function addComment(form) {
+                let url = `/todo/todo/${form.todo_id}/comment`;
 
 				return httpService.post(form, url);
-			};
+            }
 
-			this.deleteComment  = function(form) {
-				var url = '/todo/todo/'+form.id+'/delete';
-
-				return httpService.post(form, url);
-			};
-
-			this.changeTodoText = function(form) {
-				var url = '/todo/todo/'+form.id+'/changeText';
+            function editComment(form) {
+                let url = `/todo/todo/${form.id}/edit`;
 
 				return httpService.post(form, url);
-			};
+            }
 
-			this.changeTodoDueDate = function(form) {
-				var url = '/todo/todo/'+form.id+'/changeDueDate';
-
-				return httpService.post(form, url);
-			};
-
-			this.addTodoLabel = function(id, todo_id) {
-				var form = {};
-				var url = '/todo/todo/'+id+'/'+todo_id+'/addLabel';
+            function deleteComment(form) {
+                let url = `/todo/todo/${form.id}/delete`;
 
 				return httpService.post(form, url);
-			};
+            }
 
-			this.removeTodoLabel = function(id, todo_id) {
-				var form = {};
-				var url = '/todo/todo/removeLabel/'+id+'/'+todo_id;
-
-				return httpService.post(form, url);
-			};
-
-			this.saveCreateLabel = function(todo_id, form) {
-				var url = '/todo/todo/newLabel/'+todo_id;
+            function changeTodoText(form) {
+                let url = `/todo/todo/${form.id}/changeText`;
 
 				return httpService.post(form, url);
-			};
+            }
 
-			this.saveEditLabel = function(form) {
-				var url = '/todo/todo/saveEditLabel/'+form.id;
-
-				return httpService.post(form, url);
-			};
-
-			this.deleteLabel  = function(form) {
-				var url = '/todo/todo/deleteLabel/'+form.id;
+            function changeTodoDueDate(form) {
+                let url = `/todo/todo/${form.id}/changeDueDate`;
 
 				return httpService.post(form, url);
-			};
+            }
 
-			this.addTodoAccessEncounter = function(id) {
-				var form = {};
-				var url = '/todo/todo/accessEncounter/'+id;
+            function addTodoLabel(id, todo_id) {
+                let form = {};
+                let url = `/todo/todo/${id}/${todo_id}/addLabel`;
 
 				return httpService.post(form, url);
-			};
+            }
 
-			this.addAttachment = function(form, file){
-	        	var deferred = $q.defer();
+            function removeTodoLabel(id, todo_id) {
+                let form = {};
+                let url = `/todo/todo/removeLabel/${id}/${todo_id}`;
 
-	        	var uploadUrl = '/todo/todo/'+form.todo_id+'/addAttachment';
+				return httpService.post(form, url);
+            }
 
-	        	var fd = new FormData();
+            function saveCreateLabel(todo_id, form) {
+                let url = `/todo/todo/newLabel/${todo_id}`;
+
+				return httpService.post(form, url);
+            }
+
+            function saveEditLabel(form) {
+                let url = `/todo/todo/saveEditLabel/${form.id}`;
+
+				return httpService.post(form, url);
+            }
+
+            function deleteLabel(form) {
+                let url = `/todo/todo/deleteLabel/${form.id}`;
+
+				return httpService.post(form, url);
+            }
+
+            function addTodoAccessEncounter(id) {
+                let form = {};
+                let url = `/todo/todo/accessEncounter/${id}`;
+
+				return httpService.post(form, url);
+            }
+
+            function addAttachment(form, file) {
+                let deferred = $q.defer();
+
+                let uploadUrl = `/todo/todo/${form.todo_id}/addAttachment`;
+
+                let fd = new FormData();
 
 	        	fd.append('csrfmiddlewaretoken', this.csrf_token());
 
@@ -113,43 +134,43 @@
 	        		});
 
 	        	return deferred.promise;
-	    	};
+            }
 
-	    	this.deleteAttachment  = function(form) {
-				var url = '/todo/attachment/'+form.id+'/delete';
+            function deleteAttachment(form) {
+                let url = `/todo/attachment/${form.id}/delete`;
 
 				return httpService.post(form, url);
-			};
+            }
 
-			this.getTodoActivity = function(todo_id, last_id){
-				var params = {};
-				var url ='/todo/todo/'+todo_id+ '/' + last_id +'/activity/';
+            function getTodoActivity(todo_id, last_id) {
+                let params = {};
+                let url = `/todo/todo/${todo_id}/${last_id}/activity/`;
 				return httpService.get(params, url);
-			};
+            }
 
-			this.fetchTodoMembers = function(user_id){
-				var params = {};
-				var url ='/u/members/'+user_id+'/getlist/';
+            function fetchTodoMembers(user_id) {
+                let params = {};
+                let url = `/u/members/${user_id}/getlist/`;
 				return httpService.get(params, url);
-			};
+            }
 
-			this.addTodoMember = function(form, member) {
-				var url = '/todo/todo/'+form.id+'/addMember';
+            function addTodoMember(form, member) {
+                let url = `/todo/todo/${form.id}/addMember`;
 
 				return httpService.post(member, url);
-			};
+            }
 
-			this.removeTodoMember = function(form, member) {
-				var url = '/todo/todo/'+form.id+'/removeMember';
+            function removeTodoMember(form, member) {
+                let url = `/todo/todo/${form.id}/removeMember`;
 
 				return httpService.post(member, url);
-			};
+            }
 
-			this.fetchLabels = function(user_id){
-				var params = {};
-				var url ='/todo/todo/'+user_id+'/getlabels';
+            function fetchLabels(user_id) {
+                let params = {};
+                let url = `/todo/todo/${user_id}/getlabels`;
 				return httpService.get(params, url);
-			};
-	});
+            }
+        });
 
 })();
