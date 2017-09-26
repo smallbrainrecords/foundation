@@ -373,11 +373,11 @@
                 var text = '';
                 // TODO: If todo list is not fully loaded then create an recursive loading to load all todo before
                 var load2End = null;
-                if (!$scope.pendingTodoLoaded) {
+                if (!patientService.pendingTodoLoaded) {
                     alert("Generating data. Click OK to continue");
                     load2End = setInterval(() => {
                         loadMoreTodo(false);
-                        if ($scope.pendingTodoLoaded) {
+                        if (patientService.pendingTodoLoaded) {
                             clearInterval(load2End);
                             alert("Data is ready. Press Ctrl+C to copy to clipboard");
                         }
