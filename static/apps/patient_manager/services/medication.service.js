@@ -4,62 +4,74 @@
 
     angular.module('ManagerApp').service('medicationService',
         function ($http, $q, $cookies, httpService) {
+            return {
+                csrf_token: csrf_token,
+                addMedication: addMedication,
+                addMedicationNote: addMedicationNote,
+                editNote: editNote,
+                deleteNote: deleteNote,
+                fetchMedicationInfo: fetchMedicationInfo,
+                fetchPinToProblem: fetchPinToProblem,
+                medicationPinToProblem: medicationPinToProblem,
+                listTerms: listTerms,
+                changeActiveMedication: changeActiveMedication,
+                changeDosage: changeDosage,
+            };
 
-            this.csrf_token = function () {
+            function csrf_token() {
                 return $cookies.get('csrftoken');
-            };
+            }
 
-            this.addMedication = function (form) {
-                var url = '/medication/' + form.patient_id + '/add_medication';
+            function addMedication(form) {
+                let url = `/medication/${form.patient_id}/add_medication`;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.addMedicationNote = function (form) {
-                var url = '/medication/' + form.patient_id + '/' + form.medication_id + '/add_medication_note';
+            function addMedicationNote(form) {
+                let url = `/medication/${form.patient_id}/${form.medication_id}/add_medication_note`;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.editNote = function (form) {
-                var url = '/medication/note/' + form.id + '/edit';
+            function editNote(form) {
+                let url = `/medication/note/${form.id}/edit`;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.deleteNote = function (form) {
-                var url = '/medication/note/' + form.id + '/delete';
+            function deleteNote(form) {
+                let url = `/medication/note/${form.id}/delete`;
                 return httpService.post(form, url);
-            };
+            }
 
-            this.fetchMedicationInfo = function (patient_id, medication_id) {
-                var url = "/medication/" + patient_id + "/medication/" + medication_id + "/info";
-                var params = {};
+            function fetchMedicationInfo(patient_id, medication_id) {
+                let url = `/medication/${patient_id}/medication/${medication_id}/info`;
+                let params = {};
                 return httpService.get(params, url);
-            };
+            }
 
-            this.fetchPinToProblem = function (medication_id) {
-                var url = "/medication/" + medication_id + "/get_pins";
-                var params = {};
-
-                return httpService.get(params, url);
-
-            };
-
-            this.medicationPinToProblem = function (patient_id, form) {
-                var url = '/medication/' + patient_id + '/pin_to_problem';
-                return httpService.post(form, url);
-            };
-
-            this.listTerms = function (query) {
-                var params = {'query': query};
-                var url = "/medication/list_terms";
+            function fetchPinToProblem(medication_id) {
+                let url = `/medication/${medication_id}/get_pins`;
+                let params = {};
 
                 return httpService.get(params, url);
-            };
 
-            this.changeActiveMedication = function (patient_id, medication_id) {
-                var url = '/medication/' + patient_id + '/' + medication_id + '/change_active_medication';
+            }
+
+            function medicationPinToProblem(patient_id, form) {
+                let url = `/medication/${patient_id}/pin_to_problem`;
+                return httpService.post(form, url);
+            }
+
+            function listTerms(query) {
+                let params = {'query': query};
+                let url = '/medication/list_terms';
+
+                return httpService.get(params, url);
+            }
+
+            function changeActiveMedication(patient_id, medication_id) {
+                let url = `/medication/${patient_id}/${medication_id}/change_active_medication`;
                 return httpService.post({}, url);
-            };
-
+            }
             /**
              * Change medication dosage
              * @returns {HttpPromise}
@@ -67,14 +79,14 @@
              * @param medicationId
              * @param medicationObj
              */
-            this.changeDosage = function (patientId, medicationId, medicationObj) {
-                var url = '/medication/' + patientId + '/' + medicationId + '/change_dosage';
+            function changeDosage(patientId, medicationId, medicationObj) {
+                let url = `/medication/${patientId}/${medicationId}/change_dosage`;
                 return $http.post(url,medicationObj, {
                     headers: {
                         'X-CSRFToken': $cookies.get('csrftoken')
                     }
                 });
-            };
+            }
         });
 
 })();

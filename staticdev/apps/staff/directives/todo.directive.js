@@ -11,7 +11,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
 
     return {
         restrict: 'E',
-        templateUrl: '/static/apps/staff/directives/templates/todo.html',
+        templateUrl: '/static/apps/staff/directives/todo.html',
         scope: true,
         link: function (scope, element, attr, model) {
             scope.$watch('todos_ready', function (newVal, oldVal) {

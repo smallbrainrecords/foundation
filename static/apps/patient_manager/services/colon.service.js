@@ -4,56 +4,73 @@
 
 	angular.module('ManagerApp').service('colonService',
 		function($http, $q, $cookies, httpService){
+            return {
+                csrf_token: csrf_token,
+                fetchColonCancerInfo: fetchColonCancerInfo,
+                fetchColonCancerStudyInfo: fetchColonCancerStudyInfo,
+                addNewStudy: addNewStudy,
+                deleteStudy: deleteStudy,
+                saveStudy: saveStudy,
+                deleteStudyImage: deleteStudyImage,
+                addImage: addImage,
+                addFactor: addFactor,
+                deleteFactor: deleteFactor,
+                refuse: refuse,
+                not_appropriate: not_appropriate,
+                trackColonCancerClickEvent: trackColonCancerClickEvent,
+                addNote: addNote,
+                editNote: editNote,
+                deleteNote: deleteNote
+            };
 
-			this.csrf_token = function(){
+            function csrf_token() {
 
-				var token = $cookies.get('csrftoken');
-				return token;
-			};
+                return $cookies.get('csrftoken');
+            }
 
-			this.fetchColonCancerInfo = function(colon_id){
-				var url = "/colon_cancer/"+colon_id+"/info";
-				var params = {};
+            function fetchColonCancerInfo(colon_id) {
+                let url = `/colon_cancer/${colon_id}/info`;
+                let params = {};
 
 				return httpService.get(params, url);
 
-			};
+            }
 
-			this.fetchColonCancerStudyInfo = function(study_id){
-				var url = "/colon_cancer/study/"+study_id+"/info";
-				var params = {};
+            function fetchColonCancerStudyInfo(study_id) {
+                let url = `/colon_cancer/study/${study_id}/info`;
+                let params = {};
 
 				return httpService.get(params, url);
 
-			};
+            }
 
-			this.addNewStudy = function(colon_id, study) {
-				var url = '/colon_cancer/'+colon_id+'/add_study';
+            function addNewStudy(colon_id, study) {
+                let url = `/colon_cancer/${colon_id}/add_study`;
 				return httpService.post(study, url);
-			};
+            }
 
-			this.deleteStudy = function(study) {
-				var url = '/colon_cancer/'+study.id+'/delete_study';
+            function deleteStudy(study) {
+                let url = `/colon_cancer/${study.id}/delete_study`;
 				return httpService.post(study, url);
-			};
+            }
 
-			this.saveStudy = function(study) {
-				var url = '/colon_cancer/'+study.id+'/edit_study';
+            function saveStudy(study) {
+                let url = `/colon_cancer/${study.id}/edit_study`;
 				return httpService.post(study, url);
-			};
+            }
 
-			this.deleteStudyImage = function(form){
+            function deleteStudyImage(form) {
 
-				var url = '/colon_cancer/study/'+form.study_id+'/image/'+form.image_id+'/delete/';
+                let url = `/colon_cancer/study/${form.study_id}/image/${form.image_id}/delete/`;
 				return httpService.post(form, url);
-			};
+            }
 
-			this.addImage = function(form, file){
-	        	var deferred = $q.defer();
+            function addImage(form, file) {
+                let deferred = $q.defer();
 
-	        	var uploadUrl = '/colon_cancer/study/'+form.study_id+'/addImage';
+                let uploadUrl = `/colon_cancer/study/${form.study_id}/addImage`;
 
-	        	var fd = new FormData();
+                let fd = new FormData();
 
 	        	fd.append(0, file);
 
@@ -70,51 +87,51 @@
 	        		});
 
 	        	return deferred.promise;
-	    	};
+            }
 
-	    	this.addFactor = function(colon_id, factor) {
-				var url = '/colon_cancer/'+colon_id+'/add_factor';
+            function addFactor(colon_id, factor) {
+                let url = `/colon_cancer/${colon_id}/add_factor`;
 				return httpService.post(factor, url);
-			};
+            }
 
-			this.deleteFactor  = function(colon_id, factor) {
-				var url = '/colon_cancer/'+colon_id+'/delete_factor';
+            function deleteFactor(colon_id, factor) {
+                let url = `/colon_cancer/${colon_id}/delete_factor`;
 				return httpService.post(factor, url);
-			};
+            }
 
-			this.refuse  = function(colon_id) {
-				var form = {};
-				var url = '/colon_cancer/'+colon_id+'/refuse';
+            function refuse(colon_id) {
+                let form = {};
+                let url = `/colon_cancer/${colon_id}/refuse`;
 				return httpService.post(form, url);
-			};
+            }
 
-			this.not_appropriate  = function(colon_id) {
-				var form = {};
-				var url = '/colon_cancer/'+colon_id+'/not_appropriate';
+            function not_appropriate(colon_id) {
+                let form = {};
+                let url = `/colon_cancer/${colon_id}/not_appropriate`;
 				return httpService.post(form, url);
-			};
+            }
 
-			this.trackColonCancerClickEvent = function(form){
-				var url = '/colon_cancer/'+form.colon_cancer_id+'/track/click';
+            function trackColonCancerClickEvent(form) {
+                let url = `/colon_cancer/${form.colon_cancer_id}/track/click`;
 				return httpService.post(form, url);
-			};
+            }
 
-			this.addNote = function(form) {
-				var url = '/colon_cancer/'+form.colon_cancer_id+'/add_note';
+            function addNote(form) {
+                let url = `/colon_cancer/${form.colon_cancer_id}/add_note`;
 				return httpService.post(form, url);
-			};
+            }
 
-			this.editNote = function(form) {
-				var url = '/colon_cancer/note/'+form.id+'/edit';
-
-				return httpService.post(form, url);
-			};
-
-			this.deleteNote  = function(form) {
-				var url = '/colon_cancer/note/'+form.id+'/delete';
+            function editNote(form) {
+                let url = `/colon_cancer/note/${form.id}/edit`;
 
 				return httpService.post(form, url);
-			};
-	});
+            }
+
+            function deleteNote(form) {
+                let url = `/colon_cancer/note/${form.id}/delete`;
+
+				return httpService.post(form, url);
+            }
+        });
 
 })();

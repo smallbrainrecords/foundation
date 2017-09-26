@@ -17,7 +17,7 @@
 
         $routeProvider
             .when('/', {
-                templateUrl: '/static/apps/staff/partials/home.html',
+                templateUrl: '/static/apps/staff/partials/home.template.html',
                 controller: 'HomeCtrl'
             })
             .when('/manage/setting', {
@@ -45,7 +45,7 @@
             })
             .when('/manage/common_problems', {
 
-                templateUrl: '/static/apps/staff/partials/manage_common_problems.html',
+                templateUrl: '/static/apps/staff/partials/problem-common.template.html',
                 controller: 'ManageCommonProblemCtrl'
             })
             .when('/manage/upload_documents', {
@@ -61,7 +61,4 @@
                 controller: 'ViewDocumentCtrl'
             }).otherwise('/');
     });
-
-    StaffApp.run(function (staffService) {
-    })
 })();

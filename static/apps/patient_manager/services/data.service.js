@@ -32,7 +32,7 @@
             }
 
             function fetchDataInfo(data_id) {
-                var url = "/data/" + data_id + "/info";
+                var url = `/data/${data_id}/info`;
                 var params = {};
 
                 return httpService.get(params, url);
@@ -40,7 +40,7 @@
             }
 
             function fetchPinToProblem(data_id) {
-                var url = "/data/" + data_id + "/get_pins";
+                var url = `/data/${data_id}/get_pins`;
                 var params = {};
 
                 return httpService.get(params, url);
@@ -48,17 +48,17 @@
             }
 
             function dataPinToProblem(patient_id, form) {
-                var url = '/data/' + patient_id + '/pin_to_problem';
+                var url = `/data/${patient_id}/pin_to_problem`;
                 return httpService.post(form, url);
             }
 
             function addData(patient_id, component_id, form) {
-                var url = '/data/' + patient_id + '/' + component_id + '/add_new_data';
+                var url = `/data/${patient_id}/${component_id}/add_new_data`;
                 return httpService.post(form, url);
             }
 
             function fetchIndividualDataInfo(patient_id, component_id) {
-                var url = "/data/" + patient_id + "/" + component_id + "/individual_data_info";
+                var url = `/data/${patient_id}/${component_id}/individual_data_info`;
                 var params = {};
 
                 return httpService.get(params, url);
@@ -67,24 +67,24 @@
 
             function deleteIndividualData(patient_id, component_id) {
                 var form = {};
-                var url = "/data/" + patient_id + "/" + component_id + "/delete_individual_data";
+                var url = `/data/${patient_id}/${component_id}/delete_individual_data`;
                 return httpService.post(form, url);
             }
 
             function saveData(patient_id, component_id, form) {
-                var url = '/data/' + patient_id + '/' + component_id + '/save_data';
+                var url = `/data/${patient_id}/${component_id}/save_data`;
                 return httpService.post(form, url);
             }
 
             function saveDataType(form) {
-                var url = '/data/' + form.patient_id + '/' + form.data_id + '/save_data_type';
+                var url = `/data/${form.patient_id}/${form.data_id}/save_data_type`;
 
                 return httpService.post(form, url);
             }
 
             function deleteData(patient_id, data_id) {
                 var form = {};
-                var url = "/data/" + patient_id + "/" + data_id + "/delete_data";
+                var url = `/data/${patient_id}/${data_id}/delete_data`;
                 return httpService.post(form, url);
             }
 
@@ -93,7 +93,7 @@
              * @returns {*}
              */
             function updateGraphType(form) {
-                var url = '/data/update_graph';
+                var url = `/data/update_graph`;
 
                 return httpService.post(form, url);
             }
