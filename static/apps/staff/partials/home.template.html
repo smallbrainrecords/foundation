@@ -4,6 +4,7 @@
         Tagged Todos <span class="new-todo" ng-if="newTaggedTodo > 0">({{newTaggedTodo}})</span>
     </div>
     <div class='panel-body' ng-if="!taggedTodoCollapsed">
+        <wave-spinner ng-if="!todos_ready"></wave-spinner>
         <todo ng-model="tagged_todos" accomplished="false" show-problem="true" is-tagged="true"></todo>
         <hr>
         <a class='btn btn-default btn-md' ng-click="showAccomplishedTaggedTodos=!showAccomplishedTaggedTodos"

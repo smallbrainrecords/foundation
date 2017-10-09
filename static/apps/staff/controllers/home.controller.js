@@ -8,12 +8,14 @@
                                           staffService, physicianService, todoService, $filter) {
 
             // Properties
-            $scope.user_id = $('#user_id').val();
-            $scope.taggedTodoCollapsed = true;
+            // $scope.user_id = $('#user_id').val();
+            $scope.taggedTodoCollapsed = false;
             $scope.lastTimeTaggedTodoAccessed = null;
             $scope.showAccomplishedTaggedTodos = false;
             $scope.newTaggedTodo = 0;
-            $scope.users = [];
+            $scope.todos_ready = false;
+
+            // $scope.users = [];
             $scope.new_list = {};
             $scope.new_list.labels = [];
             $scope.todo_lists = [];
@@ -91,8 +93,8 @@
                 staffService.getUserTodoList($scope.user_id).then(function (data) {
                     $scope.tagged_todos = data['tagged_todos'];
                     $scope.personal_todos = data['personal_todos'];
-                    $scope.todos_ready = true;
                     $scope.newTaggedTodo = data['new_tagged_todo'];
+                    $scope.todos_ready = true;
                 });
 
                 todoService.fetchLabels($scope.user_id).then(function (data) {
