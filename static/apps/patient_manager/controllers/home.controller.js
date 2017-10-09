@@ -218,16 +218,16 @@
                         data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
                         // TODO: Manipulate DOM manually and inside JS code. Need to refine this
                         if ("weight" === data.name) {
-                            $("#vitals_weight").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                            $("#vitals_weight").html(`<a href="#/data/${data.id}">W: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
                         }
                         if ("body temperature" === data.name) {
-                            $("#vitals_body_temperature").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                            $("#vitals_body_temperature").html(`<a href="#/data/${data.id}">T: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
                         }
                         if ("blood pressure" === data.name) {
-                            $("#vitals_blood_pressure").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                            $("#vitals_blood_pressure").html(`<a href="#/data/${data.id}">BP: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
                         }
                         if ("heart rate" === data.name) {
-                            $("#vitals_heart_rate ").html(`<a href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                            $("#vitals_heart_rate ").html(`<a href="#/data/${data.id}">P: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
                         }
                     });
                     if ($scope.active_user) {
