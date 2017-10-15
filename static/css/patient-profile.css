@@ -525,8 +525,19 @@ todo .new-tagged-todo {
       display: inline-block; }
 
 #related-encounters .encounter-item {
-  border-bottom: 1px solid #CCC; }
+  border-bottom: 1px solid #CCC;
+  display: block;
+  padding-bottom: 5px;
+  margin-bottom: 5px; }
   #related-encounters .encounter-item:last-child {
+    border-bottom: none; }
+
+#encounter-related-problem .problem-item {
+  border-bottom: 1px solid #CCC;
+  display: block;
+  padding-bottom: 5px;
+  margin-bottom: 5px; }
+  #encounter-related-problem .problem-item:last-child {
     border-bottom: none; }
 
 /*# sourceMappingURL=patient-profile.css.map */

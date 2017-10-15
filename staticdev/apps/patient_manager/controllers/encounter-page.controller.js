@@ -168,6 +168,7 @@
                 });
             }
 
+            // TODO: Migrate to pure function
             function permitted(permissions) {
 
                 if (_.isUndefined($scope.active_user) || _.isEmpty($scope.active_user)) {

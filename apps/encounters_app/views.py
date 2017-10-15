@@ -2,7 +2,7 @@ from django.db.models import F
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Encounter, EncounterEvent
+from emr.models import Encounter, EncounterEvent, ObservationValue
 from emr.models import EncounterProblemRecord
 from problems_app.serializers import ProblemSerializer
 from .serializers import EncounterSerializer, EncounterEventSerializer
@@ -16,11 +16,16 @@ def get_encounter_info(request, encounter_id):
     encounter_events = EncounterEvent.objects.filter(encounter=encounter).order_by('datetime')
     related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
     related_problems = [x.problem for x in related_problem_records]
-    encounter_documents = encounter.encounter_document.all()
+
 
     encounter_dict = EncounterSerializer(encounter).data
     encounter_events_holder = EncounterEventSerializer(encounter_events, many=True).data
 
+    # Load all data value added before and during encounter from current day to encounter document
+    encounter_documents = ObservationValue.objects.filter(created_on__range=(
+        encounter.starttime.replace(hour=0, minute=0, second=0, microsecond=0),
+        encounter.stoptime)).filter(
+        component__observation__subject=encounter.patient.profile)  # encounter.encounter_document.all()
     encounter_documents_holder = []
     for document in encounter_documents:
         encounter_documents_holder.append({

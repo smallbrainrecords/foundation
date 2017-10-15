@@ -655,3 +655,16 @@ todo {
     }
   }
 }
+
+// Encounter page
+#encounter-related-problem {
+  .problem-item {
+    border-bottom: 1px solid #CCC;
+    display: block;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}

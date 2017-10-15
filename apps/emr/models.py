@@ -239,7 +239,8 @@ class Encounter(models.Model):
     recorder_status = models.IntegerField(choices=RECORDER_STATUS, default=0)
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
-    encounter_document = models.ManyToManyField('ObservationValue', through='EncounterObservationValue')
+    encounter_document = models.ManyToManyField('ObservationValue',
+                                                through='EncounterObservationValue')  # deprecated should be loaded dynamically instead of storing in specific table
 
     objects = EncounterManager()
 
@@ -676,7 +677,7 @@ class ObservationUnit(models.Model):
 class ObservationValue(models.Model):
     status = models.CharField(max_length=16, null=True, blank=True)
     component = models.ForeignKey(ObservationComponent, related_name='observation_component_values')
-    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_value_authors')
+    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_value_authors') # TODO: This relation should be using User
     value_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     value_codeableconcept = models.CharField(max_length=40, null=True, blank=True)
     value_string = models.TextField(null=True, blank=True)
