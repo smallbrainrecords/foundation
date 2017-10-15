@@ -47,6 +47,7 @@
             $scope.accomplishedTodoPage = 1;
             $scope.accomplishedTodoLoaded = false;
             $scope.pendingTodoLoaded = false;
+            $scope.encounter_collapse = false;
 
             // Init hot key binding
             $scope.add_goal = add_goal;

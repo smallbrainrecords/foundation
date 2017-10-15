@@ -524,4 +524,9 @@ todo .new-tagged-todo {
       color: white;
       display: inline-block; }
 
+#related-encounters .encounter-item {
+  border-bottom: 1px solid #CCC; }
+  #related-encounters .encounter-item:last-child {
+    border-bottom: none; }
+
 /*# sourceMappingURL=patient-profile.css.map */

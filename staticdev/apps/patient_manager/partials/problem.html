@@ -618,13 +618,11 @@
             <span ng-show='permitted(["add_problem_image"])'>
 				<button class='btn btn-sm btn-default' ngf-select="open_image_upload_box($files)" multiple
                         ngf-max-files="5"
-                        ngf-resize="{width: 160, height: 160}"
                         accept="image/*"> Upload </button>
 			</span>
         </div>
         <div class='panel-body' ng-show="problem_images.length > 0">
             <div class='row'>
-                {{problem_images.length}}
                 <div class='col-md-2' ng-repeat='image in problem_images track by $index'>
                     <img ng-src='{{ image.image }}' class='thumbnail small-img' ng-click='open_image_box(image)'>
                     <br>
@@ -745,31 +743,24 @@
         </div>
     </div>
 
-    <div class='row' ng-init="encounter_collapse=false;">
-        <div class='col-md-12'>
-            <div class='panel panel-default'>
-                <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
-                    <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
-                    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                    Related Encounters ({{related_encounters.length}})
-                </div>
-                <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'
-                     ng-show="encounter_collapse">
-                    <div ng-repeat='encounter in related_encounters track by $index' class='row'
-                         style='margin-bottom:4px; border-bottom:1px solid #ccc;'>
-                        <div class='col-md-12'>
-                            <a href='#/encounter/{{ encounter.id }}'>
-                                Ref ID: {{ encounter.id }} on {{ encounter.starttime|date }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
+    <section id="related-encounters">
+        <div class='panel panel-default'>
+            <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
+                <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+                <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+                Related Encounters ({{related_encounters.length}})
+            </div>
+            <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;' ng-show="encounter_collapse">
+                <a href='#/encounter/{{ encounter.id }}' ng-repeat='encounter in related_encounters track by $index'
+                   class="encounter-item">
+                    Ref ID: {{ encounter.id }} on {{ encounter.starttime|date }}
+                </a>
             </div>
         </div>
-    </div>
+    </section>
 
     <!--Uploaded document-->
-    <div class="panel panel-default uploaded_document">
+    <section class="panel panel-default uploaded_document">
         <div class="panel-heading">
             <p>Pinned document</p>
         </div>
@@ -788,7 +779,7 @@
                 </li>
             </ul>
         </div>
-    </div>
+    </section>
 
     <script type='text/javascript'>
         $(document).ready(function () {
