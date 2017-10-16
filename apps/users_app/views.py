@@ -11,7 +11,7 @@ from rest_framework.decorators import api_view
 from common.views import *
 # from django.shortcuts import render
 from emr.models import UserProfile, Problem, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting, \
-    Document
+    Document, ObservationValue
 from emr.models import Goal, ToDo
 from emr.models import Encounter, EncounterEvent, EncounterProblemRecord
 
@@ -298,34 +298,8 @@ def get_patient_info(request, patient_id):
     encounters = Encounter.objects.filter(patient=patient_user).order_by('-starttime')
     favorites = EncounterEvent.objects.filter(encounter__patient=patient_user, is_favorite=True).order_by('-datetime')
 
-    # Retrieve most recent encounter information
-    most_recent_encounter_summaries = []
-    most_recent_encounter_documents_holder = []
-    related_problem_holder = []
-    encounter = Encounter.objects.filter(patient=patient_user).order_by("-starttime").first()
-    if encounter:
-        # Encounter's event summaries
-        most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient=patient_user,
-                                                                     encounter=encounter)
-
-        for event in most_recent_encounter_events:
-            if not "Started encounter by" in event.summary and not "Stopped encounter by" in event.summary:
-                most_recent_encounter_summaries.append(event.summary)
-
-        # Encounter's document
-        for document in encounter.encounter_document.all():
-            most_recent_encounter_documents_holder.append({
-                'name': document.component.__str__(),
-                'value': '%g' % float(document.value_quantity),
-                'effective': document.effective_datetime.isoformat()
-            })
-
-        # Encounter's related problems
-        related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
-        related_problem_ids = [x.problem.id for x in related_problem_records]
-
-        related_problems = Problem.objects.filter(id__in=related_problem_ids)
-        related_problem_holder = ProblemSerializer(related_problems, many=True).data
+    # most_recent_encounter_documents_holder, most_recent_encounter_summaries, related_problem_holder = method_name(
+    #     patient_user)
 
     # sharing system
     shared_patients = SharingPatient.objects.filter(sharing=patient_user).order_by('shared__first_name',
@@ -358,9 +332,9 @@ def get_patient_info(request, patient_id):
     resp['encounters'] = EncounterSerializer(encounters, many=True).data
     resp['favorites'] = EncounterEventSerializer(favorites, many=True).data
 
-    resp['most_recent_encounter_summaries'] = most_recent_encounter_summaries
-    resp['most_recent_encounter_related_problems'] = related_problem_holder
-    resp['most_recent_encounter_documents'] = most_recent_encounter_documents_holder
+    # resp['most_recent_encounter_summaries'] = most_recent_encounter_summaries
+    # resp['most_recent_encounter_related_problems'] = related_problem_holder
+    # resp['most_recent_encounter_documents'] = most_recent_encounter_documents_holder
 
     resp['shared_patients'] = patients_list
     resp['sharing_patients'] = sharing_patients_list
@@ -371,7 +345,6 @@ def get_patient_info(request, patient_id):
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=patient_profile).exists()
 
     return ajax_response(resp)
-
 
 @login_required
 def get_timeline_info(request, patient_id):
@@ -910,4 +883,58 @@ def get_user_todo(request, patient_id):
 
     resp['success'] = True
     resp['data'] = TodoSerializer(todo, many=True).data
+    return ajax_response(resp)
+
+
+@login_required
+def get_most_recent_encounter(request, patient_id):
+    """
+
+    :param request:
+    :param patient_id:
+    :return:
+    """
+    resp = {'success': False}
+
+    # Retrieve most recent encounter information
+    encounter = Encounter.objects.filter(patient_id=patient_id).order_by("-starttime").first()
+
+    most_recent_encounter_summaries = []
+    most_recent_encounter_documents_holder = []
+    related_problem_holder = []
+    if encounter:
+        # Encounter's event summaries
+        most_recent_encounter_events = EncounterEvent.objects.filter(encounter__patient_id=patient_id,
+                                                                     encounter=encounter)
+
+        for event in most_recent_encounter_events:
+            if not "Started encounter by" in event.summary and not "Stopped encounter by" in event.summary:
+                most_recent_encounter_summaries.append(event.summary)
+
+        # Encounter's document
+        documents = ObservationValue.objects.filter(created_on__range=(
+            encounter.starttime.replace(hour=0, minute=0, second=0, microsecond=0), datetime.datetime.now())).filter(
+            component__observation__subject=encounter.patient.profile)
+        for document in documents:
+            most_recent_encounter_documents_holder.append({
+                'name': document.component.__str__(),
+                'value': '%g' % float(document.value_quantity),
+                'effective': document.effective_datetime.isoformat()
+            })
+
+        # Encounter's related problems
+        related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
+        related_problem_ids = [x.problem.id for x in related_problem_records]
+
+        related_problems = Problem.objects.filter(id__in=related_problem_ids)
+        related_problem_holder = ProblemSerializer(related_problems, many=True).data
+
+    #  Load all pending todo
+    todo = ToDo.objects.filter(patient_id=patient_id, accomplished=False)
+
+    resp['success'] = True
+    resp['todo'] = TodoSerializer(todo, many=True).data
+    resp['most_recent_encounter_summaries'] = most_recent_encounter_summaries
+    resp['most_recent_encounter_related_problems'] = related_problem_holder
+    resp['most_recent_encounter_documents'] = most_recent_encounter_documents_holder
     return ajax_response(resp)

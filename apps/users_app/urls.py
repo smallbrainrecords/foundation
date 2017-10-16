@@ -35,5 +35,7 @@ urlpatterns = patterns('users_app.views',
                        url(r'^update_setting', 'update_general_setting'),
 
                        # URL for API patterns
-                       url(r'^users/(?P<patient_id>\d+)/todos', 'get_user_todo')
+                       url(r'^users/(?P<patient_id>\d+)/todos', 'get_user_todo'),
+                       # GET most recent encounter
+                       url(r'^users/(?P<patient_id>\d+)/encounters', 'get_most_recent_encounter')
                        )

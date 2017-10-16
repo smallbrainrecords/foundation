@@ -18,6 +18,9 @@
                 accomplishedTodoPage: 1,
                 accomplishedTodoLoaded: false,
                 pendingTodoLoaded: false,
+                loaded: 0,
+                getMostRecentEncounter: getMostRecentEncounter,
+                progressiveTodoLoading: progressiveTodoLoading,
                 loadMoreTodo: loadMoreTodo,
                 addINRTodo: addINRTodo,
                 addProblemTodo: addProblemTodo,
@@ -611,6 +614,37 @@
                 this.updateTodoStatus(todo).then((response) => {
                     $rootScope.$broadcast('todoListUpdated');
                 });
+            }
+
+            /**
+             * Load patient todo item util it fully loaded
+             * @param patientID
+             */
+            function progressiveTodoLoading(patientID) {
+                do {
+                    httpService.get({
+                        accomplished: false,
+                        page: this.pendingTodoPage,
+                        all: false
+                    }, `/u/users/${patientID}/todos`, true)
+                        .then((resp) => {
+                            if (resp.success) {
+                                this.pendingTodoPage++;
+                                // Save data to global storage
+                                this.pendingTodo = this.pendingTodo.concat(resp.data);
+                                this.pendingTodoLoaded = resp.data.length === 0;
+
+                                $rootScope.$broadcast('todoListUpdated');
+                            }
+                            // Either success of failed do reload again
+                            this.progressiveTodoLoading();
+                        });
+                } while (this.pendingTodoLoaded);
+            }
+
+
+            function getMostRecentEncounter(patientID) {
+                return httpService.get({}, `/u/users/${patientID}/encounters`)
             }
         });
 

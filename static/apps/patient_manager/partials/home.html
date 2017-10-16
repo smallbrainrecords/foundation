@@ -154,7 +154,10 @@
 
                 <div class='col-md-12'>
                     <div class='panel panel-default'>
-                        <div class='panel-heading'> Problems</div>
+                        <div class='panel-heading'> Problems
+                            <button id="testCopy" ng-click="documentCopy('User interaction: ')">Copy</button>
+                            <button id="ajaxCopy" ng-click="ajaxCopy()">Ajax copy</button>
+                        </div>
                         <div class='panel-body'>
 
                             <uib-tabset active="collapse.innerProblemTabSetActive">

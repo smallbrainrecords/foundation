@@ -2,7 +2,7 @@
     'use strict';
     var ManagerApp = angular.module('ManagerApp',
         ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
-            'httpModule', 'sharedModule', 'colon_cancers', 'a1c', 'medication', 'problems',
+            'app.constant', 'httpModule', 'sharedModule', 'colon_cancers', 'a1c', 'medication', 'problems',
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'angular-click-outside', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
@@ -119,7 +119,9 @@
             })
             .otherwise('/');
     });
-    ManagerApp.run(function (CollapseService, sharedService) {
+    ManagerApp.run(function (CollapseService, sharedService, patientService) {
+        // Progressive load patient todo
+        // patientService.progressiveTodoLoading();//.then(patientService.loadMoreTodo());
         // Loading general setting, risk setting is failed to load -> deferred setting value
         sharedService.getSettings().then(function (response) {
             angular.forEach(response.data.settings, function (value, key) {
@@ -128,7 +130,7 @@
         });
         CollapseService.initHotKey();
     });
-    ManagerApp.factory('CollapseService', function (hotkeys, $location, $timeout, $rootScope) {
+    ManagerApp.factory('CollapseService', function (hotkeys, $location, $timeout, $rootScope, patientService, ngDialog) {
         let CollapseService = {
             show_homepage_tab: 'problems',
             show_colon_collapse: false,
@@ -242,8 +244,81 @@
                 description: 'Copy most recent encounter to clipboard',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
-                    $location.path('/');
-                    $rootScope.$broadcast('copyEncounter', {});
+                    // alert();
+
+                    // Showing loading indicator
+                    ngDialog.open({
+                        template: 'copyEncounterDialog',
+                        showClose: false,
+                        controller: function (patientService, toaster) {
+                            let vm = this;
+                            vm.dataIsLoaded = false;
+                            vm.$temp = null;
+
+                            // Load most recent encounter a.k.a latest
+                            patientService.getMostRecentEncounter($('#patient_id').val()).then((data) => {
+                                let text = '';
+
+                                // Copy encounter summaries
+                                if (data.most_recent_encounter_summaries.length > 0) {
+                                    text += "All the encounter summaries from the most recent encounter: \r\n";
+                                    angular.forEach(data.most_recent_encounter_summaries, function (value, key) {
+                                        let container = $("<div/>");
+                                        container.append(value);
+                                        text += `${container.text()}\r
+`;
+                                    });
+                                    text += '\r\n';
+                                }
+
+                                // Refer https://trello.com/c/cFylaLdv
+                                if (data.most_recent_encounter_documents.length > 0) {
+                                    text += "Measured today: \r\n";
+                                    angular.forEach(data.most_recent_encounter_documents, function (value, key) {
+                                        let container = $("<div/>");
+                                        container.append(`${value.name} : ${value.value}`);
+                                        text += `${container.text()} \r\n`;
+                                    });
+                                    text += '\r\n';
+                                }
+
+                                // Copy related problem
+                                if (data.most_recent_encounter_related_problems.length > 0) {
+                                    text += "List of related problems : \r\n";
+                                    angular.forEach(data.most_recent_encounter_related_problems, function (value, key) {
+                                        text += value.problem_name + '\r\n';
+                                    });
+                                    text += '\r\n';
+                                }
+
+                                // Copy pending all todo
+                                text += "List of all active todos : \r\n";
+                                angular.forEach(data.todo, function (value, key) {
+                                    text += `${value.todo} ${value.problem ? 'for problem ' + value.problem.problem_name : ''}\r\n`;
+                                });
+
+                                // Copy to clipboard
+                                vm.$temp = $("<textarea/>");
+                                vm.$temp.val(text);
+                                $("body").append(vm.$temp);
+
+
+                                vm.dataIsLoaded = true
+                            });
+
+                            vm.copy = function () {
+                                vm.$temp.select();
+                                document.execCommand("copy");
+                                vm.$temp.remove();
+
+                                toaster.pop('success', 'Done', 'Data is copied to clipboard');
+                            }
+                        },
+                        controllerAs: 'vm'
+                    });
+
+                    // $location.path('/');
+                    // $rootScope.$broadcast('copyEncounter', {});
                 }
             });
             hotkeys.add({
@@ -255,32 +330,5 @@
                 }
             });
         }
-    });
-    ManagerApp.constant('RECORDER_STATUS', {
-        isRecording: 0,
-        isPaused: 1,
-        isStopped: 2
-    }).constant('AUDIO_UPLOAD_STATUS', {
-        isInitialize: 0,
-        isUploading: 1,
-        isUploaded: 2
-    }).constant('LABELS', [
-        {name: 'green', css_class: 'todo-label-green'},
-        {name: 'yellow', css_class: 'todo-label-yellow'},
-        {name: 'orange', css_class: 'todo-label-orange'},
-        {name: 'red', css_class: 'todo-label-red'},
-        {name: 'purple', css_class: 'todo-label-purple'},
-        {name: 'blue', css_class: 'todo-label-blue'},
-        {name: 'sky', css_class: 'todo-label-sky'},
-    ]).constant('VIEW_MODES', [
-        {label: 'All', value: 0},
-        {label: 'Week', value: 1},
-        {label: 'Month', value: 2},
-        {label: 'Year', value: 3},
-    ]).constant('TODO_LIST', {
-        'NONE': 0,
-        'INR': 1,
-        'A1C': 2,
-        'COLON_CANCER_SCREENING': 3
     });
 })();
