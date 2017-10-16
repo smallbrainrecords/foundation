@@ -102,22 +102,6 @@
         $scope.loadMoreTodo = loadMoreTodo;
 
         init();
-        $scope.documentCopy = function (msg) {
-            let result = document.execCommand('copy');
-            console.log(msg + result);
-        };
-
-        $scope.ajaxCopy = function () {
-            setTimeout(() => {
-                let directCall = document.execCommand('copy');
-                console.log("Ajax callback: " + directCall);
-
-                console.log("Trigger btn click in callback");
-                $('#testCopy').click();
-            }, 1000);
-
-
-        };
 
         function init() {
 
