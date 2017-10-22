@@ -244,8 +244,6 @@
                 description: 'Copy most recent encounter to clipboard',
                 allowIn: ['INPUT', 'TEXTAREA', 'SELECT'],
                 callback: function (event, hotkey) {
-                    // alert();
-
                     // Showing loading indicator
                     ngDialog.open({
                         template: 'copyEncounterDialog',
@@ -254,6 +252,7 @@
                             let vm = this;
                             vm.dataIsLoaded = false;
                             vm.$temp = null;
+
 
                             // Load most recent encounter a.k.a latest
                             patientService.getMostRecentEncounter($('#patient_id').val()).then((data) => {
@@ -265,8 +264,7 @@
                                     angular.forEach(data.most_recent_encounter_summaries, function (value, key) {
                                         let container = $("<div/>");
                                         container.append(value);
-                                        text += `${container.text()}\r
-`;
+                                        text += `${container.text()}\r`;
                                     });
                                     text += '\r\n';
                                 }
@@ -302,8 +300,13 @@
                                 vm.$temp.val(text);
                                 $("body").append(vm.$temp);
 
+                                vm.dataIsLoaded = true;
 
-                                vm.dataIsLoaded = true
+                                // TODO: Focus
+                                setTimeout(() => {
+                                    $(".ngdialog-buttons button").focus()
+                                }, 200);
+
                             });
 
                             vm.copy = function () {
@@ -312,13 +315,11 @@
                                 vm.$temp.remove();
 
                                 toaster.pop('success', 'Done', 'Data is copied to clipboard');
+
                             }
                         },
                         controllerAs: 'vm'
                     });
-
-                    // $location.path('/');
-                    // $rootScope.$broadcast('copyEncounter', {});
                 }
             });
             hotkeys.add({
