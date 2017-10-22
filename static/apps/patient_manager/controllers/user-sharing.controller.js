@@ -4,77 +4,107 @@
 
 
     angular.module('ManagerApp')
-        .controller('ManageSharingPatientCtrl', function ($scope, $routeParams, ngDialog, sharedService,
-                                                          patientService, $location, $anchorScroll, toaster) {
+        .controller('ManageSharingPatientCtrl', function ($scope, $routeParams, ngDialog, staffService, $location, $anchorScroll, toaster, inrService) {
 
-            $scope.init = function () {
+            $scope.patientName = '';
+            // $scope.patient_id = $routeParams['patientId'];
+            $scope.assign_patient_form = {};
+            // $scope.patient = $scope.patient_info;
 
-                var patient_id = $('#patient_id').val();
-                $scope.patient_id = patient_id;
+            $scope.findPatient = findPatient;
 
-                $scope.assign_patient_form = {};
+            $scope.add_sharing_patient = add_sharing_patient;
+            $scope.remove_sharing_patient = remove_sharing_patient;
+            $scope.permitted = permitted;
+            $scope.isShared = isShared;
 
-                patientService.fetchActiveUser().then(function (data) {
-                    $scope.active_user = data['user_profile'];
+            init();
+
+            function init() {
+
+                // staffService.fetchActiveUser().then(function (data) {
+                //     $scope.active_user = data['user_profile'];
+                // });
+
+                staffService.getUserInfo($scope.patient_id).then(function (data) {
+                    $scope.patient = data['user_profile'];
                 });
 
-                patientService.getPatientsList().then(function (data) {
-                    $scope.patients_list = data['patients_list'];
-                });
-
-                patientService.getSharingPatients($scope.patient_id).then(function (data) {
+                staffService.getSharingPatients($scope.patient_id).then(function (data) {
                     $scope.sharing_patients = data['sharing_patients'];
                 });
-                //sharedService.initHotkey($scope);
 
-            };
+            }
 
-            $scope.add_sharing_patient = function (form) {
-                form.patient_id = $scope.patient_id;
+            function add_sharing_patient(sharingPatientId) {
+                let form = {
+                    sharing_patient_id: sharingPatientId,
+                    patient_id: $scope.patient_id
+                };
 
-                patientService.addSharingPatient(form).then(function (data) {
-                    if (data['success'] == true) {
+                staffService.addSharingPatient(form).then(function (data) {
+                    if (data['success']) {
                         $scope.sharing_patients.push(data['sharing_patient']);
                         form.sharing_patient_id = '';
 
                         toaster.pop('success', 'Done', 'Added sharing patient successfully');
                     } else {
-                        toaster.pop('error', 'Error', 'Something error! Please try again!');
+                        toaster.pop('error', 'Error', 'Added sharing patient failed!');
                     }
                 });
-            };
+            }
 
-            $scope.remove_sharing_patient = function (p) {
-                patientService.removeSharingPatient($scope.patient_id, p.user.id).then(function (data) {
-                    if (data['success'] == true) {
-                        var index = $scope.sharing_patients.indexOf(p);
-                        $scope.sharing_patients.splice(index, 1);
+            function remove_sharing_patient(userId) {
+                staffService.removeSharingPatient($scope.patient_id, userId)
+                    .then(function (data) {
+                        if (data['success']) {
+                            $scope.sharing_patients.forEach((p, idx) => {
+                                if (p.user.id == userId) {
+                                    $scope.sharing_patients.splice(idx, 1);
+                                }
+                            });
 
-                        toaster.pop('success', 'Done', 'Removed sharing patient successfully');
-                    } else {
-                        toaster.pop('error', 'Error', 'Something error! Please try again!');
+                            toaster.pop('success', 'Done', 'Removed sharing patient successfully');
+                        } else {
+                            toaster.pop('error', 'Error', 'Removed sharing patient error!');
+                        }
+                    });
+            }
+
+            function isShared(result) {
+                let isShared = false;
+                $scope.sharing_patients.forEach((patient) => {
+                    if (patient.id == result.id) {
+                        isShared = true;
                     }
                 });
-            };
+                return isShared;
+            }
 
-            $scope.permitted = function (p) {
+            function findPatient(viewValue) {
+                if (viewValue != '') {
+                    return inrService.findPatient(viewValue).then(function (response) {
+                        $scope.results = response.data.patients;
+                    });
+                } else {
+                    $scope.results = [];
+                }
+                return $scope.results;
+            }
+
+            function permitted(user) {
                 var permitted = true;
-                if (p.user.id == $scope.active_user.user.id) {
+                if (user.id == $scope.patient.user.id) {
                     permitted = false;
                 }
 
                 angular.forEach($scope.sharing_patients, function (value, key) {
-                    if (p.user.id == value.user.id) {
+                    if (user.id == value.user.id) {
                         permitted = false;
                     }
                 });
-
                 return permitted;
-
-            };
-
-            $scope.init();
-
+            }
         });
     /* End of controller */
 

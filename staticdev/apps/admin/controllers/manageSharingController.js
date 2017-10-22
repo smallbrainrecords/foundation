@@ -8,67 +8,107 @@
         });
     /* End of controller */
     angular.module('AdminApp')
-        .controller('ManageSharingPatientCtrl', function ($scope, $routeParams, ngDialog,
-                                                          adminService, $location, $anchorScroll, toaster) {
+        .controller('ManageSharingPatientCtrl', function ($scope, $routeParams, ngDialog, staffService, $location, $anchorScroll, toaster, inrService) {
+
+            $scope.patientName = '';
+            $scope.patient_id = $routeParams['patientId'];
+            $scope.assign_patient_form = {};
+
+            $scope.findPatient = findPatient;
             $scope.add_sharing_patient = add_sharing_patient;
             $scope.remove_sharing_patient = remove_sharing_patient;
             $scope.permitted = permitted;
+            $scope.isShared = isShared;
 
             init();
 
             function init() {
-                $scope.patient_id = $routeParams['patientId'];
-                $scope.assign_patient_form = {};
-                adminService.fetchActiveUser().then(function (data) {
+
+
+                staffService.fetchActiveUser().then(function (data) {
                     $scope.active_user = data['user_profile'];
                 });
-                adminService.getUserInfo($scope.patient_id).then(function (data) {
+
+                staffService.getUserInfo($scope.patient_id).then(function (data) {
                     $scope.patient = data['user_profile'];
                 });
-                adminService.getPatientsList().then(function (data) {
-                    $scope.patients_list = data['patients_list'];
-                });
-                adminService.getSharingPatients($scope.patient_id).then(function (data) {
+
+                staffService.getSharingPatients($scope.patient_id).then(function (data) {
                     $scope.sharing_patients = data['sharing_patients'];
                 });
+
             }
 
-            function add_sharing_patient(form) {
-                form.patient_id = $scope.patient_id;
-                adminService.addSharingPatient(form).then(function (data) {
-                    if (data['success'] == true) {
+            function add_sharing_patient(sharingPatientId) {
+                let form = {
+                    sharing_patient_id: sharingPatientId,
+                    patient_id: $scope.patient_id
+                };
+
+                staffService.addSharingPatient(form).then(function (data) {
+                    if (data['success']) {
                         $scope.sharing_patients.push(data['sharing_patient']);
                         form.sharing_patient_id = '';
+
                         toaster.pop('success', 'Done', 'Added sharing patient successfully');
                     } else {
-                        toaster.pop('error', 'Error', 'Something error! Please try again!');
+                        toaster.pop('error', 'Error', 'Added sharing patient failed!');
                     }
                 });
             }
 
-            function remove_sharing_patient(p) {
-                adminService.removeSharingPatient($scope.patient_id, p.user.id).then(function (data) {
-                    if (data['success'] == true) {
-                        var index = $scope.sharing_patients.indexOf(p);
-                        $scope.sharing_patients.splice(index, 1);
-                        toaster.pop('success', 'Done', 'Removed sharing patient successfully');
-                    } else {
-                        toaster.pop('error', 'Error', 'Something error! Please try again!');
-                    }
-                });
+            function remove_sharing_patient(userId) {
+                staffService.removeSharingPatient($scope.patient_id, userId)
+                    .then(function (data) {
+                        if (data['success']) {
+                            $scope.sharing_patients.forEach((p, idx) => {
+                                if (p.user.id == userId) {
+                                    $scope.sharing_patients.splice(idx, 1);
+                                }
+                            });
+
+                            toaster.pop('success', 'Done', 'Removed sharing patient successfully');
+                        } else {
+                            toaster.pop('error', 'Error', 'Removed sharing patient error!');
+                        }
+                    });
             }
 
-            function permitted(p) {
+            function isShared(result) {
+                let isShared = false;
+                $scope.sharing_patients.forEach((patient) => {
+                    if (patient.id == result.id) {
+                        isShared = true;
+                    }
+                });
+                return isShared;
+            }
+
+            function permitted(user) {
                 var permitted = true;
-                if (p.user.id == $scope.patient.user.id) {
+                if (user.id == $scope.patient.user.id) {
                     permitted = false;
                 }
+
                 angular.forEach($scope.sharing_patients, function (value, key) {
-                    if (p.user.id == value.user.id) {
+                    if (user.id == value.user.id) {
                         permitted = false;
                     }
                 });
+
                 return permitted;
+
+            }
+
+            function findPatient(viewValue) {
+                if (viewValue != '') {
+                    return inrService.findPatient(viewValue).then(function (response) {
+                        $scope.results = response.data.patients;
+                    });
+                } else {
+                    $scope.results = [];
+                }
+                return $scope.results;
             }
         });
     /* End of controller */

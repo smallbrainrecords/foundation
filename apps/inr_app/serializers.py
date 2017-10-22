@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from emr.models import InrTextNote, Problem, ObservationValue, UserProfile, ObservationComponent, \
     ObservationPinToProblem
-from users_app.serializers import UserProfileSerializer
+from users_app.serializers import UserProfileSerializer, SafeUserSerializer
 
 
 class InrTextNoteSerializer(serializers.ModelSerializer):
@@ -92,12 +92,14 @@ class INRPatientSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     date_of_birth = serializers.DateField(format='%m/%d/%Y')
     problem_id = serializers.SerializerMethodField()
+    user = SafeUserSerializer(many=False)
 
     class Meta:
         model = UserProfile
         fields = (
             'id',
             'avatar',
+            'user',
             'full_name',
             'date_of_birth',
             'problem_id'

@@ -2,6 +2,7 @@
     'use strict';
     var ManagerApp = angular.module('ManagerApp',
         ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
+            'app.services',
             'app.constant', 'httpModule', 'sharedModule', 'colon_cancers', 'a1c', 'medication', 'problems',
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'angular-click-outside', 'pickadate',
@@ -74,7 +75,7 @@
                 controller: 'EditValueCtrl'
             })
             .when('/manage/sharing', {
-                templateUrl: '/static/apps/patient_manager/partials/manage_sharing_patient.html',
+                templateUrl: '/static/apps/patient_sharing/manage_sharing_patient.html',
                 controller: 'ManageSharingPatientCtrl'
             })
             .when('/manage/sharing/problem/:sharing_patient_id', {

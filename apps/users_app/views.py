@@ -607,9 +607,13 @@ def get_patients_list(request):
 @login_required
 @api_view(["POST"])
 def add_sharing_patient(request, patient_id, sharing_patient_id):
-    resp = {}
+    resp = {'success': False}
 
     to_sharing_patient_profile = UserProfile.objects.get(user_id=sharing_patient_id)
+    is_existed = SharingPatient.objects.filter(sharing_id=sharing_patient_id, shared_id=patient_id).exists()
+    if is_existed:
+        return ajax_response(resp)
+
     sharing_patient = SharingPatient.objects.create(sharing_id=sharing_patient_id, shared_id=patient_id)
 
     problems = Problem.objects.filter(patient_id=patient_id)
