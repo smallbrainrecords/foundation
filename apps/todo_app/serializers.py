@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from emr.models import ToDo, ToDoComment, Label, ToDoAttachment, TodoActivity, LabeledToDoList
-from users_app.serializers import SafeUserSerializer, UserProfileSerializer
+from users_app.serializers import SafeUserSerializer
 
 
 class LabelSerializer(serializers.ModelSerializer):
@@ -105,7 +105,7 @@ class ToDoCommentSerializer(serializers.ModelSerializer):
 
 class TodoActivitySerializer(serializers.ModelSerializer):
     todo = TodoSerializer()
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
     comment = CommentToDoSerializer()
     attachment = AttachmentToDoSerializer()
 

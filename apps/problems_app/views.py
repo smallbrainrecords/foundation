@@ -402,7 +402,7 @@ def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
             note_auto_generated_todo.id, "A note was added", problem.problem_name)
         op_add_todo_event(request.user, patient, summary, note_auto_generated_todo)
 
-        add_todo_activity(note_auto_generated_todo, actor_profile, "Added this todo.")
+        add_todo_activity(note_auto_generated_todo, request.user, "Added this todo.")
 
         # Tag associated physician
         # Find all associated physician(s) with this patient
@@ -412,7 +412,7 @@ def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
             log = "<b>{0} {1} - {2}</b> joined this todo.".format(doctor.physician.first_name,
                                                                   doctor.physician.last_name,
                                                                   doctor.physician.profile.role)
-            add_todo_activity(note_auto_generated_todo, request.user.profile, log)
+            add_todo_activity(note_auto_generated_todo, request.user, log)
 
             resp['todo'] = TodoSerializer(note_auto_generated_todo).data
 
@@ -606,7 +606,7 @@ def add_problem_todo(request, problem_id):
     activity = '''
         Added this todo.
     '''
-    add_todo_activity(new_todo, actor_profile, activity)
+    add_todo_activity(new_todo, request.user, activity)
 
     resp['success'] = True
     resp['todo'] = TodoSerializer(new_todo).data

@@ -45,7 +45,7 @@ def add_patient_todo(request, patient_id):
 
     #  Todo activities
     actor_profile = UserProfile.objects.get(user=request.user)
-    add_todo_activity(new_todo, actor_profile, "Added this todo.")
+    add_todo_activity(new_todo, request.user, "Added this todo.")
 
     # Add tagged member
     for profile_id in members:
@@ -58,7 +58,7 @@ def add_patient_todo(request, patient_id):
         # Save activity
         log = "<b>{0} {1} - {2}</b> joined this todo.".format(member.user.first_name, member.user.last_name,
                                                               member.role)
-        add_todo_activity(new_todo, request.user.profile, log)
+        add_todo_activity(new_todo, request.user, log)
 
     resp = {'todo': TodoSerializer(new_todo).data, 'success': True}
     return ajax_response(resp)
@@ -98,7 +98,7 @@ def update_todo_status(request, todo_id):
 
     # todo activity
     activity = "Updated status of this todo to <b>{}</b>.".format(accomplished_label)
-    add_todo_activity(todo, actor_profile, activity)
+    add_todo_activity(todo, request.user, activity)
 
     # todos = ToDo.objects.filter(patient=patient)
     # accomplished_todos = [todo for todo in todos if todo.accomplished]
@@ -157,7 +157,7 @@ def update_order(request):
         activity = '''
             Updated order of this todo.
         '''
-        add_todo_activity(todo, actor_profile, activity)
+        add_todo_activity(todo, request.user, activity)
     # tagged todo order
     if datas.has_key('tagged_user_id'):
         tagged_user_id = datas['tagged_user_id']
@@ -211,7 +211,7 @@ def update_order(request):
         activity = '''
             Updated order of this todo.
         '''
-        add_todo_activity(todo, actor_profile, activity)
+        add_todo_activity(todo, request.user, activity)
 
     # list todo
     if datas.has_key('list_id'):
@@ -328,7 +328,7 @@ def change_todo_text(request, todo_id):
     todo.save(update_fields=["todo"])
 
     # Save todo activity
-    add_todo_activity(todo, request.user.profile, activity)
+    add_todo_activity(todo, request.user, activity)
 
     # Set problem authentication
     set_problem_authentication_false(request, todo)
@@ -367,7 +367,7 @@ def change_todo_due_date(request, todo_id):
         activity = "Changed due date of this todo to <b>%s</b>." % (request.POST.get('due_date'))
     else:
         activity = "Removed due date of this todo."
-    add_todo_activity(todo, actor_profile, activity)
+    add_todo_activity(todo, request.user, activity)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -505,7 +505,7 @@ def add_todo_attachment(request, todo_id):
     resp['attachment'] = attachment_dict
     # todo activity
     activity = "Attached <b>%s</b> to this todo." % (attachment.filename())
-    add_todo_activity(attachment.todo, actor_profile, activity, comment=None, attachment=attachment)
+    add_todo_activity(attachment.todo, request.user, activity, comment=None, attachment=attachment)
     return ajax_response(resp)
 
 
@@ -531,7 +531,7 @@ def delete_attachment(request, attachment_id):
     activity = '''
         Deleted <b>%s</b> from this todo.
     ''' % (attachment.filename())
-    add_todo_activity(attachment.todo, actor_profile, activity)
+    add_todo_activity(attachment.todo, request.user, activity)
     attachment.delete()
 
     resp = {}
@@ -561,7 +561,7 @@ def add_todo_member(request, todo_id):
 
     # Save activity
     log = "<b>{0} {1} - {2}</b> joined this todo.".format(member.user.first_name, member.user.last_name, member.role)
-    add_todo_activity(todo, request.user.profile, log)
+    add_todo_activity(todo, request.user, log)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -590,7 +590,7 @@ def remove_todo_member(request, todo_id):
 
     # todo activity
     log = "<b>{0} {1} - {2}</b> left this todo.".format(member.user.first_name, member.user.last_name, member.role)
-    add_todo_activity(todo, request.user.profile, log)
+    add_todo_activity(todo, request.user, log)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -647,7 +647,7 @@ def add_staff_todo(request, user_id):
     new_todo = ToDo.objects.add_staff_todo(user_id, todo_name, due_date)
     # todo activity
     activity = "Added this todo."
-    add_todo_activity(new_todo, actor_profile, activity)
+    add_todo_activity(new_todo, request.user, activity)
 
     resp = {}
     resp['todo'] = TodoSerializer(new_todo).data

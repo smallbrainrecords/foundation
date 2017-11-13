@@ -237,7 +237,7 @@ def change_dosage(request, patient_id, medication_id):
     op_add_todo_event(request.user, patient_user,
                       "Added todo <a href='#/todo/{0}'><b>{1}</b></a>".format(todo.id, todo.todo))
 
-    TodoActivity(todo=todo, author=request.user.profile, activity="Added this todo.").save()
+    TodoActivity(todo=todo, author=request.user, activity="Added this todo.").save()
 
     # Return data
     resp['medication'] = MedicationSerializer(medication).data

@@ -614,11 +614,11 @@ class EncounterTodoRecord(models.Model):
 
 class TodoActivity(models.Model):
     todo = models.ForeignKey(ToDo)
-    activity = models.TextField()
-    author = models.ForeignKey(UserProfile, null=True, blank=True)
-    created_on = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(User, null=True, blank=True)
     comment = models.ForeignKey(ToDoComment, null=True, blank=True)
     attachment = models.ForeignKey(ToDoAttachment, null=True, blank=True)
+    activity = models.TextField()
+    created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_on']

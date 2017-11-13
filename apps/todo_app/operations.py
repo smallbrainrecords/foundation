@@ -1,9 +1,8 @@
 from emr.models import TodoActivity, UserProfile
 
 
-def add_todo_activity(todo, user_profile, activity, comment=None, attachment=None):
-    new_activity = TodoActivity(
-        todo=todo, author=user_profile, activity=activity)
+def add_todo_activity(todo, user, activity, comment=None, attachment=None):
+    new_activity = TodoActivity(todo=todo, author=user, activity=activity)
     if comment:
         new_activity.comment = comment
     if attachment:
