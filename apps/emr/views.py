@@ -8,7 +8,6 @@ from models import UserProfile, Problem, \
     Goal, ToDo, Guideline, TextNote, PatientImage, \
     Encounter, EncounterEvent, Sharing, Viewer, \
     ViewStatus, ProblemRelationship
-from pain.models import PainAvatar
 
 
 # OLD
@@ -90,7 +89,7 @@ def home(request):
         return render_to_response("home.html", context)
 
     except:
-        traceback.print_exc()
+        # traceback.print_exc()
         if request.user.is_superuser:
             context = {}
             context['role'] = 'admin'
@@ -211,9 +210,9 @@ def get_patient_data(request, patient_id):
     viewers = list(
         set([viewer.viewer for viewer in Viewer.objects.filter(patient=patient, datetime__gte=time_threshold)]))
     raw_viewers = []
-    print 'viewers: ' + str(viewers)
+    # print 'viewers: ' + str(viewers)
     for viewer in viewers:
-        print 'viewer: ' + str(viewer)
+        # print 'viewer: ' + str(viewer)
         raw_viewers.append({'user_id': viewer.id, 'full_name': viewer.get_full_name()})
     viewers = raw_viewers
     view_status = {}
@@ -387,7 +386,7 @@ def change_status(request):
     role = UserProfile.objects.get(user=request.user).role
 
     authenticated = True if (role == 'physician' or role == 'admin') else False
-    print request.POST
+    # print request.POST
     if request.POST['target'] == 'problem':
         problem = Problem.objects.get(id=request.POST['id'])
         problem.authenticated = authenticated
@@ -450,7 +449,7 @@ def change_status(request):
 
 @login_required
 def submit_data_for_problem(request, problem_id):
-    print request.POST
+    # print request.POST
     role = UserProfile.objects.get(user=request.user).role
 
     authenticated = True if (role == 'physician' or role == 'admin') else False
@@ -471,7 +470,7 @@ def submit_data_for_problem(request, problem_id):
             problem.parent = Problem.objects.get(id=request.POST['data'])
         problem.save()
     elif request.POST['type'] == 'problem_start_date':
-        print 'problem_start_date: ' + str(request.POST)
+        # print 'problem_start_date: ' + str(request.POST)
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
 
@@ -524,8 +523,8 @@ def add_problem(request, patient_id):
         goal = Goal(patient=User.objects.get(id=patient_id), goal=request.POST['goal'])
         goal.save()
     elif 'todo' in request.POST:
-        print 'todo'
-        print request.POST
+        # print 'todo'
+        # print request.POST
         todo = ToDo(patient=User.objects.get(id=patient_id), todo=request.POST['todo'])
         todo.save()
     return HttpResponse('added')
@@ -599,9 +598,9 @@ def upload_image_to_problem(request, problem_id):
 #
 # @login_required
 # def encounter(request, encounter_id):
-#     print 'encounter debug'
-#     print request.POST
-#     print request.FILES
+# #     print 'encounter debug'
+# #     print request.POST
+# #     print request.FILES
 #     if 'note' in request.POST:
 #         encounter = Encounter.objects.get(id=encounter_id)
 #         encounter.note = request.POST['note']

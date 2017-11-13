@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
-from emr.models import Goal, ToDo, TextNote, PatientImage, Problem, ProblemActivity, ProblemSegment
+from emr.models import ToDo, Problem, ProblemActivity, ProblemSegment
+
 
 class ProblemService(object):
     @staticmethod

@@ -455,67 +455,65 @@ def add_wiki_note(request, problem_id):
 
 
 # Problems
-@login_required
-def add_patient_note(request, problem_id):
-    resp = {'success': False}
-    errors = []
-
-    problem = Problem.objects.get(id=problem_id)
-    patient = problem.patient
-    patient_profile = UserProfile.objects.get(user=patient)
-
-    note = request.POST.get('note')
-
-    if request.user == patient:
-        new_note = TextNote(
-            author=patient_profile, by='patient', note=note)
-        new_note.save()
-
-        problem.notes.add(new_note)
-
-        activity = 'Added patient note'
-        add_problem_activity(problem, patient_profile, activity, 'input')
-
-        resp['success'] = True
-        resp['note'] = TextNoteSerializer(new_note).data
-    else:
-        errors.append("Permission Error: Only patient can add patient note.")
-
-    resp['errors'] = errors
-    return ajax_response(resp)
+# @login_required
+# def add_patient_note(request, problem_id):
+#     resp = {'success': False}
+#     errors = []
+#
+#     problem = Problem.objects.get(id=problem_id)
+#     patient = problem.patient
+#     patient_profile = UserProfile.objects.get(user=patient)
+#
+#     note = request.POST.get('note')
+#
+#     if request.user == patient:
+#         new_note = TextNote(author=patient, by='patient', note=note)
+#         new_note.save()
+#
+#         problem.notes.add(new_note)
+#
+#         activity = 'Added patient note'
+#         add_problem_activity(problem, patient_profile, activity, 'input')
+#
+#         resp['success'] = True
+#         resp['note'] = TextNoteSerializer(new_note).data
+#     else:
+#         errors.append("Permission Error: Only patient can add patient note.")
+#
+#     resp['errors'] = errors
+#     return ajax_response(resp)
 
 
 # Problems
-@login_required
-def add_physician_note(request, problem_id):
-    # More work required
-
-    resp = {'success': False}
-
-    problem = Problem.objects.get(id=problem_id)
-    patient = problem.patient
-    note = request.POST.get('note')
-
-    physician = request.user
-
-    physician_profile = UserProfile.objects.get(user=physician)
-
-    new_note = TextNote(
-        author=physician_profile, by='physician', note=note)
-    new_note.save()
-
-    problem.notes.add(new_note)
-
-    summary = '''Added <u>note</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>''' % (note, problem.problem_name)
-    op_add_event(physician, patient, summary, problem)
-
-    activity = summary
-    add_problem_activity(problem, physician_profile, activity, 'input')
-
-    new_note_dict = TextNoteSerializer(new_note).data
-    resp['note'] = new_note_dict
-    resp['success'] = True
-    return ajax_response(resp)
+# @login_required
+# def add_physician_note(request, problem_id):
+#     # More work required
+#
+#     resp = {'success': False}
+#
+#     problem = Problem.objects.get(id=problem_id)
+#     patient = problem.patient
+#     note = request.POST.get('note')
+#
+#     physician = request.user
+#
+#     physician_profile = UserProfile.objects.get(user=physician)
+#
+#     new_note = TextNote(author=physician, by='physician', note=note)
+#     new_note.save()
+#
+#     problem.notes.add(new_note)
+#
+#     summary = '''Added <u>note</u> : <b>%s</b> to <u>problem</u> : <b>%s</b>''' % (note, problem.problem_name)
+#     op_add_event(physician, patient, summary, problem)
+#
+#     activity = summary
+#     add_problem_activity(problem, physician_profile, activity, 'input')
+#
+#     new_note_dict = TextNoteSerializer(new_note).data
+#     resp['note'] = new_note_dict
+#     resp['success'] = True
+#     return ajax_response(resp)
 
 
 # Problems

@@ -1,11 +1,11 @@
 from rest_framework import serializers
+
+from users_app.serializers import SafeUserSerializer
 from .models import TextNote
-from users_app.serializers import UserProfileSerializer
 
 
 class TextNoteSerializer(serializers.ModelSerializer):
-
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = TextNote

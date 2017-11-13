@@ -187,8 +187,7 @@ class MaritalStatus(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile")
-    role = models.CharField(
-        max_length=10, choices=ROLE_CHOICES, default='patient')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='patient')
     data = models.TextField(blank=True)
     cover_image = models.ImageField(upload_to='cover_image/', default='/static/images/cover.png')
     portrait_image = models.ImageField(upload_to='cover_image/', default='/static/images/avatar.png')
@@ -239,8 +238,8 @@ class Encounter(models.Model):
     recorder_status = models.IntegerField(choices=RECORDER_STATUS, default=0)
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
-    encounter_document = models.ManyToManyField('ObservationValue',
-                                                through='EncounterObservationValue')  # deprecated should be loaded dynamically instead of storing in specific table
+    # deprecated should be loaded dynamically instead of storing in specific table
+    encounter_document = models.ManyToManyField('ObservationValue', through='EncounterObservationValue')
 
     objects = EncounterManager()
 
@@ -262,8 +261,7 @@ class Encounter(models.Model):
 
 
 class EncounterEvent(models.Model):
-    encounter = models.ForeignKey(
-        Encounter, related_name='encounter_events', null=True, blank=True)
+    encounter = models.ForeignKey(Encounter, related_name='encounter_events', null=True, blank=True)
 
     datetime = models.DateTimeField(auto_now_add=True)
     summary = models.TextField(default='')
@@ -293,8 +291,9 @@ class EncounterEvent(models.Model):
         return '%s:%s' % (h, s)
 
 
+# @Deprecated
 class TextNote(models.Model):
-    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    author = models.ForeignKey(User, null=True, blank=True)
     by = models.CharField(max_length=20, choices=BY_CHOICES)
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)
