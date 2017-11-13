@@ -368,8 +368,8 @@ class ProblemSegment(models.Model):
 
 class ProblemActivity(models.Model):
     problem = models.ForeignKey(Problem)
+    author = models.ForeignKey(User, null=True, blank=True)
     activity = models.TextField()
-    author = models.ForeignKey(UserProfile, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     is_input_type = models.BooleanField(default=False)
     is_output_type = models.BooleanField(default=False)

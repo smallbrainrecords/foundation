@@ -115,7 +115,7 @@ class ProblemNoteSerializer(serializers.ModelSerializer):
 
 
 class ProblemActivitySerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = ProblemActivity

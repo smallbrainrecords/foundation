@@ -25,7 +25,7 @@ def op_medication_event(medication, actor, patient, summary):
     # Add log to pinned problem activity
     problems = medication.problem_set.all()
     for problem in problems:
-        activity = ProblemActivity(problem=problem, author=actor.profile, activity=summary)
+        activity = ProblemActivity(problem=problem, author=actor, activity=summary)
         activity.save()
 
     pass

@@ -23,14 +23,13 @@ from data_app.serializers import ObservationPinToProblemSerializer, ObservationS
 from emr.models import ColonCancerScreening, Observation, ObservationUnit, ObservationComponent, TaggedToDoOrder, \
     PatientController
 from emr.models import Encounter
-from emr.models import Goal, ToDo, TextNote, PatientImage, Label
+from emr.models import Goal, ToDo, PatientImage, Label
 from emr.models import MedicationPinToProblem
 from emr.models import ProblemNote, ProblemActivity, CommonProblem
 from emr.models import ProblemRelationship
 from emr.models import SharingPatient, PhysicianTeam, AOneC, ObservationPinToProblem
 from emr.models import UserProfile, Problem, ProblemOrder, ProblemLabel, LabeledProblemList
 from emr.operations import op_add_event, op_add_todo_event
-from emr.serializers import TextNoteSerializer
 from goals_app.serializers import GoalSerializer
 from medication_app.serializers import MedicationPinToProblemSerializer
 from problems_app.operations import add_problem_activity, check_problem_access, get_available_widget
