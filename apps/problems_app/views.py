@@ -56,7 +56,7 @@ def track_problem_click(request, problem_id):
         op_add_event(actor, patient, summary)
 
         activity = "Visited <u>problem</u>: <b>%s</b>" % problem.problem_name
-        add_problem_activity(problem, actor_profile, activity)
+        add_problem_activity(problem, request.user, activity)
 
     resp = {}
     return ajax_response(resp)
@@ -197,7 +197,7 @@ def add_patient_problem(request, patient_id):
 
     # Activity
     activity = "Added <u>problem</u>: <b>%s</b>" % term
-    add_problem_activity(new_problem, actor_profile, activity)
+    add_problem_activity(new_problem, request.user, activity)
 
     resp['success'] = True
     resp['problem'] = ProblemSerializer(new_problem).data
@@ -227,7 +227,7 @@ def add_patient_common_problem(request, patient_id):
     summary = 'Added <u>problem</u> <b>%s</b>' % problem.problem_name
     op_add_event(physician, new_problem.patient, summary, new_problem)
     activity = "Added <u>problem</u>: <b>%s</b>" % problem.problem_name
-    add_problem_activity(new_problem, actor_profile, activity)
+    add_problem_activity(new_problem, request.user, activity)
 
     resp['success'] = True
     resp['problem'] = ProblemSerializer(new_problem).data
@@ -275,7 +275,7 @@ def change_name(request, problem_id):
         summary = '<b>%s</b> was changed to <b>%s</b>' % (old_problem_name, problem.problem_name)
 
     op_add_event(physician, problem.patient, summary, problem)
-    add_problem_activity(problem, actor_profile, summary)
+    add_problem_activity(problem, request.user, summary)
 
     resp['success'] = True
     resp['problem'] = ProblemSerializer(problem).data
@@ -316,7 +316,7 @@ def update_problem_status(request, problem_id):
     summary = """Changed <u>problem</u>: <b>%(problem_name)s</b> status to : <b>%(is_controlled)s</b> ,<b>%(is_active)s</b> ,<b>%(authenticated)s</b>""" % status_labels
     op_add_event(physician, problem.patient, summary, problem)
     activity = summary
-    add_problem_activity(problem, actor_profile, activity)
+    add_problem_activity(problem, request.user, activity)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -342,7 +342,7 @@ def update_start_date(request, problem_id):
         problem.problem_name, problem.start_date)
     op_add_event(physician, patient, summary, problem)
     activity = summary
-    add_problem_activity(problem, actor_profile, activity)
+    add_problem_activity(problem, request.user, activity)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -367,11 +367,11 @@ def add_history_note(request, problem_id):
     patient = problem.patient
 
     # Save note
-    new_note = ProblemNote.objects.create_history_note(actor_profile, problem, note)
+    new_note = ProblemNote.objects.create_history_note(actor, problem, note)
 
     # Save problem log
     activity = "Added History Note  <b>{}</b>".format(note)
-    add_problem_activity(problem, actor_profile, activity, 'input')
+    add_problem_activity(problem, request.user, activity, 'input')
 
     # Save system log
     op_add_event(physician, patient, activity, problem)
@@ -425,7 +425,7 @@ def add_wiki_note(request, problem_id):
 
     try:
         problem = Problem.objects.get(id=problem_id)
-        author = UserProfile.objects.get(user=request.user)
+        author_profile = UserProfile.objects.get(user=request.user)
     except (Problem.DoesNotExist, UserProfile.DoesNotExist) as e:
         return ajax_response(resp)
 
@@ -437,10 +437,10 @@ def add_wiki_note(request, problem_id):
     physician = request.user
     patient = problem.patient
 
-    new_note = ProblemNote.objects.create_wiki_note(author, problem, note)
+    new_note = ProblemNote.objects.create_wiki_note(request.user, problem, note)
 
     activity = 'Added wiki note: <b>%s</b>' % note
-    add_problem_activity(problem, actor_profile, activity, 'input')
+    add_problem_activity(problem, request.user, activity, 'input')
 
     op_add_event(physician, patient, activity, problem)
 
@@ -537,7 +537,7 @@ def add_problem_goal(request, problem_id):
     op_add_event(physician, patient, summary, problem)
 
     activity = summary
-    add_problem_activity(problem, actor_profile, activity, 'output')
+    add_problem_activity(problem, request.user, activity, 'output')
 
     resp['success'] = True
     resp['goal'] = GoalSerializer(new_goal).data
@@ -597,7 +597,7 @@ def add_problem_todo(request, problem_id):
     op_add_event(physician, patient, summary, problem)
 
     activity = summary
-    add_problem_activity(problem, actor_profile, activity, 'output')
+    add_problem_activity(problem, request.user, activity, 'output')
 
     summary = '''Added <u>todo</u> <a href="#/todo/%s"><b>%s</b></a> for <u>problem</u> <b>%s</b>''' % (
         new_todo.id, new_todo.todo, problem.problem_name)
@@ -638,7 +638,7 @@ def upload_problem_image(request, problem_id):
         ''' % (problem.problem_name, patient_image.image, patient_image.image)
 
         op_add_event(request.user, patient, summary, problem)
-        add_problem_activity(problem, actor_profile, activity, 'input')
+        add_problem_activity(problem, request.user, activity, 'input')
 
         image_holder.append(patient_image)
 
@@ -663,7 +663,7 @@ def delete_problem_image(request, problem_id, image_id):
     summary = '''Deleted <u>image</u> from <u>problem</u> : <b>%s</b>''' % problem.problem_name
     op_add_event(physician, patient, summary, problem)
     activity = summary
-    add_problem_activity(problem, actor_profile, activity, 'input')
+    add_problem_activity(problem, request.user, activity, 'input')
 
     resp['success'] = True
     return ajax_response(resp)
@@ -697,8 +697,8 @@ def relate_problem(request):
             source.problem_name, target.problem_name)
 
     if activity:
-        add_problem_activity(source, actor_profile, activity)
-        add_problem_activity(target, actor_profile, activity)
+        add_problem_activity(source, request.user, activity)
+        add_problem_activity(target, request.user, activity)
         op_add_event(request.user, source.patient, activity)
 
     resp['success'] = True
@@ -723,7 +723,7 @@ def update_by_ptw(request):
             problem.problem_name, problem.start_date)
         op_add_event(physician, patient, summary, problem)
         activity = summary
-        add_problem_activity(problem, actor_profile, activity)
+        add_problem_activity(problem, request.user, activity)
 
         resp['success'] = True
 
@@ -991,7 +991,7 @@ def remove_sharing_problems(request, patient_id, sharing_patient_id, problem_id)
 
     actor_profile = UserProfile.objects.get(user=request.user)
     activity = "Removed access for patient <b>%s</b> " % sharing_patient.sharing.username
-    add_problem_activity(problem, actor_profile, activity)
+    add_problem_activity(problem, request.user, activity)
 
     resp = {'success': True}
     return ajax_response(resp)
@@ -1007,7 +1007,7 @@ def add_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
 
     actor_profile = UserProfile.objects.get(user=request.user)
     activity = "Added access for patient <b>%s</b> " % sharing_patient.sharing.username
-    add_problem_activity(problem, actor_profile, activity)
+    add_problem_activity(problem, request.user, activity)
 
     resp = {'success': True}
     return ajax_response(resp)
@@ -1220,9 +1220,9 @@ def get_problem_wikis(request, problem_id):
         '-created_on').first()
 
     wiki_notes = ProblemNote.objects.filter(note_type='wiki', problem_id=problem_id).order_by('-created_on')
-    patient_wiki_notes = [note for note in wiki_notes if note.author.role == "patient"]
-    physician_wiki_notes = [note for note in wiki_notes if note.author.role == "physician"]
-    other_wiki_notes = [note for note in wiki_notes if note.author.role not in ("patient", "physician")]
+    patient_wiki_notes = [note for note in wiki_notes if note.author.profile.role == "patient"]
+    physician_wiki_notes = [note for note in wiki_notes if note.author.profile.role == "physician"]
+    other_wiki_notes = [note for note in wiki_notes if note.author.profile.role not in ("patient", "physician")]
     problem_notes = {
         'history': ProblemNoteSerializer(history_note).data,
         'wiki_notes': {

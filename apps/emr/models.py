@@ -370,16 +370,16 @@ class ProblemActivity(models.Model):
     problem = models.ForeignKey(Problem)
     author = models.ForeignKey(User, null=True, blank=True)
     activity = models.TextField()
-    created_on = models.DateTimeField(auto_now_add=True)
     is_input_type = models.BooleanField(default=False)
     is_output_type = models.BooleanField(default=False)
+    created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_on']
 
 
 class ProblemNote(models.Model):
-    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    author = models.ForeignKey(User, null=True, blank=True)
     problem = models.ForeignKey(Problem, null=True, blank=True)
     note = models.TextField()
     note_type = models.CharField(choices=NOTE_TYPE_CHOICES, max_length=50)

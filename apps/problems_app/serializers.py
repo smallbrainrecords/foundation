@@ -4,7 +4,7 @@ from emr.models import Problem, PatientImage, ProblemRelationship, ProblemLabel,
 from emr.models import ProblemNote, ProblemActivity, ProblemSegment, CommonProblem, ObservationComponent, \
     ObservationValue
 from todo_app.serializers import LabelSerializer, CommentToDoSerializer, AttachmentToDoSerializer
-from users_app.serializers import UserProfileSerializer, SafeUserSerializer
+from users_app.serializers import SafeUserSerializer
 
 
 class CommonProblemSerializer(serializers.ModelSerializer):
@@ -102,7 +102,7 @@ class ProblemRelationshipSerializer(serializers.ModelSerializer):
 
 
 class ProblemNoteSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = ProblemNote

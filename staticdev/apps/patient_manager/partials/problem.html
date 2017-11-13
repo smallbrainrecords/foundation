@@ -309,8 +309,8 @@
                             <ul class='list-group'>
                                 <li ng-show='!patient_wiki_notes.length' class='list-group-item'> No Notes</li>
                                 <li ng-repeat='note in patient_wiki_notes' class='list-group-item' ng-show="$first">
-                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <b> {{ note.author.first_name }} {{ note.author.last_name }}
+                                        - {{ note.author.username }} </b> : {{ note.note }}
                                     <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
                                 </li>
                             </ul>
@@ -321,8 +321,8 @@
                             <ul class='list-group'>
                                 <li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes</li>
                                 <li ng-repeat='note in physician_wiki_notes' class='list-group-item' ng-show="$first">
-                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <b> {{ note.author.first_name }} {{ note.author.last_name }}
+                                        - {{ note.author.username }} </b> : {{ note.note }}
                                     <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
                                 </li>
                             </ul>
@@ -339,8 +339,8 @@
                             <ul class='list-group' ng-show='show_other_notes==true'>
                                 <li ng-show='!other_wiki_notes.length' class='list-group-item'> No Notes</li>
                                 <li ng-repeat='note in other_wiki_notes' class='list-group-item'>
-                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <b> {{ note.author.first_name }} {{ note.author.last_name }}
+                                        - {{ note.author.username }} </b> : {{ note.note }}
                                     <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
                                 </li>
                             </ul>
@@ -355,8 +355,8 @@
                             <ul class='list-group' ng-show='isOtherPatientNoteShowing'>
                                 <li ng-show='!patient_wiki_notes.length' class='list-group-item'> No Notes</li>
                                 <li ng-repeat='note in patient_wiki_notes' class='list-group-item'>
-                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <b> {{ note.author.first_name }} {{ note.author.last_name }}
+                                        - {{ note.author.username }} </b> : {{ note.note }}
                                     <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
                                 </li>
                             </ul>
@@ -370,8 +370,8 @@
                             <ul class='list-group' ng-show='show_physician_notes==true'>
                                 <li ng-show='!physician_wiki_notes.length' class='list-group-item'> No Notes</li>
                                 <li ng-repeat='note in physician_wiki_notes' class='list-group-item'>
-                                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }}
-                                        - {{ note.author.user.username }} </b> : {{ note.note }}
+                                    <b> {{ note.author.first_name }} {{ note.author.last_name }}
+                                        - {{ note.author.username }} </b> : {{ note.note }}
                                     <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
                                 </li>
                             </ul>
@@ -561,9 +561,9 @@
                     </button>
                 </div>
             </form>
-            <span class='text-muted'> <i> Last updated by {{ history_note.author.user.first_name }}
-				{{ history_note.author.user.last_name }} @{{ history_note.author.user.username }} -
-				{{ history_note.author.role }} </i>
+            <span class='text-muted'> <i> Last updated by {{ history_note.author.first_name }}
+				{{ history_note.author.last_name }} @{{ history_note.author.username }} -
+				{{ history_note.author.profile.role }} </i>
 			</span>
         </div>
     </div>
@@ -724,8 +724,8 @@
                          style='margin-bottom:4px; border-top:1px solid #ccc;'
                          ng-show="problem_activity_see_all || activity.is_input_type || activity.is_output_type">
                         <div class='col-md-3'>
-                            <b>{{ activity.author.user.first_name }} {{ activity.author.user.last_name }}
-                                - {{ activity.author.role }} </b>
+                            <b>{{ activity.author.first_name }} {{ activity.author.last_name }}
+                                - {{ activity.author.profile.role }} </b>
                         </div>
                         <div class='col-md-7'>
                             <span ng-if="activity.is_input_type"><i class="fa fa-caret-right"

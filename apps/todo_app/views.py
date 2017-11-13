@@ -92,7 +92,7 @@ def update_todo_status(request, todo_id):
 
     actor_profile = UserProfile.objects.get(user=request.user)
     if todo.problem:
-        add_problem_activity(todo.problem, actor_profile, summary, 'output')
+        add_problem_activity(todo.problem, request.user, summary, 'output')
         if accomplished:
             op_add_event(physician, todo.patient, summary, todo.problem, True)
 

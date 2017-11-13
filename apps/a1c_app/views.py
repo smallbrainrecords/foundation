@@ -90,7 +90,7 @@ def patient_refused(request, a1c_id):
 
     a1c.save()
     # set problem authentication
-    actor_profile = UserProfile.objects.get(user=actor)
+    actor_profile = UserProfile.objects.get(user=request.user)
     set_problem_authentication_false(actor_profile, a1c.problem)
 
     summary = """
@@ -98,7 +98,7 @@ def patient_refused(request, a1c_id):
         <u>problem</u> <b>%s</b>
         """ % (a1c.problem.problem_name)
 
-    add_problem_activity(a1c.problem, actor_profile, summary)
+    add_problem_activity(a1c.problem, request.user, summary)
 
     resp = {}
     resp['a1c'] = AOneCSerializer(a1c).data
@@ -136,7 +136,7 @@ def add_value(request, component_id):
         <u>problem</u> <b>%s</b>
         """ % (value.value_quantity, a1c.problem.problem_name)
 
-    add_problem_activity(a1c.problem, actor_profile, summary)
+    add_problem_activity(a1c.problem, request.user, summary)
 
     summary = "An A1C value of <b>%s</b> was entered" % (value.value_quantity)
     op_add_event(request.user, a1c.problem.patient, summary, a1c.problem)

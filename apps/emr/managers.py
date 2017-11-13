@@ -70,7 +70,6 @@ class EncounterManager(models.Manager):
 
     def create_new_encounter(self, patient_id, physician):
         from emr.models import EncounterEvent
-        from emr.models import Encounter
 
         # encounter = self.create(patient_id=patient_id, physician=physician, recorder_status=0)
         encounter = self.create(patient_id=patient_id, physician=physician)
