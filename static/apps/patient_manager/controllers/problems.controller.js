@@ -204,27 +204,28 @@
 
                 // Pinned observation component (aka data)
                 problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
+                    // TODO: Deprecated check
                     $scope.pins = data['pins'];
                     $scope.problem_pins = data['problem_pins'];
                     $scope.hasPinnedGraph = false;
 
                     $scope.datas = [];
                     patientService.getDatas($scope.patient_id).then(function (data) {
-                        if (data['success'] == true) {
+                        if (data['success']) {
                             $scope.datas = data['info'];
                             angular.forEach($scope.datas, function (data, key) {
                                 var is_pin = false;
                                 angular.forEach($scope.problem_pins, function (pin, key) {
-                                    if (data.id == pin.observation) {
+                                    if (data.id === pin.observation) {
                                         is_pin = true;
                                         $scope.hasPinnedGraph = true;
-                                        data.pin_author = pin.author.id;
+                                        data.pin_author = pin.author.id;  // TODO: This is UserProfile id
                                     }
                                 });
                                 data.pin = is_pin;
 
                                 // Default graph type
-                                if (data.graph == null || data.graph == undefined)
+                                if (data.graph == null || data.graph === undefined)
                                     data.graph = 'Line';
 
                                 // Temporary data using for generate graph
@@ -510,7 +511,7 @@
                 angular.forEach($scope.datas, function (data, key) {
 
                     // Default graph type
-                    if (data.graph == null || data.graph == undefined)
+                    if (data.graph == null || data.graph === undefined)
                         data.graph = 'Line';
 
                     // Temporary data using for generate graph

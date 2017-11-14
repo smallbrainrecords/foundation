@@ -6,13 +6,12 @@ from django.db import models
 class AOneCManager(models.Manager):
     def create_if_not_exist(self, problem):
         from emr.models import AOneC, Observation, ObservationComponent, OBSERVATION_TYPES
-        if not Observation.objects.filter(subject=problem.patient.profile, name=OBSERVATION_TYPES[0]['name']).exists():
-            observation = Observation.objects.create(subject=problem.patient.profile,
-                                                     name=OBSERVATION_TYPES[0]['name'])
+        if not Observation.objects.filter(subject=problem.patient, name=OBSERVATION_TYPES[0]['name']).exists():
+            observation = Observation.objects.create(subject=problem.patient, name=OBSERVATION_TYPES[0]['name'])
 
             observation.save()
         else:
-            observation = Observation.objects.get(subject=problem.patient.profile, name=OBSERVATION_TYPES[0]['name'])
+            observation = Observation.objects.get(subject=problem.patient, name=OBSERVATION_TYPES[0]['name'])
 
         if not ObservationComponent.objects.filter(observation=observation, name=OBSERVATION_TYPES[0]['name']).exists():
             observation_component = ObservationComponent()
@@ -34,7 +33,7 @@ class ProblemManager(models.Manager):
         # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
         if concept_id in ['73211009', '46635009', '44054006']:
             observation = Observation.objects.create(name=OBSERVATION_TYPES[0]['name'],
-                                                     subject=new_problem.patient.profile)
+                                                     subject=new_problem.patient)
             AOneC.objects.create(problem=new_problem, observation=observation)
         return new_problem
 

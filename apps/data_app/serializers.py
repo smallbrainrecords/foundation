@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationPinToProblem, \
     ObservationUnit, ObservationValue
-from users_app.serializers import UserProfileSerializer
+from users_app.serializers import UserProfileSerializer, SafeUserSerializer
 
 
 class ObservationValueTextNoteSerializer(serializers.ModelSerializer):
@@ -106,10 +106,10 @@ class ObservationComponentSerializer(serializers.ModelSerializer):
 
 
 class ObservationSerializer(serializers.ModelSerializer):
-    subject = UserProfileSerializer()
-    encounter = UserProfileSerializer()
-    performer = UserProfileSerializer()
-    author = UserProfileSerializer()
+    subject = SafeUserSerializer()
+    encounter = SafeUserSerializer()
+    performer = SafeUserSerializer()
+    author = SafeUserSerializer()
     observation_components = ObservationComponentSerializer(many=True, read_only=True)
     observation_units = ObservationUnitSerializer(many=True, read_only=True)
 

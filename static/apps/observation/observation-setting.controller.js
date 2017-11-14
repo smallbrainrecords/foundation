@@ -7,7 +7,6 @@
 
     function DataSettingsCtrl($scope, $routeParams, ngDialog, problemService, toaster, sharedService, $location, dataService, patientService) {
 
-        // $scope.patient_id = $('#patient_id').val();
         $scope.data_id = $routeParams.data_id;
         $scope.show_edit_data = false;
 
@@ -19,10 +18,6 @@
         init();
 
         function init() {
-            // patientService.fetchActiveUser().then(function (data) {
-            //     $scope.active_user = data['user_profile'];
-            // });
-
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
             });

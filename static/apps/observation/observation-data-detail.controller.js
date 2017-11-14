@@ -6,7 +6,6 @@
     IndividualDataCtrl.$inject = ['$scope', '$routeParams', 'ngDialog', 'problemService', 'sharedService', 'toaster', '$location', 'dataService', 'patientService'];
 
     function IndividualDataCtrl($scope, $routeParams, ngDialog, problemService, sharedService, toaster, $location, dataService, patientService) {
-        // $scope.patient_id = $('#patient_id').val();
         // List of all observation component value pair is requested for editing
         $scope.dataID = $routeParams.dataId;
         $scope.componentValueIds = $routeParams.componentValueIds.split('&');
@@ -22,10 +21,6 @@
         init();
 
         function init() {
-
-            // patientService.fetchActiveUser().then(function (data) {
-            //     $scope.active_user = data['user_profile'];
-            // });
 
             dataService.fetchDataInfo($scope.dataID).then(function (data) {
                 $scope.data = data['info'];

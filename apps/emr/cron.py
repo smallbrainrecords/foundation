@@ -1,10 +1,12 @@
-import cronjobs
 import datetime
-from django.contrib.auth.models import User
-from django.db.models import Max, Prefetch
-from emr.models import ColonCancerScreening, ColonCancerStudy, RiskFactor, UserProfile, Problem, ToDo, Label, \
+
+import cronjobs
+from django.db.models import Max
+
+from emr.models import ColonCancerScreening, Problem, ToDo, Label, \
 	PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem, Observation, MedicationPinToProblem, \
 	Medication
+
 
 def age(when, on=None):
     if on is None:
@@ -113,8 +115,8 @@ def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_time
 			if ObservationPinToProblem.objects.filter(author__role="physician", observation__code=pin.observation.code, problem__concept_id=pin.problem.concept_id).count() > 3:
 				problems = Problem.objects.filter(concept_id=pin.problem.concept_id)
 				for problem in problems:
-					if Observation.objects.filter(code=pin.observation.code, subject=problem.patient.profile).exists():
-						observations = Observation.objects.filter(code=pin.observation.code, subject=problem.patient.profile)
+					if Observation.objects.filter(code=pin.observation.code, subject=problem.patient).exists():
+						observations = Observation.objects.filter(code=pin.observation.code, subject=problem.patient)
 						for observation in observations:
 							if not ObservationPinToProblem.objects.filter(problem=problem, observation=observation).exists():
 								p = ObservationPinToProblem(problem=problem, author=pin.author, observation=observation)

@@ -121,9 +121,6 @@
             .otherwise('/');
     });
     ManagerApp.run(function (CollapseService, sharedService, patientService) {
-        // Progressive load patient todo
-        // patientService.progressiveTodoLoading();//.then(patientService.loadMoreTodo());
-        // Loading general setting, risk setting is failed to load -> deferred setting value
         sharedService.getSettings().then(function (response) {
             angular.forEach(response.data.settings, function (value, key) {
                 sharedService.settings[key] = JSON.parse(value);

@@ -1,4 +1,5 @@
 import math
+
 from rest_framework.decorators import api_view
 
 from common.views import *
@@ -43,10 +44,10 @@ def get_datas(request, patient_id):
         patient_user = User.objects.get(id=patient_id)
         for data in OBSERVATION_TYPES:
             if not data['name'] == 'a1c' and not Observation.objects.filter(name=data['name'], author=None,
-                                                                            subject=patient_user.profile).exists():
+                                                                            subject=patient_user).exists():
                 observation = Observation()
                 observation.name = data['name']
-                observation.subject = patient_user.profile
+                observation.subject = patient_user
                 observation.save()
 
                 first_loop = True
@@ -72,7 +73,7 @@ def get_datas(request, patient_id):
                     observation_component.name = data['name']
                     observation_component.save()
 
-        observations = Observation.objects.filter(subject__user__id=int(patient_id))
+        observations = Observation.objects.filter(subject__id=int(patient_id))
 
         if request.user.profile.role == 'nurse' or request.user.profile.role == 'secretary':
             team_members = PhysicianTeam.objects.filter(member=request.user)
@@ -117,16 +118,15 @@ def get_observation_info(request, observation_id):
 @api_view(["POST"])
 def add_new_data_type(request, patient_id):
     resp = {'success': False}
+    name = request.POST.get("name", None)
+    color_code = request.POST.get("color", None)
+    unit = request.POST.get("unit", None)
+
     if permissions_accessed(request.user, int(patient_id)):
         patient = User.objects.get(id=int(patient_id))
-        observation = Observation.objects.create(subject=patient.profile,
-                                                 author=request.user.profile,
-                                                 name=request.POST.get("name", None),
-                                                 color=request.POST.get("color", None))
-
+        observation = Observation.objects.create(subject=patient, author=request.user, name=name, color=color_code)
         observation.save()
 
-        unit = request.POST.get("unit", None)
         if unit:
             observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=unit)
             observation_unit.is_used = True  # will be changed in future when having conversion
@@ -135,7 +135,7 @@ def add_new_data_type(request, patient_id):
         observation_component = ObservationComponent()
         observation_component.observation = observation
         observation_component.component_code = request.POST.get("code", None)
-        observation_component.name = request.POST.get("name", None)
+        observation_component.name = name
         observation_component.save()
 
         resp['observation'] = ObservationSerializer(observation).data
@@ -331,21 +331,22 @@ def save_data(request, patient_id, value_id):
 @api_view(["POST"])
 def save_data_type(request, patient_id, observation_id):
     resp = {'success': False}
+    name = request.POST.get("name", None)
+    color_code = request.POST.get("color", None)
+    unit = request.POST.get("unit", None)
     if permissions_accessed(request.user, int(patient_id)):
         observation = Observation.objects.get(id=observation_id)
-        if not observation.author == None:  # prevent default datas
-            observation.name = request.POST.get("name", None)
-            observation.color = request.POST.get("color", None)
-
+        if observation.author is not None:  # prevent default datas
+            observation.name = name
+            observation.color = color_code
             observation.save()
 
             # TODO: will be changed later if we have more components in one custom observation
             for component in observation.observation_components.all():
-                component.name = request.POST.get("name", None)
+                component.name = name
                 component.component_code = request.POST.get("code", None)
                 component.save()
 
-            unit = request.POST.get("unit", None)
             if unit:
                 for observation_unit in observation.observation_units.all():
                     observation_unit.value_unit = unit
@@ -364,7 +365,7 @@ def delete_data(request, patient_id, observation_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         observation = Observation.objects.get(id=observation_id)
-        if not observation.author == None:  # prevent default datas
+        if not observation.author is None:  # prevent default datas
             pins = ObservationPinToProblem.objects.filter(observation_id=observation_id)
             for pin in pins:
                 pin.delete()

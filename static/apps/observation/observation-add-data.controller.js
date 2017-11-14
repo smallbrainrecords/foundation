@@ -6,21 +6,15 @@
     AddDataCtrl.$inject = ['$scope', '$routeParams', 'ngDialog', 'problemService', 'toaster', 'sharedService', '$location', 'dataService', 'patientService'];
 
     function AddDataCtrl($scope, $routeParams, ngDialog, problemService, toaster, sharedService, $location, dataService, patientService) {
-        // $scope.patient_id = $('#patient_id').val();
         $scope.data_id = $routeParams.data_id;
         $scope.new_data = {};
         $scope.new_data.date = moment().format("MM/DD/YYYY");
+
         $scope.add_data = add_data;
 
         init();
 
         function init() {
-
-            // patientService.fetchActiveUser().then(function (data) {
-            //     $scope.active_user = data['user_profile'];
-            //
-            // });
-
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
             });

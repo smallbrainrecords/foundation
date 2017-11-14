@@ -168,7 +168,7 @@ def add_patient_problem(request, patient_id):
         if not ObservationComponent.objects.filter(component_code="2345-7",
                                                    observation__subject=patient.profile).exists():
             # Add data type
-            observation = Observation.objects.create(subject=patient.profile, author=request.user.profile,
+            observation = Observation.objects.create(subject=patient, author=request.user,
                                                      name="Glucose",
                                                      color="#FFD2D2")
 

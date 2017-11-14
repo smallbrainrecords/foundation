@@ -44,11 +44,9 @@
                     });
 
                     bleedingRiskDialog.closePromise.then(function () {
-                        debugger;
                         patientService.addProblemTodo(form).then(addTodoSuccess);
                     });
                 } else {
-                    debugger;
                     patientService.addProblemTodo(form).then(addTodoSuccess);
                 }
 

@@ -6,11 +6,6 @@
     angular.module('ManagerApp')
         .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, sharedService,
                                                 toaster, $location, patientService, $filter, medicationService, prompt) {
-            // Properties
-            // TODO: DRY
-            // $scope.user_id = $('#user_id').val();
-            // $scope.patient_id = $('#patient_id').val();
-
 
             $scope.showMedicationSearch = false;
             $scope.showMedicationHistory = false;
@@ -35,9 +30,6 @@
             ////////////////////////
 
             function init() {
-                // patientService.fetchActiveUser().then(function (data) {
-                //     $scope.active_user = data['user_profile'];
-                // });
 
                 medicationService.fetchMedicationInfo($scope.patient_id, $scope.medication_id).then(function (data) {
                     $scope.medication = data['info'];
@@ -84,7 +76,7 @@
             function isInPins(array, item) {
                 var is_existed = false;
                 angular.forEach(array, function (value, key2) {
-                    if (value.problem == item.id) {
+                    if (value.problem === item.id) {
                         is_existed = true;
                     }
                 });

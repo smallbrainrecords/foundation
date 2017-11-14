@@ -179,6 +179,8 @@ class ListField(models.TextField):
         return self.get_db_prep_value(value)
 
 
+# Resources https://www.hl7.org/fhir/resourcelist.html
+
 class MaritalStatus(models.Model):
     code = models.CharField(max_length=1, null=True, blank=True)
     display = models.CharField(max_length=20, null=True, blank=True)
@@ -625,19 +627,28 @@ class TodoActivity(models.Model):
 
 
 class Observation(models.Model):
+    """
+    https://www.hl7.org/fhir/observation.html
+    """
     name = models.CharField(max_length=255, null=True, blank=True)
+    # TODO: Check for deprecation
     status = models.CharField(max_length=16, null=True, blank=True)
+    # TODO: Check for deprecation
     category = models.CharField(max_length=45, null=True, blank=True)
+    # TODO: Check for deprecation
     code = models.CharField(max_length=10, null=True, blank=True)
-    subject = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_subjects')
-    encounter = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_encounters')
-    performer = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_performers')
-    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_authors')
     effective_datetime = models.DateTimeField(null=True, blank=True)
+    # TODO: Check for deprecation
     comments = models.TextField(null=True, blank=True)
-    created_on = models.DateTimeField(auto_now_add=True)
     color = models.CharField(max_length=7, null=True, blank=True)
     graph = models.TextField(default='Line')
+    subject = models.ForeignKey(User, null=True, blank=True, related_name='observation_subjects')
+    # TODO: Check for deprecation
+    encounter = models.ForeignKey(User, null=True, blank=True, related_name='observation_encounters')
+    # TODO: Check for deprecation
+    performer = models.ForeignKey(User, null=True, blank=True, related_name='observation_performers')
+    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_authors')
+    created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_on']

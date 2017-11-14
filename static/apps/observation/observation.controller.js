@@ -7,7 +7,6 @@
 
     function DataCtrl($scope, $routeParams, ngDialog, problemService, toaster, $location, sharedService, dataService, patientService, $filter) {
 
-        // $scope.patient_id = $('#patient_id').val();
         $scope.data_id = $routeParams.data_id;
         $scope.viewMode = 'Year';
         $scope.show_pin_to_new_problem = false;
@@ -28,27 +27,10 @@
 
         function init() {
             $scope.$watch("viewMode", function (newVal, oldVal) {
-                if (newVal != oldVal) {
+                if (newVal !== oldVal) {
                     refreshGraph();
-                    // // Temporary data using for generate graph
-                    // var tmpData = angular.copy($scope.data);
-                    //
-                    // // Sorting before processing
-                    // _.map(tmpData.observation_components, function (item, key) {
-                    //     item.observation_component_values = dataService.updateViewMode($scope.viewMode, item.observation_component_values);
-                    //
-                    //     // Sorting before generating
-                    //     item.observation_component_values = $filter('orderBy')(item.observation_component_values, "effective_datetime");
-                    // });
-                    // $scope.data.chartData = dataService.generateChartData(tmpData);
-                    // $scope.data.chartLabel = dataService.generateChartLabel(tmpData);
                 }
             });
-
-            // patientService.fetchActiveUser().then(function (data) {
-            //     $scope.active_user = data['user_profile'];
-            //
-            // });
 
             dataService.fetchDataInfo($scope.data_id).then(function (data) {
                 $scope.data = data['info'];
@@ -99,7 +81,7 @@
         function isInPins(array, item) {
             let is_existed = false;
             angular.forEach(array, function (value, key2) {
-                if (value.problem == item.id) {
+                if (value.problem === item.id) {
                     is_existed = true;
                 }
             });
