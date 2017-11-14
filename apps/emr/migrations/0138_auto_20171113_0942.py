@@ -10,7 +10,8 @@ from emr.models import ProblemActivity, UserProfile
 def changer_user_profile_id_to_user_id(apps, schema_editor):
     activities = ProblemActivity.objects.all()
     for act in activities:
-        act.author_id = UserProfile.objects.filter(id=act.author_id).first().user_id
+        if UserProfile.objects.filter(id=act.author_id).first() is not None:
+            act.author_id = UserProfile.objects.filter(id=act.author_id).first().user_id
         act.save()
 
 
