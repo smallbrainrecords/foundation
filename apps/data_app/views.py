@@ -194,9 +194,9 @@ def obseration_pin_to_problem(request, patient_id):
             optp1 = []
             for x in optp:
                 optp1.append(x[0])
-            oc = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
+            component = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
             if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(
-                    oc) < 1:
+                    component) < 1:
                 if Inr.objects.filter(observation_id=observation_id).exists():
                     Inr.objects.filter(observation_id=observation_id).delete()
                     resp['remove_inr'] = True
@@ -207,13 +207,12 @@ def obseration_pin_to_problem(request, patient_id):
             optp1 = []
             for x in optp:
                 optp1.append(x[0])
-            oc = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
-            # pin = ObservationPinToProblem(author=request.user.profile, observation_id=observation_id, problem_id=problem_id)
+            component = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
             pin = ObservationPinToProblem(author_id=request.user.id, observation_id=observation_id,
                                           problem_id=problem_id)
             pin.save()
             if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(
-                    oc) < 1:
+                    component) < 1:
                 patient_user = User.objects.get(id=patient_id)
                 inr = Inr(observation_id=observation_id, problem_id=problem_id, author=request.user.profile,
                           patient=patient_user.profile)
@@ -230,6 +229,9 @@ def obseration_pin_to_problem(request, patient_id):
 @api_view(["POST"])
 def add_new_data(request, patient_id, component_id):
     resp = {'success': False}
+    # Patient user instance
+    patient = UserProfile.objects.filter(id=int(patient_id)).first().user
+
     if permissions_accessed(request.user, int(patient_id)):
         # Get user submit data
         effective_datetime = request.POST.get("datetime", datetime.now())
@@ -245,11 +247,12 @@ def add_new_data(request, patient_id, component_id):
         # Auto add bmi data if observation component is weight or height
         # TODO: Need to improve this block of code - https://trello.com/c/PaSdgs3k
         bmiComponent = ObservationComponent.objects.filter(component_code='39156-5').filter(
-            observation__subject=patient_id).first()
+            observation__subject=patient).first()
+        #  TODO: Later when finished refactor model relationship and patient
         if value.component.name == 'weight':
             # Calculation
             heightComponent = ObservationComponent.objects.filter(component_code='8302-2').filter(
-                observation__subject=patient_id).get()
+                observation__subject=patient).get()
             height = get_observation_most_common_value(heightComponent, effective_datetime)
             bmiValue = round(float(value.value_quantity) * 703 / math.pow(height, 2), 2)
 
@@ -263,7 +266,7 @@ def add_new_data(request, patient_id, component_id):
         if value.component.name == 'height':
             # Calculation
             weightComponent = ObservationComponent.objects.filter(component_code='3141-9').filter(
-                observation__subject=patient_id).get()
+                observation__subject=patient).get()
             weight = get_observation_most_common_value(weightComponent, effective_datetime)
             bmiValue = round(weight * 703 / math.pow(float(value.value_quantity), 2), 2)
 

@@ -658,9 +658,13 @@ class Observation(models.Model):
 
 
 class ObservationComponent(models.Model):
+    """
+    Some observations have multiple component observations. These component observations are expressed as separate code
+    value pairs that share the same attributes. Examples include systolic and diastolic component observations for
+    blood pressure measurement and multiple component observations for genetics observations.
+    """
     name = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=16, null=True, blank=True)
-    observation = models.ForeignKey(Observation, related_name='observation_components')
     component_code = models.CharField(max_length=10, null=True, blank=True)
     value_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     value_codeableconcept = models.CharField(max_length=40, null=True, blank=True)
@@ -668,8 +672,11 @@ class ObservationComponent(models.Model):
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
+
+    observation = models.ForeignKey(Observation, related_name='observation_components')
+    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_component_authors')
+
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_component_authors')
 
     class Meta:
         ordering = ['effective_datetime', 'created_on']

@@ -73,9 +73,9 @@ class ObservationValueSerializer(serializers.ModelSerializer):
 
 
 class ObservationComponentSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
     date = serializers.SerializerMethodField()
     time = serializers.SerializerMethodField()
+    author = SafeUserSerializer()
     observation_component_values = ObservationValueSerializer(many=True, read_only=True)
 
     class Meta:

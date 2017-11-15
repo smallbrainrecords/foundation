@@ -166,7 +166,7 @@ def add_patient_problem(request, patient_id):
     # Only add if problem is diabetes and patient have not
     if "44054006" == concept_id:
         if not ObservationComponent.objects.filter(component_code="2345-7",
-                                                   observation__subject=patient.profile).exists():
+                                                   observation__subject=patient).exists():
             # Add data type
             observation = Observation.objects.create(subject=patient, author=request.user,
                                                      name="Glucose",
@@ -186,8 +186,7 @@ def add_patient_problem(request, patient_id):
             observation_component.name = "Glucose"
             observation_component.save()
         else:
-            observation = ObservationComponent.objects.get(component_code="2345-7",
-                                                           observation__subject=patient.profile)
+            observation = ObservationComponent.objects.get(component_code="2345-7", observation__subject=patient)
         # Pin to problem
         ObservationPinToProblem.objects.create(author_id=request.user.id, observation=observation, problem=new_problem)
 

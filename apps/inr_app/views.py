@@ -54,8 +54,9 @@ def get_problems(request, patient_id):
 
     # Find the observation component have LOINC code: 6301-6 -> reserve get observation -> get pinned problem
     # Each user should not have more than one(zero or one) observation which have LOINC code above
+    patient = User.objects.filter(profile__id=int(patient_id)).first()
     observation_component = ObservationComponent.objects.filter(component_code='6301-6',
-                                                                observation__subject_id=patient_id).get()
+                                                                observation__subject=patient).get()
 
     observation_pin = ObservationPinToProblem.objects.filter(observation_id=observation_component.observation_id)
     problems = [observation_pin.problem for observation_pin in observation_pin]
@@ -215,8 +216,8 @@ def add_inr(request, patient_id):
     inr_value = json_body.get('inr_value')
     new_dosage = json_body.get('new_dosage')
     next_inr = json_body.get('next_inr')
-
-    observation_component = ObservationComponent.objects.filter(observation__subject_id=patient_id).filter(
+    patient = UserProfile.objects.filter(id=int(patient_id)).first().user
+    observation_component = ObservationComponent.objects.filter(observation__subject=patient).filter(
         component_code='6301-6')
 
     if observation_component.exists():
