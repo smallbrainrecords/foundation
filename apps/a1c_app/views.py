@@ -39,23 +39,25 @@ def get_a1c_info(request, a1c_id):
 @permissions_required(["add_a1c_note"])
 @login_required
 def add_note(request, a1c_id):
-    note = request.POST.get("note")
-    a1c_note = AOneCTextNote.objects.create(a1c_id=a1c_id,
-                                            author=request.user.profile, note=note)
     resp = {}
-    resp['note'] = AOneCTextNoteSerializer(a1c_note).data
+    note = request.POST.get("note")
+
+    a1c_note = AOneCTextNote.objects.create(a1c_id=a1c_id, author=request.user, note=note)
+
     resp['success'] = True
+    resp['note'] = AOneCTextNoteSerializer(a1c_note).data
     return ajax_response(resp)
 
 
 @permissions_required(["edit_a1c_note"])
 @login_required
 def edit_note(request, note_id):
+    resp = {}
+
     note = AOneCTextNote.objects.get(id=note_id)
     note.note = request.POST.get('note')
     note.save()
 
-    resp = {}
     resp['note'] = AOneCTextNoteSerializer(note).data
     resp['success'] = True
     return ajax_response(resp)
@@ -64,8 +66,10 @@ def edit_note(request, note_id):
 @permissions_required(["delete_a1c_note"])
 @login_required
 def delete_note(request, note_id):
-    AOneCTextNote.objects.get(id=note_id).delete()
     resp = {}
+
+    AOneCTextNote.objects.get(id=note_id).delete()
+
     resp['success'] = True
     return ajax_response(resp)
 

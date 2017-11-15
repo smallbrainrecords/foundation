@@ -722,7 +722,6 @@ class ObservationPinToProblem(models.Model):
     problem = models.ForeignKey(Problem, null=True, blank=True, related_name='pin_problems')
 
 
-
 class Country(models.Model):
     iso3 = models.CharField(max_length=3)
     iso_num = models.CharField(max_length=3)
@@ -821,10 +820,12 @@ class AOneC(models.Model):
 
     objects = AOneCManager()
 
+
 class AOneCTextNote(models.Model):
     a1c = models.ForeignKey(AOneC, related_name='a1c_notes')
-    author = models.ForeignKey(UserProfile, null=True, blank=True)
     note = models.TextField()
+    author = models.ForeignKey(User, null=True, blank=True)
+    # TODO: Should be renamed to created_on
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):

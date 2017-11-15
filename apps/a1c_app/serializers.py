@@ -1,15 +1,14 @@
 from rest_framework import serializers
 
-from emr.models import Observation, AOneCTextNote, ObservationComponent, ObservationValueTextNote, AOneC
-
-from users_app.serializers import SafeUserSerializer, UserProfileSerializer
-from todo_app.serializers import TodoSerializer
-from problems_app.serializers import ProblemSerializer
 from data_app.serializers import ObservationSerializer
+from emr.models import AOneCTextNote, AOneC
+from problems_app.serializers import ProblemSerializer
+from todo_app.serializers import TodoSerializer
+from users_app.serializers import SafeUserSerializer
 
 
 class AOneCTextNoteSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = AOneCTextNote
