@@ -161,7 +161,7 @@
                                        id="{{data.id}}"
                                        ng-model="data.pin"
                                        ng-change="data_pin_to_problem(data.id, problem.id);"
-                                       ng-disabled="active_user.role == 'patient' && active_user.id != data.pin_author && data.pin_author != null"
+                                       ng-disabled="active_user.role == 'patient' && active_user.user.id != data.pin_author && data.pin_author != null"
                                        title="{{data.name}}">
                                 <label for="{{data.id}}" ng-bind="data.name">
                                 </label>

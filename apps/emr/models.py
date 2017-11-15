@@ -717,9 +717,10 @@ class ObservationOrder(models.Model):
 
 
 class ObservationPinToProblem(models.Model):
-    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='pin_authors')
+    author = models.ForeignKey(User, null=True, blank=True, related_name='pin_authors')
     observation = models.ForeignKey(Observation, null=True, blank=True, related_name='pin_observations')
     problem = models.ForeignKey(Problem, null=True, blank=True, related_name='pin_problems')
+
 
 
 class Country(models.Model):
@@ -819,7 +820,6 @@ class AOneC(models.Model):
     observation = models.OneToOneField(Observation, related_name='observation_aonecs')
 
     objects = AOneCManager()
-
 
 class AOneCTextNote(models.Model):
     a1c = models.ForeignKey(AOneC, related_name='a1c_notes')

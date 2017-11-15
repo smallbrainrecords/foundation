@@ -136,7 +136,7 @@ class ObservationSerializer(serializers.ModelSerializer):
 
 
 class ObservationPinToProblemSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = ObservationPinToProblem

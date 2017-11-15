@@ -219,7 +219,7 @@
                                     if (data.id === pin.observation) {
                                         is_pin = true;
                                         $scope.hasPinnedGraph = true;
-                                        data.pin_author = pin.author.id;  // TODO: This is UserProfile id
+                                        data.pin_author = pin.author.id;
                                     }
                                 });
                                 data.pin = is_pin;

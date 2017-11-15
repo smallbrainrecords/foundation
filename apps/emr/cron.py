@@ -109,10 +109,10 @@ def a1c_order_was_automatically_generated():
 @cronjobs.register
 def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times():
 	# then that data is added to all patients for that problem
-	pins = ObservationPinToProblem.objects.filter(author__role="physician")
+	pins = ObservationPinToProblem.objects.filter(author__profile__role="physician")
 	for pin in pins:
 		if pin.observation.code and pin.problem.concept_id:
-			if ObservationPinToProblem.objects.filter(author__role="physician", observation__code=pin.observation.code, problem__concept_id=pin.problem.concept_id).count() > 3:
+			if ObservationPinToProblem.objects.filter(author__profile__role="physician", observation__code=pin.observation.code, problem__concept_id=pin.problem.concept_id).count() > 3:
 				problems = Problem.objects.filter(concept_id=pin.problem.concept_id)
 				for problem in problems:
 					if Observation.objects.filter(code=pin.observation.code, subject=problem.patient).exists():
