@@ -181,10 +181,11 @@ def edit_value(request, value_id):
 @permissions_required(["add_a1c_note"])
 @login_required
 def add_value_note(request, value_id):
-    note = ObservationValueTextNote.objects.create(observation_value_id=value_id,
-                                                      author=request.user.profile,
-                                                      note=request.POST.get("note"))
     resp = {}
+
+    note = request.POST.get("note")
+    note = ObservationValueTextNote.objects.create(observation_value_id=value_id, author=request.user, note=note)
+
     resp['note'] = ObservationValueTextNoteSerializer(note).data
     resp['success'] = True
     return ajax_response(resp)
@@ -193,12 +194,14 @@ def add_value_note(request, value_id):
 @permissions_required(["edit_a1c_note"])
 @login_required
 def edit_value_note(request, note_id):
-    note = ObservationValueTextNote.objects.get(id=note_id)
-    note.note = request.POST.get('note')
-    note.save()
-
     resp = {}
-    resp['note'] = ObservationValueTextNoteSerializer(note).data
+    note = request.POST.get('note')
+
+    observation_value_text_note = ObservationValueTextNote.objects.get(id=note_id)
+    observation_value_text_note.note = note
+    observation_value_text_note.save()
+
+    resp['note'] = ObservationValueTextNoteSerializer(observation_value_text_note).data
     resp['success'] = True
     return ajax_response(resp)
 
@@ -206,7 +209,9 @@ def edit_value_note(request, note_id):
 @permissions_required(["delete_a1c_note"])
 @login_required
 def delete_value_note(request, note_id):
-    ObservationValueTextNote.objects.get(id=note_id).delete()
     resp = {}
+
+    ObservationValueTextNote.objects.get(id=note_id).delete()
+
     resp['success'] = True
     return ajax_response(resp)

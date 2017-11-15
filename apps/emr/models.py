@@ -822,8 +822,8 @@ class AOneC(models.Model):
 
 
 class AOneCTextNote(models.Model):
-    a1c = models.ForeignKey(AOneC, related_name='a1c_notes')
     note = models.TextField()
+    a1c = models.ForeignKey(AOneC, related_name='a1c_notes')
     author = models.ForeignKey(User, null=True, blank=True)
     # TODO: Should be renamed to created_on
     datetime = models.DateTimeField(auto_now_add=True)
@@ -833,9 +833,11 @@ class AOneCTextNote(models.Model):
 
 
 class ObservationValueTextNote(models.Model):
-    observation_value = models.ForeignKey(ObservationValue, related_name='observation_value_notes')
-    author = models.ForeignKey(UserProfile, null=True, blank=True)
     note = models.TextField()
+    observation_value = models.ForeignKey(ObservationValue, related_name='observation_value_notes')
+    author = models.ForeignKey(User, null=True, blank=True)
+
+    # TODO: Should be renamed to created_on
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):

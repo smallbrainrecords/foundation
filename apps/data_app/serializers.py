@@ -2,11 +2,11 @@ from rest_framework import serializers
 
 from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationPinToProblem, \
     ObservationUnit, ObservationValue
-from users_app.serializers import UserProfileSerializer, SafeUserSerializer
+from users_app.serializers import SafeUserSerializer
 
 
 class ObservationValueTextNoteSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = ObservationValueTextNote
