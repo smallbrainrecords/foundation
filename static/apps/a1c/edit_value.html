@@ -1,15 +1,10 @@
-<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
 <div class='panel panel-default'>
-
 	<div class='panel-body'>
-
 		<div class='row'>
-
 			<div class='col-md-12'>
 				<a href='#/a1c/{{a1c_id}}/edit_or_delete_values'><b> Back to Edit or delete values </b></a>
 			</div>
 		</div>
-
 	</div><!-- End of Panel Body -->
 </div>
 
@@ -31,7 +26,7 @@
 					<span ng-if="a1c_date <= today">past due</span>
 				</p>
 
-				<div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == value.author.id)">
+				<div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">
 					<form class='form-inline' ng-show="edit">
 						<div class="row">
 							<div class="col-md-6">

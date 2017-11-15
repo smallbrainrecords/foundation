@@ -62,7 +62,7 @@ class EncounterManager(models.Manager):
 
         # https://trello.com/c/cFylaLdv
         data_value = ObservationValue.objects.filter(
-            component__observation__subject=latest_encounter.patient.profile).filter(
+            component__observation__subject=latest_encounter.patient).filter(
             created_on__lte=latest_encounter.stoptime).filter(created_on__gte=datetime.now().date()).all()
         for value in data_value:
             EncounterObservationValue.objects.create(encounter=latest_encounter, observation_value=value)

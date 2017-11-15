@@ -25,7 +25,7 @@ def get_encounter_info(request, encounter_id):
     encounter_documents = ObservationValue.objects.filter(created_on__range=(
         encounter.starttime.replace(hour=0, minute=0, second=0, microsecond=0),
         encounter.stoptime)).filter(
-        component__observation__subject=encounter.patient.profile)  # encounter.encounter_document.all()
+        component__observation__subject=encounter.patient)  # encounter.encounter_document.all()
     encounter_documents_holder = []
     for document in encounter_documents:
         encounter_documents_holder.append({

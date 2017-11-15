@@ -693,13 +693,14 @@ class ObservationUnit(models.Model):
 
 class ObservationValue(models.Model):
     status = models.CharField(max_length=16, null=True, blank=True)
-    component = models.ForeignKey(ObservationComponent, related_name='observation_component_values')
-    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='observation_value_authors') # TODO: This relation should be using User
     value_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    #  TODO: Refactor this field name
     value_codeableconcept = models.CharField(max_length=40, null=True, blank=True)
     value_string = models.TextField(null=True, blank=True)
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
+    component = models.ForeignKey(ObservationComponent, related_name='observation_component_values')
+    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_value_authors')
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:

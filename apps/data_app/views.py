@@ -240,7 +240,7 @@ def add_new_data(request, patient_id, component_id):
         valueQuantity = request.POST.get("value", None)
 
         # DB stuff
-        value = ObservationValue(author=request.user.profile, component_id=component_id,
+        value = ObservationValue(author=request.user, component_id=component_id,
                                  effective_datetime=effective_datetime, value_quantity=valueQuantity)
         value.save()
 
@@ -257,7 +257,7 @@ def add_new_data(request, patient_id, component_id):
             bmiValue = round(float(value.value_quantity) * 703 / math.pow(height, 2), 2)
 
             # DB stuff transaction
-            ObservationValue(author=request.user.profile, component=bmiComponent,
+            ObservationValue(author=request.user, component=bmiComponent,
                              effective_datetime=effective_datetime, value_quantity=bmiValue).save()
             # Save log
             summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
@@ -271,7 +271,7 @@ def add_new_data(request, patient_id, component_id):
             bmiValue = round(weight * 703 / math.pow(float(value.value_quantity), 2), 2)
 
             # DB stuff transaction
-            ObservationValue(author=request.user.profile, component=bmiComponent,
+            ObservationValue(author=request.user, component=bmiComponent,
                              effective_datetime=effective_datetime, value_quantity=bmiValue).save()
             # Save log
             summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)

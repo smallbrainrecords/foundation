@@ -1,18 +1,10 @@
-from datetime import datetime
-from django.db.models import Max
-from django.core.servers.basehttp import FileWrapper
-from django.http import Http404, HttpResponse
-from django.db.models import Q
 from common.views import *
-
-from emr.models import Observation, AOneCTextNote, ObservationComponent, UserProfile, ObservationValueTextNote, \
+from data_app.serializers import ObservationValueTextNoteSerializer, ObservationValueSerializer
+from emr.models import AOneCTextNote, ObservationComponent, UserProfile, ObservationValueTextNote, \
     AOneC, ObservationValue
-from .serializers import AOneCTextNoteSerializer, AOneCSerializer
-from data_app.serializers import ObservationValueTextNoteSerializer, ObservationComponentSerializer, \
-    ObservationSerializer, ObservationValueSerializer
 from emr.operations import op_add_event
-
 from problems_app.operations import add_problem_activity
+from .serializers import AOneCTextNoteSerializer, AOneCSerializer
 
 
 # set problem authentication to false if not physician, admin
@@ -116,9 +108,9 @@ def add_value(request, component_id):
     effective_date = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
 
     value = ObservationValue.objects.create(component=component,
-                                           value_quantity=request.POST.get("value", None),
-                                           effective_datetime=effective_date,
-                                           author=actor_profile)
+                                            value_quantity=request.POST.get("value", None),
+                                            effective_datetime=effective_date,
+                                            author=request.user)
 
     a1c = component.observation.observation_aonecs
     a1c.patient_refused_A1C = False
@@ -146,33 +138,38 @@ def add_value(request, component_id):
 @permissions_required(["delete_observation_component"])
 @login_required
 def delete_value(request, value_id):
-    ObservationValue.objects.get(id=value_id).delete()
     resp = {}
+    ObservationValue.objects.get(id=value_id).delete()
     resp['success'] = True
     return ajax_response(resp)
 
 
 @login_required
 def get_observation_value_info(request, value_id):
-    observation_value_info = ObservationValue.objects.get(id=value_id)
     resp = {}
+
+    observation_value_info = ObservationValue.objects.get(id=value_id)
+
     resp['success'] = True
     resp['info'] = ObservationValueSerializer(observation_value_info).data
     resp['a1c_id'] = observation_value_info.component.observation.observation_aonecs.id
+
     return ajax_response(resp)
 
 
 @permissions_required(["edit_observation_component"])
 @login_required
 def edit_value(request, value_id):
+    resp = {}
+
     value = ObservationValue.objects.get(id=value_id)
     value.value_quantity = request.POST.get('value_quantity')
     value.effective_datetime = datetime.strptime(request.POST.get('effective_datetime'), '%Y-%m-%d').date()
     value.save()
 
-    resp = {}
     resp['success'] = True
     resp['info'] = ObservationValueSerializer(value).data
+
     return ajax_response(resp)
 
 

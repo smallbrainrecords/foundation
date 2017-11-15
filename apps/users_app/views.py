@@ -918,7 +918,7 @@ def get_most_recent_encounter(request, patient_id):
         # Encounter's document
         documents = ObservationValue.objects.filter(created_on__range=(
             encounter.starttime.replace(hour=0, minute=0, second=0, microsecond=0), datetime.datetime.now())).filter(
-            component__observation__subject=encounter.patient.profile)
+            component__observation__subject=encounter.patient)
         for document in documents:
             most_recent_encounter_documents_holder.append({
                 'name': document.component.__str__(),

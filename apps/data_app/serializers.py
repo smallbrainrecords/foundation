@@ -30,7 +30,7 @@ class ObservationUnitSerializer(serializers.ModelSerializer):
 
 
 class ObservationValueSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
     date = serializers.SerializerMethodField()
     time = serializers.SerializerMethodField()
     observation = serializers.SerializerMethodField()

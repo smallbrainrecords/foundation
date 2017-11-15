@@ -182,15 +182,16 @@ def get_inr_table(request, patient_id):
     """
     Get the INR table(which stand for medication dosage of data point in INR data)
     :param request:
-    :param patient_id:
+    :param patient_id: Patient's user profile ID
     :return:
     """
     resp = {'success': False}
     json_body = json.loads(request.body)
     row = json_body.get('row')
+    patient = User.objects.filter(profile__id=int(patient_id)).first()
 
     observation_value = ObservationValue.objects.filter(component__component_code='6301-6') \
-        .filter(component__observation__subject_id=patient_id).order_by('-effective_datetime')
+        .filter(component__observation__subject=patient).order_by('-effective_datetime')
 
     if 0 == row:
         resp['inrs'] = InrSerializer(observation_value, many=True).data
@@ -227,7 +228,7 @@ def add_inr(request, patient_id):
             next_inr = (datetime.now() + relativedelta(months=+1)).strftime('%m/%d/%Y %H:%M')
 
         # 1st add observation value first
-        observation_value = ObservationValue(author=request.user.profile, component_id=observation_component.get().id,
+        observation_value = ObservationValue(author=request.user, component_id=observation_component.get().id,
                                              effective_datetime=parser.parse(date_measured),
                                              value_quantity=inr_value)
         observation_value.save()
@@ -272,7 +273,7 @@ def update_inr(request, patient_id):
     observation_value = ObservationValue.objects.select_related('inr').get(id=observation_value_id)
 
     # Permission checking
-    if request.user.profile.role == 'patient' and observation_value.author != request.user.profile:
+    if request.user.profile.role == 'patient' and observation_value.author != request.user:
         return ajax_response(resp)
 
     observation_value.effective_datetime = parser.parse(date_measured)
@@ -307,7 +308,7 @@ def delete_inr(request, patient_id):
 
     observation_value = ObservationValue.objects.filter(id=observation_value_id).get()
     # Patient can only delete item if they entered
-    if request.user.profile.role == 'patient' and observation_value.author != request.user.profile:
+    if request.user.profile.role == 'patient' and observation_value.author != request.user:
         return ajax_response(resp)
 
     observation_value.delete()
