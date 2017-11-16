@@ -4,12 +4,12 @@ from rest_framework import serializers
 
 from emr.models import InrTextNote, Problem, ObservationValue, UserProfile, ObservationComponent, \
     ObservationPinToProblem
-from users_app.serializers import UserProfileSerializer, SafeUserSerializer
+from users_app.serializers import SafeUserSerializer
 
 
 class InrTextNoteSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
-    patient = UserProfileSerializer()
+    author = SafeUserSerializer()
+    patient = SafeUserSerializer()
 
     class Meta:
         model = InrTextNote

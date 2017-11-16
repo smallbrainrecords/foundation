@@ -995,9 +995,10 @@ class Inr(models.Model):
 
 
 class InrTextNote(models.Model):
-    author = models.ForeignKey(UserProfile, related_name="author_note")
-    patient = models.ForeignKey(UserProfile, related_name="patient_note")
     note = models.TextField()
+    author = models.ForeignKey(User, related_name="author_note")
+    patient = models.ForeignKey(User, related_name="patient_note")
+    # TODO: Should be rename to created_at / created_on
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):

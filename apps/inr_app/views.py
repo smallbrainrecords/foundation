@@ -96,8 +96,8 @@ def get_inr_note(request, patient_id):
     resp = {'success': False}
     json_body = json.loads(request.body)
     row = json_body.get('row')
-
-    text_note_query_set = InrTextNote.objects.filter(patient_id=patient_id).order_by('-datetime')
+    patient = User.objects.filter(profile__id=int(patient_id)).first()
+    text_note_query_set = InrTextNote.objects.filter(patient=patient).order_by('-datetime')
 
     if 0 == row:
         resp['notes'] = InrTextNoteSerializer(text_note_query_set, many=True).data
@@ -120,11 +120,12 @@ def add_note(request, patient_id):
     """
     resp = {'success': False}
     json_body = json.loads(request.body)
-    note = InrTextNote(note=json_body.get('note'), author=request.user.profile, patient_id=patient_id)
+    patient = User.objects.filter(profile__id=int(patient_id)).first()
+    note = InrTextNote(note=json_body.get('note'), author=request.user, patient=patient)
     note.save()
 
     resp['note'] = InrTextNoteSerializer(note).data
-    resp['total'] = InrTextNote.objects.filter(patient_id=patient_id).count()
+    resp['total'] = InrTextNote.objects.filter(patient=patient).count()
     resp['success'] = True
 
     return ajax_response(resp)

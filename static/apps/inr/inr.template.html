@@ -310,8 +310,8 @@
                               ng-model-options="{updateOn: 'blur',debounce: 500}"
                               ng-change="updateNote()"
                               class="form-control"></textarea>
-                    <p>Last updated by <span ng-bind="noteInstance.author.user.first_name"></span> <span
-                            ng-bind="noteInstance.author.user.last_name"></span> on <span
+                    <p>Last updated by <span ng-bind="noteInstance.author.first_name"></span> <span
+                            ng-bind="noteInstance.author.last_name"></span> on <span
                             ng-bind=" noteInstance.datetime|date:'M/d/yyyy'"></span></p>
 
                     <div>
@@ -323,8 +323,8 @@
 
                     <!--Entry note history -->
                     <div ng-repeat="note in noteHistories track by $index" class="io-box" ng-if="showNoteHistory">
-                        <p>Name: <span ng-bind="note.author.user.first_name"></span><span
-                                ng-bind="note.author.user.last_name"> </span></p>
+                        <p>Name: <span ng-bind="note.author.first_name"></span><span
+                                ng-bind="note.author.last_name"> </span></p>
                         <p style="white-space: pre-line;">Note: {{ note.note }}</p>
                         <span>Date: {{ note.datetime|date:'M/d/yyyy' }}</span>
                     </div>
