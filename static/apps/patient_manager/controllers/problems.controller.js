@@ -1282,14 +1282,14 @@
                 form.problem_id = problem_id;
 
                 dataService.dataPinToProblem($scope.patient_id, form).then(function (data) {
-                    if (data['success'] == true) {
+                    if (data['success']) {
                         toaster.pop('success', 'Done', 'Pinned data!');
                         if (data.inr)
                             $scope.inrs.push(data.inr);
                         else if (data.remove_inr)
                             $scope.inrs = [];
 
-                    } else if (data['success'] == false) {
+                    } else if (!data['success']) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');

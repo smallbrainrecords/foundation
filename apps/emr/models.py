@@ -938,25 +938,26 @@ class MyStoryTab(models.Model):
 
 
 class MyStoryTextComponent(models.Model):
-    patient = models.ForeignKey(User, related_name="patient_story_texts")
-    author = models.ForeignKey(User, related_name="author_story_texts", null=True, blank=True)
-    tab = models.ForeignKey(MyStoryTab, null=True, blank=True, related_name="my_story_tab_components")
     name = models.TextField(null=True, blank=True)
-    datetime = models.DateTimeField(auto_now_add=True)
     concept_id = models.CharField(max_length=20, blank=True, null=True)
     # TODO: Why need both private & is_all
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)
+    tab = models.ForeignKey(MyStoryTab, null=True, blank=True, related_name="my_story_tab_components")
+    patient = models.ForeignKey(User, related_name="patient_story_texts")
+    author = models.ForeignKey(User, related_name="author_story_texts", null=True, blank=True)
+    # TODO: Should rename to created_at
+    datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
         return "%s" % (self.name)
 
 
 class MyStoryTextComponentEntry(models.Model):
+    text = models.TextField(null=True, blank=True)
+    component = models.ForeignKey(MyStoryTextComponent, null=True, blank=True, related_name="text_component_entries")
     patient = models.ForeignKey(User, related_name="patient_story_text_entries", null=True, blank=True)
     author = models.ForeignKey(User, related_name="author_story_text_entries", null=True, blank=True)
-    component = models.ForeignKey(MyStoryTextComponent, null=True, blank=True, related_name="text_component_entries")
-    text = models.TextField(null=True, blank=True)
     datetime = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
@@ -972,16 +973,18 @@ class Inr(models.Model):
     One data point(ObservationValue) that can be entered and viewed in more than one way.
     This is a common function for widgets and will need to be included in public API.
     """
-    author = models.ForeignKey(UserProfile, related_name='author_inr', blank=True,
-                               null=True)  # Medication dosage author
-
-    patient = models.ForeignKey(UserProfile, related_name="patient_inr",
-                                null=True)  # Can be in duplication with patient in observation value becuz this in one-2-on relationship
-    observation_value = models.OneToOneField(ObservationValue, related_name="inr",
-                                             null=True)  # Measured date & value is referred to observation data
     current_dose = models.TextField(null=True, blank=True)
     new_dosage = models.TextField(null=True, blank=True)
     next_inr = models.DateField(null=True, blank=True)
+
+    # Measured date & value is referred to observation data
+    observation_value = models.OneToOneField(ObservationValue, related_name="inr", null=True)
+
+    # Medication dosage author
+    author = models.ForeignKey(User, related_name='author_inr', blank=True, null=True)
+    # Can be in duplication with patient in observation value becuz this in one-2-on relationship
+    patient = models.ForeignKey(User, related_name="patient_inr", null=True)
+
     created_on = models.DateTimeField(auto_now_add=True)  # Medication dosage created
 
     class Meta:

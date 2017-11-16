@@ -214,8 +214,8 @@ def obseration_pin_to_problem(request, patient_id):
             if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(
                     component) < 1:
                 patient_user = User.objects.get(id=patient_id)
-                inr = Inr(observation_id=observation_id, problem_id=problem_id, author=request.user.profile,
-                          patient=patient_user.profile)
+                inr = Inr(observation_id=observation_id, problem_id=problem_id, author=request.user,
+                          patient=patient_user)
                 inr.save()
                 resp['inr'] = InrSerializer(inr).data
 

@@ -97,11 +97,11 @@
             form.data_id = data_id;
             form.problem_id = problem_id;
             dataService.dataPinToProblem($scope.patient_id, form).then(function (data) {
-                if (data['success'] == true) {
+                if (data['success']) {
                     toaster.pop('success', 'Done', 'Pinned problem!');
-                } else if (data['success'] == false) {
+                } else if (!data['success']) {
                     toaster.pop('error', 'Error', 'Something went wrong, please try again!');
-                } else if (data['success'] == "notallow") {
+                } else if (data['success'] === "notallow") {
                     toaster.pop('error', 'Error', 'You can\'t  unpin this data!');
                     $scope.problems[index].pin = true;
                 } else {
