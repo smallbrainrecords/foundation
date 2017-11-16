@@ -86,7 +86,7 @@
             }
 
             function open_image_upload_box(files) {
-                var url = '/colon_cancer/study/' + $scope.study_id + '/upload_image';
+                var url = `/colon_cancer/study/${$scope.study_id}/upload_image`;
                 // var url = '/p/problem/' + $scope.problem_id + '/upload_image';
                 $scope.files = files;
                 if (files && files.length) {

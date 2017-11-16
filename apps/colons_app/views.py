@@ -4,7 +4,7 @@ from common.views import *
 from emr.models import ColonCancerScreening, UserProfile, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, Problem, \
     ColonCancerTextNote
 from emr.operations import op_add_event
-from users_app.serializers import UserProfileSerializer
+from users_app.serializers import SafeUserSerializer
 from users_app.views import permissions_accessed
 from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySerializer, RiskFactorSerializer, \
     ColonCancerTextNoteSerializer, StudyImageSerializer
@@ -125,7 +125,7 @@ def upload_study_image(request, study_id):
         image_holder = []
         for dict in images:
             image = request.FILES[dict]
-            study_image = ColonCancerStudyImage(author=actor_profile, study=study, image=image)
+            study_image = ColonCancerStudyImage(author=request.user, study=study, image=image)
             study_image.save()
 
             image_holder.append(study_image)
@@ -162,14 +162,14 @@ def add_study_image(request, study_id):
             study.last_updated_user = request.user
             study.save()
 
-            image = ColonCancerStudyImage.objects.create(study_id=study_id, author=actor_profile,
+            image = ColonCancerStudyImage.objects.create(study_id=study_id, author=request.user,
                                                          image=request.FILES['0'])
 
             image_dict = {
                 'image': image.filename(),
                 'datetime': datetime.strftime(image.datetime, '%Y-%m-%d'),
                 'id': image.id,
-                'author': UserProfileSerializer(image.author).data,
+                'author': SafeUserSerializer(image.author).data,
                 'study': ColonCancerStudySerializer(image.study).data,
             }
             resp['image'] = image_dict

@@ -895,7 +895,7 @@ class ColonCancerStudy(models.Model):
 
 class ColonCancerStudyImage(models.Model):
     image = models.ImageField(upload_to='studies/', blank=True)
-    author = models.ForeignKey(UserProfile, null=True, blank=True)
+    author = models.ForeignKey(User, null=True, blank=True)
     study = models.ForeignKey(ColonCancerStudy, null=True, blank=True, related_name="study_images")
     datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 

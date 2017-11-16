@@ -79,9 +79,8 @@
 
             <div class='row'>
 
-                <div class='col-md-2' ng-repeat='image in study.study_images'>
+                <div class='col-md-2 text-center' ng-repeat='image in study.study_images'>
 
-                    <center>
                         <img ng-src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
                         <br>
 
@@ -91,7 +90,6 @@
                             Delete
                         </button>
                         <hr>
-                    </center>
                 </div>
 
             </div>
