@@ -468,10 +468,10 @@ class ToDo(models.Model):
 
 
 class TaggedToDoOrder(models.Model):
-    user = models.ForeignKey(User, null=True, blank=True)
-    todo = models.ForeignKey(ToDo, null=True, blank=True)
     order = models.BigIntegerField(null=True, blank=True)
     status = models.IntegerField(choices=VIEW_STATUS, default=0)
+    todo = models.ForeignKey(ToDo, null=True, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
@@ -845,25 +845,28 @@ class ObservationValueTextNote(models.Model):
 
 
 class CommonProblem(models.Model):
-    author = models.ForeignKey(User, null=True, blank=True, related_name="common_problem_author")
+    """
+    TODO: Should we managed two kind of problem OR one kind of problem having property to define it type
+    """
     problem_name = models.CharField(max_length=200)
     concept_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     problem_type = models.CharField(max_length=10, choices=COMMON_PROBLEM_TYPE_CHOICES, default='acute')
+    author = models.ForeignKey(User, null=True, blank=True, related_name="common_problem_author")
 
 
 class ColonCancerScreening(models.Model):
-    patient = models.ForeignKey(UserProfile, related_name='patient_colon_cancer')
-    created_on = models.DateTimeField(auto_now_add=True)
-    problem = models.ForeignKey(Problem, related_name='problem_colon_cancer')
     patient_refused = models.BooleanField(default=False)
     not_appropriate = models.BooleanField(default=False)
     risk = models.CharField(max_length=10, choices=RISK_CHOICES, default='normal')
     last_risk_updated_date = models.DateField(null=True, blank=True)
-    last_risk_updated_user = models.ForeignKey(UserProfile, related_name='last_risk_updated_user_colons', null=True,
-                                               blank=True)
     todo_past_five_years = models.BooleanField(default=False)
     patient_refused_on = models.DateTimeField(null=True, blank=True)
     not_appropriate_on = models.DateTimeField(null=True, blank=True)
+    problem = models.ForeignKey(Problem, related_name='problem_colon_cancer')
+    patient = models.ForeignKey(User, related_name='patient_colon_cancer')
+    last_risk_updated_user = models.ForeignKey(User, related_name='last_risk_updated_user_colons', null=True,
+                                               blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
 
     objects = ColonCancerScreeningManager()
 

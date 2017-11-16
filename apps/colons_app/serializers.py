@@ -1,10 +1,9 @@
 from rest_framework import serializers
 
 from emr.models import ColonCancerScreening, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, ColonCancerTextNote
-
-from users_app.serializers import SafeUserSerializer, UserProfileSerializer
-from todo_app.serializers import TodoSerializer
 from problems_app.serializers import ProblemSerializer
+from todo_app.serializers import TodoSerializer
+from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
 
 class ColonCancerTextNoteSerializer(serializers.ModelSerializer):
@@ -66,13 +65,13 @@ class RiskFactorSerializer(serializers.ModelSerializer):
 
 
 class ColonCancerScreeningSerializer(serializers.ModelSerializer):
-    patient = UserProfileSerializer()
-    problem = ProblemSerializer()
     colon_studies = ColonCancerStudySerializer(many=True, read_only=True)
     colon_risk_factors = RiskFactorSerializer(many=True, read_only=True)
-    last_risk_updated_user = UserProfileSerializer()
     colon_cancer_todos = TodoSerializer(many=True, read_only=True)
     colon_notes = ColonCancerTextNoteSerializer(many=True, read_only=True)
+    problem = ProblemSerializer()
+    patient = SafeUserSerializer()
+    last_risk_updated_user = SafeUserSerializer()
 
     class Meta:
         model = ColonCancerScreening

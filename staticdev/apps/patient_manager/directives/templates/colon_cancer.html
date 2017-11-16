@@ -99,7 +99,7 @@
                                     <p><b>Risk:</b> {{colon_cancer.risk}}</p>
                                     <p ng-repeat="factor in factors" ng-if="factor.checked">{{factor.value}}</p>
                                     <p ng-if="colon_cancer.last_risk_updated_user">updated by
-                                        {{colon_cancer.last_risk_updated_user.user.username}} on
+                                        {{colon_cancer.last_risk_updated_user.username}} on
                                         {{colon_cancer.last_risk_updated_date|date:'M/d/yyyy'}}</p>
                                     <p><a href class="btn btn-default" ng-click="show_factors=!show_factors;">Update</a>
                                     </p>

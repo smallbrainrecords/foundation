@@ -102,9 +102,9 @@
                 function set_header() {
                     scope.header = '';
                     if (scope.colon_cancer.patient) {
-                        if (moment().diff(moment(scope.colon_cancer.patient.date_of_birth, "MM/DD/YYYY"), 'years') < 20) {
+                        if (moment().diff(moment(scope.colon_cancer.patient.profile.date_of_birth, "MM/DD/YYYY"), 'years') < 20) {
                             scope.header = 'review risk assessment at 20 years of age';
-                        } else if (moment().diff(moment(scope.colon_cancer.patient.date_of_birth, "MM/DD/YYYY"), 'years') > 50) {
+                        } else if (moment().diff(moment(scope.colon_cancer.patient.profile.date_of_birth, "MM/DD/YYYY"), 'years') > 50) {
                             if (scope.colon_cancer.risk) {
                                 scope.header = 'Risk: ' + scope.colon_cancer.risk;
                             }

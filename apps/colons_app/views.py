@@ -12,10 +12,9 @@ from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySeriali
 
 @login_required
 def track_colon_click(request, colon_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     colon_info = ColonCancerScreening.objects.get(id=colon_id)
-    if permissions_accessed(request.user, colon_info.patient.user.id):
+    if permissions_accessed(request.user, colon_info.patient.id):
         actor = request.user
         patient = colon_info.problem.patient
 
@@ -28,16 +27,15 @@ def track_colon_click(request, colon_id):
 
 @login_required
 def get_colon_info(request, colon_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     colon_info = ColonCancerScreening.objects.get(id=colon_id)
-    if permissions_accessed(request.user, colon_info.patient.user.id):
-        if Problem.objects.filter(patient=colon_info.patient.user, id__in=[93761005, 93854002]).exists():
+    if permissions_accessed(request.user, colon_info.patient.id):
+        if Problem.objects.filter(patient=colon_info.patient, id__in=[93761005, 93854002]).exists():
             if not RiskFactor.objects.filter(colon=colon_info, factor="personal history of colorectal cancer").exists():
                 factor = RiskFactor.objects.create(colon=colon_info, factor="personal history of colorectal cancer")
                 colon_info.risk = 'high'
                 colon_info.save()
-        if Problem.objects.filter(patient=colon_info.patient.user, id__in=[64766004, 34000006]).exists():
+        if Problem.objects.filter(patient=colon_info.patient, id__in=[64766004, 34000006]).exists():
             if not RiskFactor.objects.filter(colon=colon_info,
                                              factor="personal history of ulcerative colitis or Crohn's disease").exists():
                 factor = RiskFactor.objects.create(colon=colon_info,
@@ -52,10 +50,9 @@ def get_colon_info(request, colon_id):
 @login_required
 @api_view(["POST"])
 def add_study(request, colon_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
-    if permissions_accessed(request.user, colon.patient.user.id):
+    if permissions_accessed(request.user, colon.patient.id):
         actor_profile = UserProfile.objects.get(user=request.user)
         study_date = datetime.strptime(request.POST.get('date'), '%m/%d/%Y').date()
 
@@ -189,8 +186,7 @@ def add_study_image(request, study_id):
 @login_required
 @api_view(["POST"])
 def add_factor(request, colon_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
     if permissions_accessed(request.user, colon.patient.user.id):
         actor_profile = UserProfile.objects.get(user=request.user)
@@ -211,7 +207,7 @@ def add_factor(request, colon_id):
                 colon.risk = 'normal'
             else:
                 colon.risk = 'high'
-            colon.last_risk_updated_user = actor_profile
+            colon.last_risk_updated_user = request.user
             colon.last_risk_updated_date = datetime.now().date()
             colon.todo_past_five_years = False
             colon.save()
@@ -225,10 +221,9 @@ def add_factor(request, colon_id):
 @login_required
 @api_view(["POST"])
 def delete_factor(request, colon_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
-    if permissions_accessed(request.user, colon.patient.user.id):
+    if permissions_accessed(request.user, colon.patient.id):
         actor_profile = UserProfile.objects.get(user=request.user)
 
         if RiskFactor.objects.filter(colon=colon, factor=request.POST.get("value", None)).exists():
@@ -237,10 +232,9 @@ def delete_factor(request, colon_id):
 
             if not RiskFactor.objects.filter(colon=colon) or (
                             RiskFactor.objects.filter(colon=colon).count() == 1 and RiskFactor.objects.filter(
-                        colon=colon,
-                        factor='no known risk').exists()):
+                colon=colon, factor='no known risk').exists()):
                 colon.risk = 'normal'
-                colon.last_risk_updated_user = actor_profile
+                colon.last_risk_updated_user = request.user
                 colon.last_risk_updated_date = datetime.now().date()
                 colon.todo_past_five_years = False
                 colon.save()
@@ -253,10 +247,9 @@ def delete_factor(request, colon_id):
 @login_required
 @api_view(["POST"])
 def refuse(request, colon_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
-    if permissions_accessed(request.user, colon.patient.user.id):
+    if permissions_accessed(request.user, colon.patient.id):
         if colon.patient_refused:
             colon.patient_refused = False
         else:
@@ -273,10 +266,9 @@ def refuse(request, colon_id):
 @login_required
 @api_view(["POST"])
 def not_appropriate(request, colon_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
-    if permissions_accessed(request.user, colon.patient.user.id):
+    if permissions_accessed(request.user, colon.patient.id):
         if colon.not_appropriate:
             colon.not_appropriate = False
         else:
@@ -293,10 +285,9 @@ def not_appropriate(request, colon_id):
 # Note
 @login_required
 def add_note(request, colon_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
-    if permissions_accessed(request.user, colon.patient.user.id):
+    if permissions_accessed(request.user, colon.patient.id):
         note = request.POST.get("note")
         colon_note = ColonCancerTextNote.objects.create(colon_id=colon_id, author=request.user.profile, note=note)
 
