@@ -7,7 +7,7 @@ from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
 
 class ColonCancerTextNoteSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = ColonCancerTextNote

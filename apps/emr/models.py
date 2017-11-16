@@ -912,9 +912,10 @@ class RiskFactor(models.Model):
 
 
 class ColonCancerTextNote(models.Model):
-    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_notes')
-    author = models.ForeignKey(UserProfile, null=True, blank=True)
     note = models.TextField()
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_notes')
+    author = models.ForeignKey(User, null=True, blank=True)
+    # TODO: Should be renamed to created_at
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
@@ -922,13 +923,15 @@ class ColonCancerTextNote(models.Model):
 
 
 class MyStoryTab(models.Model):
-    patient = models.ForeignKey(User, related_name="patient_story_tabs")
-    author = models.ForeignKey(User, related_name="author_story_tabs", null=True, blank=True)
     name = models.TextField()
-    datetime = models.DateTimeField(auto_now_add=True)
     # TODO: Why need both private & is_all
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)
+
+    patient = models.ForeignKey(User, related_name="patient_story_tabs")
+    author = models.ForeignKey(User, related_name="author_story_tabs", null=True, blank=True)
+
+    datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
         return "%s" % (self.name)

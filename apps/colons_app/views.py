@@ -284,7 +284,7 @@ def add_note(request, colon_id):
     colon = ColonCancerScreening.objects.get(id=colon_id)
     if permissions_accessed(request.user, colon.patient.id):
         note = request.POST.get("note")
-        colon_note = ColonCancerTextNote.objects.create(colon_id=colon_id, author=request.user.profile, note=note)
+        colon_note = ColonCancerTextNote.objects.create(colon_id=colon_id, author=request.user, note=note)
 
         resp['note'] = ColonCancerTextNoteSerializer(colon_note).data
         resp['success'] = True
@@ -293,10 +293,9 @@ def add_note(request, colon_id):
 
 @login_required
 def edit_note(request, note_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     note = ColonCancerTextNote.objects.get(id=note_id)
-    if permissions_accessed(request.user, note.author.user.id):
+    if permissions_accessed(request.user, note.author.id):
         note.note = request.POST.get('note')
         note.save()
         resp['success'] = True
@@ -306,10 +305,9 @@ def edit_note(request, note_id):
 
 @login_required
 def delete_note(request, note_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     note = ColonCancerTextNote.objects.get(id=note_id)
-    if permissions_accessed(request.user, note.author.user.id):
+    if permissions_accessed(request.user, note.author.id):
         note.delete()
         resp['success'] = True
     return ajax_response(resp)
