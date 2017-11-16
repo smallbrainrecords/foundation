@@ -33,8 +33,8 @@ class StudyImageSerializer(serializers.ModelSerializer):
 
 
 class ColonCancerStudySerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
-    last_updated_user = UserProfileSerializer()
+    author = SafeUserSerializer()
+    last_updated_user = SafeUserSerializer()
     study_images = StudyImageSerializer(many=True, read_only=True)
 
     class Meta:

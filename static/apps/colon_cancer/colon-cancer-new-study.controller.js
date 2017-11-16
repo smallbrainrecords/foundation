@@ -64,17 +64,17 @@
                 toaster.pop('error', 'Error', 'Please select!');
             } else {
                 colonService.addNewStudy($scope.colon_id, study).then(function (data) {
-                    var form = {};
+                    let form = {};
                     form.study_id = data.study.id;
 
-                    if (study.finding == 'colonoscopy' && study.result == 'adenomatous polyps') {
+                    if (study.finding === 'colonoscopy' && study.result === 'adenomatous polyps') {
                         var factor = {value: 'personal history of adenomatous polyp', checked: true};
                         colonService.addFactor($scope.colon_id, factor).then(function (data) {
                             if (image) {
                                 colonService.addImage(form, image).then(function (data) {
-                                    if (data['success'] == true) {
+                                    if (data['success']) {
                                         toaster.pop('success', 'Done', 'Added study!');
-                                    } else if (data['success'] == false) {
+                                    } else if (!data['success']) {
                                         toaster.pop('error', 'Error', 'Please fill valid data');
                                     } else {
                                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -88,9 +88,9 @@
                     } else {
                         if (image) {
                             colonService.addImage(form, image).then(function (data) {
-                                if (data['success'] == true) {
+                                if (data['success']) {
                                     toaster.pop('success', 'Done', 'Added study!');
-                                } else if (data['success'] == false) {
+                                } else if (!data['success']) {
                                     toaster.pop('error', 'Error', 'Please fill valid data');
                                 } else {
                                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');

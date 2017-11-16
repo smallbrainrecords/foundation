@@ -61,8 +61,8 @@ def add_study(request, colon_id):
                                                 result=request.POST.get("result", None),
                                                 note=request.POST.get("note", None),
                                                 study_date=study_date,
-                                                last_updated_user=actor_profile,
-                                                author=actor_profile)
+                                                last_updated_user=request.user,
+                                                author=request.user)
         study.save()
 
         resp['study'] = ColonCancerStudySerializer(study).data
@@ -74,10 +74,9 @@ def add_study(request, colon_id):
 @login_required
 @api_view(["POST"])
 def delete_study(request, study_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
-    if permissions_accessed(request.user, study.author.user.id):
+    if permissions_accessed(request.user, study.author.id):
         study.delete()
 
         resp['success'] = True
@@ -87,10 +86,9 @@ def delete_study(request, study_id):
 
 @login_required
 def get_study_info(request, study_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
-    if permissions_accessed(request.user, study.author.user.id):
+    if permissions_accessed(request.user, study.author.id):
         resp['info'] = ColonCancerStudySerializer(study).data
     return ajax_response(resp)
 
@@ -98,8 +96,7 @@ def get_study_info(request, study_id):
 @login_required
 @api_view(["POST"])
 def edit_study(request, study_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
     if permissions_accessed(request.user, study.author.user.id):
         actor_profile = UserProfile.objects.get(user=request.user)
@@ -107,7 +104,7 @@ def edit_study(request, study_id):
         study.result = request.POST.get("result", None)
         study.note = request.POST.get("note", None)
         study.study_date = datetime.strptime(request.POST.get('study_date'), '%m/%d/%Y').date()
-        study.last_updated_user = actor_profile
+        study.last_updated_user = request.user
         study.save()
 
         resp['success'] = True
@@ -119,9 +116,9 @@ def edit_study(request, study_id):
 def upload_study_image(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
-    if permissions_accessed(request.user, study.author.user.id):
+    if permissions_accessed(request.user, study.author.id):
         actor_profile = UserProfile.objects.get(user=request.user)
-        study.last_updated_user = actor_profile
+        study.last_updated_user = request.user
         study.save()
 
         images = request.FILES
@@ -141,12 +138,11 @@ def upload_study_image(request, study_id):
 @login_required
 @api_view(["POST"])
 def delete_study_image(request, study_id, image_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
-    if permissions_accessed(request.user, study.author.user.id):
+    if permissions_accessed(request.user, study.author.id):
         actor_profile = UserProfile.objects.get(user=request.user)
-        study.last_updated_user = actor_profile
+        study.last_updated_user = request.user
         study.save()
 
         ColonCancerStudyImage.objects.get(id=image_id).delete()
@@ -158,13 +154,12 @@ def delete_study_image(request, study_id, image_id):
 @login_required
 @api_view(["POST"])
 def add_study_image(request, study_id):
-    resp = {}
-    resp['success'] = False
+    resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
     if permissions_accessed(request.user, study.author.user.id):
         if request.FILES:
             actor_profile = UserProfile.objects.get(user=request.user)
-            study.last_updated_user = actor_profile
+            study.last_updated_user = request.user
             study.save()
 
             image = ColonCancerStudyImage.objects.create(study_id=study_id, author=actor_profile,
