@@ -105,7 +105,7 @@ def add_medication_note(request, patient_id, medication_id):
         medication = Medication.objects.get(id=medication_id)
         latest_note = medication.medication_notes.last()
 
-        note = MedicationTextNote(author=request.user.profile, note=note, medication=medication)
+        note = MedicationTextNote(author=request.user, note=note, medication=medication)
         note.save()
 
         op_medication_event(medication, request.user, patient_user,
@@ -123,7 +123,7 @@ def edit_note(request, note_id):
     resp = {'success': False}
 
     note = MedicationTextNote.objects.get(id=note_id)
-    if note.author == request.user.profile:
+    if note.author == request.user:
         note.note = request.POST.get('note')
         note.save()
         resp['note'] = MedicationTextNoteSerializer(note).data
@@ -136,7 +136,7 @@ def edit_note(request, note_id):
 def delete_note(request, note_id):
     resp = {'success': False}
     note = MedicationTextNote.objects.get(id=note_id)
-    if note.author == request.user.profile:
+    if note.author == request.user:
         note.delete()
         resp['success'] = True
 

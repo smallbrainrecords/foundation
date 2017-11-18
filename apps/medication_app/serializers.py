@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
 from emr.models import Medication, MedicationTextNote, MedicationPinToProblem
-from users_app.serializers import SafeUserSerializer, UserProfileSerializer
+from users_app.serializers import SafeUserSerializer
 
 
 class MedicationTextNoteSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = MedicationTextNote

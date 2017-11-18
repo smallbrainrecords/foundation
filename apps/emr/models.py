@@ -1029,9 +1029,9 @@ class MedicationPinToProblem(models.Model):
 
 
 class MedicationTextNote(models.Model):
-    medication = models.ForeignKey(Medication, related_name='medication_notes')
-    author = models.ForeignKey(UserProfile)
     note = models.TextField()
+    medication = models.ForeignKey(Medication, related_name='medication_notes')
+    author = models.ForeignKey(User)
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
