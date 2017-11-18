@@ -1,3 +1,8 @@
+import os
+import sys
+
+import raven
+
 # Django settings for emr project.
 
 DEBUG = False  # Never set 'DEBUG = True' in production environment
@@ -8,8 +13,7 @@ COMPRESS_ENABLED = True
 VOICE_CONTROL = False
 SYNCING = False
 
-import os
-import sys
+
 
 os.environ['LANG'] = 'en_US.UTF-8'
 # BASE_DIR = os.getcwd()
@@ -156,7 +160,8 @@ INSTALLED_APPS = (
     'genericadmin',
     'compressor',
     'cronjobs',
-    'session_security'
+    'session_security',
+    'raven.contrib.django.raven_compat'
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -245,3 +250,9 @@ except ImportError as e:
     # EMAIL_HOST_USER = ''
     # EMAIL_PORT = 587
     # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+RAVEN_CONFIG = {
+    'dsn': 'https://58952ec0ba834547a78a6571243c0243:69883350a9e847bb8a51355abe214d69@sentry.io/245113',
+    # If you are using git, you can also automatically configure the
+    # release based on the git info.
+}
