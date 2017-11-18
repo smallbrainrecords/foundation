@@ -1086,7 +1086,7 @@ class DocumentTodo(models.Model):
 class DocumentProblem(models.Model):
     document = models.ForeignKey(Document)
     problem = models.ForeignKey(Problem)
-    author = models.ForeignKey(UserProfile)  # User who attach document to the problem
+    author = models.ForeignKey(User)  # User who attach document to the problem
     created_on = models.DateTimeField(auto_now_add=True)
 
 

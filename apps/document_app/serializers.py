@@ -62,7 +62,7 @@ class DocumentTodoSerializer(serializers.ModelSerializer):
 class DocumentProblemSerializer(serializers.ModelSerializer):
     document = DocumentSerializer()
     problem = ProblemSerializer()
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = DocumentProblem

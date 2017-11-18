@@ -135,7 +135,7 @@ def pin_problem_2_document(request):
     document = Document.objects.filter(id=json_body.get('document')).get()
     problem = Problem.objects.filter(id=json_body.get('problem')).get()
 
-    DocumentProblem.objects.create(document=document, problem=problem, author=request.user.profile)
+    DocumentProblem.objects.create(document=document, problem=problem, author=request.user)
 
     resp['success'] = True
     return ajax_response(resp)
