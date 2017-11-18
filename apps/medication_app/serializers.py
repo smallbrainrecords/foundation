@@ -20,8 +20,8 @@ class MedicationTextNoteSerializer(serializers.ModelSerializer):
 
 
 class MedicationSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
-    patient = UserProfileSerializer()
+    author = SafeUserSerializer()
+    patient = SafeUserSerializer()
     medication_notes = MedicationTextNoteSerializer(many=True, read_only=True)
 
     class Meta:

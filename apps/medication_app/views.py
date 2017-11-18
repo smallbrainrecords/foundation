@@ -28,10 +28,16 @@ def list_terms(request):
 
 @login_required
 def get_medications(request, patient_id):
+    """
+
+    :param request:
+    :param patient_id: Patient user id
+    :return:
+    """
     resp = {'success': False}
 
     if permissions_accessed(request.user, int(patient_id)):
-        medications = Medication.objects.filter(patient__user__id=patient_id).order_by('name')
+        medications = Medication.objects.filter(patient__id=patient_id).order_by('name')
 
         resp['success'] = True
         resp['info'] = MedicationSerializer(medications, many=True).data
@@ -75,8 +81,7 @@ def add_medication(request, patient_id):
     patient_user = User.objects.get(id=patient_id)
 
     if permissions_accessed(request.user, int(patient_id)) and medication_name:
-        medication = Medication(author=request.user.profile, patient=patient_user.profile, name=medication_name,
-                                concept_id=concept_id, search_str=search_string)
+        medication = Medication(author=request.user, patient=patient_user, name=medication_name,                                concept_id=concept_id, search_str=search_string)
         medication.save()
 
         op_medication_event(medication, request.user, patient_user,

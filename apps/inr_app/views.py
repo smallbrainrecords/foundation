@@ -76,7 +76,8 @@ def get_medications(request, patient_id):
     :return:
     """
     resp = {'success': False}
-    medications = Medication.objects.filter(patient_id=patient_id,
+    patient = User.objects.filter(profile__id=patient_id).first()
+    medications = Medication.objects.filter(patient=patient,
                                             concept_id__in={375383004, 375379004, 375378007, 319735007, 375374009,
                                                             319734006, 375380001, 375375005, 319733000, 319736008})
 

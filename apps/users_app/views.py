@@ -228,7 +228,7 @@ def manage_patient(request, user_id):
     context['active_user'] = json.dumps(user_profile_serialized)
     context['patient_info'] = json.dumps(UserProfileSerializer(patient_profile).data)
     context['bleeding_risk'] = json.dumps(Medication.objects.filter(current=True).filter(
-        concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=patient_profile).exists())
+        concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists())
 
     # todo = ToDo.objects.filter(patient_id=user_id, accomplished=False).order_by("order")[0:5]
     # context['todo'] = json.dumps(TodoSerializer(todo, many=True).data)
@@ -342,7 +342,7 @@ def get_patient_info(request, patient_id):
     resp['acutes_list'] = CommonProblemSerializer(acutes, many=True).data
     resp['chronics_list'] = CommonProblemSerializer(chronics, many=True).data
     resp['bleeding_risk'] = Medication.objects.filter(current=True).filter(
-        concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=patient_profile).exists()
+        concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists()
 
     return ajax_response(resp)
 
