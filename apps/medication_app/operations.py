@@ -42,7 +42,7 @@ def count_pinned_have_same_medication_concept_id_and_problem_concept_id(actor, m
     """
 
     if problem.concept_id is not None and medication.concept_id is not None:
-        pinned_instance = MedicationPinToProblem.objects.filter(author=actor.profile).filter(
+        pinned_instance = MedicationPinToProblem.objects.filter(author=actor).filter(
             medication__concept_id=medication.concept_id).filter(
             problem__concept_id=problem.concept_id)
         return pinned_instance, pinned_instance.count()
@@ -67,7 +67,7 @@ def op_pin_medication_to_problem_for_all_controlled_patient(actor, pinned_instan
         patient_id__in=controlled_patient_id_set).exclude(id__in=pinned_instance_id_set).all()
 
     for problem in problems:
-        pin = MedicationPinToProblem(author=actor.profile, medication=medication, problem=problem)
+        pin = MedicationPinToProblem(author=actor, medication=medication, problem=problem)
         pin.save()
 
     pass

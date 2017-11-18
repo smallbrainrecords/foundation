@@ -162,8 +162,7 @@ def pin_to_problem(request, patient_id):
             pin = MedicationPinToProblem.objects.get(medication_id=medication_id, problem_id=problem_id)
             pin.delete()
         except MedicationPinToProblem.DoesNotExist:
-            pin = MedicationPinToProblem(author=request.user.profile, medication_id=medication_id,
-                                         problem_id=problem_id)
+            pin = MedicationPinToProblem(author=request.user, medication_id=medication_id, problem_id=problem_id)
             pin.save()
 
             pinned_instance_set, count = count_pinned_have_same_medication_concept_id_and_problem_concept_id(

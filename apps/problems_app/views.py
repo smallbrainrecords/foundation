@@ -1090,8 +1090,8 @@ def get_data_pins(request, problem_id):
 
 @login_required
 def get_medication_pins(request, problem_id):
-    pins = MedicationPinToProblem.objects.filter(problem_id=problem_id)
     resp = {}
+    pins = MedicationPinToProblem.objects.filter(problem_id=problem_id)
     resp['success'] = True
     resp['pins'] = MedicationPinToProblemSerializer(pins, many=True).data
     return ajax_response(resp)

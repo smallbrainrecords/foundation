@@ -129,10 +129,12 @@ def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_time
 @cronjobs.register
 def physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_3_times():
 	# then that medication is added to all patients for that problem
-	pins = MedicationPinToProblem.objects.filter(author__role="physician")
+	pins = MedicationPinToProblem.objects.filter(author__profile__role="physician")
 	for pin in pins:
 		if pin.medication.concept_id and pin.problem.concept_id:
-			if MedicationPinToProblem.objects.filter(author__role="physician", medication__concept_id=pin.medication.concept_id, problem__concept_id=pin.problem.concept_id).count() > 3:
+			if MedicationPinToProblem.objects.filter(author__profile__role="physician",
+													 medication__concept_id=pin.medication.concept_id,
+													 problem__concept_id=pin.problem.concept_id).count() > 3:
 				problems = Problem.objects.filter(concept_id=pin.problem.concept_id)
 				for problem in problems:
 					if Medication.objects.filter(concept_id=pin.medication.concept_id, inr__patient=problem.patient).exists():

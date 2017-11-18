@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from emr.models import Medication, MedicationTextNote, MedicationPinToProblem
-
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 
 
@@ -41,7 +40,7 @@ class MedicationSerializer(serializers.ModelSerializer):
 
 
 class MedicationPinToProblemSerializer(serializers.ModelSerializer):
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
     medication = MedicationSerializer()
 
     class Meta:

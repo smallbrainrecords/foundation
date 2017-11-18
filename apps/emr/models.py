@@ -1023,7 +1023,7 @@ class Medication(models.Model):
 
 
 class MedicationPinToProblem(models.Model):
-    author = models.ForeignKey(UserProfile, null=True, blank=True, related_name='author_pin_medications')
+    author = models.ForeignKey(User, null=True, blank=True, related_name='author_pin_medications')
     medication = models.ForeignKey(Medication, related_name='medication_pin_medications')
     problem = models.ForeignKey(Problem, related_name='problem_pin_medications')
 
