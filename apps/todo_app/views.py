@@ -252,7 +252,7 @@ def get_todo_info(request, todo_id):
     documents = DocumentTodo.objects.filter(todo=todo_info)
     document_todos_holder = []
     for document in documents:
-        document_todos_holder.append(DocumentSerialization(document.document).data)
+        document_todos_holder.append(DocumentSerializer(document.document).data)
 
     encounter_ids = EncounterTodoRecord.objects.filter(todo=todo_info).values_list("encounter__id", flat=True)
     related_encounters = Encounter.objects.filter(id__in=encounter_ids)

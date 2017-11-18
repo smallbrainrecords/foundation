@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from dateutil import parser
 
-from document_app.serializers import DocumentSerialization
+from document_app.serializers import DocumentSerializer
 from encounters_app.serializers import EncounterSerializer
 
 try:
@@ -1158,7 +1158,7 @@ def get_related_documents(request, problem_id):
     document_result_set = set(list(problem_document_set) + list(problem_todo_document_set))
 
     # Need remove duplicated and sorted by creation date
-    resp['documents'] = DocumentSerialization(document_result_set, many=True).data
+    resp['documents'] = DocumentSerializer(document_result_set, many=True).data
     resp['success'] = True
     return ajax_response(resp)
 

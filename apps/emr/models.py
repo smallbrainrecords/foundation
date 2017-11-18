@@ -1077,7 +1077,7 @@ class Document(models.Model):
 class DocumentTodo(models.Model):
     document = models.ForeignKey(Document)
     todo = models.ForeignKey(ToDo)
-    author = models.ForeignKey(UserProfile)  # User who attach document to the todo
+    author = models.ForeignKey(User)  # User who attach document to the todo
     created_on = models.DateTimeField(auto_now_add=True)
 
 

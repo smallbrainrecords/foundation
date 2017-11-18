@@ -54,7 +54,7 @@ def get_document_list(request):
 
     result_set = documents.all()[page * item_per_page: page * item_per_page + item_per_page]
 
-    resp['documents'] = DocumentListSerialization(result_set, many=True).data
+    resp['documents'] = DocumentListSerializer(result_set, many=True).data
     resp['total'] = documents.count()
     resp['success'] = True
 
@@ -75,7 +75,7 @@ def document_info(request, document_id):
 
     labels = Label.objects.filter(is_all=True)
 
-    resp['info'] = DocumentSerialization(document).data
+    resp['info'] = DocumentSerializer(document).data
     resp['labels'] = LabelSerializer(labels, many=True).data
     resp['success'] = True
     return ajax_response(resp)
@@ -99,7 +99,7 @@ def pin_patient_2_document(request):
 
     document = Document.objects.filter(id=document_id).get()
 
-    resp['info'] = DocumentSerialization(document).data
+    resp['info'] = DocumentSerializer(document).data
     resp['success'] = True
     return ajax_response(resp)
 
@@ -181,7 +181,7 @@ def get_patient_document(request, patient_id):
     user = User.objects.filter(id=patient_id).first()
     items = Document.objects.filter(patient=user)
 
-    resp['info'] = DocumentSerialization(items, many=True).data
+    resp['info'] = DocumentSerializer(items, many=True).data
     resp['success'] = True
     return ajax_response(resp)
 

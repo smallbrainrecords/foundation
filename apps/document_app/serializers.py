@@ -7,7 +7,7 @@ from todo_app.serializers import TodoSerializer, LabelSerializer
 from users_app.serializers import UserProfileSerializer, SafeUserSerializer
 
 
-class DocumentListSerialization(serializers.ModelSerializer):
+class DocumentListSerializer(serializers.ModelSerializer):
     patient = UserProfileSerializer()
 
     class Meta:
@@ -19,7 +19,7 @@ class DocumentListSerialization(serializers.ModelSerializer):
         )
 
 
-class DocumentSerialization(serializers.ModelSerializer):
+class DocumentSerializer(serializers.ModelSerializer):
     author = SafeUserSerializer()
     patient = SafeUserSerializer()
     labels = serializers.SerializerMethodField()
@@ -45,8 +45,8 @@ class DocumentSerialization(serializers.ModelSerializer):
         return LabelSerializer(fetch_document_label_set(obj), many=True).data
 
 
-class DocumentTodoSerialization(serializers.ModelSerializer):
-    document = DocumentSerialization()
+class DocumentTodoSerializer(serializers.ModelSerializer):
+    document = DocumentSerializer()
     todo = TodoSerializer()
     author = UserProfileSerializer()
 
@@ -59,8 +59,8 @@ class DocumentTodoSerialization(serializers.ModelSerializer):
         )
 
 
-class DocumentProblemSerialization(serializers.ModelSerializer):
-    document = DocumentSerialization()
+class DocumentProblemSerializer(serializers.ModelSerializer):
+    document = DocumentSerializer()
     problem = ProblemSerializer()
     author = UserProfileSerializer()
 
