@@ -1043,7 +1043,9 @@ class Document(models.Model):
     document = models.FileField(upload_to='documents/', null=True)
     document_name = models.TextField(blank=True)
     labels = models.ManyToManyField(Label, blank=True)
+    # TODO: These should being migrated to using reverse relationship
     todos = models.ManyToManyField(ToDo, blank=True, through="DocumentTodo")
+    # TODO: These should being migrated to using reverse relationship
     problems = models.ManyToManyField(Problem, blank=True, through="DocumentProblem")
     author = models.ForeignKey(User, related_name='author_document')
     patient = models.ForeignKey(User, related_name='patient_pinned', null=True, blank=True)

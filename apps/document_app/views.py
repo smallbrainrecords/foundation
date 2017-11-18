@@ -116,7 +116,7 @@ def pin_todo_2_document(request):
     document = Document.objects.filter(id=json_body.get('document')).get()
     todo = ToDo.objects.filter(id=json_body.get('todo')).get()
 
-    DocumentTodo.objects.create(document=document, todo=todo, author=request.user.profile)
+    DocumentTodo.objects.create(document=document, todo=todo, author=request.user)
 
     resp['success'] = True
     return ajax_response(resp)

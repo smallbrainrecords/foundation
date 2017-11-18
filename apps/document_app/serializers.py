@@ -48,7 +48,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 class DocumentTodoSerializer(serializers.ModelSerializer):
     document = DocumentSerializer()
     todo = TodoSerializer()
-    author = UserProfileSerializer()
+    author = SafeUserSerializer()
 
     class Meta:
         model = DocumentTodo
