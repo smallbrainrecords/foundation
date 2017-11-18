@@ -746,7 +746,7 @@ def search(request, user_id):
         text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient=user)
         context['text_components'] = text_components
 
-        documents = Document.objects.filter(Q(document__icontains=query), patient=user.profile)
+        documents = Document.objects.filter(Q(document__icontains=query), patient=user)
         context['documents'] = documents
         if request.user.profile.role is not 'patient':
             patients = UserProfile.objects.filter(role='patient').filter(

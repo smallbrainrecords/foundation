@@ -77,7 +77,7 @@
 
                 // Loading all related
                 if ($scope.document.patient !== null) {
-                    $scope.patient_id = $scope.document.patient.user.id;
+                    $scope.patient_id = $scope.document.patient.id;
                     $scope.getPatientInfo($scope.patient_id);
 
                     sharedService.fetchPatientInfo($scope.patient_id).then(function (response) {

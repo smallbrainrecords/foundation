@@ -4,7 +4,7 @@ from document_app.operations import fetch_document_label_set
 from emr.models import Document, DocumentProblem, DocumentTodo
 from problems_app.serializers import ProblemSerializer
 from todo_app.serializers import TodoSerializer, LabelSerializer
-from users_app.serializers import UserProfileSerializer
+from users_app.serializers import UserProfileSerializer, SafeUserSerializer
 
 
 class DocumentListSerialization(serializers.ModelSerializer):
@@ -20,8 +20,8 @@ class DocumentListSerialization(serializers.ModelSerializer):
 
 
 class DocumentSerialization(serializers.ModelSerializer):
-    author = UserProfileSerializer()
-    patient = UserProfileSerializer()
+    author = SafeUserSerializer()
+    patient = SafeUserSerializer()
     labels = serializers.SerializerMethodField()
     todos = TodoSerializer(many=True)
     problems = ProblemSerializer(many=True)

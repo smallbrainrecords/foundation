@@ -1038,14 +1038,15 @@ class MedicationTextNote(models.Model):
         return "%s" % (self.note)
 
 
+# Merge class Document and ToDoAttachment
 class Document(models.Model):
-    author = models.ForeignKey(UserProfile, related_name='author_document')
-    patient = models.ForeignKey(UserProfile, related_name='patient_pinned', null=True, blank=True)
     document = models.FileField(upload_to='documents/', null=True)
     document_name = models.TextField(blank=True)
     labels = models.ManyToManyField(Label, blank=True)
     todos = models.ManyToManyField(ToDo, blank=True, through="DocumentTodo")
     problems = models.ManyToManyField(Problem, blank=True, through="DocumentProblem")
+    author = models.ForeignKey(User, related_name='author_document')
+    patient = models.ForeignKey(User, related_name='patient_pinned', null=True, blank=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
 

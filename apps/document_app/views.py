@@ -1,6 +1,3 @@
-from django.conf import settings
-from django.db.models import Prefetch
-
 from common.views import *
 from document_app.serializers import *
 from emr.models import Document, DocumentTodo, DocumentProblem, ToDo, Problem, UserProfile, Label
@@ -17,10 +14,16 @@ def upload_document(request):
     resp = {'success': False}
 
     document = request.FILES['file']
+    # TODO: Currently this is using patient profile id instead of user id
+    # Change from UserProfile's id to User's id
     author = request.POST.get('author', None)
+    author_user = User.objects.filter(profile__id=author).first()
+    # TODO: Currently this is using patient profile id instead of user id
+    # Change from UserProfile's id to User's id
     patient = request.POST.get('patient', None)
+    patient_user = User.objects.filter(profile__id=author).first()
 
-    document_dao = Document.objects.create(author_id=author, document=document, patient_id=patient,
+    document_dao = Document.objects.create(author=author_user, document=document, patient=patient_user,
                                            document_name=document.name)
     document_dao.save()
 
@@ -90,7 +93,7 @@ def pin_patient_2_document(request):
     document_id = json_body.get('document')
     patient_id = json_body.get('patient')
     # Remove related
-    Document.objects.filter(id=document_id).update(patient=UserProfile.objects.filter(id=patient_id).get())
+    Document.objects.filter(id=document_id).update(patient=User.objects.filter(id=patient_id).get())
     DocumentTodo.objects.filter(document=document_id).delete()
     DocumentProblem.objects.filter(document=document_id).delete()
 
@@ -171,12 +174,12 @@ def get_patient_document(request, patient_id):
     """
 
     :param request:
-    :param patient_id:
+    :param patient_id: Patient user id
     :return:
     """
     resp = {'success': False}
-    profile = UserProfile.objects.filter(user_id=patient_id)
-    items = Document.objects.filter(patient=profile)
+    user = User.objects.filter(id=patient_id).first()
+    items = Document.objects.filter(patient=user)
 
     resp['info'] = DocumentSerialization(items, many=True).data
     resp['success'] = True
@@ -322,7 +325,7 @@ def remove_document(request, document_id):
     document = Document.objects.filter(id=document_id).get()
 
     # Patient cannot delete document uploaded by the other
-    if request.user.profile.role == 'patient' and request.user.profile != document.author:
+    if request.user.profile.role == 'patient' and request.user != document.author:
         resp['message'] = "You don't have permission to do this action"
         return ajax_response(resp)
 
