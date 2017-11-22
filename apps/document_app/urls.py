@@ -1,8 +1,8 @@
 from django.conf.urls import url, patterns
 
 urlpatterns = patterns('document_app.views',
-                       url(r'^upload_document$', "upload_document"),
                        url(r'^$', "get_document_list"),
+                       url(r'^upload_document$', "upload_document"),
                        url(r'^info/(?P<document_id>\d+)$', 'document_info'),
                        url(r'^pin/patient$', 'pin_patient_2_document'),
                        url(r'^pin/label$', 'pin_label_2_document'),

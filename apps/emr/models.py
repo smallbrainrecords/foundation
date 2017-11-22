@@ -139,8 +139,8 @@ RECORDER_STATUS = (
     (2, 'isStopped')
 )
 # Medication concept id set used on INR related problem
-MEDICATION_BLEEDING_RISK = {375383004, 375379004, 375378007, 319735007, 375374009, 319734006, 375380001, 375375005,
-                            319733000, 319736008}
+MEDICATION_BLEEDING_RISK = {375383004, 375379004, 375378007, 319735007, 375374009,
+                            319734006, 375380001, 375375005, 319733000, 319736008}
 
 
 # UTILITIES
@@ -150,6 +150,13 @@ def get_path(instance, filename):
             instance.patient.id, instance.problem.id, filename)
     except:
         return '%s/%s' % (instance.patient.id, filename)
+
+
+def set_document_path(instance, filename):
+    if instance.patient is not None:
+        return "{0}/documents/{1}".format(instance.patient.id, filename)
+    else:
+        return "documents/{0}".format(filename)
 
 
 class ListField(models.TextField):
@@ -1047,6 +1054,7 @@ class Document(models.Model):
     todos = models.ManyToManyField(ToDo, blank=True, through="DocumentTodo")
     # TODO: These should being migrated to using reverse relationship
     problems = models.ManyToManyField(Problem, blank=True, through="DocumentProblem")
+    # This should be always be the user who sent the request by using request object instead of pass uid directly
     author = models.ForeignKey(User, related_name='author_document')
     patient = models.ForeignKey(User, related_name='patient_pinned', null=True, blank=True)
 

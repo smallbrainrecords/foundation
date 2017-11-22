@@ -16,15 +16,15 @@ def upload_document(request):
     document = request.FILES['file']
     # TODO: Currently this is using patient profile id instead of user id
     # Change from UserProfile's id to User's id
-    author = request.POST.get('author', None)
-    author_user = User.objects.filter(profile__id=author).first()
+    # author = request.POST.get('author', None)
+    # author_user = User.objects.filter(profile__id=author).first()
+
     # TODO: Currently this is using patient profile id instead of user id
     # Change from UserProfile's id to User's id
     patient = request.POST.get('patient', None)
-    patient_user = User.objects.filter(profile__id=author).first()
+    patient_user = User.objects.filter(profile__id=patient).first()
 
-    document_dao = Document.objects.create(author=author_user, document=document, patient=patient_user,
-                                           document_name=document.name)
+    document_dao = Document.objects.create(author=request.user, document=document, patient=patient_user, document_name=document.name)
     document_dao.save()
 
     resp['document'] = document_dao.id

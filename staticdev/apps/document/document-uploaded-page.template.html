@@ -29,12 +29,12 @@
                 <tbody>
                 <tr ng-repeat='document in documents track by $index'>
                     <td>
-                        <span ng-if="document.patient != null"><b>({{document.patient.user.first_name}} {{document.patient.user.last_name}})</b></span>
+                        <span ng-if="document.patient != null"><b>({{document.patient.first_name}} {{document.patient.last_name}})</b></span>
                         <span ng-bind="document.document_name"></span>
                     </td>
                     <td class="text-right">
                         <a class="btn btn-default" ng-if="document.patient != null"
-                           href="/u/patient/manage/{{document.patient.user.id}}/#/document/{{document.id}}">Tags</a>
+                           href="/u/patient/manage/{{document.patient.id}}/#/document/{{document.id}}">Tags</a>
                         <a class="btn btn-default" ng-if="document.patient == null"
                            href="/#/manage/document/{{document.id}}">Tags</a>
                     </td>

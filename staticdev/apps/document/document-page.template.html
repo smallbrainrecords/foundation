@@ -12,10 +12,11 @@
                 <div class="document-name">
                     <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
                        ng-class="label.css_class"></a>
-                    <span ng-bind="document.document_name"
-                          ng-show="!enableEditDocumentName"></span>
-                    <span ng-if="document.patient"> <b>for </b> <a
-                            href="/u/patient/manage/{{document.patient.id}}">{{document.patient.first_name}} {{document.patient.last_name}}</a></span>
+                    <span ng-bind="document.document_name" ng-show="!enableEditDocumentName"></span>
+                    <span ng-if="document.patient">
+                        <b>for </b>
+                        <a href="/u/patient/manage/{{document.patient.profile.id}}">{{document.patient.first_name}} {{document.patient.last_name}}</a>
+                    </span>
                 </div>
                 <div ng-show="enableEditDocumentName" class="form-inline">
                     <div class="form-group">

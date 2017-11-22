@@ -59,8 +59,8 @@
          */
         function uploadDocument(files, author, patient, callback) {
             if (files && files.length) {
-                for (var i = 0; i < files.length; i++) {
-                    var file = files[i];
+                for (let i = 0; i < files.length; i++) {
+                    let file = files[i];
                     if (!file.$error) {
                         Upload.upload({
                             url: '/docs/upload_document',
