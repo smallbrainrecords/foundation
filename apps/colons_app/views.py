@@ -183,7 +183,7 @@ def add_study_image(request, study_id):
 def add_factor(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
-    if permissions_accessed(request.user, colon.patient.user.id):
+    if permissions_accessed(request.user, colon.patient.id):
         actor_profile = UserProfile.objects.get(user=request.user)
 
         if not RiskFactor.objects.filter(colon=colon, factor=request.POST.get("value", None)).exists():
