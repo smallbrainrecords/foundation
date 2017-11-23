@@ -65,12 +65,12 @@
 
             <div class="col-md-12" ng-show="enableEditPatient">
                 <input type="text"
-                       ng-if="document.author.id != document.patient.id"
                        class="form-control"
+                       placeholder="Type patient name to search"
+                       ng-if="document.author.id != document.patient.id"
                        ng-model="patientSearchString"
                        uib-typeahead="patient as patient.full_name for patient in getPatients($viewValue)"
-                       typeahead-on-select="pinPatient2Document($item, $model, $label, $event) "
-                       placeholder="Type patient name to search">
+                       typeahead-on-select="pinPatient2Document($item, $model, $label, $event) ">
             </div>
         </div>
     </section>

@@ -509,6 +509,7 @@ def fetch_active_user(request):
 
 @login_required
 def staff(request):
+    content = {}
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
     if user_profile.role == 'patient' or user_profile.role == 'admin':
@@ -522,7 +523,10 @@ def staff(request):
 
     physicians = [x.physician for x in physicians]
 
-    content = {'physicians': physicians, 'patients': patients, 'user': user, 'user_profile': user_profile}
+    content['physicians'] = physicians
+    content['patients'] = patients
+    content['user'] = user
+    content['user_profile'] = user_profile
 
     # TODO
     user_profile_serialized = UserProfileSerializer(user_profile).data

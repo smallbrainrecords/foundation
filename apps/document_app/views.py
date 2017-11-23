@@ -21,10 +21,11 @@ def upload_document(request):
 
     # TODO: Currently this is using patient profile id instead of user id
     # Change from UserProfile's id to User's id
-    patient = request.POST.get('patient', None)
-    patient_user = User.objects.filter(profile__id=patient).first()
+    patient_uid = request.POST.get('patient', None)
+    # patient_user = User.objects.filter(profile__id=patient).first()
 
-    document_dao = Document.objects.create(author=request.user, document=document, patient=patient_user, document_name=document.name)
+    document_dao = Document.objects.create(document=document, document_name=document.name,
+                                           patient_id=patient_uid, author=request.user)
     document_dao.save()
 
     resp['document'] = document_dao.id
@@ -91,9 +92,9 @@ def pin_patient_2_document(request):
     resp = {'success': False}
     json_body = json.loads(request.body)
     document_id = json_body.get('document')
-    patient_id = json_body.get('patient')
+    patient_uid = json_body.get('patient')  # User id
     # Remove related
-    Document.objects.filter(id=document_id).update(patient=User.objects.filter(id=patient_id).get())
+    Document.objects.filter(id=document_id).update(patient_id=patient_uid)
     DocumentTodo.objects.filter(document=document_id).delete()
     DocumentProblem.objects.filter(document=document_id).delete()
 
@@ -153,15 +154,15 @@ def search_patient(request):
     json_body = json.loads(request.body)
     search_str = json_body.get('search_str')
 
-    items = UserProfile.objects.filter(role='patient').filter(
+    profiles = UserProfile.objects.filter(role='patient').filter(
         Q(user__first_name__icontains=search_str)
         | Q(user__last_name__icontains=search_str)
     )
 
-    for item in items:
+    for profile in profiles:
         result.append({
-            'uid': item.id,
-            'full_name': unicode(item)
+            'uid': profile.user.id,
+            'full_name': unicode(profile)
         })
 
     resp['results'] = result
