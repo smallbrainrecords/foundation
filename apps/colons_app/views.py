@@ -98,7 +98,7 @@ def get_study_info(request, study_id):
 def edit_study(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
-    if permissions_accessed(request.user, study.author.user.id):
+    if permissions_accessed(request.user, study.author.id):
         actor_profile = UserProfile.objects.get(user=request.user)
         study.finding = request.POST.get("finding", None)
         study.result = request.POST.get("result", None)
