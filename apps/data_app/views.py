@@ -261,7 +261,7 @@ def add_new_data(request, patient_id, component_id):
                              effective_datetime=effective_datetime, value_quantity=bmiValue).save()
             # Save log
             summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
-            op_add_event(request.user, value.component.observation.subject.user, summary)
+            op_add_event(request.user, value.component.observation.subject, summary)
 
         if value.component.name == 'height':
             # Calculation
@@ -275,12 +275,12 @@ def add_new_data(request, patient_id, component_id):
                              effective_datetime=effective_datetime, value_quantity=bmiValue).save()
             # Save log
             summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
-            op_add_event(request.user, value.component.observation.subject.user, summary)
+            op_add_event(request.user, value.component.observation.subject, summary)
 
         # Save log
         summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(value.value_quantity,
                                                                           value.component.observation.name)
-        op_add_event(request.user, value.component.observation.subject.user, summary)
+        op_add_event(request.user, value.component.observation.subject, summary)
 
         resp['value'] = ObservationValueSerializer(value).data
         resp['success'] = True
