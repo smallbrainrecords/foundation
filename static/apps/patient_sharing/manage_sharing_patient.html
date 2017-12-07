@@ -1,7 +1,7 @@
 <div class="row">
 	<div class="col-md-12">
 		<h3 class="text-center">
-			<a class="pull-left" href='#/manage/sharing'><i class='glyphicon glyphicon-arrow-left'></i> Back </a>
+			<a class="pull-left" href='#/edit'><i class='glyphicon glyphicon-arrow-left'></i> Back </a>
 			Manage Sharing Patients
 		</h3>
 	</div>
@@ -65,7 +65,10 @@
 							<td> {{p.user.username}}
 							</td>
 							<td class="text-right">
-								<a class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{patient.user.id}}/{{p.user.id}}">
+								<a ng-if="'patient' != active_user.user.profile.role" class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{patient.user.id}}/{{p.user.id}}">
+		                            Edit problem based sharing
+		                        </a>
+								<a ng-if="'patient' == active_user.user.profile.role" class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{p.user.id}}">
 		                            Edit problem based sharing
 		                        </a>
 								<a class='btn btn-sm btn-danger' ng-click="remove_sharing_patient(p.user.id)">
