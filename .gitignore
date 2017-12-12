@@ -1,0 +1,7 @@
+project/local_settings.py
+
+*.idea
+media
+Icon
+static/CACHE
+staticdev/CACHE
