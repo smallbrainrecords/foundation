@@ -649,9 +649,9 @@
                     if (response.data.success) {
                         toaster.pop('success', 'Done', 'Added label to document. Loading patient todo and patient');
                         $scope.document = response.data.info;
-                        $scope.getPatientInfo(response.data.info.patient.user.id);
+                        $scope.getPatientInfo(response.data.info.patient.id);
 
-                        $window.location.href = `/u/patient/manage/${response.data.info.patient.user.id}/#/document/${$scope.document.id}`;
+                        $window.location.href = `/u/patient/manage/${response.data.info.patient.id}/#/document/${$scope.document.id}`;
                         $window.reload();
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong!');
