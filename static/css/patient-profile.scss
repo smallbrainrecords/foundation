@@ -1,0 +1,670 @@
+@import "../apps/todo/todo.scss";
+@import "../apps/todo/todo-item.scss";
+@import "../apps/todo/todo-page.scss";
+@import "../apps/medication/medication.scss";
+
+body {
+  padding-top: 70px;
+}
+
+//.nav > li > a {
+//  padding: 10px;
+//}
+
+#dvmain {
+  min-height: 550px;
+}
+
+// Fix datepicker outline on active
+.uib-datepicker:active, .uib-datepicker:focus, .uib-datepicker:hover, .uib-datepicker:visited {
+  outline: none !important;
+}
+
+.profile-section {
+  position: relative;
+  height: 315px;
+  margin-bottom: 50px;
+  border: none;
+  .panel-body {
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .cover-image {
+    position: absolute;
+    width: 100%;
+    max-width: 100%;
+    top: 0;
+    height: 100%;
+    background: #639df9;
+    &:hover + .dropdown {
+      .btn-camera {
+        background-color: #000;
+        opacity: 0.7;
+        .glyphicon-camera {
+          font-size: 1em;
+        }
+        .btn-text {
+          display: inline-block;
+        }
+      }
+    }
+  }
+
+  .btn-cover-picture-edit {
+    left: 20px;
+    &:hover {
+      border: 1px solid #fff;
+    }
+  }
+
+  .profile-picture {
+    background: #fff;
+    border: 1px solid #cccccc;
+    padding: 5px;
+    position: absolute;
+    bottom: -20px;
+    width: 168px;
+    margin: 0 30px;
+    height: 168px;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn-profile-picture-edit {
+      .glyphicon-camera {
+        vertical-align: middle;
+      }
+      bottom: 5px;
+      width: 94%;
+      .btn-text {
+        width: 80%;
+      }
+    }
+
+    &:hover {
+      .btn-camera {
+        background-color: #000;
+        opacity: 0.7;
+        .glyphicon-camera {
+          font-size: 1em;
+        }
+        .btn-text {
+          display: inline-block;
+        }
+      }
+    }
+  }
+
+  .bottom-info {
+    line-height: 30px;
+    //margin-left: 180px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 5px 10px;
+    border: none;
+    width: 75%;
+    .patient-name {
+      color: #fff;
+      font-size: 56px;
+    }
+  }
+
+  .btn-camera {
+    color: #c2c1c0;
+    //width: 100%;
+    position: absolute;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 5px;
+    .glyphicon-camera {
+      display: inline-block;
+      font-size: 1.5em;
+    }
+    .btn-text {
+      color: #fff;
+      display: none;
+    }
+    &:hover {
+      background-color: #000;
+      opacity: 0.7;
+      .glyphicon-camera {
+        font-size: 1em;
+      }
+      .btn-text {
+        display: inline-block;
+      }
+    }
+  }
+}
+
+.bottom-info {
+  line-height: 30px;
+  //margin-left: 180px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 5px 10px;
+  border: none;
+  width: 75%;
+  .patient-name {
+    color: #fff;
+    font-size: 56px;
+  }
+}
+
+.float-right {
+  float: right;
+}
+
+.float-left {
+  float: left;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.btn-upload, .btn-take-photo {
+  cursor: pointer;
+  line-height: 36px;
+  padding: 28px 0;
+}
+
+.preview-image {
+  margin: auto;
+}
+
+.dropdown {
+  li {
+    a {
+      padding: 3px 10px;
+    }
+  }
+}
+
+.dropdown.open {
+  .btn-camera {
+    background-color: #000;
+    opacity: 0.7;
+    .glyphicon-camera {
+      font-size: 1em;
+    }
+    .btn-text {
+      display: inline-block;
+    }
+  }
+  .fa.fa-sort-asc {
+    position: absolute;
+    top: -8px;
+    font-size: 2em;
+    color: #FFF;
+    left: 20px;
+  }
+}
+
+.dropdown-menu.cover-photo-menu {
+  font-size: 12px;
+  top: 35px;
+  left: 20px;
+  a {
+    cursor: pointer;
+    text-decoration: none;
+  }
+}
+
+#audio-player {
+  padding: 0;
+  list-style: none;
+  li {
+    display: inline-block;
+    &.progress-wrapper {
+      width: 200px;
+      div.progress {
+        height: 10px;
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+.list-group {
+  list-style: none;
+}
+
+.graph-header {
+  color: white;
+}
+
+.graph-view-mode {
+  .mode-active {
+    background: #FF2C55;
+    color: white;
+  }
+
+  .mode-inactive {
+    background: #FED7D0;
+    color: #C03C51;
+  }
+}
+
+.no-padding {
+  padding: 0 !important;
+}
+
+.no-margin {
+  margin: 0 !important;
+}
+
+//Problem details stylesheet
+.headerWrap {
+  padding: 10px 15px;
+  display: block;
+  a {
+    color: #000;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  vertical-align: middle;
+}
+
+.profileThumb {
+  border-radius: 2px;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.vitals_info {
+  div.vital-wrapper {
+    width: 100%;
+    min-width: 300px;
+    div.vital-item {
+      width: 24%;
+      display: inline-block;
+      text-align: center;
+      border-right: 1px solid #C2C2C2;
+      cursor: pointer;
+      &:last-child {
+        border-color: #FFFFFF;
+      }
+      a {
+        padding: 0;
+        text-decoration: none;
+      }
+    }
+  }
+}
+
+a.btn-manage {
+  margin-bottom: 20px;
+}
+
+.drop-box {
+  cursor: pointer;
+  background: #F8F8F8;
+  border: 5px dashed #DDD;
+  //width: 200px;
+  height: 100px;
+  line-height: 50px;
+  text-align: center;
+  padding-top: 25px;
+  margin-top: 50px;
+}
+
+.dragover {
+  border: 5px dashed blue;
+}
+
+.btn-remove {
+  cursor: pointer;
+}
+
+// Document tagging page
+#document-tag-page {
+  .labeled-list {
+    display: inline-block;
+  }
+
+  .dube-btn-pin-unpin {
+    margin-right: 20px;
+  }
+
+  .todo-label {
+    cursor: pointer;
+  }
+}
+
+.flex-container {
+  display: flex;
+
+  .flex-item {
+    align-self: center;
+  }
+}
+
+.panel-heading {
+  cursor: pointer;
+}
+
+.problem-controlled {
+  background: #DFF0D8;
+  z-index: 2000;
+  margin: 0;
+  &.affix-top, &.affix {
+    top: 50px;
+  }
+}
+
+.problem-uncontrolled {
+  z-index: 2000;
+  margin: 0;
+  &.affix {
+    top: 50px;
+  }
+}
+
+#time-range-select.affix {
+  top: 50px;
+}
+
+#homepage-data-time-range-header {
+  top: 50px;
+  z-index: 1;
+}
+
+.graph-data-list {
+  margin-top: 60px;
+}
+
+@media (max-width: 768px) {
+  .problem-uncontrolled, .problem-controlled {
+    max-width: 720px;
+  }
+  #time-range-select {
+    max-width: 720px;
+  }
+
+  #homepage-data-time-range-header {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 768px) {
+  .problem-uncontrolled, .problem-controlled {
+    min-width: 720px;
+  }
+  #time-range-select {
+    max-width: 720px;
+  }
+
+  #homepage-data-time-range-header {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .problem-uncontrolled, .problem-controlled {
+    min-width: 940px;
+  }
+  #time-range-select {
+    max-width: 940px;
+  }
+
+  #homepage-data-time-range-header {
+    max-width: 940px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .problem-uncontrolled, .problem-controlled {
+    min-width: 1140px;
+  }
+  #time-range-select {
+    max-width: 1140px;
+  }
+
+  #homepage-data-time-range-header {
+    max-width: 570px;
+  }
+}
+
+#view_document_page {
+  .uploaded_document {
+    .document_icon {
+      margin-right: 10px;
+    }
+
+    .document-name {
+      vertical-align: top;
+    }
+    .document_uploaded_date {
+
+    }
+  }
+
+  a {
+    text-decoration: none;
+  }
+}
+
+.inr-component {
+  a {
+    cursor: pointer;
+  }
+}
+
+inr-bfdi {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  min-height: 60px;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  #result-set {
+    border-bottom: 2px solid #808080;
+  }
+
+  .flex-item {
+    margin: 0 10px;
+  }
+}
+
+.patient-match-result {
+  padding: 10px;
+
+}
+
+.tab-problems {
+  .nav.nav-tabs {
+    //width: -moz-fit-content;
+    //width: fit-content;
+    //margin-left: auto;
+    //margin-right: auto;
+    border-bottom: none;
+    li.active {
+      a {
+        background: #808080;
+        border-radius: 5px;
+        color: white;
+      }
+    }
+  }
+}
+
+.dube-btn-pin-unpin {
+  margin-right: 20px;
+}
+
+#profile-summary {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  label, textarea, button {
+    margin-bottom: 10px;
+  }
+}
+
+.audit-log {
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+  margin: 0;
+  &:last-child {
+    border: none;
+  }
+  .datetime {
+    font-weight: bold;
+  }
+}
+
+todo {
+  .new-tagged-todo {
+    background: #F2DEDE;
+    input[type='checkbox']:before {
+      content: "*";
+      left: 2px;
+      position: absolute;
+      font-size: 2em;
+      top: 10px;
+    }
+  }
+}
+
+#image-info {
+
+  .cover {
+    width: 100%;
+    max-height: 315px;
+  }
+
+  .thumbnail {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+#bdfi .form-group input {
+  margin: 5px;
+}
+
+.cursor {
+  cursor: pointer;
+}
+
+#document-header {
+  margin-bottom: 20px;
+
+  .document-name {
+    vertical-align: top;
+  }
+
+}
+
+#problem-image {
+  image {
+    margin: auto;
+  }
+}
+
+.ngdialog-buttons {
+  .btn {
+    margin-right: 5px;
+  }
+}
+
+.member-tagging {
+  display: block;
+  padding: 5px;
+  text-decoration: none;
+  color: #444;
+  cursor: pointer;
+  &:hover, &:active, &:focus {
+    text-decoration: none;
+  }
+
+  .fa-check {
+    color: #999;
+  }
+
+  &:hover {
+    background: #298FCA;
+    color: white;
+    text-decoration: none;
+    .fa-check {
+      color: white;
+    }
+  }
+}
+
+.hint {
+  font-size: 10px;
+  font-style: italic;
+}
+
+.member-search-box {
+  margin-bottom: 5px;
+}
+
+.ngdialog-buttons {
+  margin-top: 10px;
+}
+
+.todo-member:hover {
+  background: red;
+  color: white;
+  cursor: pointer;
+}
+
+.todo-label-front {
+  cursor: pointer;
+  text-decoration: none;
+  vertical-align: text-bottom;
+  .todo-label-name {
+    display: none;
+  }
+  &:hover {
+    width: auto;
+    height: auto;
+    padding: 2px 5px;
+    .todo-label-name {
+      color: white;
+      display: inline-block;
+    }
+  }
+}
+
+// Problem page
+#related-encounters {
+  .encounter-item {
+    border-bottom: 1px solid #CCC;
+    display: block;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+// Encounter page
+#encounter-related-problem {
+  .problem-item {
+    border-bottom: 1px solid #CCC;
+    display: block;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}

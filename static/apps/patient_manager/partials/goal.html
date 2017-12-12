@@ -1,0 +1,95 @@
+<style type='text/css'>
+
+.controlled-div{
+	background-color: green;
+	color:white;
+	padding: 7px;
+}
+
+.uncontrolled-div{
+	background-color: red;
+	color: white;
+	padding: 7px;
+}
+
+</style>
+
+<a href='#/'><b> Manage Patient </b></a>
+
+<span ng-show='goal.problem!=null'>
+	<span class='text-default'>
+		<i class='glyphicon glyphicon-menu-right'></i> 
+	</span>
+	<a href='#/problem/{{goal.problem.id}}'><b>   Problem: {{goal.problem.problem_name}} </b></a>
+</span>
+<span class='text-default'>
+	<i class='glyphicon glyphicon-menu-right'></i> 
+</span>
+<span class='text-muted'><b>  Goal: {{goal.goal}} </b></span>
+
+
+<hr>
+<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
+
+<div id='problem-header' class='row' ng-class="goal.is_controlled==true?'controlled-div':'uncontrolled-div'">
+	<div class="todo">
+		<h4 ng-show="!edit_goal">  Goal : {{goal.goal}}  
+			<a href class="btn-custom" ng-click="edit_goal_name()"><i class="fa fa-pencil"></i></a>
+		</h4>
+		<!-- begin change item -->
+		<div class="quick-card-editor" id="main-menu" ng-show='edit_goal' >
+			<!-- show label and text in edit mode -->
+			<div class="quick-card-editor-text">
+				<div class='row'>
+					<div class='col-md-12'>
+						<input type='text' ng-model='new_goal_name' class='form-control'>
+						<button class='btn btn-sm btn-default' ng-click='change_goal_name(new_goal_name)'>Change Goal</button>
+						<button class='btn btn-sm btn-default' ng-click='cancel_goal_name()'>Cancel</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- end change item -->
+	</div>
+</div>
+
+<!-- <div ng-class="goal.is_controlled==true?'controlled-div':'uncontrolled-div'" class='row'>
+	<h4>  Goal : {{goal.goal}}  </h4>
+</div> -->
+
+<span ng-show='goal.problem!=null'>
+Problem  : <b> {{goal.problem.problem_name}} </b> 
+</span>
+
+
+<hr>
+
+<p>
+<b> Start Date </b> {{goal.start_date}}
+</p>
+
+<p>
+	<input type='checkbox' ng-model='goal.is_controlled' ng-disabled='!permitted(["modify_goal"])' id='is_controlled_checkbox'>  <label for='is_controlled_checkbox'> Currently Succeeding </label>
+</p>
+
+<p>
+	<input type='checkbox' ng-model='goal.accomplished'  ng-disabled='!permitted(["modify_goal"])' id='is_accomplished_checkbox'> <label for='is_accomplished_checkbox'> Is Accomplished ? </label>
+</p>
+
+<hr>
+<b> Motivation notes for this goal: </b>
+<hr>
+<div ng-show='permitted(["modify_goal"])'>
+	<textarea class='form-control' ng-model='new_note' placeholder='Add note...'></textarea>
+	<hr>
+	<button class='btn btn-default' ng-click='update_motivation()'>
+		Submit
+	</button>
+</div>
+
+<p>
+	<ul class='ul-clean'>
+	<li ng-repeat='note in goal_notes'>
+		{{note.note}}
+	</li>
+</p>

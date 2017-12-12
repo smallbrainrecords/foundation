@@ -1,0 +1,45 @@
+<div class="container" id="inr-bfdi">
+    <ul class="ul-clean no-padding" id="result-set"
+        ng-if="inr.inr_value != null && inr.inr_value != '' && results.length > 0">
+        <li ng-repeat="result in results">
+            <div class="row patient-match-result">
+                <div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 text-left flex-container">
+                    <img ng-src="{{result.avatar}}" class="profileThumb flex-item">
+                    <span ng-bind-html="result.full_name"
+                          class="full-name flex-item"></span>
+                    <span ng-bind="result.date_of_birth" class="dob flex-item"></span>
+                </div>
+                <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 text-center flex-container">
+
+                    <span class="inr flex-item">INR: {{inr.inr_value}}</span>
+                </div>
+                <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 text-right flex-container">
+
+                    <a class="btn btn-default flex-item" ng-click="addINR(result)">Ok</a>
+                    <a class="btn btn-default flex-item" ng-if="result.problem_id == null" disabled>Go
+                        to tracker</a>
+                    <a class="btn btn-default flex-item"
+                       ng-if="result.problem_id != null"
+                       href="/u/patient/manage/{{result.id}}/#/problem/{{result.problem_id}}"
+                       target="_blank">Go
+                        to tracker</a>
+                </div>
+            </div>
+        </li>
+    </ul>
+
+    <div class="row">
+        <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <input type="number" ng-model="inr.inr_value" placeholder="Enter INR value here" class="form-control"
+                   title="INR value">
+        </div>
+        <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8">
+            <input type="text" title="Patient name"
+                   class="form-control"
+                   placeholder="Type patient name to search"
+                   ng-model="patientName"
+                   ng-disabled="inr.inr_value == null || inr.inr_value ==''"
+                   ng-change="findPatient(patientName)">
+        </div>
+    </div>
+</div>

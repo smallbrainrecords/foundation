@@ -1,0 +1,110 @@
+<div class='col-md-12'>
+    <div class="panel-group" role="tablist" aria-multiselectable="true">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="row">
+                    <div class='col-md-12'>
+                        <form>
+                            <div class='form-group'>
+                                <label> Name </label>
+                                <input type='text' placeholder="Enter medication name"
+                                       ng-model-options="{debounce: 1000}"
+                                       class='form-control' ng-model='manual_medication.name' title="">
+                            </div>
+
+                            <div class='form-group'>
+                                <input type='submit' value='Add free text medication' class='btn btn-default btn-primary'
+                                       ng-click="add_medication(manual_medication);">
+                            </div>
+                        </form>
+                        <br>
+                        <div ng-show='new_medication.set==true'>
+                            <hr>
+                            <label> {{ new_medication.concept_id }} </label>
+                            {{ new_medication.name }} <br>
+                            <button class='btn btn-sm btn-default btn-primary'
+                                    ng-click='add_medication(new_medication)'>
+                                Add snomed based medication (Prefered)
+                            </button>
+                            <button class='btn btn-sm btn-default'
+                                    ng-click='unset_new_medication()'>
+                                Cancel
+                            </button>
+                            <hr>
+                        </div>
+                    </div>
+                    <div class='col-md-12' style='max-height:375px; overflow-x:hidden; overflow-y:auto;'>
+                        <div ng-repeat='med in medication_terms' style='margin-top:12px;'>
+                            <button class='btn btn-sm btn-default'
+                                    title='{{ med.name }}'
+                                    ng-click='set_new_medication(med)'>
+                                {{ med.name }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class='col-md-12'>
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+
+                                <th>Dosage</th>
+                                <th>Note</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat='medication in medications track by $index'
+                                ng-show='medication.current'>
+                                <td>
+                                    <a class="cursor-pointer" ng-click='open_medication(medication)'
+                                       ng-bind="medication.name"></a>
+                                </td>
+                                <td>
+                                    <span ng-repeat="note in medication.medication_notes"
+                                          ng-if="$last">{{ note.note }}</span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <hr ng-init="show_inactive_medications=false;">
+                <a class='btn btn-default btn-md' ng-click='show_inactive_medications=!show_inactive_medications;'>
+                    <span ng-if='show_inactive_medications==false'>Show inactive medications </span>
+                    <span ng-if='show_inactive_medications==true'>Hide inactive medications </span>
+                </a>
+                <hr>
+
+                <div class="row" ng-show="show_inactive_medications">
+                    <div class='col-md-12'>
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+
+                                <th>Dosage</th>
+                                <th>Note</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat='medication in medications'
+                                ng-show='!medication.current'>
+                                <td>
+                                    <a class="cursor-pointer" ng-click='open_medication(medication)'
+                                       ng-bind="medication.name"></a>
+                                </td>
+                                <td>
+                                    <span ng-repeat="note in medication.medication_notes"
+                                          ng-if="$last">{{ note.note }}</span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

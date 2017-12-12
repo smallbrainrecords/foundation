@@ -1,0 +1,10 @@
+/*Stytle for medication related component*/
+#medication-page {
+  #medication-header {
+    @media(min-width: 992px) {
+      .medication-action-control {
+        text-align: right;
+      }
+    }
+  }
+}

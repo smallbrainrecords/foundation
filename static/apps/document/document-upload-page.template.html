@@ -1,0 +1,31 @@
+<h3 class="text-center">
+    <a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
+</h3>
+<hr>
+
+<h3 class="text-center"> Upload documents</h3>
+<hr>
+
+<div class="container-fluid">
+    <div class="drop-box" ngf-drop ngf-select ng-model="files"
+         ngf-drag-over-class="'dragover'" ngf-multiple="true">Drop/Click to choose document files
+    </div>
+    <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>
+    <hr>
+    <div class="row" ng-repeat="(key,value) in files">
+        <div class="col-md-8">
+            <span ng-bind="value.name"></span>
+        </div>
+        <div class="col-md-3">
+            <p ng-if="logs[key].progress != 100">
+                <span ng-bind="logs[key].progress"></span> %
+            </p>
+            <span ng-bind="logs[key].status"></span>
+        </div>
+        <div class="col-md-1">
+            <a href="/#/manage/document/{{logs[key].document}}" target="_blank"
+               ng-disabled="logs[key].document == null"
+               class="btn btn-default btn-manage">Tag</a>
+        </div>
+    </div>
+</div>

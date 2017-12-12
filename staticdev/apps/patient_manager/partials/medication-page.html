@@ -1,0 +1,143 @@
+<div class='panel panel-default'>
+    <div class='panel-body'>
+        <a href='#/'><b> Back to home page </b></a>
+    </div>
+</div>
+
+<div class='row' id="medication-page">
+    <div class='col-md-12'>
+        <div class="io-box">
+            <!--Action button-->
+            <div class="row" id="medication-header">
+                <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+                    <p ng-bind="medication.name"></p>
+                </div>
+                <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8 medication-action-control">
+                    <button class="btn btn-default" ng-click="showMedicationSearch =!showMedicationSearch">Change dosage
+                    </button>
+                    <button class="btn btn-default" ng-click="seeMedicationHistory();">See medication history</button>
+                    <button class="btn btn-default" ng-click="togglePinToNewProblem();">
+                        Pin to new problem
+                    </button>
+                </div>
+            </div>
+
+            <!--Current control-->
+            <div class="row">
+                <div class="col-md-12">
+                    <label>
+                        <input type='checkbox' ng-model='medication.current'
+                               ng-change="changeActiveMedication();">
+                        Is active
+                    </label>
+                </div>
+            </div>
+
+            <!--Medication search box-->
+            <div class="row">
+                <div class="col-md-12">
+                    <medication-search ng-if="showMedicationSearch"
+                                       on-update="changeDosage(value)"
+                                       search-term="medication.search_str"></medication-search>
+                </div>
+            </div>
+
+            <!-- Medication's history -->
+            <div class="row" ng-if="medication.showMedicationHistory">
+                <!--Dosage history-->
+                <div class='col-md-6'>
+                    <label>History of dosages: </label>
+                    <p ng-repeat="record in medicationHistory  | orderBy:'date':true track by $index" class="audit-log">
+                        <span ng-bind="record.comment"></span>
+                    </p>
+                </div>
+                <!--Note history-->
+                <div class="col-md-6">
+                    <label>Note:</label>
+                    <div ng-repeat="record in medicationNoteHistory | orderBy:'datetime':true track by $index"
+                         class="audit-log"
+                         ng-init="record.editMode=false">
+                        <div ng-show="!record.editMode">
+                            <span ng-bind="record.note"></span>
+                            <button class="btn btn-default" ng-click="record.editMode=!record.editMode">Edit</button>
+                            <button class="btn btn-danger" ng-click="deleteNoteHistory(record);">Delete</button>
+                        </div>
+                        <div ng-show="record.editMode">
+                            <input type='text' class='form-control' ng-model='record.note' title="">
+                            <button class="btn btn-primary" ng-click="updateNoteHistory(record);">Save</button>
+                            <button class="btn btn-danger" ng-click="record.editMode=!record.editMode">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medication's current note-->
+            <div class="row">
+                <div class='col-md-12'>
+                    <form ng-if="medication.medication_notes.length > 0">
+                        <div ng-repeat="note in medication.medication_notes" ng-if="$last">
+                            <div class='form-group'>
+                                <label> Note: </label>
+                                <textarea class='form-control'
+                                          ng-model='note.note'
+                                          ng-click="oldNote = note.note" title=""></textarea>
+                                <p>Last edited by: {{ note.author.username }} on
+                                    {{note.datetime|date:'M/d/yyyy'}}</p>
+                            </div>
+                            <div class='form-group'>
+                                <input type='submit' value='Save' class='btn btn-default'
+                                       ng-click="addNote(note, oldNote);">
+                            </div>
+                        </div>
+                    </form>
+                    <form ng-if="medication.medication_notes.length == 0">
+                        <div class='form-group'>
+                            <label> Note </label>
+                            <textarea class='form-control'
+                                      ng-model='new_note.note' title=""></textarea>
+                        </div>
+                        <div class='form-group'>
+                            <input type='submit' value='Add' class='btn btn-default' ng-click="addNote(new_note);">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <div class='panel panel-default'>
+            <div class='panel-heading'>
+                List of pinned problems
+            </div>
+
+            <div class='panel-body'>
+                <div style='max-height:375px; overflow-y:auto;'>
+                    <ul class='ul-clean no-padding'>
+                        <li ng-repeat='problem in problems | filter:{"pin":true} track by $index'>
+                            <div class='item-box'
+                                 ng-class='problem.is_controlled==true ? "green-box" : "red-box" '
+                                 ng-click="openProblem(problem);">
+
+                                {{ problem.problem_name }} <span ng-show="problem.authenticated==false">(not authenticated)</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class='panel panel-default' ng-show="showPinToNewProblem">
+            <div class='panel-heading'>
+                List of current problems
+            </div>
+
+            <div class='panel-body'>
+                <div class="checkbox" ng-repeat="problem in problems track by $index">
+                    <input type="checkbox" ng-model="problem.pin" title="{{problem.problem_name}}"
+                           id="{{problem.id}}"
+                           ng-change="medicationPinToProblem(medication.id, problem.id);">
+                    <label for="{{problem.id}}" ng-bind="problem.problem_name"></label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

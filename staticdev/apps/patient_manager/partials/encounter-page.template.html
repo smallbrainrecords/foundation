@@ -1,0 +1,190 @@
+<a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
+<hr>
+<section id="encounter-info">
+    <h4> Encounter : <span ng-if="encounter.starttime">{{ encounter.starttime | date:'medium' }}</span> <span
+            ng-if="encounter.stoptime">to {{ encounter.stoptime | date:'medium' }}</span></h4>
+    <button class="btn btn-danger" ng-if="['admin','physician'].indexOf(active_user.role) != -1"
+            ng-click="deleteEncounter();">Delete
+    </button>
+</section>
+
+<section class="encounter-metadata">
+    <div class='row'>
+        <!--Note section-->
+        <div class='col-md-4'>
+            <form class='form' ng-if='permitted(["add_encounter"])'>
+                <div class='form-group'>
+                    <label> Note </label>
+                </div>
+                <div class='form-group'>
+                <textarea style='height:275px;' class='form-control' ng-model='encounter.note'
+                          placeholder='Add a note....'></textarea>
+                </div>
+                <button type='submit' class='btn btn-default' ng-click='update_note()'>
+                    Update
+                </button>
+            </form>
+        </div>
+
+        <!--Audio & Video section-->
+        <div class='col-md-8'>
+            <!--Video-->
+            <div ng-if='encounter.video!=null'>
+                <strong> Encounter Video </strong>
+                <div video-id='video1' ng-video-player video-src="{{ encounter.video }}" video-type='video/mp4'>
+
+                </div>
+            </div>
+            <div ng-show='encounter.video==null && permitted(["add_encounter"])'>
+                <form class='form' ng-submit='upload_video()'>
+
+                    <div class='form-group'>
+                        <label for="video_file">Video File:</label>
+                        <input type="file" file-model='video_file' id="video_file">
+                    </div>
+                    <div class='form-group'>
+                        <button type='submit' class='btn btn-default'>
+                            Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!--Audio-->
+            <div ng-if='encounter.audio!=null '>
+                <strong> Encounter Audio </strong>
+                <div ng-audio-player audio-src="{{ encounter.audio }}" audio-type="audio/mp3">
+                </div>
+            </div>
+            <div ng-show='encounter.audio==null  && permitted(["add_encounter"]) '>
+                <form class='form' ng-submit='upload_audio()'>
+                    <div class='form-group'>
+                        <label for="audio_file">Audio File:</label>
+                        <input type="file" file-model='audio_file' id="audio_file">
+                    </div>
+
+                    <div class='form-group'>
+                        <button type='submit' class='btn btn-default'>
+                            Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="timestamp-action">
+    <div class='row'>
+        <div class='col-md-8'>
+            <form name="myForm">
+                <button type='submit' class='btn btn-default' ng-click='add_timestamp()'>
+                    Add a timestamp
+                </button>
+            </form>
+        </div>
+    </div>
+    <hr>
+</section>
+
+
+<section id="encounter-events">
+    <h3 class='text-info text-center' ng-if='!encounter_events.length'>
+        No Events
+    </h3>
+
+    <table class='table' ng-if='encounter_events.length>0'>
+
+        <thead>
+        <tr>
+
+            <th> Time (24 hour)</th>
+            <th> Video Timestamp</th>
+            <th> Summary</th>
+            <th></th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr ng-repeat='event in encounter_events' ng-init="event.is_named=false;">
+            <td> {{ event.video_seconds }}
+                <span ng-if="encounter.video && !encounter.audio">
+					<button class='btn btn-default' ng-video-player-jump video-seconds='{{ event.video_seconds }}'>
+
+						<i class='glyphicon glyphicon-play'></i>
+					</button>
+				</span>
+                <span ng-if="encounter.audio">
+
+					<button class='btn btn-default' ng-audio-player-jump audio-seconds='{{ event.video_seconds }}'>
+						<i class='glyphicon glyphicon-play'></i>
+					</button>
+				</span>
+            </td>
+            <td>
+                {{ event.video_timestamp }}
+            </td>
+            <td ng-bind-html='event.summary'></td>
+            <td>
+				<span ng-if="event.is_favorite">
+					<span ng-if="event.is_named">
+						<input type="text" ng-model="event.name_favorite">
+						<button class="btn btn-default" ng-click="nameFavoriteEvent(event)">Save</button>
+						<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Cancel</button>
+					</span>
+					<span ng-if="!event.is_named">
+						{{ event.name_favorite }}
+						<button class="btn btn-default" ng-click="event.is_named=!event.is_named;">Name</button>
+						<button class="btn btn-default" ng-click="unmarkFavoriteEvent(event)">Unmark favorite</button>
+					</span>
+				</span>
+                <span ng-if="!event.is_favorite">
+					<button class="btn btn-default" ng-click="markFavoriteEvent(event)">Mark favorite</button>
+				</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="encounter-document" ng-if="encounterDocuments.length > 0">
+    <div class="panel panel-default">
+        <div class="panel-heading"> Encounter documents</div>
+        <div class="panel-body">
+
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Value</th>
+                    <th>Effective datetime</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="encounterDocument in encounterDocuments track by $index">
+                    <td ng-bind="encounterDocument.name"></td>
+                    <td ng-bind="encounterDocument.value"></td>
+                    <td ng-bind="encounterDocument.effective | date  : 'dd/MM/yyyy h:mm'"></td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</section>
+
+<section id="encounter-related-problem" ng-if="related_problems.length > 0">
+    <div class='panel panel-default'>
+        <div class='panel-heading'> Related Problems</div>
+        <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'>
+            <div class='problem-item' ng-repeat='problem in related_problems'>
+                <a href='#/problem/{{ problem.id }}'>{{ problem.problem_name }} </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="encounter-audio-played-count">
+    <label>Encounter audio have been played <span class="count" ng-bind="encounter.audio_played_count"></span>
+        times</label>
+</section>

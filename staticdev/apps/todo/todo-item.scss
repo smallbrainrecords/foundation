@@ -1,0 +1,56 @@
+todo-item {
+
+  // View mode
+  .label-wrapper {
+    display: inline-block;
+    margin-bottom: -6px;
+    overflow: hidden;
+    position: relative;
+    a.todo-label {
+      float: left;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      padding: 0;
+      display: block;
+      margin: 0 2px;
+      clear: none;
+    }
+    a.todo-label-name {
+      color: #fff;
+      width: auto;
+      padding: 0 10px;
+      text-decoration: none;
+    }
+  }
+
+  .attachment-glance {
+    margin-bottom: 10px;
+  }
+
+  .members-wrapper {
+    margin-bottom: 10px;
+  }
+
+  //  Editing mode
+  .quick-card-editor {
+
+    padding-right: 150px;
+    .quick-card-editor-label {
+      margin-bottom: initial !important;
+      z-index: 99 !important;
+    }
+    .input-group {
+      z-index: 99;
+    }
+
+    .quick-card-editor-lv2 {
+      border-radius: 3px;
+    }
+    .quick-card-editor-lv3 {
+      a.todo-label {
+        width: 100%;
+      }
+    }
+  }
+}
