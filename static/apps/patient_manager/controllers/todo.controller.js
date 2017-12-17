@@ -148,9 +148,12 @@
                             return item.user.first_name.indexOf(vm.memberSearch) !== -1 || item.user.last_name.indexOf(vm.memberSearch) !== -1;
                         }
 
-                        function toggleTaggedMember(member) {
+                        function toggleTaggedMember(event, member) {
                             let idx = vm.taggedMembers.indexOf(member.id);
                             idx === -1 ? vm.taggedMembers.push(member.id) : vm.taggedMembers.splice(idx, 1);
+
+                            // Refocus on the search box to enable enter to submit
+                            $(event.target.form).find('#member-searchbox').focus();
                         }
                     },
                     controllerAs: 'vm'

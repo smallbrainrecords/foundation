@@ -479,6 +479,9 @@ todo .new-tagged-todo {
   margin-right: 5px; }
 
 .member-tagging {
+  width: 100%;
+  background: none;
+  text-align: left;
   display: block;
   padding: 5px;
   text-decoration: none;
