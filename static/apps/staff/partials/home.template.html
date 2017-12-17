@@ -81,34 +81,7 @@
         </table>
     </div>
 </div>
-<div class='panel panel-default'
-     ng-if="active_user.role=='secretary' || active_user.role=='mid-level' || active_user.role=='nurse'">
-    <div class='panel-heading'>
-        List of all past due todos for all patients associated with the physician ({{all_todos_list.length}})
-    </div>
-    <div class='panel-body'>
-        <button ng-click="reverse=!reverse" class="btn btn-default">Reverse</button>
-        <table class='table'>
-            <thead>
-            <tr>
-                <th> Name</th>
-                <th> Due Date</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat='todo in all_todos_list | orderBy: orderByDate: reverse'>
-                <td>
-                    {{todo.todo}}
-                    <span ng-if="todo.patient"> for patient
-                      <a href="/u/patient/manage/{{todo.patient.id}}/">{{todo.patient.first_name}} {{todo.patient.last_name}}</a>
-                    </span>
-                </td>
-                <td> {{todo.due_date}}</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+
 <div class='panel panel-default' ng-if="active_user.role=='secretary'">
     <div class='panel-heading'>List all physicians</div>
     <div class='panel-body'>
