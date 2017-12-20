@@ -1,6 +1,18 @@
 import datetime
+import os
+from audioop import reverse
 
+from django.contrib.auth import logout, authenticate, login
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib.auth.models import User
+from django.core.checks import messages
+from django.db.models.loading import get_model
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from django.views.generic import View
 from django.views.static import serve
+from social_auth.exceptions import AuthFailed
+from social_auth.views import complete
 
 import project.settings as settings
 from common.views import *
@@ -206,7 +218,7 @@ def get_patient_data(request, patient_id):
     # This way we can prevent duplicate problems from being added
     viewers = []
 
-    time_threshold = datetime.datetime.now() - timedelta(seconds=5)
+    time_threshold = datetime.datetime.now() - datetime.timedelta(seconds=5)
     viewers = list(
         set([viewer.viewer for viewer in Viewer.objects.filter(patient=patient, datetime__gte=time_threshold)]))
     raw_viewers = []
@@ -502,7 +514,8 @@ def submit_data_for_problem(request, problem_id):
         problem = Problem.objects.get(id=problem_id)
         problem.authenticated = authenticated
         problem.save()
-        model = get_model('emr', request.POST['type'].capitalize())
+        model = \
+            get_model('emr', request.POST['type'].capitalize())
 
         m = model(patient=problem.patient, problem=problem)
         setattr(m, request.POST['type'], request.POST['data'])

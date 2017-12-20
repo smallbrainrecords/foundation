@@ -1,5 +1,9 @@
 #!/usr/bin/env python
+from datetime import timedelta
+
 from dateutil import parser
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 
 from document_app.serializers import DocumentSerializer
 from encounters_app.serializers import EncounterSerializer
@@ -12,7 +16,7 @@ except ImportError:
 
 import operator
 
-from django.db.models import Max, Prefetch
+from django.db.models import Max, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 

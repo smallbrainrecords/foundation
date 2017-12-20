@@ -1,18 +1,19 @@
-from common.views import *
-
-from django.contrib.auth.models import User
-from emr.models import UserProfile
-
-from users_app.serializers import UserProfileSerializer
+import datetime
 import logging
-from .forms import UpdateProfileForm, UpdateBasicProfileForm
-from .forms import UpdateEmailForm, UpdatePasswordForm
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db.models import Q
+from django.shortcuts import render
+
+from common.views import *
+from emr.models import PatientController, PhysicianTeam
+from emr.models import UserProfile
+from users_app.serializers import UserProfileSerializer
 from .forms import CreateUserForm, AssignPhysicianMemberForm
 from .forms import UpdateActiveForm, UpdateDeceasedDateForm
-
-import datetime
-
-from emr.models import PatientController, PhysicianTeam
+from .forms import UpdateEmailForm, UpdatePasswordForm
+from .forms import UpdateProfileForm, UpdateBasicProfileForm
 
 
 @login_required

@@ -1,8 +1,8 @@
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render_to_response
 
 from common.views import *
-
 from models import PainAvatar
-from django.contrib.auth.models import User
 
 
 def create_pain_avatar(request, patient_id):

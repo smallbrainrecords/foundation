@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 from dateutil.relativedelta import relativedelta
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db.models import Q
+from django.shortcuts import render, render_to_response
+from django.template import RequestContext
 
 try:
     from PIL import Image, ImageOps

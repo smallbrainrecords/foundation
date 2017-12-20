@@ -186,8 +186,6 @@
                     $scope.my_story_tabs = data['info'];
                     $scope.selected_tab = $scope.my_story_tabs[0];
                     $scope.myStoryTabTextComponentArray = _.flatten(_.pluck($scope.my_story_tabs, 'my_story_tab_components'));
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
             });
 

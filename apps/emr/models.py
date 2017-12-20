@@ -931,12 +931,12 @@ class ColonCancerTextNote(models.Model):
 
 class MyStoryTab(models.Model):
     name = models.TextField()
-    # TODO: Why need both private & is_all
-    private = models.BooleanField(default=True)
-    is_all = models.BooleanField(default=False)
+    # TODO: Why need both private & is_all. This should merged into one
+    private = models.BooleanField(default=True) # Only applied if author is Patient
+    is_all = models.BooleanField(default=False) # Only applied if author is Staff
 
     patient = models.ForeignKey(User, related_name="patient_story_tabs")
-    author = models.ForeignKey(User, related_name="author_story_tabs", null=True, blank=True)
+    author = models.ForeignKey(User, related_name="author_story_tabs", null=True, blank=True) # Patient, Patient who has accessed to the patient, Physician, Admin
 
     datetime = models.DateTimeField(auto_now_add=True)
 

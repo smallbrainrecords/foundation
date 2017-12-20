@@ -1,3 +1,5 @@
+from django.contrib.auth.decorators import login_required
+
 from common.views import *
 from data_app.serializers import ObservationValueTextNoteSerializer, ObservationValueSerializer
 from emr.models import AOneCTextNote, ObservationComponent, UserProfile, ObservationValueTextNote, \

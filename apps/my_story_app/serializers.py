@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
 from emr.models import MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry
-
-from users_app.serializers import SafeUserSerializer, UserProfileSerializer
+from users_app.serializers import SafeUserSerializer
 
 
 class MyStoryTextComponentEntrySerializer(serializers.ModelSerializer):
@@ -16,14 +15,15 @@ class MyStoryTextComponentEntrySerializer(serializers.ModelSerializer):
             'author',
             'component',
             'text',
-            'datetime',
-            )
+            'datetime'
+        )
 
 
 class MyStoryTextComponentSerializer(serializers.ModelSerializer):
 
     patient = SafeUserSerializer()
     author = SafeUserSerializer()
+    text_component_entries = MyStoryTextComponentEntrySerializer(many=True)
 
     class Meta:
         model = MyStoryTextComponent
@@ -38,13 +38,14 @@ class MyStoryTextComponentSerializer(serializers.ModelSerializer):
             'concept_id',
             'private',
             'is_all',
+            'text_component_entries'
             )
 
 
 class MyStoryTabSerializer(serializers.ModelSerializer):
-
     patient = SafeUserSerializer()
     author = SafeUserSerializer()
+    my_story_tab_components = MyStoryTextComponentSerializer(many=True)
 
     class Meta:
         model = MyStoryTab
@@ -57,4 +58,5 @@ class MyStoryTabSerializer(serializers.ModelSerializer):
             'datetime',
             'private',
             'is_all',
+            'my_story_tab_components'
             )

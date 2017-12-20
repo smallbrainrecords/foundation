@@ -1,3 +1,5 @@
+from django.contrib.auth.decorators import login_required
+
 from common.views import *
 from emr.models import UserProfile, Goal, TextNote
 from emr.operations import op_add_event
