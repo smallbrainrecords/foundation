@@ -822,11 +822,16 @@ def staff_search(request):
         context['documents'] = documents
 
         if request.user.profile.role is not 'patient':
-            patients = UserProfile.objects.filter(role='patient').filter(
+            active_patients = UserProfile.objects.filter(role='patient').filter(
                 Q(user__first_name__icontains=query)
                 | Q(user__last_name__icontains=query)
-            ).filter(user_id__in=patient_ids)
-            context['patients'] = patients
+            ).filter(user_id__in=patient_ids).filter(user__is_active=True)
+            inactive_patients = UserProfile.objects.filter(role='patient').filter(
+                Q(user__first_name__icontains=query)
+                | Q(user__last_name__icontains=query)
+            ).filter(user_id__in=patient_ids).filter(user__is_active=False)
+            context['active_patients'] = active_patients
+            context['inactive_patients'] = inactive_patients
     context['user_profile'] = user_profile
 
     context = RequestContext(request, context)

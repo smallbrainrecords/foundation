@@ -21,12 +21,12 @@
         <div class='panel-heading'>Patients</div>
         <div class='panel-body'>
             <ul class='list-group'>
-                {% for patient in patients %}
+                {% for patient in active_patients %}
                 <li>
                     <div class="row">
                         <div class="col-md-8">
                             <a href='/u/patient/manage/{{patient.user_id}}/'>
-                                {{patient}}
+                                {{patient}} - {{patient.date_of_birth}}
                             </a>
                         </div>
                         <div class="col-md-4 text-right">
@@ -166,6 +166,30 @@
                     {% if document.patient %}
                     (<a href='/u/patient/manage/{{document.patient.id}}/'>{{document.patient}}</a>)
                     {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class='panel panel-default'>
+        <div class='panel-heading'>In active Patients</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for patient in inactive_patients %}
+                <li>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <a href='/u/patient/manage/{{patient.user_id}}/'>
+                                {{patient}} - {{patient.date_of_birth}}
+                            </a>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            <a href='/project/admin/#/edit/{{patient.user_id}}/' class='btn btn-sm btn-default'>
+                                Edit
+                            </a>
+                        </div>
+                    </div>
                 </li>
                 {% endfor %}
             </ul>
