@@ -30,28 +30,6 @@ def track_tab_click(request):
 @timeit
 def get_my_story(request, patient_id):
     resp = {'success': False}
-
-    # Medication staff(s) created tab
-    # -> All patient
-    # -> Only this patient
-
-    # Patient's created tab
-    # -> Public
-    # -> Private
-
-    # How we load the tab's component
-    # All tabs belong this this patient and public
-    # At first the tabs result must be belong to request patient
-    # TODO:
-    # tabSet = MyStoryTab.objects.filter(patient_id=int(patient_id))
-    # TODO: List of all medication staff whose control this patient -> Get a list of tab's author may shared tabs for me
-    # staff = PatientController.objects.filter(patient_id = int(patient_id)).get()
-    # tabSet2 = MyStoryTab.object.filter(author_id__in=staff).filter(is_all=True) = .filter(Q(condition_1) & Q(condition_2))
-    # TODO: If request user is not a patient the filtered about
-    # tabSet2.filter(private = False)
-    # If request user is patient himself then return all
-    # If request user is physician | admin | nurse | secretary | mid-level then add privileges filters to public (a.k.a private = False)
-    # ---> Additionally new tab array which created by request user and shared between all patient (a.k.a is_all = True) and
     if permissions_accessed(request.user, int(patient_id)):
         # # METHOD 2: NEW WAY
         staffIDList = PatientController.objects.filter(patient_id=int(patient_id)).values_list('physician_id',
@@ -62,54 +40,15 @@ def get_my_story(request, patient_id):
         if request.user.profile.role != 'patient':
             myStoryTabComponentQuerySet = myStoryTabComponentQuerySet.filter(private=False)
 
+        # text_component_entries should be filtered by patient only not sharing across any patient
+        myStoryTabComponentEntriesQuerySet = MyStoryTextComponentEntry.objects.filter(patient_id=int(patient_id))
         myStoryTabQuerySet = MyStoryTab.objects.prefetch_related(
             Prefetch('my_story_tab_components', queryset=myStoryTabComponentQuerySet),
-            'my_story_tab_components__text_component_entries').filter(
+            Prefetch('my_story_tab_components__text_component_entries',
+                     queryset=myStoryTabComponentEntriesQuerySet)).filter(
             Q(patient_id=int(patient_id)) | (Q(author_id__in=staffIDList) & Q(is_all=True)))
         if request.user.profile.role != 'patient':
             myStoryTabQuerySet = myStoryTabQuerySet.filter(private=False)
-
-        # # METHOD 1: OLD WAY
-        # # Load all tab belong to this patient OR it being shared between all patients
-        # myStoryTabQuerySet = MyStoryTab.objects.filter(Q(patient_id=int(patient_id)) | Q(is_all=True))
-        # myStoryTabQuerySet.filter()
-        # # Then filter tab result above by tab's author (7, 8, 9 : probably the second condition is_all = True)
-        # # If patient is not under control by tab's author
-        # # TODO: Caveats doing this filtering in python is much more expensive than tradition SQL query
-        # # Should moving out the author filter above
-        # exclude_tabs = []
-        # for tab in myStoryTabQuerySet:  # Hit DB
-        #     if tab.author.profile.role == 'physician' and tab.is_all:
-        #         patient_controllers = PatientController.objects.filter(physician=tab.author)  # Hit DB
-        #         patient_ids = [x.patient.id for x in
-        #                        patient_controllers]  # x.patient.id also have lower performance than x.patient_id
-        #
-        #         if not int(patient_id) in patient_ids:
-        #             exclude_tabs.append(tab.id)
-        #
-        # myStoryTabQuerySet = myStoryTabQuerySet.exclude(id__in=exclude_tabs)
-        #
-        # resp['success'] = True
-        # tabs_serializer = MyStoryTabSerializer(myStoryTabQuerySet, many=True).data
-        #
-        # # Load tab's component(Apply filtering as my tab above) and component entries
-        # for tab in tabs_serializer:
-        #     components = MyStoryTextComponent.objects.filter(tab_id=tab["id"]).filter(Q(patient_id=int(patient_id)) | Q(is_all=True))
-        #     exclude_components = []
-        #     for component in components:
-        #         if component.author.profile.role == 'physician' and component.is_all:
-        #             patient_controllers = PatientController.objects.filter(physician=component.author)
-        #             patient_ids = [x.patient.id for x in patient_controllers]
-        #
-        #             if not int(patient_id) in patient_ids:
-        #                 exclude_components.append(component.id)
-        #
-        #     components = components.exclude(id__in=exclude_components)
-        #
-        #     tab["my_story_tab_components"] = MyStoryTextComponentSerializer(components, many=True).data
-        #     for component in tab["my_story_tab_components"]:
-        #         entries = MyStoryTextComponentEntry.objects.filter(component_id=component["id"], patient_id=int(patient_id))
-        #         component["text_component_entries"] = MyStoryTextComponentEntrySerializer(entries, many=True).data
 
         resp['success'] = True
         resp['info'] = MyStoryTabSerializer(myStoryTabQuerySet, many=True).data
