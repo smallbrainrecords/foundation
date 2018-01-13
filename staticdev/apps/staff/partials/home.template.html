@@ -37,6 +37,10 @@
                     <i class="fa pull-right" ng-if="'encounter'== sortingKey"
                        ng-class="isDescending ? 'fa-caret-down':'fa-caret-up'"></i>
                 </th>
+                <th class="cursor-pointer" ng-click="sortBy('document')"> D
+                    <i class="fa pull-right" ng-if="'document'== sortingKey"
+                       ng-class="isDescending ? 'fa-caret-down':'fa-caret-up'"></i>
+                </th>
                 <th> Multiply</th>
             </tr>
             </thead>
@@ -46,10 +50,11 @@
                     {{patient.user.first_name}} {{patient.user.last_name}}
                 </a>
                 </td>
-                <td> {{patient.problem }}</td>
-                <td> {{patient.todo}}</td>
-                <td> {{patient.encounter}}</td>
-                <td> {{patient.multiply}}</td>
+                <td> {{patient.problem | number:0 }}</td>
+                <td> {{patient.todo | number:0}}</td>
+                <td> {{patient.encounter | number:0}}</td>
+                <td> {{patient.document | number:0}}</td>
+                <td> {{patient.multiply | number:0}}</td>
             </tr>
             </tbody>
         </table>

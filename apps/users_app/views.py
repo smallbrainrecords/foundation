@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -596,13 +597,17 @@ def get_patients_list(request):
         six_weeks_earlier = datetime.datetime.now() - relativedelta(weeks=6)
         encounter_count = Encounter.objects.filter(patient__id=patient['user']['id'],
                                                    starttime__gte=six_weeks_earlier).count()
+        document_count = Document.objects.filter(patient__id=patient['user']['id'],
+                                                 created_on__gte=six_weeks_earlier).count()
 
-        patient["problem"] = problem_count
-        patient["todo"] = todo_count
-        patient["encounter"] = encounter_count
-        patient['multiply'] = ((todo_count if todo_count != 0 else 1) * 2 / 3) * (
-            problem_count if problem_count != 0 else 1) * (
-                                  encounter_count if encounter_count != 0 else 1)
+        patient["todo"] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3)
+        patient["problem"] = (float(problem_count) if problem_count != 0 else float(1))
+        patient["encounter"] = float(encounter_count) if encounter_count != 0 else float(1)
+        patient["document"] = (float(document_count) if document_count != 0 else float(1)) / 2
+        patient['multiply'] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3) * (
+            float(problem_count) if problem_count != 0 else float(1)) * (
+                              float(encounter_count) if encounter_count != 0 else float(1)) * (
+                                  (float(document_count) if document_count != 0 else float(1)) / 2)
 
     # Will sort patient list by providing sort_by otherwise will sort by 'multiply' key
     resp = {
