@@ -150,10 +150,8 @@
         <!-- Problems tab -->
         <div role="tabpanel" class="tab-pane tab-problems"
              ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
-            <div class='row'>
 
-                <div class='col-md-12'>
-                    <div class='panel panel-default'>
+            <div class='panel panel-default'>
                         <div class='panel-heading'> Problems
                         </div>
                         <div class='panel-body'>
@@ -379,13 +377,10 @@
                             <!--End problem list-->
                         </div>
                     </div>
-                </div>
 
-                <!--Start goal section-->
-                <div class='col-md-12'>
-                    <div class='panel panel-default'>
-
-                        <div class='panel-heading'> Goals</div>
+            <!--Start goal section-->
+            <div class='panel panel-default' ng-if="goals.length > 0">
+                <div class='panel-heading'>Goals {{}}</div>
                         <div class='panel-body'>
                             <div class='row'>
                                 <div class='col-md-12'>
@@ -467,12 +462,10 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <!--End goal section-->
+            <!--End goal section-->
 
-                <!--Todos list position is depend on user role-->
-                <div class='col-md-12' ng-if="['secretary','nurse'].indexOf(active_user.role ) == -1">
-                    <div class='panel panel-default'>
+            <!--Todos list position is depend on user role-->
+            <div class='panel panel-default' ng-if="['secretary','nurse'].indexOf(active_user.role ) == -1">
                         <div class='panel-heading'> Todos</div>
                         <div class='panel-body'>
                             <div class='row' ng-show='permitted(["add_todo"])'>
@@ -516,46 +509,42 @@
                             </div>
                         </div>
                     </div>
+            <!--End todo list section-->
+
+            <!--Start encounter section-->
+            <div class='panel panel-default' ng-init="encounter_collapse=false;">
+
+                <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
+                    <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+                    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+                    Encounters ({{encounters.length}})
                 </div>
-                <!--End todo list section-->
 
-                <!--Start encounter section-->
-                <div class='col-md-12'>
-                    <div class='panel panel-default' ng-init="encounter_collapse=false;">
+                <div class='panel-body' style='max-height:325px; overflow:auto'
+                     ng-show="encounter_collapse">
 
-                        <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
-                            <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
-                            <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                            Encounters ({{encounters.length}})
-                        </div>
+                    <ul class='ul-clean'>
+                        <li ng-repeat='encounter in encounters'>
+                            <div class='row'>
+                                <div class='col-md-6'>
+                                    <a href='#/encounter/{{ encounter.id }}'>
+                                        From <b> {{ encounter.starttime | date:'medium' }} </b> to
+                                        <b>{{ encounter.stoptime | date:'medium' }}</b>
+                                    </a>
+                                </div>
+                                <div class='col-md-4'>
+                                    {{ encounter.duration }}
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
 
-                        <div class='panel-body' style='max-height:325px; overflow:auto'
-                             ng-show="encounter_collapse">
-
-                            <ul class='ul-clean'>
-                                <li ng-repeat='encounter in encounters'>
-                                    <div class='row'>
-                                        <div class='col-md-6'>
-                                            <a href='#/encounter/{{ encounter.id }}'>
-                                                From <b> {{ encounter.starttime | date:'medium' }} </b> to
-                                                <b>{{ encounter.stoptime | date:'medium' }}</b>
-                                            </a>
-                                        </div>
-                                        <div class='col-md-4'>
-                                            {{ encounter.duration }}
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
-
-                        </div>
                     </div>
                 </div>
-                <!--End encounter section-->
+            <!--End encounter section-->
 
-                <!--Start encounter favorite-->
-                <div class='col-md-12' ng-if='favorites.length>0'>
-                    <div class='panel panel-default'>
+            <!--Start encounter favorite-->
+            <div ng-if='favorites.length>0' class='panel panel-default'>
                         <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
                             <i class="fa fa-caret-down" aria-hidden="true"
                                ng-class="favorites_collapse?'fa-caret-down':'fa-caret-right'"></i> Favorites
@@ -597,12 +586,10 @@
                             </table>
                         </div>
                     </div>
-                </div>
-                <!--End encounter favorite-->
+            <!--End encounter favorite-->
 
-                <!--Start graphic section-->
-                <div class="col-md-12">
-                    <div class="panel panel-default">
+            <!--Start graphic section-->
+            <div class="panel panel-default">
                         <div class="panel-heading" ng-click="graphicFrameIsCollapsed = !graphicFrameIsCollapsed">
                             <i class="fa" ng-class="graphicFrameIsCollapsed?'fa-caret-right':'fa-caret-down'"></i>
                             Graphics
@@ -626,9 +613,7 @@
                             <!--End problem timeline-->
                         </div>
                     </div>
-                </div>
-                <!--End graphic section-->
-            </div>
+            <!--End graphic section-->
         </div>
         <!-- End Problems tab -->
 
