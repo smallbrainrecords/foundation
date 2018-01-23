@@ -1,6 +1,11 @@
 project/local_settings.py
+media/*
+staticdev_bk/*
+templates_bk/*
 
+*.pyc
 *.idea
+*.db
 media
 Icon
 static/CACHE
