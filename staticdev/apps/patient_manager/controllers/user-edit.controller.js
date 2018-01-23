@@ -24,7 +24,7 @@
                 //     $scope.active_user = data['user_profile'];
                 // });
 
-                patientService.fetchPatientInfo($scope.user_id).then(function (data) {
+                patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
                     // $scope.patient_info = data['info'];
                     $scope.sharing_patients = data['sharing_patients'];
                     $scope.shared_patients = data['shared_patients'];
@@ -35,7 +35,7 @@
 
             function update_basic_profile() {
 
-                var form = {};
+                let form = {};
 
                 form.user_id = $scope.patient_id;
                 form.first_name = $scope.patient_info.user.first_name;
@@ -43,9 +43,9 @@
 
                 patientService.updateBasicProfile(form).then(function (data) {
 
-                    if (data['success'] == true) {
+                    if (data['success']) {
                         toaster.pop('success', 'Done', 'Patient updated!');
-                    } else if (data['success'] == false) {
+                    } else if (!data['success']) {
                         toaster.pop('error', 'Error', 'Please fill valid data');
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -55,22 +55,22 @@
 
             function update_profile() {
 
-                var form = {};
-                form.user_id = $scope.user_id;
+                let form = {};
+                form.user_id = $scope.patient_id;
                 form.phone_number = $scope.patient_info.phone_number;
                 form.sex = $scope.patient_info.sex;
                 form.role = $scope.patient_info.role;
                 form.summary = $scope.patient_info.summary;
                 form.date_of_birth = $scope.patient_info.date_of_birth;
 
-                var files = $scope.files;
+                let files = $scope.files;
 
                 patientService.updateProfile(form, files).then(function (data) {
 
-                    if (data['success'] == true) {
+                    if (data['success']) {
                         toaster.pop('success', 'Done', 'Patient updated!');
                         $scope.patient_info = data['info'];
-                    } else if (data['success'] == false) {
+                    } else if (!data['success']) {
                         toaster.pop('error', 'Error', 'Please fill valid data');
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -82,17 +82,17 @@
 
             function update_email() {
 
-                var form = {};
+                let form = {};
 
-                form.user_id = $scope.user_id;
+                form.user_id = $scope.patient_id;
                 form.email = $scope.patient_info.user.email;
 
                 patientService.updateEmail(form).then(function (data) {
 
-                    if (data['success'] == true) {
+                    if (data['success']) {
                         toaster.pop('success', 'Done', 'Patient updated!');
 
-                    } else if (data['success'] == false) {
+                    } else if (!data['success']) {
                         toaster.pop('error', 'Error', 'Please fill valid data');
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -113,8 +113,8 @@
                     toaster.pop('error', 'Error', 'Password must match');
                     return false;
                 }
-                var form = {
-                    'patient_id': $scope.user_id,
+                let form = {
+                    'patient_id': $scope.patient_id,
                     'old_password': $scope.old_password,
                     'password': $scope.password,
                     'repassword': $scope.repassword,
@@ -140,9 +140,9 @@
             }
 
             function updateImage() {
-                var form = {};
-                form.user_id = $scope.user_id;
-                var files = $scope.files;
+                let form = {};
+                form.user_id = $scope.patient_id;
+                let files = $scope.files;
 
 
                 patientService.updateProfile(form, files)

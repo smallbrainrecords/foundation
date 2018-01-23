@@ -264,7 +264,7 @@ def create_user(request):
                 logging.error('Creating User')
 
                 try:
-                    current_time = datetime.datetime.now()
+                    current_time = datetime.now()
                     new_user = User.objects.create(
                         first_name=first_name,
                         last_name=last_name,
