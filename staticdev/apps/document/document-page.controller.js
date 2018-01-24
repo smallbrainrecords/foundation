@@ -54,6 +54,7 @@
         $scope.unset_new_problem = unset_new_problem;
         $scope.add_problem = add_problem;
         $scope.add_new_problem = add_new_problem;
+        $scope.isDueDate = isDueDate;
 
         init();
 
@@ -659,6 +660,10 @@
                 }, (error) => {
                     toaster.pop('error', 'Error', 'Something went wrong!');
                 })
+        }
+
+        function isDueDate(date) {
+            return moment().isAfter(date) ? 'due-date' : '';
         }
     }
 })();

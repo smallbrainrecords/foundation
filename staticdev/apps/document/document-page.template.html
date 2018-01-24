@@ -213,7 +213,7 @@
                     </div>
                 </div>
 
-                <!-- List of active problem-->
+                <!-- List of active todos-->
                 <div class="checkbox" ng-repeat="todo in active_todos track by $index" ng-show="enableTodoPin"
                      ng-click="$event.stopPropagation();">
                     <input type="checkbox" ng-model="todo.pin" title="{{todo.todo}}" id="{{todo.id}}"
@@ -226,7 +226,7 @@
                     <li ng-repeat="todo in active_todos | filter:{'pin':true} track by $index">
                         <a class="item-box flex-container" ng-click="$event.stopPropagation();"
                            href="/u/patient/manage/{{todo.patient.id}}/#/todo/{{todo.id}}">
-                            <span ng-bind="todo.todo" class="flex-item"></span>
+                            <span ng-bind="todo.todo" class="flex-item"></span> <span ng-if="todo.due_date"  class="flex-item">&nbsp;due by <span ng-class="isDueDate(todo.due_date)">{{todo.due_date}}</span></span>
                         </a>
                     </li>
                 </ul>
