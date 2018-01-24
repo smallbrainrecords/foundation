@@ -244,8 +244,10 @@
                 <h4>People I can access:</h4>
                 <table class='table'>
                     <thead>
-                    <th> Name</th>
-                    <th> Actions</th>
+                    <tr>
+                        <th> Name</th>
+                        <th> Actions</th>
+                    </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat='p in shared_patients'>
@@ -261,18 +263,23 @@
                 </table>
                 <br>
 
-                <h4>People that can access me:</h4>
+                <h4>People that can access me:                            </h4>
                 <table class='table'>
                     <thead>
-                    <th> Name</th>
-                    <th> Actions</th>
+                    <tr>
+                        <th> Name</th>
+                        <th> Actions</th>
+                    </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat='p in sharing_patients'>
                         <td> {{ p.user.first_name }} {{ p.user.last_name }}
                         </td>
                         <td>
-                            <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
+                            <a href="/u/staff/#/manage/sharing/{{p.id}}" class='btn btn-sm btn-default' ng-if="active_user.role != 'patient'">
+                                Manage
+                            </a>
+                            <a href="#/manage/sharing/" class='btn btn-sm btn-default' ng-if="active_user.role == 'patient'">
                                 Manage
                             </a>
                         </td>
