@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 
 from common.views import *
 from emr.models import UserProfile, Goal, TextNote
@@ -23,6 +24,7 @@ def get_goal_info(request, goal_id):
 @permissions_required(["add_goal"])
 @login_required
 def add_patient_goal(request, patient_id):
+    resp = {}
     goal_name = request.POST.get('name')
     new_goal = Goal.objects.create(patient_id=patient_id, goal=goal_name)
 
@@ -31,7 +33,6 @@ def add_patient_goal(request, patient_id):
     summary = 'Added <u>goal</u> <b>%s</b>' % goal_name
     op_add_event(physician, patient, summary)
 
-    resp = {}
     resp['success'] = True
     resp['goal'] = GoalSerializer(new_goal).data
     return ajax_response(resp)
