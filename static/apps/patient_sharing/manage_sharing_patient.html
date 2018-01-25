@@ -65,10 +65,10 @@
 							<td> {{p.user.username}}
 							</td>
 							<td class="text-right">
-								<a ng-if="'patient' != active_user.user.profile.role" class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{patient.user.id}}/{{p.user.id}}">
+								<a ng-if="'patient' != active_user.role" class='btn btn-sm btn-default' href="/u/staff/#/manage/sharing/problem/{{patient.user.id}}/{{p.user.id}}">
 		                            Edit problem based sharing
 		                        </a>
-								<a ng-if="'patient' == active_user.user.profile.role" class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{p.user.id}}">
+								<a ng-if="'patient' == active_user.role" class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{p.user.id}}">
 		                            Edit problem based sharing
 		                        </a>
 								<a class='btn btn-sm btn-danger' ng-click="remove_sharing_patient(p.user.id)">

@@ -2,7 +2,7 @@ Django==1.8
 MySQL-python==1.2.5
 Pillow==2.8.1
 argparse==1.2.1
-django-appconf==1.0.1
+django-appconf==1.0.2
 django-compressor==1.5
 django-genericadmin==0.6.1
 django-mptt==0.7.2
@@ -12,11 +12,11 @@ futures==3.0.1
 httplib2==0.9.1
 oauth2==1.5.211
 python-openid==2.2.5
-six==1.9.0
+six==1.11.0
 uWSGI==2.0.10
 wsgiref==0.1.2
 django-cronjobs==0.2.3
 python-dateutil==2.6.0
 django-session-security==2.4.0
 djangorestframework==3.4.7
-raven=6.3.0
+raven=6.5.0

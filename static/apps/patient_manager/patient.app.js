@@ -90,6 +90,10 @@
                 templateUrl: '/static/apps/colon_cancer/edit_study.html',
                 controller: 'EditStudyCtrl'
             })
+            .when('/data/view', {
+                templateUrl: '/static/apps/observation/vitals_table_view_ctrl.html',
+                controller: 'ObservationTableCtrl'
+            })
             .when('/data/:data_id', {
                 templateUrl: '/static/apps/observation/data.html',
                 controller: 'DataCtrl'

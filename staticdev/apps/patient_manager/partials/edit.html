@@ -276,10 +276,7 @@
                         <td> {{ p.user.first_name }} {{ p.user.last_name }}
                         </td>
                         <td>
-                            <a href="/u/staff/#/manage/sharing/{{p.id}}" class='btn btn-sm btn-default' ng-if="active_user.role != 'patient'">
-                                Manage
-                            </a>
-                            <a href="#/manage/sharing/" class='btn btn-sm btn-default' ng-if="active_user.role == 'patient'">
+                            <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
                                 Manage
                             </a>
                         </td>
