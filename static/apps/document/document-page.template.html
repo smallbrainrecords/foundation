@@ -15,7 +15,7 @@
                     <span ng-bind="document.document_name" ng-show="!enableEditDocumentName"></span>
                     <span ng-if="document.patient">
                         <b>for </b>
-                        <a href="/u/patient/manage/{{document.patient.profile.id}}">{{document.patient.first_name}} {{document.patient.last_name}}</a>
+                        <a href="/u/patient/manage/{{document.patient.id}}">{{document.patient.first_name}} {{document.patient.last_name}}</a>
                     </span>
                 </div>
                 <div ng-show="enableEditDocumentName" class="form-inline">
