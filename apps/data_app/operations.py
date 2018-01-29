@@ -18,4 +18,4 @@ def get_observation_most_common_value(component, effective_datetime):
         if most_recent_value.exists():
             return float(most_recent_value.first().value_quantity)
         else:
-            return float(0)
+            return float(1)

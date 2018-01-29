@@ -232,7 +232,7 @@ def obseration_pin_to_problem(request, patient_id):
 def add_new_data(request, patient_id, component_id):
     resp = {'success': False}
     # Patient user instance
-    patient = UserProfile.objects.filter(id=int(patient_id)).first().user
+    patient = User.objects.filter(id=int(patient_id)).get()
 
     if permissions_accessed(request.user, int(patient_id)):
         # Get user submit data
