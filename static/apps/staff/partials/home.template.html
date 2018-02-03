@@ -304,6 +304,45 @@
             </table>
         </div>
     </div>
+    <div class='panel panel-default' ng-if='active_user.role=="physician" && pendingUsers.length > 0'>
+        <div class='panel-heading'> Users Pending Registration</div>
+        <div class='panel-body'>
+            <input type='text' class='form-control' ng-model='pendingUserSearch' placeholder='Search...'>
+            <hr>
+            <button class='btn btn-default pull-right' ng-click='refreshPendingUsers()'>
+                Refresh
+            </button>
+            <h4 class='text-info text-center'> Users Waiting Approval </h4>
+            <hr>
+            <table class='table'>
+                <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th> Assign</th>
+                    <th> Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat='user in pendingUsers | filter:pendingUserSearch'>
+                    <td> {{user.full_name}}</td>
+                    <td> {{user.username}}</td>
+                    <td>
+                        <select ng-model='user.role' title="Assigned role" class="form-control">
+                            <option value=''>--Role--</option>
+                            <option value='patient'>Patient</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <button class='btn btn-primary' ng-click='updatePendingUser(user,1)'> Approve</button>
+                        <button class='btn btn-danger' ng-click='updatePendingUser(user,0)'> Reject</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 <!--INR quick entry frame-->
 <inr-bfdi ng-if="active_user.role=='nurse'">

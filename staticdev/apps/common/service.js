@@ -47,7 +47,10 @@
             addToDo: addToDo,
             addProblem: addProblem,
             listTerms: listTerms,
-            getTodoList: getTodoList
+            getTodoList: getTodoList,
+            getPendingRegistrationUsersList: getPendingRegistrationUsersList,
+            approveUser: approveUser,
+            rejectUser: rejectUser,
         };
 
         /**
@@ -276,6 +279,26 @@
                 accomplished: isAccomplished,
                 all: true
             }, `/u/users/${userID}/todos`, true)
+        }
+
+        function getPendingRegistrationUsersList(form) {
+            let params = form;
+            let url = '/project/admin/list/unregistered/users/';
+            return httpService.get(params, url);
+        }
+
+        function approveUser(user) {
+
+            let form = user;
+            let url = '/project/admin/user/approve/';
+            return httpService.post(form, url);
+
+        }
+
+        function rejectUser(user) {
+            let form = user;
+            let url = '/project/admin/user/reject/';
+            return httpService.post(form, url);
         }
     }
 })();

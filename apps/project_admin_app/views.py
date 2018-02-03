@@ -79,6 +79,7 @@ def user_info(request, user_id):
 
 @login_required
 def approve_user(request):
+    resp = {'success': False}
     success = False
 
     user_id = request.POST.get('id')
@@ -101,7 +102,29 @@ def approve_user(request):
         success = True
         msg = 'User was assigned given role and made active'
 
-    resp = {}
+    resp['success'] = success
+    resp['msg'] = msg
+    return ajax_response(resp)
+
+
+@login_required
+def reject_user(request):
+    resp = {'success': False}
+    success = False
+
+    user_id = request.POST.get('id')
+
+    try:
+        user = User.objects.get(id=long(user_id))
+    except User.DoesNotExist:
+        user = None
+
+    if user is not None:
+        user.delete()
+
+        success = True
+        msg = 'User was rejected successfully'
+
     resp['success'] = success
     resp['msg'] = msg
     return ajax_response(resp)

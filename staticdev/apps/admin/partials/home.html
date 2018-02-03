@@ -148,7 +148,10 @@
                </td>
 
 
-               <td> <button class='btn btn-default' ng-click='update_pending_user(user)'> Save </button>
+                <td>
+                    <button class='btn btn-primary' ng-click='updatePendingUser(user,1)'> Approve</button>
+                    <button class='btn btn-danger' ng-click='updatePendingUser(user,0)'> Reject</button>
+                    <!--<button class='btn btn-default' ng-click='update_pending_user(user)'> Save</button>-->
                </td>
 
 
@@ -172,10 +175,12 @@
 
           <table class='table'>
                 <thead>
+                <tr>
                     <th> Name </th>
                     <th> Username </th>
                     <th> Contact Number </th>
-                    <th> Actions </th>
+                    <th> Actions</th>
+                </tr>
                 </thead>
                 <tbody>
                     <tr ng-repeat='patient in patients'>

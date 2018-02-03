@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app.services', ['httpModule'])
+    angular.module('app.services', ['httpModule','sharedModule'])
         .config(function ($routeProvider, $httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';

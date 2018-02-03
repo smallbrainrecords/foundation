@@ -4,8 +4,9 @@
 
 
     angular.module('StaffApp')
-        .controller('HomeCtrl', function ($scope, $routeParams, ngDialog, toaster, prompt, $interval,
-                                          staffService, physicianService, todoService, $filter) {
+        .controller('HomeCtrl', function ($scope, $routeParams, $interval,
+                                          ngDialog, toaster, prompt,
+                                          staffService, physicianService, todoService, sharedService) {
 
             // Properties
             // $scope.user_id = $('#user_id').val();
@@ -25,6 +26,7 @@
             $scope.show_accomplished_personal_todos = false;
             $scope.showLabeledTodoList = false;
             $scope.reverse = false;
+            $scope.pendingUsers = [];
 
             $scope.sortingKey = "";
             $scope.isDescending = true;
@@ -41,6 +43,8 @@
             $scope.getNewTodos = getNewTodos;
             $scope.openTodoList = openTodoList;
             $scope.sortBy = sortBy;
+            $scope.refreshPendingUsers = refreshPendingUsers;
+            $scope.updatePendingUser = updatePendingUser;
 
             init();
 
@@ -104,6 +108,8 @@
                 staffService.fetchLabeledTodoList($scope.user_id).then(function (data) {
                     $scope.todo_lists = data['todo_lists'];
                 });
+
+                $scope.refreshPendingUsers();
             }
 
             /**
@@ -313,6 +319,34 @@
                     .then(function (data) {
                         $scope.patients_list = data['patients_list'];
                     });
+            }
+
+            function refreshPendingUsers() {
+                sharedService.getPendingRegistrationUsersList().then(function (data) {
+                    $scope.pendingUsers = data;
+                });
+            }
+
+            function updatePendingUser(user, status) {
+                switch (status) {
+                    case 1: // Approve
+                        if (user.role == 'patient') {
+                            sharedService.approveUser(user).then(userUpdateSucceed);
+                        } else {
+                            alert("Please assign role!");
+                        }
+                        break;
+                    case 0: // Reject
+                        sharedService.rejectUser(user).then(userUpdateSucceed);
+                        break;
+                }
+
+                function userUpdateSucceed() {
+                    let index = $scope.pendingUsers.indexOf(user);
+                    if (index > -1) {
+                        $scope.pendingUsers.splice(index, 1);
+                    }
+                }
             }
         });
     /* End of controller */

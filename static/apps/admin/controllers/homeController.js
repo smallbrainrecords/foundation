@@ -1,9 +1,9 @@
 (function () {
     'use strict';
     angular.module('AdminApp')
-        .controller('HomeCtrl', function ($scope, $routeParams, ngDialog, adminService) {
+        .controller('HomeCtrl', function ($scope, $routeParams, ngDialog, adminService, sharedService) {
             $scope.refresh_pending_users = refresh_pending_users;
-            $scope.update_pending_user = update_pending_user;
+            $scope.updatePendingUser = updatePendingUser;
             init();
             function init() {
                 $scope.users = [];
@@ -35,17 +35,25 @@
                 });
             }
 
-            function update_pending_user(user) {
-                if (user.role == 'patient' || user.role == 'physician' || user.role == 'admin') {
-                    console.log(user);
-                    adminService.approveUser(user).then(function (data) {
-                        var index = $scope.pending_users.indexOf(user);
-                        if (index > -1) {
-                            $scope.pending_users.splice(index, 1);
+            function updatePendingUser(user, status) {
+                switch (status) {
+                    case 1: // Approve
+                        if (user.role == 'patient' || user.role == 'physician' || user.role == 'admin') {
+                            sharedService.approveUser(user).then(userUpdateSucceed);
+                        } else {
+                            alert("Please assign role!");
                         }
-                    });
-                } else {
-                    alert("Please assign role!");
+                        break;
+                    case 0: // Reject
+                        sharedService.rejectUser(user).then(userUpdateSucceed);
+                        break;
+                }
+
+                function userUpdateSucceed() {
+                    let index = $scope.pendingUsers.indexOf(user);
+                    if (index > -1) {
+                        $scope.pendingUsers.splice(index, 1);
+                    }
                 }
             }
         });
