@@ -186,8 +186,6 @@
                     $scope.my_story_tabs = data['info'];
                     $scope.selected_tab = $scope.my_story_tabs[0];
                     $scope.myStoryTabTextComponentArray = _.flatten(_.pluck($scope.my_story_tabs, 'my_story_tab_components'));
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
             });
 
@@ -231,12 +229,17 @@
                             $scope.mostCommonData = dataService.generateMostCommonData($scope.datas);
                         }
                         if ($scope.active_user.role == 'nurse') {
+                            console.log('aaaa');
                             $scope.mostCommonData = [];
                             // Related to https://trello.com/c/0aJybixw
                             // Pick  most common data with sorted order weight data first
                             let weight = _.findWhere($scope.datas, {'name': 'weight'});
                             weight.ph = 'W';
                             $scope.mostCommonData.push(weight);
+
+                            let height = _.findWhere($scope.datas, {'name': 'height'});
+                            height.ph = 'H';
+                            $scope.mostCommonData.push(height);
 
                             let blood_pressure = _.findWhere($scope.datas, {'name': 'blood pressure'});
                             blood_pressure.ph = 'BP';
@@ -255,18 +258,6 @@
                             let respiratory_rate = _.findWhere($scope.datas, {'name': 'respiratory rate'});
                             respiratory_rate.ph = 'RR';
                             $scope.mostCommonData.push(respiratory_rate);
-
-
-                            angular.forEach($scope.datas, function (data, key) {
-                                if (['weight', 'body temperature', 'respiratory rate', 'blood pressure', 'heart rate'].indexOf(data.name) === -1) {
-                                    angular.forEach(data.observation_components, function (component, component_key) {
-                                        if ('6301-6' === component.component_code) {
-                                            data.ph = 'INR';
-                                            $scope.mostCommonData.push(data);
-                                        }
-                                    });
-                                }
-                            });
                         }
                     }
 
