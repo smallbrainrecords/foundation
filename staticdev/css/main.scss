@@ -59,8 +59,8 @@
 .bottom-bar {
   position: fixed;
   height: 65px;
-  bottom: 0px;
-  left: 0px;
+  bottom: 0;
+  left: 0;
   width: 100%;
   z-index: 1000;
   background-color: rgba(255, 255, 255, 0.9);
@@ -68,8 +68,8 @@
   border-radius: 3px;
   padding-top: 10px;
 
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .bottom-bar #encounter-box {

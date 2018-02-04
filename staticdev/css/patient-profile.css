@@ -462,7 +462,8 @@ todo .new-tagged-todo {
   height: 160px; }
 
 #bdfi .form-group input {
-  margin: 5px; }
+  margin: 5px;
+  max-width: 150px; }
 
 .cursor {
   cursor: pointer; }
