@@ -218,7 +218,9 @@
                      ng-click="$event.stopPropagation();">
                     <input type="checkbox" ng-model="todo.pin" title="{{todo.todo}}" id="{{todo.id}}"
                            ng-change="!todo.pin ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo);$event.stopPropagation();">
-                    <label for="{{todo.id}}" ng-bind="todo.todo"></label>
+                    <label for="{{todo.id}}" class="flex-container">
+                        <span ng-bind="todo.todo" class="flex-item"></span> <span ng-if="todo.due_date"  class="flex-item">&nbsp;due by <span ng-class="isDueDate(todo.due_date)">{{todo.due_date}}</span></span>
+                    </label>
                 </div>
 
                 <!-- List of pinned todo-->
