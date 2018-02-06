@@ -1,7 +1,0 @@
-{
-"version": 3,
-"mappings": "AACE,4BAAmB;EACjB,aAAa,EAAE,IAAI;AAGrB,0BAAiB;EACf,aAAa,EAAE,IAAI",
-"sources": ["todo-item.scss"],
-"names": [],
-"file": "todo-item.css"
-}
