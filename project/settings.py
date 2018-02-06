@@ -31,7 +31,6 @@ VOICE_CONTROL = False
 SYNCING = False
 
 
-
 os.environ['LANG'] = 'en_US.UTF-8'
 # BASE_DIR = os.getcwd()
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -41,33 +40,16 @@ sys.path.append(APP_PATH)
 
 AUTH_PROFILE_MODULE = "account.UserProfile"
 
-# ADMINS = (
-#     ('', ''),('', ''),
-# )
-#    Imported from local_settings.py
-
-
-# MANAGERS =
-#    Imported from local_settings.py
-
-
-# DATABASES = {
-#       
-# }
-#    Imported from local_settings.py
-
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # In a Windows environment this must be set to your system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'America/Detroit'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
-
-SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -116,10 +98,6 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-# Make this unique, and don't share it with anybody.
-# SECRET_KEY = ''   # Imported from local_settings.py
-
-
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -154,7 +132,6 @@ ROOT_URLCONF = 'project.urls'
 WSGI_APPLICATION = 'project.wsgi.application'
 
 TEMPLATE_DIRS = (
-    '/var/www/foundation/templates',
     os.path.join(BASE_DIR, 'templates'),
 )
 
@@ -247,29 +224,58 @@ LOGGING = {
 
 SNOMEDCT = {}
 
-PROBLEMS_PATH = '/root/core/static/js/problems/'
 
-ALLOWED_HOSTS = [
-    #     '146.148.52.187',
-    'andromedahealth.com',
-]
+# ###################################################################
+# LOCAL SETTINGS FILE IS USED TO IMPORT SENSITIVE CONFIGURATION INFO. 
+# MODIFY THE INCLUDED TEMPLATE FOR YOUR OWN PARTICULAR ENVIRONMENT
+# ###################################################################
 
 try:
     from local_settings import *
 except ImportError as e:
     pass
 
+
+    # ADMINS = (
+    #     ('', ''),('', ''),
+    # )
+    #    Imported from local_settings.py
+
+
+    # MANAGERS =
+    #    Imported from local_settings.py
+
+
+    # DATABASES = {
+    #
+    # }
+    #    Imported from local_settings.py
+
+
+    # Make this unique, and don't share it with anybody.
+    # SECRET_KEY = ''   # Imported from local_settings.py
+
+
+    # ALLOWED_HOSTS = [
+    #     '',
+    # ]
+    #    Imported from local_settings.py
+
+
+    # SITE_ID =    # Imported from local_settings.py
+
+
     # The following is imported from local_settings.py
     # EMAIL_USE_TLS = True
     # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    # EMAIL_HOST = 'smtp.gmail.com'
+    # EMAIL_HOST = ''
     # EMAIL_HOST_PASSWORD = ''
     # EMAIL_HOST_USER = ''
-    # EMAIL_PORT = 587
+    # EMAIL_PORT = 
     # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-RAVEN_CONFIG = {
-    'dsn': 'https://58952ec0ba834547a78a6571243c0243:69883350a9e847bb8a51355abe214d69@sentry.io/245113',
-    # If you are using git, you can also automatically configure the
-    # release based on the git info.
-}
+    # RAVEN_CONFIG = {
+    #     'dsn': '',   #Imported from local_settings.py
+    #      If you are using git, you can also automatically configure the
+    #      release based on the git info.
+    # }

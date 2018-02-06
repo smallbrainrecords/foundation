@@ -2,49 +2,76 @@ import os
 
 BASE_DIR  = os.getcwd()
 
-
-
+ALLOWED_HOSTS = [
+       '###.###.##.###',  # IP address format
+       'example.com',     # Domain name format
+]
+ 
 PROBLEMS_PATH = os.path.join(BASE_DIR, 'static/js/problems')
 
-COMPRESS_ENABLED = False
+ADMINS = (
+    ('someadmin', 'someadmin@example.com'), ('anotheradmin', 'anotheradmin@example.com'),
+)
+
+MANAGERS = ADMINS
+
+SITE_ID =  
 
 # SECRET_KEY
 with open('/path/to/secret_key.txt') as f:
     SECRET_KEY = f.read().strip()
 
 
+# Consider other options to connect to database(s). For example, Google Cloud Platform's
+# Compute Engine allows connecting to SQL via the Cloud SQL Proxy, rather than over IP. 
+
+# MAIN DB PASSWORD
 with open('/path/to/db_pass.txt') as f:
     db_pass = f.read().strip()
 
+# SNOMEDCT DB PASSWORD
+with open('/path/to/db_snomed_pass.txt') as f:
+    db_snomed_pass = f.read().strip()
+
+
 SNOMEDCT = {
-        'snomedct': {
-            'ssl': {'key':'/path/to/key','cert':'/path/to/cert','ca':'/path/to/ca'},
+            'ssl': {'key':'/path/to/key', 'cert':'/path/to/cert', 'ca':'/path/to/ca'},
             'host':'',
             'user':'',
-            'passwd':db_pass,
-            'db':'snomedct',
-         }
+            'passwd':db_snomed_pass,
+            'db':'snomedct',  # Change to your SNOMED CT database name
 }
 
 DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-            'NAME': '',                      # Or path to database file if using sqlite3.
-            'USER': '',                      # Not used with sqlite3.
-            'PASSWORD': db_pass,                  # Not used with sqlite3.
-            'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-            'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-            'OPTIONS': {'ssl':{'key':'/path/to/key','cert':'/path/to/cert','ca':'/path/to/ca'}},
+            'ENGINE': 'django.db.backends.mysql', 
+            'NAME': '',   # Name of database 
+            'USER': '',   # Create and use an app-specific DB user with minimum necessary privileges 
+            'PASSWORD': db_pass, 
+            'HOST': '',   # Set to empty string for localhost.
+            'PORT': '',   # Set to empty string for default.
+            'OPTIONS': {'ssl':{'key':'/path/to/key', 'cert':'/path/to/cert', 'ca':'/path/to/ca'}},
         }
     }
 
-# DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-#             'NAME': 'sbtest',                      # Or path to database file if using sqlite3.
-#             'USER': 'root',                      # Not used with sqlite3.
-#             'PASSWORD': 'Volatile0',                  # Not used with sqlite3.
-#             'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-#             'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-#         }
-#     }
+
+
+# Settings for error log reporting by email. Consider the security of the email accounts involved
+# in this, especially for production sites. Sensitive information may be contained in the error 
+# reports that are emailed.
+
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = ''           # example:  'smtp.gmail.com'
+EMAIL_HOST_PASSWORD = ''  # example:  'a gmail password'
+EMAIL_HOST_USER = ''      # example:  'a.gmail.address@gmail.com' 
+EMAIL_PORT =              # example: 587
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+RAVEN_CONFIG = {
+    'dsn': '',   # See Raven Sentry Docs 
+    # If you are using git, you can also automatically configure the
+    # release based on the git info.
+}
