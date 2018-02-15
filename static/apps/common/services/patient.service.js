@@ -21,7 +21,7 @@
 
     angular.module('app.services').service('patientService',
         function ($http, $q, $cookies, $rootScope, $filter, httpService) {
-            const base_url = 'u/patient/';
+
             return {
                 activeUser: null,
                 patientInfo: null,
@@ -98,6 +98,7 @@
                 getMedications: getMedications,
                 getDocuments: getDocuments,
                 getToDo: getToDo,
+                getVitalTableViews: getVitalTableViews
             };
 
             function csrf_token() {
@@ -662,6 +663,9 @@
             function getMostRecentEncounter(patientID) {
                 return httpService.get({}, `/u/users/${patientID}/encounters`)
             }
-        });
 
+            function getVitalTableViews(patientID) {
+                return $http.get(`/u/users/${patientID}/vitals`);
+            }
+        });
 })();

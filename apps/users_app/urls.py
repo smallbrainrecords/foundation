@@ -53,6 +53,7 @@ urlpatterns = patterns('users_app.views',
 
                        # URL for API patterns
                        url(r'^users/(?P<patient_id>\d+)/todos', 'get_user_todo'),
+                       url(r'^users/(?P<patient_id>\d+)/vitals', 'get_user_vitals'),
                        # GET most recent encounter
                        url(r'^users/(?P<patient_id>\d+)/encounters', 'get_most_recent_encounter')
                        )

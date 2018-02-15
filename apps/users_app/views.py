@@ -21,7 +21,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q, When, Case, Value, CharField
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 
@@ -979,3 +979,75 @@ def get_most_recent_encounter(request, patient_id):
     resp['most_recent_encounter_related_problems'] = related_problem_holder
     resp['most_recent_encounter_documents'] = most_recent_encounter_documents_holder
     return ajax_response(resp)
+
+
+@login_required
+def get_user_vitals(request, patient_id):
+    """
+    TODO: Get last core vitals
+    pulse, weight, height, bmi, blood pressure (systolic/diastolic), a1c
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    # Last 5 days
+    weight = get_vitals_table_component(patient_id, 'weight')
+    height = get_vitals_table_component(patient_id, 'height')
+    bmi = get_vitals_table_component(patient_id, 'body mass index')
+
+    systolic = get_vitals_table_component(patient_id, 'systolic')
+    diastolic = get_vitals_table_component(patient_id, 'diastolic')
+
+    temperature = get_vitals_table_component(patient_id, 'body temperature')
+    pulse = get_vitals_table_component(patient_id, 'heart rate')
+    repository_rate = get_vitals_table_component(patient_id, 'respiratory rate')
+    a1c = get_vitals_table_component(patient_id, 'a1c')
+
+    vitals = {
+        'weight': weight.first(),
+        'height': height.first(),
+        'bmi': bmi.first(),
+        'blood_pressure': list(zip(systolic.first(), diastolic.first())),
+        'temperature': temperature.first(),
+        'pulse': pulse.first(),
+        'repository_rate': repository_rate.first(),
+        'a1c': a1c.first(),
+    }
+
+    # Get all observation related to items
+    # Each component load all
+
+    resp['vitals'] = vitals
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+def get_vitals_table_component(patient_id, component_name):
+    today = datetime.date.today()
+    day_one = datetime.date.today() - datetime.timedelta(days=1)
+    day_two = datetime.date.today() - datetime.timedelta(days=2)
+    day_three = datetime.date.today() - datetime.timedelta(days=3)
+    day_four = datetime.date.today() - datetime.timedelta(days=4)
+    day_five = datetime.date.today() - datetime.timedelta(days=5)
+
+    return ObservationValue.objects.annotate(
+        today=Case(When(effective_datetime__gte=today, then='value_quantity'), default=Value("0"),
+                   output_field=CharField()),
+        day_one=Case(When(Q(effective_datetime__gte=day_one) & Q(effective_datetime__lt=today), then='value_quantity'),
+                     default=Value("0"),
+                     output_field=CharField()),
+        day_two=Case(
+            When(Q(effective_datetime__gte=day_two) & Q(effective_datetime__lt=day_two), then='value_quantity'),
+            default=Value("0"),
+            output_field=CharField()),
+        day_three=Case(
+            When(Q(effective_datetime__gte=day_three) & Q(effective_datetime__lt=day_four), then='value_quantity'),
+            default=Value("0"),
+            output_field=CharField()),
+        day_four=Case(
+            When(Q(effective_datetime__gte=day_four) & Q(effective_datetime__lt=day_five), then='value_quantity'),
+            default=Value("0"),
+            output_field=CharField()),
+    ).filter(component__name=component_name).filter(component__observation__subject_id=patient_id).order_by(
+        '-effective_datetime').values_list('day_four', 'day_three', 'day_two', 'day_one', 'today')

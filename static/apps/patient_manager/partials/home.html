@@ -148,8 +148,7 @@
 
     <div class="tab-content">
         <!-- Problems tab -->
-        <div role="tabpanel" class="tab-pane tab-problems"
-             ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
+        <div role="tabpanel" class="tab-pane tab-problems" ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
 
             <div class='panel panel-default'>
                         <div class='panel-heading'> Problems
@@ -877,6 +876,7 @@
                 <div class='panel-body'>
                     <div class="row">
                         <div class="col-md-6 no-padding">
+                            <a target="_blank" href="#/data/view" class="btn btn-default btn-block">Table view of vitals</a>
                             <div class="btn-group btn-group-justified graph-view-mode"
                                  id="homepage-data-time-range-header"
                                  patient-homepage-time-range-selector>
@@ -987,8 +987,8 @@
                     </div>
 
                     <!--Adding new data type-->
-                    <div class="row">
-                        <div class='col-md-12'>
+                    <!--<div class="row">-->
+                        <!--<div class='col-md-12'>-->
                             <div class='panel panel-default'>
 
                                 <div class='panel-body'>
@@ -1048,8 +1048,8 @@
                                     </form>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        <!--</div>-->
+                    <!--</div>-->
                 </div>
             </div>
         </div>
