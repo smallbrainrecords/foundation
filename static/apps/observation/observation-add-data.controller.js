@@ -25,6 +25,7 @@
         $scope.data_id = $routeParams.data_id;
         $scope.new_data = {};
         $scope.new_data.date = moment().format("MM/DD/YYYY");
+        $scope.new_data.time = moment().format("HH:mm");
 
         $scope.add_data = add_data;
 
@@ -54,7 +55,7 @@
                         if (key == $scope.data.observation_components.length - 1)
                             $location.url('/data/' + $scope.data_id);
                     } else {
-                        toaster.pop('error', 'Error', 'Something went wrong, please try again!');
+                        toaster.pop('error', 'Error', 'Invalid entered data format!');
                     }
                 }, () => {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');

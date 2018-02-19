@@ -250,17 +250,18 @@ def add_new_data(request, patient_id, component_id):
     resp = {'success': False}
     # Patient user instance
     patient = User.objects.filter(id=int(patient_id)).get()
+    # Get user submit data
+    effective_datetime = request.POST.get("datetime", datetime.now().strftime('%m/%d/%Y %H:%M'))
+    value_quantity = request.POST.get("value", 0)
 
-    if permissions_accessed(request.user, int(patient_id)):
-        # Get user submit data
-        effective_datetime = request.POST.get("datetime", datetime.now())
-        if effective_datetime:
-            effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
-        valueQuantity = request.POST.get("value", 0)
+    # Validate user input
+    if permissions_accessed(request.user, int(patient_id)) and validate_effective_datetime(
+            effective_datetime) and validate_number(value_quantity):
 
         # DB stuff
+        effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
         value = ObservationValue(author=request.user, component_id=component_id,
-                                 effective_datetime=effective_datetime, value_quantity=int(valueQuantity))
+                                 effective_datetime=effective_datetime, value_quantity=int(value_quantity))
         value.save()
 
         # Auto add bmi data if observation component is weight or height

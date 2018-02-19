@@ -29,7 +29,6 @@
         };
 
         function fnLink($scope, $element, $attrs) {
-            console.log($scope.patient_id);
             $element.click(() => {
                 let form = {
                     patient_id: $scope.patient_id,

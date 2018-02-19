@@ -19,21 +19,22 @@
                     <div class="form-group">
                         <label class="col-sm-2 control-label">Date</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-model="new_data.date" id="due_date">
+                            <input type="text" class="form-control" ng-model="new_data.date" id="due_date"
+                                   placeholder="MM/DD/YYYY">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label class="col-sm-2 control-label">Time</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-model="new_data.time">
+                            <input type="text" class="form-control" ng-model="new_data.time" placeholder="HH:mm">
                         </div>
                     </div>
 
                     <div class="form-group" ng-repeat="component in data.observation_components">
                         <label class="col-sm-2 control-label">{{ component.name }}</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" ng-model="component.new_value">
+                          <input type="number" class="form-control" ng-model="component.new_value">
                         </div>
                     </div>
 

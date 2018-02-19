@@ -25,15 +25,16 @@ from emr.manage_patient_permissions import check_permissions
 
 
 def ajax_response(resp):
-
-	return HttpResponse(json.dumps(resp), content_type="application/json" )
+    return HttpResponse(json.dumps(resp), content_type="application/json")
 
 
 def get_date(date_string):
-	return datetime.strptime(date_string, "%Y-%m-%d").date()
+    return datetime.strptime(date_string, "%Y-%m-%d").date()
+
 
 def get_new_date(date_string):
-	return datetime.strptime(date_string, "%m/%d/%Y").date()
+    return datetime.strptime(date_string, "%m/%d/%Y").date()
+
 
 def permissions_required(permissions):
     def decorator(view_func):
@@ -41,11 +42,12 @@ def permissions_required(permissions):
         def _wrapper(request, *args, **kwargs):
             actor_profile, permitted = check_permissions(permissions, request.user)
             if not permitted:
-                resp = {}
-                resp['success'] = False
+                resp = {'success': False}
                 return ajax_response(resp)
             return view_func(request, *args, **kwargs)
+
         return _wrapper
+
     return decorator
 
 
@@ -59,3 +61,24 @@ def timeit(method):
         return result
 
     return timed
+
+
+def validate_effective_datetime(date_text):
+    """
+    Validate date effective date time format %m/%d/%Y %H:%M
+    :param date_text:
+    :return:
+    """
+    try:
+        datetime.strptime(date_text, '%m/%d/%Y %H:%M')
+        return True
+    except ValueError:
+        return False
+
+
+def validate_number(number_text):
+    try:
+        int(number_text)
+        return True
+    except ValueError:
+        return False
