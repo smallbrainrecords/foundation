@@ -215,8 +215,9 @@ def obseration_pin_to_problem(request, patient_id):
             component = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
             if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(
                     component) < 1:
-                if Inr.objects.filter(observation_id=observation_id).exists():
-                    Inr.objects.filter(observation_id=observation_id).delete()
+                inr_objects_filter = Inr.objects.filter(observation_value__component__observation_id=observation_id)
+                if inr_objects_filter.exists():
+                    inr_objects_filter.delete()
                     resp['remove_inr'] = True
         except ObservationPinToProblem.DoesNotExist:
             problems = Problem.objects.filter(patient_id=patient_id)
