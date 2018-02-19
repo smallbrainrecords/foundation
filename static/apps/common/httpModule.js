@@ -80,8 +80,10 @@
 
             };
 
-            this.get = function (params, url, cache = false) {
-
+            this.get = function (params, url, cache) {
+                if (!cache) {
+                    cache = false;
+                }
                 let deferred = $q.defer();
 
                 $http({
