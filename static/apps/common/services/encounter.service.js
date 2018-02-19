@@ -33,7 +33,8 @@
                 updateAudioPlayedCount: updateAudioPlayedCount,
                 addEncounterEvent: addEncounterEvent,
                 toggleRecorder: toggleRecorder,
-                stopEncounter: stopEncounter
+                stopEncounter: stopEncounter,
+                logEncounterAccess: logEncounterAccess
             };
 
 
@@ -159,10 +160,11 @@
                 let params = {};
 
                 return httpService.get(params, url);
+            }
 
-
+            function logEncounterAccess(form) {
+                let url = `/enc/encounter/log_access`;
+                return httpService.post(form, url);
             }
         });
-
-
 })();

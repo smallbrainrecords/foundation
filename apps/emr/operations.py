@@ -19,9 +19,7 @@ from .models import EncounterProblemRecord
 
 
 def op_add_event(physician, patient, event_summary, problem=None, todo=False):
-    latest_encounter = Encounter.objects.filter(
-        physician=physician,
-        patient=patient).order_by('-id')
+    latest_encounter = Encounter.objects.filter(physician=physician, patient=patient).order_by('-id')
 
     if latest_encounter.exists():
         latest_encounter = latest_encounter[0]

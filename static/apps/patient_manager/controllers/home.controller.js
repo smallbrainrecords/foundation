@@ -990,11 +990,8 @@
          *   toggle view my story tab
          */
         function view_my_story_tab(tab) {
-            var form = {};
-            form.patient_id = $scope.patient_id;
-            form.tab_id = tab.id;
-            patientService.trackTabClickEvent(form).then(function (data) {
-            });
+
+
             $scope.selected_tab = tab;
             $scope.show_edit_my_story_tab = false;
         }

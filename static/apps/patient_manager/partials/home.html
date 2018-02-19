@@ -625,7 +625,7 @@
                 <div class="col-sm-3 my-story-left">
                     <!--Available tabs-->
                     <ul class='ul-clean my-story-list no-padding'>
-                        <li ng-repeat="tab in my_story_tabs"
+                        <li ng-repeat="tab in my_story_tabs" encounter-event data-tab-id="{{tab.id}}"
                             ng-if="tab.private==false || active_user.role=='patient' || active_user.user.id==tab.author.id">
                             <button class="btn-link"
                                     ng-click="view_my_story_tab(tab);"
