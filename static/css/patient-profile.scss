@@ -3,6 +3,10 @@
 @import "../apps/todo/todo-page.scss";
 @import "../apps/medication/medication.scss";
 
+.nav>li>a{
+  padding-right:5px;
+  padding-left:5px;
+}
 body {
   padding-top: 70px;
 }

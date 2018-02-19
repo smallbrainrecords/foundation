@@ -54,7 +54,7 @@
                 templateUrl: '/static/apps/patient_manager/partials/home.html',
                 controller: 'HomeCtrl'
             })
-            .when('/edit/', {
+            .when('/edit/:section?', {
                 templateUrl: '/static/apps/patient_manager/partials/edit.html',
                 controller: 'EditUserCtrl'
             })

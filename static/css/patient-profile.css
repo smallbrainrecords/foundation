@@ -87,6 +87,10 @@ todo-item .quick-card-editor {
   #medication-page #medication-header .medication-action-control {
     text-align: right; } }
 
+.nav > li > a {
+  padding-right: 5px;
+  padding-left: 5px; }
+
 body {
   padding-top: 70px; }
 

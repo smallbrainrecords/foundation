@@ -16,7 +16,12 @@
 
 {% block patient_header%}
 <li>
-    <a href="#/" class="headerWrap">
+    <a  title="Edit profile" href="#/edit/profileInfo">
+        Phone: {{patient.profile.phone_number}}
+    </a>
+</li>
+<li>
+    <a href="#/" class="headerWrap" title="My account">
         {% if patient_profile.portrait_image %}
         <img src="{{ patient_profile.portrait_image.url }}" alt="" class="profileThumb">
         {% endif %}

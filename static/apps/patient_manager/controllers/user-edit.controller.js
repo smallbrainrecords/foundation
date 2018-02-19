@@ -47,6 +47,9 @@
                 });
 
                 $scope.files = {};
+                setTimeout(() => {
+                    navigate($routeParams.section);
+                }, 500);
             }
 
             function update_basic_profile() {
