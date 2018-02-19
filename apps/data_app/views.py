@@ -255,11 +255,11 @@ def add_new_data(request, patient_id, component_id):
         effective_datetime = request.POST.get("datetime", datetime.now())
         if effective_datetime:
             effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
-        valueQuantity = request.POST.get("value", None)
+        valueQuantity = request.POST.get("value", 0)
 
         # DB stuff
         value = ObservationValue(author=request.user, component_id=component_id,
-                                 effective_datetime=effective_datetime, value_quantity=valueQuantity)
+                                 effective_datetime=effective_datetime, value_quantity=int(valueQuantity))
         value.save()
 
         # Auto add bmi data if observation component is weight or height
