@@ -311,7 +311,7 @@
              * @returns {string}
              */
             function onbeforeunload(e) {
-                if ($scope.encounterCtrl.status.isRecording) {
+                if ($scope.encounterCtrl != null && $scope.encounterCtrl.hasOwnProperty('status') && $scope.encounterCtrl.status.isRecording) {
                     let confirmationMessage = "\o/"; // Due to browser security we cannot customize user message here
 
                     e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
