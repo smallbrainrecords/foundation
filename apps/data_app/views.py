@@ -272,7 +272,7 @@ def add_new_data(request, patient_id, component_id):
         if value.component.name == 'weight':
             # Calculation
             heightComponent = ObservationComponent.objects.filter(component_code='8302-2').filter(
-                observation__subject=patient).get()
+                observation__subject_id=int(patient_id)).get()
             height = get_observation_most_common_value(heightComponent, effective_datetime)
             bmiValue = round(float(value.value_quantity) * 703 / math.pow(height, 2), 2)
 
@@ -286,7 +286,7 @@ def add_new_data(request, patient_id, component_id):
         if value.component.name == 'height':
             # Calculation
             weightComponent = ObservationComponent.objects.filter(component_code='3141-9').filter(
-                observation__subject=patient).get()
+                observation__subject_id=int(patient_id)).get()
             weight = get_observation_most_common_value(weightComponent, effective_datetime)
             bmiValue = round(weight * 703 / math.pow(float(value.value_quantity), 2), 2)
 
