@@ -255,10 +255,11 @@ def add_inr(request, patient_id):
         observation_value.save()
 
         last_dosage = Inr.objects.filter(patient=patient).order_by('observation_value__effective_datetime').last()
+
         if current_dose is None:
-            current_dose = last_dosage.current_dose
+            current_dose = last_dosage.current_dose if last_dosage is not None else 0
         if new_dosage is None:
-            new_dosage = last_dosage.new_dosage
+            new_dosage = last_dosage.new_dosage if last_dosage is not None else 0
 
         # 2nd add dosage
         dosage = Inr(observation_value=observation_value, patient=patient, author=request.user,
