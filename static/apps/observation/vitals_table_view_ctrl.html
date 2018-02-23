@@ -1,8 +1,8 @@
 <table class="table table-striped table-bordered">
     <thead>
     <tr>
-        <th>{{patient_info.user.first_name}}{{patient_info.user.last_name}} {{patient_info.date_of_birth}}</th>
-        <th class="text-center" ng-repeat="day in last5Days track by $index">{{day | date:'dd/MM/yy'}}</th>
+        <th>{{patient_info.user.first_name}} {{patient_info.user.last_name}} {{patient_info.date_of_birth}}</th>
+        <th class="text-center" ng-repeat="day in last5Days track by $index">{{day | date:'MM/dd/yyyy'}}</th>
     </tr>
     </thead>
     <tbody>
@@ -43,8 +43,8 @@
         </td>
     </tr>
     <tr>
-        <td>Repository rate</td>
-        <td class="text-center" ng-repeat="entry in vitals.repository_rate track by $index">
+        <td>Respiratory rate</td>
+        <td class="text-center" ng-repeat="entry in vitals.respiratory_rate track by $index">
             {{entry | number: 0 }} bpm
         </td>
     </tr>

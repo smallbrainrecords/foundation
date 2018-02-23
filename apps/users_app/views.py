@@ -1001,7 +1001,7 @@ def get_user_vitals(request, patient_id):
 
     temperature = get_vitals_table_component(patient_id, 'body temperature')
     pulse = get_vitals_table_component(patient_id, 'heart rate')
-    repository_rate = get_vitals_table_component(patient_id, 'respiratory rate')
+    respiratory_rate = get_vitals_table_component(patient_id, 'respiratory rate')
     a1c = get_vitals_table_component(patient_id, 'a1c')
 
     vitals = {
@@ -1011,7 +1011,7 @@ def get_user_vitals(request, patient_id):
         'blood_pressure': list(zip(systolic.first(), diastolic.first())),
         'temperature': temperature.first(),
         'pulse': pulse.first(),
-        'repository_rate': repository_rate.first(),
+        'respiratory_rate': respiratory_rate.first(),
         'a1c': a1c.first(),
     }
 
