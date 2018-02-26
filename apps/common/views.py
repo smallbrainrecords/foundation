@@ -78,7 +78,7 @@ def validate_effective_datetime(date_text):
 
 def validate_number(number_text):
     try:
-        int(number_text)
+        float(number_text)
         return True
     except ValueError:
         return False
