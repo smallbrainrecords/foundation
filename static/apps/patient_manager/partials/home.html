@@ -149,8 +149,9 @@
     <div class="tab-content">
         <!-- Problems tab -->
         <div role="tabpanel" class="tab-pane tab-problems" ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
-
-            <div class='panel panel-default'>
+            <div class="row">
+                <div class="" ng-class="['secretary','nurse'].indexOf(active_user.role ) == -1 ? 'col-md-6':'col-md-12'">
+                    <div class='panel panel-default'>
                         <div class='panel-heading'> Problems
                         </div>
                         <div class='panel-body'>
@@ -343,7 +344,7 @@
                                             <span ng-if="check_problem_list_authenticated(list)">(not-authenticated)</span>
                                         </span>
                                     <span ng-show="list.rename">
-                                            <input type="text" ng-model="list.name"> 
+                                            <input type="text" ng-model="list.name">
                                             <button class="btn btn-default"
                                                     ng-click="rename_list(list); $event.stopPropagation();">Save</button>
                                             <button class="btn btn-default"
@@ -376,6 +377,56 @@
                             <!--End problem list-->
                         </div>
                     </div>
+                </div>
+                <div class="col-md-6">
+                    <!--Todos list position is depend on user role-->
+                    <div class='panel panel-default' ng-if="['secretary','nurse'].indexOf(active_user.role ) == -1">
+                                <div class='panel-heading'> Todos</div>
+                                <div class='panel-body'>
+                                    <div class='row' ng-show='permitted(["add_todo"])'>
+                                        <div class='col-md-12'>
+                                            <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
+                                                <label> Todo Name </label>
+                                                <div class='input-group'>
+                                                    <input type='text' ng-model='new_todo.name' title="Todo name"
+                                                           class="form-control" id='todoNameInput'>
+                                                    <span class="input-group-btn">
+                                                        <button type='submit' class='btn btn-default'> Add Todo</button>
+                                                    </span>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <div class="todo-list-wrapper">
+                                        <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
+                                            <todo todo-list="pending_todos" show-problem="true"
+                                                  on-status-changed-success="updateStatusCallback"
+                                                  labels="labels" members="members"
+                                                  patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
+                                            <wave-spinner ng-if="todoIsLoading"></wave-spinner>
+                                        </div>
+                                        <hr>
+
+                                        <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
+                                                ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
+                                        </button>
+                                        <hr>
+
+                                        <div ng-show='show_accomplished_todos'>
+                                            <todo todo-list="accomplished_todos" show-problem="true"
+                                                  on-status-changed-success="updateStatusCallback"
+                                                  labels="labels" members="members"
+                                                  patient-id="patient_id" user-id="patient_id"
+                                                  active-user="active_user"></todo>
+                                            <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    <!--End todo list section-->
+                </div>
+            </div>
 
             <!--Start goal section-->
             <div class='panel panel-default' ng-if="goals.length > 0">
@@ -462,53 +513,6 @@
                         </div>
                     </div>
             <!--End goal section-->
-
-            <!--Todos list position is depend on user role-->
-            <div class='panel panel-default' ng-if="['secretary','nurse'].indexOf(active_user.role ) == -1">
-                        <div class='panel-heading'> Todos</div>
-                        <div class='panel-body'>
-                            <div class='row' ng-show='permitted(["add_todo"])'>
-                                <div class='col-md-12'>
-                                    <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
-                                        <label> Todo Name </label>
-                                        <div class='input-group'>
-                                            <input type='text' ng-model='new_todo.name' title="Todo name"
-                                                   class="form-control" id='todoNameInput'>
-                                            <span class="input-group-btn">
-                                                <button type='submit' class='btn btn-default'> Add Todo</button>
-                                            </span>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <div class="todo-list-wrapper">
-                                <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
-                                    <todo todo-list="pending_todos" show-problem="true"
-                                          on-status-changed-success="updateStatusCallback"
-                                          labels="labels" members="members"
-                                          patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
-                                    <wave-spinner ng-if="todoIsLoading"></wave-spinner>
-                                </div>
-                                <hr>
-
-                                <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
-                                        ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
-                                </button>
-                                <hr>
-
-                                <div ng-show='show_accomplished_todos'>
-                                    <todo todo-list="accomplished_todos" show-problem="true"
-                                          on-status-changed-success="updateStatusCallback"
-                                          labels="labels" members="members"
-                                          patient-id="patient_id" user-id="patient_id"
-                                          active-user="active_user"></todo>
-                                    <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-            <!--End todo list section-->
 
             <!--Start encounter section-->
             <div class='panel panel-default' ng-init="encounter_collapse=false;">
