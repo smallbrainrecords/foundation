@@ -21,7 +21,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Q, When, Case, Value, CharField
+from django.db.models import Q
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 
@@ -992,27 +992,96 @@ def get_user_vitals(request, patient_id):
     """
     resp = {'success': False}
     # Last 5 days
-    weight = get_vitals_table_component(patient_id, 'weight')
-    height = get_vitals_table_component(patient_id, 'height')
-    bmi = get_vitals_table_component(patient_id, 'body mass index')
+    weightQuerySet = get_vitals_table_component(patient_id, 'weight')
+    weight = []
+    for idx in range(5):
+        try:
+            weight.append(weightQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            weight.append(0)
+    weight.reverse()
 
-    systolic = get_vitals_table_component(patient_id, 'systolic')
-    diastolic = get_vitals_table_component(patient_id, 'diastolic')
+    heightQuerySet = get_vitals_table_component(patient_id, 'height')
+    height = []
+    for idx in range(5):
+        try:
+            height.append(heightQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            height.append(0)
+    height.reverse()
 
-    temperature = get_vitals_table_component(patient_id, 'body temperature')
-    pulse = get_vitals_table_component(patient_id, 'heart rate')
-    respiratory_rate = get_vitals_table_component(patient_id, 'respiratory rate')
-    a1c = get_vitals_table_component(patient_id, 'a1c')
+    bmiQuerySet = get_vitals_table_component(patient_id, 'body mass index')
+    bmi = []
+    for idx in range(5):
+        try:
+            bmi.append(bmiQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            bmi.append(0)
+    bmi.reverse()
+
+    systolicQuerySet = get_vitals_table_component(patient_id, 'systolic')
+    systolic = []
+    for idx in range(5):
+        try:
+            systolic.append(systolicQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            systolic.append(0)
+    systolic.reverse()
+
+    diastolicQuerySet = get_vitals_table_component(patient_id, 'diastolic')
+    diastolic = []
+    for idx in range(5):
+        try:
+            diastolic.append(diastolicQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            diastolic.append(0)
+    diastolic.reverse()
+
+    temperatureQuerySet = get_vitals_table_component(patient_id, 'body temperature')
+    temperature = []
+    for idx in range(5):
+        try:
+            temperature.append(temperatureQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            temperature.append(0)
+    temperature.reverse()
+
+    pulseQuerySet = get_vitals_table_component(patient_id, 'heart rate')
+    pulse = []
+    for idx in range(5):
+        try:
+            pulse.append(pulseQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            pulse.append(0)
+    pulse.reverse()
+
+    respiratory_rateQuerySet = get_vitals_table_component(patient_id, 'respiratory rate')
+    respiratory_rate = []
+    for idx in range(5):
+        try:
+            respiratory_rate.append(respiratory_rateQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            respiratory_rate.append(0)
+    respiratory_rate.reverse()
+
+    a1cQuerySet = get_vitals_table_component(patient_id, 'a1c')
+    a1c = []
+    for idx in range(5):
+        try:
+            a1c.append(a1cQuerySet[idx].value_quantity.__str__())
+        except IndexError:
+            a1c.append(0)
+    a1c.reverse()
 
     vitals = {
-        'weight': weight.first(),
-        'height': height.first(),
-        'bmi': bmi.first(),
-        'blood_pressure': list(zip(systolic.first(), diastolic.first())),
-        'temperature': temperature.first(),
-        'pulse': pulse.first(),
-        'respiratory_rate': respiratory_rate.first(),
-        'a1c': a1c.first(),
+        'weight': weight,
+        'height': height,
+        'bmi': bmi,
+        'blood_pressure': list(zip(systolic, diastolic)),
+        'temperature': temperature,
+        'pulse': pulse,
+        'respiratory_rate': respiratory_rate,
+        'a1c': a1c,
     }
 
     # Get all observation related to items
@@ -1024,30 +1093,34 @@ def get_user_vitals(request, patient_id):
 
 
 def get_vitals_table_component(patient_id, component_name):
-    today = datetime.date.today()
-    day_one = datetime.date.today() - datetime.timedelta(days=1)
-    day_two = datetime.date.today() - datetime.timedelta(days=2)
-    day_three = datetime.date.today() - datetime.timedelta(days=3)
-    day_four = datetime.date.today() - datetime.timedelta(days=4)
-    day_five = datetime.date.today() - datetime.timedelta(days=5)
+    # today = datetime.date.today()
+    # day_one = datetime.date.today() - datetime.timedelta(days=1)
+    # day_two = datetime.date.today() - datetime.timedelta(days=2)
+    # day_three = datetime.date.today() - datetime.timedelta(days=3)
+    # day_four = datetime.date.today() - datetime.timedelta(days=4)
+    # day_five = datetime.date.today() - datetime.timedelta(days=5)
+    #
+    # return ObservationValue.objects.annotate(
+    #     today=Case(When(effective_datetime__gte=today, then='value_quantity'), default=Value("0"),
+    #                output_field=CharField()),
+    #     day_one=Case(When(Q(effective_datetime__gte=day_one) & Q(effective_datetime__lt=today), then='value_quantity'),
+    #                  default=Value("0"),
+    #                  output_field=CharField()),
+    #     day_two=Case(
+    #         When(Q(effective_datetime__gte=day_two) & Q(effective_datetime__lt=day_two), then='value_quantity'),
+    #         default=Value("0"),
+    #         output_field=CharField()),
+    #     day_three=Case(
+    #         When(Q(effective_datetime__gte=day_three) & Q(effective_datetime__lt=day_four), then='value_quantity'),
+    #         default=Value("0"),
+    #         output_field=CharField()),
+    #     day_four=Case(
+    #         When(Q(effective_datetime__gte=day_four) & Q(effective_datetime__lt=day_five), then='value_quantity'),
+    #         default=Value("0"),
+    #         output_field=CharField()),
+    # ).filter(component__name=component_name).filter(component__observation__subject_id=patient_id).order_by(
+    #     '-effective_datetime').values('day_four', 'day_three', 'day_two', 'day_one', 'today')
 
-    return ObservationValue.objects.annotate(
-        today=Case(When(effective_datetime__gte=today, then='value_quantity'), default=Value("0"),
-                   output_field=CharField()),
-        day_one=Case(When(Q(effective_datetime__gte=day_one) & Q(effective_datetime__lt=today), then='value_quantity'),
-                     default=Value("0"),
-                     output_field=CharField()),
-        day_two=Case(
-            When(Q(effective_datetime__gte=day_two) & Q(effective_datetime__lt=day_two), then='value_quantity'),
-            default=Value("0"),
-            output_field=CharField()),
-        day_three=Case(
-            When(Q(effective_datetime__gte=day_three) & Q(effective_datetime__lt=day_four), then='value_quantity'),
-            default=Value("0"),
-            output_field=CharField()),
-        day_four=Case(
-            When(Q(effective_datetime__gte=day_four) & Q(effective_datetime__lt=day_five), then='value_quantity'),
-            default=Value("0"),
-            output_field=CharField()),
-    ).filter(component__name=component_name).filter(component__observation__subject_id=patient_id).order_by(
-        '-effective_datetime').values_list('day_four', 'day_three', 'day_two', 'day_one', 'today')
+    return ObservationValue.objects.filter(component__name=component_name).filter(
+        component__observation__subject_id=patient_id).order_by(
+        '-effective_datetime')[0:5]

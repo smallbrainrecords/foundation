@@ -6,7 +6,7 @@
     ObservationTableCtrl.$inject = ['$scope', 'patientService'];
 
     function ObservationTableCtrl($scope, patientService) {
-        $scope.last5Days = [moment().subtract(4, 'd').format('x'), moment().subtract(3, 'd').format('x'), moment().subtract(2, 'd').format('x'), moment().subtract(1, 'd').format('x'), moment().format('x')];
+        // $scope.last5Days = [moment().subtract(4, 'd').format('x'), moment().subtract(3, 'd').format('x'), moment().subtract(2, 'd').format('x'), moment().subtract(1, 'd').format('x'), moment().format('x')];
 
         init();
 

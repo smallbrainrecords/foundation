@@ -2,7 +2,12 @@
     <thead>
     <tr>
         <th>{{patient_info.user.first_name}} {{patient_info.user.last_name}} {{patient_info.date_of_birth}}</th>
-        <th class="text-center" ng-repeat="day in last5Days track by $index">{{day | date:'MM/dd/yyyy'}}</th>
+        <!--<th class="text-center" ng-repeat="day in last5Days track by $index">{{day | date:'MM/dd/yyyy'}}</th>-->
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
     </tr>
     </thead>
     <tbody>
@@ -46,6 +51,12 @@
         <td>Respiratory rate</td>
         <td class="text-center" ng-repeat="entry in vitals.respiratory_rate track by $index">
             {{entry | number: 0 }} bpm
+        </td>
+    </tr>
+    <tr>
+        <td>A1C</td>
+        <td class="text-center" ng-repeat="entry in vitals.a1c track by $index">
+            {{entry | number: 0 }}
         </td>
     </tr>
     </tbody>
