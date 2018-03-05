@@ -54,7 +54,8 @@
             function updatePendingUser(user, status) {
                 switch (status) {
                     case 1: // Approve
-                        if (user.role == 'patient' || user.role == 'physician' || user.role == 'admin') {
+                        if (user.role == 'patient') {
+//                        if (user.role == 'patient' || user.role == 'physician' || user.role == 'admin') {
                             sharedService.approveUser(user).then(userUpdateSucceed);
                         } else {
                             alert("Please assign role!");
