@@ -14,13 +14,13 @@
     <tr>
         <td>Weight</td>
         <td class="text-center" ng-repeat="entry in vitals.weight track by $index">
-            {{entry | number: 0 }} in
+            {{entry | number: 0 }} lb 
         </td>
     </tr>
     <tr>
         <td>Height</td>
         <td class="text-center" ng-repeat="entry in vitals.height track by $index">
-            {{entry | number: 0 }} lb
+            {{entry | number: 0 }} in
         </td>
     </tr>
     <tr>
@@ -50,7 +50,7 @@
     <tr>
         <td>Respiratory rate</td>
         <td class="text-center" ng-repeat="entry in vitals.respiratory_rate track by $index">
-            {{entry | number: 0 }} bpm
+            {{entry | number: 0 }} breaths/min
         </td>
     </tr>
     <tr>
