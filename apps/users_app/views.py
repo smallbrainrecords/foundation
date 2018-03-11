@@ -641,7 +641,7 @@ def get_patients_list(request):
 def add_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {'success': False}
 
-    to_sharing_patient_profile = UserProfile.objects.get(user_id=sharing_patient_id)
+    to_sharing_patient_profile = User.objects.get(id=sharing_patient_id)
     is_existed = SharingPatient.objects.filter(sharing_id=sharing_patient_id, shared_id=patient_id).exists()
     if is_existed:
         return ajax_response(resp)
@@ -653,7 +653,7 @@ def add_sharing_patient(request, patient_id, sharing_patient_id):
     sharing_patient.save()
 
     resp['success'] = True
-    resp['sharing_patient'] = UserProfileSerializer(to_sharing_patient_profile).data
+    resp['sharing_patient'] = UserProfileSerializer(to_sharing_patient_profile.profile).data
     return ajax_response(resp)
 
 

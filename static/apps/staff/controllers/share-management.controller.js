@@ -65,13 +65,17 @@
 
             }
 
+            /**
+             *
+             * @param sharingPatientId : Patient User Id being shared my profile
+             */
             function add_sharing_patient(sharingPatientId) {
                 let form = {
-                    sharing_patient_id: sharingPatientId,
-                    patient_id: $scope.patient_id
+                    patient_id: $scope.patient_id,
+                    sharing_patient_id: sharingPatientId, // Profile id -> user id
                 };
 
-				staffService.addSharingPatient(form).then(function(data){
+                staffService.addSharingPatient(form).then(function(data){
                     if (data['success']) {
                         $scope.sharing_patients.push(data['sharing_patient']);
                         form.sharing_patient_id = '';
@@ -80,7 +84,7 @@
                     } else {
                         toaster.pop('error', 'Error', 'Added sharing patient failed!');
                     }
-				});
+                });
             }
 
             function remove_sharing_patient(userId) {
@@ -129,7 +133,7 @@
             function findPatient(viewValue) {
                 if (viewValue != '') {
                     return inrService.findPatient(viewValue).then(function (response) {
-                        $scope.results = response.data.patients;
+                        $scope.results = response.data.patients; // This one return User Profile
                     });
                 } else {
                     $scope.results = [];

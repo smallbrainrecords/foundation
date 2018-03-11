@@ -37,7 +37,7 @@
 									<span ng-if="permitted(result.user)">
 
 										<a class="btn btn-primary pull-right" ng-if="!isShared(result)"
-										   ng-click="add_sharing_patient(result.id)">Assign</a>
+										   ng-click="add_sharing_patient(result.user.id)">Assign</a>
 
 										<!-- TODO Condition checking here-->
 										<a class="btn btn-danger pull-right" ng-if="isShared(result)"
