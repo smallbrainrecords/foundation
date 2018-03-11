@@ -83,7 +83,7 @@ OBSERVATION_TYPES = [
         'unit': [
             'mmHg',
         ],
-        'loinc_code': '',
+        'loinc_code': '85354-9',
         'components': [
             {
                 'name': 'systolic',

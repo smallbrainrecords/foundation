@@ -17,11 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 import datetime
 
 import cronjobs
-from django.db.models import Max
+from django.contrib.auth.models import User
+from django.db.models import Max, Count
 
 from emr.models import ColonCancerScreening, Problem, ToDo, Label, \
     PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem, Observation, MedicationPinToProblem, \
-    Medication
+    Medication, ProblemRelationship
+from emr.operations import op_add_event
+from problems_app.operations import add_problem_activity
 
 
 def age(when, on=None):
@@ -168,3 +171,47 @@ def physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_
                                                                          medication=medication).exists():
                                 p = MedicationPinToProblem(problem=problem, author=pin.author, medication=medication)
                                 p.save()
+
+
+@cronjobs.register
+def problem_relationship_auto_pinning_for_3_times_matched():
+    """
+    https://trello.com/c/TWI2l0UU
+    If any two SNOMED CT CONCEPT_IDs are set as relationship more than 3 times
+    then set this as a relationship for all patients who have those two problems.
+    :return:
+    """
+    # Default actor for cron job
+    actor = User.objects.get(profile__role='admin')
+
+    # Find all paired problem have same SNOMED CT id
+    relationships = ProblemRelationship.objects.filter(source__concept_id__isnull=False,
+                                                       target__concept_id__isnull=False) \
+        .values('source__concept_id', 'target__concept_id').annotate(total=Count('source__concept_id'))
+    # SELECT emr_problemrelationship.*,a.concept_id, b.concept_id, COUNT(*) FROM emr_problemrelationship
+    # LEFT JOIN emr_problem a ON a.id = emr_problemrelationship.source_id
+    # LEFT JOIN emr_problem b ON b.id = emr_problemrelationship.target_id
+    # WHERE a.concept_id is not null and b.concept_id is not NULL
+    # GROUP BY a.concept_id,b.concept_id
+
+    # find_all_problem_relationship_more_than_3_time()
+    # SELECT patient_id,	GROUP_CONCAT( id ),	count( * )
+    # FROM	emr_problem
+    # WHERE emr_problem.concept_id IN ( 102499006, 237572004 )
+    # GROUP BY	patient_id;
+    for relation in relationships:
+        if relation['total'] >= 3:  # TODO: Moving this condition into query set
+            for p in User.objects.filter(profile__role='patient').all():
+                if Problem.objects.filter(patient_id=p.id).filter(
+                        concept_id__in=[relation['source__concept_id'], relation['target__concept_id']]).count() == 2:
+                    source = Problem.objects.get(patient_id=p.id, concept_id=relation['source__concept_id'])
+                    target = Problem.objects.get(patient_id=p.id, concept_id=relation['target__concept_id'])
+                    if not ProblemRelationship.objects.filter(source=source, target=target).exists():
+                        ProblemRelationship.objects.create(source=source, target=target)
+                        activity = "Created Problem Relationship(automation pinning): <b>{0}</b> effects <b>{1}</b>".format(
+                            source.problem_name, target.problem_name)
+                        # Add log
+                        add_problem_activity(source, actor, activity)
+                        add_problem_activity(target, actor, activity)
+                        op_add_event(actor, source.patient, activity)
+                        print(activity)

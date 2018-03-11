@@ -27,8 +27,8 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import View
 from django.views.static import serve
-from social_auth.exceptions import AuthFailed
-from social_auth.views import complete
+# from social_auth.exceptions import AuthFailed
+# from social_auth.views import complete
 
 import project.settings as settings
 from common.views import *

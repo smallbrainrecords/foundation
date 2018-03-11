@@ -1093,34 +1093,6 @@ def get_user_vitals(request, patient_id):
 
 
 def get_vitals_table_component(patient_id, component_name):
-    # today = datetime.date.today()
-    # day_one = datetime.date.today() - datetime.timedelta(days=1)
-    # day_two = datetime.date.today() - datetime.timedelta(days=2)
-    # day_three = datetime.date.today() - datetime.timedelta(days=3)
-    # day_four = datetime.date.today() - datetime.timedelta(days=4)
-    # day_five = datetime.date.today() - datetime.timedelta(days=5)
-    #
-    # return ObservationValue.objects.annotate(
-    #     today=Case(When(effective_datetime__gte=today, then='value_quantity'), default=Value("0"),
-    #                output_field=CharField()),
-    #     day_one=Case(When(Q(effective_datetime__gte=day_one) & Q(effective_datetime__lt=today), then='value_quantity'),
-    #                  default=Value("0"),
-    #                  output_field=CharField()),
-    #     day_two=Case(
-    #         When(Q(effective_datetime__gte=day_two) & Q(effective_datetime__lt=day_two), then='value_quantity'),
-    #         default=Value("0"),
-    #         output_field=CharField()),
-    #     day_three=Case(
-    #         When(Q(effective_datetime__gte=day_three) & Q(effective_datetime__lt=day_four), then='value_quantity'),
-    #         default=Value("0"),
-    #         output_field=CharField()),
-    #     day_four=Case(
-    #         When(Q(effective_datetime__gte=day_four) & Q(effective_datetime__lt=day_five), then='value_quantity'),
-    #         default=Value("0"),
-    #         output_field=CharField()),
-    # ).filter(component__name=component_name).filter(component__observation__subject_id=patient_id).order_by(
-    #     '-effective_datetime').values('day_four', 'day_three', 'day_two', 'day_one', 'today')
-
     return ObservationValue.objects.filter(component__name=component_name).filter(
         component__observation__subject_id=patient_id).order_by(
         '-effective_datetime')[0:5]

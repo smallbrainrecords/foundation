@@ -150,12 +150,12 @@ INSTALLED_APPS = (
     'reversion',
     'emr',
     'pain',
-    'social_auth',
     'genericadmin',
     'compressor',
     'cronjobs',
     'session_security',
-    'raven.contrib.django.raven_compat'
+    'raven.contrib.django.raven_compat',
+    'django_crontab',
 )
 
 AUTHENTICATION_BACKENDS = (

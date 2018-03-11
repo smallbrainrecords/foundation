@@ -36,7 +36,7 @@ urlpatterns = patterns('',
                        url('^pain/create_pain_avatar/(?P<patient_id>\d+)/$', 'pain.views.create_pain_avatar'),
                        url('^pain/reset/$', 'pain.views.reset'),
                        url(r'^login-error/$', LoginError.as_view()),
-                       url(r'', include('social_auth.urls')),
+                       # url(r'', include('social_auth.urls')),
 
                        # Old user views
                        url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/u/login/'}),
