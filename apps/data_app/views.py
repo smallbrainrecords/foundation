@@ -64,6 +64,7 @@ def get_datas(request, patient_id):
             if not data['name'] == 'a1c' and not Observation.objects.filter(name=data['name'], author=None,
                                                                             subject=patient_user).exists():
                 observation = Observation()
+                observation.code = data['loinc_code']
                 observation.name = data['name']
                 observation.subject = patient_user
                 observation.save()
@@ -138,11 +139,13 @@ def add_new_data_type(request, patient_id):
     resp = {'success': False}
     name = request.POST.get("name", None)
     color_code = request.POST.get("color", None)
+    loinc_code = request.POST.get("code", None)
     unit = request.POST.get("unit", None)
 
     if permissions_accessed(request.user, int(patient_id)):
         patient = User.objects.get(id=int(patient_id))
-        observation = Observation.objects.create(subject=patient, author=request.user, name=name, color=color_code)
+        observation = Observation.objects.create(subject=patient, author=request.user, name=name, color=color_code,
+                                                 code=loinc_code)
         observation.save()
 
         if unit:
@@ -152,7 +155,7 @@ def add_new_data_type(request, patient_id):
 
         observation_component = ObservationComponent()
         observation_component.observation = observation
-        observation_component.component_code = request.POST.get("code", None)
+        observation_component.component_code = loinc_code
         observation_component.name = name
         observation_component.save()
 

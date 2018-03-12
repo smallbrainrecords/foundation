@@ -133,6 +133,23 @@ def a1c_order_was_automatically_generated():
 
 @cronjobs.register
 def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times():
+    """
+    Refer: https://trello.com/c/DSAQoLCw -> https://trello.com/c/UDwAXH4H
+    Critical issues:
+    - Observation's LOINC code is always null -> Resolution: Update LOINC code for all Observation record
+    - [DONE] While adding default data for patient save LOINC code also
+    - [DONE] While adding custom data save LOINC code in observation & it's component also
+
+    #  STEP 1: Raw SQL query to get all pair of data LOINC and problem CONCEPT_ID which have occurred more than x times
+    SELECT emr_observationpintoproblem.*, emr_observation.`code`, emr_problem.concept_id, COUNT(*) FROM `emr_observationpintoproblem`
+    LEFT JOIN emr_observation ON emr_observationpintoproblem.author_id = emr_observation.id
+    LEFT JOIN emr_problem ON emr_observationpintoproblem.author_id = emr_problem.id
+    GROUP BY emr_observation.`code`, emr_problem.concept_id
+    HAVING COUNT(*) > 3
+
+    # STEP 2: Find all PATIENT having both data LOINC code and problem CONCEPT_ID
+    :return:
+    """
     # then that data is added to all patients for that problem
     pins = ObservationPinToProblem.objects.filter(author__profile__role="physician")
     for pin in pins:

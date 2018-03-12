@@ -36,8 +36,6 @@
 
                 var deferred = $q.defer();
 
-                //data.csrfmiddlewaretoken = this.csrf_token();
-
                 $http({
                     'method': 'POST',
                     'url': url,
@@ -48,10 +46,10 @@
                     }
                 }).success(function (data) {
                     deferred.resolve(data);
-                    toaster.pop('success', 'Done', 'Success');
+                    // toaster.pop('success', 'Done', 'Success');
                 }).error(function (data) {
                     deferred.resolve(data);
-                    toaster.pop('error', 'Failed', 'Error');
+                    // toaster.pop('error', 'Failed', 'Error');
                 });
 
                 return deferred.promise;

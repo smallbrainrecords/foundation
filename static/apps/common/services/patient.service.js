@@ -486,7 +486,7 @@
             function getDocuments(patient_id) {
                 let params = {};
                 let url = `/docs/${patient_id}/get_pinned_document`;
-                return httpService.post(params, url);
+                return httpService.get(params, url);
             }
 
 
