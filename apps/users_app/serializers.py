@@ -15,10 +15,10 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
+from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from emr.models import UserProfile
-from django.contrib.auth.models import User
 
 
 class SafeUserProfileSerializer(serializers.ModelSerializer):
@@ -71,5 +71,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'note',
             'active_reason',
             'deceased_date',
-            'last_access_tagged_todo'
+            'last_access_tagged_todo',
+            'insurance_medicare',
+            'insurance_note'
         )

@@ -59,6 +59,7 @@
         $scope.sortedProblem = false;
         $scope.draggedProblem = false;
         $scope.todoIsLoading = false;
+        $scope.insurance = {}; // Patient insurance form
 
         $scope.add_bfdi_value = add_bfdi_value;
         $scope.add_goal = addGoal;
@@ -116,10 +117,13 @@
         $scope.addProblemIsSelected = addProblemIsSelected;
         $scope.bdfiValueIsChanged = bdfiValueIsChanged;
         $scope.loadMoreTodo = loadMoreTodo;
-
+        $scope.submitInsurance = submitInsurance;
         init();
 
         function init() {
+            $scope.insurance.medicare = $scope.patient_info.insurance_medicare;
+            $scope.insurance.note = $scope.patient_info.insurance_note;
+
 
             $scope.pending_todos = patientService.pendingTodo;
             $scope.accomplished_todos = patientService.accomplishedTodo;
@@ -1387,6 +1391,10 @@
                         value.new_value = "";
                 });
             }
+        }
+
+        function submitInsurance() {
+            patientService.updateMedicare($scope.patient_id, $scope.insurance);
         }
     }
 

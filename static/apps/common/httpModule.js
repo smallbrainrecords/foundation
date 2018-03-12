@@ -18,13 +18,13 @@
 
     'use strict';
 
-    var module = angular.module('httpModule', []).config(function ($httpProvider) {
+    var module = angular.module('httpModule', ['toaster']).config(function ($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     });
 
     module.service('httpService',
-        function ($http, $q, $cookies) {
+        function ($http, $q, $cookies, toaster) {
 
 
             this.csrf_token = function () {
@@ -48,8 +48,10 @@
                     }
                 }).success(function (data) {
                     deferred.resolve(data);
+                    toaster.pop('success', 'Done', 'Success');
                 }).error(function (data) {
                     deferred.resolve(data);
+                    toaster.pop('error', 'Failed', 'Error');
                 });
 
                 return deferred.promise;
@@ -72,8 +74,10 @@
                     }
                 }).success(function (data) {
                     deferred.resolve(data);
+
                 }).error(function (data) {
                     deferred.resolve(data);
+
                 });
 
                 return deferred.promise;

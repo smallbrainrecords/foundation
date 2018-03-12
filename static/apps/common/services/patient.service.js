@@ -98,7 +98,8 @@
                 getMedications: getMedications,
                 getDocuments: getDocuments,
                 getToDo: getToDo,
-                getVitalTableViews: getVitalTableViews
+                getVitalTableViews: getVitalTableViews,
+                updateMedicare: updateMedicare
             };
 
             function csrf_token() {
@@ -666,6 +667,17 @@
 
             function getVitalTableViews(patientID) {
                 return $http.get(`/u/users/${patientID}/vitals`);
+            }
+
+            /**
+             * Update user patient insurance info
+             * @param patientId
+             * @param form
+             * @returns {HttpPromise}
+             */
+            function updateMedicare(patientId, form) {
+                // console.log(`PatientService:updateMedicare:${JSON.stringify(form)}`);
+                return httpService.post(form, `/u/users/${patientId}/medicare`);
             }
         });
 })();

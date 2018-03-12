@@ -226,6 +226,8 @@ class UserProfile(models.Model):
     active_reason = models.TextField(null=True, blank=True)
     inr_target = models.PositiveIntegerField(choices=TARGET_CHOICES, default=1)
     last_access_tagged_todo = models.DateTimeField(null=True, blank=True)
+    insurance_medicare = models.BooleanField(default=False)
+    insurance_note = models.TextField(blank=True)
 
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())

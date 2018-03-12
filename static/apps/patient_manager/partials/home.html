@@ -66,6 +66,32 @@
     </div>
 </section>
 
+<section id="insurance">
+    <div class='panel panel-default'>
+        <div class='panel-heading'>Insurance</div>
+
+        <div class='panel-body'>
+            <form novalidate ng-submit="submitInsurance()">
+                <div class="form-group">
+                    <div class="checkbox">
+                        <input type="checkbox" id="insurance-medicare" ng-model="insurance.medicare"
+                               title="Patient has medicare">
+                        <label for="insurance-medicare"> Patient has medicare </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="insurance-note"></label>
+                    <textarea name="insurance-note" id="insurance-note" msd-elastic class="form-control"
+                              ng-model="insurance.note"></textarea>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" type="submit"> Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
 <!-- Facebook like cover & profile image -->
 <section id="patient-profile-header">
     <div class='panel panel-default profile-section no-margin'

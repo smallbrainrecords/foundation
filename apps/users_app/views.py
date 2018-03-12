@@ -1092,6 +1092,25 @@ def get_user_vitals(request, patient_id):
     return ajax_response(resp)
 
 
+@login_required
+def set_user_medicare(request, patient_id):
+    """
+
+    :param request:
+    :param patient_id:
+    :return:
+    """
+    resp = {'success': False}
+
+    user_profile = UserProfile.objects.get(user_id=patient_id)
+    user_profile.insurance_medicare = request.POST.get('medicare', False)
+    user_profile.insurance_note = request.POST.get('note', '')
+    user_profile.save()
+
+    resp['success'] = True
+    return ajax_response(resp)
+
+
 def get_vitals_table_component(patient_id, component_name):
     return ObservationValue.objects.filter(component__name=component_name).filter(
         component__observation__subject_id=patient_id).order_by(
