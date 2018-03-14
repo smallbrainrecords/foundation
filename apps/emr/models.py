@@ -70,6 +70,7 @@ BELONG_TO = (
 OBSERVATION_TYPES = [
     {
         'name': 'a1c',
+        'loinc_code': '4548-4',
     },
     {
         'name': 'heart rate',
