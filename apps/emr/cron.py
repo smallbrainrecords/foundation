@@ -20,6 +20,7 @@ import cronjobs
 from django.contrib.auth.models import User
 from django.db.models import Max, Count
 
+from common.views import timeit
 from emr.models import ColonCancerScreening, Problem, ToDo, Label, \
     PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem, Observation, MedicationPinToProblem, \
     Medication, ProblemRelationship
@@ -131,41 +132,51 @@ def a1c_order_was_automatically_generated():
                     a1c.save()
 
 
+@timeit
 @cronjobs.register
 def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times():
     """
     Refer: https://trello.com/c/DSAQoLCw -> https://trello.com/c/UDwAXH4H
     Critical issues:
-    - Observation's LOINC code is always null -> Resolution: Update LOINC code for all Observation record
+    - [DONE] Observation's LOINC code is always null -> Resolution: Update LOINC code for all Observation record
     - [DONE] While adding default data for patient save LOINC code also
     - [DONE] While adding custom data save LOINC code in observation & it's component also
-
-    #  STEP 1: Raw SQL query to get all pair of data LOINC and problem CONCEPT_ID which have occurred more than x times
-    SELECT emr_observationpintoproblem.*, emr_observation.`code`, emr_problem.concept_id, COUNT(*) FROM `emr_observationpintoproblem`
-    LEFT JOIN emr_observation ON emr_observationpintoproblem.author_id = emr_observation.id
-    LEFT JOIN emr_problem ON emr_observationpintoproblem.author_id = emr_problem.id
-    GROUP BY emr_observation.`code`, emr_problem.concept_id
-    HAVING COUNT(*) > 3
-
     # STEP 2: Find all PATIENT having both data LOINC code and problem CONCEPT_ID
+    # STEP 3: If they are note pinned then do the work
     :return:
     """
+    print('Starting cron physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times...')
+
+    # Default actor for cron job
+    actor = User.objects.get(profile__role='admin')
+
     # then that data is added to all patients for that problem
-    pins = ObservationPinToProblem.objects.filter(author__profile__role="physician")
+    pins = ObservationPinToProblem.objects.filter(author__profile__role="physician").filter(
+        problem__concept_id__isnull=False, observation__code__isnull=False).values('problem__concept_id',
+                                                                                   'observation__code').annotate(
+        total=Count('problem__concept_id')).filter(total__gte=3)
+    print("Existing pins count: {}".format(pins.count()))
+    print('')
+
     for pin in pins:
-        if pin.observation.code and pin.problem.concept_id:
-            if ObservationPinToProblem.objects.filter(author__profile__role="physician",
-                                                      observation__code=pin.observation.code,
-                                                      problem__concept_id=pin.problem.concept_id).count() > 3:
-                problems = Problem.objects.filter(concept_id=pin.problem.concept_id)
-                for problem in problems:
-                    if Observation.objects.filter(code=pin.observation.code, subject=problem.patient).exists():
-                        observations = Observation.objects.filter(code=pin.observation.code, subject=problem.patient)
-                        for observation in observations:
-                            if not ObservationPinToProblem.objects.filter(problem=problem,
-                                                                          observation=observation).exists():
-                                p = ObservationPinToProblem(problem=problem, author=pin.author, observation=observation)
-                                p.save()
+        print("Processing pin pair: Observation: {} - Problem:{}".format(pin['observation__code'],
+                                                                         pin['problem__concept_id']))
+        print('')
+        for p in User.objects.filter(profile__role='patient').all():
+            patient_observation = Observation.objects.filter(subject_id=p.id, code=pin['observation__code'])
+            patient_problem = Problem.objects.filter(patient_id=p.id, concept_id=pin['problem__concept_id'])
+            print("Processing patient:({}) {}".format(p.id, p))
+            print("Observation: {} ".format(patient_observation.exists()))
+            print("Problem: {} ".format(patient_problem.exists()))
+            print('')
+            if patient_observation.exists() and patient_problem.exists():
+                if not ObservationPinToProblem.objects.filter(problem=patient_problem.get(),
+                                                              observation=patient_observation.get()).exists():
+                    p = ObservationPinToProblem(problem=patient_problem.get(), author=actor,
+                                                observation=patient_observation.get())
+                    p.save()
+
+    print('Finished cron physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times...')
 
 
 @cronjobs.register
@@ -205,7 +216,8 @@ def problem_relationship_auto_pinning_for_3_times_matched():
     # Find all paired problem have same SNOMED CT id
     relationships = ProblemRelationship.objects.filter(source__concept_id__isnull=False,
                                                        target__concept_id__isnull=False) \
-        .values('source__concept_id', 'target__concept_id').annotate(total=Count('source__concept_id'))
+        .values('source__concept_id', 'target__concept_id').annotate(total=Count('source__concept_id')).filter(
+        total__gte=3)
 
     # find_all_problem_relationship_more_than_3_time()
     print('Find all paired problem have same SNOMED CT...')
@@ -213,8 +225,9 @@ def problem_relationship_auto_pinning_for_3_times_matched():
     print('')
 
     for relation in relationships:
-        if relation['total'] >= 3:  # TODO: Moving this condition into query set
-            for p in User.objects.filter(profile__role='patient').all():
+        print("Processing problem relationship source: {}- target {}".format(relation['source__concept_id'],
+                                                                             relation['target__concept_id']))
+        for p in User.objects.filter(profile__role='patient').all():
                 problem_pairs = Problem.objects.filter(patient_id=p.id).filter(
                     concept_id__in=[relation['source__concept_id'], relation['target__concept_id']])
                 print("Processing patient:({}) {}".format(p.id, p))
