@@ -24,6 +24,7 @@
 
             // $scope.user_id = $('#patient_id').val();
             $scope.staff_roles = ['nurse', 'secretary', 'mid-level'];
+            $scope.insurance = {}; // Patient insurance form
 
             $scope.updateImage = updateImage;
             $scope.update_basic_profile = update_basic_profile;
@@ -31,6 +32,7 @@
             $scope.update_email = update_email;
             $scope.update_patient_password = update_patient_password;
             $scope.navigate = navigate;
+            $scope.submitInsurance = submitInsurance;
 
             init();
 
@@ -45,7 +47,8 @@
                     $scope.sharing_patients = data['sharing_patients'];
                     $scope.shared_patients = data['shared_patients'];
                 });
-
+                $scope.insurance.medicare = $scope.patient_info.insurance_medicare;
+                $scope.insurance.note = $scope.patient_info.insurance_note;
                 $scope.files = {};
                 setTimeout(() => {
                     navigate($routeParams.section);
@@ -174,6 +177,10 @@
                     }, function () {
                         toaster.pop('error', 'Error', 'Something went wrong! We fix ASAP');
                     });
+            }
+
+            function submitInsurance() {
+                patientService.updateMedicare($scope.patient_id, $scope.insurance);
             }
 
         });

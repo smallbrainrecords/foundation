@@ -198,6 +198,7 @@ def problem_relationship_auto_pinning_for_3_times_matched():
     then set this as a relationship for all patients who have those two problems.
     :return:
     """
+    print('Starting cron problem_relationship_auto_pinning_for_3_times_matched...')
     # Default actor for cron job
     actor = User.objects.get(profile__role='admin')
 
@@ -205,24 +206,23 @@ def problem_relationship_auto_pinning_for_3_times_matched():
     relationships = ProblemRelationship.objects.filter(source__concept_id__isnull=False,
                                                        target__concept_id__isnull=False) \
         .values('source__concept_id', 'target__concept_id').annotate(total=Count('source__concept_id'))
-    # SELECT emr_problemrelationship.*,a.concept_id, b.concept_id, COUNT(*) FROM emr_problemrelationship
-    # LEFT JOIN emr_problem a ON a.id = emr_problemrelationship.source_id
-    # LEFT JOIN emr_problem b ON b.id = emr_problemrelationship.target_id
-    # WHERE a.concept_id is not null and b.concept_id is not NULL
-    # GROUP BY a.concept_id,b.concept_id
 
     # find_all_problem_relationship_more_than_3_time()
-    # SELECT patient_id,	GROUP_CONCAT( id ),	count( * )
-    # FROM	emr_problem
-    # WHERE emr_problem.concept_id IN ( 102499006, 237572004 )
-    # GROUP BY	patient_id;
+    print('Find all paired problem have same SNOMED CT...')
+    print(relationships)
+    print('')
+
     for relation in relationships:
         if relation['total'] >= 3:  # TODO: Moving this condition into query set
             for p in User.objects.filter(profile__role='patient').all():
-                if Problem.objects.filter(patient_id=p.id).filter(
-                        concept_id__in=[relation['source__concept_id'], relation['target__concept_id']]).count() == 2:
+                problem_pairs = Problem.objects.filter(patient_id=p.id).filter(
+                    concept_id__in=[relation['source__concept_id'], relation['target__concept_id']])
+                print("Processing patient:({}) {}".format(p.id, p))
+                print("Number of problems in pair: {}".format(problem_pairs.count()))
+                if problem_pairs.exists() and problem_pairs.count() == 2:
                     source = Problem.objects.get(patient_id=p.id, concept_id=relation['source__concept_id'])
                     target = Problem.objects.get(patient_id=p.id, concept_id=relation['target__concept_id'])
+
                     if not ProblemRelationship.objects.filter(source=source, target=target).exists():
                         ProblemRelationship.objects.create(source=source, target=target)
                         activity = "Created Problem Relationship(automation pinning): <b>{0}</b> effects <b>{1}</b>".format(
@@ -231,4 +231,6 @@ def problem_relationship_auto_pinning_for_3_times_matched():
                         add_problem_activity(source, actor, activity)
                         add_problem_activity(target, actor, activity)
                         op_add_event(actor, source.patient, activity)
-                        print(activity)
+                        print("Activity log: {}".format(activity))
+                print('')
+    print('Finished cron problem_relationship_auto_pinning_for_3_times_matched...')
