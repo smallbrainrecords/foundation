@@ -148,7 +148,7 @@ def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_time
     print('Starting cron physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times...')
 
     # Default actor for cron job
-    actor = User.objects.first(profile__role='admin')
+    actor = User.objects.filter(profile__role='admin').first()
 
     # then that data is added to all patients for that problem
     pins = ObservationPinToProblem.objects.filter(author__profile__role="physician").filter(
@@ -211,7 +211,7 @@ def problem_relationship_auto_pinning_for_3_times_matched():
     """
     print('Starting cron problem_relationship_auto_pinning_for_3_times_matched...')
     # Default actor for cron job
-    actor = User.objects.first(profile__role='admin')
+    actor = User.objects.filter(profile__role='admin').first()
 
     # Find all paired problem have same SNOMED CT id
     relationships = ProblemRelationship.objects.filter(source__concept_id__isnull=False,
