@@ -184,13 +184,10 @@ def add_patient_problem(request, patient_id):
     # https://trello.com/c/0OlwGwCB
     # Only add if problem is diabetes and patient have not
     if "44054006" == concept_id:
-        if not ObservationComponent.objects.filter(component_code="2345-7",
-                                                   observation__subject=patient).exists():
-            # Add data type
-            observation = Observation.objects.create(subject=patient, author=request.user,
-                                                     name="Glucose",
-                                                     color="#FFD2D2")
-
+        if not ObservationComponent.objects.filter(component_code="2345-7", observation__subject=patient).exists():
+            # Add data(observation) Glucose type
+            observation = Observation.objects.create(subject=patient, author=request.user, name="Glucose",
+                                                     code="2345-7", color="#FFD2D2")
             observation.save()
 
             #  Add data unit
@@ -210,11 +207,11 @@ def add_patient_problem(request, patient_id):
         ObservationPinToProblem.objects.create(author_id=request.user.id, observation=observation, problem=new_problem)
 
     # Event
-    summary = 'Added <u>problem</u> <b>%s</b>' % term
+    summary = "Added <u>problem</u> <b>{}</b>".format(term)
     op_add_event(physician, new_problem.patient, summary, new_problem)
 
     # Activity
-    activity = "Added <u>problem</u>: <b>%s</b>" % term
+    activity = "Added <u>problem</u>: <b>{}</b>".format(term)
     add_problem_activity(new_problem, request.user, activity)
 
     resp['success'] = True

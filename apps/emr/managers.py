@@ -14,25 +14,34 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+
 from datetime import datetime, timedelta
 
 from django.db import models
+from django.db.models import Max
 
 
 class AOneCManager(models.Manager):
     def create_if_not_exist(self, problem):
-        from emr.models import AOneC, Observation, ObservationComponent, OBSERVATION_TYPES
-        if not Observation.objects.filter(subject=problem.patient, name=OBSERVATION_TYPES[0]['name']).exists():
-            observation = Observation.objects.create(subject=problem.patient, name=OBSERVATION_TYPES[0]['name'])
+        from emr.models import Observation, ObservationComponent, AOneC
+        a1c = {
+            'name': 'a1c',
+            'loinc_code': '4548-4',
+        }
+
+        if not Observation.objects.filter(subject=problem.patient, name=a1c.get('name')).exists():
+            observation = Observation.objects.create(subject=problem.patient, name=a1c.get('name'),
+                                                     code=a1c.get('loinc_code'))
 
             observation.save()
         else:
-            observation = Observation.objects.get(subject=problem.patient, name=OBSERVATION_TYPES[0]['name'])
+            observation = Observation.objects.get(subject=problem.patient, name=a1c.get('name'))
 
-        if not ObservationComponent.objects.filter(observation=observation, name=OBSERVATION_TYPES[0]['name']).exists():
+        if not ObservationComponent.objects.filter(observation=observation, name=a1c.get('name')).exists():
             observation_component = ObservationComponent()
             observation_component.observation = observation
-            observation_component.name = OBSERVATION_TYPES[0]['name']
+            observation_component.component_code = a1c.get('loinc_code')
+            observation_component.name = a1c.get('name')
             observation_component.save()
 
         if not AOneC.objects.filter(problem=problem).exists():
@@ -41,14 +50,23 @@ class AOneCManager(models.Manager):
 
 class ProblemManager(models.Manager):
     def create_new_problem(self, patient_id, problem_name, concept_id, user_profile):
-        from emr.models import Problem, Observation, AOneC, OBSERVATION_TYPES
+        from emr.models import Problem
+        from emr.models import Observation
+        from emr.models import AOneC
+
+        a1c = {
+            'name': 'a1c',
+            'loinc_code': '4548-4',
+        }
+
         new_problem = Problem(patient_id=patient_id, problem_name=problem_name, concept_id=concept_id)
         if user_profile.role in ('physician', 'admin'):
             new_problem.authenticated = True
         new_problem.save()
+
         # add a1c widget to problems that have concept id 73211009, 46635009, 44054006
         if concept_id in ['73211009', '46635009', '44054006']:
-            observation = Observation.objects.create(name=OBSERVATION_TYPES[0]['name'],
+            observation = Observation.objects.create(name=a1c.get('name'), code=a1c.get('loinc_code'),
                                                      subject=new_problem.patient)
             AOneC.objects.create(problem=new_problem, observation=observation)
         return new_problem
@@ -66,7 +84,9 @@ class ProblemNoteManager(models.Manager):
 
 class EncounterManager(models.Manager):
     def stop_patient_encounter(self, physician, encounter_id):
-        from emr.models import EncounterEvent, ObservationValue, EncounterObservationValue
+        from emr.models import EncounterEvent
+        from emr.models import EncounterObservationValue
+        from emr.models import ObservationValue
 
         latest_encounter = self.get(physician=physician, id=encounter_id)
         latest_encounter.stoptime = datetime.now()
@@ -85,7 +105,6 @@ class EncounterManager(models.Manager):
 
     def create_new_encounter(self, patient_id, physician):
         from emr.models import EncounterEvent
-
         # encounter = self.create(patient_id=patient_id, physician=physician, recorder_status=0)
         encounter = self.create(patient_id=patient_id, physician=physician)
         # Add event started encounter
@@ -111,7 +130,7 @@ class EncounterManager(models.Manager):
 
 class TodoManager(models.Manager):
     def add_patient_todo(self, patient, todo_name, due_date):
-        from django.db.models import Max
+
         order = self.filter(patient=patient).aggregate(Max('order'))
         if not order['order__max']:
             order = 1
@@ -121,7 +140,7 @@ class TodoManager(models.Manager):
         return new_todo
 
     def add_staff_todo(self, user_id, todo_name, due_date):
-        from django.db.models import Max
+
         order = self.filter(user_id=user_id).aggregate(Max('order'))
         if not order['order__max']:
             order = 1

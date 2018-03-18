@@ -142,6 +142,12 @@ OBSERVATION_TYPES = [
         ],
         'loinc_code': '59408-5',
     },
+    {
+        'name': 'PHQ-2',
+        'loinc_code': '55757-9',
+        'unit': [],
+        'color': '#FFFF00'
+    }
 ]
 
 VIEW_STATUS = (

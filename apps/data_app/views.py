@@ -56,21 +56,23 @@ def get_datas(request, patient_id):
     resp = {'success': False}
 
     if permissions_accessed(request.user, int(patient_id)):
-        # TODO: This initial data should be added when a patient is REGISTERED | ACTIVED
-        # Add default datas: heart rate, blood pressure, respiratory rate, body temperature, height, weight,
-        # body mass index
         patient_user = User.objects.get(id=patient_id)
+
+        # TODO[Observation] This initial data should be added when a patient is REGISTERED | ACTIVED
+        # region Add default datas: heart rate, blood pressure, respiratory rate, body temperature, height, weight, body mass index, PHQ-2
         for data in OBSERVATION_TYPES:
-            if not data['name'] == 'a1c' and not Observation.objects.filter(name=data['name'], author=None,
-                                                                            subject=patient_user).exists():
+            if not data.get('name', '') == 'a1c' and not Observation.objects.filter(name=data.get('name', ''),
+                                                                                    author=None,
+                                                                                    subject=patient_user).exists():
                 observation = Observation()
-                observation.code = data['loinc_code']
-                observation.name = data['name']
+                observation.code = data.get('loinc_code', '')
+                observation.name = data.get('name', '')
+                observation.color = data.get('color', None)
                 observation.subject = patient_user
                 observation.save()
 
                 first_loop = True
-                for unit in data['unit']:
+                for unit in data.get('unit', []):
                     observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=unit)
                     if first_loop:
                         observation_unit.is_used = True  # will be changed in future when having conversion
@@ -78,19 +80,20 @@ def get_datas(request, patient_id):
                     observation_unit.save()
 
                 if data.has_key('components'):
-                    for component in data['components']:
+                    for component in data.get('components', []):
                         observation_component = ObservationComponent()
                         observation_component.observation = observation
-                        observation_component.component_code = component['loinc_code']
-                        observation_component.name = component['name']
+                        observation_component.component_code = component.get('loinc_code', '')
+                        observation_component.name = component.get('name', '')
                         observation_component.save()
 
                 else:
                     observation_component = ObservationComponent()
                     observation_component.observation = observation
-                    observation_component.component_code = data['loinc_code']
-                    observation_component.name = data['name']
+                    observation_component.component_code = data.get('loinc_code', '')
+                    observation_component.name = data.get('name', '')
                     observation_component.save()
+        # endregion
 
         observations = Observation.objects.filter(subject__id=int(patient_id))
 
@@ -102,6 +105,7 @@ def get_datas(request, patient_id):
                 user = request.user
         else:
             user = request.user
+
         try:
             observation_order = ObservationOrder.objects.get(user=user, patient_id=patient_id)
         except ObservationOrder.DoesNotExist:
@@ -143,6 +147,7 @@ def add_new_data_type(request, patient_id):
     unit = request.POST.get("unit", None)
 
     if permissions_accessed(request.user, int(patient_id)):
+        # TODO[Observation]
         patient = User.objects.get(id=int(patient_id))
         observation = Observation.objects.create(subject=patient, author=request.user, name=name, color=color_code,
                                                  code=loinc_code)
@@ -316,7 +321,8 @@ def get_individual_data_info(request, patient_id, value_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
         value = ObservationValue.objects.get(id=value_id)
-        if not value.component.observation.name == OBSERVATION_TYPES[0]['name']:
+        # TODO: Figure out why this one is fixed OBSERVATION_TYPES[0]['name'] = 'a1c'
+        if not value.component.observation.name == 'a1c':
             resp['info'] = ObservationValueSerializer(value).data
             resp['success'] = True
     return ajax_response(resp)

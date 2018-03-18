@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations
 
 from emr.models import Problem, Observation, ObservationComponent, ObservationUnit, User, ObservationPinToProblem
 
@@ -16,7 +16,7 @@ def generate_glucose_for_diabetes_problem(apps, schema_editor):
                                                    observation__subject=patient.profile).exists():
             # If patient doesn't have glucose data type yet then add new one
             observation = Observation.objects.create(subject=patient.profile, author=patient.profile, name="Glucose",
-                                                     color="#FFD2D2")
+                                                     color="#FFD2D2", code="2345-7")
             observation.save()
 
             #  Add data unit
