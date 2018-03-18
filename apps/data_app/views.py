@@ -256,15 +256,14 @@ def obseration_pin_to_problem(request, patient_id):
 @api_view(["POST"])
 def add_new_data(request, patient_id, component_id):
     resp = {'success': False}
-    # Patient user instance
-    patient = User.objects.filter(id=int(patient_id)).get()
-    # Get user submit data
-    effective_datetime = request.POST.get("datetime", datetime.now().strftime('%m/%d/%Y %H:%M'))
+
+    patient = User.objects.filter(id=int(patient_id)).get() # Patient user instance
+    effective_datetime = request.POST.get("datetime", datetime.now().strftime('%m/%d/%Y %H:%M')) # Get user submit data
     value_quantity = request.POST.get("value", 0)
 
     # Validate user input
     if permissions_accessed(request.user, int(patient_id)) and validate_effective_datetime(
-            effective_datetime) and validate_number(value_quantity):
+            effective_datetime) and validate_number(value_quantity) and validate_value_quantity(component_id,value_quantity):
 
         # DB stuff
         effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')

@@ -22,6 +22,7 @@ from datetime import datetime
 from django.http import *
 
 from emr.manage_patient_permissions import check_permissions
+from emr.models import ObservationComponent
 
 
 def ajax_response(resp):
@@ -79,6 +80,17 @@ def validate_effective_datetime(date_text):
 def validate_number(number_text):
     try:
         float(number_text)
+        return True
+    except ValueError:
+        return False
+
+
+def validate_value_quantity(component_id, value_quantity):
+    try:
+        observation_component = ObservationComponent.objects.get(id=component_id)
+        if '55757-9' == observation_component.component_code:
+            return 1 <= int(value_quantity) <= 6
+
         return True
     except ValueError:
         return False
