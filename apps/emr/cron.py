@@ -37,6 +37,9 @@ def age(when, on=None):
 
 @cronjobs.register
 def review_colorectal_cancer_risk_assessment():
+
+    print('Starting cron review_colorectal_cancer_risk_assessment...')
+
     colon_cancers = ColonCancerScreening.objects.all()
     for colon_cancer in colon_cancers:
         if not colon_cancer.todo_past_five_years and age(colon_cancer.patient.profile.date_of_birth) >= 20 and \
@@ -63,10 +66,15 @@ def review_colorectal_cancer_risk_assessment():
 
             colon_cancer.todo_past_five_years = True
             colon_cancer.save()
+    print('Finished cron review_colorectal_cancer_risk_assessment...')
+    print('')
 
 
 @cronjobs.register
 def patient_needs_a_plan_for_colorectal_cancer_screening():
+
+    print('Starting cron patient_needs_a_plan_for_colorectal_cancer_screening...')
+
     colon_cancers = ColonCancerScreening.objects.all()
     for colon_cancer in colon_cancers:
         if colon_cancer.colon_cancer_todos.count() == 0 and age(colon_cancer.patient.profile.date_of_birth) >= 50:
@@ -98,9 +106,15 @@ def patient_needs_a_plan_for_colorectal_cancer_screening():
                 new_todo.members.add(controller.physician)
                 TaggedToDoOrder.objects.create(todo=new_todo, user=controller.physician)
 
+    print('Finished cron patient_needs_a_plan_for_colorectal_cancer_screening...')
+    print('')
+
 
 @cronjobs.register
 def a1c_order_was_automatically_generated():
+
+    print('Starting cron a1c_order_was_automatically_generated...')
+
     a1cs = AOneC.objects.all()
     for a1c in a1cs:
         if a1c.observation.observation_components.all():
@@ -131,6 +145,9 @@ def a1c_order_was_automatically_generated():
                     a1c.todo_past_six_months = True
                     a1c.save()
 
+    print('Finished cron a1c_order_was_automatically_generated...')
+    print('')
+
 
 @timeit
 @cronjobs.register
@@ -155,8 +172,7 @@ def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_time
         problem__concept_id__isnull=False, observation__code__isnull=False).values('problem__concept_id',
                                                                                    'observation__code').annotate(
         total=Count('problem__concept_id')).filter(total__gte=3)
-    print("Existing pins count: {}".format(pins.count()))
-    print(pins)
+    print("Existing pins count: {}".format(pins.query))
     print('')
 
     for pin in pins:
@@ -178,11 +194,15 @@ def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_time
                     p.save()
 
     print('Finished cron physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times...')
+    print('')
 
 
 @cronjobs.register
 def physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_3_times():
     # then that medication is added to all patients for that problem
+
+    print('Starting cron physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_3_times...')
+
     pins = MedicationPinToProblem.objects.filter(author__profile__role="physician")
     for pin in pins:
         if pin.medication.concept_id and pin.problem.concept_id:
@@ -200,6 +220,9 @@ def physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_
                                                                          medication=medication).exists():
                                 p = MedicationPinToProblem(problem=problem, author=pin.author, medication=medication)
                                 p.save()
+
+    print('Finished cron physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_3_times...')
+    print('')
 
 
 @cronjobs.register
@@ -248,3 +271,4 @@ def problem_relationship_auto_pinning_for_3_times_matched():
                         print("Activity log: {}".format(activity))
                 print('')
     print('Finished cron problem_relationship_auto_pinning_for_3_times_matched...')
+    print('')
