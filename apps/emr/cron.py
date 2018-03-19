@@ -172,7 +172,8 @@ def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_time
         problem__concept_id__isnull=False, observation__code__isnull=False).values('problem__concept_id',
                                                                                    'observation__code').annotate(
         total=Count('problem__concept_id')).filter(total__gte=3)
-    print("Existing pins count: {}".format(pins.query))
+    print("Existing pins count: {}".format(pins.count()))
+    print(pins)
     print('')
 
     for pin in pins:
