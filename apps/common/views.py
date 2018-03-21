@@ -89,7 +89,7 @@ def validate_value_quantity(component_id, value_quantity):
     try:
         observation_component = ObservationComponent.objects.get(id=component_id)
         if '55757-9' == observation_component.component_code:
-            return 1 <= int(value_quantity) <= 6
+            return 0 <= int(value_quantity) <= 6
 
         return True
     except ValueError:
