@@ -75,3 +75,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'insurance_medicare',
             'insurance_note'
         )
+
+
+class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(many=False)
+
+    class Meta:
+        model = User
+
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'username',
+            'email',
+            'is_active',
+            'profile',
+        )
+

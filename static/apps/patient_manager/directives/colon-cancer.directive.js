@@ -37,7 +37,7 @@
                 members: "="
             },
             link: function (scope, element, attr) {
-                scope.set_header = set_header;
+                scope.set_header = generateHeaderTitle;
                 scope.open_colon = open_colon;
                 scope.delete_study = delete_study;
                 scope.change_factor = change_factor;
@@ -115,53 +115,65 @@
 
                 }
 
-                function set_header() {
+                /**
+                 */
+                function generateHeaderTitle() {
                     scope.header = '';
                     if (scope.colon_cancer.patient) {
                         if (moment().diff(moment(scope.colon_cancer.patient.profile.date_of_birth, "MM/DD/YYYY"), 'years') < 20) {
-                            scope.header = 'review risk assessment at 20 years of age';
+                            scope.header = 'Review risk assessment at 20 years of age';
                         } else if (moment().diff(moment(scope.colon_cancer.patient.profile.date_of_birth, "MM/DD/YYYY"), 'years') > 50) {
+                            // Adding risk status to header
                             if (scope.colon_cancer.risk) {
-                                scope.header = 'Risk: ' + scope.colon_cancer.risk;
+                                scope.header = `Risk:${scope.colon_cancer.risk},`;
                             }
-                            if (scope.header != '') scope.header = scope.header + ' ';
 
-                            var texts = [];
+                            if (scope.colon_cancer.colon_studies.length > 0) {
+                                scope.header = `${scope.header} Last finding: ${scope.colon_cancer.colon_studies[0].finding} `;
+                            }
+                            // if (scope.header != '') scope.header = scope.header + ' ';
+
+                            // TODO: Doest both refused and not appropriate are active?
+                            let texts = [];
                             if (scope.colon_cancer.patient_refused) {
                                 texts.push({
                                     text: "Refused on " + moment(scope.colon_cancer.patient_refused_on).format("MM/DD/YYYY"),
                                     date: moment(scope.colon_cancer.patient_refused_on)
                                 });
                             }
+
                             if (scope.colon_cancer.not_appropriate) {
                                 texts.push({
                                     text: "Not appropriate on " + moment(scope.colon_cancer.not_appropriate_on).format("MM/DD/YYYY"),
                                     date: moment(scope.colon_cancer.not_appropriate_on)
                                 });
                             }
+
                             if (scope.colon_cancer.colon_cancer_todos.length > 0) {
                                 scope.most_recent_todo = scope.colon_cancer.colon_cancer_todos[scope.colon_cancer.colon_cancer_todos.length - 1];
-                                var text = {};
-                                text['text'] = 'Todo: ' + scope.most_recent_todo.todo;
+                                let text = {};
+                                text['text'] = `Todo: ${scope.most_recent_todo.todo}`;
                                 if (scope.most_recent_todo.due_date)
-                                    text['text'] = text['text'] + ' ' + moment(scope.most_recent_todo.due_date, "MM/DD/YYYY").format("MM/DD/YYYY");
+                                    text['text'] = `${text['text']} ${moment(scope.most_recent_todo.due_date, "MM/DD/YYYY").format("MM/DD/YYYY")}`;
                                 text['date'] = moment(scope.most_recent_todo.created_on);
                                 texts.push(text);
                             }
-                            var picked = {};
-                            for (var i = 0; i < texts.length; i++) {
-                                if (picked.date == undefined) {
+
+                            let picked = {};
+                            for (let i = 0; i < texts.length; i++) {
+                                if (picked.date === undefined) {
                                     picked = texts[i];
                                 } else if (picked.date < texts[i].date) {
                                     picked = texts[i];
                                 }
                             }
+
                             if (!$.isEmptyObject(picked)) {
                                 scope.header = scope.header + picked['text'];
                             }
 
                         } else {
-                            scope.header = 'screening starts at 50 years old';
+                            scope.header = 'Screening starts at 50 years old';
                         }
                     }
                 }
