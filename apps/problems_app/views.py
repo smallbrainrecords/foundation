@@ -1249,6 +1249,7 @@ def get_problem_wikis(request, problem_id):
 
     resp['wiki_notes'] = problem_notes['wiki_notes']
     resp['history_note'] = problem_notes['history']
+    resp['history_note_total'] = ProblemNote.objects.filter(note_type='history', problem_id=problem_id).count()
     resp['success'] = True
 
     return ajax_response(resp)

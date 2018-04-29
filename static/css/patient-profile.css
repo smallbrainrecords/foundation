@@ -540,6 +540,10 @@ todo .new-tagged-todo {
   #related-encounters .encounter-item:last-child {
     border-bottom: none; }
 
+.auto-ordering {
+  display: flex;
+  flex-direction: column-reverse; }
+
 #encounter-related-problem .problem-item {
   border-bottom: 1px solid #CCC;
   display: block;

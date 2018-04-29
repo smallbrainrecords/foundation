@@ -664,6 +664,11 @@ todo {
   }
 }
 
+.auto-ordering{
+  display: flex;
+  flex-direction: column-reverse;
+}
+
 // Encounter page
 #encounter-related-problem {
   .problem-item {

@@ -26,6 +26,7 @@
 
             $scope.activities = [];
             $scope.availableWidgets = [];
+            $scope.history_note_total = 0;
             $scope.change_pinned_data = false;
             $scope.change_pinned_medication = false;
             $scope.change_problem_label = false;
@@ -43,6 +44,9 @@
             $scope.problem_id = $routeParams.problem_id;
             $scope.problem_label_component = {};
             $scope.problem_terms = [];
+            $scope.problem_activity_collapse = false;
+            $scope.problem_activity_see_all = false;
+
             // $scope.problem_todos = [];
             $scope.related_encounters = [];
             $scope.show_accomplished_goals = false;
@@ -206,6 +210,7 @@
                 // Wiki note
                 problemService.getRelatedWikis($scope.problem_id).then(function (response) {
                     $scope.history_note = response.data['history_note'];
+                    $scope.history_note_total = response.data['history_note_total'];
                     if ($scope.history_note != null) {
                         $scope.history_note_form = {
                             note: $scope.history_note.note
@@ -909,6 +914,9 @@
                         toaster.pop('success', 'Done', 'Added History Note');
 
                         $scope.history_note = data['note'];
+                        $scope.history_note_total++;
+
+
                         $scope.set_authentication_false();
 
                         if (data.hasOwnProperty('todo')) {
