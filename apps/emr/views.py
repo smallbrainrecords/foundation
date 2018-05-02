@@ -26,11 +26,12 @@ from django.db.models.loading import get_model
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import View
-from django.views.static import serve
 # from social_auth.exceptions import AuthFailed
 # from social_auth.views import complete
+from django.views.static import serve
+from ranged_response import RangedFileResponse
 
-import project.settings as settings
+import settings
 from common.views import *
 from models import UserProfile, Problem, \
     Goal, ToDo, Guideline, TextNote, PatientImage, \
@@ -701,35 +702,6 @@ def list_snomed_terms(request):
 
     return HttpResponse(results_holder, content_type="application/json")
 
-
-# @login_required
-# def list_snomed_terms(request):
-#     from pymedtermino import *
-#     import pymedtermino.snomedct
-#     # We list snomed given a query
-#     query = request.GET['query']
-#     results = pymedtermino.snomedct.SNOMEDCT.search(query)
-#     results_holder = []
-#     disorders = []
-#     findings = []
-#     for result in results:
-#         if '(disorder)' in result.term:
-#             disorders.append(
-#                 {'term': result.term, 'code': result.code, 'active': result.active})
-#         if '(finding)' in result.term:
-#             findings.append(
-#                 {'term': result.term, 'code': result.code, 'active': result.active})
-
-#     disorders = sorted(disorders, key=lambda x: x['term'])
-#     findings = sorted(findings, key=lambda x: x['term'])
-
-#     results_holder.extend(disorders)
-#     results_holder.extend(findings)
-
-#     results_holder = json.dumps(results_holder)
-
-#     return HttpResponse(results_holder, content_type="application/json")
-
 def has_read_permission(request, path):
     """ Only show to authenticated users"""
     # Note this could allow access to paths including ../..
@@ -745,6 +717,8 @@ def serve_private_file(request, path):
     :return:
     """
     if has_read_permission(request, path):
-        return serve(request, path, settings.MEDIA_ROOT, show_indexes=False)
+        fileRes = serve(request, path, settings.MEDIA_ROOT, False)
+        response = RangedFileResponse(request, fileRes.file_to_stream,fileRes._headers['content-type'][1])
+        return response
     else:
         return HttpResponseForbidden()

@@ -53,22 +53,18 @@
                         // If encounter include any audio automatically playing this audio
                         if ($scope.encounter.audio != null) {
                             $timeout(function () {
-                                let myAudio = document.getElementById('audio1');
+                                var myAudio = document.getElementById('audio1');
                                 myAudio.onplay = function () {
                                     encounterService.updateAudioPlayedCount($scope.encounter_id);
                                 };
-                            }, 1000);
 
-                            if ($routeParams.startAt != null) {
-                                // TODO: We have to check that audio1 element must be valid before playing
-                                var canPlay = setInterval(function () {
+                                if ($routeParams.startAt != null) {
                                     if (myAudio != null) {
                                         myAudio.currentTime = parseInt($routeParams.startAt);
                                         myAudio.play();
-                                        clearInterval(canPlay);
                                     }
-                                }, 1000);
-                            }
+                                }
+                            }, 1000);
                         }
                     });
             }

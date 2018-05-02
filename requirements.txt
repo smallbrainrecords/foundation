@@ -21,3 +21,4 @@ djangorestframework==3.4.7
 raven==6.6.0
 django-crontab==0.7.1
 channels==1.1.8
+django-ranged-response==0.2.0
