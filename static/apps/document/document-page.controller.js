@@ -45,7 +45,7 @@
         $scope.enableEditDocumentName = false;
         $scope.enableTodoPin = false;
         $scope.enableProblemPin = false;
-        $scope.enableEditLabel = false;
+        $scope.enableEditLabel = true;
         $scope.enableEditPatient = false;
         $scope.new_todo = {};
         $scope.new_problem = {set: false};
