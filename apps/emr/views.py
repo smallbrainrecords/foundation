@@ -31,7 +31,7 @@ from django.views.generic import View
 from django.views.static import serve
 from ranged_response import RangedFileResponse
 
-import settings
+import project.settings as settings
 from common.views import *
 from models import UserProfile, Problem, \
     Goal, ToDo, Guideline, TextNote, PatientImage, \
