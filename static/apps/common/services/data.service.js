@@ -22,7 +22,6 @@
         function ($http, $q, $cookies, httpService) {
 
             return {
-                csrf_token: csrf_token,
                 fetchDataInfo: fetchDataInfo,
                 fetchPinToProblem: fetchPinToProblem,
                 dataPinToProblem: dataPinToProblem,
@@ -40,67 +39,75 @@
                 updateViewMode: updateViewMode,
                 getValueCount: getValueCount,
                 generateMostCommonData: generateMostCommonData,
-                deleteComponentValues: deleteComponentValues
+                deleteComponentValues: deleteComponentValues,
+                getObservationValues: getObservationValues
             };
 
-            function csrf_token() {
-                return $cookies.get('csrftoken');
+            /**
+             * Return abc
+             * @param observationId
+             * @returns {*}
+             */
+            function getObservationValues(observationId) {
+                let url = `/data/${observationId}/values`;
+                let params = {};
+                return httpService.get(params, url)
             }
 
             function fetchDataInfo(data_id) {
-                var url = `/data/${data_id}/info`;
-                var params = {};
+                let url = `/data/${data_id}/info`;
+                let params = {};
 
                 return httpService.get(params, url);
 
             }
 
             function fetchPinToProblem(data_id) {
-                var url = `/data/${data_id}/get_pins`;
-                var params = {};
+                let url = `/data/${data_id}/get_pins`;
+                let params = {};
 
                 return httpService.get(params, url);
 
             }
 
             function dataPinToProblem(patient_id, form) {
-                var url = `/data/${patient_id}/pin_to_problem`;
+                let url = `/data/${patient_id}/pin_to_problem`;
                 return httpService.post(form, url);
             }
 
             function addData(patient_id, component_id, form) {
-                var url = `/data/${patient_id}/${component_id}/add_new_data`;
+                let url = `/data/${patient_id}/${component_id}/add_new_data`;
                 return httpService.post(form, url);
             }
 
             function fetchIndividualDataInfo(patient_id, component_id) {
-                var url = `/data/${patient_id}/${component_id}/individual_data_info`;
-                var params = {};
+                let url = `/data/${patient_id}/${component_id}/individual_data_info`;
+                let params = {};
 
                 return httpService.get(params, url);
 
             }
 
             function deleteIndividualData(patient_id, component_id) {
-                var form = {};
-                var url = `/data/${patient_id}/${component_id}/delete_individual_data`;
+                let form = {};
+                let url = `/data/${patient_id}/${component_id}/delete_individual_data`;
                 return httpService.post(form, url);
             }
 
             function saveData(patient_id, component_id, form) {
-                var url = `/data/${patient_id}/${component_id}/save_data`;
+                let url = `/data/${patient_id}/${component_id}/save_data`;
                 return httpService.post(form, url);
             }
 
             function saveDataType(form) {
-                var url = `/data/${form.patient_id}/${form.data_id}/save_data_type`;
+                let url = `/data/${form.patient_id}/${form.data_id}/save_data_type`;
 
                 return httpService.post(form, url);
             }
 
             function deleteData(patient_id, data_id) {
-                var form = {};
-                var url = `/data/${patient_id}/${data_id}/delete_data`;
+                let form = {};
+                let url = `/data/${patient_id}/${data_id}/delete_data`;
                 return httpService.post(form, url);
             }
 
@@ -109,7 +116,7 @@
              * @returns {*}
              */
             function updateGraphType(form) {
-                var url = `/data/update_graph`;
+                let url = `/data/update_graph`;
 
                 return httpService.post(form, url);
             }
@@ -130,7 +137,7 @@
                 if (observation.observation_components.length == 0)
                     return [];
                 // Generate data point(s)
-                return _.pluck(observation.observation_components[0].observation_component_values, 'date');
+                return _.pluck(observation.observation_components[0].observation_component_values, 'effective_datetime');
             }
 
             function generateChartSeries(observation) {

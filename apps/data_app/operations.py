@@ -14,6 +14,10 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from itertools import izip
+
+from django.db import connection
+
 from emr.models import ObservationValue
 
 
@@ -35,3 +39,38 @@ def get_observation_most_common_value(component, effective_datetime):
             return float(most_recent_value.first().value_quantity)
         else:
             return float(1)
+
+
+def query_to_dicts(query_string, *query_args):
+    """Run a simple query and produce a generator
+    that returns the results as a bunch of dictionaries
+    with keys for the column values selected.
+    """
+    cursor = connection.cursor()
+    cursor.execute(query_string, query_args)
+    col_names = [desc[0] for desc in cursor.description]
+    while True:
+        row = cursor.fetchone()
+        if row is None:
+            break
+        row_dict = dict(izip(col_names, row))
+        yield row_dict
+    return
+
+
+def get_observation_value_pair(component_id):
+    """
+
+    :param component_id:
+    :return:
+    """
+    raw_query = "SELECT DATE_FORMAT(created_on, '%m/%d/%Y %H:%i') as entry_time, GROUP_CONCAT(value_quantity SEPARATOR '/') as value,  GROUP_CONCAT(id SEPARATOR '&') as edit_link FROM emr_observationvalue WHERE component_id IN ({0}) GROUP BY DATE_FORMAT(created_on, '%Y-%m-%d %H:%i:%s')" \
+        .format(component_id)
+    with connection.cursor() as cursor:
+        cursor.execute(raw_query)
+        columns = [col[0] for col in cursor.description]
+
+        return [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]

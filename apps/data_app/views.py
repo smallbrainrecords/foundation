@@ -14,14 +14,14 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-import math
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import *
 from rest_framework.decorators import api_view
 
 from common.views import *
-from data_app.operations import get_observation_most_common_value
+from data_app.operations import get_observation_most_common_value, get_observation_value_pair
 from emr.models import OBSERVATION_TYPES
 from emr.models import Observation, ObservationComponent, ObservationOrder, \
     PhysicianTeam, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue, \
@@ -443,4 +443,35 @@ def delete_component_values(request, patient_id):
     if permissions_accessed(request.user, int(patient_id)):
         ObservationValue.objects.filter(id__in=observation_value_ids).delete()
         resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+def get_observation_values(request, observation_id):
+    """
+
+    :param request:
+    :param observation_id:
+    :return:
+    """
+    resp = {'success': False}
+    observation = Observation.objects.get(id=observation_id)
+    observation_unit = ObservationUnit.objects.filter(is_used=True).filter(observation_id=observation_id).get()
+    #  TODO: Value list return is not string
+    observation_component_ids = ObservationComponent.objects.values_list('id', flat=True).filter(
+        observation_id=observation_id)
+    observation_components_labels = ObservationComponent.objects.values_list('name', flat=True).filter(
+        observation_id=observation_id)
+    # Normalize list before passing to query
+    observation_values = get_observation_value_pair(",".join(map(str, observation_component_ids)))
+
+    resp['success'] = True
+    resp['data'] = {
+        'id': observation_id,
+        'name': observation.name,
+        'unit': observation_unit.value_unit,
+        'label': "/".join(map(str, observation_components_labels)),
+        'values': observation_values
+    }
+
     return ajax_response(resp)

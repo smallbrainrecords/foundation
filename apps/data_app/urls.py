@@ -34,4 +34,5 @@ urlpatterns = patterns('data_app.views',
 
                        # Allow to edit multiple observation component value
                        url(r'^(?P<patient_id>\d+)/delete$', 'delete_component_values'),
+                       url(r'(?P<observation_id>\d+)/values', 'get_observation_values'),
                        )

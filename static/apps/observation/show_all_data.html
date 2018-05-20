@@ -10,26 +10,19 @@
 <div class='panel panel-default'>
     <div class='panel-body'>
         <h3>{{ data.name }}</h3>
-        <p ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}} </p>
+        <p> {{data.unit}} </p>
     </div>
 </div>
 <div class='panel panel-default'>
     <div class='panel-body'>
-        <div class='row'>
-            <div class='col-md-12'>
-                <ul class="ul-clean">
-                    <li ng-repeat="component in displayedComponent">
-                        <span ng-if="componentLabel" ng-bind="componentLabel" class="component-labels"></span>
-                        <a href='#/data/{{data.id}}/edit/{{editLink[$index]}}'>
-                        <span class="component-value" ng-repeat="value in component">{{value.value_quantity}}<i
-                                ng-if="!$last">/</i>
-                        <span ng-if="$last" class="component-effective-datetime"
-                              ng-bind="value.effective_datetime|date:'M/d/yyyy HH:mm'"></span>
-                        </span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
+        <ul class="ul-clean">
+            <li ng-repeat="value in data.values track by $index">
+                <span ng-bind="data.label" class="component-labels"></span>
+                <a href='#/data/{{data.id}}/edit/{{value.edit_link}}'>
+                    <span class="component-effective-datetime">{{value.entry_time}}</span>
+                    <span class="component-value">{{value.value}}</span>
+                </a>
+            </li>
+        </ul>
     </div>
 </div>
