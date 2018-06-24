@@ -259,7 +259,9 @@ def add_new_data(request, patient_id, component_id):
 
     patient = User.objects.filter(id=int(patient_id)).get() # Patient user instance
     effective_datetime = request.POST.get("datetime", datetime.now().strftime('%m/%d/%Y %H:%M')) # Get user submit data
+
     value_quantity = request.POST.get("value", 0)
+    value_quantity = value_quantity if value_quantity != '' else 0  # Passed empty value
 
     # Validate user input
     if permissions_accessed(request.user, int(patient_id)) and validate_effective_datetime(
