@@ -50,6 +50,7 @@
         $scope.new_todo = {};
         $scope.new_problem = {set: false};
         $scope.indirectPinnedProblem = [];
+        $scope.pagination = {};
 
         $scope.deleteDocument = deleteDocument;
         $scope.getPatientInfo = getPatientInfo;
@@ -67,17 +68,21 @@
         $scope.addNewCommonProblem = addNewCommonProblem;
         $scope.problemTermChanged = problemTermChanged;
         $scope.set_new_problem = setNewProblem;
-        $scope.unset_new_problem = unset_new_problem;
-        $scope.add_problem = add_problem;
-        $scope.add_new_problem = add_new_problem;
+        $scope.unset_new_problem = unsetNewProblem;
+        $scope.add_problem = addProblem;
+        $scope.add_new_problem = addNewProblem;
         $scope.isDueDate = isDueDate;
 
         init();
 
         function init() {
 
-            sharedService.getDocumentInfo($routeParams.documentId).then(function (resp) {
+            sharedService.getDocumentInfo($routeParams.documentId).then((resp) => {
                 $scope.document = resp.data.info;
+                $scope.pagination = {
+                    prev: resp.data.prev,
+                    next: resp.data.next
+                };
                 $scope.newDocumentName = $scope.document.document_name;
                 $scope.labels = resp.data.labels;
 
@@ -552,7 +557,7 @@
         /**
          *
          */
-        function unset_new_problem() {
+        function unsetNewProblem() {
             $scope.new_problem.set = false;
         }
 
@@ -560,7 +565,7 @@
          *
          * @returns {boolean}
          */
-        function add_problem() {
+        function addProblem() {
 
             var c = confirm("Are you sure?");
 
@@ -582,7 +587,7 @@
          * @param problem_term
          * @returns {boolean}
          */
-        function add_new_problem(problem_term) {
+        function addNewProblem(problem_term) {
             if (problem_term == '' || problem_term == undefined) {
                 return false;
             }
