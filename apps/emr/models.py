@@ -1139,3 +1139,14 @@ class EncounterObservationValue(models.Model):
     encounter = models.ForeignKey(Encounter, null=False)
     observation_value = models.ForeignKey(ObservationValue, null=False)
     created_on = models.DateTimeField(auto_now_add=True)
+
+
+class Narrative(models.Model):
+    """
+
+    """
+    description = models.TextField()
+    patient = models.ForeignKey(User, related_name="patient_narratives")
+    author = models.ForeignKey(User, related_name="owned_narratives")
+    parent = models.ForeignKey("Narrative",related_name="child",null=True)
+    created_at = models.DateTimeField(auto_now_add=True)

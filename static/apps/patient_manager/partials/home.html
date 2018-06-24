@@ -591,6 +591,30 @@
                     </div>
             <!--End encounter favorite-->
 
+            <div class='panel panel-default'>
+                <div class='panel-heading'>
+                    Narrative
+                </div>
+                <div class="panel-body">
+                    <textarea msd-elastic class='form-control' title="Narrative" rows="3"
+                              ng-model="narratives.latest.description"></textarea>
+
+                    <br>
+                    <p>
+                        Last edited by: {{ narratives.latest.author}} on {{ narratives.latest.datetime|date:'M/d/yyyy'}}
+                        <button class="btn btn-link" ng-click="loadMore(narratives.nextPage)" tabindex="-1">
+                            See previous entries({{narratives.total }})
+                        </button>
+                        <button class="btn btn-primary pull-right" ng-click="addNarrative()">Update narrative</button>
+                    </p>
+                    <br>
+                    <div ng-repeat="narrative in narrativeHistories" ng-if="!$first" ng-show="showNarrative">
+                        <span ng-bind="narrative.description"></span>
+                        <p>by {{ narrative.author }} on {{ narrative.datetime|date:'M/d/yyyy' }}</p>
+                    </div>
+                </div>
+            </div>
+
             <!--Start graphic section-->
             <div class="panel panel-default">
                         <div class="panel-heading" ng-click="graphicFrameIsCollapsed = !graphicFrameIsCollapsed">

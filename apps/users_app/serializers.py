@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from emr.models import UserProfile
+from emr.models import UserProfile, Narrative
 
 
 class SafeUserProfileSerializer(serializers.ModelSerializer):
@@ -93,3 +93,17 @@ class UserSerializer(serializers.ModelSerializer):
             'profile',
         )
 
+
+class NarrativeSerializer(serializers.ModelSerializer):
+    datetime = serializers.DateTimeField(source='created_at')
+    author = serializers.StringRelatedField()
+
+    class Meta:
+        model = Narrative
+
+        fields = (
+            'id',
+            'description',
+            'author',
+            'datetime'
+        )

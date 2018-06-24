@@ -33,9 +33,8 @@ except ImportError:
 import operator
 from rest_framework.decorators import api_view
 from common.views import *
-# from django.shortcuts import render
 from emr.models import UserProfile, Problem, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting, \
-    Document, ObservationValue
+    Document, ObservationValue, Narrative
 from emr.models import Goal, ToDo
 from emr.models import Encounter, EncounterEvent, EncounterProblemRecord
 
@@ -46,7 +45,7 @@ from emr.models import MyStoryTab, MyStoryTextComponent
 
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
-from .serializers import UserProfileSerializer
+from .serializers import UserProfileSerializer, NarrativeSerializer
 from todo_app.serializers import TodoSerializer
 from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
 
@@ -254,9 +253,6 @@ def manage_patient(request, user_id):
     context['bleeding_risk'] = json.dumps(Medication.objects.filter(current=True).filter(
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists())
 
-    # todo = ToDo.objects.filter(patient_id=user_id, accomplished=False).order_by("order")[0:5]
-    # context['todo'] = json.dumps(TodoSerializer(todo, many=True).data)
-
     context = RequestContext(request, context)
     return render_to_response("manage_patient.html", context)
 
@@ -322,9 +318,6 @@ def get_patient_info(request, patient_id):
     encounters = Encounter.objects.filter(patient=patient_user).order_by('-starttime')
     favorites = EncounterEvent.objects.filter(encounter__patient=patient_user, is_favorite=True).order_by('-datetime')
 
-    # most_recent_encounter_documents_holder, most_recent_encounter_summaries, related_problem_holder = method_name(
-    #     patient_user)
-
     # sharing system
     shared_patients = SharingPatient.objects.filter(sharing=patient_user).order_by('shared__first_name',
                                                                                    'shared__last_name')
@@ -355,10 +348,6 @@ def get_patient_info(request, patient_id):
 
     resp['encounters'] = EncounterSerializer(encounters, many=True).data
     resp['favorites'] = EncounterEventSerializer(favorites, many=True).data
-
-    # resp['most_recent_encounter_summaries'] = most_recent_encounter_summaries
-    # resp['most_recent_encounter_related_problems'] = related_problem_holder
-    # resp['most_recent_encounter_documents'] = most_recent_encounter_documents_holder
 
     resp['shared_patients'] = patients_list
     resp['sharing_patients'] = sharing_patients_list
@@ -1111,7 +1100,68 @@ def set_user_medicare(request, patient_id):
     return ajax_response(resp)
 
 
+@login_required
 def get_vitals_table_component(patient_id, component_name):
     return ObservationValue.objects.filter(component__name=component_name).filter(
         component__observation__subject_id=patient_id).order_by(
         '-effective_datetime')[0:5]
+
+
+@login_required
+def get_user_narratives(request, patient_id):
+    """
+
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    result_set = Narrative.objects.filter(patient_id=patient_id).order_by('-created_at')
+
+    resp['success'] = True
+    resp['data'] = {
+        "latest": NarrativeSerializer(result_set.first()).data,
+        "total": result_set.count()
+    }
+
+    return ajax_response(resp)
+
+
+def add_narratives(request, patient_id):
+    """
+
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    json_body = json.loads(request.body)
+
+    narrative = Narrative(
+        description=json_body.get("description"),
+        parent_id=json_body.get("id"),
+        author=request.user,
+        patient_id=patient_id
+    )
+    narrative.save()
+
+    resp['success'] = True
+    resp['data'] = NarrativeSerializer(narrative).data
+
+    return ajax_response(resp)
+
+
+def get_all_narratives(request, patient_id):
+    """
+
+    :param patient_id:
+    :param request:
+    :return:
+    """
+    resp = {'success': False}
+    result_set = Narrative.objects.filter(patient_id=patient_id).order_by('-created_at')
+
+    resp['success'] = True
+    resp['data'] = NarrativeSerializer(result_set, many=True).data
+
+    return ajax_response(resp)

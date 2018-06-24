@@ -22,6 +22,25 @@
         'ngDialog', 'sharedService', 'dataService', 'toaster', '$location', 'todoService',
         'prompt', '$timeout', 'CollapseService', '$filter', '$window'];
 
+    /**
+     *
+     * @param $scope
+     * @param patientService
+     * @param problemService
+     * @param encounterService
+     * @param ngDialog
+     * @param sharedService
+     * @param dataService
+     * @param toaster
+     * @param $location
+     * @param todoService
+     * @param prompt
+     * @param $timeout
+     * @param CollapseService
+     * @param $filter
+     * @param $window
+     * @constructor
+     */
     function HomeCtrl($scope, patientService, problemService, encounterService, ngDialog, sharedService, dataService,
                       toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
 
@@ -59,63 +78,72 @@
         $scope.sortedProblem = false;
         $scope.draggedProblem = false;
         $scope.todoIsLoading = false;
+        $scope.narrativeHistories = [];
+        $scope.showNarrative = false;
+        $scope.narratives = {
+            latest: {},
+            total: 6
+        };
 
-        $scope.add_bfdi_value = add_bfdi_value;
+        $scope.add_bfdi_value = addBfdiValue;
         $scope.add_goal = addGoal;
-        $scope.add_my_story_tab = add_my_story_tab;
-        $scope.add_my_story_text = add_my_story_text;
-        $scope.add_new_common_problem = add_new_common_problem;
-        $scope.add_new_data_type = add_new_data_type;
-        $scope.add_new_list_label = add_new_list_label;
-        $scope.add_new_problem = add_new_problem;
-        $scope.add_problem = add_problem;
-        $scope.add_problem_list = add_problem_list;
+        $scope.add_my_story_tab = addMyStoryTab;
+        $scope.add_my_story_text = addMyStoryText;
+        $scope.add_new_common_problem = addNewCommonProblem;
+        $scope.add_new_data_type = addNewDataType;
+        $scope.add_new_list_label = addNewListLabel;
+        $scope.add_new_problem = addNewProblem;
+        $scope.add_problem = addProblem;
+        $scope.add_problem_list = addProblemList;
         $scope.add_todo = addTodo;
-        $scope.change_component_text = change_component_text;
-        $scope.change_homepage_tab = change_homepage_tab;
-        $scope.check_has_data_loinc_code = check_has_data_loinc_code;
-        $scope.check_problem_list_authenticated = check_problem_list_authenticated;
-        $scope.check_problem_list_controlled = check_problem_list_controlled;
+        $scope.change_component_text = changeComponentText;
+        $scope.change_homepage_tab = changeHomepageTab;
+        $scope.check_has_data_loinc_code = checkHasDataLoincCode;
+        $scope.check_problem_list_authenticated = checkProblemListAuthenticated;
+        $scope.check_problem_list_controlled = checkProblemListControlled;
         $scope.checkSharedMyStory = checkSharedMyStory;
         $scope.checkSharedProblem = checkSharedProblem;
-        $scope.delete_list = delete_list;
-        $scope.delete_my_story_tab = delete_my_story_tab;
-        $scope.delete_my_story_text = delete_my_story_text;
-        $scope.edit_my_story_tab = edit_my_story_tab;
+        $scope.delete_list = deleteList;
+        $scope.delete_my_story_tab = deleteMyStoryTab;
+        $scope.delete_my_story_text = deleteMyStoryText;
+        $scope.edit_my_story_tab = editMyStoryTab;
         $scope.fetchTimeLineProblem = fetchTimeLineProblem;
         $scope.fileUploadSuccess = fileUploadSuccess;
         $scope.inArray = inArray;
         $scope.isInArray = isInArray;
         $scope.nameFavoriteEvent = nameFavoriteEvent;
         $scope.nurseSubmitBDFI = nurseSubmitBDFI;
-        $scope.on_cover_picture_remove = on_cover_picture_remove;
-        $scope.on_cover_picture_reposition = on_cover_picture_reposition;
-        $scope.on_cover_picture_upload = on_cover_picture_upload;
-        $scope.open_problem = open_problem;
+        $scope.on_cover_picture_remove = onCoverPictureRemove;
+        $scope.on_cover_picture_reposition = onCoverPictureReposition;
+        $scope.on_cover_picture_upload = onCoverPictureUpload;
+        $scope.open_problem = openProblem;
         $scope.permitted = permitted;
         $scope.problemTermChanged = problemTermChanged;
-        $scope.rename_list = rename_list;
-        $scope.save_my_story_tab = save_my_story_tab;
-        $scope.save_my_story_text = save_my_story_text;
-        $scope.see_previous_entries = see_previous_entries;
-        $scope.set_collapse = set_collapse;
+        $scope.rename_list = renameList;
+        $scope.save_my_story_tab = saveMyStoryTab;
+        $scope.save_my_story_text = saveMyStoryText;
+        $scope.see_previous_entries = seePreviousEntries;
+        $scope.set_collapse = setCollapse;
         $scope.set_new_problem = setNewProblem;
         $scope.timelineSave = timelineSave;
         $scope.toggle_accomplished_todos = toggleAccomplishedTodos;
-        $scope.toggle_add_my_story_tab = toggle_add_my_story_tab;
-        $scope.toggle_add_my_story_text = toggle_add_my_story_text;
-        $scope.toggle_add_new_data_type = toggle_add_new_data_type;
+        $scope.toggle_add_my_story_tab = toggleAddMyStoryTab;
+        $scope.toggle_add_my_story_text = toggleAddMyStoryText;
+        $scope.toggle_add_new_data_type = toggleAddNewDataType;
         $scope.unmarkFavoriteEvent = unmarkFavoriteEvent;
-        $scope.unset_new_problem = unset_new_problem;
-        $scope.update_patient_note = update_patient_note;
-        $scope.update_problem_list_note = update_problem_list_note;
+        $scope.unset_new_problem = unsetNewProblem;
+        $scope.update_patient_note = updatePatientNote;
+        $scope.update_problem_list_note = updateProblemListNote;
         $scope.updateStatusCallback = changeTodoList;
         $scope.updateProfilePicture = updateProfilePicture;
         $scope.updateSummary = updateSummary;
-        $scope.view_my_story_tab = view_my_story_tab;
+        $scope.view_my_story_tab = viewMyStoryTab;
         $scope.addProblemIsSelected = addProblemIsSelected;
         $scope.bdfiValueIsChanged = bdfiValueIsChanged;
         $scope.loadMoreTodo = loadMoreTodo;
+        $scope.loadMore = loadMoreNarrative;
+        $scope.addNarrative = addNarrative;
+
         init();
 
         function init() {
@@ -183,6 +211,10 @@
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                 }
+            });
+
+            patientService.fetchNarrative($scope.patient_id).then(response => {
+                $scope.narratives = response.data;
             });
 
             // TODO: This should be set to global usage
@@ -629,11 +661,11 @@
             $scope.new_problem.code = problem.code;
         }
 
-        function unset_new_problem() {
+        function unsetNewProblem() {
             $scope.new_problem.set = false;
         }
 
-        function add_problem() {
+        function addProblem() {
             var c = confirm("Are you sure?");
             if (c == false) {
                 return false;
@@ -662,7 +694,7 @@
             });
         }
 
-        function add_new_problem(problem_term) {
+        function addNewProblem(problem_term) {
             if (problem_term == '' || problem_term == undefined) {
                 return false;
             }
@@ -692,7 +724,7 @@
             });
         }
 
-        function add_new_common_problem(problem, type) {
+        function addNewCommonProblem(problem, type) {
             var form = {};
             form.patient_id = $scope.patient_id;
             form.cproblem = problem;
@@ -716,7 +748,7 @@
             patientService.toggleTodoStatus(todo);
         }
 
-        function open_problem(problem) {
+        function openProblem(problem) {
             if (!$scope.draggedProblem) {
                 $location.path('/problem/' + problem.id);
             }
@@ -736,7 +768,7 @@
         }
 
         // label problem list
-        function add_new_list_label(new_list, label) {
+        function addNewListLabel(new_list, label) {
             var index = new_list.labels.indexOf(label);
             if (index > -1)
                 new_list.labels.splice(index, 1);
@@ -744,7 +776,7 @@
                 new_list.labels.push(label);
         }
 
-        function add_problem_list(form) {
+        function addProblemList(form) {
             form.user_id = $scope.user_id;
             form.patient_id = $scope.patient_id;
             if (form.name && form.labels.length > 0) {
@@ -760,12 +792,12 @@
             }
         }
 
-        function set_collapse(list) {
+        function setCollapse(list) {
             if (list.rename === false)
                 list.collapse = !list.collapse;
         }
 
-        function delete_list(list) {
+        function deleteList(list) {
             prompt({
                 "title": "Are you sure?",
                 "message": "Deleting a problem list is forever. There is no undo."
@@ -780,7 +812,7 @@
             });
         }
 
-        function rename_list(list) {
+        function renameList(list) {
             if (list.name) {
                 problemService.renameProblemList(list).then(function (data) {
                     list.rename = false;
@@ -791,7 +823,7 @@
             }
         }
 
-        function update_problem_list_note(list) {
+        function updateProblemListNote(list) {
             var form = {
                 'list_id': list.id,
                 'note': list.note
@@ -801,7 +833,7 @@
             });
         }
 
-        function check_problem_list_authenticated(list) {
+        function checkProblemListAuthenticated(list) {
             var is_existed = false;
             angular.forEach(list.problems, function (value, key) {
                 if (!value.authenticated) {
@@ -811,7 +843,7 @@
             return is_existed;
         }
 
-        function check_problem_list_controlled(list) {
+        function checkProblemListControlled(list) {
             var is_existed = false;
             angular.forEach(list.problems, function (value, key) {
                 if (!value.is_controlled) {
@@ -858,7 +890,7 @@
         }
 
         // note on header of page
-        function update_patient_note() {
+        function updatePatientNote() {
             var form = {
                 'patient_id': $scope.patient_id,
                 'note': $scope.patient_info.note
@@ -892,7 +924,7 @@
         /**
          * Callback when user choose new cover image from computer
          */
-        function on_cover_picture_upload(file) {
+        function onCoverPictureUpload(file) {
             var form = {};
             form.user_id = $scope.patient_info.user.id;
             form.phone_number = $scope.patient_info.phone_number;
@@ -916,7 +948,7 @@
         /**
          * Callback when user choosing thee reposition action
          */
-        function on_cover_picture_reposition() {
+        function onCoverPictureReposition() {
             $scope.is_reposition_flag = true;
             console.log("On cover image starting reposition .....");
         }
@@ -924,7 +956,7 @@
         /**
          * Callback when user click on remove cover image
          */
-        function on_cover_picture_remove() {
+        function onCoverPictureRemove() {
             alert("Function under-construction we will update asap");
         }
 
@@ -943,7 +975,7 @@
         /*
          *   handle cache homepage tabs
          */
-        function change_homepage_tab(tab) {
+        function changeHomepageTab(tab) {
 
             CollapseService.ChangeHomepageTab(tab);
 
@@ -957,11 +989,11 @@
             }
         }
 
-        function toggle_add_my_story_tab() {
+        function toggleAddMyStoryTab() {
             $scope.show_add_my_story_tab = !$scope.show_add_my_story_tab;
         }
 
-        function add_my_story_tab(new_tab) {
+        function addMyStoryTab(new_tab) {
             if (new_tab.name) {
                 var form = {};
                 form.name = new_tab.name;
@@ -989,7 +1021,7 @@
         /*
          *   toggle view my story tab
          */
-        function view_my_story_tab(tab) {
+        function viewMyStoryTab(tab) {
 
 
             $scope.selected_tab = tab;
@@ -999,11 +1031,11 @@
         /*
          *   toggle add my story text
          */
-        function toggle_add_my_story_text() {
+        function toggleAddMyStoryText() {
             $scope.show_add_my_story_text = !$scope.show_add_my_story_text;
         }
 
-        function add_my_story_text(tab, new_text) {
+        function addMyStoryText(tab, new_text) {
             var form = {};
             form.name = new_text.name;
             form.text = new_text.text;
@@ -1032,14 +1064,14 @@
         /*
          *   toggle edit my story tab
          */
-        function edit_my_story_tab() {
+        function editMyStoryTab() {
             $scope.show_edit_my_story_tab = !$scope.show_edit_my_story_tab;
         }
 
         /*
          *   delete my story tab
          */
-        function delete_my_story_tab(selected_tab) {
+        function deleteMyStoryTab(selected_tab) {
             prompt({
                 "title": "Are you sure?",
                 "message": "Deleting a tab is forever. There is no undo."
@@ -1061,7 +1093,7 @@
             });
         }
 
-        function save_my_story_tab(selected_tab) {
+        function saveMyStoryTab(selected_tab) {
             if (selected_tab.name) {
                 var form = {};
                 form.name = selected_tab.name;
@@ -1083,7 +1115,7 @@
         /*
          *   delete my story tab
          */
-        function delete_my_story_text(component) {
+        function deleteMyStoryText(component) {
             prompt({
                 "title": "Are you sure?",
                 "message": "Deleting a text component is forever. There is no undo."
@@ -1102,7 +1134,7 @@
             });
         }
 
-        function save_my_story_text(component) {
+        function saveMyStoryText(component) {
             var form = {};
             form.name = component.name;
             form.concept_id = component.concept_id;
@@ -1117,7 +1149,7 @@
             });
         }
 
-        function change_component_text(component, entry, oldText) {
+        function changeComponentText(component, entry, oldText) {
             var form = {};
             form.text = entry.text;
             form.component_id = component.id;
@@ -1135,7 +1167,7 @@
             });
         }
 
-        function see_previous_entries() {
+        function seePreviousEntries() {
             $scope.show_previous_entries = !$scope.show_previous_entries;
         }
 
@@ -1156,11 +1188,11 @@
             return false;
         }
 
-        function toggle_add_new_data_type() {
+        function toggleAddNewDataType() {
             $scope.show_add_new_data_type = !$scope.show_add_new_data_type;
         }
 
-        function add_new_data_type(new_data_type) {
+        function addNewDataType(new_data_type) {
             var form = {};
             form.name = new_data_type.name;
             form.code = new_data_type.code;
@@ -1181,7 +1213,7 @@
             });
         }
 
-        function check_has_data_loinc_code(datas, code) {
+        function checkHasDataLoincCode(datas, code) {
             var is_inr = false;
             angular.forEach(datas, function (data, key) {
                 angular.forEach(data.observation_components, function (component, key2) {
@@ -1193,7 +1225,7 @@
             return is_inr;
         }
 
-        function add_bfdi_value(component, resetNewValue) {
+        function addBfdiValue(component, resetNewValue) {
             // Default is true
             resetNewValue = _.isUndefined(resetNewValue);
             var new_data = {};
@@ -1389,7 +1421,27 @@
             }
         }
 
+        /**
+         *
+         */
+        function loadMoreNarrative() {
+            $scope.showNarrative = !$scope.showNarrative;
+            patientService.loadAllNarrative($scope.patient_id).then(response => {
+                $scope.narrativeHistories = response.data;
+            });
+        }
 
+        /**
+         *
+         */
+        function addNarrative() {
+            patientService.addNarrative($scope.patient_id, $scope.narratives.latest)
+                .then(response => {
+                    $scope.narratives.latest = response.data;
+                    $scope.narrativeHistories.unshift(response.data);
+                    $scope.narratives.total++;
+                });
+        }
     }
 
     /* End of controller */
