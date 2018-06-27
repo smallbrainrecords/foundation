@@ -99,7 +99,10 @@
                 getDocuments: getDocuments,
                 getToDo: getToDo,
                 getVitalTableViews: getVitalTableViews,
-                updateMedicare: updateMedicare
+                updateMedicare: updateMedicare,
+                addNarrative: addNarrative,
+                fetchNarrative: fetchNarrative,
+                loadAllNarrative: loadAllNarrative
             };
 
             function csrf_token() {
@@ -676,8 +679,35 @@
              * @returns {HttpPromise}
              */
             function updateMedicare(patientId, form) {
-                // console.log(`PatientService:updateMedicare:${JSON.stringify(form)}`);
                 return httpService.post(form, `/u/users/${patientId}/medicare`);
+            }
+
+            /**
+             *
+             * @param patientId
+             * @returns {*}
+             */
+            function loadAllNarrative(patientId) {
+                return httpService.get({}, `/u/users/${patientId}/get_all_narratives`)
+            }
+
+            /**
+             *
+             * @param patientId
+             * @returns {*}
+             */
+            function fetchNarrative(patientId) {
+                return httpService.get({}, `/u/users/${patientId}/narratives`)
+            }
+
+            /**
+             *
+             * @param patientId
+             * @param narrative
+             * @returns {*}
+             */
+            function addNarrative(patientId, narrative) {
+                return httpService.postJson(narrative, `/u/users/${patientId}/add_narratives`);
             }
         });
 })();

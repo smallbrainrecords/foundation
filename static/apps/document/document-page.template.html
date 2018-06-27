@@ -28,11 +28,13 @@
                                 ng-click="enableEditDocumentName=false">
                             Cancel
                         </button>
+
+
                     </div>
                 </div>
             </div>
-
             <div class="col-md-12">
+                <br>
                 <div class="flex-item">
                     <button class="btn btn-default" ng-show="!enableEditDocumentName"
                             ng-click="enableEditDocumentName=true">Edit name
@@ -49,10 +51,15 @@
                             ng-click="enableProblemPin=!enableProblemPin"
                             ng-bind="enableProblemPin ? 'Done problem pin' :'Pin problem'"></button>
                     <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete</button>
+                    <div class="pull-right" ng-if="'patient'!=active_user.role">
+                        <a class="btn btn-default" href="#/manage/document/{{pagination.prev}}" ng-if="pagination.prev">Prev</a>
+                        <a class="btn btn-default" href="#/manage/document/{{pagination.next}}" ng-if="pagination.next">Next</a>
+                    </div>
                 </div>
             </div>
 
             <div class="col-md-12" ng-show="enableEditLabel">
+                <br>
                 <span ng-repeat="label in labels track by $index" class="quick-card-editor-label labeled-list cursor"
                       ng-class="label.pin ? '' :''">
                     <a class="todo-label" ng-class="label.css_class"

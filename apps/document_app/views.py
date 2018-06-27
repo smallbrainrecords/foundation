@@ -42,7 +42,6 @@ def upload_document(request):
     # TODO: Currently this is using patient profile id instead of user id
     # Change from UserProfile's id to User's id
     patient_uid = request.POST.get('patient', None)
-    # patient_user = User.objects.filter(profile__id=patient).first()
 
     document_dao = Document.objects.create(document=document, document_name=document.name,
                                            patient_id=patient_uid, author=request.user)
@@ -96,9 +95,15 @@ def document_info(request, document_id):
 
     labels = Label.objects.filter(is_all=True)
 
+    next = Document.objects.filter(id__gt=document_id, patient__isnull=True).order_by('id').first()
+    prev = Document.objects.filter(id__lt=document_id, patient__isnull=True).order_by('-id').first()
+
+    resp['success'] = True
+    resp['prev'] = prev if prev is None else prev.id
+    resp['next'] = next if next is None else next.id
     resp['info'] = DocumentSerializer(document).data
     resp['labels'] = LabelSerializer(labels, many=True).data
-    resp['success'] = True
+
     return ajax_response(resp)
 
 
@@ -242,12 +247,9 @@ def delete_document(request, document_id):
         todo = ToDo.objects.filter(id=del_tag_id).get()
         tag = DocumentTodo.objects.filter(document=document, todo=todo).get()
 
-    if user.profile.role != 'patient':  # Other user not patient can delete the tag without hassle
+    if user.profile.role != 'patient' or (
+            user.profile == document.author or user.profile == tag.author):  # Other user not patient can delete the tag without hassle
         tag.delete()
-    else:
-        # Patient can only delete tag if they document owner or tag author
-        if user.profile == document.author or user.profile == tag.author:
-            tag.delete()
 
     if del_in_sys and ["physician", "admin"].__contains__(user.profile.role):  # delete document in system
         document.delete()
