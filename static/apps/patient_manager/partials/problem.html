@@ -679,7 +679,7 @@
             </div>
             <div class="panel-body">
                 <ul class="ul-clean no-padding">
-                    <li ng-repeat="document in pinned_document track by $index">
+                    <li ng-repeat="document in pinned_document | orderBy:'created_on':true track by $index">
                         <div>
                             <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
                                ng-class="label.css_class"><span ng-bind="label.name"
