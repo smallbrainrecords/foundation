@@ -52,8 +52,8 @@
                             ng-bind="enableProblemPin ? 'Done problem pin' :'Pin problem'"></button>
                     <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete</button>
                     <div class="pull-right" ng-if="'patient'!=active_user.role">
-                        <a class="btn btn-default" href="#/manage/document/{{pagination.prev}}" ng-if="pagination.prev">Prev</a>
-                        <a class="btn btn-default" href="#/manage/document/{{pagination.next}}" ng-if="pagination.next">Next</a>
+                        <a class="btn btn-default" href="/u/staff/#/manage/document/{{pagination.prev}}" ng-if="pagination.prev">Prev</a>
+                        <a class="btn btn-default" href="/u/staff/#/manage/document/{{pagination.next}}" ng-if="pagination.next">Next</a>
                     </div>
                 </div>
             </div>
