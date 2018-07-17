@@ -37,7 +37,7 @@ def get_blood_pressure_obs_component_ids():
 
     :return:
     """
-    raw_query = "SELECT group_concat(id SEPARATOR ',') AS component_ids FROM emr_observationcomponent WHERE name IN ('systolic','diastolic')  GROUP BY observation_id"
+    raw_query = "SELECT group_concat(ANY_VALUE(id) SEPARATOR ',') AS component_ids FROM emr_observationcomponent WHERE name IN ('systolic','diastolic')  GROUP BY observation_id"
 
     with connection.cursor() as cursor:
         cursor.execute(raw_query)
@@ -54,7 +54,7 @@ def get_observation_value_pair(component_id):
     :param component_id:
     :return:
     """
-    raw_query = "SELECT  COUNT('component_id') AS no_of_component, DATE_FORMAT(created_on, '%m/%d/%Y %H:%i') AS entry_time,  GROUP_CONCAT(id SEPARATOR '&') AS existed_value_ids, GROUP_CONCAT(component_id SEPARATOR ',') AS existed_component_ids FROM emr_observationvalue WHERE component_id IN ({0}) GROUP BY DATE_FORMAT(created_on, '%Y-%m-%d %H:%i:%s') ORDER  BY COUNT(component_id)" \
+    raw_query = "SELECT  COUNT('component_id') AS no_of_component, DATE_FORMAT(ANY_VALUE(created_on), '%m/%d/%Y %H:%i') AS entry_time,  GROUP_CONCAT(ANY_VALUE(id) SEPARATOR '&') AS existed_value_ids, GROUP_CONCAT(ANY_VALUE(component_id) SEPARATOR ',') AS existed_component_ids FROM emr_observationvalue WHERE component_id IN ({0}) GROUP BY DATE_FORMAT(created_on, '%Y-%m-%d %H:%i:%s') ORDER  BY COUNT(component_id)" \
         .format(component_id)
     with connection.cursor() as cursor:
         cursor.execute(raw_query)
