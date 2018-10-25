@@ -641,9 +641,7 @@
             </div>
             <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;' ng-show="encounter_collapse">
                 <a href='#/encounter/{{ encounter.id }}' ng-repeat='encounter in related_encounters track by $index'
-                   class="encounter-item">
-                    Ref ID: {{ encounter.id }} on {{ encounter.starttime|date }}
-                </a>
+                   class="encounter-item"> {{ encounter.starttime|date }}</a>
             </div>
         </div>
 
