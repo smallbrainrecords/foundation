@@ -256,7 +256,7 @@
                             </form>
                             <hr>
                             <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
-                                      <!--on-status-changed-success="updateStatusCallback"-->
+                                <!--on-status-changed-success="updateStatusCallback"-->
                                 <todo todo-list="pending_todos" show-problem="false"
                                       labels="labels" members="members"
                                       patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
@@ -268,7 +268,7 @@
                             </button>
                             <hr>
                             <div ng-show='show_accomplished_todos'>
-                                      <!--on-status-changed-success="updateStatusCallback"-->
+                                <!--on-status-changed-success="updateStatusCallback"-->
                                 <todo todo-list="accomplished_todos" show-problem="false"
                                       labels="labels" members="members"
                                       patient-id="patient_id" user-id="patient_id"
@@ -574,31 +574,6 @@
             </div>
         </div>
 
-        <!--Problem images-->
-        <div ng-style="{order:problem_images.length}" class='panel panel-default' id="problem-image">
-            <div class='panel-heading'>
-                Images
-                <span ng-show='permitted(["add_problem_image"])'>
-				<button class='btn btn-sm btn-default' ngf-select="open_image_upload_box($files)" multiple
-                        ngf-max-files="5"
-                        accept="image/*"> Upload </button>
-			</span>
-            </div>
-            <div class='panel-body' ng-show="problem_images.length > 0">
-                <div class='row'>
-                    <div class='col-md-2' ng-repeat='image in problem_images track by $index'>
-                        <img ng-src='{{ image.image }}' class='thumbnail small-img' ng-click='open_image_box(image)'>
-                        <br>
-                        <a href="{{ image.image }}" target="_blank" class='btn btn-sm btn-default'>View</a>
-                        <button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)'
-                                ng-show='permitted(["delete_problem_image"])'>
-                            Delete
-                        </button>
-                        <hr>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Relationships -->
         <div ng-style="{order:effected_problems.length + effecting_problems.length}" class='panel panel-default'>
@@ -672,27 +647,60 @@
             </div>
         </div>
 
-        <!--Uploaded document-->
-        <div ng-style="{order:pinned_document.length}" class="panel panel-default uploaded_document">
-            <div class="panel-heading">
-                <p>Pinned document</p>
+        <div class="row">
+            <div class="col-md-6">
+                <!--Uploaded document-->
+                <div ng-style="{order:pinned_document.length}" class="panel panel-default uploaded_document">
+                    <div class="panel-heading">
+                        <p>Pinned document</p>
+                    </div>
+                    <div class="panel-body">
+                        <ul class="ul-clean no-padding">
+                            <li ng-repeat="document in pinned_document | orderBy:'created_on':true track by $index">
+                                <div>
+                                    <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
+                                       ng-class="label.css_class"><span ng-bind="label.name"
+                                                                        class="todo-label-name"></span></a>
+                                    <a href="#/document/{{document.id}}" class="flex-item document_name"
+                                       ng-bind="document.document_name"></a>
+                                    <span class="flex-item document_uploaded_date pull-right"
+                                          ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <div class="panel-body">
-                <ul class="ul-clean no-padding">
-                    <li ng-repeat="document in pinned_document | orderBy:'created_on':true track by $index">
-                        <div>
-                            <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
-                               ng-class="label.css_class"><span ng-bind="label.name"
-                                                                class="todo-label-name"></span></a>
-                            <a href="#/document/{{document.id}}" class="flex-item document_name"
-                               ng-bind="document.document_name"></a>
-                            <span class="flex-item document_uploaded_date pull-right"
-                                  ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
+            <div class="col-md-6">
+                <!--Problem images-->
+                <div ng-style="{order:problem_images.length}" class='panel panel-default' id="problem-image">
+                    <div class='panel-heading'>
+                        Images
+                        <span ng-show='permitted(["add_problem_image"])'>
+				<button class='btn btn-sm btn-default' ngf-select="open_image_upload_box($files)" multiple
+                        ngf-max-files="5"
+                        accept="image/*"> Upload </button>
+			</span>
+                    </div>
+                    <div class='panel-body'>
+                        <div class='row'>
+                            <div class='col-md-2' ng-repeat='image in problem_images track by $index'>
+                                <img ng-src='{{ image.image }}' class='thumbnail small-img'
+                                     ng-click='open_image_box(image)'>
+                                <br>
+                                <a href="{{ image.image }}" target="_blank" class='btn btn-sm btn-default'>View</a>
+                                <button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)'
+                                        ng-show='permitted(["delete_problem_image"])'>
+                                    Delete
+                                </button>
+                                <hr>
+                            </div>
                         </div>
-                    </li>
-                </ul>
+                    </div>
+                </div>
             </div>
         </div>
+
     </section>
     <!--END WEIGHTED ORDERING-->
 
