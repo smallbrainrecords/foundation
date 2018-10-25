@@ -208,28 +208,28 @@
     </div>
 
     <!-- Problem status-->
-    <div class='row'>
-        <div class='col-md-12'>
-            <div class='panel panel-default'>
-                <div class='panel-heading'>Status</div>
-                <div class='panel-body'>
-                    <div class='row'>
-                        <div class='col-md-4'>
-                            <label><input type='checkbox' ng-model='problem.is_controlled'
-                                          ng-disabled='!permitted(["set_problem_controlled"])'>
-                                Is controlled</label>
-                        </div>
-                        <div class='col-md-4'>
-                            <input type='checkbox' ng-model='problem.authenticated'
-                                   ng-disabled='!permitted(["set_problem_authenticated"])'>
-                            Is authenticated
-                        </div>
-                        <div class='col-md-4'>
-                            <input type='checkbox' ng-model='problem.is_active'
-                                   ng-disabled='!permitted(["set_problem_active"])'>
-                            Is active
-                        </div>
+    <div class='panel panel-default'>
+        <div class='panel-body'>
+            <div class='row'>
+                <div class='col-md-4'>
+                    <!--Only show if edit mode is enabled-->
+                    <div class="checkbox">
+                        <input type='checkbox' ng-model='problem.is_controlled' id="controller-switch"
+                               ng-disabled='!permitted(["set_problem_controlled"])'>
+                        <label for="controller-switch"> Is controlled </label>
                     </div>
+                </div>
+                <div class='col-md-4'>
+                    <div class="checkbox">
+                        <input type='checkbox' ng-model='problem.authenticated' id="authenticated-switch"
+                               ng-disabled='!permitted(["set_problem_authenticated"])'>
+                        <label for="authenticated-switch">Is authenticated</label></div>
+                </div>
+                <div class='col-md-4'>
+                    <div class="checkbox">
+                        <input type='checkbox' ng-model='problem.is_active' id="active-switch"
+                               ng-disabled='!permitted(["set_problem_active"])'>
+                        <label for="active-switch">Is active</label></div>
                 </div>
             </div>
         </div>
