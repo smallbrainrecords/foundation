@@ -48,6 +48,18 @@
          * Global chart configuration
          */
         ChartJsProvider.setOptions({
+            elements: {
+                line: {
+                    tension: 0, // disables bezier curves
+                }
+            },
+            scales: {
+                xAxes: [
+                    {
+                        type: 'time'
+                    }
+                ]
+            },
             chartColors: ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF']
         });
         /**
