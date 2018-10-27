@@ -1,0 +1,1 @@
+`docker run  -d -e MYSQL_ROOT_PASSWORD=root -p 3306:3306 -v D:\Workspace\database\smallbrain:/var/lib/mysql mysql:5.7.22 --sql_mode=""`

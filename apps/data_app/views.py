@@ -14,6 +14,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from math import pow
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -257,15 +258,16 @@ def obseration_pin_to_problem(request, patient_id):
 def add_new_data(request, patient_id, component_id):
     resp = {'success': False}
 
-    patient = User.objects.filter(id=int(patient_id)).get() # Patient user instance
-    effective_datetime = request.POST.get("datetime", datetime.now().strftime('%m/%d/%Y %H:%M')) # Get user submit data
+    patient = User.objects.filter(id=int(patient_id)).get()  # Patient user instance
+    effective_datetime = request.POST.get("datetime", datetime.now().strftime('%m/%d/%Y %H:%M'))  # Get user submit data
 
     value_quantity = request.POST.get("value", 0)
     value_quantity = value_quantity if value_quantity != '' else 0  # Passed empty value
 
     # Validate user input
     if permissions_accessed(request.user, int(patient_id)) and validate_effective_datetime(
-            effective_datetime) and validate_number(value_quantity) and validate_value_quantity(component_id,value_quantity):
+            effective_datetime) and validate_number(value_quantity) and validate_value_quantity(component_id,
+                                                                                                value_quantity):
 
         # DB stuff
         effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
@@ -283,7 +285,7 @@ def add_new_data(request, patient_id, component_id):
             heightComponent = ObservationComponent.objects.filter(component_code='8302-2').filter(
                 observation__subject_id=int(patient_id)).get()
             height = get_observation_most_common_value(heightComponent, effective_datetime)
-            bmiValue = round(float(value.value_quantity) * 703 / math.pow(height, 2), 2)
+            bmiValue = round(float(value.value_quantity) * 703 / pow(height, 2), 2)
 
             # DB stuff transaction
             ObservationValue(author=request.user, component=bmiComponent,
@@ -297,7 +299,7 @@ def add_new_data(request, patient_id, component_id):
             weightComponent = ObservationComponent.objects.filter(component_code='3141-9').filter(
                 observation__subject_id=int(patient_id)).get()
             weight = get_observation_most_common_value(weightComponent, effective_datetime)
-            bmiValue = round(weight * 703 / math.pow(float(value.value_quantity), 2), 2)
+            bmiValue = round(weight * 703 / pow(float(value.value_quantity), 2), 2)
 
             # DB stuff transaction
             ObservationValue(author=request.user, component=bmiComponent,
