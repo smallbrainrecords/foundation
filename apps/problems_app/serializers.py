@@ -123,6 +123,7 @@ class ProblemNoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProblemNote
         fields = (
+            'id',
             'author',
             'problem',
             'note',

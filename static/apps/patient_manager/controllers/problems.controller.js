@@ -119,6 +119,7 @@
             $scope.toggle_accomplished_goals = toggle_accomplished_goals;
             $scope.toggle_accomplished_todos = toggle_accomplished_todos;
             $scope.toggle_other_notes = toggle_other_notes;
+            $scope.loadMoreNotes = loadMoreNotes();
             $scope.toggle_physician_notes = toggle_physician_notes;
             $scope.unset_new_problem = unset_new_problem;
             $scope.update_start_date = update_start_date;
@@ -208,6 +209,7 @@
                 // SECONDARY LOADING
 
                 // Wiki note
+                // TODO -> Migrate to component
                 problemService.getRelatedWikis($scope.problem_id).then(function (response) {
                     $scope.history_note = response.data['history_note'];
                     $scope.history_note_total = response.data['history_note_total'];
@@ -863,6 +865,10 @@
                 });
             }
 
+            /**
+             * @deprecated
+             * @param form
+             */
             function add_wiki_note(form) {
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
@@ -899,9 +905,7 @@
 
                 }, function (error) {
                     toaster.pop('error', 'Warning', 'Something went wrong!');
-
                 });
-
             }
 
             function add_history_note(form) {
@@ -1192,6 +1196,9 @@
 
             }
 
+            /**
+             * @deprecated
+             */
             function toggle_other_notes() {
 
                 if ($scope.show_other_notes == true) {
@@ -1201,6 +1208,21 @@
                 }
             }
 
+            /**
+             * @deprecated
+             */
+            function loadMoreNotes() {
+                //TODO: Load all problem wikie note
+                if ($scope.show_other_notes == true) {
+                    $scope.show_other_notes = false;
+                } else {
+                    $scope.show_other_notes = true;
+                }
+            }
+
+            /**
+             * @deprecated
+             */
             function toggle_physician_notes() {
 
                 if ($scope.show_physician_notes == true) {

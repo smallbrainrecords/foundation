@@ -1,0 +1,33 @@
+<div class='panel panel-default'>
+    <div class='panel-heading'>Notes</div>
+    <div class='panel-body'>
+        <!-- New note form -->
+        <form class='form' ng-submit='$ctrl.addNote()'>
+            <div class='form-group'>
+                <textarea ng-model='$ctrl.note' class='form-control' auto-focus tabindex="1"></textarea>
+            </div>
+            <div class='form-group'>
+                <button type='submit' class='btn btn-default' ng-attr-tabindex="{{$ctrl.note ? 2: -1}}"> Add</button>
+            </div>
+        </form>
+
+        <!-- Latest note -->
+        <ul class='list-group'>
+            <!--Last note-->
+            <li class='list-group-item' ng-if="$ctrl.latestNote">
+                <b> {{ $ctrl.latestNote.author.first_name }} {{ $ctrl.latestNote.author.last_name }}
+                    - {{ $ctrl.latestNote.author.username }} </b> : {{ $ctrl.latestNote.note }}
+                <p>{{ $ctrl.latestNote.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+            </li>
+            <!-- 4 more notes-->
+            <li ng-repeat="note in $ctrl.noteList" class='list-group-item'>
+                <b> {{ note.author.first_name }} {{ note.author.last_name }}
+                    - {{ note.author.username }} </b> : {{ note.note }}
+                <p>{{ note.created_on | date:"d MMM yyyy 'at' h:mm" }}</p>
+            </li>
+        </ul>
+
+        <!-- Add more note -->
+        <button class='btn btn-default' ng-click='$ctrl.loadMoreNotes()'>4 more notes</button>
+    </div>
+</div>

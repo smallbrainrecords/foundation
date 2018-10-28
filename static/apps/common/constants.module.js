@@ -47,5 +47,9 @@
             'INR': 1,
             'A1C': 2,
             'COLON_CANCER_SCREENING': 3
+        })
+        .constant('PROBLEM_NOTE_TYPE', {
+            WIKI: 'wiki',
+            HISTORY: 'history'
         });
 })();

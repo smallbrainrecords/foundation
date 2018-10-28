@@ -74,4 +74,6 @@ urlpatterns = patterns('problems_app.views', url(r'^problem/(?P<problem_id>\d+)/
                        url(r'^problem/(?P<problem_id>\d+)/relationships', 'get_problem_relationships'),
                        url(r'^problem/(?P<problem_id>\d+)/encounters$', 'get_related_encounters'),
                        url(r'^problem/(?P<problem_id>\d+)/documents$', 'get_related_documents'),
+
+                       url(r'^problem/(?P<problem_id>\d+)/notes$', 'problem_notes_function'),
                        )

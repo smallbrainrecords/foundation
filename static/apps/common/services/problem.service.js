@@ -61,7 +61,9 @@
                 getRelatedGoals: getRelatedGoals,
                 getRelatedWikis: getRelatedWikis,
                 getRelatedImages: getRelatedImages,
-                getProblemRelationships: getProblemRelationships
+                getProblemRelationships: getProblemRelationships,
+                addNote: addNote,
+                loadMoreProblemNotes: loadMoreProblemNotes
             };
 
             function updateProblemStatus(form) {
@@ -85,6 +87,11 @@
 
             }
 
+            /**
+             * @deprecated Deprecated by {@link addNote}
+             * @param form
+             * @returns {*}
+             */
             function addWikiNote(form) {
 
                 let url = `/p/problem/${form.problem_id}/add_wiki_note`;
@@ -92,6 +99,11 @@
 
             }
 
+            /**
+             * @deprecated Deprecated by {@link addNote}
+             * @param form
+             * @returns {*}
+             */
             function addHistoryNote(form) {
 
                 let url = `/p/problem/${form.problem_id}/add_history_note`;
@@ -322,5 +334,34 @@
                 return $http.get(url);
             }
 
+            /**
+             * RESTful API to adding problem's note
+             * @param {Number} problemId
+             * @param {Object} data
+             * @param {String} data.note
+             * @param {String} data.note_type
+             */
+            function addNote(problemId, data) {
+                let url = `/p/problem/${problemId}/notes`;
+                return $http.post(url, data);
+            }
+
+            /**
+             *
+             * @param {Number} problemId
+             * @param {String} note_type
+             * @param {Number} lastItemIndex
+             * @param {Number} limit
+             */
+            function loadMoreProblemNotes(problemId, note_type, lastItemIndex, limit) {
+                let url = `/p/problem/${problemId}/notes`;
+                return $http.get(url, {
+                    params: {
+                        type: note_type,
+                        before: lastItemIndex,
+                        limit: limit
+                    }
+                });
+            }
         });
 })();

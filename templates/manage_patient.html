@@ -16,7 +16,7 @@
 
 {% block patient_header%}
 <li>
-    <a  title="Edit profile" href="#/edit/profileInfo">
+    <a title="Edit profile" href="#/edit/profileInfo">
         Phone: {{patient.profile.phone_number}}
     </a>
 </li>
@@ -81,8 +81,6 @@
 <!-- Todo module-->
 <script src="/static/apps/todo/todo-item.component.js" type="text/javascript"></script>
 
-
-
 <!--Directives | Component-->
 <script src="/static/apps/patient_manager/directives/timeline.directive.js" type="text/javascript"></script>
 <script src="/static/apps/patient_manager/directives/todo.directive.js" type="text/javascript"></script>
@@ -91,6 +89,10 @@
 <script src="/static/apps/patient_manager/directives/colon-cancer.directive.js" type="text/javascript"></script>
 <script src="/static/apps/patient_manager/directives/medication.directive.js" type="text/javascript"></script>
 <script src="/static/apps/common/encounter-event.directive.js" type="text/javascript"></script>
+
+<!-- Problem note component-->
+<script src="/static/apps/problem-note/problem-note.component.js" type="text/javascript"></script>
+
 <!-- TODO: Patient_Id is an User_ID-->
 <!-- TODO: Patient_Info is an UserProfile instant-->
 <!-- TODO: User_Id is an User_ID instant-->

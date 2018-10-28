@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from datetime import timedelta
 
 from dateutil import parser
+from deprecated import deprecated
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
@@ -267,7 +268,7 @@ def change_name(request, problem_id):
     old_problem_concept_id = problem.concept_id
     old_problem_name = problem.problem_name
     if datetime.now() > datetime.strptime(
-                            problem.start_date.strftime('%d/%m/%Y') + ' ' + problem.start_time.strftime('%H:%M:%S'),
+            problem.start_date.strftime('%d/%m/%Y') + ' ' + problem.start_time.strftime('%H:%M:%S'),
             "%d/%m/%Y %H:%M:%S") + timedelta(hours=24):
         problem.old_problem_name = old_problem_name
 
@@ -435,7 +436,14 @@ def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
 # Add Wiki Note
 @login_required
 # @api_view(["POST"])
+@deprecated(reason="This method is replaced with problem_notes_function()")
 def add_wiki_note(request, problem_id):
+    """
+    @depre
+    :param request:
+    :param problem_id:
+    :return:
+    """
     resp = {'success': False}
 
     try:
@@ -1222,6 +1230,7 @@ def get_problem_goals(request, problem_id):
 
 
 @login_required
+@deprecated
 def get_problem_wikis(request, problem_id):
     """
     Loading all problem's wiki notes
@@ -1296,4 +1305,61 @@ def get_problem_relationships(request, problem_id):
     resp['patient_problems'] = ProblemSerializer(patient_problems, many=True).data
     resp['success'] = True
 
+    return ajax_response(resp)
+
+
+@login_required
+def problem_notes_function(request, problem_id):
+    """
+
+    :param request:
+    :param problem_id:
+    :return:
+    """
+    # TODO: Add a new problem's note (either wiki or history)
+    resp = {'success': False}
+    if request.method == "POST":
+        responseBody = json.loads(request.body)
+
+        actor = request.user
+        actor_profile = UserProfile.objects.get(user=actor)
+        note = responseBody.get('note')  # <- TODO: Sanitize to prevent SQL Injection Attack
+        note_type = responseBody.get('note_type')  # <- TODO: Validate note type
+        # physician = request.user
+
+        #  Validation
+        try:
+            problem = Problem.objects.get(id=problem_id)
+            # author_profile = UserProfile.objects.get(user=request.user)
+        except (Problem.DoesNotExist, UserProfile.DoesNotExist):
+            return ajax_response(resp)
+
+        #  Adding new note
+        new_note = ProblemNote.objects.create_problem_note(actor, problem, note, note_type)
+
+        # Save problem activity
+        activity = 'Added wiki note: <b>%s</b>' % note
+        add_problem_activity(problem, request.user, activity, 'input')
+
+        # Add operation event
+        op_add_event(actor, problem.patient, activity, problem)
+
+        # Auto generate to do correspond to note https://trello.com/c/hkdbHZjw
+        auto_generate_note_todo(actor_profile, problem.patient, problem, request, resp)
+
+        resp['note'] = ProblemNoteSerializer(new_note).data
+        resp['success'] = True
+    if request.method == "GET":
+        note_type = request.GET.get('type')  # this is required
+        before = request.GET.get('before', 1000000000)  # this is optional
+        limit = request.GET.get('limit', 10)
+
+        # TODO: Getting list of notes with default reserve chronology (most recent on top)
+        notes = ProblemNote.objects.filter(problem_id=problem_id, note_type=note_type, id__lt=before).order_by(
+            '-created_on')[0:limit]
+
+        resp['notes'] = ProblemNoteSerializer(notes.all(), many=True).data
+        resp['success'] = True
+    if request.method == "DELETE":
+        pass
     return ajax_response(resp)
