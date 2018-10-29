@@ -10,33 +10,28 @@
     <!-- Bootstrap core CSS -->
     {% load compress %}
     {% compress css %}
-    <link rel="stylesheet" href="/static/bower_components/font-awesome/css/font-awesome.min.css">
-    <!-- Version 4.x -->
-    <!--<link rel="stylesheet" href="/static/node_modules/bootstrap/dist/css/bootstrap.min.css" type="text/css">-->
-
+    <link rel="stylesheet" href="/static/node_modules/font-awesome/css/font-awesome.min.css">
     <!-- Version 3.x -->
-    <link rel="stylesheet" href="/static/bower_components/bootstrap/dist/css/bootstrap.min.css" type="text/css">
-    <link rel="stylesheet" href="/static/bower_components/ngDialog/css/ngDialog.min.css" type="text/css"
-    >
-    <link rel="stylesheet" href="/static/bower_components/ngDialog/css/ngDialog-theme-default.css" type="text/css"
-    >
-    <link href="/static/bower_components/jquery-ui/themes/overcast/jquery-ui.min.css" rel="stylesheet"/>
-    <link href="/static/bower_components/angularjs-toaster/toaster.css" rel="stylesheet"/>
-    <link rel="stylesheet" href="/static/bower_components/angular-pickadate/dist/angular-pickadate.css">
-    <link rel="stylesheet" href="/static/bower_components/angular-color-picker/dist/angularjs-color-picker.min.css"/>
-    <link rel="stylesheet" href="/static/bower_components/angular-bootstrap/ui-bootstrap-csp.css"/>
-    <link rel="stylesheet"
-          href="/static/bower_components/angular-color-picker/dist/themes/angularjs-color-picker-bootstrap.min.css"/>
-    <link rel="stylesheet" href="/static/bower_components/ng-json-explorer/dist/angular-json-explorer.css"/>
-    <link rel="stylesheet" href="/static/bower_components/videogular-themes-default/videogular.css"/>
-    <link rel="stylesheet" href="/static/bower_components/view-file-ng/dist/view-file-ng.min.css">
-    <link rel="stylesheet" href='/static/bower_components/angular-hotkeys/build/hotkeys.css'>
-    <link rel="stylesheet" href='/static/bower_components/angular-xeditable/dist/css/xeditable.css'>
-    <link rel="stylesheet" href="/static/bower_components/angular-spinkit/build/angular-spinkit.min.css">
-    <link rel="stylesheet" href="/static/bower_components/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css">
+    <link rel="stylesheet" href="/static/node_modules/bootstrap/dist/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="/static/node_modules/ng-dialog/css/ngDialog.min.css" type="text/css">
+    <link rel="stylesheet" href="/static/node_modules/ng-dialog/css/ngDialog-theme-default.css" type="text/css">
+    <!--<link href="/static/node_modules/jquery-ui/ui/overcast/jquery-ui.min.css" rel="stylesheet"/>-->
+    <link href="/static/node_modules/angularjs-toaster/toaster.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="/static/node_modules/angular-pickadate/dist/angular-pickadate.css">
+    <link rel="stylesheet" href="/static/node_modules/angularjs-color-picker/dist/angularjs-color-picker.min.css"/>
+    <link rel="stylesheet" href="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap-csp.css"/>
+    <link rel="stylesheet" href="/static/node_modules/angularjs-color-picker/dist/angularjs-color-picker.min.css"/>
+    <link rel="stylesheet" href="/static/node_modules/ng-json-explorer/dist/angular-json-explorer.css"/>
+    <!--<link rel="stylesheet" href="/static/node_modules/videogular-themes-default/videogular.css"/>-->
+    <link rel="stylesheet" href="/static/node_modules/view-file-ng/dist/view-file-ng.min.css">
+    <link rel="stylesheet" href='/static/node_modules/angular-hotkeys/build/hotkeys.css'>
+    <link rel="stylesheet" href='/static/node_modules/angular-xeditable/dist/css/xeditable.css'>
+    <link rel="stylesheet" href="/static/node_modules/angular-spinkit/build/angular-spinkit.min.css">
+    <link rel="stylesheet" href="/static/node_modules/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css">
+    <link rel="stylesheet" href="/static/node_modules/angular-spinkit/build/angular-spinkit.min.css">
+
     <link rel="stylesheet" href="/static/css/main.css" type="text/css">
     <link rel="stylesheet" href="/static/css/patient-profile.css" type="text/css">
-    <link rel="stylesheet" href="/static/bower_components/angular-spinkit/build/angular-spinkit.min.css">
 
     {% endcompress %}
 
@@ -46,78 +41,64 @@
 
     <!-- Vendor compressed-->
     {% compress js %}
-    <script src="/static/bower_components/jquery/dist/jquery.js" type="text/javascript"></script>
-    <script src="/static/bower_components/jquery-ui/jquery-ui.min.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/jquery-form/jquery.form.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/bootstrap/dist/js/bootstrap.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/underscore/underscore-min.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/moment/moment.js" type="text/javascript"></script>
-    <script src="/static/bower_components/moment-timezone/builds/moment-timezone-with-data.min.js"
+    <script src="/static/node_modules/jquery/dist/jquery.js" type="text/javascript"></script>
+    <script src="/static/node_modules/jquery-ui-dist/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/jquery-form/jquery.form.js" type="text/javascript"></script>
+    <script src="/static/node_modules/bootstrap/dist/js/bootstrap.js" type="text/javascript"></script>
+    <script src="/static/node_modules/underscore/underscore-min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/moment/moment.js" type="text/javascript"></script>
+    <script src="/static/node_modules/moment-timezone/builds/moment-timezone-with-data.min.js"
             type="text/javascript"></script>
-    <script src="/static/bower_components/angular/angular.min.js" type="text/javascript"></script>
-    <script src="/static/bower_components/angular-cookies/angular-cookies.min.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/angular-animate/angular-animate.min.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/angular-sanitize/angular-sanitize.min.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/angular-route/angular-route.min.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/ngDialog/js/ngDialog.min.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/angularjs-toaster/toaster.js" type="text/javascript"
-    ></script>
-    <script src="/static/bower_components/angular-drag-and-drop-lists/angular-drag-and-drop-lists.min.js"
+    <script src="/static/node_modules/angular/angular.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/angular-cookies/angular-cookies.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/angular-animate/angular-animate.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/angular-sanitize/angular-sanitize.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/angular-route/angular-route.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/ng-dialog/js/ngDialog.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/angularjs-toaster/toaster.js" type="text/javascript"></script>
+    <script src="/static/node_modules/angular-drag-and-drop-lists/angular-drag-and-drop-lists.min.js"
             type="text/javascript"></script>
-    <script type="text/javascript" src="/static/bower_components/angular-ui-sortable/sortable.js"></script>
+    <script type="text/javascript" src="/static/node_modules/angular-ui-sortable/dist/sortable.min.js"></script>
     <script type="text/javascript"
-            src="/static/bower_components/angular-click-outside/clickoutside.directive.js"></script>
-    <script src="/static/bower_components/angular-pickadate/dist/angular-pickadate.min.js"></script>
-    <script src="/static/bower_components/angular-bootstrap/ui-bootstrap.min.js"></script>
-    <script src="/static/bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
-    <script src="/static/bower_components/angular-prompt/dist/angular-prompt.js"></script>
-    <script src="/static/bower_components/angular-audio/app/angular.audio.js"
-            type="text/javascript"></script>
-    <script src="/static/bower_components/ng-file-upload/ng-file-upload-all.min.js"
-            type="text/javascript"></script>
-    <script src="/static/bower_components/ng-file-upload/ng-file-upload.min.js" type="text/javascript"></script>
+            src="/static/node_modules/@iamadamjowett/angular-click-outside/clickoutside.directive.js"></script>
+    <script src="/static/node_modules/angular-pickadate/dist/angular-pickadate.min.js"></script>
+    <script src="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap.js"></script>
+    <script src="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap-tpls.js"></script>
+    <script src="/static/node_modules/angular-prompt/dist/angular-prompt.js"></script>
+    <script src="/static/node_modules/angular-audio/app/angular.audio.js" type="text/javascript"></script>
+    <script src="/static/node_modules/ng-file-upload/dist/ng-file-upload-all.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/ng-file-upload/dist/ng-file-upload.min.js" type="text/javascript"></script>
 
-    <script src="/static/bower_components/webcam/dist/webcam.min.js"
-            type="text/javascript"></script>
-    <script src="/static/bower_components/tinycolor/dist/tinycolor-min.js"></script>
-    <script src="/static/bower_components/angular-color-picker/dist/angularjs-color-picker.min.js"></script>
+    <script src="/static/node_modules/webcam/dist/webcam.min.js" type="text/javascript"></script>
+    <script src="/static/node_modules/tinycolor/tinycolor.js"></script>
+    <script src="/static/node_modules/angularjs-color-picker/dist/angularjs-color-picker.min.js"></script>
     <script src="/static/node_modules/chart.js/dist/Chart.js"></script>
     <script src="/static/node_modules/angular-chart.js/dist/angular-chart.js"></script>
-    <script src="/static/bower_components/angular-highlightjs/build/angular-highlightjs.js"></script>
-    <script src="/static/bower_components/x2js/xml2json.min.js"></script>
-    <script src="/static/bower_components/angular-x2js/dist/x2js.min.js"></script>
-    <script src="/static/bower_components/ng-json-explorer/dist/angular-json-explorer.js"></script>
-    <script src="/static/bower_components/vkbeautify-wrapper/dist/vkbeautify.0.99.00.beta.js"></script>
-    <script src="/static/bower_components/angular-recursion/angular-recursion.js"></script>
+    <script src="/static/node_modules/angular-highlightjs/build/angular-highlightjs.js"></script>
+    <script src="/static/node_modules/x2js/x2js.js"></script>
+    <script src="/static/node_modules/angular-x2js-demo/dist/x2js.min.js"></script>
+    <script src="/static/node_modules/ng-json-explorer/dist/angular-json-explorer.js"></script>
+    <!--<script src="/static/node_modules/vkbeautify-wrapper/dist/vkbeautify.0.99.00.beta.js"></script>-->
+    <script src="/static/node_modules/angular-recursion/angular-recursion.js"></script>
 
     <script src="/static/node_modules/videogular/dist/videogular/videogular.js"></script>
     <script src="/static/node_modules/videogular/dist/controls/vg-controls.min.js"></script>
     <script src="/static/node_modules/videogular/dist/buffering/vg-buffering.min.js"></script>
 
-    <script src='/static/bower_components/view-file-ng/dist/view-file-ng.min.js'></script>
-    <script src='/static/bower_components/angular-elastic/elastic.js'></script>
-    <script src='/static/bower_components/angular-hotkeys/build/hotkeys.js'></script>
-    <script src='/static/bower_components/angular-xeditable/dist/js/xeditable.min.js'></script>
-    <script src="/static/bower_components/angular-spinkit/build/angular-spinkit.min.js"></script>
-    <script src="/static/bower_components/angular-moment/angular-moment.min.js"></script>
-    <script src="/static/bower_components/checklist-model/checklist-model.js"></script>
-    <script src="/static/bower_components/angular-indexedDB/angular-indexed-db.js"></script>
-    <script src="/static/bower_components/angular-spinkit/build/angular-spinkit.min.js"></script>
-    <script src="/static/bower_components/ngInfiniteScroll/build/ng-infinite-scroll.min.js"></script>
+    <script src='/static/node_modules/view-file-ng/dist/view-file-ng.min.js'></script>
+    <script src='/static/node_modules/angular-elastic/elastic.js'></script>
+    <script src='/static/node_modules/angular-hotkeys/build/hotkeys.js'></script>
+    <script src='/static/node_modules/angular-xeditable/dist/js/xeditable.min.js'></script>
+    <script src="/static/node_modules/angular-spinkit/build/angular-spinkit.min.js"></script>
+    <script src="/static/node_modules/angular-moment/angular-moment.min.js"></script>
+    <script src="/static/node_modules/checklist-model/checklist-model.js"></script>
+    <script src="/static/node_modules/angularindexeddb/angular-indexed-db.min.js"></script>
+    <script src="/static/node_modules/angular-spinkit/build/angular-spinkit.min.js"></script>
+    <script src="/static/node_modules/ng-infinite-scroll/build/ng-infinite-scroll.min.js"></script>
     {% endcompress %}
 
     <!-- Not safe for compression. This will load an additional lib which result 404 not found if being compressed-->
-    <script src="/static/bower_components/angularAudioRecorder/dist/angular-audio-recorder.js"
-            type="text/javascript"></script>
+    <script src="/static/node_modules/angular-audio-recorder/dist/angular-audio-recorder.js" type="text/javascript"></script>
 
     <!--Common service shared across whole system-->
     <script src="/static/apps/common/constants.module.js" type="text/javascript"></script>

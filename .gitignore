@@ -9,5 +9,6 @@ templates_bk/*
 media
 Icon
 static/CACHE
+static/node_modules
 staticdev/CACHE
 venv
