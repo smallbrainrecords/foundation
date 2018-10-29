@@ -480,8 +480,8 @@
 
         <!-- Relationships -->
         <div ng-style="{order:effected_problems.length + effecting_problems.length}" class='panel panel-default'>
-            <div class='panel-heading'> Relationships</div>
-            <div class='panel-body' style='padding:20px;'>
+            <div class='panel-heading' ng-click="editMode=!editMode"> Relationships</div>
+            <div class='panel-body'>
                 <div class='row'>
                     <div class='col-md-4'>
                         <h4> Effecting Problems <i class='glyphicon glyphicon-arrow-right'></i></h4>
@@ -529,9 +529,7 @@
                 </div>
             </div>
             <div class="panel-footer text-right">
-                <button class="btn btn-default" ng-click="editMode=!editMode" ng-init="editMode=false">{{editMode
-                    ?'Save':'Edit'}}
-                </button>
+                <button class="btn btn-default" ng-click="editMode=!editMode">{{editMode ?'Save':'Edit'}}</button>
             </div>
         </div>
 

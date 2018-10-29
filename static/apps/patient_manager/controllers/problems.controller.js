@@ -22,7 +22,7 @@
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
-                                              dataService, medicationService, CollapseService, Upload, $timeout, LABELS, TODO_LIST) {
+                                              dataService, medicationService, CollapseService, Upload, $timeout, LABELS) {
 
             $scope.activities = [];
             $scope.availableWidgets = [];
@@ -47,7 +47,6 @@
             $scope.problem_activity_collapse = false;
             $scope.problem_activity_see_all = false;
 
-            // $scope.problem_todos = [];
             $scope.related_encounters = [];
             $scope.show_accomplished_goals = false;
             $scope.show_accomplished_todos = false;
@@ -68,6 +67,7 @@
             $scope.accomplishedTodoLoaded = false;
             $scope.pendingTodoLoaded = false;
             $scope.encounter_collapse = false;
+            $scope.editMode = false;
 
             // Init hot key binding
             $scope.add_goal = add_goal;
@@ -75,7 +75,7 @@
             $scope.add_new_list_label = add_new_list_label;
             $scope.add_problem_list = add_problem_list;
             $scope.add_todo = addTodo;
-            $scope.add_wiki_note = add_wiki_note;
+
             $scope.change_effected_problem = change_effected_problem;
             $scope.change_effecting_problem = change_effecting_problem;
             $scope.change_new_problem_name = change_new_problem_name;
@@ -208,23 +208,6 @@
 
                 // SECONDARY LOADING
 
-                // Wiki note
-                // TODO -> Migrate to component
-                problemService.getRelatedWikis($scope.problem_id).then(function (response) {
-                    $scope.history_note = response.data['history_note'];
-                    $scope.history_note_total = response.data['history_note_total'];
-                    if ($scope.history_note != null) {
-                        $scope.history_note_form = {
-                            note: $scope.history_note.note
-                        };
-                    }
-
-                    var wiki_notes = response.data['wiki_notes'];
-                    $scope.patient_wiki_notes = wiki_notes['patient'];
-                    $scope.physician_wiki_notes = wiki_notes['physician'];
-                    $scope.other_wiki_notes = wiki_notes['other'];
-                });
-
                 // Pinned observation component (aka data)
                 problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
                     // TODO: Deprecated check
@@ -269,17 +252,17 @@
 
                                 // TODO: Manipulate DOM manually and inside JS code. Need to refine this
                                 if ("blood pressure" === data.name) {
-                                    $("#vitals_blood_pressure").html(`<a title="Blood Pressure" href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                                    $("#vitals_blood_pressure").html(`<a title="Blood Pressure" href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue}</a>`);
                                 }
                                 if ("weight" === data.name) {
-                                    $("#vitals_weight").html(`<a title="Weight"  href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                                    $("#vitals_weight").html(`<a title="Weight"  href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue}</a>`);
                                 }
                                 if ("body temperature" === data.name) {
-                                    $("#vitals_body_temperature").html(`<a title="Body Temperature"  href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                                    $("#vitals_body_temperature").html(`<a title="Body Temperature"  href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue}</a>`);
                                 }
 
                                 if ("heart rate" === data.name) {
-                                    $("#vitals_heart_rate ").html(`<a title="Heart Rate"  href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                                    $("#vitals_heart_rate ").html(`<a title="Heart Rate"  href="#/data/${data.id}">${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue}</a>`);
                                 }
                             });
 
@@ -840,13 +823,13 @@
             }
 
             function set_authentication_false() {
-                if ($scope.active_user.role != "physician" && $scope.active_user.role != "admin")
+                if ("physician" !== $scope.active_user.role && "admin" !== $scope.active_user.role)
                     $scope.problem.authenticated = false;
             }
 
             function update_start_date() {
 
-                var form = {};
+                let form = {};
 
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
@@ -862,49 +845,6 @@
                     $scope.set_authentication_false();
                     $scope.timeline.problems[0].events[0].startTime = convertDateTime($scope.problem);
                     $scope.timeline_changed.push({changing: new Date().getTime()});
-                });
-            }
-
-            /**
-             * @deprecated
-             * @param form
-             */
-            function add_wiki_note(form) {
-                form.patient_id = $scope.patient_id;
-                form.problem_id = $scope.problem.id;
-
-                problemService.addWikiNote(form).then(function (data) {
-
-                    if (data.success) {
-                        toaster.pop('success', 'Done', 'Added Wiki Note');
-
-                        var note = data['note'];
-                        if ($scope.active_user.role == 'patient') {
-                            $scope.patient_wiki_notes.unshift(note);
-                        } else if ($scope.active_user.role == 'physician') {
-                            $scope.show_physician_notes = true;
-                            $scope.physician_wiki_notes.unshift(note);
-                        } else {
-                            $scope.show_other_notes = true;
-                            $scope.other_wiki_notes.unshift(note);
-                        }
-                        form.note = '';
-
-                        $scope.set_authentication_false();
-
-                        // https://trello.com/c/ZFlgZLOz. Move cursor to todo input text field
-                        $('#todoNameInput').focus();
-
-                        // Push newly added todo to active todo list
-                        if (data.hasOwnProperty('todo')) {
-                            patientService.addTodoCallback(data.todo);
-                        }
-                    } else {
-                        toaster.pop('error', 'Warning', 'Action Failed');
-                    }
-
-                }, function (error) {
-                    toaster.pop('error', 'Warning', 'Something went wrong!');
                 });
             }
 
@@ -1244,17 +1184,6 @@
             }
 
             function toggle_accomplished_todos() {
-
-                // var flag = $scope.show_accomplished_todos;
-                //
-                // if (flag == true) {
-                //     flag = false;
-                // } else {
-                //     flag = true;
-                // }
-                //
-                // $scope.show_accomplished_todos = flag;
-                // $scope.todos_ready = false;
 
                 $scope.show_accomplished_todos = !$scope.show_accomplished_todos;
                 if (!$scope.accomplishedTodoLoaded) {
