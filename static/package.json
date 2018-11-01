@@ -48,8 +48,7 @@
     "videogular": "^2.2.1",
     "view-file-ng": "git+https://github.com/grtjn/view-file-ng.git",
     "webcam": "^3.1.1",
-    "x2js": "^3.2.1",
-    "xml2json": "^0.11.2"
+    "x2js": "^3.2.1"
   },
   "devDependencies": {},
   "scripts": {
