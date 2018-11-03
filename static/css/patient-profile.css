@@ -337,13 +337,13 @@ a.btn-manage {
 
 .problem-controlled {
   background: #DFF0D8;
-  z-index: 2000;
+    z-index: 1000;
   margin: 0; }
   .problem-controlled.affix-top, .problem-controlled.affix {
     top: 50px; }
 
 .problem-uncontrolled {
-  z-index: 2000;
+    z-index: 1000;
   margin: 0; }
   .problem-uncontrolled.affix {
     top: 50px; }

@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+{% extends "base.html" %}
 
 {% block search %}
 <form class="navbar-form navbar-left" target="_blank" action="{% url 'staff_search'%}" method="post">
@@ -87,7 +87,8 @@
     <div class='col-md-9'>
         <!-- TODO: User_Id is an User_ID instant-->
         <!-- TODO: active_user is an UserProfile instant-->
-        <div id='ng-app' ng-app='StaffApp' class='no-js' lang="en" ng-init="active_user={{active_user}};user_id={{user.id}};">
+        <div id='ng-app' ng-app='StaffApp' class='no-js' lang="en"
+             ng-init="active_user={{active_user}}user_id={{user.id}}">
             <div ng-view>
                 Loading...
             </div>

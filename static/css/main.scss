@@ -488,7 +488,7 @@ tbody button {
 .my-story-left {
   border-right: 1px solid #ddd;
   padding-top: 10px;
-  padding-bottom: 10px;
+  //padding-bottom: 10px;
   margin-bottom: -1000px;
   padding-bottom: 1000px;
 }
@@ -517,4 +517,23 @@ tbody button {
 .pickadate {
   top: 0 !important;
   left: 0 !important;
+}
+
+.masonry-brick {
+  width: 48%;
+
+  .fa.fa-times {
+    position: absolute;
+    color: #d9534f;
+    font-size: 3rem;
+    cursor: pointer;
+    right: 0;
+    top: 0;
+  }
+}
+
+.masonry-brick img {
+  width: 100%;
+  border: 2px solid #f5f5f5;
+  border-radius: 5px;
 }

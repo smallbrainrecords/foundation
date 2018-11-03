@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+{% extends "base.html" %}
 
 {% block search %}
 <form class="navbar-form navbar-left" target="_blank" action="{% url 'staff_search'%}" method="post">
@@ -20,9 +20,9 @@
 <div id='ng-app' ng-app='AdminApp' class='no-js' lang="en">
     <div>
         <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
-        <p class="text-center">
-            <a href='/old/home'> Go to old Physician/Admin Dashboard </a>
-        </p>
+        <!--<p class="text-center">-->
+        <!--<a href='/old/home'> Go to old Physician/Admin Dashboard </a>-->
+        <!--</p>-->
 
         <div ng-view>
             Loading...

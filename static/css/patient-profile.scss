@@ -359,7 +359,7 @@ a.btn-manage {
 
 .problem-controlled {
   background: #DFF0D8;
-  z-index: 2000;
+  z-index: 1000;
   margin: 0;
   &.affix-top, &.affix {
     top: 50px;
@@ -367,7 +367,7 @@ a.btn-manage {
 }
 
 .problem-uncontrolled {
-  z-index: 2000;
+  z-index: 1000;
   margin: 0;
   &.affix {
     top: 50px;

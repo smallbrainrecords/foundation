@@ -1,4 +1,4 @@
-{% extends 'base/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 <script>
@@ -262,8 +262,8 @@
         }
 
         function intersects(x, y, cx, cy, r) {
-            var dx = x - cx
-            var dy = y - cy
+            var dx = x - cx;
+            var dy = y - cy;
             return dx * dx + dy * dy <= r * r
         }
 
@@ -271,7 +271,7 @@
             for (var i = 0; i < bodyParts.length; i++) {
                 var c = bodyParts[i];
                 if (c['shape_type'] == 'polygon') {
-                    var c = bodyParts[i]['coordinates']
+                    var c = bodyParts[i]['coordinates'];
                     var vertx = [];
                     var verty = [];
                     for (var j = 0; j < c.length; j++) {

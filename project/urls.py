@@ -25,7 +25,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
 
-                       url(r'^old/home/$', 'emr.views.home', name='home'),
+                       # url(r'^old/home/$', 'emr.views.home', name='home'),
 
                        url(r'^$', 'users_app.views.home', name='u_home'),
 
@@ -41,8 +41,8 @@ urlpatterns = patterns('',
                        # Old user views
                        url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/u/login/'}),
                        # OK to remove
-                       url(r'^login/$', 'emr.views.login_user'),  # OK to remove
-                       url(r'^register/$', 'emr.views.register'),  # OK to remove
+                       # url(r'^login/$', 'emr.views.login_user'),  # OK to remove
+                       # url(r'^register/$', 'emr.views.register'),  # OK to remove
 
                        # Old views
                        url(r'^list_of_unregistered_users/$', 'emr.views.list_of_unregistered_users'),
@@ -55,8 +55,8 @@ urlpatterns = patterns('',
                        url(r'^patient/(?P<patient_id>\d+)/add_problem/$', 'emr.views.add_problem'),
                        url(r'^add_patient_summary/(?P<patient_id>\d+)/$', 'emr.views.save_patient_summary'),
 
-                       url(r'^upload_image_to_problem/(?P<problem_id>\d+)/$', 'emr.views.upload_image_to_problem'),
-                       url(r'^submit_data_for_problem/(?P<problem_id>\d+)/$', 'emr.views.submit_data_for_problem'),
+                       # url(r'^upload_image_to_problem/(?P<problem_id>\d+)/$', 'emr.views.upload_image_to_problem'),
+                       # url(r'^submit_data_for_problem/(?P<problem_id>\d+)/$', 'emr.views.submit_data_for_problem'),
                        url(r'^update/$', 'emr.views.update'),
 
                        # New URLS

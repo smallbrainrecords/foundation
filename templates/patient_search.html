@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+{% extends "base.html" %}
 {% block title %}  Search Patient - {{ patient.get_full_name }}   {% endblock %}
 {% block search %}
 <form class="navbar-form navbar-left" action="{% url 'search' patient.id %}" method="post">

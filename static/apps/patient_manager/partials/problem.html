@@ -573,26 +573,20 @@
             <div class="col-md-6">
                 <!--Problem images-->
                 <div ng-style="{order:problem_images.length}" class='panel panel-default' id="problem-image">
-                    <div class='panel-heading'>
-                        Images
-                        <span ng-show='permitted(["add_problem_image"])'>
-				<button class='btn btn-sm btn-default' ngf-select="open_image_upload_box($files)" multiple
-                        ngf-max-files="5"
-                        accept="image/*"> Upload </button>
-			</span>
+                    <div class='panel-heading'> Images <span ng-show='permitted(["add_problem_image"])'>
+				    <button class='btn btn-sm btn-default' ngf-select="open_image_upload_box($files)" multiple
+                            ngf-max-files="5" accept="image/*"> Upload </button>
+			        </span>
                     </div>
                     <div class='panel-body'>
-                        <div class='row'>
-                            <div class='col-md-2' ng-repeat='image in problem_images track by $index'>
-                                <img ng-src='{{ image.image }}' class='thumbnail small-img'
-                                     ng-click='open_image_box(image)'>
-                                <br>
-                                <a href="{{ image.image }}" target="_blank" class='btn btn-sm btn-default'>View</a>
-                                <button class='btn btn-sm btn-danger' ng-click='delete_problem_image(image)'
-                                        ng-show='permitted(["delete_problem_image"])'>
-                                    Delete
-                                </button>
-                                <hr>
+                        <div masonry="{ gutter: 10}">
+                            <div class="masonry-brick" ng-repeat='image in problem_images track by $index'>
+                                <i class="fa fa-times" title="Delete image" ng-click='delete_problem_image(image)'
+                                   ng-show='permitted(["delete_problem_image"])'></i>
+                                <a class="problem-images-gallery" rel="problem-images-gallery" href='{{ image.image }}'
+                                   fancyboxable="img-{{$index}}" id="img-{{$index}}">
+                                    <img ng-src='{{ image.image }}' load-images="true" alt="img-{{$index}}"/>
+                                </a>
                             </div>
                         </div>
                     </div>

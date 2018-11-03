@@ -18,16 +18,10 @@ import datetime
 import os
 from audioop import reverse
 
-from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import User
 from django.core.checks import messages
-from django.db.models.loading import get_model
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 from django.views.generic import View
-# from social_auth.exceptions import AuthFailed
-# from social_auth.views import complete
 from django.views.static import serve
 from ranged_response import RangedFileResponse
 
@@ -35,57 +29,8 @@ import project.settings as settings
 from common.views import *
 from models import UserProfile, Problem, \
     Goal, ToDo, Guideline, TextNote, PatientImage, \
-    Encounter, EncounterEvent, Sharing, Viewer, \
+    Sharing, Viewer, \
     ViewStatus, ProblemRelationship
-
-
-# OLD
-def login_user(request):
-    logout(request)
-    email = ''
-    password = ''
-    if request.POST:
-        email = request.POST['email']
-        password = request.POST['password']
-
-        try:
-            u = User.objects.get(username=email)
-        except User.DoesNotExist as e:
-            # Temp fix
-            current = datetime.datetime.now()
-            u = User.objects.create(
-                username=email, email=email, last_login=current)
-            u.set_password(password)
-            u.save()
-
-        user = authenticate(username=email, password=password)
-        if user is not None:
-            if user.is_active:
-                login(request, user)
-                return HttpResponseRedirect('/')
-    return render_to_response(
-        'login.html', context_instance=RequestContext(request))
-
-
-# OLD
-def register(request):
-    if request.POST:
-        email = request.POST['email']
-        password = request.POST['password']
-        if request.POST['password'] != request.POST['password_confirm']:
-            return HttpResponseRedirect('/')
-        u, created = User.objects.get_or_create(username=email, email=email)
-        if created:
-            u.set_password(password)
-            u.first_name = request.POST['first_name']
-            u.last_name = request.POST['last_name']
-            u.save()
-            user = authenticate(username=email, password=password)
-            if user is not None:
-                if user.is_active:
-                    login(request, user)
-                    return HttpResponseRedirect('/')
-        return HttpResponseRedirect('/')
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -101,37 +46,6 @@ def update(request):
     </script> Going to homepage in <span id="time_left">60</span> seconds
     """
     return HttpResponse(html)
-
-
-# OLD
-@login_required
-def home(request):
-    try:
-        profile = UserProfile.objects.get(user=request.user)
-        role = profile.role
-        context = {}
-        context['role'] = role
-        context = RequestContext(request, context)
-        # if (role == 'patient'):
-            # BAD
-            # return view_patient(request, request.user.id)
-        return render_to_response("home.html", context)
-
-    except:
-        # traceback.print_exc()
-        if request.user.is_superuser:
-            context = {}
-            context['role'] = 'admin'
-            context = RequestContext(request, context)
-            return render_to_response("home.html", context)
-
-        response_str = """
-            <script>
-                setTimeout(function() { window.location = "/" }, 1000);
-            </script>
-             Waiting on manual approval
-        """
-        return HttpResponse(response_str)
 
 
 # OLD
@@ -185,41 +99,6 @@ def list_users(request):
                   '%m/%d/%Y') if UserProfile.objects.get(user=user).date_of_birth else ''} for user in
              User.objects.all().order_by('first_name') if UserProfile.objects.filter(user=user)]
     return HttpResponse(json.dumps(users), content_type="application/json")
-
-
-# @login_required
-# def view_patient(request, user_id):
-#     role = UserProfile.objects.get(user=request.user).role
-#     user = User.objects.get(id=user_id)
-#     # allowed viewers are the patient, admin/physician, and other patients the patient has shared to
-#     if (not ((request.user == user) or (role in ['admin', 'physician']) or (
-#             Sharing.objects.filter(patient=user, other_patient=request.user, all=True)))):
-#         return HttpResponse("Not allowed")
-#     if (not is_patient(user)):
-#         return HttpResponse("Error: this user isn't a patient")
-#     context = {'patient': user, 'user_role': UserProfile.objects.get(user=request.user).role,
-#                'patient_profile': UserProfile.objects.get(user=user), 'problems': Problem.objects.filter(patient=user)}
-#     context['user_role'] = context['user_role'] if not UserProfile.objects.get(
-#         user=request.user).role == 'admin' else 'physician'
-#     context.update({'pain_avatars': PainAvatar.objects.filter(patient=user).order_by('-datetime')})
-#     context['encounters'] = Encounter.objects.filter(patient=user).order_by('-starttime')
-#
-#     context['voice_control'] = settings.VOICE_CONTROL
-#     context['syncing'] = settings.SYNCING
-#     if (request.user == user):
-#         context['shared_patients'] = list(set([i.patient for i in Sharing.objects.filter(other_patient=user)]))
-#     context = RequestContext(request, context)
-#     try:
-#         encounter = Encounter.objects.filter(patient=user, stoptime__isnull=True).order_by('-starttime')[0]
-#         context['current_encounter'] = encounter
-#     except:
-#         pass
-#     import os
-#     import re
-#     context['problem_elements'] = [re.search('problem_(?P<element>\w+)', f).group('element') for f in
-#                                    os.listdir('/root/core/static/js/problems/') if
-#                                    not (f == 'problem_element_template.js' or f == 'problems.js')]
-#     return render_to_response("patient.html", context)
 
 
 @login_required
@@ -477,71 +356,6 @@ def change_status(request):
 
 
 @login_required
-def submit_data_for_problem(request, problem_id):
-    # print request.POST
-    role = UserProfile.objects.get(user=request.user).role
-
-    authenticated = True if (role == 'physician' or role == 'admin') else False
-
-    if request.POST['type'] == 'note':
-        problem = Problem.objects.get(id=problem_id)
-        problem.authenticated = authenticated
-        note = TextNote(by=UserProfile.objects.get(user=request.user).role, note=request.POST['data'])
-        note.save()
-        problem.notes.add(note)
-        problem.save()
-    elif request.POST['type'] == 'problem_parent':
-        problem = Problem.objects.get(id=problem_id)
-        problem.authenticated = authenticated
-        if (request.POST['data'] == 'none'):
-            problem.parent = None
-        else:
-            problem.parent = Problem.objects.get(id=request.POST['data'])
-        problem.save()
-    elif request.POST['type'] == 'problem_start_date':
-        # print 'problem_start_date: ' + str(request.POST)
-        problem = Problem.objects.get(id=problem_id)
-        problem.authenticated = authenticated
-
-        if not request.POST['data'].index('/') == 2:
-            problem.start_date = datetime.strptime('0' + request.POST['data'], "%m/%d/%Y")
-        else:
-            problem.start_date = datetime.strptime(request.POST['data'], "%m/%d/%Y")
-        problem.save()
-    elif request.POST['type'] == 'note_for_goal':
-
-        goal = Goal.objects.get(id=problem_id)
-        note = TextNote(by=UserProfile.objects.get(user=request.user).role, note=request.POST['data'])
-        note.save()
-        goal.notes.add(note)
-        goal.save()
-        if goal.problem:
-            problem = goal.problem
-            problem.authenticated = authenticated
-            problem.save()
-    elif request.POST['type'] == 'mark_parent':
-        problem = Problem.objects.get(id=problem_id)
-        problem.authenticated = authenticated
-        if (request.POST['data'] == 'none'):
-            problem.parent = None
-        else:
-            problem.parent = Problem.objects.get(id=request.POST['data'])
-        problem.save()
-    else:
-        problem = Problem.objects.get(id=problem_id)
-        problem.authenticated = authenticated
-        problem.save()
-        model = \
-            get_model('emr', request.POST['type'].capitalize())
-
-        m = model(patient=problem.patient, problem=problem)
-        setattr(m, request.POST['type'], request.POST['data'])
-        m.save()
-        return HttpResponse(m.id)
-    return HttpResponse('saved')
-
-
-@login_required
 def add_problem(request, patient_id):
     role = UserProfile.objects.get(user=request.user).role
     authenticated = True if (role == 'physician' or role == 'admin') else False
@@ -558,108 +372,6 @@ def add_problem(request, patient_id):
         todo = ToDo(patient=User.objects.get(id=patient_id), todo=request.POST['todo'])
         todo.save()
     return HttpResponse('added')
-
-
-@login_required
-def upload_image_to_problem(request, problem_id):
-    if request.POST:
-        role = UserProfile.objects.get(user=request.user).role
-
-        authenticated = True if (role == 'physician' or role == 'admin') else False
-        problem = Problem.objects.get(id=problem_id)
-        problem.authenticated = authenticated
-        problem.save()
-        patient_image = PatientImage(patient=Problem.objects.get(id=problem_id).patient,
-                                     problem=Problem.objects.get(id=problem_id), image=request.FILES['file'])
-        patient_image.save()
-        try:
-            summary = 'Physician added image<br/><a href="/media/%s"><img src="/media/%s" style="max-width:100px; max-height:100px" /></a>' % (
-                patient_image.image, patient_image.image)
-
-            encounter = Encounter.objects.filter(
-                patient=problem.patient, stoptime__isnull=True).order_by('-starttime')[0]
-
-            encounter_event = EncounterEvent(
-                encounter=encounter,
-                summary=summary)
-
-            encounter_event.save()
-
-        except:
-            pass
-        return HttpResponseRedirect('/patient/%s/' % (Problem.objects.get(id=problem_id).patient.id))
-    else:
-        context = RequestContext(request, {})
-        return render_to_response('upload_image_to_problem.html', context)
-
-
-# @login_required
-# def create_encounter(request, patient_id):
-#     encounter = Encounter(patient=User.objects.get(id=patient_id), physician=User.objects.get(id=request.user.id))
-#     encounter.save()
-#     return HttpResponse(encounter.id, content_type="text/plain")
-#
-#
-# @login_required
-# def stop_encounter(request, encounter_id):
-#
-#     encounter = Encounter.objects.get(id=encounter_id)
-#     encounter.stoptime = datetime.now()
-#     encounter.save()
-#     return HttpResponse('saved', content_type="text/plain")
-#
-#
-# @login_required
-# def save_event_summary(request):
-#
-#     summary = request.POST.get('summary', 'Unknown')
-#     encounter_id = request.POST.get('encounter_id', None)
-#
-#     encounter = Encounter.objects.get(id=encounter_id)
-#
-#     encounter_event = EncounterEvent(
-#         encounter=encounter,
-#         summary=summary)
-#
-#     encounter_event.save()
-#
-#     return HttpResponse('ok')
-#
-#
-# @login_required
-# def encounter(request, encounter_id):
-# #     print 'encounter debug'
-# #     print request.POST
-# #     print request.FILES
-#     if 'note' in request.POST:
-#         encounter = Encounter.objects.get(id=encounter_id)
-#         encounter.note = request.POST['note']
-#         encounter.save()
-#     if 'audio_file' in request.FILES:
-#         encounter = Encounter.objects.get(id=encounter_id)
-#         encounter.audio = request.FILES['audio_file']
-#         encounter.save()
-#     if 'video_file' in request.FILES:
-#         encounter = Encounter.objects.get(id=encounter_id)
-#         encounter.video = request.FILES['video_file']
-#         encounter.save()
-#     role_of_user_requesting_the_data = UserProfile.objects.get(user=request.user).role
-#     encounter = Encounter.objects.get(id=encounter_id)
-#     patient = encounter.patient
-#     if (not ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician']) or (Sharing.objects.filter(patient=patient, other_patient=request.user)))):
-#         return HttpResponse("Not allowed")
-#
-#     encounter = Encounter.objects.get(id=encounter_id)
-#     events = EncounterEvent.objects.filter(encounter=encounter).order_by('datetime')
-#     patient = encounter.patient
-#
-#     context = {
-#         'encounter':encounter,
-#         'events':events,
-#         'patient':patient
-#     }
-#     context = RequestContext(request, context)
-#     return render_to_response("encounter.html", context)
 
 
 def save_patient_summary(request, patient_id):
@@ -702,6 +414,7 @@ def list_snomed_terms(request):
 
     return HttpResponse(results_holder, content_type="application/json")
 
+
 def has_read_permission(request, path):
     """ Only show to authenticated users"""
     # Note this could allow access to paths including ../..
@@ -718,7 +431,7 @@ def serve_private_file(request, path):
     """
     if has_read_permission(request, path):
         fileRes = serve(request, path, settings.MEDIA_ROOT, False)
-        response = RangedFileResponse(request, fileRes.file_to_stream,fileRes._headers['content-type'][1])
+        response = RangedFileResponse(request, fileRes.file_to_stream, fileRes._headers['content-type'][1])
         return response
     else:
         return HttpResponseForbidden()

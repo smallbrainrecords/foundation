@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+{% extends "base.html" %}
 {% block title %}  Manage Patient - {{ patient.get_full_name }}   {% endblock %}
 
 {% block search %}
@@ -98,7 +98,7 @@
 <!-- TODO: User_Id is an User_ID instant-->
 <!-- TODO: active_user is an UserProfile instant-->
 <div id='ng-app' ng-app='ManagerApp'
-     ng-init="active_user={{active_user}};patient_info={{patient_info}}; bleeding_risk={{bleeding_risk}};patient_id={{patient.id}};user_id={{user.id}}">
+     ng-init="active_user={{active_user}}patient_info={{patient_info}} bleeding_risk={{bleeding_risk}}patient_id={{patient.id}}user_id={{user.id}}">
 
     <input type='hidden' id='patient_id' value='{{ patient.id }}'>
     <input type='hidden' id='user_id' value='{{ user.id }}'>
