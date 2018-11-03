@@ -35,6 +35,7 @@
     "jquery": "^3.2.1",
     "jquery-form": "~3.50.0",
     "jquery-ui": "^1.12.1",
+    "jquery-ui-dist": "^1.12.1",
     "moment": "^2.19.4",
     "moment-timezone": "^0.5.23",
     "ng-dialog": "^1.4.0",
