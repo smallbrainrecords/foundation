@@ -33,6 +33,7 @@
 
         // Properties
         ctrl.note = "";
+        ctrl.total = 0;
         ctrl.latestNote = null;
 
         // Current show item to be shown
@@ -121,6 +122,7 @@
                 .then(response => {
                     if (response.data.success) {
                         ctrl.noteStorage = response.data.notes;
+                        ctrl.total = response.data.total;
                         if (callback) callback();
                     }
                 }, () => {

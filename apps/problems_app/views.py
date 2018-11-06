@@ -1359,6 +1359,7 @@ def problem_notes_function(request, problem_id):
             '-created_on')[0:limit]
 
         resp['notes'] = ProblemNoteSerializer(notes.all(), many=True).data
+        resp['total'] = ProblemNote.objects.filter(problem_id=problem_id, note_type=note_type, id__lt=before).count()
         resp['success'] = True
     if request.method == "DELETE":
         pass
