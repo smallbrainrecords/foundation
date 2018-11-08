@@ -51,15 +51,18 @@
             </div>
             <div class="col-md-5 col-lg-5 col-sm-12 col-xs-12">
                 <form>
-                    <div class="form-group" ng-repeat="component in data.observation_components">
+                    <div class="form-group" ng-repeat="component in data.observation_components ">
                         <label>{{ component.name }}</label>
-                        <input type="text" class="form-control" auto-focus
-                               ng-model="component.new_value" title="">
+                        <input type="text" class="form-control" autofocus ng-if="$first" ng-model="component.new_value"
+                               tabindex="1">
+                        <input type="text" class="form-control" ng-if="!$first" ng-model="component.new_value"
+                               tabindex="{{$index + 2}}">
                     </div>
 
                     <div class="form-group">
-                        <button class="btn btn-primary " ng-click="quickAddDataPoint(quickEntryDataObj);">Measured
-                            today
+                        <button class="btn btn-primary" tabindex="{{data.observation_components.length + 1}}"
+                                ng-click="quickAddDataPoint(quickEntryDataObj);">
+                            Measured today
                         </button>
                     </div>
                 </form>
