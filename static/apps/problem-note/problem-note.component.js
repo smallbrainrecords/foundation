@@ -23,6 +23,7 @@
             controller: ProblemNoteController,
             bindings: {
                 problemId: "<",
+                onNoteChanged: "&",
                 onNoteAdded: "&"
             }
         });
@@ -55,7 +56,6 @@
         /**
          * Adding new wiki note. After a wiki note is added a corresponding to do is auto generated.
          * Post action: https://trello.com/c/ZFlgZLOz
-         * TODO: Generate todo item
          */
         function addNote() {
             let form = {
@@ -111,7 +111,7 @@
         }
 
         /**
-         *
+         * Loading problem's wiki note w/ pagination
          * @param limit
          * @param callback
          */
@@ -131,7 +131,7 @@
         }
 
         /**
-         *
+         * Initial callback after the component is created
          */
         function initCallBack() {
             ctrl.latestNote = ctrl.noteStorage.shift();

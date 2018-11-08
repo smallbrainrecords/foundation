@@ -241,48 +241,48 @@
             <div class='panel panel-default'>
                 <div class='panel-heading'> Todos</div>
                 <div class='panel-body'>
-                    <div class='row'>
-                        <div class='col-md-12'>
-                            <form class='form-inline' ng-submit='add_todo(todo_form)'>
-                                <label for="todoNameInput"> Todo name</label>
-                                <div class='input-group'>
-                                    <input type='text' class='form-control' ng-model='todo_form.name'
-                                           ng-attr-tabindex="{{wiki_note_form.note ? 3: 2}}"
-                                           id='todoNameInput'>
-                                    <span class="input-group-btn">
-                                    <input type='submit' value='Submit' class='btn btn-default'
-                                           ng-attr-tabindex="{{wiki_note_form.note ? 4 : 3}}"></span>
-                                </div>
-                            </form>
-                            <hr>
-                            <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
-                                <!--on-status-changed-success="updateStatusCallback"-->
-                                <todo todo-list="pending_todos" show-problem="false"
-                                      labels="labels" members="members"
-                                      patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
-                                <wave-spinner ng-if="todoIsLoading"></wave-spinner>
-                            </div>
-                            <hr>
-                            <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
-                                    ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
-                            </button>
-                            <hr>
-                            <div ng-show='show_accomplished_todos'>
-                                <!--on-status-changed-success="updateStatusCallback"-->
-                                <todo todo-list="accomplished_todos" show-problem="false"
-                                      labels="labels" members="members"
-                                      patient-id="patient_id" user-id="patient_id"
-                                      active-user="active_user"></todo>
-                                <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
-                            </div>
+                    <!-- Form adding new todo(wiki_note_form is out of scope w/ problem controller)-->
+                    <form class='form-inline' ng-submit='add_todo(todo_form)'>
+                        <label for="todoNameInput"> Todo name</label>
+                        <div class='input-group'>
+                            <input type='text' class='form-control' ng-model='todo_form.name'
+                                   ng-attr-tabindex="{{problemWikiNote ? 3: 2}}"
+                                   id='todoNameInput'>
+                            <span class="input-group-btn">
+                            <input type='submit' value='Submit' class='btn btn-default'
+                                   ng-attr-tabindex="{{problemWikiNote ? 4 : 3}}"></span>
                         </div>
+                    </form>
+
+                    <!-- Scroll view-->
+                    <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
+                        <!--on-status-changed-success="updateStatusCallback"-->
+                        <todo todo-list="pending_todos" show-problem="false"
+                              labels="labels" members="members"
+                              patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
+                        <wave-spinner ng-if="todoIsLoading"></wave-spinner>
+                    </div>
+
+                    <!--Toggle button-->
+                    <button class='btn btn-default btn-md' ng-click='toggle_accomplished_todos()'
+                            ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
+                    </button>
+
+                    <!--Scroll view-->
+                    <div ng-show='show_accomplished_todos'>
+                        <!--on-status-changed-success="updateStatusCallback"-->
+                        <todo todo-list="accomplished_todos" show-problem="false"
+                              labels="labels" members="members"
+                              patient-id="patient_id" user-id="patient_id"
+                              active-user="active_user"></todo>
+                        <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-6">
-            <problem-note problem-id="problem.id"></problem-note>
+            <problem-note problem-id="problem.id" on-note-changed="onProblemWikiNoteChanged(note)"></problem-note>
         </div>
     </div>
 

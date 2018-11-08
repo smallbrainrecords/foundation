@@ -50,10 +50,11 @@
             $scope.related_encounters = [];
             $scope.show_accomplished_goals = false;
             $scope.show_accomplished_todos = false;
-            $scope.show_other_notes = false;
-            $scope.show_physician_notes = false;
             $scope.viewMode = 'Year';
-            $scope.wiki_note_form = {};
+
+            $scope.problemWikiNote = "";
+            $scope.onProblemWikiNoteChanged = onProblemWikiNoteChanged;
+
             $scope.problem_labels_component = LABELS;
             $scope.edit_problem = false;
             $scope.show_inactive_medications = false;
@@ -103,7 +104,6 @@
             $scope.open_create_label_problems_list = openCreateLabelProblemsList;
             $scope.open_create_problem_label = open_create_problem_label;
             $scope.open_data = open_data;
-            $scope.open_image_box = open_image_box;
             $scope.open_image_upload_box = open_image_upload_box;
             $scope.open_medication = open_medication;
             $scope.permitted = permitted;
@@ -118,9 +118,6 @@
             $scope.timelineSave = timelineSave;
             $scope.toggle_accomplished_goals = toggle_accomplished_goals;
             $scope.toggle_accomplished_todos = toggle_accomplished_todos;
-            $scope.toggle_other_notes = toggle_other_notes;
-            $scope.loadMoreNotes = loadMoreNotes();
-            $scope.toggle_physician_notes = toggle_physician_notes;
             $scope.unset_new_problem = unset_new_problem;
             $scope.update_start_date = update_start_date;
             $scope.addMedication = addMedication;
@@ -1027,6 +1024,10 @@
                 }
             }
 
+            /**
+             * @deprecated
+             * @param image
+             */
             function open_image_box(image) {
 
                 ngDialog.open({
@@ -1117,6 +1118,11 @@
 
             }
 
+            /**
+             * TODO: Migrate it to filter | directive
+             * @param permissions
+             * @returns {boolean}
+             */
             function permitted(permissions) {
 
                 if ($scope.active_user == undefined) {
@@ -1137,39 +1143,10 @@
             }
 
             /**
-             * @deprecated
+             * Problem wiki note listener to dynamic update tabs index of item element in problem detail page
              */
-            function toggle_other_notes() {
-
-                if ($scope.show_other_notes == true) {
-                    $scope.show_other_notes = false;
-                } else {
-                    $scope.show_other_notes = true;
-                }
-            }
-
-            /**
-             * @deprecated
-             */
-            function loadMoreNotes() {
-                //TODO: Load all problem wikie note
-                if ($scope.show_other_notes == true) {
-                    $scope.show_other_notes = false;
-                } else {
-                    $scope.show_other_notes = true;
-                }
-            }
-
-            /**
-             * @deprecated
-             */
-            function toggle_physician_notes() {
-
-                if ($scope.show_physician_notes == true) {
-                    $scope.show_physician_notes = false;
-                } else {
-                    $scope.show_physician_notes = true;
-                }
+            function onProblemWikiNoteChanged(note) {
+                this.problemWikiNote = note;
             }
 
             function refresh_problem_activity() {
@@ -1229,6 +1206,12 @@
                 }
             }
 
+            /**
+             * TODO: Migrate it to filter | directive
+             * @param array
+             * @param item
+             * @returns {boolean}
+             */
             function isInArray(array, item) {
                 var is_existed = false;
                 angular.forEach(array, function (value, key2) {

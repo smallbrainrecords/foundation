@@ -4,7 +4,9 @@
         <!-- New note form -->
         <form class='form' ng-submit='$ctrl.addNote()'>
             <div class='form-group'>
-                <textarea ng-model='$ctrl.note' class='form-control' auto-focus tabindex="1"></textarea>
+                <textarea auto-focus class='form-control' ng-change="$ctrl.onNoteChanged({note: $ctrl.note})"
+                          ng-model='$ctrl.note'
+                          tabindex="1"></textarea>
             </div>
             <div class='form-group'>
                 <button type='submit' class='btn btn-default' ng-attr-tabindex="{{$ctrl.note ? 2: -1}}"> Add</button>
@@ -28,6 +30,7 @@
         </ul>
 
         <!-- Add more note -->
-        <button class='btn btn-default' ng-click='$ctrl.loadMoreNotes()'>{{$ctrl.total}} more notes</button>
+        <button class='btn btn-default' ng-click='$ctrl.loadMoreNotes()'>{{$ctrl.total}} more notes
+        </button>
     </div>
 </div>
