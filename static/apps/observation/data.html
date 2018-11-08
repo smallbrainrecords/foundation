@@ -53,7 +53,7 @@
                 <form>
                     <div class="form-group" ng-repeat="component in data.observation_components ">
                         <label>{{ component.name }}</label>
-                        <input type="text" class="form-control" autofocus ng-if="$first" ng-model="component.new_value"
+                        <input type="text" class="form-control" auto-focus ng-if="$first" ng-model="component.new_value"
                                tabindex="1">
                         <input type="text" class="form-control" ng-if="!$first" ng-model="component.new_value"
                                tabindex="{{$index + 2}}">
