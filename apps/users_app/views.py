@@ -25,6 +25,8 @@ from django.db.models import Q
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 
+from users_app.operations import get_vitals_table_component
+
 try:
     from PIL import Image, ImageOps
 except ImportError:
@@ -1098,13 +1100,6 @@ def set_user_medicare(request, patient_id):
 
     resp['success'] = True
     return ajax_response(resp)
-
-
-@login_required
-def get_vitals_table_component(patient_id, component_name):
-    return ObservationValue.objects.filter(component__name=component_name).filter(
-        component__observation__subject_id=patient_id).order_by(
-        '-effective_datetime')[0:5]
 
 
 @login_required
