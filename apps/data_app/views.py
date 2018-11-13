@@ -469,6 +469,12 @@ def get_observation_values(request, observation_id):
     # Normalize list before passing to query
     observation_values = get_observation_value_pair(",".join(map(str, observation_component_ids)))
 
+    # Format blood pressure value before returning
+    if '85354-9' == observation.code:
+        for obs in observation_values:
+            valuesPair = obs['value'].split("/")
+            obs['value'] = int(float(valuesPair[0])).__str__() + "/" + int(float(valuesPair[1])).__str__()
+
     resp['success'] = True
     resp['data'] = {
         'id': observation_id,
