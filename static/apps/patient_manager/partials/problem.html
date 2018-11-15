@@ -456,13 +456,12 @@
     <!--START WEIGHTED ORDERING-->
     <section class="auto-ordering">
         <!-- Problem history note -->
-        <div ng-style="{order:history_note_total}" class='panel panel-default'>
+        <div ng-style="{order:historyNoteTotal}" class='panel panel-default'>
             <div class='panel-heading'> Problem History</div>
             <div class='panel-body'>
-                <form class='form' ng-submit='add_history_note(history_note_form)'>
+                <form class='form' ng-submit="addHistoryNote(historyNoteForm)">
                     <div class='form-group'>
-                    <textarea ng-model='history_note_form.note' class='form-control ' style='height:125px;'
-                              required></textarea>
+                        <textarea ng-model='historyNoteForm.note' class='form-control' rows="3" required></textarea>
                     </div>
                     <div class='form-group'>
                         <button type='submit' class='btn btn-default' ng-show="permitted(['modify_problem'])">
@@ -470,9 +469,9 @@
                         </button>
                     </div>
                 </form>
-                <span class='text-muted'> <i> Last updated by {{ history_note.author.first_name }}
-				{{ history_note.author.last_name }} @{{ history_note.author.username }} -
-				{{ history_note.author.profile.role }} </i>
+                <span class='text-muted'> <i> Last updated by {{ historyNote.author.first_name }}
+				{{ historyNote.author.last_name }} @{{ historyNote.author.username }} -
+				{{ historyNote.author.profile.role }} </i>
 			</span>
             </div>
         </div>

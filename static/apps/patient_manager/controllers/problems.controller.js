@@ -26,7 +26,7 @@
 
             $scope.activities = [];
             $scope.availableWidgets = [];
-            $scope.history_note_total = 0;
+            $scope.historyNoteTotal = 0;
             $scope.change_pinned_data = false;
             $scope.change_pinned_medication = false;
             $scope.change_problem_label = false;
@@ -34,7 +34,7 @@
             $scope.create_problem_label = false;
             $scope.current_activity = 0;
             $scope.hasAccess = false;
-            $scope.history_note_form = {};
+            $scope.historyNoteForm = {};
             $scope.isOtherPatientNoteShowing = false;
             $scope.loading = true;
             $scope.medications = [];
@@ -72,7 +72,7 @@
 
             // Init hot key binding
             $scope.add_goal = add_goal;
-            $scope.add_history_note = add_history_note;
+            $scope.addHistoryNote = addHistoryNote;
             $scope.add_new_list_label = add_new_list_label;
             $scope.add_problem_list = add_problem_list;
             $scope.add_todo = addTodo;
@@ -204,6 +204,16 @@
                 problemService.trackProblemClickEvent($scope.problem_id);
 
                 // SECONDARY LOADING
+                // Problem history note component
+                problemService.getRelatedWikis($scope.problem_id).then((response) => {
+                    $scope.historyNote = response.data['history_note'];
+                    $scope.historyNoteTotal = response.data['history_note_total'];
+                    if ($scope.historyNote != null) {
+                        $scope.historyNoteForm = {
+                            note: $scope.historyNote.note
+                        };
+                    }
+                });
 
                 // Pinned observation component (aka data)
                 problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
@@ -819,6 +829,9 @@
                 }
             }
 
+            /**
+             * TODO: Does this method is really needed
+             */
             function set_authentication_false() {
                 if ("physician" !== $scope.active_user.role && "admin" !== $scope.active_user.role)
                     $scope.problem.authenticated = false;
@@ -845,7 +858,7 @@
                 });
             }
 
-            function add_history_note(form) {
+            function addHistoryNote(form) {
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
 
@@ -854,8 +867,8 @@
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Added History Note');
 
-                        $scope.history_note = data['note'];
-                        $scope.history_note_total++;
+                        $scope.historyNote = data['note'];
+                        $scope.historyNoteTotal++;
 
 
                         $scope.set_authentication_false();
@@ -867,12 +880,9 @@
                     } else {
                         toaster.pop('error', 'Warning', 'Action Failed');
                     }
-
-                }, (e) => {
+                }, () => {
                     toaster.pop('error', 'Warning', 'Something went wrong!');
-
                 });
-
             }
 
             function add_goal(form) {

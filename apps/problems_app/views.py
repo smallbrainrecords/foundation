@@ -1233,7 +1233,7 @@ def get_problem_goals(request, problem_id):
 @deprecated
 def get_problem_wikis(request, problem_id):
     """
-    Loading all problem's wiki notes
+    Loading all problem's history notes
     :param request:
     :param problem_id:
     :return:
@@ -1243,20 +1243,10 @@ def get_problem_wikis(request, problem_id):
     history_note = ProblemNote.objects.filter(note_type='history', problem_id=problem_id).order_by(
         '-created_on').first()
 
-    wiki_notes = ProblemNote.objects.filter(note_type='wiki', problem_id=problem_id).order_by('-created_on')
-    patient_wiki_notes = [note for note in wiki_notes if note.author.profile.role == "patient"]
-    physician_wiki_notes = [note for note in wiki_notes if note.author.profile.role == "physician"]
-    other_wiki_notes = [note for note in wiki_notes if note.author.profile.role not in ("patient", "physician")]
     problem_notes = {
-        'history': ProblemNoteSerializer(history_note).data,
-        'wiki_notes': {
-            'patient': ProblemNoteSerializer(patient_wiki_notes, many=True).data,
-            'physician': ProblemNoteSerializer(physician_wiki_notes, many=True).data,
-            'other': ProblemNoteSerializer(other_wiki_notes, many=True).data
-        }
+        'history': ProblemNoteSerializer(history_note).data
     }
 
-    resp['wiki_notes'] = problem_notes['wiki_notes']
     resp['history_note'] = problem_notes['history']
     resp['history_note_total'] = ProblemNote.objects.filter(note_type='history', problem_id=problem_id).count()
     resp['success'] = True
