@@ -12,17 +12,15 @@
 
 {% block content %}
 <script src="/static/apps/admin/admin.app.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/admin/controllers/homeController.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/admin/controllers/editUserController.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/admin/controllers/addUserController.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/admin/controllers/manageSharingController.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/controllers/home.controller.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/controllers/edit-user.controller.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/controllers/add-user.controller.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/controllers/manage-sharing.controller.js" type="text/javascript"
+        charset="utf-8"></script>
 
 <div id='ng-app' ng-app='AdminApp' class='no-js' lang="en">
     <div>
         <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
-        <!--<p class="text-center">-->
-        <!--<a href='/old/home'> Go to old Physician/Admin Dashboard </a>-->
-        <!--</p>-->
 
         <div ng-view>
             Loading...
