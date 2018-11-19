@@ -1229,7 +1229,7 @@
             // Default is true
             resetNewValue = _.isUndefined(resetNewValue);
             var new_data = {};
-            new_data.datetime = moment().format("MM/DD/YYYY HH:mm");
+            new_data.datetime = moment().format("MM/DD/YYYY HH:mm:SS");
             new_data.value = component.new_value;
             dataService.addData($scope.patient_id, component.id, new_data)
                 .then(function (data) {
