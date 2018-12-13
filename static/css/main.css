@@ -158,6 +158,19 @@
   -webkit-transition: -webkit-transform 85ms ease-in;
   transition: transform 85ms ease-in; }
 
+a.pickadate-prev, a.pickadate-next {
+    background: initial !important;
+    border-radius: initial !important;
+    clear: initial !important;
+    color: initial !important;
+    display: initial !important;
+    margin: initial !important;
+    padding: initial !important;
+    text-decoration: initial !important;
+    -webkit-transition: initial !important;
+    transition: initial !important;
+}
+
 .quick-card-editor a:hover {
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
