@@ -1,0 +1,36 @@
+<!--1) a todo will have a 'print' button added to the pen menu and inside the todo.-->
+<!--2) when user clicks print it will open a new tab that will include the typical patient header and the content from the image bellow.-->
+
+<section id="todo-laboratory">
+    <p>Label</p>
+    <!--3) display todo label types that are "for all users"-->
+    <ul>
+        <li ng-repeat="label in $ctrl.todoLabels"></li>
+    </ul>
+    <!--4) display all the active todos for the patient with a check box to the left.-->
+    <div class="checkbox" ng-repeat="todo in $ctrl.activeTodos">
+        <todo-item active-user="activeUser" item="todo" patient-id="patientId" show-problem="true"
+                   user-id="userId"></todo-item>
+    </div>
+
+    <!--5) add a boolean "Fasting" check box-->
+    <div class="checkbox">
+        <input id="fasting" title="Fasting" type="checkbox">
+        <label for="fasting">Fasting</label>
+    </div>
+
+    <!--6) add free text input fields: "notes:" and "copies to:"-->
+    <label for="notes">Note</label>
+    <textarea class="form-control" id="notes" msd-elastic placeholder="Notes" title="Notes"></textarea>
+
+    <label for="copies-to">Copies to</label>
+    <textarea class="form-control" id="copies-to" msd-elastic placeholder="Copies to" title="Copies to"></textarea>
+
+    <!--7) add a phone number input field "fax number"-->
+    <label for="fax-number">Fax number</label>
+    <input class="form-control" id="fax-number" placeholder="Fax number" title="Fax number" type="tel"/>
+
+    <!--8) add a "print" button-->
+    <button class="btn btn-primary" ng-click="$ctrl.doPrint()">Print</button>
+</section>
+<!--when the user has filled out the above information and selected one or more of the todos then a form is printed as seen bellow-->

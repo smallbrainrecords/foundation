@@ -260,18 +260,18 @@
                         data.mostRecentValue = dataService.generateMostRecentValue(tmpData);
                         // TODO: Manipulate DOM manually and inside JS code. Need to refine this
                         if ("blood pressure" === data.name) {
-                            $("#vitals_blood_pressure").html(`<a title="Blood Pressure" href="#/data/${data.id}">BP: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                            $("#vitals_blood_pressure").html(`<a title="Blood Pressure" href="#/data/${data.id}">BP: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue}</a>`);
                         }
 
                         if ("body temperature" === data.name) {
-                            $("#vitals_body_temperature").html(`<a title="Body Temperature" href="#/data/${data.id}">T: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                            $("#vitals_body_temperature").html(`<a title="Body Temperature" href="#/data/${data.id}">T: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue}</a>`);
                         }
                         if ("weight" === data.name) {
-                            $("#vitals_weight").html(`<a title="Weight" href="#/data/${data.id}">W: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                            $("#vitals_weight").html(`<a title="Weight" href="#/data/${data.id}">W: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue}</a>`);
                         }
 
                         if ("heart rate" === data.name) {
-                            $("#vitals_heart_rate ").html(`<a title="Heart Rate" href="#/data/${data.id}">P: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue }</a>`);
+                            $("#vitals_heart_rate ").html(`<a title="Heart Rate" href="#/data/${data.id}">P: ${_.isEmpty(data.mostRecentValue) ? 'N/A' : data.mostRecentValue}</a>`);
                         }
                     });
                     if ($scope.active_user) {
@@ -532,7 +532,7 @@
             $scope.show_accomplished_todos = !$scope.show_accomplished_todos;
             // $scope.todos_ready = false;
             if (!$scope.accomplishedTodoLoaded) {
-                patientService.getToDo($scope.patient_id, true, $scope.accomplishedTodoPage, true).then((resp) => {
+                patientService.getToDo($scope.patient_id, true, true, $scope.accomplishedTodoPage).then((resp) => {
                     if (resp.success) {
                         // if loading from remote then replace it cuz it fresh & trusted data source
                         $scope.accomplished_todos = resp.data;

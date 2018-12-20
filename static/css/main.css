@@ -1,3 +1,7 @@
+.navbar.navbar-default.navbar-fixed-top {
+  z-index: 8;
+}
+
 .google-login-img {
   height: 50px; }
 
@@ -49,7 +53,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  z-index: 1000;
+  z-index: 8;
   background-color: rgba(255, 255, 255, 0.9);
   border-top: 2px solid grey;
   border-radius: 3px;
@@ -93,19 +97,29 @@
   right: 10px;
   top: 10px;
   padding: 5px;
-  z-index: 98; }
+  z-index: 8;
+}
+
+#problem-header {
+  z-index: 8;
+}
+
+#problem-header .todo {
+  width: auto;
+  display: inline-block;
+}
 
 #problem-header .todo .btn-custom {
   right: -30px;
-  top: 5px; }
+  top: 5px;
+}
 
-#problem-header .todo,
 #problem-header .todo h4 {
   width: auto;
-  display: inline-block; }
+  display: inline-block;
+}
 
-#problem-header:hover .btn-custom,
-.todo:hover .btn-custom {
+#problem-header:hover .btn-custom, .todo:hover .btn-custom {
   display: block; }
 
 .problem-uncontrolled {
@@ -159,16 +173,16 @@
   transition: transform 85ms ease-in; }
 
 a.pickadate-prev, a.pickadate-next {
-    background: initial !important;
-    border-radius: initial !important;
-    clear: initial !important;
-    color: initial !important;
-    display: initial !important;
-    margin: initial !important;
-    padding: initial !important;
-    text-decoration: initial !important;
-    -webkit-transition: initial !important;
-    transition: initial !important;
+  background: initial !important;
+  border-radius: initial !important;
+  clear: initial !important;
+  color: initial !important;
+  display: initial !important;
+  margin: initial !important;
+  padding: initial !important;
+  text-decoration: initial !important;
+  -webkit-transition: initial !important;
+  transition: initial !important;
 }
 
 .quick-card-editor a:hover {
@@ -435,7 +449,7 @@ tbody button {
   left: 0 !important; }
 
 .masonry-brick {
-    width: 48%;
+  width: 48%;
 }
 
 .masonry-brick .fa.fa-times {
@@ -444,13 +458,13 @@ tbody button {
     font-size: 3rem;
     cursor: pointer;
     right: 0;
-    top: 0;
+  top: 0;
 }
 
 .masonry-brick img {
-    width: 100%;
-    border: 2px solid #f5f5f5;
-    border-radius: 5px;
+  width: 100%;
+  border: 2px solid #f5f5f5;
+  border-radius: 5px;
 }
 
 /*# sourceMappingURL=main.css.map */

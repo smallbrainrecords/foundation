@@ -1,3 +1,7 @@
+.navbar.navbar-default.navbar-fixed-top {
+  z-index: 8;
+}
+
 .google-login-img {
   height: 50px;
 }
@@ -62,7 +66,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  z-index: 1000;
+  z-index: 8;
   background-color: rgba(255, 255, 255, 0.9);
   border-top: 2px solid grey;
   border-radius: 3px;
@@ -117,22 +121,29 @@
   right: 10px;
   top: 10px;
   padding: 5px;
-  z-index: 98;
+  z-index: 8;
 }
 
-#problem-header .todo .btn-custom {
-  right: -30px;
-  top: 5px;
+#problem-header {
+  z-index: 8;
+
+  .todo {
+    width: auto;
+    display: inline-block;
+
+    .btn-custom {
+      right: -30px;
+      top: 5px;
+    }
+
+    h4 {
+      width: auto;
+      display: inline-block;
+    }
+  }
 }
 
-#problem-header .todo,
-#problem-header .todo h4 {
-  width: auto;
-  display: inline-block;
-}
-
-#problem-header:hover .btn-custom,
-.todo:hover .btn-custom {
+#problem-header:hover .btn-custom, .todo:hover .btn-custom {
   display: block;
 }
 

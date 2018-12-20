@@ -17,7 +17,7 @@
 (function () {
     'use strict';
     var ManagerApp = angular.module('ManagerApp',
-        ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
+        ['ui.router', 'ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
             'app.services',
             "ngSanitize",
             "com.2fdevs.videogular",
@@ -25,10 +25,10 @@
             "com.2fdevs.videogular.plugins.buffering",
             'app.constant', 'httpModule', 'sharedModule', 'colon_cancers', 'a1c', 'medication', 'problems',
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
-            'timeLine', 'chart.js', 'toaster', 'ui.sortable', , 'pickadate',
+            'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
             'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB', 'angular-spinkit', 'infinite-scroll', 'wu.masonry', 'fancyboxplus']);
-    ManagerApp.config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
+    ManagerApp.config(function ($stateProvider, $routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
         $indexedDBProvider.connection('andromedaHealthIndexedDB')
             .upgradeDatabase(1, function (event, db, tx) {
                 let objStore = db.createObjectStore('encounter', {keyPath: 'id'});
@@ -62,6 +62,14 @@
             },
             chartColors: ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF']
         });
+
+        let aboutState = {
+            name: 'about',
+            url: '/about',
+            component: 'todoLaboratory'
+        };
+
+        $stateProvider.state(aboutState);
         /**
          * Application route
          */
@@ -152,7 +160,7 @@
             })
             .when('/document/:documentId', {
                 templateUrl: '/static/apps/document/document-page.template.html',
-                controller: 'ViewDocumentCtrl'
+                controller: 'ViewDocumentCtrl',
             })
             .otherwise('/');
     });

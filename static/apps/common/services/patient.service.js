@@ -501,7 +501,7 @@
              * @param loadAll
              * @returns {HttpPromise}
              */
-            function getToDo(patient_id, is_accomplished = false, page = 1, loadAll = false) {
+            function getToDo(patient_id, is_accomplished = false, loadAll = false, page = 1) {
                 return httpService.get({
                     accomplished: is_accomplished,
                     page: page,

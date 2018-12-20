@@ -206,13 +206,12 @@
                     <div class="quick-card-editor-card">
                         <!-- begin buttons -->
                         <div class="quick-card-editor-buttons">
-                            <a href ng-click="changeLabel(todo)"><i class="fa fa-tags"></i>Edit label</a>
+                            <a ng-click="changeDueDate(todo)"><i class="fa fa-clock-o"></i>Change Due Date</a>
+                            <a ng-click="changeAttachment(todo)"><i class="fa fa-link"></i>Attachment</a>
+                            <a ng-click="changeLabel(todo)"><i class="fa fa-tags"></i>Edit label</a>
+                            <a ng-click="changeMember(todo)"><i class="fa fa-user"></i>Members</a>
+                            <a><i class="fa fa-print"></i>Print</a>
 
-                            <a href ng-click="changeDueDate(todo)"><i class="fa fa-clock-o"></i>Change Due Date</a>
-
-                            <a href ng-click="changeAttachment(todo)"><i class="fa fa-link"></i>Attachment</a>
-
-                            <a href ng-click="changeMember(todo)"><i class="fa fa-user"></i>Members</a>
                         </div>
                         <!-- end buttons -->
 
