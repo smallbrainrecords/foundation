@@ -561,3 +561,50 @@ tbody button {
   border: 2px solid #f5f5f5;
   border-radius: 5px;
 }
+
+todo-laboratory {
+
+  .label-wrapper {
+    display: inline-block;
+    margin-bottom: -6px;
+    overflow: hidden;
+    position: relative;
+
+    a.todo-label {
+      float: left;
+      text-align: center;
+      display: inline-block;;
+      margin: 0 2px;
+      clear: none;
+      color: #fff;
+      width: auto;
+      padding: 0 10px;
+      text-decoration: none;
+    }
+  }
+
+}
+
+// Todo laboratory print styling
+@media print {
+  #print-template {
+    display: block !important;
+
+    div, li, p, ul {
+      display: block !important;
+    }
+
+    p, ul {
+      margin: 0 0 10px !important;
+    }
+
+    li {;
+      display: list-item !important;
+      font-size: 14px !important;
+      height: 20px !important;
+      line-height: 20px !important;
+      list-style-type: none !important;
+      text-align: left !important;
+    }
+  }
+}

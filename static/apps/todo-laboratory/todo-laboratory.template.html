@@ -1,36 +1,90 @@
 <!--1) a todo will have a 'print' button added to the pen menu and inside the todo.-->
 <!--2) when user clicks print it will open a new tab that will include the typical patient header and the content from the image bellow.-->
-
 <section id="todo-laboratory">
-    <p>Label</p>
-    <!--3) display todo label types that are "for all users"-->
+    <form name="printForm" novalidate>
+        <!--3) display todo label types that are "for all users"-->
+        <p>Label:</p>
+        <span class="label-wrapper">
+                    <a class="todo-label" ng-class="label.css_class" ng-repeat="label in $ctrl.todoLabels">
+                        {{label.name}}
+                    </a>
+                </span>
+
+        <!--4) display all the active todos for the patient with a check box to the left.-->
+        <div class="checkbox" ng-repeat="todo in $ctrl.activeTodos track by $index">
+            <input id="todo-{{todo.id}}" ng-click="$ctrl.selectItemToPrint($event,todo, $index)" title="{{todo.todo}}"
+                   type="checkbox">
+            <label for="todo-{{todo.id}}">
+                {{todo.todo}} {{todo.problem? "for "+ todo.problem.problem_name : ""}}
+                {{todo.due_date ? "due date " + todo.due_date : ""}}
+            </label>
+        </div>
+        <br>
+        <!--5) add a boolean "Fasting" check box-->
+        <div class="checkbox">
+            <input id="fasting" ng-model="$ctrl.printForm.fasting" required title="Fasting" type="checkbox">
+            <label for="fasting">Fasting</label>
+        </div>
+
+        <!--6) add free text input fields: "notes:" and "copies to:"-->
+        <label for="notes">Note</label>
+        <textarea class="form-control" id="notes" msd-elastic ng-model="$ctrl.printForm.notes" placeholder="Notes"
+                  required
+                  title="Notes"></textarea>
+
+        <label for="copies-to">Copies to</label>
+        <textarea class="form-control" id="copies-to" msd-elastic ng-model="$ctrl.printForm.copied"
+                  placeholder="Copies to"
+                  required
+                  title="Copies to"></textarea>
+
+        <!--7) add a phone number input field "fax number"-->
+        <label for="fax-number">Fax number</label>
+        <input class="form-control" id="fax-number" ng-model="$ctrl.printForm.fax" placeholder="Fax number" required
+               title="Fax number"/>
+        <br>
+        <!--8) add a "print" button-->
+        <button class="btn btn-primary" ng-disabled="$ctrl.printForm.todos.length == 0 ||  printForm.$invalid" ng-print
+                print-element-id="print-template"
+                type="button">Print
+        </button>
+    </form>
+</section>
+
+<section id="print-template" class="hide">
+    <p>Laboratory Requisition:</p>
+
+    <div>Ryan Family Practice</div>
+    <div>300 S. Rath Ave, Suite 202</div>
+    <div>Ludington, MI 49431</div>
+    <div>Phone: 231 425 4447</div>
+    <p>Fax: 231 425 4401</p>
+
+    <div>Ordering Provider: James Ryan D.O.</div>
+    <div>NPI number: 1437271996</div>
+    <div>Copies to: {{$ctrl.printForm.copied}} Fax: {{$ctrl.printForm.fax}}</div>
+    <p>Date ordered: {{$ctrl.printForm.orderedAt | date :'MM/dd/yyyy'}}</p>
+
+    <div>Patient’s name: {{$ctrl.printForm.patient.firstName}} {{$ctrl.printForm.patient.lastName}}</div>
+    <div>Patient’s DOB: {{$ctrl.printForm.patient.birthday}}</div>
+    <div>Sex: {{$ctrl.printForm.patient.sex}}</div>
+    <p>Patient’s phone number: {{$ctrl.printForm.patient.phoneNumber}}</p>
+
+    <div>Fasting: {{$ctrl.printForm.fasting ? "Yes" : "No"}}</div>
+    <p>Special instructions: {{$ctrl.printForm.note}}</p>
+
     <ul>
-        <li ng-repeat="label in $ctrl.todoLabels"></li>
+        <li ng-repeat="todo in $ctrl.printForm.todos track by $index">
+            {{todo.todo}} {{todo.problem? "for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
+            {{todo.due_date ? "due date " + todo.due_date : ""}}
+        </li>
     </ul>
-    <!--4) display all the active todos for the patient with a check box to the left.-->
-    <div class="checkbox" ng-repeat="todo in $ctrl.activeTodos">
-        <todo-item active-user="activeUser" item="todo" patient-id="patientId" show-problem="true"
-                   user-id="userId"></todo-item>
-    </div>
 
-    <!--5) add a boolean "Fasting" check box-->
-    <div class="checkbox">
-        <input id="fasting" title="Fasting" type="checkbox">
-        <label for="fasting">Fasting</label>
-    </div>
-
-    <!--6) add free text input fields: "notes:" and "copies to:"-->
-    <label for="notes">Note</label>
-    <textarea class="form-control" id="notes" msd-elastic placeholder="Notes" title="Notes"></textarea>
-
-    <label for="copies-to">Copies to</label>
-    <textarea class="form-control" id="copies-to" msd-elastic placeholder="Copies to" title="Copies to"></textarea>
-
-    <!--7) add a phone number input field "fax number"-->
-    <label for="fax-number">Fax number</label>
-    <input class="form-control" id="fax-number" placeholder="Fax number" title="Fax number" type="tel"/>
-
-    <!--8) add a "print" button-->
-    <button class="btn btn-primary" ng-click="$ctrl.doPrint()">Print</button>
+    <p>Associated diagnosis:</p>
+    <ul>
+        <li ng-repeat="problem in $ctrl.printForm.problems track by $index">
+            {{problem.problem_name}} {{ problem.concept_id }}
+        </li>
+    </ul>
 </section>
 <!--when the user has filled out the above information and selected one or more of the todos then a form is printed as seen bellow-->

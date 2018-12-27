@@ -27,7 +27,8 @@
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'pickadate',
             'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
-            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB', 'angular-spinkit', 'infinite-scroll', 'wu.masonry', 'fancyboxplus']);
+            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB', 'angular-spinkit',
+            'infinite-scroll', 'wu.masonry', 'fancyboxplus', 'ngPrint']);
     ManagerApp.config(function ($stateProvider, $routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
         $indexedDBProvider.connection('andromedaHealthIndexedDB')
             .upgradeDatabase(1, function (event, db, tx) {
@@ -64,8 +65,8 @@
         });
 
         let aboutState = {
-            name: 'about',
-            url: '/about',
+            name: 'Laboratory',
+            url: '/laboratory',
             component: 'todoLaboratory'
         };
 
@@ -161,6 +162,9 @@
             .when('/document/:documentId', {
                 templateUrl: '/static/apps/document/document-page.template.html',
                 controller: 'ViewDocumentCtrl',
+            })
+            .when('/todo-laboratory', {
+                templateUrl: '/static/apps/todo-laboratory/print.template.html'
             })
             .otherwise('/');
     });
