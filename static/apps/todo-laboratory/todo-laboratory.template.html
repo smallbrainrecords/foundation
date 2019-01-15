@@ -72,7 +72,7 @@
 
     <div>Fasting: {{$ctrl.printForm.fasting ? "Yes" : "No"}}</div>
     <p>Special instructions: {{$ctrl.printForm.note}}</p>
-
+    <p>Tests Ordered:</p>
     <ul>
         <li ng-repeat="todo in $ctrl.printForm.todos track by $index">
             {{todo.todo}} {{todo.problem? "for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
