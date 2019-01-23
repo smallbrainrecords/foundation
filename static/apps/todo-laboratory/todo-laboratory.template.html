@@ -13,6 +13,8 @@
         <!--4) display all the active todos for the patient with a check box to the left.-->
         <div class="checkbox" ng-repeat="todo in $ctrl.activeTodos track by $index">
             <input id="todo-{{todo.id}}" ng-click="$ctrl.selectItemToPrint($event,todo, $index)" title="{{todo.todo}}"
+                   checklist-model="$ctrl.printForm.todos" ng-checked="{{todo.id == $ctrl.todoId}}"
+                   ng-init="todo.selected= todo.id == $ctrl.todoId"
                    type="checkbox">
             <label for="todo-{{todo.id}}">
                 {{todo.todo}} {{todo.problem? "for "+ todo.problem.problem_name : ""}}
@@ -20,6 +22,7 @@
             </label>
         </div>
         <br>
+
         <!--5) add a boolean "Fasting" check box-->
         <div class="checkbox">
             <input id="fasting" ng-model="$ctrl.printForm.fasting" title="Fasting" type="checkbox">

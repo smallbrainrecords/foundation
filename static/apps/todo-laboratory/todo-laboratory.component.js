@@ -20,20 +20,24 @@
         angular.module('ManagerApp')
             .component('todoLaboratory', {
                 templateUrl: "/static/apps/todo-laboratory/todo-laboratory.template.html",
-                controller: todoLaboratoryController
+                controller: todoLaboratoryController,
+                bindings: {
+                    todoId: "<"
+                }
             });
 
         /**
          *
          * @type {string[]}
          */
-        todoLaboratoryController.$inject = ['$rootScope', 'patientService', 'todoService'];
+        todoLaboratoryController.$inject = ['$rootScope', 'patientService', 'todoService', '$routeParams'];
 
         /**
          * TODO: Should I used $rootScope
          */
-        function todoLaboratoryController($rootScope, patientService, todoService) {
+        function todoLaboratoryController($rootScope, patientService, todoService, $routeParams) {
             // Temporary solution for this (controllerAs syntax)
+
             let ctrl = this;
             ctrl.printForm = {};
             ctrl.todoLabels = [];
@@ -41,24 +45,6 @@
             ctrl.selectItemToPrint = selectItemToPrint;
 
             ctrl.$onInit = () => {
-                patientService.getToDo(4, false, true, 1).then((resp) => {
-                    if (resp.success) {
-                        ctrl.activeTodos = resp.data;
-                        let allLabels = _.flatten(_.pluck(resp.data, 'labels'));
-                        const map = new Map();
-                        for (const item of allLabels) {
-                            if (!map.has(item.id)) {
-                                map.set(item.id, true);    // set any value to Map
-                                ctrl.todoLabels.push({
-                                    id: item.id,
-                                    name: item.name,
-                                    css_class: item.css_class
-                                });
-                            }
-                        }
-                    }
-                });
-
                 ctrl.printForm = {
                     clinic: {
                         name: "Ryan Family Practice",
@@ -85,6 +71,34 @@
                     problems: [] // text based array, labeled Associated diagnosis:
 
                 };
+
+                patientService.getToDo(4, false, true, 1).then((resp) => {
+                    if (resp.success) {
+                        ctrl.activeTodos = resp.data;
+
+                        ctrl.activeTodos.map((todo, idx) => {
+                            if (todo.id == ctrl.todoId) {
+                                selectItemToPrint(null, todo, idx);
+                            }
+                        });
+
+                        // Load all label for all user
+                        let allLabels = _.flatten(_.pluck(resp.data, 'labels'));
+                        const map = new Map();
+                        for (const item of allLabels) {
+                            if (!map.has(item.id)) {
+                                map.set(item.id, true);    // set any value to Map
+                                ctrl.todoLabels.push({
+                                    id: item.id,
+                                    name: item.name,
+                                    css_class: item.css_class
+                                });
+                            }
+                        }
+                    }
+                });
+
+
             };
 
             /**

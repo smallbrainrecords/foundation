@@ -163,7 +163,8 @@
                 templateUrl: '/static/apps/document/document-page.template.html',
                 controller: 'ViewDocumentCtrl',
             })
-            .when('/todo-laboratory', {
+            .when('/todo-laboratory/:todoId', {
+                controller: 'PrintCtrl',
                 templateUrl: '/static/apps/todo-laboratory/print.template.html'
             })
             .otherwise('/');
