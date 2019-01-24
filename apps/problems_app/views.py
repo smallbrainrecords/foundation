@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from datetime import timedelta
 
 from dateutil import parser
-from deprecated import deprecated
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
@@ -436,7 +435,7 @@ def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
 # Add Wiki Note
 @login_required
 # @api_view(["POST"])
-@deprecated(reason="This method is replaced with problem_notes_function()")
+# @deprecated(reason="This method is replaced with problem_notes_function()")
 def add_wiki_note(request, problem_id):
     """
     @depre
@@ -1230,7 +1229,7 @@ def get_problem_goals(request, problem_id):
 
 
 @login_required
-@deprecated
+#@deprecated
 def get_problem_wikis(request, problem_id):
     """
     Loading all problem's history notes

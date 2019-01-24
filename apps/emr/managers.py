@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 from datetime import datetime, timedelta
 
-from deprecated import deprecated
 from django.db import models
 from django.db.models import Max
 
@@ -74,12 +73,12 @@ class ProblemManager(models.Manager):
 
 
 class ProblemNoteManager(models.Manager):
-    @deprecated
+    # @deprecated
     def create_history_note(self, author, problem, note):
         from emr.models import ProblemNote
         return ProblemNote.objects.create(author=author, problem=problem, note=note, note_type='history')
 
-    @deprecated
+    #@deprecated
     def create_wiki_note(self, author, problem, note):
         from emr.models import ProblemNote
         return ProblemNote.objects.create(author=author, problem=problem, note=note, note_type='wiki')
