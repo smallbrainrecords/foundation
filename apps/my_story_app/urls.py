@@ -14,18 +14,19 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
+from my_story_app.views import *
 
-urlpatterns = patterns('my_story_app.views',
-	url(r'^track/click$', 'track_tab_click'),
-    url(r'^(?P<patient_id>\d+)/get_my_story$', 'get_my_story'),
-    url(r'^(?P<tab_id>\d+)/info$', 'get_tab_info'),
-    url(r'^(?P<patient_id>\d+)/add_tab$', 'add_tab'),
-    url(r'^(?P<patient_id>\d+)/(?P<tab_id>\d+)/add_text$', 'add_text'),
-    url(r'^(?P<patient_id>\d+)/delete_tab/(?P<tab_id>\d+)$', 'delete_tab'),
-    url(r'^(?P<patient_id>\d+)/save_tab/(?P<tab_id>\d+)$', 'save_tab'),
-    url(r'^(?P<patient_id>\d+)/delete_text_component/(?P<component_id>\d+)$', 'delete_text_component'),
-    url(r'^(?P<patient_id>\d+)/save_text_component/(?P<component_id>\d+)$', 'save_text_component'),
-    url(r'^(?P<patient_id>\d+)/save_text_component_entry/(?P<component_id>\d+)$', 'save_text_component_entry'),
-)
+urlpatterns = [
+    url(r'^track/click$', track_tab_click),
+    url(r'^(?P<patient_id>\d+)/get_my_story$', get_my_story),
+    url(r'^(?P<tab_id>\d+)/info$', get_tab_info),
+    url(r'^(?P<patient_id>\d+)/add_tab$', add_tab),
+    url(r'^(?P<patient_id>\d+)/(?P<tab_id>\d+)/add_text$', add_text),
+    url(r'^(?P<patient_id>\d+)/delete_tab/(?P<tab_id>\d+)$', delete_tab),
+    url(r'^(?P<patient_id>\d+)/save_tab/(?P<tab_id>\d+)$', save_tab),
+    url(r'^(?P<patient_id>\d+)/delete_text_component/(?P<component_id>\d+)$', delete_text_component),
+    url(r'^(?P<patient_id>\d+)/save_text_component/(?P<component_id>\d+)$', save_text_component),
+    url(r'^(?P<patient_id>\d+)/save_text_component_entry/(?P<component_id>\d+)$', save_text_component_entry)
+]

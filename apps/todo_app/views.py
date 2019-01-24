@@ -15,10 +15,11 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
+from wsgiref.util import FileWrapper
+
 from dateutil import parser
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.servers.basehttp import FileWrapper
 from django.db.models import Max, Q
 from rest_framework.decorators import api_view
 

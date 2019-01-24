@@ -189,6 +189,9 @@ class ListField(models.TextField):
     def __init__(self, *args, **kwargs):
         super(ListField, self).__init__(*args, **kwargs)
 
+    # def from_db_value(self, value, expression, connection, context):
+    #     return value
+
     def to_python(self, value):
         if not value:
             value = []

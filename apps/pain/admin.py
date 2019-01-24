@@ -15,14 +15,13 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from django.contrib import admin
+from reversion.admin import VersionAdmin
+
 from models import PainAvatar
 
 
-import reversion
-
-class PainAvatarAdmin(reversion.VersionAdmin):
-
+class PainAvatarAdmin(VersionAdmin):
     pass
 
-admin.site.register(PainAvatar, PainAvatarAdmin)
 
+admin.site.register(PainAvatar, PainAvatarAdmin)

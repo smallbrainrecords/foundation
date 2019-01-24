@@ -14,10 +14,10 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-import reversion
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as AuthUserAdmin
 from django.contrib.auth.models import User
+from reversion.admin import VersionAdmin
 from reversion.helpers import patch_admin
 
 from .models import PatientController, PhysicianTeam
@@ -65,85 +65,85 @@ class EncounterEventInline(admin.StackedInline):
     model = EncounterEvent
 
 
-class UserProfileAdmin(reversion.VersionAdmin):
+class UserProfileAdmin(VersionAdmin):
     pass
 
 
 admin.site.register(UserProfile, UserProfileAdmin)
 
 
-class AccessLogAdmin(reversion.VersionAdmin):
+class AccessLogAdmin(VersionAdmin):
     actions = []
 
 
 admin.site.register(AccessLog, AccessLogAdmin)
 
 
-class EncounterAdmin(reversion.VersionAdmin):
+class EncounterAdmin(VersionAdmin):
     inlines = [EncounterEventInline]
 
 
 admin.site.register(Encounter, EncounterAdmin)
 
 
-class EncounterEventAdmin(reversion.VersionAdmin):
+class EncounterEventAdmin(VersionAdmin):
     pass
 
 
 admin.site.register(EncounterEvent, EncounterEventAdmin)
 
 
-class ProblemAdmin(reversion.VersionAdmin):
+class ProblemAdmin(VersionAdmin):
     pass
 
 
 admin.site.register(Problem, ProblemAdmin)
 
 
-class ProblemSegmentAdmin(reversion.VersionAdmin):
+class ProblemSegmentAdmin(VersionAdmin):
     pass
 
 
 admin.site.register(ProblemSegment, ProblemSegmentAdmin)
 
 
-class GoalAdmin(reversion.VersionAdmin):
+class GoalAdmin(VersionAdmin):
     pass
 
 
 admin.site.register(Goal, GoalAdmin)
 
 
-class ToDoAdmin(reversion.VersionAdmin):
+class ToDoAdmin(VersionAdmin):
     pass
 
 
 admin.site.register(ToDo, ToDoAdmin)
 
 
-class TextNoteAdmin(reversion.VersionAdmin):
+class TextNoteAdmin(VersionAdmin):
     pass
 
 
 admin.site.register(TextNote, TextNoteAdmin)
 
 
-class GuidelineAdmin(reversion.VersionAdmin):
+class GuidelineAdmin(VersionAdmin):
     pass
 
 
 admin.site.register(Guideline, GuidelineAdmin)
 
 
-class PatientImageAdmin(reversion.VersionAdmin):
+class PatientImageAdmin(VersionAdmin):
     pass
 
 
-class PatientControllerAdmin(reversion.VersionAdmin):
+class PatientControllerAdmin(VersionAdmin):
     list_display = ['patient', 'physician']
 
 
-class ObservationComponentAdmin(reversion.VersionAdmin):
+class ObservationComponentAdmin(VersionAdmin):
     list_display = ['name', 'get_observation_name', 'get_observation_id']
 
     def get_observation_name(self, obj):
