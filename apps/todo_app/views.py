@@ -573,15 +573,17 @@ def add_todo_member(request, todo_id):
     todo = ToDo.objects.get(id=todo_id)
     member_id = request.POST.get('id')
     member = UserProfile.objects.get(id=int(member_id))
+    tagged_todo = TaggedToDoOrder.objects.filter(todo=todo, user=member.user).first()
+    if tagged_todo is None:
+        TaggedToDoOrder.objects.create(todo=todo, user=member.user)
 
-    TaggedToDoOrder.objects.create(todo=todo, user=member.user)
+        # Set problem authentication
+        set_problem_authentication_false(request, todo)
 
-    # Set problem authentication
-    set_problem_authentication_false(request, todo)
-
-    # Save activity
-    log = "<b>{0} {1} - {2}</b> joined this todo.".format(member.user.first_name, member.user.last_name, member.role)
-    add_todo_activity(todo, request.user, log)
+        # Save activity
+        log = "<b>{0} {1} - {2}</b> joined this todo.".format(member.user.first_name, member.user.last_name,
+                                                              member.role)
+        add_todo_activity(todo, request.user, log)
 
     resp['success'] = True
     return ajax_response(resp)
