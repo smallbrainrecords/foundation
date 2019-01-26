@@ -20,25 +20,23 @@
         angular.module('ManagerApp')
             .component('todoLaboratory', {
                 templateUrl: "/static/apps/todo-laboratory/todo-laboratory.template.html",
-                controller: todoLaboratoryController,
-                bindings: {
-                    todoId: "<"
-                }
+                controller: todoLaboratoryController
             });
 
         /**
          *
          * @type {string[]}
          */
-        todoLaboratoryController.$inject = ['$rootScope', 'patientService', 'todoService', '$routeParams'];
+        todoLaboratoryController.$inject = ['$rootScope', '$scope', 'patientService', 'todoService', '$routeParams'];
 
         /**
          * TODO: Should I used $rootScope
          */
-        function todoLaboratoryController($rootScope, patientService, todoService, $routeParams) {
+        function todoLaboratoryController($rootScope, $scope, patientService, todoService, $routeParams) {
             // Temporary solution for this (controllerAs syntax)
 
             let ctrl = this;
+            ctrl.todoId = parseInt($routeParams.todoId);
             ctrl.printForm = {};
             ctrl.todoLabels = [];
             ctrl.activeTodos = []; // Active Todos <-  Selected todo -> Todo & Problem
@@ -72,7 +70,7 @@
 
                 };
 
-                patientService.getToDo(4, false, true, 1).then((resp) => {
+                patientService.getToDo($rootScope.patient_id, false, true, 1).then((resp) => {
                     if (resp.success) {
                         ctrl.activeTodos = resp.data;
 
