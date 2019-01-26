@@ -103,13 +103,15 @@
 <!-- TODO: Patient_Info is an UserProfile instant-->
 <!-- TODO: User_Id is an User_ID instant-->
 <!-- TODO: active_user is an UserProfile instant-->
+<input class="form-control" type="hidden" value="{{user.id}}" id="user_id"/>
+<input class="form-control" type="hidden" value="{{active_user}}" id="active_user"/>
+<input class="form-control" type="hidden" value="{{patient.id}}" id="patient_id"/>
+<input class="form-control" type="hidden" value="{{patient_info}}" id="patient_info"/>
+<input class="form-control" type="hidden" value="{{bleeding_risk}}" id="bleeding_risk"/>
+<input class="form-control" type="hidden" value="{{fit_and_well}}" id="fit_and_well"/>
+
 <div id='ng-app' ng-app='ManagerApp'
-     ng-init="active_user={{active_user}};patient_info={{patient_info}}; bleeding_risk={{bleeding_risk}};patient_id={{patient.id}};user_id={{user.id}}">
-
-    <input type='hidden' id='patient_id' value='{{ patient.id }}'>
-    <input type='hidden' id='user_id' value='{{ user.id }}'>
-    <input type="hidden" id="fit_and_well" value="{{fit_and_well}}">
-
+     ng-init="user_id=user.id;active_user={{active_user}};patient_id={{patient.id}};patient_info={{patient_info}}; bleeding_risk={{bleeding_risk}};">
     <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
 
     <div ng-view autoscroll='true'>

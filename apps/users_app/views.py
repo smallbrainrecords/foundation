@@ -250,6 +250,7 @@ def manage_patient(request, user_id):
     # TODO: Perfomances improvement
     user_profile_serialized = UserProfileSerializer(actor_profile).data
     user_profile_serialized['permissions'] = ROLE_PERMISSIONS[actor_profile.role]
+    context['user'] = request.user
     context['active_user'] = json.dumps(user_profile_serialized)
     context['patient_info'] = json.dumps(UserProfileSerializer(patient_profile).data)
     context['bleeding_risk'] = json.dumps(Medication.objects.filter(current=True).filter(
