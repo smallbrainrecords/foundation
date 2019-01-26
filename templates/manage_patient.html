@@ -111,7 +111,7 @@
 <input class="form-control" type="hidden" value="{{fit_and_well}}" id="fit_and_well"/>
 
 <div id='ng-app' ng-app='ManagerApp'
-     ng-init="user_id=user.id;active_user={{active_user}};patient_id={{patient.id}};patient_info={{patient_info}}; bleeding_risk={{bleeding_risk}};">
+     ng-init="user_id={{user.id}};active_user={{active_user}};patient_id={{patient.id}};patient_info={{patient_info}}; bleeding_risk={{bleeding_risk}};">
     <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
 
     <div ng-view autoscroll='true'>
