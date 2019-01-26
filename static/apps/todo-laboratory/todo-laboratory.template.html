@@ -30,9 +30,10 @@
         </div>
 
         <!--6) add free text input fields: "notes:" and "copies to:"-->
-        <label for="notes">Note</label>
-        <textarea class="form-control" id="notes" msd-elastic ng-model="$ctrl.printForm.notes" placeholder="Notes"
-                  title="Notes"></textarea>
+        <label for="notes">Special instructions</label>
+        <textarea class="form-control" id="notes" msd-elastic ng-model="$ctrl.printForm.notes"
+                  placeholder="Special instructions"
+                  title="Special instructions"></textarea>
 
         <label for="copies-to">Copies to</label>
         <textarea class="form-control" id="copies-to" msd-elastic ng-model="$ctrl.printForm.copied"
@@ -71,7 +72,7 @@
     <p>Patient’s phone number: {{$ctrl.printForm.patient.phoneNumber}}</p>
 
     <div>Fasting: {{$ctrl.printForm.fasting ? "Yes" : "No"}}</div>
-    <p>Special instructions: {{$ctrl.printForm.note}}</p>
+    <p>Special instructions: {{$ctrl.printForm.notes}}</p>
     <p>Tests Ordered:</p>
     <ul>
         <li ng-repeat="todo in $ctrl.printForm.todos track by $index">
