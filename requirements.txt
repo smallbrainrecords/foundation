@@ -2,7 +2,7 @@ Django==1.9
 django-reversion==1.10
 django-mptt==0.9.0
 django-mptt-admin==0.6.0
-django-genericadmin==0.6.1
+django-genericadmin==0.7.0
 
 django-appconf==1.0.2
 django-compressor==1.5
