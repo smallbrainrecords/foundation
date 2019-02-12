@@ -784,7 +784,7 @@ def search(request, user_id):
     context['user_role'] = actor_profile.role
     context['patient_profile'] = patient_profile
 
-    context = RequestContext(request, context)
+    # context = RequestContext(request, context)
     return render_to_response("patient_search.html", context)
 
 
@@ -844,7 +844,7 @@ def staff_search(request):
             context['inactive_patients'] = inactive_patients
     context['user_profile'] = user_profile
 
-    context = RequestContext(request, context)
+    # context = RequestContext(request, context)
     return render_to_response("staff_search.html", context)
 
 
