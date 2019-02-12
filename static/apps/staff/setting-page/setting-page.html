@@ -24,11 +24,11 @@
         </li>
         <li ng-repeat="role in roles track by $index">
             <div class="checkbox checkbox-success">
-                <input title="{{role.slug}}" id="{{role.slug}}" class="styled" type="checkbox"
+                <input title="{{ role.slug }}" id="{{ role.slug }}" class="styled" type="checkbox"
                        checklist-model="generalSettings['todo_popup_confirm']"
                        checklist-value="role.slug"
                        checklist-change="updateSetting('todo_popup_confirm')">
-                <label for="{{role.slug}}" ng-bind="role.display"></label>
+                <label for="{{ role.slug }}" ng-bind="role.display"></label>
             </div>
         </li>
     </ul>

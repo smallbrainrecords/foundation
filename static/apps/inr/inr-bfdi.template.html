@@ -4,14 +4,14 @@
         <li ng-repeat="result in results">
             <div class="row patient-match-result">
                 <div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 text-left flex-container">
-                    <img ng-src="{{result.avatar}}" class="profileThumb flex-item">
+                    <img ng-src="{{ result.avatar }}" class="profileThumb flex-item">
                     <span ng-bind-html="result.full_name"
                           class="full-name flex-item"></span>
                     <span ng-bind="result.date_of_birth" class="dob flex-item"></span>
                 </div>
                 <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 text-center flex-container">
 
-                    <span class="inr flex-item">INR: {{inr.inr_value}}</span>
+                    <span class="inr flex-item">INR: {{ inr.inr_value }}</span>
                 </div>
                 <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 text-right flex-container">
 
@@ -20,7 +20,7 @@
                         to tracker</a>
                     <a class="btn btn-default flex-item"
                        ng-if="result.problem_id != null"
-                       href="/u/patient/manage/{{result.id}}/#/problem/{{result.problem_id}}"
+                       href="/u/patient/manage/{{ result.id }}/#/problem/{{ result.problem_id }}"
                        target="_blank">Go
                         to tracker</a>
                 </div>

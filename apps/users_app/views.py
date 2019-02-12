@@ -256,7 +256,7 @@ def manage_patient(request, user_id):
     context['bleeding_risk'] = json.dumps(Medication.objects.filter(current=True).filter(
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists())
 
-    context = RequestContext(request, context)
+    # context = RequestContext(request, context)
     return render_to_response("manage_patient.html", context)
 
 
@@ -361,6 +361,7 @@ def get_patient_info(request, patient_id):
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists()
 
     return ajax_response(resp)
+
 
 @login_required
 def get_timeline_info(request, patient_id):
@@ -615,8 +616,8 @@ def get_patients_list(request):
         patient["document"] = (float(document_count) if document_count != 0 else float(1)) / 2
         patient['multiply'] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3) * (
             float(problem_count) if problem_count != 0 else float(1)) * (
-                              float(encounter_count) if encounter_count != 0 else float(1)) * (
-                                  (float(document_count) if document_count != 0 else float(1)) / 2)
+                                  float(encounter_count) if encounter_count != 0 else float(1)) * (
+                                      (float(document_count) if document_count != 0 else float(1)) / 2)
 
     # Will sort patient list by providing sort_by otherwise will sort by 'multiply' key
     resp = {

@@ -1,127 +1,128 @@
 <div class='panel panel-default'>
-	<div class='panel-body'>
-		<div class='row'>
-			<div class='col-md-12'>
-				<a href='#/a1c/{{a1c_id}}/edit_or_delete_values'><b> Back to Edit or delete values </b></a>
-			</div>
-		</div>
-	</div><!-- End of Panel Body -->
+    <div class='panel-body'>
+        <div class='row'>
+            <div class='col-md-12'>
+                <a href='#/a1c/{{ a1c_id }}/edit_or_delete_values'><b> Back to Edit or delete values </b></a>
+            </div>
+        </div>
+    </div><!-- End of Panel Body -->
 </div>
 
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<b> Edit or delete value </b>
-				<hr>		
-			</div>
-			<div class='col-md-12' ng-init="edit=false;">
+            <div class='col-md-12'>
+                <b> Edit or delete value </b>
+                <hr>
+            </div>
+            <div class='col-md-12' ng-init="edit=false;">
 
-				<p ng-class="{'text-danger': value.value_quantity > 7.5}">A1C: 
-					<span ng-if="value.patient_refused_A1C">refused </span>
-					{{value.value_quantity| number:1}}% on {{value.effective_datetime|date:'M/d/yyyy'}}
-					<span ng-if="a1c_date <= today">past due</span>
-				</p>
+                <p ng-class="{'text-danger': value.value_quantity > 7.5}">A1C:
+                    <span ng-if="value.patient_refused_A1C">refused </span>
+                    {{ value.value_quantity| number:1 }}% on {{ value.effective_datetime|date:'M/d/yyyy' }}
+                    <span ng-if="a1c_date <= today">past due</span>
+                </p>
 
-				<div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">
-					<form class='form-inline' ng-show="edit">
-						<div class="row">
-							<div class="col-md-6">
-								<div class='form-group'>
-									<label> New value </label>
-									<input type='text' class='form-control' ng-model='value.value_quantity'>
-								</div>
-								<div class='form-group'>
-									<label> Date </label>
-									<input type='text' class='form-control' ng-model="a1c_date_format" id="due_date">
-								</div>
-							</div>
-							<div class="col-md-6">
-								<div class='form-group'>
-									<input ng-click="edit=false;" type='button' value='Cancel' class='btn btn-default'>
-									<input ng-click="editValue(value.id, value.value_quantity, a1c_date_format)" type='submit' value='Save' class='btn btn-default'>
-								</div>
-							</div>
-						</div>
-						
-					</form>
-					<p ng-show="!edit">
-						<a href ng-click="edit=!edit">Edit</a>
-						<a href ng-click="deleteValue(value)">Delete</a>	
-					</p>
-				</div>
-			</div>
-		</div>
+                <div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">
+                    <form class='form-inline' ng-show="edit">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class='form-group'>
+                                    <label> New value </label>
+                                    <input type='text' class='form-control' ng-model='value.value_quantity'>
+                                </div>
+                                <div class='form-group'>
+                                    <label> Date </label>
+                                    <input type='text' class='form-control' ng-model="a1c_date_format" id="due_date">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class='form-group'>
+                                    <input ng-click="edit=false;" type='button' value='Cancel' class='btn btn-default'>
+                                    <input ng-click="editValue(value.id, value.value_quantity, a1c_date_format)"
+                                           type='submit' value='Save' class='btn btn-default'>
+                                </div>
+                            </div>
+                        </div>
 
-	</div><!-- End of Panel Body -->
+                    </form>
+                    <p ng-show="!edit">
+                        <a href ng-click="edit=!edit">Edit</a>
+                        <a href ng-click="deleteValue(value)">Delete</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- End of Panel Body -->
 </div>
 
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
-		<div class='row'>
+    <div class='panel-body'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<b> Notes </b>
-				<hr> 
-			</div>
-		</div>
-		<div class="row" ng-if="value.observation_value_notes.length">
-			<div class='col-md-12' ng-repeat="note in value.observation_value_notes">
-				<div ng-show="$index == 0 || show_note">
-					<span ng-show="!note.edit">{{note.author.user.username}}: {{note.note}} {{note.datetime|date:'M/d/yyyy'}}</span>
-					<div ng-if="active_user.role == 'physician' || active_user.role == 'admin'">
-						<div class="comment-box" ng-show="note.edit">
-							<input type='text' ng-model='note.note'>
-						</div>
-						<div ng-show="!note.edit">
-							<a href ng-click="toggleEditNote(note)">Edit</a>
-							<a href ng-click="deleteNote(note)">Delete</a>
-						</div>
-						<p ng-show="note.edit"><a href ng-click="toggleSaveNote(note)">Save</a></p>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="row" ng-init="show_note=false">
-			<div class='col-md-12'>
-				<button class='btn btn-default' ng-click="show_note=!show_note">
-					<span ng-if="!show_note">Show more notes</span>
-					<span ng-if="show_note">Show less notes</span>
-				</button>
-			</div>
-		</div>
-		</br>
-		<div class="row" ng-init="toggle_add_note=false">
-			<div class='col-md-12'>
-				<button class='btn btn-default' ng-click="toggle_add_note=!toggle_add_note">Add note</button>
-			</div>
-		</div>
-		<div class="row" ng-show="toggle_add_note">
-			<div class='col-md-12'>
-				<form class='form-inline' ng-submit='toggle_add_note=!toggle_add_note; add_note(note_form)' >
-					<div class='form-group'>
-						<label> Add </label>
-						<input type='text' class='form-control' ng-model='note_form.note'>
-					</div>
-					<div class='form-group'>
-						<input type='submit' value='Submit' class='btn btn-default'>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
-	</div><!-- End of Panel Body -->
+            <div class='col-md-12'>
+                <b> Notes </b>
+                <hr>
+            </div>
+        </div>
+        <div class="row" ng-if="value.observation_value_notes.length">
+            <div class='col-md-12' ng-repeat="note in value.observation_value_notes">
+                <div ng-show="$index == 0 || show_note">
+                    <span ng-show="!note.edit">{{ note.author.user.username }}: {{ note.note }} {{ note.datetime|date:'M/d/yyyy' }}</span>
+                    <div ng-if="active_user.role == 'physician' || active_user.role == 'admin'">
+                        <div class="comment-box" ng-show="note.edit">
+                            <input type='text' ng-model='note.note'>
+                        </div>
+                        <div ng-show="!note.edit">
+                            <a href ng-click="toggleEditNote(note)">Edit</a>
+                            <a href ng-click="deleteNote(note)">Delete</a>
+                        </div>
+                        <p ng-show="note.edit"><a href ng-click="toggleSaveNote(note)">Save</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" ng-init="show_note=false">
+            <div class='col-md-12'>
+                <button class='btn btn-default' ng-click="show_note=!show_note">
+                    <span ng-if="!show_note">Show more notes</span>
+                    <span ng-if="show_note">Show less notes</span>
+                </button>
+            </div>
+        </div>
+        </br>
+        <div class="row" ng-init="toggle_add_note=false">
+            <div class='col-md-12'>
+                <button class='btn btn-default' ng-click="toggle_add_note=!toggle_add_note">Add note</button>
+            </div>
+        </div>
+        <div class="row" ng-show="toggle_add_note">
+            <div class='col-md-12'>
+                <form class='form-inline' ng-submit='toggle_add_note=!toggle_add_note; add_note(note_form)'>
+                    <div class='form-group'>
+                        <label> Add </label>
+                        <input type='text' class='form-control' ng-model='note_form.note'>
+                    </div>
+                    <div class='form-group'>
+                        <input type='submit' value='Submit' class='btn btn-default'>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div><!-- End of Panel Body -->
 </div>
 
 <script type='text/javascript'>
-	
-	$(document).ready(function(){
 
-		$( "#due_date" ).datepicker({ dateFormat: 'yy-mm-dd' });
+    $(document).ready(function () {
 
-	});
+        $("#due_date").datepicker({dateFormat: 'yy-mm-dd'});
+
+    });
 </script>

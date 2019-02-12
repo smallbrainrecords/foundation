@@ -18,7 +18,7 @@
 
     'use strict';
 
-    var myTools = angular.module('myTools', []).config(function($httpProvider){
+    var myTools = angular.module('myTools', []).config(function ($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     });
@@ -512,7 +512,7 @@
 
     function setGlobalPlayer(id) {
 
-        if (typeof(videojs) == 'undefined') {
+        if (typeof (videojs) == 'undefined') {
 
             setTimeout(function () {
                 setGlobalPlayer(id);

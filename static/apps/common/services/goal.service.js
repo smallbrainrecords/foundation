@@ -14,9 +14,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-(function(){
+(function () {
 
-	'use strict';
+    'use strict';
 
     angular.module('app.services').service('goalService', function ($http, $q, $cookies, httpService) {
         return {
@@ -35,14 +35,14 @@
         function addNote(form) {
 
             let url = `/g/patient/${form.patient_id}/goal/${form.goal_id}/add_note`;
-			return httpService.post(form, url);
+            return httpService.post(form, url);
 
 
         }
 
         function changeGoalName(form) {
             let url = `/g/patient/${form.patient_id}/goal/${form.goal_id}/change_name`;
-			return httpService.post(form, url);
+            return httpService.post(form, url);
         }
     });
 

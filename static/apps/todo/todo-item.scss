@@ -6,6 +6,7 @@ todo-item {
     margin-bottom: -6px;
     overflow: hidden;
     position: relative;
+
     a.todo-label {
       float: left;
       width: 20px;
@@ -16,6 +17,7 @@ todo-item {
       margin: 0 2px;
       clear: none;
     }
+
     a.todo-label-name {
       color: #fff;
       width: auto;
@@ -36,10 +38,12 @@ todo-item {
   .quick-card-editor {
 
     padding-right: 150px;
+
     .quick-card-editor-label {
       margin-bottom: initial !important;
       z-index: 99 !important;
     }
+
     .input-group {
       z-index: 99;
     }
@@ -47,6 +51,7 @@ todo-item {
     .quick-card-editor-lv2 {
       border-radius: 3px;
     }
+
     .quick-card-editor-lv3 {
       a.todo-label {
         width: 100%;

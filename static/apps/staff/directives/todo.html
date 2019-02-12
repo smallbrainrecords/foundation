@@ -12,7 +12,8 @@
                 <span ng-if="item.due_date"> due by <span
                         ng-class="isDueDate(item.due_date)">{{ item.due_date }}</span></span>
 
-                <span ng-if="item.problem">for problem <a href="/u/patient/manage/{{ item.patient.id }}/#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a></span>
+                <span ng-if="item.problem">for problem <a
+                        href="/u/patient/manage/{{ item.patient.id }}/#/problem/{{ item.problem.id }}">{{ item.problem.problem_name }}</a></span>
 
                 <span ng-if="item.patient"> for patient
 						<a href="/u/patient/manage/{{ item.patient.id }}/">{{ item.patient.first_name }} {{ item.patient.last_name }}</a>
@@ -35,7 +36,8 @@
 
                 <p>
                     <span ng-repeat="member in item.members" title="Remove this member"
-                          ng-click="removeMember(item,member,$index);$event.stopPropagation();" class="todo-member">{{ member.username }}</span>
+                          ng-click="removeMember(item,member,$index);$event.stopPropagation();"
+                          class="todo-member">{{ member.username }}</span>
                 </p>
                 <a href class="btn-custom" ng-click="todoChange(item)"><i class="fa fa-pencil"></i></a>
             </div>

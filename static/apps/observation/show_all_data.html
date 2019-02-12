@@ -2,7 +2,7 @@
     <div class='panel-body'>
         <div class='row'>
             <div class='col-md-12'>
-                <a href='#/data/{{data.id}}'><b> Back to data page </b></a>
+                <a href='#/data/{{ data.id }}'><b> Back to data page </b></a>
             </div>
         </div>
     </div><!-- End of Panel Body -->
@@ -10,7 +10,7 @@
 <div class='panel panel-default'>
     <div class='panel-body'>
         <h3>{{ data.name }}</h3>
-        <p> {{data.unit}} </p>
+        <p> {{ data.unit }} </p>
     </div>
 </div>
 <div class='panel panel-default'>
@@ -18,9 +18,9 @@
         <ul class="ul-clean">
             <li ng-repeat="value in data.values track by $index">
                 <span ng-bind="data.label" class="component-labels"></span>
-                <a href='#/data/{{data.id}}/edit/{{value.edit_link}}'>
-                    <span class="component-effective-datetime">{{value.entry_time}}</span>
-                    <span class="component-value">{{value.value}}</span>
+                <a href='#/data/{{ data.id }}/edit/{{ value.edit_link }}'>
+                    <span class="component-effective-datetime">{{ value.entry_time }}</span>
+                    <span class="component-value">{{ value.value }}</span>
                 </a>
             </li>
         </ul>

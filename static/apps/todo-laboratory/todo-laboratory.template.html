@@ -6,17 +6,18 @@
         <p>Label:</p>
         <span class="label-wrapper">
                     <a class="todo-label" ng-class="label.css_class" ng-repeat="label in $ctrl.todoLabels">
-                        {{label.name}}
+                        {{ label.name }}
                     </a>
                 </span>
 
         <!--4) display all the active todos for the patient with a check box to the left.-->
         <div class="checkbox" ng-repeat="todo in $ctrl.activeTodos track by $index">
-            <input id="todo-{{todo.id}}" ng-click="$ctrl.selectItemToPrint($event,todo, $index)" title="{{todo.todo}}"
-                   checklist-model="$ctrl.printForm.todos" ng-checked="{{todo.id == $ctrl.todoId }}" type="checkbox">
-            <label for="todo-{{todo.id}}">
-                {{todo.todo}} {{todo.problem? "for "+ todo.problem.problem_name : ""}}
-                {{todo.due_date ? "due date " + todo.due_date : ""}}
+            <input id="todo-{{ todo.id }}" ng-click="$ctrl.selectItemToPrint($event,todo, $index)"
+                   title="{{ todo.todo }}"
+                   checklist-model="$ctrl.printForm.todos" ng-checked="{{ todo.id == $ctrl.todoId }}" type="checkbox">
+            <label for="todo-{{ todo.id }}">
+                {{ todo.todo }} {{ todo.problem? "for "+ todo.problem.problem_name : ""}}
+                {{ todo.due_date ? "due date " + todo.due_date : ""}}
             </label>
         </div>
         <br>
@@ -74,15 +75,15 @@
     <p>Tests Ordered:</p>
     <ul>
         <li ng-repeat="todo in $ctrl.printForm.todos track by $index">
-            {{todo.todo}} {{todo.problem? "for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
-            {{todo.due_date ? "due date " + todo.due_date : ""}}
+            {{ todo.todo }} {{ todo.problem? "for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
+            {{ todo.due_date ? "due date " + todo.due_date : ""}}
         </li>
     </ul>
 
     <p>Associated diagnosis:</p>
     <ul>
         <li ng-repeat="problem in $ctrl.printForm.problems track by $index">
-            {{problem.problem_name}} {{ problem.concept_id }}
+            {{ problem.problem_name }} {{ problem.concept_id }}
         </li>
     </ul>
 </section>

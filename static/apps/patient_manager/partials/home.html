@@ -104,7 +104,7 @@
             </div>
 
             <div class="bottom-info">
-                <span class="patient-name float-left"><strong> {{ patient_info.user.first_name }} {{ patient_info.user.last_name }}  {{ patient_info.date_of_birth | age}} </strong></span>
+                <span class="patient-name float-left"><strong> {{ patient_info.user.first_name }} {{ patient_info.user.last_name }}  {{ patient_info.date_of_birth | age }} </strong></span>
             </div>
         </div><!-- End of Panel Body -->
     </div>
@@ -279,7 +279,7 @@
                                                             title="Chronic Problem">
                                                         <option ng-repeat="chronic in chronics  track by $index"
                                                                 value="{{ chronic.id }}"> {{
-                                                            chronic.problem_name }}
+                                                                chronic.problem_name }}
                                                         </option>
                                                     </select>
                                                     <span class="input-group-btn">
@@ -432,7 +432,7 @@
 
             <!--Start goal section-->
             <div class='panel panel-default' ng-if="goals.length > 0">
-                <div class='panel-heading'>Goals {{}}</div>
+                <div class='panel-heading'>Goals {{ }}</div>
                 <div class='panel-body'>
                     <div class='row'>
                         <div class='col-md-12'>
@@ -522,7 +522,7 @@
                 <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
                     <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
                     <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                    Encounters ({{encounters.length}})
+                    Encounters ({{ encounters.length }})
                 </div>
 
                 <div class='panel-body' style='max-height:325px; overflow:auto'
@@ -603,9 +603,10 @@
 
                     <br>
                     <p>
-                        Last edited by: {{ narratives.latest.author}} on {{ narratives.latest.datetime|date:'M/d/yyyy'}}
+                        Last edited by: {{ narratives.latest.author }}
+                        on {{ narratives.latest.datetime|date:'M/d/yyyy' }}
                         <button class="btn btn-link" ng-click="loadMore(narratives.nextPage)" tabindex="-1">
-                            See previous entries({{narratives.total }})
+                            See previous entries({{ narratives.total }})
                         </button>
                         <button class="btn btn-primary pull-right" ng-click="addNarrative()">Update narrative</button>
                     </p>
@@ -655,7 +656,7 @@
                 <div class="col-sm-3 my-story-left">
                     <!--Available tabs-->
                     <ul class='ul-clean my-story-list no-padding'>
-                        <li ng-repeat="tab in my_story_tabs" encounter-event data-tab-id="{{tab.id}}"
+                        <li ng-repeat="tab in my_story_tabs" encounter-event data-tab-id="{{ tab.id }}"
                             ng-if="tab.private==false || active_user.role=='patient' || active_user.user.id==tab.author.id">
                             <button class="btn-link"
                                     ng-click="view_my_story_tab(tab);"
@@ -665,7 +666,7 @@
                             </button>
                             <div class="row"
                                  ng-show="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
-                                <input type="text" ng-model="selected_tab.name" title="{{selected_tab.name}}">
+                                <input type="text" ng-model="selected_tab.name" title="{{ selected_tab.name }}">
                                 <button class="btn btn-default"
                                         ng-click="save_my_story_tab(selected_tab);">Save
                                 </button>
@@ -762,7 +763,7 @@
                                 <!-- Last text entried-->
                                 <div ng-repeat="(entriesIdx,entry) in component.text_component_entries" ng-if="$first">
                                     <textarea class="tab-components form-control"
-                                              id="{{myStoryTabTextComponentArray.indexOf(component) + 1}}"
+                                              id="{{ myStoryTabTextComponentArray.indexOf(component) + 1}}"
                                               ng-model="entry.text"
                                               ng-change="change_component_text(component, entry, oldText)"
                                               ng-click="oldText = entry.text"
@@ -778,7 +779,7 @@
                                 <!-- In case there is nothing already entry-->
                                 <div ng-if="component.text_component_entries.length == 0">
                                         <textarea class="tab-components form-control" ng-model="entry.text"
-                                                  id="{{myStoryTabTextComponentArray.indexOf(component) + 1}}"
+                                                  id="{{ myStoryTabTextComponentArray.indexOf(component) + 1}}"
                                                   ng-change="change_component_text(component, entry, oldText)"
                                                   ng-click="oldText = entry.text"
                                                   ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
@@ -936,7 +937,7 @@
                                                 <h3>
                                                     <span ng-bind="data.mostRecentValue"></span>
                                                     <span ng-repeat='unit in data.observation_units'
-                                                          ng-if="unit.is_used"> {{unit.value_unit}}</span>
+                                                          ng-if="unit.is_used"> {{ unit.value_unit }}</span>
 
                                                 </h3>
                                                 <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
@@ -970,7 +971,7 @@
                                                 <h3>
                                                     <span ng-bind="data.mostRecentValue"></span>
                                                     <span ng-repeat='unit in data.observation_units'
-                                                          ng-if="unit.is_used"> {{unit.value_unit}}</span>
+                                                          ng-if="unit.is_used"> {{ unit.value_unit }}</span>
                                                 </h3>
                                                 <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                                             </div>
@@ -1054,7 +1055,7 @@
                                         <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
                                            ng-class="label.css_class"><span ng-bind="label.name"
                                                                             class="todo-label-name"></span></a>
-                                        <a href="#/document/{{document.id}}" class="flex-item document_name"
+                                        <a href="#/document/{{ document.id }}" class="flex-item document_name"
                                            target="_blank"
                                            ng-bind="document.document_name"></a>
                                         <span class="flex-item document_uploaded_date pull-right"
@@ -1089,7 +1090,7 @@
             <form class="form-inline" ng-if="active_user.role=='nurse'" ng-submit="nurseSubmitBDFI()">
                 <div class="form-group" ng-repeat="data in mostCommonData">
                     <input type='text' class='form-control'
-                           placeholder='{{data.name == component.name ? data.ph : data.ph + " " + component.name}}'
+                           placeholder='{{ data.name == component.name ? data.ph : data.ph + " " + component.name}}'
                            ng-repeat="component in data.observation_components"
                            ng-change="bdfiValueIsChanged(component)"
                            ng-model="component.new_value">
@@ -1103,7 +1104,7 @@
             <form class="form-inline" ng-if="active_user.role=='patient'">
                 <div class="form-group" ng-repeat="data in mostCommonData">
                     <input type='text' class='form-control'
-                           placeholder='{{data.name == component.name ? data.name : data.name + " " + component.name}}'
+                           placeholder='{{ data.name == component.name ? data.name : data.name + " " + component.name}}'
                            ng-repeat="component in data.observation_components"
                            ng-model="component.new_value"
                            ng-change="add_bfdi_value(component)"

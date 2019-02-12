@@ -160,12 +160,12 @@
                             </div>
                             <div class="checkbox" ng-repeat="data in datas track by $index">
                                 <input type="checkbox"
-                                       id="{{data.id}}"
+                                       id="{{ data.id }}"
                                        ng-model="data.pin"
                                        ng-change="data_pin_to_problem(data.id, problem.id);"
                                        ng-disabled="active_user.role == 'patient' && active_user.user.id != data.pin_author && data.pin_author != null"
-                                       title="{{data.name}}">
-                                <label for="{{data.id}}" ng-bind="data.name">
+                                       title="{{ data.name }}">
+                                <label for="{{ data.id }}" ng-bind="data.name">
                                 </label>
                             </div>
                         </div>
@@ -178,12 +178,12 @@
                             </div>
                             <div class="checkbox" ng-repeat="medication in medications track by $index">
                                 <input type="checkbox"
-                                       id="{{medication.id}}"
-                                       title="{{medication.name}}"
+                                       id="{{ medication.id }}"
+                                       title="{{ medication.name }}"
                                        ng-model="medication.pin"
                                        ng-change="medication_pin_to_problem(medication, problem.id);"
                                        ng-disabled="active_user.role == 'patient' && (active_user.id != medication.pin_author || medication.pin_author != null)">
-                                <label for="{{medication.id}}">{{ medication.name }}</label>
+                                <label for="{{ medication.id }}">{{ medication.name }}</label>
                             </div>
                         </div>
                         <!-- end change medication -->
@@ -247,11 +247,11 @@
                         <label for="todoNameInput"> Todo name</label>
                         <div class='input-group'>
                             <input type='text' class='form-control' ng-model='todo_form.name'
-                                   ng-attr-tabindex="{{problemWikiNote ? 3: 2}}"
+                                   ng-attr-tabindex="{{ problemWikiNote ? 3: 2}}"
                                    id='todoNameInput'>
                             <span class="input-group-btn">
                             <input type='submit' value='Submit' class='btn btn-default'
-                                   ng-attr-tabindex="{{problemWikiNote ? 4 : 3}}"></span>
+                                   ng-attr-tabindex="{{ problemWikiNote ? 4 : 3}}"></span>
                         </div>
                     </form>
 
@@ -358,7 +358,8 @@
                                         <div class="col-md-6 text-right">
                                             <h3>
                                                 <span ng-bind="data.mostRecentValue"></span>
-                                                <span ng-repeat='unit in data.observation_units' ng-if="unit.is_used"> {{unit.value_unit}}</span>
+                                                <span ng-repeat='unit in data.observation_units'
+                                                      ng-if="unit.is_used"> {{ unit.value_unit }}</span>
                                             </h3>
                                             <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                                         </div>
@@ -438,7 +439,8 @@
                                 <tr ng-repeat='medication in medications'
                                     ng-show='!medication.current && medication.pin'>
                                     <td>
-                                        <span class="cursor-pointer" ng-click='open_medication(medication)'>{{ medication.name }}</span>
+                                        <span class="cursor-pointer"
+                                              ng-click='open_medication(medication)'>{{ medication.name }}</span>
                                     </td>
                                     <td>
                                 <span ng-repeat="note in medication.medication_notes"
@@ -489,16 +491,16 @@
                              ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effecting: true}'>
                             <!--Only show if edit mode is enabled-->
                             <input type='checkbox'
-                                   id="eff{{eff_problem.id}}"
+                                   id="eff{{ eff_problem.id }}"
                                    title="{{ eff_problem.problem_name }}" ng-if="editMode"
                                    ng-model='eff_problem.effecting'
                                    ng-change='change_effecting_problem(eff_problem, problem)'
                                    ng-disabled='!permitted(["relate_problem"])'>
-                            <label for="eff{{eff_problem.id}}" ng-if='eff_problem.effecting==true'
+                            <label for="eff{{ eff_problem.id }}" ng-if='eff_problem.effecting==true'
                                    style='font-size:14px; font-weight:bold'>
                                 <a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
                             </label>
-                            <label for="eff{{eff_problem.id}}" ng-if='eff_problem.effecting!=true'>
+                            <label for="eff{{ eff_problem.id }}" ng-if='eff_problem.effecting!=true'>
                                 {{ eff_problem.problem_name }}
                             </label>
                         </div>
@@ -512,16 +514,16 @@
                              ng-repeat='eff_problem in patient_problems | filter : editMode ? "" : {effected: true}'>
                             <!--Only show if edit mode is enabled-->
                             <input type='checkbox'
-                                   id="effected_{{eff_problem.id}}"
+                                   id="effected_{{ eff_problem.id }}"
                                    title="{{ eff_problem.problem_name }}"
                                    ng-if="editMode" ng-model='eff_problem.effected'
                                    ng-change='change_effected_problem(problem, eff_problem)'
                                    ng-disabled='!permitted(["relate_problem"])'>
-                            <label for="effected_{{eff_problem.id}}" ng-if='eff_problem.effected==true'
+                            <label for="effected_{{ eff_problem.id }}" ng-if='eff_problem.effected==true'
                                    style='font-size:14px; font-weight:bold'>
                                 <a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
                             </label>
-                            <label for="effected_{{eff_problem.id}}" ng-if='eff_problem.effected!=true'>
+                            <label for="effected_{{ eff_problem.id }}" ng-if='eff_problem.effected!=true'>
                                 {{ eff_problem.problem_name }}
                             </label>
                         </div>
@@ -529,7 +531,7 @@
                 </div>
             </div>
             <div class="panel-footer text-right">
-                <button class="btn btn-default" ng-click="editMode=!editMode">{{editMode ?'Save':'Edit'}}</button>
+                <button class="btn btn-default" ng-click="editMode=!editMode">{{ editMode ?'Save':'Edit'}}</button>
             </div>
         </div>
 
@@ -538,7 +540,7 @@
             <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
                 <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
                 <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                Related Encounters ({{related_encounters.length}})
+                Related Encounters ({{ related_encounters.length }})
             </div>
             <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;' ng-show="encounter_collapse">
                 <a href='#/encounter/{{ encounter.id }}' ng-repeat='encounter in related_encounters track by $index'
@@ -560,7 +562,7 @@
                                     <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
                                        ng-class="label.css_class"><span ng-bind="label.name"
                                                                         class="todo-label-name"></span></a>
-                                    <a href="#/document/{{document.id}}" class="flex-item document_name"
+                                    <a href="#/document/{{ document.id }}" class="flex-item document_name"
                                        ng-bind="document.document_name"></a>
                                     <span class="flex-item document_uploaded_date pull-right"
                                           ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
@@ -622,7 +624,7 @@
                  ng-show="problem_activity_see_all || activity.is_input_type || activity.is_output_type">
                 <div class='col-md-3'>
                     <b>{{ activity.author.first_name }} {{ activity.author.last_name }} - {{
-                        activity.author.profile.role }} </b>
+                            activity.author.profile.role }} </b>
                 </div>
                 <div class='col-md-7'>
                             <span ng-if="activity.is_input_type"><i class="fa fa-caret-right"

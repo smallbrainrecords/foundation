@@ -106,7 +106,7 @@ class INRPatientSerializer(serializers.ModelSerializer):
     """
     avatar = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
-    date_of_birth = serializers.DateField(format='%m/%d/%Y')
+    date_of_birth = serializers.DateTimeField(format='%m/%d/%Y')
     problem_id = serializers.SerializerMethodField()
     user = SafeUserSerializer(many=False)
 

@@ -233,7 +233,7 @@ class UserProfile(models.Model):
     portrait_image = models.ImageField(upload_to='cover_image/', default='/static/images/avatar.png')
     summary = models.TextField(blank=True)
     sex = models.CharField(max_length=6, choices=SEX_CHOICES, blank=True)
-    date_of_birth = models.DateField(null=True, blank=True)
+    date_of_birth = models.DateTimeField(null=True, blank=True)
     deceased_date = models.DateTimeField(null=True, blank=True)
     marital_status = models.ForeignKey(MaritalStatus, null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
@@ -362,7 +362,7 @@ class Problem(MPTTModel):
     is_controlled = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     authenticated = models.BooleanField(default=False)
-    start_date = models.DateField(auto_now_add=True)
+    start_date = models.DateTimeField(auto_now_add=True)
     start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
     old_problem_name = models.CharField(max_length=200, blank=True, null=True)
 
@@ -398,7 +398,7 @@ class ProblemSegment(models.Model):
     is_active = models.BooleanField(default=True)
     authenticated = models.BooleanField(default=False)
     event_id = models.BigIntegerField(null=True, blank=True)
-    start_date = models.DateField()
+    start_date = models.DateTimeField()
     start_time = models.TimeField(null=True, blank=True)
 
     class Meta:
@@ -452,7 +452,7 @@ class Goal(models.Model):
     is_controlled = models.BooleanField(default=False)
     accomplished = models.BooleanField(default=False)
     notes = models.ManyToManyField(TextNote, blank=True)
-    start_date = models.DateField(auto_now_add=True)
+    start_date = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
         return '%s %s' % (unicode(self.patient), unicode(self.problem))
@@ -485,7 +485,7 @@ class ToDo(models.Model):
     """
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
-    due_date = models.DateField(blank=True, null=True)
+    due_date = models.DateTimeField(blank=True, null=True)
     order = models.BigIntegerField(null=True, blank=True)  # Position in normal todo list
 
     user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")  # Author
@@ -839,8 +839,8 @@ class UserTelecom(models.Model):
     telecom = models.ForeignKey(Telecom, related_name='telecom_users')
     use_code = models.CharField(max_length=6)
     rank = models.PositiveIntegerField(null=True, blank=True)
-    start = models.DateField(null=True, blank=True)
-    end = models.DateField(null=True, blank=True)
+    start = models.DateTimeField(null=True, blank=True)
+    end = models.DateTimeField(null=True, blank=True)
 
 
 class UserAddress(models.Model):
@@ -848,8 +848,8 @@ class UserAddress(models.Model):
     address = models.ForeignKey(Address, related_name='address_users')
     type_code = models.ForeignKey(AddressType, related_name='type_code_user_address')
     use_code = models.ForeignKey(AddressUse, related_name='use_code_user_address')
-    start = models.DateField(null=True, blank=True)
-    end = models.DateField(null=True, blank=True)
+    start = models.DateTimeField(null=True, blank=True)
+    end = models.DateTimeField(null=True, blank=True)
 
 
 class AOneC(models.Model):
@@ -898,7 +898,7 @@ class ColonCancerScreening(models.Model):
     patient_refused = models.BooleanField(default=False)
     not_appropriate = models.BooleanField(default=False)
     risk = models.CharField(max_length=10, choices=RISK_CHOICES, default='normal')
-    last_risk_updated_date = models.DateField(null=True, blank=True)
+    last_risk_updated_date = models.DateTimeField(null=True, blank=True)
     todo_past_five_years = models.BooleanField(default=False)
     patient_refused_on = models.DateTimeField(null=True, blank=True)
     not_appropriate_on = models.DateTimeField(null=True, blank=True)
@@ -915,7 +915,7 @@ class ColonCancerScreening(models.Model):
 
 
 class ColonCancerStudy(models.Model):
-    study_date = models.DateField(null=True, blank=True)
+    study_date = models.DateTimeField(null=True, blank=True)
     finding = models.CharField(max_length=100, null=True, blank=True)
     result = models.CharField(max_length=100, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
@@ -924,7 +924,7 @@ class ColonCancerStudy(models.Model):
     author = models.ForeignKey(User, related_name='author_studies')
     last_updated_user = models.ForeignKey(User, related_name='last_updated_user_studies', null=True, blank=True)
 
-    last_updated_date = models.DateField(auto_now=True)
+    last_updated_date = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     objects = ColonCancerStudyManager()
@@ -965,11 +965,12 @@ class ColonCancerTextNote(models.Model):
 class MyStoryTab(models.Model):
     name = models.TextField()
     # TODO: Why need both private & is_all. This should merged into one
-    private = models.BooleanField(default=True) # Only applied if author is Patient
-    is_all = models.BooleanField(default=False) # Only applied if author is Staff
+    private = models.BooleanField(default=True)  # Only applied if author is Patient
+    is_all = models.BooleanField(default=False)  # Only applied if author is Staff
 
     patient = models.ForeignKey(User, related_name="patient_story_tabs")
-    author = models.ForeignKey(User, related_name="author_story_tabs", null=True, blank=True) # Patient, Patient who has accessed to the patient, Physician, Admin
+    author = models.ForeignKey(User, related_name="author_story_tabs", null=True,
+                               blank=True)  # Patient, Patient who has accessed to the patient, Physician, Admin
 
     datetime = models.DateTimeField(auto_now_add=True)
 
@@ -1015,7 +1016,7 @@ class Inr(models.Model):
     """
     current_dose = models.TextField(null=True, blank=True)
     new_dosage = models.TextField(null=True, blank=True)
-    next_inr = models.DateField(null=True, blank=True)
+    next_inr = models.DateTimeField(null=True, blank=True)
 
     # Measured date & value is referred to observation data
     observation_value = models.OneToOneField(ObservationValue, related_name="inr", null=True)
@@ -1156,5 +1157,5 @@ class Narrative(models.Model):
     description = models.TextField()
     patient = models.ForeignKey(User, related_name="patient_narratives")
     author = models.ForeignKey(User, related_name="owned_narratives")
-    parent = models.ForeignKey("Narrative",related_name="child",null=True)
+    parent = models.ForeignKey("Narrative", related_name="child", null=True)
     created_at = models.DateTimeField(auto_now_add=True)

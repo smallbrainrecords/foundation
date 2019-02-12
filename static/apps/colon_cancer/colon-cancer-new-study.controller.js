@@ -73,8 +73,7 @@
                     'negative',
                 ];
             }
-        };
-
+        }
         function addStudy(study, image) {
             if (study.finding == '' || study.result == '' || study.date == '' || study.finding == undefined || study.result == undefined || study.date == undefined) {
                 toaster.pop('error', 'Error', 'Please select!');

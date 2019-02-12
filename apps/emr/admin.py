@@ -18,7 +18,6 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as AuthUserAdmin
 from django.contrib.auth.models import User
 from reversion.admin import VersionAdmin
-from reversion.helpers import patch_admin
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
@@ -31,8 +30,10 @@ from .models import UserProfile, AccessLog, Encounter, \
     CommonProblem, ColonCancerScreening, RiskFactor, ObservationPinToProblem, MyStoryTab, MyStoryTextComponent, \
     Medication, Inr, MedicationPinToProblem, MedicationTextNote, InrTextNote
 
+# from reversion.helpers import patch_admin
+
 admin.site.disable_action('delete_selected')
-patch_admin(User)
+# patch_admin(User)
 
 
 class UserProfileInline(admin.StackedInline):
@@ -189,4 +190,4 @@ admin.site.register(MedicationTextNote)
 admin.site.register(InrTextNote)
 
 # TODO: AnhDN(1/12/2017) Need to understand why need to patch_admin to able to view reversion from other app
-patch_admin(Medication)
+# patch_admin(Medication)

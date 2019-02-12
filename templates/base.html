@@ -10,31 +10,34 @@
     <!-- Bootstrap core CSS -->
     {% load compress %}
     {% compress css %}
-    <link href="/static/node_modules/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-    <!-- Version 3.x -->
-    <link href="/static/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-    <link href="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap-csp.css" rel="stylesheet" type="text/css"/>
-    <link href="/static/node_modules/ng-dialog/css/ngDialog.min.css" rel="stylesheet" type="text/css">
-    <link href="/static/node_modules/ng-dialog/css/ngDialog-theme-default.css" rel="stylesheet" type="text/css">
-    <link href="/static/node_modules/angularjs-toaster/toaster.min.css" rel="stylesheet" type="text/css"/>
-    <link href="/static/node_modules/ng-json-explorer/dist/angular-json-explorer.css" rel="stylesheet" type="text/css"/>
-    <link href="/static/node_modules/view-file-ng/dist/view-file-ng.min.css" rel="stylesheet" type="text/css">
-    <link href='/static/node_modules/angular-hotkeys/build/hotkeys.css' rel="stylesheet" type="text/css">
-    <link href='/static/node_modules/angular-xeditable/dist/css/xeditable.css' rel="stylesheet" type="text/css">
-    <link href="/static/node_modules/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet"
-          type="text/css">
-    <link href="/static/node_modules/angular-spinkit/build/angular-spinkit.min.css" rel="stylesheet" type="text/css">
-    <link href="/static/node_modules/fancybox-plus/css/jquery.fancybox-plus.css" rel="stylesheet" type="text/css">
-    <link href="/static/node_modules/angularjs-color-picker/dist/angularjs-color-picker.min.css" rel="stylesheet"
-          type="text/css"/>
-    <link href="/static/node_modules/angular-pickadate/dist/angular-pickadate.css" rel="stylesheet" type="text/css">
-    <!-- only include if you use bootstrap -->
-    <link href="/static/node_modules/angularjs-color-picker/dist/themes/angularjs-color-picker-bootstrap.min.css"
-          rel="stylesheet" type="text/css"/>
-    <link href="/static/libs/ngPrint/ngPrint.min.css" rel="stylesheet" type="text/css"/>
+        <link href="/static/node_modules/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <!-- Version 3.x -->
+        <link href="/static/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+        <link href="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap-csp.css" rel="stylesheet"
+              type="text/css"/>
+        <link href="/static/node_modules/ng-dialog/css/ngDialog.min.css" rel="stylesheet" type="text/css">
+        <link href="/static/node_modules/ng-dialog/css/ngDialog-theme-default.css" rel="stylesheet" type="text/css">
+        <link href="/static/node_modules/angularjs-toaster/toaster.min.css" rel="stylesheet" type="text/css"/>
+        <link href="/static/node_modules/ng-json-explorer/dist/angular-json-explorer.css" rel="stylesheet"
+              type="text/css"/>
+        <link href="/static/node_modules/view-file-ng/dist/view-file-ng.min.css" rel="stylesheet" type="text/css">
+        <link href='/static/node_modules/angular-hotkeys/build/hotkeys.css' rel="stylesheet" type="text/css">
+        <link href='/static/node_modules/angular-xeditable/dist/css/xeditable.css' rel="stylesheet" type="text/css">
+        <link href="/static/node_modules/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet"
+              type="text/css">
+        <link href="/static/node_modules/angular-spinkit/build/angular-spinkit.min.css" rel="stylesheet"
+              type="text/css">
+        <link href="/static/node_modules/fancybox-plus/css/jquery.fancybox-plus.css" rel="stylesheet" type="text/css">
+        <link href="/static/node_modules/angularjs-color-picker/dist/angularjs-color-picker.min.css" rel="stylesheet"
+              type="text/css"/>
+        <link href="/static/node_modules/angular-pickadate/dist/angular-pickadate.css" rel="stylesheet" type="text/css">
+        <!-- only include if you use bootstrap -->
+        <link href="/static/node_modules/angularjs-color-picker/dist/themes/angularjs-color-picker-bootstrap.min.css"
+              rel="stylesheet" type="text/css"/>
+        <link href="/static/libs/ngPrint/ngPrint.min.css" rel="stylesheet" type="text/css"/>
 
-    <link href="/static/css/main.css" rel="stylesheet" type="text/css">
-    <link href="/static/css/patient-profile.css" rel="stylesheet" type="text/css">
+        <link href="/static/css/main.css" rel="stylesheet" type="text/css">
+        <link href="/static/css/patient-profile.css" rel="stylesheet" type="text/css">
 
     {% endcompress %}
 
@@ -44,72 +47,73 @@
 
     <!-- Vendor compressed-->
     {% compress js %}
-    <script src="/static/node_modules/jquery/dist/jquery.js" type="text/javascript"></script>
-    <script src="/static/node_modules/jquery-ui-dist/jquery-ui.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/jquery-form/jquery.form.js" type="text/javascript"></script>
-    <script src="/static/node_modules/bootstrap/dist/js/bootstrap.js" type="text/javascript"></script>
-    <script src="/static/node_modules/underscore/underscore-min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/moment/moment.js" type="text/javascript"></script>
-    <script src="/static/node_modules/moment-timezone/builds/moment-timezone-with-data.min.js"
-            type="text/javascript"></script>
-    <script src="/static/node_modules/angular/angular.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/angular-cookies/angular-cookies.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/angular-animate/angular-animate.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/angular-sanitize/angular-sanitize.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/angular-route/angular-route.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/ng-dialog/js/ngDialog.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/angularjs-toaster/toaster.js" type="text/javascript"></script>
-    <script src="/static/node_modules/angular-drag-and-drop-lists/angular-drag-and-drop-lists.min.js"
-            type="text/javascript"></script>
-    <script type="text/javascript" src="/static/node_modules/angular-ui-sortable/dist/sortable.min.js"></script>
-    <script src="/static/node_modules/angular-pickadate/dist/angular-pickadate.min.js"></script>
-    <script src="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap.js"></script>
-    <script src="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap-tpls.js"></script>
-    <script src="/static/node_modules/angular-prompt/dist/angular-prompt.js"></script>
-    <script src="/static/node_modules/angular-audio/app/angular.audio.js" type="text/javascript"></script>
-    <script src="/static/node_modules/ng-file-upload/dist/ng-file-upload-all.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/ng-file-upload/dist/ng-file-upload.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/jquery/dist/jquery.js" type="text/javascript"></script>
+        <script src="/static/node_modules/jquery-ui-dist/jquery-ui.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/jquery-form/jquery.form.js" type="text/javascript"></script>
+        <script src="/static/node_modules/bootstrap/dist/js/bootstrap.js" type="text/javascript"></script>
+        <script src="/static/node_modules/underscore/underscore-min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/moment/moment.js" type="text/javascript"></script>
+        <script src="/static/node_modules/moment-timezone/builds/moment-timezone-with-data.min.js"
+                type="text/javascript"></script>
+        <script src="/static/node_modules/angular/angular.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/angular-cookies/angular-cookies.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/angular-animate/angular-animate.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/angular-sanitize/angular-sanitize.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/angular-route/angular-route.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/ng-dialog/js/ngDialog.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/angularjs-toaster/toaster.js" type="text/javascript"></script>
+        <script src="/static/node_modules/angular-drag-and-drop-lists/angular-drag-and-drop-lists.min.js"
+                type="text/javascript"></script>
+        <script type="text/javascript" src="/static/node_modules/angular-ui-sortable/dist/sortable.min.js"></script>
+        <script src="/static/node_modules/angular-pickadate/dist/angular-pickadate.min.js"></script>
+        <script src="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap.js"></script>
+        <script src="/static/node_modules/angular-ui-bootstrap/dist/ui-bootstrap-tpls.js"></script>
+        <script src="/static/node_modules/angular-prompt/dist/angular-prompt.js"></script>
+        <script src="/static/node_modules/angular-audio/app/angular.audio.js" type="text/javascript"></script>
+        <script src="/static/node_modules/ng-file-upload/dist/ng-file-upload-all.min.js"
+                type="text/javascript"></script>
+        <script src="/static/node_modules/ng-file-upload/dist/ng-file-upload.min.js" type="text/javascript"></script>
 
-    <script src="/static/node_modules/webcam/dist/webcam.min.js" type="text/javascript"></script>
-    <script src="/static/node_modules/tinycolor2/dist/tinycolor-min.js"></script>
-    <script src="/static/node_modules/angularjs-color-picker/dist/angularjs-color-picker.min.js"></script>
-    <script src="/static/node_modules/chart.js/dist/Chart.js"></script>
-    <script src="/static/node_modules/angular-chart.js/dist/angular-chart.js"></script>
-    <script src="/static/node_modules/angular-highlightjs/build/angular-highlightjs.js"></script>
-    <script src="/static/node_modules/x2js/x2js.js"></script>
-    <script src="/static/node_modules/angular-x2js-demo/dist/x2js.min.js"></script>
-    <script src="/static/node_modules/ng-json-explorer/dist/angular-json-explorer.js"></script>
-    <script src="/static/node_modules/angular-recursion/angular-recursion.js"></script>
+        <script src="/static/node_modules/webcam/dist/webcam.min.js" type="text/javascript"></script>
+        <script src="/static/node_modules/tinycolor2/dist/tinycolor-min.js"></script>
+        <script src="/static/node_modules/angularjs-color-picker/dist/angularjs-color-picker.min.js"></script>
+        <script src="/static/node_modules/chart.js/dist/Chart.js"></script>
+        <script src="/static/node_modules/angular-chart.js/dist/angular-chart.js"></script>
+        <script src="/static/node_modules/angular-highlightjs/build/angular-highlightjs.js"></script>
+        <script src="/static/node_modules/x2js/x2js.js"></script>
+        <script src="/static/node_modules/angular-x2js-demo/dist/x2js.min.js"></script>
+        <script src="/static/node_modules/ng-json-explorer/dist/angular-json-explorer.js"></script>
+        <script src="/static/node_modules/angular-recursion/angular-recursion.js"></script>
 
-    <script src="/static/node_modules/videogular/dist/videogular/videogular.js"></script>
-    <script src="/static/node_modules/videogular/dist/controls/vg-controls.min.js"></script>
-    <script src="/static/node_modules/videogular/dist/buffering/vg-buffering.min.js"></script>
+        <script src="/static/node_modules/videogular/dist/videogular/videogular.js"></script>
+        <script src="/static/node_modules/videogular/dist/controls/vg-controls.min.js"></script>
+        <script src="/static/node_modules/videogular/dist/buffering/vg-buffering.min.js"></script>
 
-    <script src='/static/node_modules/view-file-ng/dist/view-file-ng.min.js'></script>
-    <script src='/static/node_modules/angular-elastic/elastic.js'></script>
-    <script src='/static/node_modules/angular-hotkeys/build/hotkeys.js'></script>
-    <script src='/static/node_modules/angular-xeditable/dist/js/xeditable.min.js'></script>
-    <script src="/static/node_modules/angular-moment/angular-moment.min.js"></script>
-    <script src="/static/node_modules/checklist-model/checklist-model.js"></script>
-    <script src="/static/node_modules/angularindexeddb/angular-indexed-db.min.js"></script>
-    <script src="/static/node_modules/angular-spinkit/build/angular-spinkit.min.js"></script>
-    <script src="/static/node_modules/ng-infinite-scroll/build/ng-infinite-scroll.min.js"></script>
-    <!--Mansory-->
-    <script src="/static/node_modules/ev-emitter/ev-emitter.js"></script>
-    <script src="/static/node_modules/desandro-matches-selector/matches-selector.js"></script>
-    <script src="/static/node_modules/fizzy-ui-utils/utils.js"></script>
-    <script src="/static/node_modules/get-size/get-size.js"></script>
-    <script src="/static/node_modules/outlayer/item.js"></script>
-    <script src="/static/node_modules/outlayer/outlayer.js"></script>
-    <script src="/static/node_modules/masonry-layout/dist/masonry.pkgd.min.js"></script>
-    <script src="/static/node_modules/imagesloaded/imagesloaded.js"></script>
-    <script src="/static/node_modules/angular-masonry/angular-masonry.min.js"></script>
-    <!--Fancy box-->
-    <script src="/static/node_modules/fancybox-plus/dist/jquery.fancybox-plus.min.js"></script>
-    <script src="/static/node_modules/angular-fancybox-plus/js/angular-fancybox-plus.js"></script>
-    <!--UI Router-->
-    <script src="/static/node_modules/@uirouter/core/_bundles/ui-router-core.min.js"></script>
-    <script src="/static/node_modules/@uirouter/angularjs/release/ui-router-angularjs.min.js"></script>
+        <script src='/static/node_modules/view-file-ng/dist/view-file-ng.min.js'></script>
+        <script src='/static/node_modules/angular-elastic/elastic.js'></script>
+        <script src='/static/node_modules/angular-hotkeys/build/hotkeys.js'></script>
+        <script src='/static/node_modules/angular-xeditable/dist/js/xeditable.min.js'></script>
+        <script src="/static/node_modules/angular-moment/angular-moment.min.js"></script>
+        <script src="/static/node_modules/checklist-model/checklist-model.js"></script>
+        <script src="/static/node_modules/angularindexeddb/angular-indexed-db.min.js"></script>
+        <script src="/static/node_modules/angular-spinkit/build/angular-spinkit.min.js"></script>
+        <script src="/static/node_modules/ng-infinite-scroll/build/ng-infinite-scroll.min.js"></script>
+        <!--Mansory-->
+        <script src="/static/node_modules/ev-emitter/ev-emitter.js"></script>
+        <script src="/static/node_modules/desandro-matches-selector/matches-selector.js"></script>
+        <script src="/static/node_modules/fizzy-ui-utils/utils.js"></script>
+        <script src="/static/node_modules/get-size/get-size.js"></script>
+        <script src="/static/node_modules/outlayer/item.js"></script>
+        <script src="/static/node_modules/outlayer/outlayer.js"></script>
+        <script src="/static/node_modules/masonry-layout/dist/masonry.pkgd.min.js"></script>
+        <script src="/static/node_modules/imagesloaded/imagesloaded.js"></script>
+        <script src="/static/node_modules/angular-masonry/angular-masonry.min.js"></script>
+        <!--Fancy box-->
+        <script src="/static/node_modules/fancybox-plus/dist/jquery.fancybox-plus.min.js"></script>
+        <script src="/static/node_modules/angular-fancybox-plus/js/angular-fancybox-plus.js"></script>
+        <!--UI Router-->
+        <script src="/static/node_modules/@uirouter/core/_bundles/ui-router-core.min.js"></script>
+        <script src="/static/node_modules/@uirouter/angularjs/release/ui-router-angularjs.min.js"></script>
     {% endcompress %}
 
     <!-- Not safe for compression. This will load an additional lib which result 404 not found if being compressed-->
@@ -176,8 +180,8 @@
             {% endblock %}
             <ul class="nav navbar-nav navbar-right">
                 {% if user.is_authenticated %}
-                {% block patient_header%}
-                {% endblock %}
+                    {% block patient_header %}
+                    {% endblock %}
                 {% endif %}
             </ul>
         </div><!-- /.navbar-collapse -->

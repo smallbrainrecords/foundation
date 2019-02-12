@@ -14,9 +14,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-(function(){
+(function () {
 
-	'use strict';
+    'use strict';
 
     angular.module('app.services')
         .service('a1cService', function ($http, $q, $cookies, httpService) {
@@ -47,7 +47,7 @@
                 let url = `/a1c/${a1c_id}/info`;
                 let params = {};
 
-				return httpService.get(params, url);
+                return httpService.get(params, url);
 
             }
 
@@ -55,7 +55,7 @@
                 let url = `/a1c/${component_id}/component_info`;
                 let params = {};
 
-				return httpService.get(params, url);
+                return httpService.get(params, url);
 
             }
 
@@ -63,30 +63,30 @@
                 let url = `/a1c/${value_id}/value_info`;
                 let params = {};
 
-				return httpService.get(params, url);
+                return httpService.get(params, url);
 
             }
 
             function addNote(form) {
                 let url = `/a1c/${form.a1c_id}/add_note`;
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function editNote(form) {
                 let url = `/a1c/note/${form.id}/edit`;
 
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function deleteNote(form) {
                 let url = `/a1c/note/${form.id}/delete`;
 
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function addNewValue(form) {
                 let url = `/a1c/${form.component_id}/add_value`;
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function deleteValue(value) {
@@ -98,34 +98,34 @@
             function editValue(form) {
                 let url = `/a1c/value/${form.value_id}/edit`;
 
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function addValueNote(form) {
                 let url = `/a1c/value/${form.value_id}/add_note`;
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function editValueNote(form) {
                 let url = `/a1c/value/note/${form.id}/edit`;
 
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function deleteValueNote(form) {
                 let url = `/a1c/value/note/${form.id}/delete`;
 
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function addValueRefused(form) {
                 let url = `/a1c/${form.a1c_id}/patient_refused`;
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
 
             function trackA1cClickEvent(form) {
                 let url = `/a1c/${form.a1c_id}/track/click/`;
-				return httpService.post(form, url);
+                return httpService.post(form, url);
             }
         });
 

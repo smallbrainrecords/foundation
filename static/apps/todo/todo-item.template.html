@@ -4,7 +4,8 @@
            ng-change='updateTodoStatus(item)' ng-click="$event.stopPropagation();">
     <span ng-bind="item.todo"></span>
     <span ng-if="item.due_date"> due by <span ng-class="isDueDate(item.due_date)" ng-bind="item.due_date"></span></span>
-    <span ng-if="item.problem && showProblem">for problem <a href="#/problem/{{item.problem.id}}">{{item.problem.problem_name}}</a></span>
+    <span ng-if="item.problem && showProblem">for problem <a
+            href="#/problem/{{ item.problem.id }}">{{ item.problem.problem_name }}</a></span>
 
     <!-- begin label -->
     <span class="label-wrapper">
@@ -15,15 +16,16 @@
 
     <!--Display todo attached items-->
     <div class="attachment-glance">
-        <span ng-if="item.comments.length > 0"><i class="fa fa-comment-o"></i> {{item.comments.length}}</span>
-        <span ng-if="item.attachments.length > 0"><i class="fa fa-file-o"></i> {{item.attachments.length}}</span>
-        <span ng-if="item.document_set.length > 0"><i class="fa fa-file-pdf-o"></i> {{item.document_set.length}}</span>
+        <span ng-if="item.comments.length > 0"><i class="fa fa-comment-o"></i> {{ item.comments.length }}</span>
+        <span ng-if="item.attachments.length > 0"><i class="fa fa-file-o"></i> {{ item.attachments.length }}</span>
+        <span ng-if="item.document_set.length > 0"><i
+                class="fa fa-file-pdf-o"></i> {{ item.document_set.length }}</span>
     </div>
 
     <!-- Display todo tagged members-->
     <div class="members-wrapper">
         <span ng-repeat="member in item.members" class="todo-member" title="Remove this member"
-              ng-click="removeMember(item,member,$index);$event.stopPropagation();">{{member.username}}</span>
+              ng-click="removeMember(item,member,$index);$event.stopPropagation();">{{ member.username }}</span>
     </div>
 
     <a href class="btn-custom" ng-click="enableEditMode();$event.stopPropagation();"><i class="fa fa-pencil"></i></a>
@@ -55,7 +57,7 @@
             <a ng-click="changeDueDate(current_todo)"><i class="fa fa-clock-o"></i>Change Due Date</a>
             <a ng-click="changeLabel(current_todo)"><i class="fa fa-tags"></i>Edit label</a>
             <a ng-click="changeMember(current_todo)"><i class="fa fa-user"></i>Members</a>
-            <a href="#/todo-laboratory/{{current_todo.id}}"><i class="fa fa-print"></i>Print</a>
+            <a href="#/todo-laboratory/{{ current_todo.id }}"><i class="fa fa-print"></i>Print</a>
         </div>
         <!-- end buttons -->
 
@@ -66,7 +68,7 @@
             </div>
             <div ng-repeat="label in labels track by $index">
                 <a href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(current_todo, label)">
-                    {{label.name}}
+                    {{ label.name }}
                     <i class="fa fa-check" ng-repeat="l in current_todo.labels" ng-if="l.id==label.id"></i>
                 </a>
                 <!-- begin edit label -->
@@ -134,7 +136,7 @@
                 <a href ng-click="changeMember(current_todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
             </div>
             <a ng-repeat="member in members track by $index" href ng-click="changeTodoMember(current_todo, member)">
-                {{member.user.first_name}} {{member.user.last_name}}
+                {{ member.user.first_name }} {{ member.user.last_name }}
                 <i class="fa fa-check" ng-repeat="m in current_todo.members" ng-if="m.id==member.id"></i>
             </a>
         </div>

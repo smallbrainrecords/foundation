@@ -3,11 +3,11 @@
         <div class="panel-heading" role="tab" id="headingOne" ng-click="open_colon()">
             <div ng-show="!show_colon_collapse">
                 <i class="fa fa-caret-right" aria-hidden="true"></i>
-                Colon cancer screening: {{header}}
+                Colon cancer screening: {{ header }}
             </div>
             <div ng-show="show_colon_collapse">
                 <i class="fa fa-caret-down" aria-hidden="true"></i>
-                Colon cancer screening: {{header}}
+                Colon cancer screening: {{ header }}
             </div>
         </div>
         <div ng-show="show_colon_collapse">
@@ -22,29 +22,30 @@
                                             <p><b>Most recent study</b></p>
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    {{colon_cancer.colon_studies[0].finding}}
+                                                    {{ colon_cancer.colon_studies[0].finding}}
                                                 </div>
                                                 <div class="col-md-6"></div>
                                             </div>
                                             <div class="row">
                                                 <div class="col-md-12">on
-                                                    {{colon_cancer.colon_studies[0].study_date|date:'M/d/yyyy'}}
+                                                    {{ colon_cancer.colon_studies[0].study_date|date:'M/d/yyyy'}}
                                                 </div>
                                             </div>
                                             <div class="row">
-                                                <div class="col-md-6">{{colon_cancer.colon_studies[0].result}}
+                                                <div class="col-md-6">{{ colon_cancer.colon_studies[0].result}}
                                                 </div>
                                                 <div class="col-md-6"><a href class="btn btn-default">View
                                                     report</a></div>
                                             </div>
                                             <p ng-if="colon_cancer.colon_studies[0].note">Note:
-                                                {{colon_cancer.colon_studies[0].note}}</p>
+                                                {{ colon_cancer.colon_studies[0].note}}</p>
                                             <p>updated by
-                                                {{colon_cancer.colon_studies[0].last_updated_user.user.username}}
+                                                {{ colon_cancer.colon_studies[0].last_updated_user.user.username}}
                                                 on
-                                                {{colon_cancer.colon_studies[0].last_updated_date|date:'M/d/yyyy'}}</p>
+                                                {{ colon_cancer.colon_studies[0].last_updated_date|date:'M/d/yyyy'}}</p>
                                             <p>
-                                                <a href="#/colon_cancer/{{colon_cancer.id}}/edit_study/{{colon_cancer.colon_studies[0].id}}/"
+                                                <a href="#/colon_cancer/{{ colon_cancer.id }}/edit_study/
+                                                        {{ colon_cancer.colon_studies[0].id}}/"
                                                    class="btn btn-default">Edit</a>
                                             </p>
                                         </div>
@@ -58,7 +59,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6"><a
-                                                href="#/colon_cancer/{{colon_cancer.id}}/add_new_study"
+                                                href="#/colon_cancer/{{ colon_cancer.id }}/add_new_study"
                                                 class="btn btn-default">Add new study</a></div>
                                         <div class="col-md-6">
                                             <div class="row" ng-init="see_past_studies=false">
@@ -78,13 +79,13 @@
                                         <div class='col-md-12' ng-repeat="study in colon_cancer.colon_studies"
                                              ng-if="!$first">
                                             Study:
-                                            {{study.finding}}, {{study.result}}.
-                                            <span ng-if="study.study_date">Date: {{study.study_date|date:'M/d/yyyy'}}.</span>
-                                            <span ng-if="study.author">Author: {{study.author.user.first_name}} {{study.author.user.last_name}}.</span>
-                                            <span ng-if="study.created_on">Date added: {{study.created_on|date:'M/d/yyyy'}}.</span>
-                                            <p ng-if="study.note">Note: {{study.note}}</p>
+                                            {{ study.finding }}, {{ study.result }}.
+                                            <span ng-if="study.study_date">Date: {{ study.study_date|date:'M/d/yyyy' }}.</span>
+                                            <span ng-if="study.author">Author: {{ study.author.user.first_name }} {{ study.author.user.last_name }}.</span>
+                                            <span ng-if="study.created_on">Date added: {{ study.created_on|date:'M/d/yyyy' }}.</span>
+                                            <p ng-if="study.note">Note: {{ study.note }}</p>
                                             <p>
-                                                <a href="#/colon_cancer/{{colon_cancer.id}}/edit_study/{{study.id}}/"
+                                                <a href="#/colon_cancer/{{ colon_cancer.id }}/edit_study/{{ study.id }}/"
                                                    class="btn btn-link"
                                                    ng-if="active_user.role == 'physician' || active_user.role == 'admin' || active_user.id == study.author.id">Edit</a>
                                                 <a href class="btn btn-link" ng-click="delete_study(study)"
@@ -96,18 +97,18 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="io-box" ng-init="show_factors=false;">
-                                    <p><b>Risk:</b> {{colon_cancer.risk}}</p>
-                                    <p ng-repeat="factor in factors" ng-if="factor.checked">{{factor.value}}</p>
+                                    <p><b>Risk:</b> {{ colon_cancer.risk }}</p>
+                                    <p ng-repeat="factor in factors" ng-if="factor.checked">{{ factor.value }}</p>
                                     <p ng-if="colon_cancer.last_risk_updated_user">updated by
-                                        {{colon_cancer.last_risk_updated_user.username}} on
-                                        {{colon_cancer.last_risk_updated_date|date:'M/d/yyyy'}}</p>
+                                        {{ colon_cancer.last_risk_updated_user.username }} on
+                                        {{ colon_cancer.last_risk_updated_date|date:'M/d/yyyy' }}</p>
                                     <p><a href class="btn btn-default" ng-click="show_factors=!show_factors;">Update</a>
                                     </p>
                                     <form ng-show="show_factors">
                                         <div ng-repeat="factor in factors">
-                                            <label><input type="checkbox" value="{{factor.value}}"
+                                            <label><input type="checkbox" value="{{ factor.value }}"
                                                           ng-click="change_factor(factor)"
-                                                          ng-model="factor.checked">{{factor.value}}</label>
+                                                          ng-model="factor.checked">{{ factor.value }}</label>
                                         </div>
                                     </form>
                                 </div>
@@ -146,7 +147,7 @@
                                     <!--class='btn btn-default'>Add new order</a></p>-->
                                     <p>
                                         <a href class='btn btn-default btn-block' ng-click="repeat_todo(todo_repeat)">Repeat
-                                            {{todo_repeat.name}} in {{todo_repeat.year}} year<span
+                                            {{ todo_repeat.name }} in {{ todo_repeat.year }} year<span
                                                     ng-if="todo_repeat.year > 1">s</span></a>
                                     </p>
                                     <div class="row">
@@ -164,7 +165,7 @@
                                         <div class='col-md-12'
                                              ng-repeat="note in colon_cancer.colon_notes|orderBy:'datetime':true">
                                             <div ng-show="$index == 0 || show_note">
-                                                <span ng-show="!note.edit">{{note.author.username}}: {{note.note}} {{note.datetime|date:'M/d/yyyy'}}</span>
+                                                <span ng-show="!note.edit">{{ note.author.username }}: {{ note.note }} {{ note.datetime|date:'M/d/yyyy' }}</span>
                                                 <div ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.id == note.author.profile.id)">
                                                     <div class="comment-box" ng-show="note.edit">
                                                         <input type='text' ng-model='note.note'>

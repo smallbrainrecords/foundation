@@ -19,7 +19,7 @@
 
     angular.module('ManagerApp')
         .controller('DataSettingsCtrl', DataSettingsCtrl);
-    DataSettingsCtrl.$inject = ['$scope', '$routeParams', 'ngDialog', 'problemService', 'toaster', 'sharedService', '$location', 'dataService', 'patientService']
+    DataSettingsCtrl.$inject = ['$scope', '$routeParams', 'ngDialog', 'problemService', 'toaster', 'sharedService', '$location', 'dataService', 'patientService'];
 
     function DataSettingsCtrl($scope, $routeParams, ngDialog, problemService, toaster, sharedService, $location, dataService, patientService) {
 

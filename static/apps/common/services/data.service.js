@@ -176,8 +176,7 @@
                             valueQuantity = isNaN(valueQuantity) ? 0 : Math.round(parseFloat(valueQuantity));
                         }
                         result.push(valueQuantity);
-                    }
-                    else
+                    } else
                         result.push('');
                 });
 

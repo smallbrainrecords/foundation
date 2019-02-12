@@ -14,9 +14,11 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from django.db import models
-from django.contrib.auth.models import User
 import json
+
+from django.contrib.auth.models import User
+from django.db import models
+
 
 class PainAvatar(models.Model):
     patient = models.ForeignKey(User)

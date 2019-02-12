@@ -53,7 +53,7 @@ class ProblemLabelSerializer(serializers.ModelSerializer):
 
 
 class ProblemSegmentSerializer(serializers.ModelSerializer):
-    start_date = serializers.DateField(format='%m/%d/%Y')
+    start_date = serializers.DateTimeField(format='%m/%d/%Y')
 
     class Meta:
         model = ProblemSegment
@@ -72,7 +72,7 @@ class ProblemSegmentSerializer(serializers.ModelSerializer):
 class ProblemSerializer(serializers.ModelSerializer):
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
-    start_date = serializers.DateField(format='%m/%d/%Y')
+    start_date = serializers.DateTimeField(format='%m/%d/%Y')
 
     class Meta:
         model = Problem
@@ -167,7 +167,7 @@ class LabeledProblemListSerializer(serializers.ModelSerializer):
 class ProblemInfoSerializer(serializers.ModelSerializer):
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
-    start_date = serializers.DateField(format='%m/%d/%Y')
+    start_date = serializers.DateTimeField(format='%m/%d/%Y')
 
     class Meta:
         model = Problem
@@ -236,7 +236,7 @@ class ProblemTodoSerializer(serializers.ModelSerializer):
     attachments = AttachmentToDoSerializer(many=True)
     patient = SafeUserSerializer()
     members = SafeUserSerializer(many=True)
-    due_date = serializers.DateField(format='%m/%d/%Y')
+    due_date = serializers.DateTimeField(format='%m/%d/%Y')
 
     class Meta:
         model = ToDo
