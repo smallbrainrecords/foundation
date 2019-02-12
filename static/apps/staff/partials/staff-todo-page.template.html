@@ -10,7 +10,7 @@
                 <span class="todo-name" ng-bind="todo.todo" ng-click="changeText(todo)"
                       ng-if="!todo.change_text"></span>
                 <div class="quick-card-editor-text" ng-if="todo.change_text">
-                    <input type="text" ng-model="todo.todo" title="{{todo.todo}}" class="form-control">
+                    <input type="text" ng-model="todo.todo" title="{{ todo.todo }}" class="form-control">
                     <button class="btn btn-default" ng-click="saveTodoText(todo)">Save</button>
                     <a ng-click="changeText(todo)"><i class="fa fa-close"></i></a>
                 </div>
@@ -66,7 +66,7 @@
                      ng-repeat="comment in comments | orderBy:'datetime':true track by $index">
                     <div class="col-xs-12">
                         <div class="comment">
-                            <p class="username">{{comment.user.first_name}} {{comment.user.last_name}}</p>
+                            <p class="username">{{ comment.user.first_name }} {{ comment.user.last_name }}</p>
                             <div ng-show="!comment.edit" class="comment-content-wrapper">
                                 <p class="comment-content" ng-bind="comment.comment"></p>
                             </div>
@@ -98,10 +98,10 @@
                 <p>Attachments:</p>
 
                 <div ng-repeat="attachment in attachments" class="attachment">
-                    <p>{{attachment.attachment}}</p>
-                    <p>Added {{attachment.datetime}}</p>
+                    <p>{{ attachment.attachment }}</p>
+                    <p>Added {{ attachment.datetime }}</p>
                     <p>
-                        <a href="/todo/attachment/{{attachment.id}}/downloadAttachment">
+                        <a href="/todo/attachment/{{ attachment.id }}/downloadAttachment">
                             <i class="fa fa-download"></i>
                             Download
                         </a>
@@ -128,8 +128,8 @@
                             <div ng-repeat='encounter in related_encounters' class='row'
                                  style='margin-bottom:4px; border-top:1px solid #ccc;'>
                                 <div class='col-md-12'>
-                                    <a href='#/encounter/{{encounter.id}}'>
-                                        Ref ID: {{encounter.id}} on {{encounter.starttime|date}}
+                                    <a href='#/encounter/{{ encounter.id }}'>
+                                        Ref ID: {{ encounter.id }} on {{ encounter.starttime|date }}
                                     </a>
                                 </div>
                             </div>
@@ -144,16 +144,16 @@
                 <h2>Activities:</h2>
                 <div ng-repeat='activity in activities' class='row activity-item'>
                     <div class='col-md-3'>
-                        <b>{{activity.author.first_name}} {{activity.author.last_name}} -
-                            {{activity.author.profile.role}} </b>
+                        <b>{{ activity.author.first_name }} {{ activity.author.last_name }} -
+                            {{ activity.author.profile.role }} </b>
                     </div>
                     <div class='col-md-7'>
                         <span ng-bind-html='activity.activity'></span>
-                        <p ng-if="activity.attachment.is_image"><img ng-src="{{activity.attachment.attachment}}"
+                        <p ng-if="activity.attachment.is_image"><img ng-src="{{ activity.attachment.attachment }}"
                                                                      class="thumbnail"></p>
                     </div>
                     <div class='col-md-2'>
-                        {{activity.created_on | date }}
+                        {{ activity.created_on | date }}
                     </div>
                 </div>
             </section>
@@ -185,7 +185,7 @@
                         <div ng-repeat="label in labels">
                             <a href class="todo-label" ng-class="label.css_class"
                                ng-click="changeTodoLabel(todo, label)">
-                                {{label.name}}
+                                {{ label.name }}
                                 <i class="fa fa-check" ng-repeat="l in todo.labels" ng-if="l.id==label.id"></i>
                             </a>
 
@@ -258,7 +258,7 @@
                             <a href ng-click="changeMember(todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
                         </div>
                         <a ng-repeat="member in members" href ng-click="changeTodoMember(todo, member)">
-                            {{member.user.first_name}} {{member.user.last_name}}
+                            {{ member.user.first_name }} {{ member.user.last_name }}
                             <i class="fa fa-check" ng-repeat="m in todo.members" ng-if="m.id==member.id"></i>
                         </a>
                     </div>
@@ -271,7 +271,7 @@
                 <div class="quick-card-editor-label">
                     <a ng-repeat="label in todo.labels" href class="todo-label todo-label-name"
                        ng-class="label.css_class" ng-click="changeLabel2(todo)"
-                       ng-if="label.author.id==user_id || label.is_all">{{label.name}}</a>
+                       ng-if="label.author.id==user_id || label.is_all">{{ label.name }}</a>
                     <a href ng-click="changeLabel2(todo)"><i class="fa fa-plus"></i></a>
                 </div>
 
@@ -284,7 +284,7 @@
                         <div ng-repeat="label in labels">
                             <a href class="todo-label" ng-class="label.css_class"
                                ng-click="changeTodoLabel(todo, label)">
-                                {{label.name}}
+                                {{ label.name }}
                                 <i class="fa fa-check" ng-repeat="l in todo.labels" ng-if="l.id==label.id"></i>
                             </a>
 
@@ -331,7 +331,7 @@
             <!-- begin members -->
             <div class="todo-component" ng-if="todo.members.length > 0">
                 <div class="quick-card-editor-label">
-                    <span ng-repeat="member in todo.members" class="todo-member">{{member.user.username}}</span>
+                    <span ng-repeat="member in todo.members" class="todo-member">{{ member.user.username }}</span>
                     <a href ng-click="changeMember2(todo)"><i class="fa fa-plus"></i></a>
                 </div>
 
@@ -341,7 +341,7 @@
                                 class="fa fa-close"></i></a>
                     </div>
                     <a ng-repeat="member in members" href ng-click="changeTodoMember(todo, member)">
-                        {{member.user.first_name}} {{member.user.last_name}}
+                        {{ member.user.first_name }} {{ member.user.last_name }}
                         <i class="fa fa-check" ng-repeat="m in todo.members" ng-if="m.id==member.id"></i>
                     </a>
                 </div>

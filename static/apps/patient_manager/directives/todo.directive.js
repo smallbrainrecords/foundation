@@ -85,8 +85,8 @@
                         // TODO: Update the global data source also
                         patientService.updateTodoOrder(form)
                             .then((data) => {
-                            toaster.pop('success', 'Done', 'Updated Todo Order');
-                        });
+                                toaster.pop('success', 'Done', 'Updated Todo Order');
+                            });
                     }
                     scope.sorted = false;
                     $timeout(function () {

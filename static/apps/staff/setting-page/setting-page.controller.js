@@ -44,7 +44,7 @@
                 });
 
             sharedService.getSettings().then(function (response) {
-                angular.forEach( response.data.settings, function (value, key) {
+                angular.forEach(response.data.settings, function (value, key) {
                     $scope.generalSettings[key] = JSON.parse(value);
                 });
             });

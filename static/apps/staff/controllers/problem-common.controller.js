@@ -14,34 +14,34 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-(function(){
+(function () {
 
-	'use strict';
+    'use strict';
 
 
-	angular.module('StaffApp')
-		.controller('ManageCommonProblemCtrl', function(
-			$scope, $routeParams, ngDialog, 
-			staffService, $location, $anchorScroll, toaster){
+    angular.module('StaffApp')
+        .controller('ManageCommonProblemCtrl', function (
+            $scope, $routeParams, ngDialog,
+            staffService, $location, $anchorScroll, toaster) {
 
-			$scope.chronic_problem_terms = [];
-			$scope.acute_problem_terms = [];
+            $scope.chronic_problem_terms = [];
+            $scope.acute_problem_terms = [];
             $scope.new_chronic_problem = {set: false};
             $scope.new_acute_problem = {set: false};
             $scope.ready = false;
             $scope.problems = [];
 
-            staffService.fetchActiveUser().then(function(data){
-				$scope.active_user = data['user_profile'];
-				$scope.ready = true;
+            staffService.fetchActiveUser().then(function (data) {
+                $scope.active_user = data['user_profile'];
+                $scope.ready = true;
 
-				staffService.getCommonProblems($scope.active_user.user.id).then(function(data){
-					$scope.problems = data['problems'];
-				});
-			});
+                staffService.getCommonProblems($scope.active_user.user.id).then(function (data) {
+                    $scope.problems = data['problems'];
+                });
+            });
 
 
-			$scope.$watch('chronic_problem', function (newVal, oldVal) {
+            $scope.$watch('chronic_problem', function (newVal, oldVal) {
 
                 console.log(newVal);
                 if (newVal == undefined) {
@@ -116,7 +116,7 @@
                         $scope.unset_new_problem(new_problem);
 
                     } else if (data['success'] == false) {
-                         toaster.pop('error', 'Error', data['msg']);
+                        toaster.pop('error', 'Error', data['msg']);
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong');
                     }
@@ -125,7 +125,7 @@
                 });
 
 
-            }
+            };
 
             $scope.add_new_problem = function (problem_term, concept_id, new_problem, type) {
                 if (problem_term == '' || problem_term == undefined || concept_id == '' || concept_id == undefined) {
@@ -156,13 +156,13 @@
                         toaster.pop('error', 'Error', 'Something went wrong');
                     }
                 });
-            }
+            };
 
-            $scope.remove_common_problem = function(problem) {
-            	staffService.removeCommonProblem(problem.id).then(function (data) {
+            $scope.remove_common_problem = function (problem) {
+                staffService.removeCommonProblem(problem.id).then(function (data) {
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Removed Problem successfully');
-                        $scope.problems.splice( $scope.problems.indexOf(problem), 1 );
+                        $scope.problems.splice($scope.problems.indexOf(problem), 1);
                     } else if (data['success'] == false) {
                         toaster.pop('error', 'Error', data['msg']);
                     } else {
@@ -172,5 +172,5 @@
             }
 
 
-		}); /* End of controller */
+        }); /* End of controller */
 })();

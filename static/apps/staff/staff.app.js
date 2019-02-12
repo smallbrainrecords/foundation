@@ -23,7 +23,7 @@
         'app.services',
         'sharedModule', 'httpModule', 'myTools', 'inr', 'todos', 'document', 'TemplateCache',  // Development module
 
-        'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable','angular-spinkit', // 3rd party module
+        'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', 'angular-spinkit', // 3rd party module
         'ui.bootstrap', , 'pickadate', 'cgPrompt', 'view.file', 'angularMoment', 'checklist-model']);
 
 

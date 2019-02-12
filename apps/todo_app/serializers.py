@@ -71,7 +71,7 @@ class TodoSerializer(serializers.ModelSerializer):
     attachments = AttachmentToDoSerializer(many=True)
     patient = SafeUserSerializer()
     members = SafeUserSerializer(many=True)
-    due_date = serializers.DateField(format='%m/%d/%Y')
+    due_date = serializers.DateTimeField(format='%m/%d/%Y')
     problem = serializers.SerializerMethodField()
 
     class Meta:

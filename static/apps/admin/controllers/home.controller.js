@@ -21,6 +21,7 @@
             $scope.refresh_pending_users = refresh_pending_users;
             $scope.updatePendingUser = updatePendingUser;
             init();
+
             function init() {
                 $scope.users = [];
                 adminService.fetchActiveUser().then(function (data) {

@@ -1,37 +1,38 @@
 <!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
-<center> 
-	<h3> 
-		<a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a> 
-	</h3> 
+<center>
+    <h3>
+        <a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
+    </h3>
 </center>
 <hr>
 
-<center> <h3> Manage Common Problems </h3> </center>
+<center><h3> Manage Common Problems </h3></center>
 <hr>
 
 <div ng-if="active_user.role!='physician' && active_user.role!='mid-level' && ready">
-	<div class='panel panel-default'>
+    <div class='panel panel-default'>
 
-		<div class='panel-heading'> </div>
+        <div class='panel-heading'></div>
 
-		<div class='panel-body'>
-			You can not access this page
-		</div>
-	</div>
+        <div class='panel-body'>
+            You can not access this page
+        </div>
+    </div>
 </div>
 
 <div ng-show="active_user.role=='physician' || active_user.role=='mid-level'">
 
-	<div class='row'>
-		<div class='col-md-12'>
-			<div class='panel panel-default'>
+    <div class='row'>
+        <div class='col-md-12'>
+            <div class='panel panel-default'>
 
-				<div class='panel-heading'> Chronic Problems </div>
+                <div class='panel-heading'> Chronic Problems</div>
 
-				<div class='panel-body'>
-					<input type='text' ng-model='chronic_problem' class='form-control' placeholder='Search Problem....'>
-					<input type='text' ng-model='chronic_problem_id' class='form-control' placeholder='Concept ID'>
-                    <button class='btn btn-sm btn-default' ng-click='add_new_problem(chronic_problem, chronic_problem_id, new_chronic_problem, "chronic")'>
+                <div class='panel-body'>
+                    <input type='text' ng-model='chronic_problem' class='form-control' placeholder='Search Problem....'>
+                    <input type='text' ng-model='chronic_problem_id' class='form-control' placeholder='Concept ID'>
+                    <button class='btn btn-sm btn-default'
+                            ng-click='add_new_problem(chronic_problem, chronic_problem_id, new_chronic_problem, "chronic")'>
                         Add Problem
                     </button>
                     <br>
@@ -48,36 +49,41 @@
                         <hr>
                     </div>
                     <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
-	                    <div ng-repeat='problem_term in chronic_problem_terms' style='margin-top:12px;'>
-	                        <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
-	                                ng-click='set_new_problem(new_chronic_problem, problem_term)'>
-	                            {{ problem_term.term }}
-	                        </button>
-	                    </div>
-	                </div>
-	                <br>
-	                <hr>
-	                <div class="row">
-	                	<div class="col-md-12">
-	                		<p ng-repeat="problem in problems" ng-if="problem.problem_type=='chronic'"> {{ problem.problem_name }} <button class="btn btn-danger" ng-click="remove_common_problem(problem);">Remove</button></p>
-	                	</div>
-	                </div>
+                        <div ng-repeat='problem_term in chronic_problem_terms' style='margin-top:12px;'>
+                            <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
+                                    ng-click='set_new_problem(new_chronic_problem, problem_term)'>
+                                {{ problem_term.term }}
+                            </button>
+                        </div>
+                    </div>
+                    <br>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p ng-repeat="problem in problems"
+                               ng-if="problem.problem_type=='chronic'"> {{ problem.problem_name }}
+                                <button class="btn btn-danger" ng-click="remove_common_problem(problem);">Remove
+                                </button>
+                            </p>
+                        </div>
+                    </div>
                 </div>
-			</div>
+            </div>
 
-		</div>
-	</div>
+        </div>
+    </div>
 
-	<div class='row'>
-		<div class='col-md-12'>
-			<div class='panel panel-default'>
+    <div class='row'>
+        <div class='col-md-12'>
+            <div class='panel panel-default'>
 
-				<div class='panel-heading'> Acute Problems </div>
+                <div class='panel-heading'> Acute Problems</div>
 
-				<div class='panel-body'>
-					<input type='text' ng-model='acute_problem' class='form-control' placeholder='Search Problem....'>
-					<input type='text' ng-model='acute_problem_id' class='form-control' placeholder='Concept ID'>
-                    <button class='btn btn-sm btn-default' ng-click='add_new_problem(acute_problem, acute_problem_id,  new_acute_problem, "acute")'>
+                <div class='panel-body'>
+                    <input type='text' ng-model='acute_problem' class='form-control' placeholder='Search Problem....'>
+                    <input type='text' ng-model='acute_problem_id' class='form-control' placeholder='Concept ID'>
+                    <button class='btn btn-sm btn-default'
+                            ng-click='add_new_problem(acute_problem, acute_problem_id,  new_acute_problem, "acute")'>
                         Add Problem
                     </button>
                     <br>
@@ -94,22 +100,26 @@
                         <hr>
                     </div>
                     <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
-	                    <div ng-repeat='problem_term in acute_problem_terms' style='margin-top:12px;'>
-	                        <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
-	                                ng-click='set_new_problem(new_acute_problem, problem_term)'>
-	                            {{ problem_term.term }}
-	                        </button>
-	                    </div>
-	                </div>
-	                <br>
-	                <hr>
-	                <div class="row">
-	                	<div class="col-md-12">
-	                		<p ng-repeat="problem in problems" ng-if="problem.problem_type=='acute'"> {{ problem.problem_name }} <button class="btn btn-danger" ng-click="remove_common_problem(problem);">Remove</button></p>
-	                	</div>
-	                </div>
-				</div>
-			</div>
-		</div>
-	</div>
+                        <div ng-repeat='problem_term in acute_problem_terms' style='margin-top:12px;'>
+                            <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
+                                    ng-click='set_new_problem(new_acute_problem, problem_term)'>
+                                {{ problem_term.term }}
+                            </button>
+                        </div>
+                    </div>
+                    <br>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p ng-repeat="problem in problems"
+                               ng-if="problem.problem_type=='acute'"> {{ problem.problem_name }}
+                                <button class="btn btn-danger" ng-click="remove_common_problem(problem);">Remove
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

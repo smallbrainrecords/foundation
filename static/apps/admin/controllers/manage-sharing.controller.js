@@ -136,6 +136,7 @@
             $scope.inArray = inArray;
             $scope.changeSharingProblem = changeSharingProblem;
             init();
+
             function init() {
                 adminService.fetchActiveUser().then(function (data) {
                     $scope.active_user = data['user_profile'];

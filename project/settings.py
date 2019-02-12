@@ -23,23 +23,19 @@ import raven
 # Django settings for emr project.
 
 DEBUG = False  # Never set 'DEBUG = True' in production environment
-TEMPLATE_DEBUG = True
 COMPRESS_ENABLED = True
 
 # toggle experimental features
 VOICE_CONTROL = False
 SYNCING = False
 
-
 os.environ['LANG'] = 'en_US.UTF-8'
-# BASE_DIR = os.getcwd()
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 APP_PATH = os.path.join(BASE_DIR, 'apps')
 sys.path.append(APP_PATH)
 
 AUTH_PROFILE_MODULE = "account.UserProfile"
-
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -98,23 +94,6 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    #     'django.template.loaders.eggs.Loader',
-)
-
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.debug',
-    'django.core.context_processors.i18n',
-    'django.core.context_processors.media',
-    'django.core.context_processors.static',
-    'django.core.context_processors.request',
-    'django.contrib.messages.context_processors.messages',
-)
-
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -131,9 +110,25 @@ ROOT_URLCONF = 'project.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 # WSGI_APPLICATION = 'project.wsgi.application'
 
-TEMPLATE_DIRS = (
-    os.path.join(BASE_DIR, 'templates'),
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+            'debug': True
+        }
+    }
+]
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -145,7 +140,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
+    'django.contrib.admindocs',
     'mptt',
     'reversion',
     'emr',
@@ -224,7 +219,6 @@ LOGGING = {
 
 SNOMEDCT = {}
 
-
 # ###################################################################
 # LOCAL SETTINGS FILE IS USED TO IMPORT SENSITIVE CONFIGURATION INFO. 
 # MODIFY THE INCLUDED TEMPLATE FOR YOUR OWN PARTICULAR ENVIRONMENT
@@ -235,35 +229,28 @@ try:
 except ImportError as e:
     pass
 
-
     # ADMINS = (
     #     ('', ''),('', ''),
     # )
     #    Imported from local_settings.py
 
-
     # MANAGERS =
     #    Imported from local_settings.py
-
 
     # DATABASES = {
     #
     # }
     #    Imported from local_settings.py
 
-
     # Make this unique, and don't share it with anybody.
     # SECRET_KEY = ''   # Imported from local_settings.py
-
 
     # ALLOWED_HOSTS = [
     #     '',
     # ]
     #    Imported from local_settings.py
 
-
     # SITE_ID =    # Imported from local_settings.py
-
 
     # The following is imported from local_settings.py
     # EMAIL_USE_TLS = True

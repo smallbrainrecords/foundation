@@ -4,9 +4,9 @@
             <div ng-show="!show_a1c_collapse" ng-class="{'text-danger': last_value.value_quantity > 7.5}">
                 <i class="fa fa-caret-right" aria-hidden="true"></i>
                 A1C:
-                <span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
+                <span ng-if="a1c.patient_refused_A1C">Refused on {{ a1c.observation.effective_datetime|date:'M/d/yyyy' }}</span>
                 <span ng-if="first_component.observation_component_values.length && !a1c.patient_refused_A1C">
-						{{last_value.value_quantity| number:1}}% on {{last_value.effective_datetime|date:'M/d/yyyy'}}
+						{{ last_value.value_quantity| number:1 }}% on {{ last_value.effective_datetime|date:'M/d/yyyy' }}
 						<span ng-if="a1c_date <= today">past due</span>
 					</span>
             </div>
@@ -18,9 +18,9 @@
 
                     <div class='col-md-12' ng-class="{'text-danger': last_value.value_quantity > 7.5}">
                         A1C:
-                        <span ng-if="a1c.patient_refused_A1C">Refused on {{a1c.observation.effective_datetime|date:'M/d/yyyy'}}</span>
+                        <span ng-if="a1c.patient_refused_A1C">Refused on {{ a1c.observation.effective_datetime|date:'M/d/yyyy' }}</span>
                         <span ng-if="first_component.observation_component_values.length && !a1c.patient_refused_A1C">
-								{{last_value.value_quantity| number:1}}% on {{last_value.effective_datetime|date:'M/d/yyyy'}}
+								{{ last_value.value_quantity| number:1 }}% on {{ last_value.effective_datetime|date:'M/d/yyyy' }}
 								<span ng-if="a1c_date <= today">past due</span>
 							</span>
                     </div>
@@ -30,14 +30,14 @@
                     <div class='col-md-6'>
                         <div class="row">
                             <div class='col-md-12'>
-                                <a href="#/a1c/{{a1c.id}}/enter_new_value" class='btn btn-default'>Enter new
+                                <a href="#/a1c/{{ a1c.id }}/enter_new_value" class='btn btn-default'>Enter new
                                     value</a>
                             </div>
                         </div>
                         </br>
                         <div class="row">
                             <div class='col-md-12'>
-                                <a href="#/a1c/{{a1c.id}}/edit_or_delete_values" class='btn btn-default'>Edit
+                                <a href="#/a1c/{{ a1c.id }}/edit_or_delete_values" class='btn btn-default'>Edit
                                     values</a>
                             </div>
                         </div>
@@ -50,17 +50,17 @@
                                  ng-repeat="value in first_component.observation_component_values|orderBy:['effective_datetime','created_on']:true"
                                  ng-class="{'text-danger': component.value_quantity > 7.5}">
                                 A1C:
-                                {{value.value_quantity| number:1}}% on
-                                {{value.effective_datetime|date:'M/d/yyyy'}}.
+                                {{ value.value_quantity| number:1 }}% on
+                                {{ value.effective_datetime|date:'M/d/yyyy' }}.
 
                                 <span ng-if="value.observation_value_notes.length">
 											Note: 
 											<span ng-repeat="note in value.observation_value_notes">
-												{{note.note}}.
+												{{ note.note }}.
 											</span>
 										</span>
-                                <span ng-if="value.author">Author: {{value.author.user.username}}.</span>
-                                <span ng-if="value.created_on">Date added: {{value.created_on|date:'M/d/yyyy'}}.</span>
+                                <span ng-if="value.author">Author: {{ value.author.user.username }}.</span>
+                                <span ng-if="value.created_on">Date added: {{ value.created_on|date:'M/d/yyyy' }}.</span>
                             </div>
                         </div>
                         </br>
@@ -75,7 +75,7 @@
                         <div class="row" ng-if="a1c.a1c_notes.length">
                             <div class='col-md-12' ng-repeat="note in a1c.a1c_notes">
                                 <div ng-show="$index == 0 || show_note">
-                                    <span ng-show="!note.edit">{{note.author.user.username}}: {{note.note}} {{note.datetime|date:'M/d/yyyy'}}</span>
+                                    <span ng-show="!note.edit">{{ note.author.user.username }}: {{ note.note }} {{ note.datetime|date:'M/d/yyyy' }}</span>
                                     <div ng-if="active_user.role == 'physician' || active_user.role == 'admin'">
                                         <div class="comment-box" ng-show="note.edit">
                                             <input type='text' ng-model='note.note'>
@@ -127,18 +127,18 @@
                             <p ng-if='orders.length == 0'> No pending order</p>
                             <div ng-if="orders.length > 0">
                                 <todo todo-list="orders" accomplished="false" show-problem="false"
-                                          on-status-changed-success="a1cTodoStatusChangedCallback"
-                                          labels="labels" members="members"
-                                          patient-id="patient_id" user-id="patient_id"
-                                          active-user="active_user"></todo>
+                                      on-status-changed-success="a1cTodoStatusChangedCallback"
+                                      labels="labels" members="members"
+                                      patient-id="patient_id" user-id="patient_id"
+                                      active-user="active_user"></todo>
                                 <wave-spinner ng-if="todoIsLoading"></wave-spinner>
                             </div>
                         </div>
-                        <a href="#/a1c/{{a1c.id}}/add_different_order" class='btn btn-default btn-block'>Add a
+                        <a href="#/a1c/{{ a1c.id }}/add_different_order" class='btn btn-default btn-block'>Add a
                             different task</a>
                         <button class='btn btn-default btn-block' ng-click="repeatThreeMonths()">Repeat in 3
-                                    months
-                                </button>
+                            months
+                        </button>
                     </div>
                 </div>
             </div>

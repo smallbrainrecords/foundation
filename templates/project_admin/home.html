@@ -1,33 +1,34 @@
 {% extends "base.html" %}
 
 {% block search %}
-<form class="navbar-form navbar-left" target="_blank" action="{% url 'staff_search'%}" method="post">
-    {% csrf_token %}
-    <div class="form-group">
-        <input type="text" class="form-control" placeholder="Search" name="query">
-    </div>
-    <button type="submit" class="btn btn-default">Submit</button>
-</form>
+    <form class="navbar-form navbar-left" target="_blank" action="{% url 'staff_search' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="Search" name="query">
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+    </form>
 {% endblock %}
 
 {% block content %}
-<script src="/static/apps/admin/admin.app.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/admin/controllers/home.controller.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/admin/controllers/edit-user.controller.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/admin/controllers/add-user.controller.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/apps/admin/controllers/manage-sharing.controller.js" type="text/javascript"
-        charset="utf-8"></script>
+    <script src="/static/apps/admin/admin.app.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/admin/controllers/home.controller.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/admin/controllers/edit-user.controller.js" type="text/javascript"
+            charset="utf-8"></script>
+    <script src="/static/apps/admin/controllers/add-user.controller.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/apps/admin/controllers/manage-sharing.controller.js" type="text/javascript"
+            charset="utf-8"></script>
 
-<div id='ng-app' ng-app='AdminApp' class='no-js' lang="en">
-    <div>
-        <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
+    <div id='ng-app' ng-app='AdminApp' class='no-js' lang="en">
+        <div>
+            <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
 
-        <div ng-view>
-            Loading...
+            <div ng-view>
+                Loading...
+            </div>
         </div>
-    </div>
 
-</div>
+    </div>
 
 {% endblock %}
 

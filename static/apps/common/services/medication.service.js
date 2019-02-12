@@ -88,6 +88,7 @@
                 let url = `/medication/${patient_id}/${medication_id}/change_active_medication`;
                 return httpService.post({}, url);
             }
+
             /**
              * Change medication dosage
              * @returns {HttpPromise}
@@ -97,7 +98,7 @@
              */
             function changeDosage(patientId, medicationId, medicationObj) {
                 let url = `/medication/${patientId}/${medicationId}/change_dosage`;
-                return $http.post(url,medicationObj, {
+                return $http.post(url, medicationObj, {
                     headers: {
                         'X-CSRFToken': $cookies.get('csrftoken')
                     }

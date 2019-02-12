@@ -1,86 +1,88 @@
 <div class="row">
-	<div class="col-md-12">
-		<h3 class="text-center">
-			<a class="pull-left" href='#/edit'><i class='glyphicon glyphicon-arrow-left'></i> Back </a>
-			Manage Sharing Patients
-		</h3>
-	</div>
+    <div class="col-md-12">
+        <h3 class="text-center">
+            <a class="pull-left" href='#/edit'><i class='glyphicon glyphicon-arrow-left'></i> Back </a>
+            Manage Sharing Patients
+        </h3>
+    </div>
 </div>
 <hr>
 
 <div class='row'>
-	<div class='col-md-12'>
-		<div class='panel panel-default' id='nursesAssignedInfo'>
+    <div class='col-md-12'>
+        <div class='panel panel-default' id='nursesAssignedInfo'>
 
-			<div class='panel-heading'>
-				{{patient.user.first_name}} {{patient.user.last_name}} @ {{patient.user.username}} {{}}
-			</div>
+            <div class='panel-heading'>
+                {{ patient.user.first_name }} {{ patient.user.last_name }} @ {{ patient.user.username }} {{ }}
+            </div>
 
-			<div class='panel-body'>
-				<div ng-if="active_user.role != 'patient'">
-					<label for="patient-name">Select user can access this patient </label>
-					<input type="text" title="Patient name"
-						   class="form-control"
-						   id="patient-name"
-						   placeholder="Type patient name to search"
-						   ng-model="patientName"
-						   ng-change="findPatient(patientName)">
-					<ul class="ul-clean no-padding" id="result-set" ng-if="results.length > 0">
-						<li ng-repeat="result in results">
-							<div class="row patient-match-result">
-								<div class="col-md-12 text-left">
-									<img ng-src="{{result.avatar}}" class="profileThumb">
-									<span class="full-name flex-item"> {{result.full_name}} @ {{result.user.username}}</span>
-									<span ng-bind="result.date_of_birth" class="dob"></span>
+            <div class='panel-body'>
+                <div ng-if="active_user.role != 'patient'">
+                    <label for="patient-name">Select user can access this patient </label>
+                    <input type="text" title="Patient name"
+                           class="form-control"
+                           id="patient-name"
+                           placeholder="Type patient name to search"
+                           ng-model="patientName"
+                           ng-change="findPatient(patientName)">
+                    <ul class="ul-clean no-padding" id="result-set" ng-if="results.length > 0">
+                        <li ng-repeat="result in results">
+                            <div class="row patient-match-result">
+                                <div class="col-md-12 text-left">
+                                    <img ng-src="{{ result.avatar }}" class="profileThumb">
+                                    <span class="full-name flex-item"> {{ result.full_name }} @ {{ result.user.username }}</span>
+                                    <span ng-bind="result.date_of_birth" class="dob"></span>
 
-									<!-- TODO Condition checking here-->
-									<span ng-if="permitted(result.user)">
+                                    <!-- TODO Condition checking here-->
+                                    <span ng-if="permitted(result.user)">
 
 										<a class="btn btn-primary pull-right" ng-if="!isShared(result)"
-										   ng-click="add_sharing_patient(result.user.id)">Assign</a>
+                                           ng-click="add_sharing_patient(result.user.id)">Assign</a>
 
-										<!-- TODO Condition checking here-->
+                                        <!-- TODO Condition checking here-->
 										<a class="btn btn-danger pull-right" ng-if="isShared(result)"
-										   ng-click="remove_sharing_patient(result.user.id)">Remove</a>
+                                           ng-click="remove_sharing_patient(result.user.id)">Remove</a>
 									</span>
-								</div>
-							</div>
-						</li>
-					</ul>
-					<hr>
-				</div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <hr>
+                </div>
 
-				<table class='table'>
-					<thead>
-					<tr>
-						<th> Name</th>
-						<th> Username</th>
-						<th> Actions</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr ng-repeat='p in sharing_patients'>
-							<td> {{p.user.first_name}} {{p.user.last_name}}
-							</td>
-							<td> {{p.user.username}}
-							</td>
-							<td class="text-right">
-								<a ng-if="'patient' != active_user.role" class='btn btn-sm btn-default' href="/u/staff/#/manage/sharing/problem/{{patient.user.id}}/{{p.user.id}}">
-		                            Edit problem based sharing
-		                        </a>
-								<a ng-if="'patient' == active_user.role" class='btn btn-sm btn-default' href="#/manage/sharing/problem/{{p.user.id}}">
-		                            Edit problem based sharing
-		                        </a>
-								<a class='btn btn-sm btn-danger' ng-click="remove_sharing_patient(p.user.id)">
-		                            Remove
-		                        </a>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
+                <table class='table'>
+                    <thead>
+                    <tr>
+                        <th> Name</th>
+                        <th> Username</th>
+                        <th> Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat='p in sharing_patients'>
+                        <td> {{ p.user.first_name }} {{ p.user.last_name }}
+                        </td>
+                        <td> {{ p.user.username }}
+                        </td>
+                        <td class="text-right">
+                            <a ng-if="'patient' != active_user.role" class='btn btn-sm btn-default'
+                               href="/u/staff/#/manage/sharing/problem/{{ patient.user.id }}/{{ p.user.id }}">
+                                Edit problem based sharing
+                            </a>
+                            <a ng-if="'patient' == active_user.role" class='btn btn-sm btn-default'
+                               href="#/manage/sharing/problem/{{ p.user.id }}">
+                                Edit problem based sharing
+                            </a>
+                            <a class='btn btn-sm btn-danger' ng-click="remove_sharing_patient(p.user.id)">
+                                Remove
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
-		</div>
+        </div>
 
-	</div>
+    </div>
 </div>

@@ -44,7 +44,7 @@
                                 <input type="text"
                                        class="form-control"
                                        title="Date measured"
-                                       uib-datepicker-popup="{{format}}"
+                                       uib-datepicker-popup="{{ format }}"
                                        ng-model="inrInstance.date_measured"
                                        is-open="dateMeasuredIsOpened"
                                        datepicker-options="dateMeasuredDateOptions"
@@ -84,7 +84,7 @@
                                        class="form-control"
                                        title="Next INR"
                                        ng-model="inrInstance.next_inr"
-                                       uib-datepicker-popup="{{format}}"
+                                       uib-datepicker-popup="{{ format }}"
                                        is-open="nextINRIsOpened"
                                        datepicker-options="nextINRDateOptions"
                                        datepicker-append-to-body="true"
@@ -116,7 +116,7 @@
                                 <input type="text"
                                        class="form-control"
                                        title="Date measured"
-                                       uib-datepicker-popup="{{format}}"
+                                       uib-datepicker-popup="{{ format }}"
                                        date-parser
                                        ng-model="inr.date_measured"
                                        is-open="dateMeasuredIsOpened"
@@ -183,7 +183,7 @@
                                        class="form-control"
                                        title="Next INR"
                                        ng-model="inr.next_inr"
-                                       uib-datepicker-popup="{{format}}"
+                                       uib-datepicker-popup="{{ format }}"
                                        is-open="nextINRIsOpened"
                                        datepicker-options="nextINRDateOptions"
                                        datepicker-append-to-body="true"
@@ -239,7 +239,7 @@
                         <tbody>
                         <tr ng-repeat="medication in medications track by $index">
                             <td>
-                                <a class="cursor-pointer" ng-href='#/medication/{{medication.id}}'
+                                <a class="cursor-pointer" ng-href='#/medication/{{ medication.id }}'
                                    ng-bind="medication.name"></a>
                             </td>
                             <td>

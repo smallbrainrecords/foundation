@@ -1,75 +1,75 @@
 <!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<a href='#/problem/{{colon_cancer.problem.id}}'><b> Back to problem page </b></a>
-			</div>
-		</div>
+            <div class='col-md-12'>
+                <a href='#/problem/{{ colon_cancer.problem.id }}'><b> Back to problem page </b></a>
+            </div>
+        </div>
 
-	</div><!-- End of Panel Body -->
+    </div><!-- End of Panel Body -->
 </div>
 
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<b> New Study </b>
-				<hr>  
+            <div class='col-md-12'>
+                <b> New Study </b>
+                <hr>
 
-				<form class='form-horizontal'>
-					<div class="col-md-12">
-						<div class='form-group'>
-							<label> Finding </label>
-							<select class='form-control' 
-									ng-model="study.finding"
-									ng-change="update_results(study.finding);">
+                <form class='form-horizontal'>
+                    <div class="col-md-12">
+                        <div class='form-group'>
+                            <label> Finding </label>
+                            <select class='form-control'
+                                    ng-model="study.finding"
+                                    ng-change="update_results(study.finding);">
                                 <option ng-repeat="finding in findings"
                                         value="{{ finding }}"> {{ finding }} </option>
                             </select>
-						</div>
-						<div class='form-group'>
-							<label> Result </label>
-							<select class='form-control' 
-									ng-model="study.result">
+                        </div>
+                        <div class='form-group'>
+                            <label> Result </label>
+                            <select class='form-control'
+                                    ng-model="study.result">
                                 <option ng-repeat="result in results"
                                         value="{{ result }}"> {{ result }} </option>
                             </select>
-						</div>
-						<div class='form-group'>
-							<label> Date </label>
-							<input type='text' class='form-control' ng-model='study.date' id="due_date">
-						</div>
-						<div class='form-group'>
-							<label> Note </label>
-							<textarea class='form-control' ng-model='study.note'></textarea>
-						</div>
-						<div class='form-group'>
-							<label> Image </label>
-							<input type='file' class='form-control' file-model="image">
-						</div>
-						<div class='form-group'>
-							<input ng-click="addStudy(study, image)" type='submit' value='Add' class='btn btn-default'>
-						</div>
-					</div>
-				</form>
-			</div>
-		</div>
+                        </div>
+                        <div class='form-group'>
+                            <label> Date </label>
+                            <input type='text' class='form-control' ng-model='study.date' id="due_date">
+                        </div>
+                        <div class='form-group'>
+                            <label> Note </label>
+                            <textarea class='form-control' ng-model='study.note'></textarea>
+                        </div>
+                        <div class='form-group'>
+                            <label> Image </label>
+                            <input type='file' class='form-control' file-model="image">
+                        </div>
+                        <div class='form-group'>
+                            <input ng-click="addStudy(study, image)" type='submit' value='Add' class='btn btn-default'>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-	</div><!-- End of Panel Body -->
+    </div><!-- End of Panel Body -->
 </div>
 
 <script type='text/javascript'>
-	
-	$(document).ready(function(){
 
-		$( "#due_date" ).datepicker({ dateFormat: 'mm/dd/yy' });
+    $(document).ready(function () {
 
-	});
+        $("#due_date").datepicker({dateFormat: 'mm/dd/yy'});
+
+    });
 </script>

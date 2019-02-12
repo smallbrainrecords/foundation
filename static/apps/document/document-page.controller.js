@@ -16,7 +16,7 @@
  */
 (function () {
     'use strict';
-    angular.module('document', ['ngFileUpload', 'toaster', 'sharedModule', 'httpModule','app.services'])
+    angular.module('document', ['ngFileUpload', 'toaster', 'sharedModule', 'httpModule', 'app.services'])
         .controller('ViewDocumentCtrl', ViewDocumentCtrl);
 
     ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', '$location', 'toaster', 'documentService', 'ngDialog', '$http', '$cookies', 'todoService', '$window'];

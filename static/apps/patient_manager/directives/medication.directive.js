@@ -14,10 +14,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-var medication = angular.module('medication', []).config(function($httpProvider){
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-    });
+var medication = angular.module('medication', []).config(function ($httpProvider) {
+    $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+    $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+});
 
 medication.directive('medication', ['CollapseService', 'toaster', '$location', '$timeout', 'prompt', 'medicationService', medicationDirective]);
 

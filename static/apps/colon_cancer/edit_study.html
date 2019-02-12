@@ -9,7 +9,7 @@
             <div class='row'>
 
                 <div class='col-md-12'>
-                    <a href='#/problem/{{colon_cancer.problem.id}}'><b> Back to problem page </b></a>
+                    <a href='#/problem/{{ colon_cancer.problem.id }}'><b> Back to problem page </b></a>
                 </div>
             </div>
 
@@ -81,15 +81,15 @@
 
                 <div class='col-md-2 text-center' ng-repeat='image in study.study_images'>
 
-                        <img ng-src='{{image.image}}' class='thumbnail small-img' ng-click='open_image_box(image)'>
-                        <br>
+                    <img ng-src='{{ image.image }}' class='thumbnail small-img' ng-click='open_image_box(image)'>
+                    <br>
 
-                        <a href="{{image.image}}" target="_blank" class='btn btn-sm btn-default'>View</a>
+                    <a href="{{ image.image }}" target="_blank" class='btn btn-sm btn-default'>View</a>
 
-                        <button class='btn btn-sm btn-danger' ng-click='delete_study_image(image)'>
-                            Delete
-                        </button>
-                        <hr>
+                    <button class='btn btn-sm btn-danger' ng-click='delete_study_image(image)'>
+                        Delete
+                    </button>
+                    <hr>
                 </div>
 
             </div>

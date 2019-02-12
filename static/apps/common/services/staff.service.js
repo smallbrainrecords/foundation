@@ -60,6 +60,7 @@
                 let url = `/u/active/user/`;
                 return httpService.get(params, url);
             }
+
             /**
              * Alternative getting top patient list from this.getPatientsList()
              * Supported sorting key and pagination query string
@@ -215,6 +216,7 @@
 
                 return httpService.post(form, url);
             }
+
             /**
              *
              * @param user_id

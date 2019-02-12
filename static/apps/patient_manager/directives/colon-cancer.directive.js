@@ -186,8 +186,7 @@
                             CollapseService.ChangeColonCollapse();
                             scope.show_colon_collapse = CollapseService.show_colon_collapse;
                         });
-                    }
-                    else {
+                    } else {
                         CollapseService.ChangeColonCollapse();
                         scope.show_colon_collapse = CollapseService.show_colon_collapse;
                     }
@@ -277,6 +276,7 @@
                     //     scope.set_header();
                     // });
                 }
+
                 // note
                 function add_note(form) {
                     if (_.isEmpty(form.note))

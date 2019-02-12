@@ -148,8 +148,7 @@
                         $scope.old_password = null;
                         $scope.password = null;
                         $scope.repassword = null;
-                    }
-                    else {
+                    } else {
                         toaster.pop('error', 'Error', data.message);
                     }
                 });

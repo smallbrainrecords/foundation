@@ -1,6 +1,7 @@
 todo {
   .new-tagged-todo {
     background: #F2DEDE;
+
     input[type='checkbox']:before {
       content: "*";
       left: 2px;

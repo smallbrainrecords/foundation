@@ -19,7 +19,8 @@
     angular.module('AdminApp')
         .controller('AddUserCtrl', function ($scope, $routeParams, ngDialog, adminService, $location, $anchorScroll, toaster) {
             $scope.add_user = add_user;
-            init()
+            init();
+
             function init() {
 
                 adminService.fetchActiveUser().then(function (data) {

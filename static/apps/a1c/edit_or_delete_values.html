@@ -1,50 +1,50 @@
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<a href='#/problem/{{a1c.problem.id}}'><b> Back to problem page </b></a>
-			</div>
-		</div>
+            <div class='col-md-12'>
+                <a href='#/problem/{{ a1c.problem.id }}'><b> Back to problem page </b></a>
+            </div>
+        </div>
 
-	</div><!-- End of Panel Body -->
+    </div><!-- End of Panel Body -->
 </div>
 
 <div class='panel panel-default'>
 
-	<div class='panel-body'>
+    <div class='panel-body'>
 
-		<div class='row'>
+        <div class='row'>
 
-			<div class='col-md-12'>
-				<b> Edit or delete values </b>
-				<hr>  
-				<table class='table'>
-					<thead>
-					<tr>
+            <div class='col-md-12'>
+                <b> Edit or delete values </b>
+                <hr>
+                <table class='table'>
+                    <thead>
+                    <tr>
 
-						<th> Value </th>
-						<th> Datetime </th>
-						<th> Action</th>
-					</tr>
-					</thead>
-					<tbody>
-						<tr ng-repeat="value in first_component.observation_component_values|orderBy:'effective_datetime':true">
-							<td ng-class="{'text-danger': value.value_quantity > 7.5}"> {{value.value_quantity| number:1 }} </td>
-							<td> {{value.effective_datetime|date:'M/d/yyyy'}} </td>
-							<td>
-								<a href="#/observation_value/{{value.id}}/edit_value"
-								   ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">Edit</a>
-								<a href ng-click="deleteValue(value)"
-								   ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">Delete</a>
-						 	</td>
-						</tr>
-					</tbody>
-				</table>		
-			</div>
-		</div>
+                        <th> Value</th>
+                        <th> Datetime</th>
+                        <th> Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="value in first_component.observation_component_values|orderBy:'effective_datetime':true">
+                        <td ng-class="{'text-danger': value.value_quantity > 7.5}"> {{ value.value_quantity| number:1 }} </td>
+                        <td> {{ value.effective_datetime|date:'M/d/yyyy' }} </td>
+                        <td>
+                            <a href="#/observation_value/{{ value.id }}/edit_value"
+                               ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">Edit</a>
+                            <a href ng-click="deleteValue(value)"
+                               ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">Delete</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-	</div><!-- End of Panel Body -->
+    </div><!-- End of Panel Body -->
 </div>

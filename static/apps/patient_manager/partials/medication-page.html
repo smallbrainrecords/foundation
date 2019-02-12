@@ -82,7 +82,7 @@
                                           ng-model='note.note'
                                           ng-click="oldNote = note.note" title=""></textarea>
                                 <p>Last edited by: {{ note.author.username }} on
-                                    {{note.datetime|date:'M/d/yyyy'}}</p>
+                                    {{ note.datetime|date:'M/d/yyyy' }}</p>
                             </div>
                             <div class='form-group'>
                                 <input type='submit' value='Save' class='btn btn-default'
@@ -132,10 +132,10 @@
 
             <div class='panel-body'>
                 <div class="checkbox" ng-repeat="problem in problems track by $index">
-                    <input type="checkbox" ng-model="problem.pin" title="{{problem.problem_name}}"
-                           id="{{problem.id}}"
+                    <input type="checkbox" ng-model="problem.pin" title="{{ problem.problem_name }}"
+                           id="{{ problem.id }}"
                            ng-change="medicationPinToProblem(medication.id, problem.id);">
-                    <label for="{{problem.id}}" ng-bind="problem.problem_name"></label>
+                    <label for="{{ problem.id }}" ng-bind="problem.problem_name"></label>
                 </div>
             </div>
         </div>

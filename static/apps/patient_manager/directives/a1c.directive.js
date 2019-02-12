@@ -106,8 +106,7 @@
                             CollapseService.ChangeA1cCollapse();
                             scope.show_a1c_collapse = CollapseService.show_a1c_collapse;
                         });
-                    }
-                    else {
+                    } else {
                         CollapseService.ChangeA1cCollapse();
                         scope.show_a1c_collapse = CollapseService.show_a1c_collapse;
                     }

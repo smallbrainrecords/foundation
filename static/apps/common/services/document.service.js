@@ -83,6 +83,7 @@
                 }
 
             }
+
             /**
              * Get list of document user have uploaded
              */
@@ -91,12 +92,14 @@
                     params: params
                 });
             }
+
             /**
              * @param documentId
              */
             function getDocumentInfo(documentId) {
                 return $http.get('/docs/info/' + documentId);
             }
+
             /**
              *
              * Pin any patient to a document
@@ -114,6 +117,7 @@
                     }
                 });
             }
+
             /**
              * Pin any active todo to a document
              * @param document
@@ -130,6 +134,7 @@
                     }
                 });
             }
+
             /**
              * Pin any problem to a document
              * @param document

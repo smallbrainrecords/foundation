@@ -17,10 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 '''
     PERMISSIONS for managing patient
 '''
-from .models import UserProfile, SharingPatient
-from .models import PatientController, PhysicianTeam
 import logging
 
+from .models import PatientController, PhysicianTeam
+from .models import UserProfile, SharingPatient
 
 ROLES = (
     ('patient', 'Patient'),

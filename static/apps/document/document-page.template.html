@@ -15,7 +15,7 @@
                     <span ng-bind="document.document_name" ng-show="!enableEditDocumentName"></span>
                     <span ng-if="document.patient">
                         <b>for </b>
-                        <a href="/u/patient/manage/{{document.patient.id}}">{{document.patient.first_name}} {{document.patient.last_name}}</a>
+                        <a href="/u/patient/manage/{{ document.patient.id }}">{{ document.patient.first_name }} {{ document.patient.last_name }}</a>
                     </span>
                 </div>
                 <div ng-show="enableEditDocumentName" class="form-inline">
@@ -41,7 +41,7 @@
                     </button>
 
                     <!--<button class="btn btn-default" ng-click="enableEditLabel=!enableEditLabel"-->
-                            <!--ng-bind="enableEditLabel ? 'Done edit label' :'Edit label'"></button>-->
+                    <!--ng-bind="enableEditLabel ? 'Done edit label' :'Edit label'"></button>-->
                     <button class="btn btn-default" ng-click="enableEditPatient=!enableEditPatient"
                             ng-show="['physician','admin','nurse','secretary'].indexOf(active_user.role)!=-1"
                             ng-bind="enableEditPatient ? 'Done edit patient' :'Edit patient'"></button>
@@ -52,8 +52,10 @@
                             ng-bind="enableProblemPin ? 'Done problem pin' :'Pin problem'"></button>
                     <button class="btn btn-danger" ng-click="deleteDocument(document)">Delete</button>
                     <div class="pull-right" ng-if="'patient'!=active_user.role">
-                        <a class="btn btn-default" href="/u/staff/#/manage/document/{{pagination.prev}}" ng-if="pagination.prev">Prev</a>
-                        <a class="btn btn-default" href="/u/staff/#/manage/document/{{pagination.next}}" ng-if="pagination.next">Next</a>
+                        <a class="btn btn-default" href="/u/staff/#/manage/document/{{ pagination.prev }}"
+                           ng-if="pagination.prev">Prev</a>
+                        <a class="btn btn-default" href="/u/staff/#/manage/document/{{ pagination.next }}"
+                           ng-if="pagination.next">Next</a>
                     </div>
                 </div>
             </div>
@@ -106,7 +108,7 @@
                                 <select class='form-control' ng-model="acuteForm" title=""
                                         ng-click="$event.stopPropagation();">
                                     <option ng-repeat="acute in acutes" value="{{ acute.id }}"> {{
-                                        acute.problem_name }}
+                                            acute.problem_name }}
                                     </option>
                                 </select>
                                 <span class="input-group-btn">
@@ -122,7 +124,7 @@
                                 <select class='form-control' ng-model="chronicForm" title=""
                                         ng-click="$event.stopPropagation();">
                                     <option ng-repeat="chronic in chronics" value="{{ chronic.id }}">
-                                        {{chronic.problem_name }}
+                                        {{ chronic.problem_name }}
                                     </option>
                                 </select>
                                 <span class="input-group-btn">
@@ -181,16 +183,17 @@
                 <!-- List of active problem-->
                 <div class="checkbox" ng-repeat="problem in active_probs track by $index" ng-show="enableProblemPin"
                      ng-click="$event.stopPropagation();">
-                    <input type="checkbox" ng-model="problem.pin" title="{{problem.problem_name}}" id="{{problem.id}}"
+                    <input type="checkbox" ng-model="problem.pin" title="{{ problem.problem_name }}"
+                           id="{{ problem.id }}"
                            ng-change="!problem.pin ? unpinDocumentProblem(document,problem):pinProblem2Document(document,problem);$event.stopPropagation();">
-                    <label for="{{problem.id}}" ng-bind="problem.problem_name"></label>
+                    <label for="{{ problem.id }}" ng-bind="problem.problem_name"></label>
                 </div>
 
                 <!-- Pinned problem list-->
                 <ul class="ul-clean no-padding" ng-show="!enableProblemPin">
                     <li ng-repeat="problem in active_probs | filter:{'pin':true} track by $index">
                         <a class="item-box flex-container" ng-class='problem.is_controlled ? "green-box" : "red-box" '
-                           href="/u/patient/manage/{{problem.patient}}/#/problem/{{problem.id}}">
+                           href="/u/patient/manage/{{ problem.patient }}/#/problem/{{ problem.id }}">
                             <span ng-bind="problem.problem_name" class="flex-item"></span>
                             <span ng-show="!problem.authenticated" class="flex-item">(not authenticated)</span>
                         </a>
@@ -223,10 +226,12 @@
                 <!-- List of active todos-->
                 <div class="checkbox" ng-repeat="todo in active_todos track by $index" ng-show="enableTodoPin"
                      ng-click="$event.stopPropagation();">
-                    <input type="checkbox" ng-model="todo.pin" title="{{todo.todo}}" id="{{todo.id}}"
+                    <input type="checkbox" ng-model="todo.pin" title="{{ todo.todo }}" id="{{ todo.id }}"
                            ng-change="!todo.pin ? unpinDocumentTodo(document,todo):pinTodo2Document(document,todo);$event.stopPropagation();">
-                    <label for="{{todo.id}}" class="flex-container">
-                        <span ng-bind="todo.todo" class="flex-item"></span> <span ng-if="todo.due_date"  class="flex-item">&nbsp;due by <span ng-class="isDueDate(todo.due_date)">{{todo.due_date}}</span></span>
+                    <label for="{{ todo.id }}" class="flex-container">
+                        <span ng-bind="todo.todo" class="flex-item"></span> <span ng-if="todo.due_date"
+                                                                                  class="flex-item">&nbsp;due by <span
+                            ng-class="isDueDate(todo.due_date)">{{ todo.due_date }}</span></span>
                     </label>
                 </div>
 
@@ -234,8 +239,10 @@
                 <ul class="ul-clean no-padding" ng-show="!enableTodoPin">
                     <li ng-repeat="todo in active_todos | filter:{'pin':true} track by $index">
                         <a class="item-box flex-container" ng-click="$event.stopPropagation();"
-                           href="/u/patient/manage/{{todo.patient.id}}/#/todo/{{todo.id}}">
-                            <span ng-bind="todo.todo" class="flex-item"></span> <span ng-if="todo.due_date"  class="flex-item">&nbsp;due by <span ng-class="isDueDate(todo.due_date)">{{todo.due_date}}</span></span>
+                           href="/u/patient/manage/{{ todo.patient.id }}/#/todo/{{ todo.id }}">
+                            <span ng-bind="todo.todo" class="flex-item"></span> <span ng-if="todo.due_date"
+                                                                                      class="flex-item">&nbsp;due by <span
+                                ng-class="isDueDate(todo.due_date)">{{ todo.due_date }}</span></span>
                         </a>
                     </li>
                 </ul>

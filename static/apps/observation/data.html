@@ -34,7 +34,7 @@
                             <h3>
                                 <span ng-bind="data.mostRecentValue || 0"></span>
                                 <span ng-repeat='unit in data.observation_units'
-                                      ng-if="unit.is_used"> {{unit.value_unit}}</span>
+                                      ng-if="unit.is_used"> {{ unit.value_unit }}</span>
                             </h3>
                             <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                         </div>
@@ -60,7 +60,7 @@
                     </div>
 
                     <div class="form-group">
-                        <button class="btn btn-primary" tabindex="{{data.observation_components.length + 1}}"
+                        <button class="btn btn-primary" tabindex="{{ data.observation_components.length + 1}}"
                                 ng-click="quickAddDataPoint(quickEntryDataObj);">
                             Measured today
                         </button>
@@ -110,10 +110,10 @@
     </div>
     <div class='panel-body'>
         <div class="checkbox" ng-repeat="problem in problems track by $index">
-            <input type="checkbox" ng-model="problem.pin" title="{{problem.problem_name}}"
-                   id="{{problem.id}}"
+            <input type="checkbox" ng-model="problem.pin" title="{{ problem.problem_name }}"
+                   id="{{ problem.id }}"
                    ng-change="data_pin_to_problem($index, data.id, problem.id);">
-            <label for="{{problem.id}}" ng-bind="problem.problem_name"></label>
+            <label for="{{ problem.id }}" ng-bind="problem.problem_name"></label>
         </div>
     </div>
 </div>
