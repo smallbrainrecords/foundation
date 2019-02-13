@@ -257,7 +257,8 @@ def manage_patient(request, user_id):
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists())
 
     # context = RequestContext(request, context)
-    return render_to_response("manage_patient.html", context)
+    return render(request, 'manage_patient.html', context)
+    # return render_to_response("manage_patient.html", context)
 
 
 # Users

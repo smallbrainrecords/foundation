@@ -165,12 +165,14 @@ class LabeledProblemListSerializer(serializers.ModelSerializer):
 
 
 class ProblemInfoSerializer(serializers.ModelSerializer):
+    # fields = __all__
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
     start_date = serializers.DateTimeField(format='%m/%d/%Y')
 
     class Meta:
         model = Problem
+        fields = "__all__"
 
     def get_a1c(self, obj):
         a1c_dict = {}

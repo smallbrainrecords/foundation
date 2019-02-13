@@ -33,7 +33,6 @@
     "angularjs-color-picker": "^3.4.8",
     "angularjs-toaster": "~2.2.0",
     "awesome-bootstrap-checkbox": "^0.3.7",
-    "bootstrap": "~3.3.7",
     "checklist-model": "^0.11.0",
     "font-awesome": "^4.7.0",
     "jquery": "^3.2.1",
@@ -52,8 +51,9 @@
     "underscore": "^1.9.1",
     "videogular": "^2.2.1",
     "view-file-ng": "git+https://github.com/grtjn/view-file-ng.git",
-    "webcam": "^3.1.1",
-    "x2js": "^3.2.1"
+    "webcam": "^3.2.1",
+    "x2js": "^3.2.1",
+    "bootstrap": "^3.4.1"
   },
   "devDependencies": {},
   "scripts": {

@@ -4,12 +4,12 @@
 {% block search %}
     <form class="navbar-form navbar-left" target="_blank" action="{% url 'search' patient.id %}" method="post">
         {% csrf_token %}
-        <input type='hidden' name='patient_id' value='{{ user.id }}'>
+        <input type='hidden' name='patient_id' value='{{ patient.id }}'>
         <div class="input-group">
             <input type="text" class="form-control" placeholder="Search" name="query">
             <span class="input-group-btn">
-        <button type="submit" class="btn btn-default">Submit</button>
-        </span>
+                <button type="submit" class="btn btn-default">Submit</button>
+            </span>
         </div>
     </form>
 {% endblock %}
@@ -111,9 +111,9 @@
     <input class="form-control" type="hidden" value="{{ bleeding_risk }}" id="bleeding_risk"/>
     <input class="form-control" type="hidden" value="{{ fit_and_well }}" id="fit_and_well"/>
 
-<div id='ng-app' ng-app='ManagerApp'
-     ng-init="user_id={{user.id}};active_user={{active_user}};patient_id={{patient.id}};patient_info={{patient_info}}; bleeding_risk={{bleeding_risk}};">
-    <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
+    <div id='ng-app' ng-app='ManagerApp'
+         ng-init="user_id={{ user.id }};active_user={{ active_user }};patient_id={{ patient.id }};patient_info={{ patient_info }}; bleeding_risk={{ bleeding_risk }};">
+        <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
 
         <div ng-view autoscroll='true'>
             Loading ....
