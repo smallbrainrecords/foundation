@@ -515,58 +515,55 @@
                 </div>
             </div>
             <!--End goal section-->
+            <div class="row">
+                <div class="col-md-6">
 
-            <!--Start encounter section-->
-            <div class='panel panel-default' ng-init="encounter_collapse=false;">
 
-                <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
-                    <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
-                    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                    Encounters ({{ encounters.length }})
-                </div>
+                    <!--Start encounter section-->
+                    <div class='panel panel-default' ng-init="encounter_collapse=false;">
 
-                <div class='panel-body' style='max-height:325px; overflow:auto'
-                     ng-show="encounter_collapse">
+                        <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
+                            <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
+                            <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
+                            Encounters ({{ encounters.length }})
+                        </div>
 
-                    <ul class='ul-clean'>
-                        <li ng-repeat='encounter in encounters'>
-                            <div class='row'>
-                                <div class='col-md-6'>
+                        <div class='panel-body' style='max-height:325px; overflow:auto'
+                             ng-show="encounter_collapse">
+
+                            <ul class='ul-clean no-padding'>
+                                <li ng-repeat='encounter in encounters'>
                                     <a href='#/encounter/{{ encounter.id }}'>
                                         From <b> {{ encounter.starttime | date:'medium' }} </b> to
                                         <b>{{ encounter.stoptime | date:'medium' }}</b>
                                     </a>
-                                </div>
-                                <div class='col-md-4'>
-                                    {{ encounter.duration }}
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
+                                    <span class="float-right">{{ encounter.duration }}</span>
+                                </li>
+                            </ul>
 
-                </div>
-            </div>
-            <!--End encounter section-->
+                        </div>
+                    </div>
+                    <!--End encounter section-->
 
-            <!--Start encounter favorite-->
-            <div ng-if='favorites.length>0' class='panel panel-default'>
-                <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
-                    <i class="fa fa-caret-down" aria-hidden="true"
-                       ng-class="favorites_collapse?'fa-caret-down':'fa-caret-right'"></i> Favorites
-                </div>
+                    <!--Start encounter favorite-->
+                    <div ng-if='favorites.length>0' class='panel panel-default'>
+                        <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
+                            <i class="fa fa-caret-down" aria-hidden="true"
+                               ng-class="favorites_collapse?'fa-caret-down':'fa-caret-right'"></i> Favorites
+                        </div>
 
-                <div class='panel-body' style='max-height:325px; overflow:auto'
-                     ng-show="favorites_collapse">
-                    <table class='table'>
-                        <thead>
-                        <tr>
-                            <th>Name</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat='event in favorites track by $index'
-                            ng-init="event.is_named=false;">
-                            <td>
+                        <div class='panel-body' style='max-height:325px; overflow:auto'
+                             ng-show="favorites_collapse">
+                            <table class='table'>
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat='event in favorites track by $index'
+                                    ng-init="event.is_named=false;">
+                                    <td>
                                                 <span ng-if="event.is_favorite">
                                                     <span ng-if="event.is_named">
                                                         <input type="text" ng-model="event.name_favorite">
@@ -585,39 +582,44 @@
                                                                 ng-click="unmarkFavoriteEvent(event)">Remove</button>
                                                     </span>
                                                 </span>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!--End encounter favorite-->
                 </div>
-            </div>
-            <!--End encounter favorite-->
-
-            <div class='panel panel-default'>
-                <div class='panel-heading'>
-                    Narrative
-                </div>
-                <div class="panel-body">
+                <div class="col-md-6">
+                    <div class='panel panel-default' ng-init="narrativeCollapsed = false;">
+                        <div class='panel-heading' ng-click="narrativeCollapsed  = !narrativeCollapsed ">
+                            <i class="fa" ng-class="narrativeCollapsed ? 'fa-caret-down' :'fa-caret-right'"
+                               aria-hidden="true"></i>
+                            Narrative
+                        </div>
+                        <div class="panel-body" ng-show="narrativeCollapsed">
                     <textarea msd-elastic class='form-control' title="Narrative" rows="3"
                               ng-model="narratives.latest.description"></textarea>
 
-                    <br>
-                    <p>
-                        Last edited by: {{ narratives.latest.author }}
-                        on {{ narratives.latest.datetime|date:'M/d/yyyy' }}
-                        <button class="btn btn-link" ng-click="loadMore(narratives.nextPage)" tabindex="-1">
-                            See previous entries({{ narratives.total }})
-                        </button>
-                        <button class="btn btn-primary pull-right" ng-click="addNarrative()">Update narrative</button>
-                    </p>
-                    <br>
-                    <div ng-repeat="narrative in narrativeHistories" ng-if="!$first" ng-show="showNarrative">
-                        <span ng-bind="narrative.description"></span>
-                        <p>by {{ narrative.author }} on {{ narrative.datetime|date:'M/d/yyyy' }}</p>
+                            <br>
+                            <p>
+                                Last edited by: {{ narratives.latest.author }}
+                                on {{ narratives.latest.datetime|date:'M/d/yyyy' }}
+                                <button class="btn btn-link" ng-click="loadMore(narratives.nextPage)" tabindex="-1">
+                                    See previous entries({{ narratives.total }})
+                                </button>
+                                <button class="btn btn-primary pull-right" ng-click="addNarrative()">Update narrative
+                                </button>
+                            </p>
+                            <br>
+                            <div ng-repeat="narrative in narrativeHistories" ng-if="!$first" ng-show="showNarrative">
+                                <span ng-bind="narrative.description"></span>
+                                <p>by {{ narrative.author }} on {{ narrative.datetime|date:'M/d/yyyy' }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
             <!--Start graphic section-->
             <div class="panel panel-default">
                 <div class="panel-heading" ng-click="graphicFrameIsCollapsed = !graphicFrameIsCollapsed">
