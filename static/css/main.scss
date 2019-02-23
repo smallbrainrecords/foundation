@@ -588,6 +588,10 @@ todo-laboratory {
 // Todo laboratory print styling
 @media print {
   #print-template {
+    b {
+      font-weight: bold !important;
+    }
+
     display: block !important;
 
     div, li, p, ul {

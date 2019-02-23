@@ -75,7 +75,8 @@
     <p>Tests Ordered:</p>
     <ul>
         <li ng-repeat="todo in $ctrl.printForm.todos track by $index">
-            {{ todo.todo }} {{ todo.problem? "for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
+            <b>{{ todo.todo }}: </b>
+            {{ todo.problem? "for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
             {{ todo.due_date ? "due date " + todo.due_date : ""}}
         </li>
     </ul>
