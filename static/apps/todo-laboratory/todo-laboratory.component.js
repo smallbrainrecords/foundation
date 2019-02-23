@@ -36,6 +36,7 @@
             // Temporary solution for this (controllerAs syntax)
 
             let ctrl = this;
+            ctrl.activeUser = $rootScope.active_user;
             ctrl.todoId = parseInt($routeParams.todoId);
             ctrl.printForm = {};
             ctrl.todoLabels = [];

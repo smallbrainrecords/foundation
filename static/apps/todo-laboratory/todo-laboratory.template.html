@@ -51,7 +51,7 @@
     </form>
 </section>
 
-<section id="print-template" class="hide">
+<section id="print-template" class="hide2">
     <p>Laboratory Requisition:</p>
 
     <div>Ryan Family Practice</div>
@@ -87,5 +87,8 @@
             {{ problem.problem_name }} {{ problem.concept_id }}
         </li>
     </ul>
+
+    <img style="float: right;" src="/static/images/signature.png" alt="signature" id="signature"
+         ng-if="$ctrl.activeUser.role != 'patient'">
 </section>
 <!--when the user has filled out the above information and selected one or more of the todos then a form is printed as seen bellow-->

@@ -1,6 +1,5 @@
 .navbar.navbar-default.navbar-fixed-top {
-    z-index: 8;
-}
+  z-index: 8; }
 
 .google-login-img {
   height: 50px; }
@@ -97,27 +96,19 @@
   right: 10px;
   top: 10px;
   padding: 5px;
-    z-index: 8;
-}
+  z-index: 8; }
 
 #problem-header {
-    z-index: 8;
-}
-
-#problem-header .todo {
+  z-index: 8; }
+  #problem-header .todo {
     width: auto;
-    display: inline-block;
-}
-
-#problem-header .todo .btn-custom {
-    right: -30px;
-    top: 5px;
-}
-
-#problem-header .todo h4 {
-    width: auto;
-    display: inline-block;
-}
+    display: inline-block; }
+    #problem-header .todo .btn-custom {
+      right: -30px;
+      top: 5px; }
+    #problem-header .todo h4 {
+      width: auto;
+      display: inline-block; }
 
 #problem-header:hover .btn-custom, .todo:hover .btn-custom {
   display: block; }
@@ -182,8 +173,7 @@ a.pickadate-prev, a.pickadate-next {
   padding: initial !important;
   text-decoration: initial !important;
   -webkit-transition: initial !important;
-    transition: initial !important;
-}
+  transition: initial !important; }
 
 .quick-card-editor a:hover {
   background: rgba(0, 0, 0, 0.8);
@@ -449,32 +439,26 @@ tbody button {
   left: 0 !important; }
 
 .masonry-brick {
-    width: 48%;
-}
-
-.masonry-brick .fa.fa-times {
+  width: 48%; }
+  .masonry-brick .fa.fa-times {
     position: absolute;
     color: #d9534f;
     font-size: 3rem;
     cursor: pointer;
     right: 0;
-    top: 0;
-}
+    top: 0; }
 
 .masonry-brick img {
   width: 100%;
   border: 2px solid #f5f5f5;
-    border-radius: 5px;
-}
+  border-radius: 5px; }
 
 todo-laboratory .label-wrapper {
-    display: inline-block;
-    margin-bottom: -6px;
-    overflow: hidden;
-    position: relative;
-}
-
-todo-laboratory .label-wrapper a.todo-label {
+  display: inline-block;
+  margin-bottom: -6px;
+  overflow: hidden;
+  position: relative; }
+  todo-laboratory .label-wrapper a.todo-label {
     float: left;
     text-align: center;
     display: inline-block;
@@ -483,30 +467,27 @@ todo-laboratory .label-wrapper a.todo-label {
     color: #fff;
     width: auto;
     padding: 0 10px;
-    text-decoration: none;
-}
+    text-decoration: none; }
 
 @media print {
-    #print-template {
-        display: block !important;
-    }
-
+  #print-template {
+    display: block !important; }
+    #print-template #signature {
+      position: fixed;
+      right: 0;
+      width: 250px !important; }
+    #print-template b {
+      font-weight: bold !important; }
     #print-template div, #print-template li, #print-template p, #print-template ul {
-        display: block !important;
-    }
-
+      display: block !important; }
     #print-template p, #print-template ul {
-        margin: 0 0 10px !important;
-    }
-
+      margin: 0 0 10px !important; }
     #print-template li {
-        display: list-item !important;
-        font-size: 14px !important;
-        height: 20px !important;
-        line-height: 20px !important;
-        list-style-type: none !important;
-        text-align: left !important;
-    }
-}
+      display: list-item !important;
+      font-size: 14px !important;
+      height: 20px !important;
+      line-height: 20px !important;
+      list-style-type: none !important;
+      text-align: left !important; } }
 
 /*# sourceMappingURL=main.css.map */
