@@ -472,6 +472,11 @@ todo-laboratory .label-wrapper {
     padding: 0 10px;
     text-decoration: none; }
 
+#signature {
+  position: relative;
+  right: 0;
+  width: 250px !important; }
+
 @media print {
   #print-template {
     display: block !important; }

@@ -589,6 +589,12 @@ todo-laboratory {
 
 }
 
+#signature {
+  position: relative;
+  right: 0;
+  width: 250px !important;;
+}
+
 // Todo laboratory print styling
 @media print {
   #print-template {

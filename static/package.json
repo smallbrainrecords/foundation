@@ -33,12 +33,17 @@
     "angularjs-color-picker": "^3.4.8",
     "angularjs-toaster": "~2.2.0",
     "awesome-bootstrap-checkbox": "^0.3.7",
+    "bootstrap": "^3.4.1",
     "checklist-model": "^0.11.0",
+    "es6-promise": "^4.2.6",
     "font-awesome": "^4.7.0",
+    "html2canvas": "^1.0.0-alpha.12",
+    "html2pdf.js": "^0.9.1",
     "jquery": "^3.2.1",
     "jquery-form": "~3.50.0",
     "jquery-ui": "^1.12.1",
     "jquery-ui-dist": "^1.12.1",
+    "jspdf": "^1.5.3",
     "moment": "^2.19.4",
     "moment-timezone": "^0.5.23",
     "ng-dialog": "^1.4.0",
@@ -52,8 +57,7 @@
     "videogular": "^2.2.1",
     "view-file-ng": "git+https://github.com/grtjn/view-file-ng.git",
     "webcam": "^3.2.1",
-    "x2js": "^3.2.1",
-    "bootstrap": "^3.4.1"
+    "x2js": "^3.2.1"
   },
   "devDependencies": {},
   "scripts": {

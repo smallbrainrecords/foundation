@@ -42,6 +42,8 @@
             ctrl.todoLabels = [];
             ctrl.activeTodos = []; // Active Todos <-  Selected todo -> Todo & Problem
             ctrl.selectItemToPrint = selectItemToPrint;
+            ctrl.saveDocument = saveDocument;
+            ctrl.print = print;
 
             ctrl.$onInit = () => {
                 ctrl.printForm = {
@@ -154,7 +156,24 @@
                 }
             }
 
-            event.stopPropagation();
+            // event.stopPropagation();
+
+            function saveDocument() {
+                // TODO: Save to to do's activity log.
+
+                // Generate PDF
+                let opt = {
+                    margin: 10
+                };
+                let printEle = document.getElementById("print-template");
+                html2pdf().set(opt).from(printEle.innerHTML).save(`Todo Laboratory for ${$rootScope.patient_info.user.first_name} ${$rootScope.patient_info.user.last_name}_${Date.now()}`);
+            }
+
+            function print(ele) {
+                // Save log
+
+                // Open print preview
+            }
         }
     }
 )();

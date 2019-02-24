@@ -48,6 +48,9 @@
         <button class="btn btn-primary" ng-disabled="$ctrl.printForm.todos.length == 0 ||  printForm.$invalid" ng-print
                 print-element-id="print-template" type="button">Print
         </button>
+        <button class="btn btn-primary" ng-disabled="$ctrl.printForm.todos.length == 0 ||  printForm.$invalid"
+                id="saveDocument" type="button" ng-click="$ctrl.saveDocument()">Save document
+        </button>
     </form>
 </section>
 
