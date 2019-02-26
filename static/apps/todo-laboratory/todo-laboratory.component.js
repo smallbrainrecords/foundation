@@ -156,11 +156,7 @@
                 }
             }
 
-            // event.stopPropagation();
-
             function saveDocument() {
-                // TODO: Save to to do's activity log.
-
                 // Generate PDF
                 let opt = {
                     margin: 10
@@ -169,10 +165,10 @@
                 html2pdf().set(opt).from(printEle.innerHTML).save(`Todo Laboratory for ${$rootScope.patient_info.user.first_name} ${$rootScope.patient_info.user.last_name}_${Date.now()}`);
             }
 
-            function print(ele) {
-                // Save log
-
-                // Open print preview
+            function print() {
+                // TODO: How to save activities log only when user is successfully print the todo laboratory.
+                // An exception case is user show print preview but doesn't print actually.
+                todoService.saveTodoPrintLogs(ctrl.printForm.todos);
             }
         }
     }

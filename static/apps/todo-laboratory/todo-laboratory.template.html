@@ -46,7 +46,7 @@
         <br>
         <!--8) add a "print" button-->
         <button class="btn btn-primary" ng-disabled="$ctrl.printForm.todos.length == 0 ||  printForm.$invalid" ng-print
-                print-element-id="print-template" type="button">Print
+                print-element-id="print-template" type="button" ng-click="$ctrl.print()">Print
         </button>
         <button class="btn btn-primary" ng-disabled="$ctrl.printForm.todos.length == 0 ||  printForm.$invalid"
                 id="saveDocument" type="button" ng-click="$ctrl.saveDocument()">Save document

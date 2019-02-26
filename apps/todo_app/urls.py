@@ -19,6 +19,9 @@ from django.conf.urls import url
 
 from todo_app.views import *
 
+
+
+
 urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/todos/add/new_todo$', add_patient_todo),
 
@@ -52,4 +55,5 @@ urlpatterns = [
 
     url(r'^attachment/(?P<attachment_id>\d+)/downloadAttachment$', download_attachment),
     url(r'^attachment/(?P<attachment_id>\d+)/delete$', delete_attachment),
+    url(r'^activities$', batch_save_activities),
 ]

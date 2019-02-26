@@ -801,3 +801,22 @@ def open_todo_list(request, list_id):
     todo_list.save()
     resp['success'] = True
     return ajax_response(resp)
+
+
+@login_required
+def batch_save_activities(request):
+    """
+    TODO: Some how to link with other todo printed in the request
+    :param request:
+    :return:
+    """
+    resp = {}
+    todo_id_list = request.POST.getlist('todos[]')
+    for todo_id in todo_id_list:
+        TodoActivity(todo_id=todo_id, author=request.user,
+                     activity="<b>{0} {1} - {2} </b> print this todo".format(request.user.first_name,
+                                                                             request.user.last_name,
+                                                                             request.user.profile.role)).save()
+
+    resp['success'] = True
+    return ajax_response(resp)

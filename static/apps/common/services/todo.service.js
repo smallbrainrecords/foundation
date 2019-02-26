@@ -42,7 +42,8 @@
                 removeTodoMember: removeTodoMember,
                 fetchLabels: fetchLabels,
                 updateTodoOrder: updateTodoOrder,
-                updateTodoStatus: updateTodoStatus
+                updateTodoStatus: updateTodoStatus,
+                saveTodoPrintLogs: saveTodoPrintLogs
             };
 
             function csrf_token() {
@@ -197,6 +198,19 @@
 
             function updateTodoStatus(form) {
                 let url = `/todo/todo/${form.id}/update/`;
+                return httpService.post(form, url);
+            }
+
+            /**
+             *
+             * @param todoList
+             * @returns {*}
+             */
+            function saveTodoPrintLogs(todoList) {
+                let form = {
+                    'todos': _.pluck(todoList, 'id')
+                };
+                let url = `/todo/activities`;
                 return httpService.post(form, url);
             }
         });
