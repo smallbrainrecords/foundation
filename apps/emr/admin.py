@@ -73,11 +73,11 @@ class UserProfileAdmin(VersionAdmin):
 admin.site.register(UserProfile, UserProfileAdmin)
 
 
-class AccessLogAdmin(VersionAdmin):
-    actions = []
+# class AccessLogAdmin(VersionAdmin):
+#     actions = []
 
 
-admin.site.register(AccessLog, AccessLogAdmin)
+# admin.site.register(AccessLog, AccessLogAdmin)
 
 
 class EncounterAdmin(VersionAdmin):
