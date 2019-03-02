@@ -17,7 +17,7 @@
                    checklist-model="$ctrl.printForm.todos" ng-checked="{{ todo.id == $ctrl.todoId }}" type="checkbox">
             <label for="todo-{{ todo.id }}">
                 {{ todo.todo }} {{ todo.problem? "for "+ todo.problem.problem_name : ""}}
-                {{ todo.due_date ? "due date " + todo.due_date : ""}}
+                {{ todo.due_date ? "due by " + todo.due_date : ""}}
             </label>
         </div>
         <br>
@@ -80,7 +80,7 @@
         <li ng-repeat="todo in $ctrl.printForm.todos track by $index">
             <b>{{ todo.todo }}: </b>
             {{ todo.problem? "for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
-            {{ todo.due_date ? "due date " + todo.due_date : ""}}
+            {{ todo.due_date ? "due by " + todo.due_date : ""}}
         </li>
     </ul>
 
