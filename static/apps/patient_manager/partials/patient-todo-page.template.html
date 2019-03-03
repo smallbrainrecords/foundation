@@ -6,7 +6,7 @@
 <div ng-if="checkSharedProblem(todo.problem, sharing_patients)">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+            <div class="col-md-12">
                 <div class="io-box">
                     <input ng-model='todo.accomplished' type='checkbox' ng-change='updateTodoStatus(todo)' title="">
 
@@ -46,23 +46,23 @@
                     </div>
                 </div>
             </div>
+
             <!-- begin todo info -->
             <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8">
-                <!-- begin comments -->
                 <section id="comments">
-                    <div class="row">
-                        <div class="col-xs-12">
-                            <form role='form' ng-submit='add_comment(new_comment)' class="new-comment">
-                                <div class='form-group'>
-                                    <label for="comment"> Add comment </label>
-                                    <textarea name="comment" id="comment" msd-elastic class="form-control"
-                                              ng-model="new_comment.comment"></textarea>
-                                </div>
-                                <button type='submit' class='btn btn-default'>Send</button>
-                            </form>
+                    <form role='form' ng-submit='add_comment(new_comment)' class="new-comment">
+                        <div class='form-group'>
+                            <label for="comment"> Add comment </label>
+                            <textarea name="comment" id="comment" msd-elastic class="form-control"
+                                      ng-model="new_comment.comment"></textarea>
                         </div>
-                    </div>
-                    <p>Comments:</p>
+                        <button type='submit' class='btn btn-default'>Send</button>
+                    </form>
+                </section>
+
+                <!-- begin comments -->
+                <section id="comments-list">
+                    <h4>Comments:</h4>
                     <div class="row comment-history"
                          ng-repeat="comment in comments | orderBy:'datetime':true track by $index">
                         <div class="col-xs-12">
@@ -95,84 +95,66 @@
                 </section>
                 <!-- end comments -->
 
-                <!-- end due date -->
+                <!-- Acttachment and documenatation-->
                 <section id="attachment-document">
                     <!-- begin attachments -->
                     <div class="todo-component" ng-if="attachments.length > 0">
-                        <p>Attachments:</p>
-                        <div ng-repeat="attachment in attachments" class="attachment">
-                            <p>{{ attachment.attachment }}</p>
-                            <p>Added {{ attachment.datetime }}</p>
-                            <p>
-                                <a href="/todo/attachment/{{ attachment.id }}/downloadAttachment">
-                                    <i class="fa fa-download"></i>
-                                    Download
-                                </a>
-                                <a href ng-click="deleteAttachment(attachment)">
-                                    <i class="fa fa-remove"></i>
-                                    Delete
-                                </a>
-                            </p>
-                        </div>
+                        <h4>Attachments:</h4>
+                        <ul class="ul-clean no-padding">
+                            <li ng-repeat="attachment in attachments" class="attachment">
+                                <div>
+                                    <i class="fa fa-paperclip"></i>
+                                    <span>{{ attachment.attachment }}</span>
+                                    <div class="pull-right flex-item">
+                                        <span class="document_uploaded_date"
+                                              ng-bind="attachment.datetime | date:'MM/dd/yyyy'"></span>
+                                        <a href="/todo/attachment/{{ attachment.id }}/downloadAttachment"><i
+                                                class="fa fa-download"></i>Download</a>
+                                        <a class="text-danger" ng-click="deleteAttachment(attachment)"><i class="fa fa-remove"></i>Delete</a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
                     <!-- end attachments -->
 
                     <!-- begin document -->
-                    <div class="panel panel-default uploaded_document" ng-if="documents.length != 0">
-                        <div class="panel-heading">
-                            <p>Pinned documents</p>
-                        </div>
-                        <div class="panel-body">
-                            <ul class="ul-clean no-padding">
-                                <li ng-repeat="document in documents track by $index">
-                                    <div>
-                                        <i class="fa fa-file-o flex-item document_icon"></i>
-                                        <a href="#/document/{{ document.id }}" class="flex-item document_name"
-                                           ng-bind="document.document_name"></a>
-                                        <div class="pull-right flex-item ">
+                    <div class="uploaded_document" ng-if="documents.length != 0">
+                        <h4>Pinned documents:</h4>
+                        <ul class="ul-clean no-padding">
+                            <li ng-repeat="document in documents track by $index">
+                                <div>
+                                    <i class="fa fa-file-o flex-item document_icon"></i>
+                                    <a href="#/document/{{ document.id }}" class="flex-item document_name"
+                                       ng-bind="document.document_name"></a>
+                                    <div class="pull-right flex-item ">
 
-                                            <span class="document_uploaded_date"
-                                                  ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
+                                        <span class="document_uploaded_date"
+                                              ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
 
-                                            <a href="{{ document.document }}" download>
-                                                <i class="fa fa-download"></i>
-                                                Download
-                                            </a>
-                                            <a ng-click="deleteDocumentTag(document,todo)" class="btn-remove">
-                                                <i class="fa fa-remove"></i>
-                                                Delete
-                                            </a>
-                                        </div>
+                                        <a href="{{ document.document }}" download>
+                                            <i class="fa fa-download"></i>
+                                            Download
+                                        </a>
+                                        <a ng-click="deleteDocumentTag(document,todo)" class="text-danger" >
+                                            <i class="fa fa-remove"></i>
+                                            Delete
+                                        </a>
                                     </div>
-                                </li>
-                            </ul>
-                        </div>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
                     <!-- end documents -->
                 </section>
 
-                <!-- begin encounters -->
-                <section id="encounters">
-                    <div class='row todo-component' ng-if="related_encounters.length > 0">
+                <!-- Related encounters -->
+                <section id="encounters" ng-if="related_encounters.length > 0">
+                    <h4>Related encounters ({{ related_encounters.length }})</h4>
+
+                    <div ng-repeat='encounter in related_encounters' class='row'>
                         <div class='col-md-12'>
-                            <div class='panel panel-default' ng-init="encounter_collapse=false;">
-                                <div class='panel-heading' ng-click="encounter_collapse=!encounter_collapse;">
-                                    <i class="fa fa-caret-down" aria-hidden="true" ng-if="encounter_collapse"></i>
-                                    <i class="fa fa-caret-right" aria-hidden="true" ng-if="!encounter_collapse"></i>
-                                    Related Encounters
-                                </div>
-                                <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'
-                                     ng-show="encounter_collapse">
-                                    <div ng-repeat='encounter in related_encounters' class='row'
-                                         style='margin-bottom:4px; border-top:1px solid #ccc;'>
-                                        <div class='col-md-12'>
-                                            <a href='#/encounter/{{ encounter.id }}'>
-                                                Ref ID: {{ encounter.id }} on {{ encounter.starttime|date }}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            Ref ID: {{ encounter.id }} on {{ encounter.starttime|date }}
                         </div>
                     </div>
                 </section>
@@ -180,7 +162,7 @@
 
                 <!-- begin activities -->
                 <section id="activity">
-                    <h2>Activities:</h2>
+                    <h4>Activities:</h4>
                     <div ng-repeat='activity in activities' class='row activity-item'>
                         <div class='col-md-3'>
                             <b>{{ activity.author.first_name }} {{ activity.author.last_name }} -
@@ -188,8 +170,8 @@
                         </div>
                         <div class='col-md-7'>
                             <span ng-bind-html='activity.activity'></span>
-                            <p ng-if="activity.attachment.is_image"><img ng-src="{{ activity.attachment.attachment }}"
-                                                                         class="thumbnail"></p>
+                            <img ng-src="{{ activity.attachment.attachment }}" ng-if="activity.attachment.is_image"
+                                 class="img-responsive">
                         </div>
                         <div class='col-md-2'>
                             {{ activity.created_on | date }}
@@ -199,6 +181,7 @@
                 <!-- end activities -->
             </div>
             <!-- end todo info -->
+
             <!-- begin todo edit buttons -->
             <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
 

@@ -58,28 +58,28 @@ todo-item .quick-card-editor {
   margin-right: 4px;
   margin-bottom: 4px; }
 
-#comments textarea {
+#comments textarea, #comments-list textarea {
   width: 100%;
   resize: none; }
-#comments form.new-comment {
+#comments form.new-comment, #comments-list form.new-comment {
   background: #EEEFF1;
   padding: 15px;
   margin-bottom: 20px;
   border-radius: 2px; }
-#comments .comment-history .comment {
+#comments .comment-history .comment, #comments-list .comment-history .comment {
   background: #EEEFF1;
   padding: 15px;
   margin-bottom: 10px;
   border-radius: 2px; }
-  #comments .comment-history .comment .username {
+  #comments .comment-history .comment .username, #comments-list .comment-history .comment .username {
     font-weight: bold; }
-  #comments .comment-history .comment .comment-content-wrapper {
+  #comments .comment-history .comment .comment-content-wrapper, #comments-list .comment-history .comment .comment-content-wrapper {
     margin-bottom: 15px; }
-    #comments .comment-history .comment .comment-content-wrapper .comment-content {
+    #comments .comment-history .comment .comment-content-wrapper .comment-content, #comments-list .comment-history .comment .comment-content-wrapper .comment-content {
       background: white;
       padding: 10px;
       border-radius: 5px; }
-  #comments .comment-history .comment textarea {
+  #comments .comment-history .comment textarea, #comments-list .comment-history .comment textarea {
     margin-bottom: 15px; }
 
 /*Stytle for medication related component*/
@@ -337,13 +337,13 @@ a.btn-manage {
 
 .problem-controlled {
   background: #DFF0D8;
-    z-index: 1000;
+  z-index: 1000;
   margin: 0; }
   .problem-controlled.affix-top, .problem-controlled.affix {
     top: 50px; }
 
 .problem-uncontrolled {
-    z-index: 1000;
+  z-index: 1000;
   margin: 0; }
   .problem-uncontrolled.affix {
     top: 50px; }
