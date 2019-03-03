@@ -73,6 +73,8 @@ class ProblemSerializer(serializers.ModelSerializer):
     problem_segment = ProblemSegmentSerializer(many=True, read_only=True)
     labels = ProblemLabelSerializer(many=True)
     start_date = serializers.DateTimeField(format='%m/%d/%Y')
+    effected = serializers.SerializerMethodField()
+    effecting = serializers.SerializerMethodField()
 
     class Meta:
         model = Problem
@@ -90,7 +92,20 @@ class ProblemSerializer(serializers.ModelSerializer):
             'is_active',
             'authenticated',
             'start_time',
-            'start_date',)
+            'start_date',
+            'effected',
+            'effecting'
+        )
+
+    def get_effected(self, problemInstance):
+        effected_relations = ProblemRelationship.objects.filter(source_id=problemInstance.id)
+        effected_problems = [relationship.target.id for relationship in effected_relations]
+        return effected_problems
+
+    def get_effecting(self, problemInstance):
+        effecting_relations = ProblemRelationship.objects.filter(target_id=problemInstance.id)
+        effecting_problems = [relationship.source.id for relationship in effecting_relations]
+        return effecting_problems
 
 
 class PatientImageSerializer(serializers.ModelSerializer):

@@ -5,13 +5,13 @@
         <!--3) display todo label types that are "for all users"-->
         <p>Label:</p>
         <span class="label-wrapper">
-                    <a class="todo-label" ng-class="label.css_class" ng-repeat="label in $ctrl.todoLabels">
+                    <a class="todo-label" ng-class="label.css_class" ng-repeat="label in $ctrl.patientTodoLabels">
                         {{ label.name }}
                     </a>
                 </span>
 
         <!--4) display all the active todos for the patient with a check box to the left.-->
-        <div class="checkbox" ng-repeat="todo in $ctrl.activeTodos track by $index">
+        <div class="checkbox" ng-repeat="todo in $ctrl.patientTodos track by $index">
             <input id="todo-{{ todo.id }}" ng-click="$ctrl.selectItemToPrint($event,todo, $index)"
                    title="{{ todo.todo }}"
                    checklist-model="$ctrl.printForm.todos" ng-checked="{{ todo.id == $ctrl.todoId }}" type="checkbox">
@@ -78,15 +78,15 @@
     <p>Tests Ordered:</p>
     <ul>
         <li ng-repeat="todo in $ctrl.printForm.todos track by $index">
-            <b>{{ todo.todo }}: </b>
-            {{ todo.problem? "for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
+            <b>{{ todo.todo }} </b>
+            {{ todo.problem? ": for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
             {{ todo.due_date ? "due by " + todo.due_date : ""}}
         </li>
     </ul>
 
     <p>Associated diagnosis:</p>
     <ul>
-        <li ng-repeat="problem in $ctrl.printForm.problems track by $index">
+        <li ng-repeat="problem in $ctrl.patientProblems track by $index" ng-if="$ctrl.problem2Print.indexOf(problem.id) !=-1">
             {{ problem.problem_name }} {{ problem.concept_id }}
         </li>
     </ul>

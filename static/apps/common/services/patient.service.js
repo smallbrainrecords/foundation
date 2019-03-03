@@ -102,7 +102,8 @@
                 updateMedicare: updateMedicare,
                 addNarrative: addNarrative,
                 fetchNarrative: fetchNarrative,
-                loadAllNarrative: loadAllNarrative
+                loadAllNarrative: loadAllNarrative,
+                getProblems: getProblems
             };
 
             function csrf_token() {
@@ -708,6 +709,10 @@
              */
             function addNarrative(patientId, narrative) {
                 return httpService.postJson(narrative, `/u/users/${patientId}/add_narratives`);
+            }
+
+            function getProblems(patientId) {
+                return $http.get(`/u/users/${patientId}/problems`);
             }
         });
 })();

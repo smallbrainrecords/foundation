@@ -23,7 +23,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import render, render_to_response
-from django.template import RequestContext
 
 from users_app.operations import get_vitals_table_component
 
@@ -1149,6 +1148,7 @@ def add_narratives(request, patient_id):
     return ajax_response(resp)
 
 
+@login_required
 def get_all_narratives(request, patient_id):
     """
 
@@ -1162,4 +1162,14 @@ def get_all_narratives(request, patient_id):
     resp['success'] = True
     resp['data'] = NarrativeSerializer(result_set, many=True).data
 
+    return ajax_response(resp)
+
+
+@login_required
+def get_user_problem(request, patient_id):
+    resp = {'success': False}
+    problems = Problem.objects.filter(patient_id=patient_id)
+
+    resp['success'] = True
+    resp['data'] = ProblemSerializer(problems,many=True).data
     return ajax_response(resp)

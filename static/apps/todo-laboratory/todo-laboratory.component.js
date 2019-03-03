@@ -34,13 +34,17 @@
          */
         function todoLaboratoryController($rootScope, $scope, patientService, todoService, $routeParams) {
             // Temporary solution for this (controllerAs syntax)
-
             let ctrl = this;
-            ctrl.activeUser = $rootScope.active_user;
+
             ctrl.todoId = parseInt($routeParams.todoId);
+            ctrl.activeUser = $rootScope.active_user;
+            ctrl.patientProblems = [];
+            ctrl.problem2Print=[];
+            ctrl.patientTodos = [];
+            ctrl.patientTodoLabels = [];
             ctrl.printForm = {};
-            ctrl.todoLabels = [];
-            ctrl.activeTodos = []; // Active Todos <-  Selected todo -> Todo & Problem
+            ctrl.itermediatedProblem2Print = {};
+
             ctrl.selectItemToPrint = selectItemToPrint;
             ctrl.saveDocument = saveDocument;
             ctrl.print = print;
@@ -69,15 +73,14 @@
                     fasting: false,
                     notes: "", //labelled Special instructions:
                     todos: [], // text based array
-                    problems: [] // text based array, labeled Associated diagnosis:
 
                 };
 
                 patientService.getToDo($rootScope.patient_id, false, true, 1).then((resp) => {
                     if (resp.success) {
-                        ctrl.activeTodos = resp.data;
+                        ctrl.patientTodos = resp.data;
 
-                        ctrl.activeTodos.map((todo, idx) => {
+                        ctrl.patientTodos.map((todo, idx) => {
                             if (todo.id == ctrl.todoId) {
                                 selectItemToPrint(null, todo, idx);
                             }
@@ -89,7 +92,7 @@
                         for (const item of allLabels) {
                             if (!map.has(item.id)) {
                                 map.set(item.id, true);    // set any value to Map
-                                ctrl.todoLabels.push({
+                                ctrl.patientTodoLabels.push({
                                     id: item.id,
                                     name: item.name,
                                     css_class: item.css_class
@@ -99,61 +102,44 @@
                     }
                 });
 
-
-            };
-
-            /**
-             * Similar to ngAfterViewInit | ngAfterContentInit  in Angular
-             */
-            ctrl.$postLink = () => {
-
+                patientService.getProblems($rootScope.patient_id).then((resp) => {
+                    if (resp.data.success)
+                        ctrl.patientProblems = resp.data.data;
+                });
             };
 
             /**
              * Select todo item to print
              */
             function selectItemToPrint(event, todo, todoIdx) {
-                if (ctrl.activeTodos[todoIdx].selected) {
-                    // Remove selected todo & it associated diagnostics(if problem does not exist in any other selected todo)
-                    let removingProblem = true; // Flag to determine whether or not problem should be removed. Default true
-                    // Get position of selected todo inside selected item
+                if (ctrl.patientTodos[todoIdx].selected) {
                     ctrl.printForm.todos.map((item, index) => {
-                        // Consideration of removing associated problem along with the todo if any other todo having
-                        if (todo.problem != null && item.problem != null && todo.id !== item.id && todo.problem.id === item.problem.id) {
-                            removingProblem = false;
-                        }
-
-                        // Remove the todo after removing problem
                         if (todo.id === item.id) {
                             ctrl.printForm.todos.splice(index, 1);
-                            ctrl.activeTodos[todoIdx].selected = false;
+                            ctrl.patientTodos[todoIdx].selected = false;
                         }
                     });
 
-                    if (removingProblem) {
-                        ctrl.printForm.problems.map((item, index) => {
-                            if (todo.problem.id === item.id) {
-                                ctrl.printForm.problems.splice(index, 1);
-                            }
-                        });
-                    }
+                    delete ctrl.itermediatedProblem2Print[todo.id];
                 } else {
                     ctrl.printForm.todos.push(todo);
-                    let addingProblem = true;
-                    if (todo.problem != null) {
-                        // Consideration of adding problem in to printed array
-                        ctrl.printForm.problems.map((item) => {
-                            if (todo.problem.id === item.id) {
-                                addingProblem = false;
-                            }
-                        });
+                    ctrl.patientTodos[todoIdx].selected = true;
 
-                        if (addingProblem) {
-                            ctrl.printForm.problems.push(todo.problem);
-                        }
+                    if (todo.problem) {
+                        ctrl.itermediatedProblem2Print[todo.id] = todo.problem;
                     }
-                    ctrl.activeTodos[todoIdx].selected = true;
                 }
+
+                // 1. Get all selected values
+                let problems = Object.values(ctrl.itermediatedProblem2Print);
+
+                // 2. Get all problems id
+                let problemIds = _.pluck(problems, 'id');
+                let effectedIds = _.pluck(problems, 'effected').flat();
+                let effectingIds = _.pluck(problems, 'effecting').flat();
+
+                // 3. Distinct items
+                ctrl.problem2Print = [...new Set(problemIds.concat(effectedIds, effectingIds))];
             }
 
             function saveDocument() {

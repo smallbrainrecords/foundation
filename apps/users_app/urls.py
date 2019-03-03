@@ -19,6 +19,8 @@ from django.conf.urls import url
 
 from users_app.views import *
 
+
+
 urlpatterns = [
     url(r'^login/$', login_user),
     url(r'^logout/$', logout_user),
@@ -54,6 +56,7 @@ urlpatterns = [
     url(r'^update_setting$', update_general_setting),
 
     # URL for API patterns
+    url(r'^users/(?P<patient_id>\d+)/problems$', get_user_problem),
     url(r'^users/(?P<patient_id>\d+)/todos$', get_user_todo),
     url(r'^users/(?P<patient_id>\d+)/vitals$', get_user_vitals),
     url(r'^users/(?P<patient_id>\d+)/medicare$', set_user_medicare),
