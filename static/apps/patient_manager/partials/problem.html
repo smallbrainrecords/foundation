@@ -309,17 +309,6 @@
         </div>
     </div>
 
-    <!-- INR widget -->
-    <div class="row" ng-if="availableWidgets.indexOf('inr') != -1">
-        <div class="col-md-12">
-            <inr order-added="INROrderAdded"
-                 active-user="active_user"
-                 patient-id="patient_id"
-                 labels="labels" members="members"
-                 order-status-changed="INROrderStatusChanged"></inr>
-        </div>
-    </div>
-
     <!-- Problem old name-->
     <div class='panel panel-default' ng-show="problem.old_problem_name">
         <div class='panel-body'>
@@ -624,7 +613,7 @@
                  ng-show="problem_activity_see_all || activity.is_input_type || activity.is_output_type">
                 <div class='col-md-3'>
                     <b>{{ activity.author.first_name }} {{ activity.author.last_name }} - {{
-                            activity.author.profile.role }} </b>
+                        activity.author.profile.role }} </b>
                 </div>
                 <div class='col-md-7'>
                             <span ng-if="activity.is_input_type"><i class="fa fa-caret-right"
