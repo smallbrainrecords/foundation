@@ -56,23 +56,23 @@ from problems_app import urls
 from project_admin_app import urls
 from todo_app import urls
 from users_app import urls
-from users_app import views
+from views import home
 
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^$', users_app.views.home),
+    url(r'^$', home),
 
     url(r'^admin/', include(admin.site.urls)),
 
     url(r'^project/admin/', include(project_admin_app.urls)),
 
-    url('^pain/create_pain_avatar/(?P<patient_id>\d+)/$', pain.views.create_pain_avatar),
-    url('^pain/reset/$', pain.views.reset),
+    url(r'^pain/create_pain_avatar/(?P<patient_id>\d+)/$', pain.views.create_pain_avatar),
+    url(r'^pain/reset/$', pain.views.reset),
     url(r'^login-error/$', LoginError.as_view()),
 
     # Old user views
-    url(r'^logout/$', django.contrib.auth.views.logout, {'next_page': '/u/login/'}),
+    url(r'^logout/$', django.contrib.auth.views.logout, {'next_page': '/'}),
 
     # Old views
     url(r'^list_of_unregistered_users/$', emr.views.list_of_unregistered_users),
