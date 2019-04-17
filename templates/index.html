@@ -9,11 +9,11 @@
     <!-- CSS -->
     <link rel="stylesheet" type="text/css" href="/static/css/landing_page.css"/>
 </head>
+{% load static %}
 <body>
-
 <div class="clearfix borderbox" id="page"><!-- column -->
     <div class="clip_frame colelem" id="u210"><!-- image -->
-        <img class="block" id="u210_img" src="/static/images/docpic-crop-u210.jpg?crc=4128903711" alt=""
+        <img class="block" id="u210_img" src="{% static 'images/docpic-crop-u210.jpg' %}" alt="cover"
              data-heightwidthratio="0.13695652173913042" data-image-width="920" data-image-height="126"/>
     </div>
     <div class="clearfix colelem" id="u97-4" data-sizePolicy="fluidWidth" data-pintopage="page_fixedCenter">
@@ -37,30 +37,30 @@
         <a class="nonblock nontext clip_frame grpelem" id="u101"
            href="https://www.nytimes.com/2017/08/18/health/recording-your-doctors-appointment.html" target="_blank">
             <!-- image --><img class="block" id="u101_img"
-                               src="/static/images/screen%20shot%202018-03-13%20at%2081625%20am.jpg?crc=365475910"
+                               src="{% static 'images/screen%20shot%202018-03-13%20at%2081625%20am.jpg' %}"
                                alt=""
                                data-heightwidthratio="0.16831683168316833" data-image-width="202"
                                data-image-height="34"/></a>
         <a class="nonblock nontext clip_frame grpelem" id="u105"
            href="https://www.aarp.org/health/healthy-living/info-2017/audio-recording-your-doctor-visit-fd.html">
             <!-- image --><img class="block" id="u105_img"
-                               src="/static/images/pasted%20image%20200x200.jpg?crc=4065793506"
+                               src="{% static 'images/pasted%20image%20200x200.jpg' %}"
                                alt="" data-heightwidthratio="1" data-image-width="103" data-image-height="103"/></a>
         <a class="nonblock nontext clip_frame grpelem" id="u109"
            href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5519830/" data-sizePolicy="fluidWidthHeight"
            data-pintopage="page_fixedCenter"><!-- image --><img class="block" id="u109_img"
-                                                                src="/static/images/pasted%20image%20420x235.jpg?crc=40819377"
+                                                                src="{% static 'images/pasted%20image%20420x235.jpg' %}"
                                                                 alt="" data-heightwidthratio="0.5572139303482587"
                                                                 data-image-width="201" data-image-height="112"/></a>
         <a class="nonblock nontext clip_frame grpelem" id="u103"
            href="http://www.medicaleconomics.com/medical-economics-blog/should-patients-be-allowed-record-their-doctors">
             <!-- image --><img class="block" id="u103_img"
-                               src="/static/images/pasted%20image%20242x91.png?crc=349648915" alt=""
+                               src="{% static 'images/pasted%20image%20242x91.png' %}"
                                data-heightwidthratio="0.37662337662337664" data-image-width="154"
                                data-image-height="58"/></a>
         <a class="nonblock nontext clip_frame grpelem" id="u440" href="https://www.medscape.com/viewarticle/895560">
             <!-- image --><img class="block" id="u440_img"
-                               src="/static/images/1280px-medscape_logosvg.png?crc=308857067" alt=""
+                               src="{% static 'images/1280px-medscape_logosvg.png' %}"
                                data-heightwidthratio="0.2392638036809816" data-image-width="163"
                                data-image-height="39"/></a>
     </div>
@@ -68,12 +68,12 @@
         <a class="nonblock nontext clip_frame grpelem" id="u107"
            href="http://www.cbc.ca/radio/whitecoat/from-er-to-office-how-the-practice-of-medicine-is-changing-1.4307446/forget-what-the-doctor-said-this-md-records-visits-so-you-can-listen-back-1.4307921">
             <!-- image --><img class="block" id="u107_img"
-                               src="/static/images/pasted%20image%20620x349.jpg?crc=473349517"
+                               src="{% static 'images/pasted%20image%20620x349.jpg' %}"
                                alt="" data-heightwidthratio="0.5619047619047619" data-image-width="105"
                                data-image-height="59"/></a>
         <a class="nonblock nontext clip_frame grpelem" id="u111" href="http://www.openrecordings.org/">
             <!-- image --><img class="block" id="u111_img"
-                               src="/static/images/screen%20shot%202018-03-13%20at%2083657%20am.jpg?crc=3849207407"
+                               src="{% static 'images/screen%20shot%202018-03-13%20at%2083657%20am.jpg' %}"
                                alt=""
                                data-heightwidthratio="0.8073394495412844" data-image-width="109"
                                data-image-height="88"/></a>
