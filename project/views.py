@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Copyright (c) Small Brain Records 2014-2018 Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
 
@@ -17,7 +15,11 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from django.shortcuts import render
+from django.http import HttpResponseRedirect
 
 
 def home(request):
-    return render(request, 'index.html', {})
+    if not request.user.is_authenticated():
+        return render(request, 'index.html', {})
+    elif request.user.is_authenticated():
+        return HttpResponseRedirect('/u/home/')
