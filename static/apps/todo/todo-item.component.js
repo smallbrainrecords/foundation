@@ -113,7 +113,7 @@
              * @returns {string}
              */
             function isDueDate(date) {
-                return moment().isAfter(date) ? 'due-date' : '';
+                return moment().isAfter(moment(date, 'MM-DD-YYYY')) ? 'due-date' : '';
             }
 
             /**
