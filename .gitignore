@@ -12,3 +12,4 @@ static/CACHE
 static/node_modules
 staticdev/CACHE
 venv
+.coverage
