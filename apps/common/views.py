@@ -30,8 +30,11 @@ def ajax_response(resp):
 
 
 def get_date(date_string):
-    return datetime.strptime(date_string, "%Y-%m-%d").date()
-
+    try:
+        date_object = datetime.strptime(date_string, "%Y-%m-%d").date()
+        return date_object
+    except:
+        return "Unsupported format"
 
 def get_new_date(date_string):
     return datetime.strptime(date_string, "%m/%d/%Y").date()
