@@ -14,12 +14,3 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-
-
-def home(request):
-    if not request.user.is_authenticated():
-        return render(request, 'index.html', {})
-    elif request.user.is_authenticated():
-        return HttpResponseRedirect('/u/home/')

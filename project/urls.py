@@ -61,7 +61,7 @@ from views import home
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^$', home),
+    url(r'^$', home,name='project_home'),
 
     url(r'^admin/', include(admin.site.urls)),
 
