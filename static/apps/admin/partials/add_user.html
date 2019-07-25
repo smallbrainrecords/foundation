@@ -35,7 +35,7 @@
 
             <div class='form-group'>
                 <label> Role </label>
-                <select ng-model='form.role' class='form-control' required>
+                <select ng-model='form.role' class='form-control' required title="">
                     <option value=''> ----</option>
                     <option value='patient'> Patient</option>
                     <option disabled ng-if="active_user.role == 'admin' || active_user.role == 'physician'">----------
@@ -57,12 +57,12 @@
 
             <div class='form-group'>
                 <label> Password </label>
-                <input type='password' class='form-control' ng-model='form.password' required>
+                <input type='password' class='form-control' ng-model='form.password' required title="">
             </div>
 
             <div class='form-group'>
                 <label> Verfiy Password </label>
-                <input type='password' class='form-control' ng-model='form.verify_password' required>
+                <input type='password' class='form-control' ng-model='form.verify_password' required title="">
             </div>
             <hr>
 
@@ -71,12 +71,18 @@
             <hr>
             <div class='form-group'>
                 <label> Date of birth </label>
-                <input type='text' class='form-control' ng-model='form.date_of_birth' id='dob1'>
+                <datepicker date-format="MM/dd/yyyy" selector="form-control">
+                    <div class="input-group">
+                        <input class="form-control" placeholder="Choose a date" ng-model="form.date_of_birth" title=""/>
+                        <span class="input-group-addon" style="cursor: pointer"><i
+                                class="fa fa-lg fa-calendar"></i></span>
+                    </div>
+                </datepicker>
             </div>
 
             <div class='form-group'>
                 <label> Sex </label>
-                <select ng-model='form.sex' class='form-control'>
+                <select ng-model='form.sex' class='form-control' title="">
                     <option value=''> ----</option>
                     <option value='male'> Male</option>
                     <option value='female'> Female</option>
@@ -85,7 +91,7 @@
 
             <div class='form-group'>
                 <label> Phone/Contact </label>
-                <input type='text' class='form-control' ng-model='form.phone_number'>
+                <input type='text' class='form-control' ng-model='form.phone_number' title="">
             </div>
             <div class='form-group'>
 
@@ -96,9 +102,7 @@
 
 
             <div class='form-group'>
-
                 <label> Portrait Image </label>
-
                 <input type='file' file-model='files.portrait_image'>
             </div>
 
@@ -107,18 +111,10 @@
                 <textarea ng-model='form.summary' class='form-control' title=""></textarea>
             </div>
             <hr>
-
             <div class='form-group'>
-
                 <input type='submit' value='Add User' class='btn btn-default btn-lg'>
             </div>
-
         </form>
     </div>
 </div>
 
-<script type='text/javascript'>
-    $(document).ready(function () {
-        $("#dob1").datepicker({dateFormat: 'mm/dd/yy'});
-    });
-</script>

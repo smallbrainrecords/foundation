@@ -22,7 +22,7 @@
             "ngSanitize",
             "com.2fdevs.videogular",
             "com.2fdevs.videogular.plugins.controls",
-            "com.2fdevs.videogular.plugins.buffering",
+            "com.2fdevs.videogular.plugins.buffering", '720kb.datepicker',
             'app.constant', 'httpModule', 'sharedModule', 'colon_cancers', 'a1c', 'medication', 'problems',
             'todos', 'medication-component', 'inr', 'myTools', 'document', 'TemplateCache',
             'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'pickadate',

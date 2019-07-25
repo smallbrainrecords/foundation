@@ -117,7 +117,7 @@
                             }
                         }
                     });
-                }, 1500);
+                }, 3000);
 
                 $interval(function () {
                     if ($scope.activeEncounter !== null && RECORDER_STATUS.isRecording === $scope.activeEncounter.recorder_status)
@@ -127,7 +127,7 @@
                     if ($scope.elapsedTime > $scope.limitTime && $scope.encounterCtrl.status.isRecording) {
                         stopEncounter();
                     }
-                }, 1000);
+                }, 2000);
 
                 // Update rootScope encounter status to able using in other page.
                 // TODO(AnhDN): Later should be migrate to encounterService

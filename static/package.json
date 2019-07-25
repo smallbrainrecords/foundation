@@ -31,6 +31,7 @@
     "angular-xeditable": "^0.9.0",
     "angularindexeddb": "^1.1.4",
     "angularjs-color-picker": "^3.4.8",
+    "angularjs-datepicker": "^2.1.23",
     "angularjs-toaster": "~2.2.0",
     "awesome-bootstrap-checkbox": "^0.3.7",
     "bootstrap": "^3.4.1",

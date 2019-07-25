@@ -180,8 +180,14 @@
                     <div class='form-group'>
 
                         <label> Date of birth </label>
-
-                        <input type='text' ng-model='user_profile.date_of_birth' class='form-control' required id='dob'>
+                        <datepicker date-format="dd/MM/yyyy" selector="form-control">
+                            <div class="input-group">
+                                <input class="form-control" placeholder="Choose a date"
+                                       ng-model="user_profile.date_of_birth" title=""/>
+                                <span class="input-group-addon" style="cursor: pointer"><i
+                                        class="fa fa-lg fa-calendar"></i></span>
+                            </div>
+                        </datepicker>
 
                     </div>
 
@@ -708,8 +714,14 @@
                 <form>
                     <div class="form-group">
                         <p>Deceased date:</p>
-                        <input type='text' class='form-control' id="deceased_date"
-                               ng-model="user_profile.deceased_date">
+                        <datepicker date-format="MM/dd/yyyy" selector="form-control">
+                            <div class="input-group">
+                                <input class="form-control" placeholder="Choose a date"
+                                       ng-model="user_profile.deceased_date" title=""/>
+                                <span class="input-group-addon" style="cursor: pointer"><i
+                                        class="fa fa-lg fa-calendar"></i></span>
+                            </div>
+                        </datepicker>
                     </div>
                     <div class="form-group">
                         <button class="btn btn-default" ng-click="update_deceased_date();">Update</button>
@@ -718,15 +730,4 @@
             </div>
         </div>
     </div>
-
 </div>
-
-
-<script type='text/javascript'>
-
-    $(document).ready(function () {
-
-        $("#dob").datepicker({dateFormat: 'yy-mm-dd'});
-        $("#deceased_date").datepicker({dateFormat: 'mm/dd/yy'});
-    });
-</script>
