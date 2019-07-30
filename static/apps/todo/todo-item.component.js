@@ -176,6 +176,7 @@
              * @param todo: Temporary copy of editing todo item
              */
             function saveTodoDueDate(todo) {
+                debugger;
                 // Calling API
                 todoService.changeTodoDueDate(todo).then((data) => {
                     data.success ? toaster.pop('success', "Done", "Due date Updated!") : toaster.pop('error', 'Error', 'Invalid date format');

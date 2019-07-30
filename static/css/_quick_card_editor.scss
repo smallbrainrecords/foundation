@@ -1,0 +1,180 @@
+.quick-card-editor {
+  a {
+    text-decoration: none;
+  }
+
+  input, button {
+    position: relative;
+    z-index: 99;
+  }
+
+  .quick-card-editor-buttons {
+    a {
+      background: rgba(0, 0, 0, .6);
+      border-radius: 3px;
+      clear: both;
+      color: #e6e6e6;
+      display: block;
+      float: left;
+      margin: 0 0 5px 0;
+      padding: 6px 9pt 6px 8px;
+      text-decoration: none;
+      -webkit-transition: -webkit-transform 85ms ease-in;
+      transition: transform 85ms ease-in;
+
+      &:hover {
+        background: rgba(0, 0, 0, .8);
+        color: #fff;
+        -webkit-transform: translateX(5px);
+        transform: translateX(5px);
+      }
+
+      i {
+        margin-right: 5px;
+      }
+    }
+  }
+
+  .quick-card-editor-lv2 {
+    position: absolute;
+    z-index: 999;
+    background: white;
+    min-height: 220px;
+    min-width: 200px;
+    width: 100%;
+    padding: 10px;
+
+    ._720kb-datepicker-calendar {
+      position: relative;
+      visibility: visible;
+    }
+
+    a.todo-label {
+      display: block;
+      clear: none;
+      width: 80%;
+      min-height: 20px;
+      height: auto;
+      text-align: left;
+      padding: 0 0 0 10px;
+      float: left;
+      margin: 0 2px 2px 0;
+    }
+
+    .quick-card-editor-lv2-header {
+      margin-bottom: 40px;
+
+      a {
+        float: right;
+      }
+
+
+      a.todo-label-edit {
+        float: right;
+        clear: none;
+        background: none;
+        margin: 0px;
+        padding: 0px;
+        color: black;
+        transition: none;
+        -webkit-transform: none !important;
+        transform: none !important;
+
+        &:hover {
+          color: #242323;
+        }
+      }
+
+      i {
+        font-size: 10px;
+        text-shadow: 0 0 5px rgba(0, 0, 0, .2), 0 0 2px #000;
+        margin: 0;
+      }
+    }
+  }
+
+  .quick-card-editor-lv3 {
+    z-index: 1000;
+  }
+
+  .quick-card-editor-label {
+    overflow: hidden;
+    position: relative;
+    z-index: 9;
+
+    a.todo-label {
+      float: left;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      padding: 0;
+      display: block;
+      margin: 0 2px;
+      clear: none;
+    }
+
+    a.todo-label-name {
+      color: #fff;
+      width: auto;
+      padding: 0 10px;
+      text-decoration: none;
+    }
+  }
+}
+
+.active-element {
+  z-index: 10;
+}
+
+.overlay {
+  background: rgba(0, 0, 0, .5);
+  z-index: 9;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  display: block;
+  top: 0;
+  left: 0;
+}
+
+todo {
+  textarea {
+    margin: 5px auto;
+  }
+
+  .quick-card-editor {
+    z-index: 10;
+  }
+
+  .quick-card-editor-label {
+    display: inline-block;
+    margin-bottom: -6px;
+  }
+
+  .quick-card-editor-card {
+    //position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 99;
+    max-width: 200px;
+  }
+}
+
+.problem-tabs, #problem-header {
+  .quick-card-editor-label {
+    display: inline-block;
+    top: 0;
+  }
+}
+
+#problem-header .todo {
+  .quick-card-editor-text input {
+    width: 100%;
+    min-width: 500px;
+  }
+
+  .quick-card-editor-card {
+    right: -200px;
+  }
+}
+

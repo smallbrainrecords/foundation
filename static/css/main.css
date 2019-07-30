@@ -1,3 +1,141 @@
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+.quick-card-editor a {
+  text-decoration: none; }
+.quick-card-editor input, .quick-card-editor button {
+  position: relative;
+  z-index: 99; }
+.quick-card-editor .quick-card-editor-buttons a {
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
+  clear: both;
+  color: #e6e6e6;
+  display: block;
+  float: left;
+  margin: 0 0 5px 0;
+  padding: 6px 9pt 6px 8px;
+  text-decoration: none;
+  -webkit-transition: -webkit-transform 85ms ease-in;
+  transition: transform 85ms ease-in; }
+  .quick-card-editor .quick-card-editor-buttons a:hover {
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    -webkit-transform: translateX(5px);
+    transform: translateX(5px); }
+  .quick-card-editor .quick-card-editor-buttons a i {
+    margin-right: 5px; }
+.quick-card-editor .quick-card-editor-lv2 {
+  position: absolute;
+  z-index: 999;
+  background: white;
+  min-height: 220px;
+  min-width: 200px;
+  width: 100%;
+  padding: 10px; }
+  .quick-card-editor .quick-card-editor-lv2 ._720kb-datepicker-calendar {
+    position: relative;
+    visibility: visible; }
+  .quick-card-editor .quick-card-editor-lv2 a.todo-label {
+    display: block;
+    clear: none;
+    width: 80%;
+    min-height: 20px;
+    height: auto;
+    text-align: left;
+    padding: 0 0 0 10px;
+    float: left;
+    margin: 0 2px 2px 0; }
+  .quick-card-editor .quick-card-editor-lv2 .quick-card-editor-lv2-header {
+    margin-bottom: 40px; }
+    .quick-card-editor .quick-card-editor-lv2 .quick-card-editor-lv2-header a {
+      float: right; }
+    .quick-card-editor .quick-card-editor-lv2 .quick-card-editor-lv2-header a.todo-label-edit {
+      float: right;
+      clear: none;
+      background: none;
+      margin: 0px;
+      padding: 0px;
+      color: black;
+      transition: none;
+      -webkit-transform: none !important;
+      transform: none !important; }
+      .quick-card-editor .quick-card-editor-lv2 .quick-card-editor-lv2-header a.todo-label-edit:hover {
+        color: #242323; }
+    .quick-card-editor .quick-card-editor-lv2 .quick-card-editor-lv2-header i {
+      font-size: 10px;
+      text-shadow: 0 0 5px rgba(0, 0, 0, 0.2), 0 0 2px #000;
+      margin: 0; }
+.quick-card-editor .quick-card-editor-lv3 {
+  z-index: 1000; }
+.quick-card-editor .quick-card-editor-label {
+  overflow: hidden;
+  position: relative;
+  z-index: 9; }
+  .quick-card-editor .quick-card-editor-label a.todo-label {
+    float: left;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    padding: 0;
+    display: block;
+    margin: 0 2px;
+    clear: none; }
+  .quick-card-editor .quick-card-editor-label a.todo-label-name {
+    color: #fff;
+    width: auto;
+    padding: 0 10px;
+    text-decoration: none; }
+
+.active-element {
+  z-index: 10; }
+
+.overlay {
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  display: block;
+  top: 0;
+  left: 0; }
+
+todo textarea {
+  margin: 5px auto; }
+todo .quick-card-editor {
+  z-index: 10; }
+todo .quick-card-editor-label {
+  display: inline-block;
+  margin-bottom: -6px; }
+todo .quick-card-editor-card {
+  top: 10px;
+  right: 10px;
+  z-index: 99;
+  max-width: 200px; }
+
+.problem-tabs .quick-card-editor-label, #problem-header .quick-card-editor-label {
+  display: inline-block;
+  top: 0; }
+
+#problem-header .todo .quick-card-editor-text input {
+  width: 100%;
+  min-width: 500px; }
+#problem-header .todo .quick-card-editor-card {
+  right: -200px; }
+
 body {
   font-family: 'Source Sans Pro', sans-serif !important; }
 
@@ -124,22 +262,8 @@ body {
 .btn-custom:hover {
   color: #4d4d4d; }
 
-.todo .quick-card-editor-card {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 99;
-  max-width: 200px; }
-
-#problem-header .todo .quick-card-editor-card {
-  right: -200px; }
-
 #problem-header .todo input {
   color: black; }
-
-#problem-header .todo .quick-card-editor-text input {
-  width: 100%;
-  min-width: 500px; }
 
 .thumbnail-custom {
   height: auto;
@@ -147,67 +271,6 @@ body {
 
 .todos-container .list-group-item {
   cursor: pointer; }
-
-.quick-card-editor input,
-.quick-card-editor button {
-  position: relative;
-  z-index: 99; }
-
-.quick-card-editor a {
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 3px;
-  clear: both;
-  color: #e6e6e6;
-  display: block;
-  float: left;
-  margin: 0 0 5px 0;
-  padding: 6px 9pt 6px 8px;
-  text-decoration: none;
-  -webkit-transition: -webkit-transform 85ms ease-in;
-  transition: transform 85ms ease-in; }
-
-a.pickadate-prev, a.pickadate-next {
-  background: initial !important;
-  border-radius: initial !important;
-  clear: initial !important;
-  color: initial !important;
-  display: initial !important;
-  margin: initial !important;
-  padding: initial !important;
-  text-decoration: initial !important;
-  -webkit-transition: initial !important;
-  transition: initial !important; }
-
-.quick-card-editor a:hover {
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  -webkit-transform: translateX(5px);
-  transform: translateX(5px); }
-
-.quick-card-editor-buttons a i {
-  margin-right: 5px; }
-
-.quick-card-editor a.todo-label,
-.quick-card-editor-label a.todo-label {
-  float: left;
-  width: 20px;
-  height: 20px;
-  text-align: center;
-  padding: 0;
-  display: block;
-  margin: 0 2px;
-  clear: none; }
-
-.quick-card-editor-label a.todo-label-name {
-  color: #fff;
-  width: auto;
-  padding: 0 10px;
-  text-decoration: none; }
-
-.quick-card-editor a.todo-label i {
-  font-size: 10px;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.2), 0 0 2px #000;
-  margin: 0; }
 
 .todo-label-green {
   background-color: #61bd4f !important; }
@@ -229,66 +292,6 @@ a.pickadate-prev, a.pickadate-next {
 
 .todo-label-sky {
   background-color: #00c2e0 !important; }
-
-.overlay {
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 9;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  display: block;
-  top: 0;
-  left: 0; }
-
-.quick-card-editor-lv2 {
-  position: absolute;
-  z-index: 999;
-  background: white;
-  min-height: 220px;
-  min-width: 200px;
-  padding: 10px; }
-
-.quick-card-editor .quick-card-editor-lv2 a.todo-label {
-  clear: none;
-  width: 80%;
-  min-height: 20px;
-  height: auto;
-  text-align: left;
-  padding: 0;
-  padding-left: 10px;
-  display: block;
-  float: left;
-  margin-left: 0;
-  margin-bottom: 2px; }
-
-.quick-card-editor .quick-card-editor-lv2 a.todo-label-edit {
-  float: right;
-  clear: none;
-  background: none;
-  margin: 0px;
-  padding: 0px;
-  color: black;
-  transition: none;
-  -webkit-transform: none !important;
-  transform: none !important; }
-
-.quick-card-editor .quick-card-editor-lv2 a.todo-label-edit:hover {
-  color: #242323; }
-
-.quick-card-editor-label {
-  overflow: hidden;
-  position: relative;
-  z-index: 9; }
-
-.todo .quick-card-editor-label {
-  display: inline-block;
-  margin-bottom: -6px; }
-
-.quick-card-editor-lv2-header {
-  margin-bottom: 40px; }
-
-.quick-card-editor-lv2-header a {
-  float: right; }
 
 .todo-component {
   margin-bottom: 20px; }
@@ -341,9 +344,6 @@ tbody button {
 .due-date {
   background: rgba(255, 0, 0, 0.35); }
 
-.quick-card-editor-lv3 {
-  z-index: 1000; }
-
 .top-left-0 {
   top: 0;
   left: 0; }
@@ -355,11 +355,6 @@ tbody button {
   padding: 2px 5px;
   text-decoration: none;
   margin-bottom: 2px; }
-
-.problem-tabs .quick-card-editor-label,
-#problem-header .quick-card-editor-label {
-  display: inline-block;
-  top: 0; }
 
 .tiny-img {
   width: 20px;

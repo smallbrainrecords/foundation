@@ -355,6 +355,7 @@
                         if ($scope.allowDueDateNotification)
                             toaster.pop('success', "Done", "Due date Updated!");
                         $scope.allowDueDateNotification = true;
+                        todo.change_due_date = !todo.change_due_date;
                     } else if (data['success'] == false) {
                         todo.due_date = data['todo']['due_date'];
                         toaster.pop('error', 'Error', 'Invalid date format');

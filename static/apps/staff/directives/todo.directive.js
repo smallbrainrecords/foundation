@@ -170,11 +170,12 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     };
 
                     scope.changeDueDate = function (todo) {
-                        todo.change_due_date = (todo.change_due_date != true) ? true : false;
+                        todo.change_due_date = !todo.change_due_date;
                     };
 
                     scope.saveTodoDueDate = function (todo) {
                         todoService.changeTodoDueDate(todo).then(function (data) {
+                            todo.change_due_date = !todo.change_due_date;
                             if (data['success'] == true) {
                                 if (scope.allowDueDateNotification)
                                     toaster.pop('success', "Done", "Due date Updated!");
@@ -269,7 +270,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     };
 
                     scope.changeLabel = function (todo) {
-                        todo.change_label = (todo.change_label != true) ? true : false;
+                        todo.change_label = !todo.change_label;
                     };
 
                     scope.changeTodoLabel = function (todo, label) {

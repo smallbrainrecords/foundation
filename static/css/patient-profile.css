@@ -30,17 +30,6 @@ todo-item .attachment-glance {
   margin-bottom: 10px; }
 todo-item .members-wrapper {
   margin-bottom: 10px; }
-todo-item .quick-card-editor {
-  padding-right: 150px; }
-  todo-item .quick-card-editor .quick-card-editor-label {
-    margin-bottom: initial !important;
-    z-index: 99 !important; }
-  todo-item .quick-card-editor .input-group {
-    z-index: 99; }
-  todo-item .quick-card-editor .quick-card-editor-lv2 {
-    border-radius: 3px; }
-  todo-item .quick-card-editor .quick-card-editor-lv3 a.todo-label {
-    width: 100%; }
 
 .todo-label-front {
   width: 20px;

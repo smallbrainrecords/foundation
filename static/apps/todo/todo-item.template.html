@@ -1,5 +1,5 @@
 <!-- Start todo item view mode-->
-<div ng-show='!editMode' ng-click="openTodo(item)">
+<section id="todo-item-display" ng-show='!editMode' ng-click="openTodo(item)">
     <input type='checkbox' ng-model='item.accomplished' title="Accomplished"
            ng-change='updateTodoStatus(item)' ng-click="$event.stopPropagation();">
     <span ng-bind="item.todo"></span>
@@ -17,7 +17,7 @@
     <!--Display todo attached items-->
     <div class="attachment-glance">
         <span ng-if="item.comments.length > 0"><i class="fa fa-comment-o"></i> {{ item.comments.length }}</span>
-        <span ng-if="item.attachments.length > 0"><i class="fa fa-file-o"></i> {{ item.attachments.length }}</span>
+        <span ng-if="item.attachments.length > 0"><i class="fa fa-paperclip"></i> {{ item.attachments.length }}</span>
         <span ng-if="item.document_set.length > 0"><i
                 class="fa fa-file-pdf-o"></i> {{ item.document_set.length }}</span>
     </div>
@@ -29,120 +29,141 @@
     </div>
 
     <a href class="btn-custom" ng-click="enableEditMode();$event.stopPropagation();"><i class="fa fa-pencil"></i></a>
-</div>
+</section>
 <!-- End todo item view mode -->
 
 <!-- Start todo item edit mode-->
-<div class="quick-card-editor" id="main-menu" ng-show='editMode'>
-    <!-- show label and text in edit mode -->
-    <div class="quick-card-editor-text">
-        <div class="quick-card-editor-label">
-            <a ng-repeat="label in item.labels" href class="todo-label" ng-class="label.css_class"
-               ng-if="label.author.id==user_id || label.is_all"></a>
-        </div>
-        <div class="input-group">
-            <input type="text" ng-model="current_todo.todo" title="" class="form-control">
-            <span class="input-group-btn">
+<section class="quick-card-editor" id="todo-item-editing" ng-show='editMode'>
+    <div class="row" ng-class="{'active-element': editMode}">
+        <div class="col-md-7" ng-class="{'active-element': editMode}">
+            <!-- show label and text in edit mode -->
+            <div class="quick-card-editor-text">
+                <div class="quick-card-editor-label">
+                    <a ng-repeat="label in item.labels" href class="todo-label" ng-class="label.css_class"
+                       ng-if="label.author.id==user_id || label.is_all"></a>
+                </div>
+                <div class="input-group">
+                    <input type="text" ng-model="current_todo.todo" title="" class="form-control">
+                    <span class="input-group-btn">
                 <button class="btn btn-default" ng-click="saveTodoText(current_todo)">Save</button>
             </span>
-        </div>
-    </div>
-    <!-- end show label and text in edit mode -->
-
-    <div class="quick-card-editor-card">
-
-        <!-- begin buttons -->
-        <div class="quick-card-editor-buttons">
-            <a ng-click="clickOutSide();$event.stopPropagation();"><i class="fa fa-close"></i></a>
-            <a ng-click="changeDueDate(current_todo)"><i class="fa fa-clock-o"></i>Change Due Date</a>
-            <a ng-click="changeLabel(current_todo)"><i class="fa fa-tags"></i>Edit label</a>
-            <a ng-click="changeMember(current_todo)"><i class="fa fa-user"></i>Members</a>
-            <a href="#/todo-laboratory/{{ current_todo.id }}"><i class="fa fa-print"></i>Print</a>
-        </div>
-        <!-- end buttons -->
-
-        <!-- begin change label -->
-        <div ng-if="current_todo.change_label" class="quick-card-editor-lv2">
-            <div class="quick-card-editor-lv2-header">
-                <a href ng-click="changeLabel(current_todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+                </div>
             </div>
-            <div ng-repeat="label in labels track by $index">
-                <a href class="todo-label" ng-class="label.css_class" ng-click="changeTodoLabel(current_todo, label)">
-                    {{ label.name }}
-                    <i class="fa fa-check" ng-repeat="l in current_todo.labels" ng-if="l.id==label.id"></i>
-                </a>
-                <!-- begin edit label -->
-                <a href class="todo-label-edit" ng-click="editLabel(label)"
-                   ng-if="label.name != 'screening' && (['physician','admin'].indexOf(activeUser.role) !=-1|| (['physician','admin'].indexOf(label.author.profile.role) != -1 && activeUser.user.id == label.author.id))">
-                    <i class="fa fa-pencil"></i>
-                </a>
+            <!-- end show label and text in edit mode -->
+        </div>
+        <div class="col-md-5 no-padding" ng-class="{'active-element': editMode}">
+            <div class="quick-card-editor-card">
 
-                <div ng-if="label.edit_label"
-                     class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
-                    <div class="quick-card-editor-lv2-header">
-                        <a href ng-click="editLabel(label); $event.stopPropagation();"><i
+                <!-- begin buttons -->
+                <div class="quick-card-editor-buttons">
+                    <a ng-click="clickOutSide();$event.stopPropagation();"><i class="fa fa-close"></i></a>
+                    <a ng-click="changeDueDate(current_todo)"><i class="fa fa-clock-o"></i>Change Due Date</a>
+                    <a ng-click="changeLabel(current_todo)"><i class="fa fa-tags"></i>Edit label</a>
+                    <a ng-click="changeMember(current_todo)"><i class="fa fa-user"></i>Members</a>
+                    <a href="#/todo-laboratory/{{ current_todo.id }}"><i class="fa fa-print"></i>Print</a>
+                </div>
+                <!-- end buttons -->
+
+                <!-- begin change label -->
+                <div ng-if="current_todo.change_label" class="quick-card-editor-lv2">
+                    <div class="quick-card-editor-lv2-header quick-card-editor-buttons">
+                        <a href ng-click="changeLabel(current_todo); $event.stopPropagation();"><i
                                 class="fa fa-close"></i></a>
                     </div>
-                    <input class="form-control" type="text" ng-model="label.name" title="">
-                    <a ng-repeat="component in labels_component" href class="todo-label"
-                       ng-class="component.css_class" ng-click="selectEditLabelComponent(label, component)">
-                        <i class="fa fa-check" ng-if="component.css_class==label.css_class"></i>
-                    </a>
-                    <a class="btn btn-block" ng-click="saveEditLabel(label)">Save</a>
-                    <a href class="btn btn-block" ng-click="deleteEditLabel(label)">Delete</a>
+
+                    <div ng-repeat="label in labels track by $index">
+                        <a href class="todo-label" ng-class="label.css_class"
+                           ng-click="changeTodoLabel(current_todo, label)">
+                            {{ label.name }}
+                            <i class="fa fa-check" ng-repeat="l in current_todo.labels" ng-if="l.id==label.id"></i>
+                        </a>
+                        <!-- begin edit label -->
+                        <a href class="todo-label-edit" ng-click="editLabel(label)"
+                           ng-if="label.name != 'screening' && (['physician','admin'].indexOf(activeUser.role) !=-1|| (['physician','admin'].indexOf(label.author.profile.role) != -1 && activeUser.user.id == label.author.id))">
+                            <i class="fa fa-pencil"></i>
+                        </a>
+
+                        <div ng-if="label.edit_label"
+                             class="quick-card-editor-lv2 quick-card-editor-lv3 top-left-0">
+                            <div class="quick-card-editor-lv2-header">
+                                <a href ng-click="editLabel(label); $event.stopPropagation();"><i
+                                        class="fa fa-close"></i></a>
+                            </div>
+                            <input class="form-control" type="text" ng-model="label.name" title="">
+                            <a ng-repeat="component in labels_component" href class="todo-label"
+                               ng-class="component.css_class" ng-click="selectEditLabelComponent(label, component)">
+                                <i class="fa fa-check" ng-if="component.css_class==label.css_class"></i>
+                            </a>
+                            <a class="btn btn-block" ng-click="saveEditLabel(label)">Save</a>
+                            <a href class="btn btn-block" ng-click="deleteEditLabel(label)">Delete</a>
+                        </div>
+                        <!-- end edit label -->
+                    </div>
+
+                    <div class="quick-card-editor-buttons">
+                        <a class="btn btn-block" ng-click="createLabel(current_todo)">
+                            <i class="fa fa-tags"></i>Create new label
+                        </a>
+                    </div>
                 </div>
-                <!-- end edit label -->
-            </div>
-            <a class="btn btn-block" ng-click="createLabel(current_todo)"><i class="fa fa-tags"></i>Create new label</a>
-        </div>
 
-        <div ng-if="current_todo.create_label" class="quick-card-editor-lv2 quick-card-editor-lv3">
-            <div class="quick-card-editor-lv2-header">
-                <a href ng-click="createLabel(current_todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
-            </div>
-            <p>
-                <input class="form-control" type="text" ng-model="label_component.name" title="">
-            </p>
-            <a ng-repeat="component in labels_component" href class="todo-label"
-               ng-class="component.css_class" ng-click="selectLabelComponent(component)">
-                <i class="fa fa-check" ng-if="component.css_class==label_component.css_class"></i>
-            </a>
-            <a class="btn btn-block" ng-click="saveCreateLabel(current_todo,null)">Save just for me</a>
-            <a class="btn btn-block" ng-click="saveCreateLabel(current_todo,true)" ng-if="activeUser.role != 'patient'">Save
-                for all
-                users</a>
-        </div>
-        <!-- end change label -->
+                <div ng-if="current_todo.create_label" class="quick-card-editor-lv2 quick-card-editor-lv3">
+                    <div class="quick-card-editor-lv2-header quick-card-editor-buttons">
+                        <a href ng-click="createLabel(current_todo);"><i class="fa fa-close"></i></a>
+                    </div>
 
-        <!-- begin change due date -->
-        <div ng-if="current_todo.change_due_date" class="quick-card-editor-lv2">
-            <div class="quick-card-editor-lv2-header">
-                <a href ng-click="changeDueDate(current_todo); $event.stopPropagation();"><i
-                        class="fa fa-close"></i></a>
-            </div>
-            <p>
-                <input type="text" ng-model="current_todo.due_date" ng-change="saveTodoDueDate(current_todo)"
-                       ng-model-options="{ updateOn: 'default blur', debounce: { default: 30000, blur: 1000 } }"
-                       title="" class="form-control">
-            </p>
-            <div ng-model="current_todo.due_date" ng-change="saveTodoDueDate(current_todo)" pickadate class="pickadate"
-                 format="MM/dd/yyyy"></div>
-        </div>
-        <!-- end change due date -->
+                    <input class="form-control" type="text" ng-model="label_component.name" title="">
 
-        <!-- begin change member -->
-        <div ng-if="current_todo.change_member" class="quick-card-editor-lv2">
-            <div class="quick-card-editor-lv2-header">
-                <a href ng-click="changeMember(current_todo); $event.stopPropagation();"><i class="fa fa-close"></i></a>
+                    <a ng-repeat="component in labels_component" href class="todo-label"
+                       ng-class="component.css_class" ng-click="selectLabelComponent(component)">
+                        <i class="fa fa-check" ng-if="component.css_class==label_component.css_class"></i>
+                    </a>
+                    <div class="quick-card-editor-buttons">
+                        <a class="btn btn-block" ng-click="saveCreateLabel(current_todo,null)">Save just for me</a>
+                        <a class="btn btn-block" ng-click="saveCreateLabel(current_todo,true)"
+                           ng-if="activeUser.role != 'patient'">Save for all users</a>
+                    </div>
+                </div>
+                <!-- end change label -->
+
+                <!-- begin change due date -->
+                <div ng-if="current_todo.change_due_date" class="quick-card-editor-lv2 no-padding">
+                    <div class="text-center quick-card-editor-buttons">
+                        <a class="pull-right" ng-click="changeDueDate(current_todo)">
+                            <i class="fa fa-close"></i>
+                        </a>
+                        <span>Change Due Date</span>
+                    </div>
+                    <datepicker date-format="MM/dd/yyyy" selector="form-control">
+                        <input class="form-control" placeholder="Choose a date" ng-model="current_todo.due_date"
+                               title=""/>
+                    </datepicker>
+                    <div class="">
+                        <button class="btn btn-primary pull-right" ng-click="saveTodoDueDate(current_todo)">Save
+                        </button>
+                    </div>
+                </div>
+                <!-- end change due date -->
+
+                <!-- begin change member -->
+                <div ng-if="current_todo.change_member" class="quick-card-editor-lv2">
+                    <div class="quick-card-editor-lv2-header">
+                        <a href ng-click="changeMember(current_todo); $event.stopPropagation();"><i
+                                class="fa fa-close"></i></a>
+                    </div>
+                    <div class="quick-card-editor-buttons">
+                        <a ng-repeat="member in members track by $index" href
+                           ng-click="changeTodoMember(current_todo, member)">
+                            {{ member.user.first_name }} {{ member.user.last_name }}
+                            <i class="fa fa-check" ng-repeat="m in current_todo.members" ng-if="m.id==member.id"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- end change member -->
             </div>
-            <a ng-repeat="member in members track by $index" href ng-click="changeTodoMember(current_todo, member)">
-                {{ member.user.first_name }} {{ member.user.last_name }}
-                <i class="fa fa-check" ng-repeat="m in current_todo.members" ng-if="m.id==member.id"></i>
-            </a>
         </div>
-        <!-- end change member -->
     </div>
-</div>
+</section>
 <!-- End todo item edit mode-->
 
 <!-- Edit mode overlay-->

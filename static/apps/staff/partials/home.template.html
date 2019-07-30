@@ -149,16 +149,14 @@
         </div>
     </div>
 </div>
+
 <div class='panel panel-default'>
     <div class='panel-heading'> Personal Todos</div>
     <div class='panel-body'>
         <todo ng-model="personal_todos" accomplished="false" show-problem="true" is-tagged="false"></todo>
-        <hr>
         <a class='btn btn-default btn-md' ng-click='show_accomplished_personal_todos=!show_accomplished_personal_todos'>
-            <span ng-if='show_accomplished_personal_todos==false'>Show accomplished Todos </span>
-            <span ng-if='show_accomplished_personal_todos==true'>Hide accomplished Todos </span>
+            <span ng-bind='show_accomplished_personal_todos? "Hide accomplished Todos ":"Show accomplished Todos "'></span>
         </a>
-        <hr>
         <todo ng-if="show_accomplished_personal_todos" ng-model="personal_todos" accomplished="true" show-problem="true"
               is-tagged="false"></todo>
         <form class='form-inline' role='form' ng-submit='add_todo(new_todo)'>
@@ -170,6 +168,7 @@
         </form>
     </div>
 </div>
+
 <div ng-if="active_user.role=='physician'" class="physician-view">
     <!--<div class='panel panel-default'>-->
     <!--<div class='panel-heading'>-->
