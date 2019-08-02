@@ -35,7 +35,7 @@ import operator
 from rest_framework.decorators import api_view
 from common.views import *
 from emr.models import UserProfile, Problem, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting, \
-    Document, ObservationValue, Narrative
+    Document, ObservationValue, Narrative, VWTopPatients
 from emr.models import Goal, ToDo
 from emr.models import Encounter, EncounterEvent, EncounterProblemRecord
 
@@ -46,7 +46,7 @@ from emr.models import MyStoryTab, MyStoryTextComponent
 
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
-from .serializers import UserProfileSerializer, NarrativeSerializer
+from .serializers import UserProfileSerializer, NarrativeSerializer, TopPatientSerializer
 from todo_app.serializers import TodoSerializer
 from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
 
@@ -583,45 +583,49 @@ def get_patients_list(request):
 
     if user_profile.role == 'admin':
         patients = UserProfile.objects.filter(role='patient').filter(user__is_active=True)
+        patient_ids = [x.patient.id for x in patients]
 
     elif user_profile.role == 'patient':
         patients = UserProfile.objects.filter(role='patient').exclude(user=request.user).filter(user__is_active=True)
+        patient_ids = [x.patient.id for x in patients]
 
     elif user_profile.role == 'physician':
         patient_controllers = PatientController.objects.filter(physician=request.user)
         patient_ids = [x.patient.id for x in patient_controllers]
-        patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
+        # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         physician_ids = [x.physician.id for x in team_members]
         patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
-        patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
+        # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
-    patients_list = UserProfileSerializer(patients, many=True).data
-    for patient in patients_list:
-        todo_count = ToDo.objects.filter(patient__id=patient['user']['id'], accomplished=False).count()
-        problem_count = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True,
-                                               is_controlled=False).count()
-        six_weeks_earlier = datetime.datetime.now() - relativedelta(weeks=6)
-        encounter_count = Encounter.objects.filter(patient__id=patient['user']['id'],
-                                                   starttime__gte=six_weeks_earlier).count()
-        document_count = Document.objects.filter(patient__id=patient['user']['id'],
-                                                 created_on__gte=six_weeks_earlier).count()
+    result = TopPatientSerializer(VWTopPatients.objects.filter(id__in=patient_ids), many=True).data
 
-        patient["todo"] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3)
-        patient["problem"] = (float(problem_count) if problem_count != 0 else float(1))
-        patient["encounter"] = float(encounter_count) if encounter_count != 0 else float(1)
-        patient["document"] = (float(document_count) if document_count != 0 else float(1)) / 2
-        patient['multiply'] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3) * (
-            float(problem_count) if problem_count != 0 else float(1)) * (
-                                  float(encounter_count) if encounter_count != 0 else float(1)) * (
-                                      (float(document_count) if document_count != 0 else float(1)) / 2)
+    # patients_list = UserProfileSerializer(patients, many=True).data
+    # six_weeks_earlier = datetime.datetime.now() - relativedelta(weeks=6)
+    # for patient in patients_list:
+    #     todo_count = ToDo.objects.filter(patient__id=patient['user']['id'], accomplished=False).count()
+    #     problem_count = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True,
+    #                                            is_controlled=False).count()
+    #     encounter_count = Encounter.objects.filter(patient__id=patient['user']['id'],
+    #                                                starttime__gte=six_weeks_earlier.date()).count()
+    #     document_count = Document.objects.filter(patient__id=patient['user']['id'],
+    #                                              created_on__gte=six_weeks_earlier.date()).count()
+    #
+    #     patient["todo"] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3)
+    #     patient["problem"] = (float(problem_count) if problem_count != 0 else float(1))
+    #     patient["encounter"] = float(encounter_count) if encounter_count != 0 else float(1)
+    #     patient["document"] = (float(document_count) if document_count != 0 else float(1)) / 2
+    #     patient['multiply'] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3) * (
+    #         float(problem_count) if problem_count != 0 else float(1)) * (
+    #                               float(encounter_count) if encounter_count != 0 else float(1)) * (
+    #                                   (float(document_count) if document_count != 0 else float(1)) / 2)
 
     # Will sort patient list by providing sort_by otherwise will sort by 'multiply' key
     resp = {
-        'patients_list': sorted(patients_list,
+        'patients_list': sorted(result,
                                 key=operator.itemgetter(sort_by if sort_by is not None else 'multiply'),
                                 reverse=is_descending if sort_by is not None else True)
     }
@@ -1171,5 +1175,5 @@ def get_user_problem(request, patient_id):
     problems = Problem.objects.filter(patient_id=patient_id)
 
     resp['success'] = True
-    resp['data'] = ProblemSerializer(problems,many=True).data
+    resp['data'] = ProblemSerializer(problems, many=True).data
     return ajax_response(resp)

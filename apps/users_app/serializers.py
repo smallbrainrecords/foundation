@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from emr.models import UserProfile, Narrative
+from emr.models import UserProfile, Narrative, VWTopPatients
 
 
 class SafeUserProfileSerializer(serializers.ModelSerializer):
@@ -107,3 +107,44 @@ class NarrativeSerializer(serializers.ModelSerializer):
             'author',
             'datetime'
         )
+
+
+class TopPatientSerializer(serializers.ModelSerializer):
+    todo_count = serializers.SerializerMethodField()
+    problem_count = serializers.SerializerMethodField()
+    document_count = serializers.SerializerMethodField()
+    encounter_count = serializers.SerializerMethodField()
+    multiply = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VWTopPatients
+
+        fields = (
+            'id',
+            'username',
+            'name',
+            'user_profile_id',
+            'todo_count',
+            'problem_count',
+            'encounter_count',
+            'document_count',
+            'multiply'
+        )
+
+    def get_todo_count(self, obj):
+        return ((float(obj.todo_count) if obj.todo_count != 0 else float(1)) * 2 / 3)
+
+    def get_problem_count(self, obj):
+        return (float(obj.problem_count) if obj.problem_count != 0 else float(1))
+
+    def get_document_count(self, obj):
+        return float(obj.encounter_count) if obj.encounter_count != 0 else float(1)
+
+    def get_encounter_count(self, obj):
+        return (float(obj.document_count) if obj.document_count != 0 else float(1)) / 2
+
+    def get_multiply(self, obj):
+        return ((float(obj.todo_count) if obj.todo_count != 0 else float(1)) * 2 / 3) * (
+            float(obj.problem_count) if obj.problem_count != 0 else float(1)) * (
+                   float(obj.encounter_count) if obj.encounter_count != 0 else float(1)) * (
+                       (float(obj.document_count) if obj.document_count != 0 else float(1)) / 2)

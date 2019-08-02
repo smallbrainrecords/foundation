@@ -1149,7 +1149,6 @@ class EncounterObservationValue(models.Model):
     observation_value = models.ForeignKey(ObservationValue, null=False)
     created_on = models.DateTimeField(auto_now_add=True)
 
-
 class Narrative(models.Model):
     """
 
@@ -1159,3 +1158,17 @@ class Narrative(models.Model):
     author = models.ForeignKey(User, related_name="owned_narratives")
     parent = models.ForeignKey("Narrative", related_name="child", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class VWTopPatients(models.Model):
+    id = models.IntegerField(primary_key=True)
+    username = models.TextField()
+    name = models.TextField()
+    user_profile_id = models.IntegerField()
+    todo_count = models.IntegerField()
+    problem_count = models.IntegerField()
+    encounter_count = models.IntegerField()
+    document_count = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = "vw_top_patients"

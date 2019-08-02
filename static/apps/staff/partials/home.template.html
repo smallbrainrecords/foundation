@@ -47,7 +47,7 @@
             <tbody>
             <tr ng-repeat='patient in patients_list' ng-show="$index < 10 || show_all">
                 <td><a href='/u/patient/manage/{{ patient.user.id }}/'>
-                    {{ patient.user.first_name }} {{ patient.user.last_name }}
+                    {{ patient.name }}
                 </a>
                 </td>
                 <td> {{ patient.problem | number:0 }}</td>
