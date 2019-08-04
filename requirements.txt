@@ -39,3 +39,4 @@ Twisted==18.9.0
 txaio==18.8.1
 zope.interface==4.6.0
 coverage==4.5.3
+sqlparse=0.3.0
