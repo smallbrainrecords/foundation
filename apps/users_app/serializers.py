@@ -110,10 +110,10 @@ class NarrativeSerializer(serializers.ModelSerializer):
 
 
 class TopPatientSerializer(serializers.ModelSerializer):
-    todo_count = serializers.SerializerMethodField()
-    problem_count = serializers.SerializerMethodField()
-    document_count = serializers.SerializerMethodField()
-    encounter_count = serializers.SerializerMethodField()
+    todo = serializers.SerializerMethodField()
+    problem = serializers.SerializerMethodField()
+    document = serializers.SerializerMethodField()
+    encounter = serializers.SerializerMethodField()
     multiply = serializers.SerializerMethodField()
 
     class Meta:
@@ -124,23 +124,23 @@ class TopPatientSerializer(serializers.ModelSerializer):
             'username',
             'name',
             'user_profile_id',
-            'todo_count',
-            'problem_count',
-            'encounter_count',
-            'document_count',
+            'todo',
+            'problem',
+            'encounter',
+            'document',
             'multiply'
         )
 
-    def get_todo_count(self, obj):
+    def get_todo(self, obj):
         return ((float(obj.todo_count) if obj.todo_count != 0 else float(1)) * 2 / 3)
 
-    def get_problem_count(self, obj):
+    def get_problem(self, obj):
         return (float(obj.problem_count) if obj.problem_count != 0 else float(1))
 
-    def get_document_count(self, obj):
+    def get_document(self, obj):
         return float(obj.encounter_count) if obj.encounter_count != 0 else float(1)
 
-    def get_encounter_count(self, obj):
+    def get_encounter(self, obj):
         return (float(obj.document_count) if obj.document_count != 0 else float(1)) / 2
 
     def get_multiply(self, obj):

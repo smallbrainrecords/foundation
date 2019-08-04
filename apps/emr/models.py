@@ -1159,6 +1159,37 @@ class Narrative(models.Model):
     parent = models.ForeignKey("Narrative", related_name="child", null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+class VWMedications(models.Model):
+    effectivetime = models.TextField()
+    active = models.TextField()
+    moduleid = models.TextField()
+    conceptid = models.TextField()
+    languagecode = models.TextField()
+    typeid = models.TextField()
+    term = models.TextField()
+    casesignificanceid = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = "vw_medications"
+
+
+class VWProblems(models.Model):
+    effectivetime = models.TextField()
+    active = models.TextField()
+    moduleid = models.TextField()
+    conceptid = models.TextField()
+    languagecode = models.TextField()
+    typeid = models.TextField()
+    term = models.TextField()
+    casesignificanceid = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = "vw_problems"
+
+
 class VWTopPatients(models.Model):
     id = models.IntegerField(primary_key=True)
     username = models.TextField()
