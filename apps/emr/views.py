@@ -27,10 +27,11 @@ from ranged_response import RangedFileResponse
 
 import project.settings as settings
 from common.views import *
+from emr.mysnomedct import VWProblemsSerializers
 from models import UserProfile, Problem, \
     Goal, ToDo, Guideline, TextNote, PatientImage, \
     Sharing, Viewer, \
-    ViewStatus, ProblemRelationship
+    ViewStatus, ProblemRelationship, VWProblems
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -401,18 +402,10 @@ class LoginError(View):
 # ****************** New Code *********************
 @login_required
 def list_snomed_terms(request):
-    # We list snomed given a query
-    from emr.mysnomedct import SnomedctConnector
     query = request.GET['query']
-    if query:
-        query = query.replace(" ", "%")
-    snomedct_conn = SnomedctConnector()
-    snomedct_conn.cursor = snomedct_conn.connect()
-    medications = snomedct_conn.get_problems(query)
-
-    results_holder = json.dumps(medications)
-
-    return HttpResponse(results_holder, content_type="application/json")
+    result = VWProblems.objects.using('snomedict').filter(term__contains="{0}".format(query)).all()
+    results_holder = VWProblemsSerializers(result, many=True).data
+    return ajax_response(results_holder)
 
 
 def has_read_permission(request, path):

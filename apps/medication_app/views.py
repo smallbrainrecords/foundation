@@ -20,8 +20,8 @@ from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TodoActivity
-from emr.mysnomedct import SnomedctConnector
+from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TodoActivity, VWMedications
+from emr.mysnomedct import VWMedicationsSerializers
 from emr.operations import op_add_todo_event
 from medication_app.operations import op_medication_event, op_pin_medication_to_problem_for_all_controlled_patient, \
     count_pinned_have_same_medication_concept_id_and_problem_concept_id
@@ -33,15 +33,9 @@ from .serializers import MedicationTextNoteSerializer, MedicationSerializer, Med
 def list_terms(request):
     # We list snomed given a query
     query = request.GET['query']
-    if query:
-        query = query.replace(" ", "%")
-    snomedct_conn = SnomedctConnector()
-    snomedct_conn.cursor = snomedct_conn.connect()
-    medications = snomedct_conn.get_medications(query)
-
-    results_holder = json.dumps(medications)
-
-    return HttpResponse(results_holder, content_type="application/json")
+    result = VWMedications.objects.using('snomedict').filter(term__contains="{0}".format(query)).all()
+    results_holder = VWMedicationsSerializers(result, many=True).data
+    return ajax_response(results_holder)
 
 
 @login_required
