@@ -492,5 +492,7 @@ todo-laboratory .label-wrapper {
       line-height: 20px !important;
       list-style-type: none !important;
       text-align: left !important; } }
+.inactive {
+  color: lightgrey; }
 
 /*# sourceMappingURL=main.css.map */

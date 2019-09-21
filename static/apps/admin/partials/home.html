@@ -1,16 +1,9 @@
-<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
-
-
-<b>Name</b> : {{ active_user.user.first_name }} {{ active_user.user.last_name }}
-<br>
-<b>Username</b> : {{ active_user.user.username }}
-<br>
-<b>Role</b> : {{ active_user.role }}
-
+<p><b>Name</b> : {{ active_user.user.first_name }} {{ active_user.user.last_name }}</p>
+<p><b>Username</b> : {{ active_user.user.username }}</p>
+<p><b>Role</b> : {{ active_user.role }}</p>
 <hr>
 
 <div class='row'>
-
 
     <div class='col-md-3'>
 
@@ -47,11 +40,16 @@
                 Registered Users
             </div>
             <div class='panel-body'>
-                <center>
-                    <h4 class='text-info'> Registered Users </h4>
-                </center>
-                <hr>
-                <input type='text' class='form-control' ng-model='query_users' placeholder='Search...'>
+                <div class="input-group">
+                    <input type='text' class='form-control' ng-model='query_users' placeholder='Search...'
+                           title="Search...">
+                    <div class="input-group-addon">
+                        <label title="Ignored while searching">
+                            <input type="checkbox" ng-model="showInActive">
+                            Show in active
+                        </label>
+                    </div>
+                </div>
                 <hr>
                 <table class='table'>
                     <thead>
@@ -65,37 +63,28 @@
                         <th>Action</th>
                     </tr>
                     </thead>
-
                     <tbody>
-
-                    <tr ng-repeat='user in users|filter:query_users'>
-                        <td> {{ user.user.first_name }} </td>
-                        <td> {{ user.user.last_name }} </td>
-                        <td> {{ user.user.username }} </td>
-                        <td> {{ user.role }} </td>
-                        <td> {{ user.sex }} </td>
-                        <td> {{ user.phone_number }} </td>
+                    <!--Default show only active patient, staff can addition show in active patient. Search result will include patient as default-->
+                    <tr ng-repeat='user in users | filter:query_users' ng-class="{inactive: !user.user.is_active}"
+                        ng-if="(user.user.is_active || showInActive) || query_users.length > 0">
+                        <td> {{ user.user.first_name }}</td>
+                        <td> {{ user.user.last_name }}</td>
+                        <td> {{ user.user.username }}</td>
+                        <td> {{ user.role }}</td>
+                        <td> {{ user.sex }}</td>
+                        <td> {{ user.phone_number }}</td>
                         <td>
-
                             <a href='#/edit/{{ user.user.id }}/' class='btn btn-sm btn-default'>
                                 Edit
                             </a>
-
                             <a href='/u/patient/manage/{{ user.user.id }}/' class='btn btn-sm btn-default'
                                ng-show='user.role=="patient"'>
                                 Manage
                             </a>
-
-
                         </td>
-
-
                     </tr>
-
                     </tbody>
-
                 </table>
-
             </div>
         </div>
 
@@ -131,9 +120,9 @@
                     <tbody>
 
                     <tr ng-repeat='user in pending_users | filter:query_pending'>
-                        <td> {{ user.full_name }} </td>
+                        <td> {{ user.full_name }}</td>
 
-                        <td> {{ user.username }} </td>
+                        <td> {{ user.username }}</td>
 
                         <td><select ng-model='user.role'>
                             <option value=''>--Role--</option>
@@ -180,9 +169,9 @@
                         </thead>
                         <tbody>
                         <tr ng-repeat='patient in patients'>
-                            <td> {{ patient.user.first_name }} {{ patient.user.last_name }} </td>
-                            <td> {{ patient.user.username }} </td>
-                            <td> {{ patient.phone_number }} </td>
+                            <td> {{ patient.user.first_name }} {{ patient.user.last_name }}</td>
+                            <td> {{ patient.user.username }}</td>
+                            <td> {{ patient.phone_number }}</td>
                             <td><a href='/u/patient/manage/{{ patient.user.id }}/' class='btn btn-sm btn-default'
                                    ng-show='patient.role=="patient"'>
                                 Manage
@@ -212,9 +201,9 @@
                         </thead>
                         <tbody>
                         <tr ng-repeat='nurse  in team.nurses'>
-                            <td> {{ nurse.user.first_name }} {{ nurse.user.last_name }} </td>
-                            <td> {{ nurse.user.username }} </td>
-                            <td> {{ nurse.phone_number }} </td>
+                            <td> {{ nurse.user.first_name }} {{ nurse.user.last_name }}</td>
+                            <td> {{ nurse.user.username }}</td>
+                            <td> {{ nurse.phone_number }}</td>
                         </tr>
                         </tbody>
                     </table>
@@ -239,9 +228,9 @@
                         </thead>
                         <tbody>
                         <tr ng-repeat='staff  in team.mid_level_staffs'>
-                            <td> {{ staff.user.first_name }} {{ staff.user.last_name }} </td>
-                            <td> {{ staff.user.username }} </td>
-                            <td> {{ staff.phone_number }} </td>
+                            <td> {{ staff.user.first_name }} {{ staff.user.last_name }}</td>
+                            <td> {{ staff.user.username }}</td>
+                            <td> {{ staff.phone_number }}</td>
                         </tr>
                         </tbody>
                     </table>
@@ -266,9 +255,9 @@
                         </thead>
                         <tbody>
                         <tr ng-repeat='staff  in team.secretaries'>
-                            <td> {{ staff.user.first_name }} {{ staff.user.last_name }} </td>
-                            <td> {{ staff.user.username }} </td>
-                            <td> {{ staff.phone_number }} </td>
+                            <td> {{ staff.user.first_name }} {{ staff.user.last_name }}</td>
+                            <td> {{ staff.user.username }}</td>
+                            <td> {{ staff.phone_number }}</td>
                         </tr>
                         </tbody>
                     </table>

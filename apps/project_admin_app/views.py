@@ -49,13 +49,14 @@ def home(request):
 
 @login_required
 def list_registered_users(request):
+    user_profiles = None
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
 
     if actor_profile.role == 'physician':
         controlled_patients = PatientController.objects.filter(physician=actor)
         patients_ids = [long(x.patient.id) for x in controlled_patients]
-        user_profiles = UserProfile.objects.filter(user__id__in=patients_ids).filter(user__is_active=True)
+        user_profiles = UserProfile.objects.filter(user__id__in=patients_ids)
 
     if actor_profile.role == 'admin':
         user_profiles = UserProfile.objects.all()
