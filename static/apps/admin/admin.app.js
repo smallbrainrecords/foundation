@@ -20,12 +20,6 @@
         .config(function ($routeProvider, $httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-            $httpProvider.defaults.transformResponse = function (data, headersGetter, status) {
-                if (status = 500) {
-
-                }
-                return data;
-            };
 
             $routeProvider
                 .when('/', {

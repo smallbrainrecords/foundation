@@ -26,12 +26,12 @@
                     </thead>
                     <tbody>
                     <tr ng-repeat='patient in patients_list'>
-                        <td> {{ patient.user.first_name }} {{ patient.user.last_name }}
+                        <td> {{ patient.name}}
                         </td>
-                        <td> {{ patient.user.username }}
+                        <td> {{ patient.username }}
                         </td>
                         <td>
-                            <a href='#/manage/sharing/{{ patient.user.id }}/' class='btn btn-sm btn-default'>
+                            <a href='#/manage/sharing/{{ patient.id }}/' class='btn btn-sm btn-default'>
                                 Manage Sharing
                             </a>
                         </td>
