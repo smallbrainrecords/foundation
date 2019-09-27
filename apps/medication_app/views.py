@@ -18,6 +18,7 @@ import reversion
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
+from reversion.models import Version
 
 from common.views import *
 from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TodoActivity, VWMedications
@@ -64,7 +65,7 @@ def get_medication(request, patient_id, medication_id):
     if permissions_accessed(request.user, int(patient_id)):
         try:
             medication = Medication.objects.get(id=medication_id)
-            reversion_list = reversion.get_for_object(medication)
+            reversion_list = Version.objects.get_for_object(medication)
             for item in reversion_list:
                 history_list.append({
                     'date': item.revision.date_created.isoformat(),
