@@ -31,4 +31,3 @@ class TextNoteSerializer(serializers.ModelSerializer):
             'by',
             'note',
             'datetime')
-

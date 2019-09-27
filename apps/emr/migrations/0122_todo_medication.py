@@ -5,7 +5,6 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0121_taggedtodoorder_created_on'),
     ]

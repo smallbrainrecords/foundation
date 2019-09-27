@@ -5,7 +5,6 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0068_auto_20160727_0144'),
     ]
@@ -19,6 +18,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='coloncancerstudy',
             name='last_updated_user',
-            field=models.ForeignKey(related_name='last_updated_user_studies', blank=True, to='emr.UserProfile', null=True),
+            field=models.ForeignKey(related_name='last_updated_user_studies', blank=True, to='emr.UserProfile',
+                                    null=True),
         ),
     ]

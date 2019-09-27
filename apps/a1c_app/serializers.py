@@ -33,7 +33,7 @@ class AOneCTextNoteSerializer(serializers.ModelSerializer):
             'author',
             'note',
             'datetime',
-            )
+        )
 
 
 class AOneCSerializer(serializers.ModelSerializer):
@@ -52,4 +52,4 @@ class AOneCSerializer(serializers.ModelSerializer):
             'patient_refused_A1C',
             'a1c_todos',
             'a1c_notes',
-            )
+        )

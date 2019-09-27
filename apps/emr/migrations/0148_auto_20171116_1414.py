@@ -19,7 +19,6 @@ def changer_user_profile_id_to_user_id(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0147_auto_20171116_0232'),
     ]
@@ -33,7 +32,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='coloncancerstudy',
             name='last_updated_user',
-            field=models.ForeignKey(related_name='last_updated_user_studies', blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='last_updated_user_studies', blank=True, to=settings.AUTH_USER_MODEL,
+                                    null=True),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

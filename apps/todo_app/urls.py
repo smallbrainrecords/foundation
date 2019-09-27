@@ -19,9 +19,6 @@ from django.conf.urls import url
 
 from todo_app.views import *
 
-
-
-
 urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/todos/add/new_todo$', add_patient_todo),
 

@@ -21,7 +21,7 @@ from reversion.admin import VersionAdmin
 
 from .models import PatientController, PhysicianTeam
 from .models import ProblemNote
-from .models import UserProfile, AccessLog, Encounter, \
+from .models import UserProfile, Encounter, \
     EncounterEvent, TextNote, Problem, Goal, ToDo, Guideline, \
     GuidelineForm, PatientImage, Sharing, ProblemRelationship, \
     ProblemSegment, Label, ToDoAttachment, ToDoComment, LabeledToDoList, \
@@ -33,6 +33,8 @@ from .models import UserProfile, AccessLog, Encounter, \
 # from reversion.helpers import patch_admin
 
 admin.site.disable_action('delete_selected')
+
+
 # patch_admin(User)
 
 

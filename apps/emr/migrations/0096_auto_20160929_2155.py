@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
 from django.conf import settings
+from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('emr', '0095_auto_20160926_2235'),
@@ -58,7 +57,8 @@ class Migration(migrations.Migration):
             name='MedicationPinToProblem',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('author', models.ForeignKey(related_name='author_pin_medications', blank=True, to='emr.UserProfile', null=True)),
+                ('author',
+                 models.ForeignKey(related_name='author_pin_medications', blank=True, to='emr.UserProfile', null=True)),
                 ('medication', models.ForeignKey(related_name='medication_pin_medications', to='emr.Medication')),
                 ('problem', models.ForeignKey(related_name='problem_pin_medications', to='emr.Problem')),
             ],

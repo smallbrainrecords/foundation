@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
 import mptt.fields
-import emr.models
 from django.conf import settings
+from django.db import models, migrations
+
+import emr.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('contenttypes', '0002_remove_content_type_name'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
@@ -129,7 +129,8 @@ class Migration(migrations.Migration):
             name='TextNote',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('by', models.CharField(max_length=20, choices=[(b'patient', b'patient'), (b'physician', b'physician')])),
+                ('by',
+                 models.CharField(max_length=20, choices=[(b'patient', b'patient'), (b'physician', b'physician')])),
                 ('note', models.TextField()),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
             ],
@@ -149,12 +150,15 @@ class Migration(migrations.Migration):
             name='UserProfile',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('role', models.CharField(default=b'patient', max_length=10, choices=[(b'patient', b'patient'), (b'physician', b'physician'), (b'admin', b'admin')])),
+                ('role', models.CharField(default=b'patient', max_length=10,
+                                          choices=[(b'patient', b'patient'), (b'physician', b'physician'),
+                                                   (b'admin', b'admin')])),
                 ('data', models.TextField(blank=True)),
                 ('cover_image', models.ImageField(upload_to=b'cover_image/', blank=True)),
                 ('portrait_image', models.ImageField(upload_to=b'cover_image/', blank=True)),
                 ('summary', models.TextField(blank=True)),
-                ('sex', models.CharField(blank=True, max_length=6, choices=[(b'male', b'male'), (b'female', b'female')])),
+                ('sex',
+                 models.CharField(blank=True, max_length=6, choices=[(b'male', b'male'), (b'female', b'female')])),
                 ('date_of_birth', models.DateField(null=True, blank=True)),
                 ('phone_number', models.CharField(max_length=20, blank=True)),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, unique=True)),

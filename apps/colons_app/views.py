@@ -243,7 +243,7 @@ def delete_factor(request, colon_id):
             factor.delete()
 
             if not RiskFactor.objects.filter(colon=colon) or (
-                            RiskFactor.objects.filter(colon=colon).count() == 1 and RiskFactor.objects.filter(
+                    RiskFactor.objects.filter(colon=colon).count() == 1 and RiskFactor.objects.filter(
                 colon=colon, factor='no known risk').exists()):
                 colon.risk = 'normal'
                 colon.last_risk_updated_user = request.user

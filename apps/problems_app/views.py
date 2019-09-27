@@ -1229,7 +1229,7 @@ def get_problem_goals(request, problem_id):
 
 
 @login_required
-#@deprecated
+# @deprecated
 def get_problem_wikis(request, problem_id):
     """
     Loading all problem's history notes

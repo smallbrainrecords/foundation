@@ -36,7 +36,6 @@ def get_encounter_info(request, encounter_id):
     related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
     related_problems = [x.problem for x in related_problem_records]
 
-
     encounter_dict = EncounterSerializer(encounter).data
     encounter_events_holder = EncounterEventSerializer(encounter_events, many=True).data
 

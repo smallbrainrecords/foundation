@@ -5,7 +5,6 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0085_observationfield_code'),
     ]
@@ -22,7 +21,8 @@ class Migration(migrations.Migration):
                 ('value_unit', models.CharField(max_length=45, null=True, blank=True)),
                 ('effective_datetime', models.DateTimeField(null=True, blank=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True, null=True)),
-                ('author', models.ForeignKey(related_name='observation_value_authors', blank=True, to='emr.UserProfile', null=True)),
+                ('author', models.ForeignKey(related_name='observation_value_authors', blank=True, to='emr.UserProfile',
+                                             null=True)),
             ],
         ),
         migrations.RemoveField(

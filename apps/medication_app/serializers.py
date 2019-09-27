@@ -31,7 +31,7 @@ class MedicationTextNoteSerializer(serializers.ModelSerializer):
             'note',
             'medication',
             'datetime',
-            )
+        )
 
 
 class MedicationSerializer(serializers.ModelSerializer):
@@ -52,7 +52,7 @@ class MedicationSerializer(serializers.ModelSerializer):
             'current',
             'search_str',
             'created_on',
-            )
+        )
 
 
 class MedicationPinToProblemSerializer(serializers.ModelSerializer):
@@ -66,4 +66,4 @@ class MedicationPinToProblemSerializer(serializers.ModelSerializer):
             'author',
             'medication',
             'problem',
-            )
+        )

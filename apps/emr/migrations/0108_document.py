@@ -5,7 +5,6 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0107_auto_20161118_1709'),
     ]
@@ -19,7 +18,8 @@ class Migration(migrations.Migration):
                 ('path', models.TextField()),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('author', models.ForeignKey(related_name='author_document', to='emr.UserProfile')),
-                ('patient', models.ForeignKey(related_name='patient_pinned', blank=True, to='emr.UserProfile', null=True)),
+                ('patient',
+                 models.ForeignKey(related_name='patient_pinned', blank=True, to='emr.UserProfile', null=True)),
             ],
             options={
                 'ordering': ['-created_on'],

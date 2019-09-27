@@ -82,11 +82,9 @@ GLOBAL_PERMISSIONS = [
     # Pain
     'update_pain', ]
 
-
 ROLE_PERMISSIONS = {}
 
 ROLE_PERMISSIONS['admin'] = GLOBAL_PERMISSIONS
-
 
 ROLE_PERMISSIONS['patient'] = [
     # Problem
@@ -126,7 +124,6 @@ ROLE_PERMISSIONS['patient'] = [
     'add_data_type',
     # Pain
     'update_pain', ]
-
 
 ROLE_PERMISSIONS['physician'] = [
     # Problem
@@ -219,7 +216,6 @@ ROLE_PERMISSIONS['mid-level'] = [
     # Pain
     'update_pain', ]
 
-
 ROLE_PERMISSIONS['nurse'] = [
     # Problem
     'add_problem',
@@ -251,7 +247,6 @@ ROLE_PERMISSIONS['nurse'] = [
     # Pain
     'update_pain', ]
 
-
 ROLE_PERMISSIONS['secretary'] = [
     # Problem
     'add_problem_label',
@@ -275,7 +270,6 @@ ROLE_PERMISSIONS['secretary'] = [
 
 
 def contains(list1, list2):
-
     if len(list1) < 1:
         return False
 

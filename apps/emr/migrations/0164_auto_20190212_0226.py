@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0163_add_missing_blood_pressure_component_value'),
     ]

@@ -5,7 +5,6 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0074_coloncancerscreening_todo_past_five_years'),
     ]
@@ -19,6 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='todo',
             name='colon_cancer',
-            field=models.ForeignKey(related_name='colon_cancer_todos', blank=True, to='emr.ColonCancerScreening', null=True),
+            field=models.ForeignKey(related_name='colon_cancer_todos', blank=True, to='emr.ColonCancerScreening',
+                                    null=True),
         ),
     ]

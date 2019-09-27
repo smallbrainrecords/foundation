@@ -5,7 +5,6 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0100_auto_20161017_2239'),
     ]
@@ -32,7 +31,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='inr',
             name='pin',
-            field=models.ForeignKey(related_name='observation_inrs', blank=True, to='emr.ObservationPinToProblem', null=True),
+            field=models.ForeignKey(related_name='observation_inrs', blank=True, to='emr.ObservationPinToProblem',
+                                    null=True),
         ),
         migrations.AddField(
             model_name='inrvalue',

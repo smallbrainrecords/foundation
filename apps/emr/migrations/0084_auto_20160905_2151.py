@@ -5,7 +5,6 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0083_observationunit'),
     ]
@@ -22,6 +21,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='observationcomponent',
             name='field',
-            field=models.ForeignKey(related_name='observation_component_fields', blank=True, to='emr.ObservationField', null=True),
+            field=models.ForeignKey(related_name='observation_component_fields', blank=True, to='emr.ObservationField',
+                                    null=True),
         ),
     ]

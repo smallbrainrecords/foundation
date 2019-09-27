@@ -37,7 +37,6 @@ def age(when, on=None):
 
 @cronjobs.register
 def review_colorectal_cancer_risk_assessment():
-
     print('Starting cron review_colorectal_cancer_risk_assessment...')
 
     colon_cancers = ColonCancerScreening.objects.all()
@@ -72,7 +71,6 @@ def review_colorectal_cancer_risk_assessment():
 
 @cronjobs.register
 def patient_needs_a_plan_for_colorectal_cancer_screening():
-
     print('Starting cron patient_needs_a_plan_for_colorectal_cancer_screening...')
 
     colon_cancers = ColonCancerScreening.objects.all()
@@ -112,7 +110,6 @@ def patient_needs_a_plan_for_colorectal_cancer_screening():
 
 @cronjobs.register
 def a1c_order_was_automatically_generated():
-
     print('Starting cron a1c_order_was_automatically_generated...')
 
     a1cs = AOneC.objects.all()
@@ -253,23 +250,23 @@ def problem_relationship_auto_pinning_for_3_times_matched():
         print("Processing problem relationship source: {}- target {}".format(relation['source__concept_id'],
                                                                              relation['target__concept_id']))
         for p in User.objects.filter(profile__role='patient').all():
-                problem_pairs = Problem.objects.filter(patient_id=p.id).filter(
-                    concept_id__in=[relation['source__concept_id'], relation['target__concept_id']])
-                print("Processing patient:({}) {}".format(p.id, p))
-                print("Number of problems in pair: {}".format(problem_pairs.count()))
-                if problem_pairs.exists() and problem_pairs.count() == 2:
-                    source = Problem.objects.get(patient_id=p.id, concept_id=relation['source__concept_id'])
-                    target = Problem.objects.get(patient_id=p.id, concept_id=relation['target__concept_id'])
+            problem_pairs = Problem.objects.filter(patient_id=p.id).filter(
+                concept_id__in=[relation['source__concept_id'], relation['target__concept_id']])
+            print("Processing patient:({}) {}".format(p.id, p))
+            print("Number of problems in pair: {}".format(problem_pairs.count()))
+            if problem_pairs.exists() and problem_pairs.count() == 2:
+                source = Problem.objects.get(patient_id=p.id, concept_id=relation['source__concept_id'])
+                target = Problem.objects.get(patient_id=p.id, concept_id=relation['target__concept_id'])
 
-                    if not ProblemRelationship.objects.filter(source=source, target=target).exists():
-                        ProblemRelationship.objects.create(source=source, target=target)
-                        activity = "Created Problem Relationship(automation pinning): <b>{0}</b> effects <b>{1}</b>".format(
-                            source.problem_name, target.problem_name)
-                        # Add log
-                        add_problem_activity(source, actor, activity)
-                        add_problem_activity(target, actor, activity)
-                        op_add_event(actor, source.patient, activity)
-                        print("Activity log: {}".format(activity))
-                print('')
+                if not ProblemRelationship.objects.filter(source=source, target=target).exists():
+                    ProblemRelationship.objects.create(source=source, target=target)
+                    activity = "Created Problem Relationship(automation pinning): <b>{0}</b> effects <b>{1}</b>".format(
+                        source.problem_name, target.problem_name)
+                    # Add log
+                    add_problem_activity(source, actor, activity)
+                    add_problem_activity(target, actor, activity)
+                    op_add_event(actor, source.patient, activity)
+                    print("Activity log: {}".format(activity))
+            print('')
     print('Finished cron problem_relationship_auto_pinning_for_3_times_matched...')
     print('')

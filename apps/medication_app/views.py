@@ -93,7 +93,8 @@ def add_medication(request, patient_id):
     patient_user = User.objects.get(id=patient_id)
 
     if permissions_accessed(request.user, int(patient_id)) and medication_name:
-        medication = Medication(author=request.user, patient=patient_user, name=medication_name,                                concept_id=concept_id, search_str=search_string)
+        medication = Medication(author=request.user, patient=patient_user, name=medication_name, concept_id=concept_id,
+                                search_str=search_string)
         medication.save()
 
         op_medication_event(medication, request.user, patient_user,

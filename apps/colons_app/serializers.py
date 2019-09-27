@@ -32,11 +32,10 @@ class ColonCancerTextNoteSerializer(serializers.ModelSerializer):
             'author',
             'note',
             'datetime',
-            )
+        )
 
 
 class StudyImageSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ColonCancerStudyImage
 
@@ -66,11 +65,10 @@ class ColonCancerStudySerializer(serializers.ModelSerializer):
             'last_updated_date',
             'last_updated_user',
             'study_images',
-            )
+        )
 
 
 class RiskFactorSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = RiskFactor
 
@@ -108,4 +106,4 @@ class ColonCancerScreeningSerializer(serializers.ModelSerializer):
             'patient_refused_on',
             'not_appropriate_on',
             'colon_notes',
-            )
+        )

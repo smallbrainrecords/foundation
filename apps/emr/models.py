@@ -18,6 +18,7 @@ import ast
 import mimetypes
 import os
 
+import reversion
 from django.contrib.auth.models import User
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
@@ -1046,6 +1047,7 @@ class InrTextNote(models.Model):
         return "%s" % (self.note)
 
 
+@reversion.register()
 class Medication(models.Model):
     name = models.TextField()
     concept_id = models.CharField(max_length=20, blank=True, null=True)
@@ -1148,6 +1150,7 @@ class EncounterObservationValue(models.Model):
     encounter = models.ForeignKey(Encounter, null=False)
     observation_value = models.ForeignKey(ObservationValue, null=False)
     created_on = models.DateTimeField(auto_now_add=True)
+
 
 class Narrative(models.Model):
     """

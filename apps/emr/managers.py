@@ -78,7 +78,7 @@ class ProblemNoteManager(models.Manager):
         from emr.models import ProblemNote
         return ProblemNote.objects.create(author=author, problem=problem, note=note, note_type='history')
 
-    #@deprecated
+    # @deprecated
     def create_wiki_note(self, author, problem, note):
         from emr.models import ProblemNote
         return ProblemNote.objects.create(author=author, problem=problem, note=note, note_type='wiki')

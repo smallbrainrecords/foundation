@@ -36,6 +36,7 @@ def get_date(date_string):
     except:
         return "Unsupported format"
 
+
 def get_new_date(date_string):
     return datetime.strptime(date_string, "%m/%d/%Y").date()
 

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
 from django.conf import settings
+from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0086_auto_20160906_0142'),
     ]
@@ -24,6 +23,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='mystorytextcomponententry',
             name='author',
-            field=models.ForeignKey(related_name='author_story_text_entries', blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='author_story_text_entries', blank=True, to=settings.AUTH_USER_MODEL,
+                                    null=True),
         ),
     ]

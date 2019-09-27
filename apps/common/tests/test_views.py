@@ -65,6 +65,5 @@ class TestCommonView(TestCase):
         response = get_date('2019-23-12')
         self.assertEqual(response, "Unsupported format")
 
-
     def tearDown(self):
         pass

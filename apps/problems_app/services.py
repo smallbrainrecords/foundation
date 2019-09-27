@@ -24,7 +24,8 @@ class ProblemService(object):
     def populate_multiplicity(problems_json):
         for problem in problems_json:
             todo = ToDo.objects.filter(problem_id=problem['id'], accomplished=False).count()
-            event = ProblemActivity.objects.filter(problem_id=problem['id'], created_on__gte=datetime.now()-timedelta(days=30)).count()
+            event = ProblemActivity.objects.filter(problem_id=problem['id'],
+                                                   created_on__gte=datetime.now() - timedelta(days=30)).count()
             if todo == 0 and event == 0:
                 problem['multiply'] = 0
             elif todo == 0 or event == 0:
@@ -56,7 +57,7 @@ class ProblemService(object):
                             problem_segment.event_id = event_id
                             problem_segment.problem = problem
 
-                        start_date = datetime.strptime(problem_json['events'][i+1]['startTime'], "%d/%m/%Y %H:%M:%S")
+                        start_date = datetime.strptime(problem_json['events'][i + 1]['startTime'], "%d/%m/%Y %H:%M:%S")
                         problem_segment.start_date = start_date.date()
                         problem_segment.start_time = start_date.time()
                         problem_segment.is_active = event["state"] != "inactive"

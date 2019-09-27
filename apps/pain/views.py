@@ -32,7 +32,6 @@ def create_pain_avatar(request, patient_id):
 @login_required
 @permissions_required(["update_pain"])
 def add_pain_avatar(request, patient_id):
-
     if request.method == 'POST':
         resp = {}
         pain_avatar = PainAvatar.objects.create(patient_id=patient_id, json=request.POST['json'])

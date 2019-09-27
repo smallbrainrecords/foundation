@@ -16,7 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from django import forms
 
-
 SEX_CHOICES = (
     ('male', 'Male'),
     ('female', 'Female'),)

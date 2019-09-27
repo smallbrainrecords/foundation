@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
 from django.conf import settings
+from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('emr', '0077_mystorytab_mystorytextcomponent_mystorytextcomponententry'),
@@ -20,7 +19,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='mystorytab',
             name='author',
-            field=models.ForeignKey(related_name='author_story_tabs', blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='author_story_tabs', blank=True, to=settings.AUTH_USER_MODEL,
+                                    null=True),
         ),
         migrations.AddField(
             model_name='mystorytab',
@@ -30,7 +30,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='mystorytextcomponent',
             name='author',
-            field=models.ForeignKey(related_name='author_story_texts', blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='author_story_texts', blank=True, to=settings.AUTH_USER_MODEL,
+                                    null=True),
         ),
         migrations.AddField(
             model_name='mystorytextcomponent',
@@ -55,6 +56,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='mystorytextcomponententry',
             name='component',
-            field=models.ForeignKey(related_name='text_component_entries', blank=True, to='emr.MyStoryTextComponent', null=True),
+            field=models.ForeignKey(related_name='text_component_entries', blank=True, to='emr.MyStoryTextComponent',
+                                    null=True),
         ),
     ]

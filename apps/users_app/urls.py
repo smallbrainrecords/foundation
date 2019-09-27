@@ -19,8 +19,6 @@ from django.conf.urls import url
 
 from users_app.views import *
 
-
-
 urlpatterns = [
     url(r'^login/$', login_user),
     url(r'^logout/$', logout_user),

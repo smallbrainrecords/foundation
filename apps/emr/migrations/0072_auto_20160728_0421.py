@@ -5,7 +5,6 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('emr', '0071_auto_20160727_2038'),
     ]
@@ -30,7 +29,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='coloncancerscreening',
             name='risk',
-            field=models.CharField(default=b'normal', max_length=10, choices=[(b'normal', b'Normal'), (b'high', b'High')]),
+            field=models.CharField(default=b'normal', max_length=10,
+                                   choices=[(b'normal', b'Normal'), (b'high', b'High')]),
         ),
         migrations.AlterField(
             model_name='coloncancerstudyimage',

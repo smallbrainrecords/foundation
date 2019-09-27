@@ -32,6 +32,7 @@ def set_problem_authentication_false(actor_profile, problem):
     problem.authenticated = authenticated
     problem.save()
 
+
 @login_required
 def track_a1c_click(request, a1c_id):
     actor = request.user
@@ -43,6 +44,7 @@ def track_a1c_click(request, a1c_id):
 
     resp = {}
     return ajax_response(resp)
+
 
 @login_required
 def get_a1c_info(request, a1c_id):

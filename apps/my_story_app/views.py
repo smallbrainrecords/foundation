@@ -158,7 +158,7 @@ def delete_tab(request, patient_id, tab_id):
             MyStoryTextComponentEntry.objects.filter(component__tab=tab).delete()
             MyStoryTextComponent.objects.filter(tab=tab).delete()
             tab.delete()
-        
+
             resp['success'] = True
 
     return ajax_response(resp)
@@ -175,7 +175,7 @@ def save_tab(request, patient_id, tab_id):
         if request.user.id == tab.author.id:
             tab.name = request.POST.get("name", None)
             tab.save()
-            
+
             resp['tab'] = MyStoryTabSerializer(tab).data
             resp['success'] = True
 
@@ -193,7 +193,7 @@ def delete_text_component(request, patient_id, component_id):
         if request.user.id == component.author.id:
             MyStoryTextComponentEntry.objects.filter(component=component).delete()
             component.delete()
-        
+
             resp['success'] = True
 
     return ajax_response(resp)
@@ -212,7 +212,7 @@ def save_text_component(request, patient_id, component_id):
             component.concept_id = request.POST.get("concept_id", None)
 
         component.save()
-        
+
         resp['component'] = MyStoryTextComponentSerializer(component).data
         entries = MyStoryTextComponentEntry.objects.filter(component_id=component.id, patient_id=int(patient_id))
         resp['component']["text_component_entries"] = MyStoryTextComponentEntrySerializer(entries, many=True).data
