@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@uirouter/angularjs": "^1.0.20",
-    "angular": "1.5.9",
+    "angular": "1.7.9",
     "angular-animate": "~1.5.*",
     "angular-audio": "^1.7.3",
     "angular-audio-recorder": "git+https://github.com/logbon72/angular-recorder.git",
