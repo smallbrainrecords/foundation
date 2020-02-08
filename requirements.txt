@@ -21,7 +21,7 @@ django-mptt-admin==0.6.0
 django-ranged-response==0.2.0
 django-reversion==3.0.3
 django-session-security==2.6.5
-djangorestframework==3.6.4
+djangorestframework==3.9.1
 futures==3.2.0
 httplib2==0.12.0
 hyperlink==18.0.0
