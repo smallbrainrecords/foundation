@@ -44,8 +44,8 @@
                                                 on
                                                 {{ colon_cancer.colon_studies[0].last_updated_date|date:'M/d/yyyy'}}</p>
                                             <p>
-                                                <a href="#/colon_cancer/{{ colon_cancer.id }}/edit_study/
-                                                        {{ colon_cancer.colon_studies[0].id}}/"
+                                                {{colon_cancer.colon_studies[0].id }}
+                                                <a ng-href="#/colon_cancer/{{ colon_cancer.id }}/edit_study/{{ colon_cancer.colon_studies[0].id}}/"
                                                    class="btn btn-default">Edit</a>
                                             </p>
                                         </div>
