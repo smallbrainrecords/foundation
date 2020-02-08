@@ -1,10 +1,10 @@
-<div class='panel panel-default'>
+<section class='panel panel-default'>
     <div class='panel-body'>
         <a href='#/'><b> Back to home page </b></a>
     </div>
-</div>
+</section>
 
-<div class='panel panel-default'>
+<section class='panel panel-default'>
     <div class='panel-body no-padding'>
         <div class="row">
 
@@ -39,6 +39,7 @@
                             <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                         </div>
                     </div>
+                    <p>{{data.chartLabel}}</p>
                     <canvas ng-if="data.graph=='Line'" class="chart chart-line"
                             chart-data="data.chartData"
                             chart-series="data.chartSeries"
@@ -50,7 +51,7 @@
                 </div>
             </div>
             <div class="col-md-5 col-lg-5 col-sm-12 col-xs-12">
-                <form>
+                <form ng-if="data.code != '39156-5'">
                     <div class="form-group" ng-repeat="component in data.observation_components ">
                         <label>{{ component.name }}</label>
                         <input type="text" class="form-control" auto-focus ng-if="$first" ng-model="component.new_value"
@@ -66,9 +67,8 @@
                         </button>
                     </div>
                 </form>
-
-                <a href="#/data/{{ data.id }}/show_all_data" class="btn btn-default btn-block">Show all data</a>
-                <a href="#/data/{{ data.id }}/add_data" class="btn btn-default btn-block">Add data point</a>
+                <a ng-href="#/data/{{ data.id }}/show_all_data" class="btn btn-default btn-block">Show all data</a>
+                <a ng-href="#/data/{{ data.id }}/add_data" class="btn btn-default btn-block" ng-if="data.code != '39156-5'">Add data point</a>
                 <button class="btn btn-default btn-block" ng-click="toggle_pin_to_new_problem();"
                         ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.profile.id || true">
                     Pin to new problem
@@ -77,9 +77,9 @@
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<div class='panel panel-default'>
+<section class='panel panel-default'>
     <div class='panel-heading'>
         List of pinned problems
     </div>
@@ -101,9 +101,9 @@
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<div class='panel panel-default' ng-show="show_pin_to_new_problem"
+<section class='panel panel-default' ng-show="show_pin_to_new_problem"
      ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.profile.id || true">
     <div class='panel-heading'>
         List of current problems
@@ -116,4 +116,4 @@
             <label for="{{ problem.id }}" ng-bind="problem.problem_name"></label>
         </div>
     </div>
-</div>
+</section>

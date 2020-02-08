@@ -1,28 +1,32 @@
-<div class='panel panel-default'>
+<section class='panel panel-default'>
     <div class='panel-body'>
-        <div class='row'>
-            <div class='col-md-12'>
-                <a href='#/data/{{ data.id }}'><b> Back to data page </b></a>
-            </div>
-        </div>
+        <a ng-href='#/data/{{ data.id }}'><b> Back to data page </b></a>
     </div><!-- End of Panel Body -->
-</div>
-<div class='panel panel-default'>
+</section>
+<section class='panel panel-default'>
     <div class='panel-body'>
         <h3>{{ data.name }}</h3>
-        <p> {{ data.unit }} </p>
+        <h4> {{ data.unit }} </h4>
     </div>
-</div>
-<div class='panel panel-default'>
-    <div class='panel-body'>
-        <ul class="ul-clean">
-            <li ng-repeat="value in data.values track by $index">
-                <span ng-bind="data.label" class="component-labels"></span>
-                <a href='#/data/{{ data.id }}/edit/{{ value.edit_link }}'>
-                    <span class="component-effective-datetime">{{ value.entry_time }}</span>
-                    <span class="component-value">{{ value.value }}</span>
-                </a>
-            </li>
-        </ul>
-    </div>
-</div>
+</section>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Entry time</th>
+        <th>Value</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="value in data.values  | orderBy: reverse:true  track by $index">
+        <td><span class="component-effective-datetime">{{ value.entry_time }}</span>
+        </td>
+        <td><span class="component-value">{{ value.value }}</span>
+        </td>
+        <td>
+            <!--        TODO: Hide this action button if data type is BMI -->
+            <a ng-href='#/data/{{ data.id }}/edit/{{ value.edit_link }}'>Edit</a>
+        </td>
+    </tr>
+    </tbody>
+</table>

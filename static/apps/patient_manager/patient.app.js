@@ -57,7 +57,10 @@
             scales: {
                 xAxes: [
                     {
-                        type: 'time'
+                        type: 'time',
+                        time: {
+                            minUnit: 'day'
+                        }
                     }
                 ]
             },
