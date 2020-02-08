@@ -1,6 +1,7 @@
 @import "_variables.scss";
 @import "_colors.scss";
 @import "_quick_card_editor";
+
 body {
   font-family: 'Source Sans Pro', sans-serif !important;
 }
@@ -132,7 +133,12 @@ body {
 }
 
 #problem-header {
-  z-index: 8;
+  z-index: 10;
+  position: absolute;
+
+  &.affix {
+    position: fixed !important;
+  }
 
   .todo {
     width: auto;
@@ -471,6 +477,6 @@ todo-laboratory {
   }
 }
 
-.inactive{
+.inactive {
   color: lightgrey;
 }

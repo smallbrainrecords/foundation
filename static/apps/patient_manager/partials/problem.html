@@ -1,12 +1,12 @@
 <a href='#/'><b> Manage Patient </b></a>
-<div ng-if="!hasAccess && !loading">
+<section ng-if="!hasAccess && !loading">
     <h3 class="text-center">You can not access this page.</h3>
-</div>
+</section>
 
-<div ng-if="hasAccess">
+<section ng-if="hasAccess">
     <!--Problem header-->
-    <div class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100'
-         ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'>
+    <section class='row' id='problem-header' fixed-zone offset-orientation='top' offset-top='100'
+             ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'>
         <div class="col-md-6">
             <div class="todo">
                 <h4 ng-show="!edit_problem">
@@ -32,7 +32,6 @@
                     <div class="quick-card-editor-text">
                         <div class='row' ng-show='permitted(["change_problem_name"])'>
                             <div class='col-md-12'>
-                                input
                                 <input type='text' ng-model='problem_term' class='form-control' id='problemTermInput'
                                        placeholder='Search Problem....'
                                        ng-change="problem_name_changed(problem_term);"
@@ -206,10 +205,10 @@
                 </div>
             </form>
         </div>
-    </div>
+    </section>
 
     <!-- Problem status-->
-    <div class='panel panel-default'>
+    <section class='panel panel-default'>
         <div class='panel-body'>
             <div class='row'>
                 <div class='col-md-4'>
@@ -234,10 +233,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Problem todo-->
-    <div class="row">
+    <section class="row">
         <div class="col-md-6">
             <div class='panel panel-default'>
                 <div class='panel-heading'> Todos</div>
@@ -285,10 +284,10 @@
         <div class="col-md-6">
             <problem-note problem-id="problem.id" on-note-changed="onProblemWikiNoteChanged(note)"></problem-note>
         </div>
-    </div>
+    </section>
 
     <!--A1C widget-->
-    <div class="row" ng-if="availableWidgets.indexOf('a1c') != -1 && a1c != null">
+    <section class="row" ng-if="availableWidgets.indexOf('a1c') != -1 && a1c != null">
         <div class="col-md-12">
             <a1c a1c="a1c"
                  active-user="active_user"
@@ -296,10 +295,10 @@
                  order-status-changed="A1COrderStatusChanged"
                  labels="labels" members="members"></a1c>
         </div>
-    </div>
+    </section>
 
     <!--Colon cancer widget-->
-    <div class='row' ng-if="availableWidgets.indexOf('colon_cancers') != -1 && colon_cancers!=null">
+    <section class='row' ng-if="availableWidgets.indexOf('colon_cancers') != -1 && colon_cancers!=null">
         <div class="col-md-12">
             <colon-cancer colon-cancer="colon_cancers"
                           active-user="active_user"
@@ -307,17 +306,17 @@
                           order-status-changed="colonCancersOrderStatusChanged"
                           labels="labels" members="members"></colon-cancer>
         </div>
-    </div>
+    </section>
 
     <!-- Problem old name-->
-    <div class='panel panel-default' ng-show="problem.old_problem_name">
+    <section class='panel panel-default' ng-show="problem.old_problem_name">
         <div class='panel-body'>
             This problem was previously named "{{ problem.old_problem_name }}"
         </div>
-    </div>
+    </section>
 
     <!-- Problem data & meditation-->
-    <div class="row">
+    <section class="row">
         <div ng-if="hasPinnedGraph" ng-class="hasPinnedGraph  && hasPinnedMedication ? 'col-md-6' :'col-md-6'">
             <div class='panel panel-default'>
                 <div class="panel-header">
@@ -443,7 +442,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!--START WEIGHTED ORDERING-->
     <section class="auto-ordering">
@@ -589,15 +588,15 @@
     <!--END WEIGHTED ORDERING-->
 
     <!--Problem time line-->
-    <div class='panel panel-default'>
+    <section class='panel panel-default'>
         <div class='panel-heading'> Problems</div>
         <div class='panel-body'>
             <problem-timeline ng-model="timeline"></problem-timeline>
         </div>
-    </div>
+    </section>
 
     <!--Problem activities-->
-    <div class='panel panel-default'>
+    <section class='panel panel-default'>
         <div class='panel-heading' ng-click="problem_activity_collapse=!problem_activity_collapse;">
             <i class="fa fa-caret-down" aria-hidden="true" ng-if="problem_activity_collapse"></i>
             <i class="fa fa-caret-right" aria-hidden="true" ng-if="!problem_activity_collapse"></i>
@@ -627,10 +626,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!--Goals-->
-    <div class='panel panel-default'>
+    <section class='panel panel-default'>
         <div class='panel-heading'> Goals</div>
         <div class='panel-body'>
             <div class='row'>
@@ -672,10 +671,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <div class="overlay" ng-show="edit_problem" ng-click="edit_problem = false"></div>
-</div>
+</section>
 
 <script type='text/javascript'>
     $(document).ready(function () {
