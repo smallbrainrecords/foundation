@@ -108,7 +108,7 @@ def is_patient(user):
 
 def login_user(request):
     if request.method == "GET":
-        return render(request, 'users/login.html', {})
+        return render(request, 'users/../../templates/login.html', {})
     elif request.method == 'POST':
         logout(request)
         form = LoginForm(request.POST)
@@ -117,7 +117,7 @@ def login_user(request):
         if not form.is_valid():
             errors.append('Please fill valid data.')
             content = {'login_errors': errors, 'form': form}
-            return render(request, 'users/login.html', content)
+            return render(request, 'users/../../templates/login.html', content)
 
         username = form.cleaned_data['username']
         password = form.cleaned_data['password']
@@ -132,7 +132,7 @@ def login_user(request):
             elif not user.is_active:
                 errors.append('User is not verified or active.')
             content = {'login_errors': errors, 'form': form}
-            return render(request, 'users/login.html', content)
+            return render(request, 'users/../../templates/login.html', content)
 
 
 def logout_user(request):
@@ -146,7 +146,7 @@ def register_user(request):
         errors = []
         if not form.is_valid():
             errors.append('Please fill data')
-            return render(request, 'users/login.html', {"register_form": form, "register_errors": errors})
+            return render(request, 'users/../../templates/login.html', {"register_form": form, "register_errors": errors})
 
         email = form.cleaned_data['email']
         password = form.cleaned_data['password']
@@ -156,12 +156,12 @@ def register_user(request):
 
         if len(password) <= 2 or password != verify_password:
             errors.append('Passwords must match')
-            return render(request, 'users/login.html', {"register_form": form, "register_errors": errors})
+            return render(request, 'users/../../templates/login.html', {"register_form": form, "register_errors": errors})
 
         user_exists = User.objects.filter(Q(email=email) | Q(username=email)).exists()
         if user_exists:
             errors.append('User with same email or username already exists')
-            return render(request, 'users/login.html', {"register_form": form, "register_errors": errors})
+            return render(request, 'users/../../templates/login.html', {"register_form": form, "register_errors": errors})
 
         current = datetime.datetime.now()
         user = User(username=email, email=email, first_name=first_name,
@@ -255,8 +255,8 @@ def manage_patient(request, user_id):
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists())
 
     # context = RequestContext(request, context)
-    return render(request, 'manage_patient.html', context)
-    # return render_to_response("manage_patient.html", context)
+    return render(request, 'patient_app.html', context)
+    # return render_to_response("patient_app.html", context)
 
 
 # Users
@@ -549,7 +549,7 @@ def staff(request):
     user_profile_serialized['permissions'] = ROLE_PERMISSIONS[user_profile.role]
     content['active_user'] = json.dumps(user_profile_serialized)
 
-    return render(request, 'staff.html', content)
+    return render(request, 'staff_app.html', content)
 
 
 @login_required

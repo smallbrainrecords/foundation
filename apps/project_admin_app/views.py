@@ -43,7 +43,7 @@ def home(request):
 
     return render(
         request,
-        'project_admin/home.html',
+        'project_admin/../../templates/admin_app.html',
         content)
 
 
