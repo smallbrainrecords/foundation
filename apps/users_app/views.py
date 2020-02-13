@@ -255,8 +255,8 @@ def manage_patient(request, user_id):
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists())
 
     # context = RequestContext(request, context)
-    return render(request, 'patient_app.html', context)
-    # return render_to_response("patient_app.html", context)
+    return render(request, 'patient-app.html', context)
+    # return render_to_response("patient-app.html", context)
 
 
 # Users
@@ -549,7 +549,7 @@ def staff(request):
     user_profile_serialized['permissions'] = ROLE_PERMISSIONS[user_profile.role]
     content['active_user'] = json.dumps(user_profile_serialized)
 
-    return render(request, 'staff_app.html', content)
+    return render(request, 'staff-app.html', content)
 
 
 @login_required
@@ -788,7 +788,7 @@ def search(request, user_id):
     context['patient_profile'] = patient_profile
 
     # context = RequestContext(request, context)
-    return render_to_response("patient_search.html", context)
+    return render_to_response("patient-search.html", context)
 
 
 @login_required
@@ -848,7 +848,7 @@ def staff_search(request):
     context['user_profile'] = user_profile
 
     # context = RequestContext(request, context)
-    return render_to_response("staff_search.html", context)
+    return render_to_response("staff-search.html", context)
 
 
 @login_required

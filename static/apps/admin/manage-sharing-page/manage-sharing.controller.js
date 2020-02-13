@@ -16,12 +16,10 @@
  */
 (function () {
     'use strict';
-    angular.module('app.services', ['ngRoute', 'httpModule', 'sharedModule'])
-        .config(function ($httpProvider) {
-            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        })
-        .run(function run($http, $cookies) {
-            $http.defaults.headers.common["X-CSRFToken"] = $cookies.get('csrftoken')
-        })
+    angular.module('AdminApp')
+        .controller('ManageSharingCtrl', function ($scope, $routeParams, ngDialog, adminService, $location, $anchorScroll, toaster) {
+            adminService.getPatientsList().then(function (data) {
+                $scope.patients_list = data['patients_list'];
+            });
+        });
 })();

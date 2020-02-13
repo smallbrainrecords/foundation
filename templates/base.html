@@ -43,10 +43,6 @@
 
     {% endcompress %}
 
-    <!-- Install sentry tracker -->
-    <script src="https://cdn.ravenjs.com/3.26.4/angular/raven.min.js" crossorigin="anonymous"></script>
-    <script>Raven.config('https://d71f6e59381c4a4caff011cbe970b229@sentry.io/127883').install();</script>
-
     <!-- Vendor compressed-->
     {% compress js %}
         <script src="/static/node_modules/jquery/dist/jquery.js" type="text/javascript"></script>
@@ -129,25 +125,23 @@
     <script src="/static/node_modules/angular-audio-recorder/dist/angular-audio-recorder.js"
             type="text/javascript"></script>
 
-    <!--Common service shared across whole system-->
+    <!--Common modules shared across whole system-->
     <script src="/static/apps/common/constants.module.js" type="text/javascript"></script>
     <script src="/static/apps/common/template.module.js" type="text/javascript"></script>
     <script src="/static/apps/common/http.module.js" type="text/javascript"></script>
-    <script src="/static/apps/common/service.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives.js" type="text/javascript"></script>
+    <script src="/static/apps/common/shared-service.module.js" type="text/javascript"></script>
+    <script src="/static/apps/common/my-tools.module.js" type="text/javascript"></script>
 
     <!-- START SINGLE REPO SYSTEM SERVICES -->
     <script src="/static/apps/common/services/service.module.js" type="text/javascript"></script>
 
     <script src="/static/apps/common/services/admin.service.js" type="text/javascript"></script>
-
     <script src="/static/apps/common/services/staff.service.js" type="text/javascript"></script>
     <script src="/static/apps/common/services/physician.service.js" type="text/javascript"></script>
+    <script src="/static/apps/common/services/patient.service.js" type="text/javascript"></script>
     <script src="/static/apps/common/services/todo.service.js" type="text/javascript"></script>
     <script src="/static/apps/common/services/document.service.js" type="text/javascript"></script>
     <script src="/static/apps/common/services/inr.service.js" type="text/javascript"></script>
-
-    <script src="/static/apps/common/services/patient.service.js" type="text/javascript"></script>
     <script src="/static/apps/common/services/problem.service.js" type="text/javascript"></script>
     <script src="/static/apps/common/services/encounter-fail-safe.service.js" type="text/javascript"></script>
     <script src="/static/apps/common/services/goal.service.js" type="text/javascript"></script>
@@ -160,12 +154,12 @@
     <!-- Component-->
 
     <!--Document-->
-    <script src="/static/apps/document/document-page.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/common/directives/document/document-page.controller.js" type="text/javascript"></script>
     <!--INR-->
-    <script src="/static/apps/inr/inr.component.js" type="text/javascript"></script>
-    <script src="/static/apps/inr/inr-bfdi.component.js" type="text/javascript"></script>
+    <script src="/static/apps/common/directives/inr/inr.component.js" type="text/javascript"></script>
+    <script src="/static/apps/common/directives/inr/inr-bfdi.component.js" type="text/javascript"></script>
     <!--Medication component-->
-    <script src="/static/apps/medication/medication-search.component.js" type="text/javascript"></script>
+    <script src="/static/apps/common/directives/medication/medication-search.component.js" type="text/javascript"></script>
 
     {% include 'session_security/all.html' %}
 </head>

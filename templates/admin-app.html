@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block search %}
+<form class="navbar-form navbar-left" target="_blank" action="{% url 'staff_search' %}" method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <input type="text" class="form-control" placeholder="Search" name="query">
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
+{% endblock %}
+
+{% block content %}
+<script src="/static/apps/admin/admin.app.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/home-page/home.controller.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/edit-user-page/edit-user.controller.js" type="text/javascript"
+        charset="utf-8"></script>
+<script src="/static/apps/admin/add-user-page/add-user.controller.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/apps/admin/manage-sharing-page/manage-sharing.controller.js" type="text/javascript"
+        charset="utf-8"></script>
+<script src="/static/apps/admin/manage-sharing-patient/manage-sharing-patient.controller.js" type="text/javascript"
+        charset="utf-8"></script>
+<script src="/static/apps/admin/manage-sharing-problem/manage-sharing-patient.controller.js" type="text/javascript"
+        charset="utf-8"></script>
+
+<div id='ng-app' ng-app='AdminApp' class='no-js' lang="en">
+    <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
+
+    <div ng-view>
+        Loading...
+    </div>
+</div>
+
+{% endblock %}
+
+
