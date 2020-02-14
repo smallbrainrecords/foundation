@@ -1,152 +1,153 @@
 {% extends "base.html" %}
 {% block title %}  Search Patient - {{ patient.get_full_name }}   {% endblock %}
 {% block search %}
-    <form class="navbar-form navbar-left" action="{% url 'search' patient.id %}" method="post">
-        {% csrf_token %}
-        <input type='hidden' name='patient_id' value='{{ user.id }}'>
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search" name="query">
-            <span class="input-group-btn">
-    <button type="submit" class="btn btn-default">Submit</button>
+<form action="{% url 'search' patient.id %}" class="navbar-form navbar-left" method="post">
+    {% csrf_token %}
+    <input name='patient_id' type='hidden' value='{{ user.id }}'>
+    <div class="input-group">
+        <input class="form-control" name="query" placeholder="Search" type="text">
+        <span class="input-group-btn">
+    <button class="btn btn-default" type="submit">Submit</button>
         </span>
-        </div>
-    </form>
+    </div>
+</form>
 {% endblock %}
 
 {% block content %}
 
-    <section id="search-result">
-        {% if patients %}
-            <div class='panel panel-default'>
-                <div class='panel-heading'>Patients</div>
-                <div class='panel-body'>
-                    <ul class='list-group'>
-                        {% for patient in patients %}
-                            <li>
-                                <div class="row">
-                                    <div class="col-md-8">
+<section id="search-result">
+    {% if patients %}
+    <div class='panel panel-default'>
+        <div class='panel-heading'>Patients</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for patient in patients %}
+                <li>
+                    <div class="row">
+                        <div class="col-md-8">
 
-                                        {{ patient }}
-                                    </div>
-                                    <div class="col-md-4 text-right">
+                            {{ patient }}
+                        </div>
+                        <div class="col-md-4 text-right">
 
-                                        <a href='/project/admin/#/edit/{{ patient.user_id }}/'
-                                           class='btn btn-sm btn-default'>
-                                            Edit
-                                        </a>
+                            <a class='btn btn-sm btn-default'
+                               href='/project/admin/#/edit/{{ patient.user_id }}/'>
+                                Edit
+                            </a>
 
-                                        <a href='/u/patient/manage/{{ patient.user_id }}/'
-                                           class='btn btn-sm btn-default'>
-                                            Manage
-                                        </a>
-                                    </div>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        {% endif %}
-
-        <div class='panel panel-default'>
-            <div class='panel-heading'> Notes</div>
-            <div class='panel-body'>
-                <ul class='list-group'>
-                    {% for note in notes %}
-                        <li>
-                            <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }} -
-                                {{ note.author.user.username }} </b> : {{ note.note }}
-                            <p>{{ note.created_on | date:"d M Y" }} at {{ note.created_on | date:"H:i" }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+                            <a class='btn btn-sm btn-default'
+                               href='/u/patient/manage/{{ patient.user_id }}/'>
+                                Manage
+                            </a>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
+    </div>
+    {% endif %}
 
-        <div class='panel panel-default'>
-            <div class='panel-heading'> Todos</div>
-            <div class='panel-body'>
-                <ul class='list-group'>
-                    {% for todo in todos %}
-                        <li>
-                            {{ todo.todo }}
-                            <p>{{ todo.created_on | date:"d M Y" }} at {{ todo.created_on | date:"H:i" }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+    <div class='panel panel-default'>
+        <div class='panel-heading'> Notes</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for note in notes %}
+                <li>
+                    <b> {{ note.author.user.first_name }} {{ note.author.user.last_name }} -
+                        {{ note.author.user.username }} </b> : {{ note.note }}
+                    <p>{{ note.created_on | date:"d M Y" }} at {{ note.created_on | date:"H:i" }}</p>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
+    </div>
 
-        <div class='panel panel-default'>
-            <div class='panel-heading'> Goals</div>
-            <div class='panel-body'>
-                <ul class='list-group'>
-                    {% for goal in goals %}
-                        <li>
-                            {{ goal.goal }}
-                            <p>{{ goal.start_date | date:"d M Y" }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+    <div class='panel panel-default'>
+        <div class='panel-heading'> Todos</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for todo in todos %}
+                <li>
+                    {{ todo.todo }}
+                    <p>{{ todo.created_on | date:"d M Y" }} at {{ todo.created_on | date:"H:i" }}</p>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
+    </div>
 
-        <div class='panel panel-default'>
-            <div class='panel-heading'> Summaries</div>
-            <div class='panel-body'>
-                <ul class='list-group'>
-                    {% for summary in summaries %}
-                        <li>
-                            {{ summary.summary|safe }}
-                            <p>{{ summary.datetime | date:"d M Y" }} at {{ summary.datetime | date:"H:i" }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+    <div class='panel panel-default'>
+        <div class='panel-heading'> Goals</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for goal in goals %}
+                <li>
+                    {{ goal.goal }}
+                    <p>{{ goal.start_date | date:"d M Y" }}</p>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
+    </div>
 
-        <div class='panel panel-default'>
-            <div class='panel-heading'> My Story Tabs</div>
-            <div class='panel-body'>
-                <ul class='list-group'>
-                    {% for tab in tabs %}
-                        <li>
-                            {{ tab.name }}
-                            <p>{{ tab.datetime | date:"d M Y" }} at {{ tab.datetime | date:"H:i" }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+    <div class='panel panel-default'>
+        <div class='panel-heading'> Summaries</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for summary in summaries %}
+                <li>
+                    {{ summary.summary|safe }}
+                    <p>{{ summary.datetime | date:"d M Y" }} at {{ summary.datetime | date:"H:i" }}</p>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
+    </div>
 
-        <div class='panel panel-default'>
-            <div class='panel-heading'> My Story Text Components</div>
-            <div class='panel-body'>
-                <ul class='list-group'>
-                    {% for text_component in text_components %}
-                        <li>
-                            {{ text_component.name }}
-                            <p>{{ text_component.datetime | date:"d M Y" }}
-                                at {{ text_component.datetime | date:"H:i" }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+    <div class='panel panel-default'>
+        <div class='panel-heading'> My Story Tabs</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for tab in tabs %}
+                <li>
+                    {{ tab.name }}
+                    <p>{{ tab.datetime | date:"d M Y" }} at {{ tab.datetime | date:"H:i" }}</p>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
+    </div>
 
-        <div class='panel panel-default'>
-            <div class='panel-heading'> Documents</div>
-            <div class='panel-body'>
-                <ul class='list-group'>
-                    {% for document in documents %}
-                        <li>
-                            <a href='/u/patient/manage/{{ document.patient.id }}/#/document/{{ document.id }}/'>{{ document.document_name }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+    <div class='panel panel-default'>
+        <div class='panel-heading'> My Story Text Components</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for text_component in text_components %}
+                <li>
+                    {{ text_component.name }}
+                    <p>{{ text_component.datetime | date:"d M Y" }}
+                        at {{ text_component.datetime | date:"H:i" }}</p>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
-    </section>
+    </div>
+
+    <div class='panel panel-default'>
+        <div class='panel-heading'> Documents</div>
+        <div class='panel-body'>
+            <ul class='list-group'>
+                {% for document in documents %}
+                <li>
+                    <a href='/u/patient/manage/{{ document.patient.id }}/#/document/{{ document.id }}/'>{{
+                        document.document_name }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</section>
 {% endblock %}
 {% block page_js %}
 {% endblock %}

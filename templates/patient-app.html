@@ -1,196 +1,210 @@
 {% extends "base.html" %}
-{% block title %}  Manage Patient - {{ patient.get_full_name }}   {% endblock %}
+{% block title %}  Manage Patient - {{ patient.get_full_name }} {{patient}}  {% endblock %}
+{% load tz %}
 
 {% block search %}
-    <form class="navbar-form navbar-left" target="_blank" action="{% url 'search' patient.id %}" method="post">
-        {% csrf_token %}
-        <input type='hidden' name='patient_id' value='{{ patient.id }}'>
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search" name="query">
-            <span class="input-group-btn">
-                <button type="submit" class="btn btn-default">Submit</button>
+<form action="{% url 'search' patient.id %}" class="navbar-form navbar-left" method="post" target="_blank">
+    {% csrf_token %}
+    <input name='patient_id' type='hidden' value='{{ patient.id }}'>
+    <div class="input-group">
+        <input class="form-control" name="query" placeholder="Search" type="text">
+        <span class="input-group-btn">
+                <button class="btn btn-default" type="submit">Submit</button>
             </span>
-        </div>
-    </form>
+    </div>
+</form>
 {% endblock %}
 
 {% block patient_header %}
-    <li>
-        <a title="Edit profile" href="#/edit/profileInfo">
-            Phone: {{ patient.profile.phone_number }}
-        </a>
-    </li>
-    <li>
-        <a href="#/" class="headerWrap" title="My account">
-            {% if patient_profile.portrait_image %}
-                <img src="{{ patient_profile.portrait_image.url }}" alt="" class="profileThumb">
-            {% endif %}
-            {{ patient.get_full_name }} {{ patient_profile.date_of_birth | date:"m/d/Y" }}
-        </a>
-    </li>
+<li>
+    <a href="#/edit/profileInfo" title="Edit profile">
+        Phone: {{ patient.profile.phone_number }}
+    </a>
+</li>
+<li>
+    <a class="headerWrap" href="#/" title="My account">
+        {% if patient_profile.portrait_image %}
+        <img alt="" class="profileThumb" src="{{ patient_profile.portrait_image.url }}">
+        {% endif %}
+        {{ patient.get_full_name }} {% localtime off %} {{ patient_profile.date_of_birth | date:"m/d/Y" }} {%
+        endlocaltime %}
+    </a>
+</li>
 
-    <!--Vitals infos-->
-    <li id="vitals_blood_pressure" class="vitals"></li>
-    <li id="vitals_body_temperature" class="vitals"></li>
-    <li id="vitals_weight" class="vitals"></li>
-    <li id="vitals_heart_rate" class="vitals"></li>
-    <li class="dropdown">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-           aria-expanded="false">
-            <span class="caret"></span></a>
-        <ul class="dropdown-menu">
-            <li><a href='#/edit/'>My account</a></li>
-            <li><a href='/logout'>Logout</a></li>
-        </ul>
-    </li>
+<!--Vitals infos-->
+<li class="vitals" id="vitals_blood_pressure"></li>
+<li class="vitals" id="vitals_body_temperature"></li>
+<li class="vitals" id="vitals_weight"></li>
+<li class="vitals" id="vitals_heart_rate"></li>
+<li class="dropdown">
+    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown" href="#"
+       role="button">
+        <span class="caret"></span></a>
+    <ul class="dropdown-menu">
+        <li><a href='#/edit/'>My account</a></li>
+        <li><a href='/logout'>Logout</a></li>
+    </ul>
+</li>
 
 {% endblock %}
 
 {% block content %}
-    <script src="/static/apps/patient/patient.app.js" type="text/javascript"></script>
+<script src="/static/apps/patient/patient.app.js" type="text/javascript"></script>
 
-    <script src="/static/apps/patient/home-page/home.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/problem-page/problems.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/goal-page/goals.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/encounter-page/encounter-page.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/encounter-bfdi.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/patient-todo-page/todo.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/edit-profile-page/user-edit.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/manage-sharing/user-sharing.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/manage-sharing-problem/manage-sharing-problem.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/medication-page/medication.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/user-portrait-update-dialog.controller.js"
-            type="text/javascript"></script>
+<script src="/static/apps/patient/home-page/home.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/problem-page/problems.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/goal-page/goals.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/encounter-page/encounter-page.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/controllers/encounter-bfdi.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/patient-todo-page/todo.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/edit-profile-page/user-edit.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/manage-sharing/user-sharing.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/manage-sharing-problem/manage-sharing-problem.controller.js"
+        type="text/javascript"></script>
+<script src="/static/apps/patient/medication-page/medication.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/controllers/user-portrait-update-dialog.controller.js"
+        type="text/javascript"></script>
 
 
-    <!--A1C module's components-->
-    <script src="/static/apps/patient/a1c-new-order-page/a1c-new-order.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/a1c-new-value-page/a1c-new-value.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/a1c-edit-delete-value-page/a1c-edit-delete-value.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/a1c-edit-value-page/a1c-edit-value.controller.js" type="text/javascript"></script>
+<!--A1C module's components-->
+<script src="/static/apps/patient/a1c-new-order-page/a1c-new-order.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/a1c-new-value-page/a1c-new-value.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/a1c-edit-delete-value-page/a1c-edit-delete-value.controller.js"
+        type="text/javascript"></script>
+<script src="/static/apps/patient/a1c-edit-value-page/a1c-edit-value.controller.js" type="text/javascript"></script>
 
-    <!-- Colon cancer widget-->
-    <script src="/static/apps/patient/colon-cancer-edit-page/colon-cancer-edit-study.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/colon-cancer-create-page/colon-cancer-new-study.controller.js" type="text/javascript"></script>
+<!-- Colon cancer widget-->
+<script src="/static/apps/patient/colon-cancer-edit-page/colon-cancer-edit-study.controller.js"
+        type="text/javascript"></script>
+<script src="/static/apps/patient/colon-cancer-create-page/colon-cancer-new-study.controller.js"
+        type="text/javascript"></script>
 
-    <!-- Observation | Data module-->
-    <script src="/static/apps/patient/observation-page/observation.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/observation-add-data-page/observation-add-data.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/observation-list-data-page/observation-list-data.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/observation-data-detail-page/observation-data-detail.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/observation-setting-page/observation-setting.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/observation-table-page/observation-table.controller.js" type="text/javascript"></script>
+<!-- Observation | Data module-->
+<script src="/static/apps/patient/observation-page/observation.controller.js" type="text/javascript"></script>
+<script src="/static/apps/patient/observation-add-data-page/observation-add-data.controller.js"
+        type="text/javascript"></script>
+<script src="/static/apps/patient/observation-list-data-page/observation-list-data.controller.js"
+        type="text/javascript"></script>
+<script src="/static/apps/patient/observation-data-detail-page/observation-data-detail.controller.js"
+        type="text/javascript"></script>
+<script src="/static/apps/patient/observation-setting-page/observation-setting.controller.js"
+        type="text/javascript"></script>
+<script src="/static/apps/patient/observation-table-page/observation-table.controller.js"
+        type="text/javascript"></script>
 
-    <!-- Todo module-->
-    <script src="/static/apps/common/directives/todo/todo-item.component.js" type="text/javascript"></script>
+<!-- Todo module-->
+<script src="/static/apps/common/directives/todo/todo-item.component.js" type="text/javascript"></script>
 
-    <!--Directives | Component-->
-    <script src="/static/apps/patient/directives/timeline.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/todo-directive/todo.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/a1c-directive/a1c.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/problem-directive/problem.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/colon-cancer-directive/colon-cancer.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/medication-directive/medication.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/encounter-event.directive.js" type="text/javascript"></script>
+<!--Directives | Component-->
+<script src="/static/apps/patient/directives/timeline.directive.js" type="text/javascript"></script>
+<script src="/static/apps/patient/directives/todo-directive/todo.directive.js" type="text/javascript"></script>
+<script src="/static/apps/patient/directives/a1c-directive/a1c.directive.js" type="text/javascript"></script>
+<script src="/static/apps/patient/directives/problem-directive/problem.directive.js" type="text/javascript"></script>
+<script src="/static/apps/patient/directives/colon-cancer-directive/colon-cancer.directive.js"
+        type="text/javascript"></script>
+<script src="/static/apps/patient/directives/medication-directive/medication.directive.js"
+        type="text/javascript"></script>
+<script src="/static/apps/common/directives/encounter-event.directive.js" type="text/javascript"></script>
 
-    <!-- Problem note component-->
-    <script src="/static/apps/common/directives/problem-note/problem-note.component.js" type="text/javascript"></script>
-    <!--Todo laboratory-->
-    <script src="/static/apps/patient/todo-laboratory-print-page/print.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/todo-laboratory/todo-laboratory.component.js" type="text/javascript"></script>
+<!-- Problem note component-->
+<script src="/static/apps/common/directives/problem-note/problem-note.component.js" type="text/javascript"></script>
+<!--Todo laboratory-->
+<script src="/static/apps/patient/todo-laboratory-print-page/print.controller.js" type="text/javascript"></script>
+<script src="/static/apps/common/directives/todo-laboratory/todo-laboratory.component.js"
+        type="text/javascript"></script>
 
-    <script src="/static/libs/ngPrint/ngPrint.min.js"></script>
+<script src="/static/libs/ngPrint/ngPrint.min.js"></script>
 
-    <!-- TODO: Patient_Id is an User_ID-->
-    <!-- TODO: Patient_Info is an UserProfile instant-->
-    <!-- TODO: User_Id is an User_ID instant-->
-    <!-- TODO: active_user is an UserProfile instant-->
-    <input class="form-control" type="hidden" value="{{ user.id }}" id="user_id"/>
-    <input class="form-control" type="hidden" value="{{ active_user }}" id="active_user"/>
-    <input class="form-control" type="hidden" value="{{ patient.id }}" id="patient_id"/>
-    <input class="form-control" type="hidden" value="{{ patient_info }}" id="patient_info"/>
-    <input class="form-control" type="hidden" value="{{ bleeding_risk }}" id="bleeding_risk"/>
-    <input class="form-control" type="hidden" value="{{ fit_and_well }}" id="fit_and_well"/>
+<!-- TODO: Patient_Id is an User_ID-->
+<!-- TODO: Patient_Info is an UserProfile instant-->
+<!-- TODO: User_Id is an User_ID instant-->
+<!-- TODO: active_user is an UserProfile instant-->
+<input class="form-control" id="user_id" type="hidden" value="{{ user.id }}"/>
+<input class="form-control" id="active_user" type="hidden" value="{{ active_user }}"/>
+<input class="form-control" id="patient_id" type="hidden" value="{{ patient.id }}"/>
+<input class="form-control" id="patient_info" type="hidden" value="{{ patient_info }}"/>
+<input class="form-control" id="bleeding_risk" type="hidden" value="{{ bleeding_risk }}"/>
+<input class="form-control" id="fit_and_well" type="hidden" value="{{ fit_and_well }}"/>
 
-    <div id='ng-app' ng-app='ManagerApp'
-         ng-init="user_id={{ user.id }};active_user={{ active_user }};patient_id={{ patient.id }};patient_info={{ patient_info }}; bleeding_risk={{ bleeding_risk }};">
-        <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
+<div id='ng-app' ng-app='ManagerApp'
+     ng-init="user_id={{ user.id }}active_user={{ active_user }}patient_id={{ patient.id }}patient_info={{ patient_info }} bleeding_risk={{ bleeding_risk }}">
+    <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
 
-        <div ng-view autoscroll='true'>
-            Loading ....
-        </div>
+    <div autoscroll='true' ng-view>
+        Loading ....
+    </div>
 
-        {% verbatim %}
-        <div id='encounter-bar' class='bottom-bar' ng-controller='EncountersMainCtrl'
-             ng-if="active_user.permissions.indexOf('add_encounter') != -1">
+    {% verbatim %}
+    <div class='bottom-bar' id='encounter-bar' ng-controller='EncountersMainCtrl'
+         ng-if="active_user.permissions.indexOf('add_encounter') != -1">
 
-            <!-- Client UI response for recording states-->
-            <div class='row' id='encounter-box'>
-                <!-- Don't have an active encounter-->
-                <div class='col-md-12' ng-show='activeEncounter == null'>
-                    <button class='btn btn-warning btn-md' ng-click='start_encounter()'>
-                        Start Encounter
-                    </button>
-                </div>
+        <!-- Client UI response for recording states-->
+        <div class='row' id='encounter-box'>
+            <!-- Don't have an active encounter-->
+            <div class='col-md-12' ng-show='activeEncounter == null'>
+                <button class='btn btn-warning btn-md' ng-click='start_encounter()'>
+                    Start Encounter
+                </button>
+            </div>
 
-                <!-- Having an active encounter-->
-                <div class='col-md-12' ng-show='activeEncounter != null'>
-                    <div class='row'>
-                        <div class='col-md-6'>
-                            <div ng-show="activeEncounter.recorder_status != 2">
-                                <button class='btn btn-warning btn-md' ng-click='stop_encounter()'> Stop Encounter
-                                </button>
+            <!-- Having an active encounter-->
+            <div class='col-md-12' ng-show='activeEncounter != null'>
+                <div class='row'>
+                    <div class='col-md-6'>
+                        <div ng-show="activeEncounter.recorder_status != 2">
+                            <button class='btn btn-warning btn-md' ng-click='stop_encounter()'> Stop Encounter
+                            </button>
 
-                                <span ng-show="settings.browser_audio_recording">
+                            <span ng-show="settings.browser_audio_recording">
                                 <!-- This is control used to record audio in client side-->
-                                <ng-audio-recorder id='audioInput' show-player="false" audio-model='recordedInput'
-                                                   style="display: none"
-                                                   on-record-start="recordStart()"
-                                                   on-record-complete="recordComplete()"
+                                <ng-audio-recorder audio-model='recordedInput' id='audioInput' on-conversion-complete="conversionComplete()"
                                                    on-conversion-start="conversionStart()"
-                                                   on-conversion-complete="conversionComplete()">
+                                                   on-record-complete="recordComplete()"
+                                                   on-record-start="recordStart()"
+                                                   show-player="false"
+                                                   style="display: none">
                                     <div ng-if="!recorder.isAvailable"> Your browser is not support recording</div>
                                 </ng-audio-recorder>
 
-                                    <!-- Pause/Resume recorder while encountering | Disable while converting -->
-                                <button type="button" class="btn btn-default" ng-click='toggle_recorder()'>
-                                    <span ng-if="activeEncounter.recorder_status==1" class="glyphicon glyphicon-play"
-                                          title="Resume" aria-hidden="true"></span>
-                                    <span ng-if="activeEncounter.recorder_status==0" class="glyphicon glyphicon-pause"
-                                          title="Pause" aria-hidden="true"></span>
+                                <!-- Pause/Resume recorder while encountering | Disable while converting -->
+                                <button class="btn btn-default" ng-click='toggle_recorder()' type="button">
+                                    <span aria-hidden="true" class="glyphicon glyphicon-play"
+                                          ng-if="activeEncounter.recorder_status==1" title="Resume"></span>
+                                    <span aria-hidden="true" class="glyphicon glyphicon-pause"
+                                          ng-if="activeEncounter.recorder_status==0" title="Pause"></span>
                                 </button>
                             </span>
 
-                                <button class='btn btn-default btn-md' ng-click='view_encounter()'> View Encounter
-                                </button>
-                                <span>Recorded time: {{ elapsedTime*1000 | duration }}</span>
-                            </div>
-
-                            <!--Audio conversion & uploading status only if there is stop command-->
-                            <div ng-show="activeEncounter.recorder_status == 2">
-                                <label ng-if="encounterCtrl.status.isConverting">Converting encounter...</label>
-                                <label ng-if="encounterUploading">Uploading encounter...</label>
-                            </div>
+                            <button class='btn btn-default btn-md' ng-click='view_encounter()'> View Encounter
+                            </button>
+                            <span>Recorded time: {{ elapsedTime*1000 | duration }}</span>
                         </div>
 
-                        <div class='col-md-6'>
-                            <div class="input-group">
-                                <input type='text' ng-model='event_summary' placeholder='What are you doing right now ?'
-                                       class='form-control'>
-                                <span class="input-group-btn">
+                        <!--Audio conversion & uploading status only if there is stop command-->
+                        <div ng-show="activeEncounter.recorder_status == 2">
+                            <label ng-if="encounterCtrl.status.isConverting">Converting encounter...</label>
+                            <label ng-if="encounterUploading">Uploading encounter...</label>
+                        </div>
+                    </div>
+
+                    <div class='col-md-6'>
+                        <div class="input-group">
+                            <input class='form-control' ng-model='event_summary' placeholder='What are you doing right now ?'
+                                   type='text'>
+                            <span class="input-group-btn">
                                 <button class='btn btn-default' ng-click='add_event_summary()'>
                                     Add Event Summary
                                 </button>
                             </span>
-                            </div><!-- /input-group -->
-                        </div>
+                        </div><!-- /input-group -->
                     </div>
-
                 </div>
+
             </div>
         </div>
-        {% endverbatim %}
     </div>
+    {% endverbatim %}
+</div>
 {% endblock %}
 {% block page_js %}
 {% endblock %}
