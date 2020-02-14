@@ -1,0 +1,65 @@
+<!--
+  ~ Copyright (c) Small Brain Records 2014-2020. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Affero General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>
+  -->
+
+<!--<toaster-container toaster-options="{'time-out': 1000}"></toaster-container>-->
+<center>
+    <h3>
+        <a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
+    </h3>
+</center>
+<hr>
+
+<center><h3> Manage Sharing Between Patients </h3></center>
+<hr>
+
+
+<div class='row'>
+    <div class='col-md-12'>
+        <div class='panel panel-default' id='nursesAssignedInfo'>
+
+            <div class='panel-heading'> Patients Assigned</div>
+
+            <div class='panel-body'>
+
+                <table class='table'>
+                    <thead>
+                    <tr>
+                        <th> Name</th>
+                        <th> Username</th>
+                        <th> Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat='patient in patients_list'>
+                        <td> {{ patient.name }}
+                        </td>
+                        <td> {{ patient.username }}
+                        </td>
+                        <td>
+                            <a href='#/manage/sharing/{{ patient.id }}/' class='btn btn-sm btn-default'>
+                                Manage Sharing
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </div>
+</div>

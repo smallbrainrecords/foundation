@@ -40,11 +40,11 @@
                     controller: 'ManageSharingCtrl'
                 })
                 .when('/manage/sharing/:patientId', {
-                    templateUrl: '/static/apps/common/directives/patient_sharing/manage_sharing_patient.html',
+                    templateUrl: '/static/apps/admin/manage-sharing-patient-page/manage-sharing-patient.html',
                     controller: 'ManageSharingPatientCtrl'
                 })
                 .when('/manage/sharing/problem/:patientId/:sharing_patient_id', {
-                    templateUrl: '/static/apps/admin/manage-sharing-problem/manage-sharing-problem.html',
+                    templateUrl: '/static/apps/admin/manage-sharing-problem-page/manage-sharing-problem.html',
                     controller: 'ManageSharingProblemCtrl'
                 }).otherwise('/');
         });

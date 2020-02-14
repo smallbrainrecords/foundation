@@ -31,4 +31,4 @@
                 return Math.abs(ageDate.getUTCFullYear() - 1970);
             }
         });
-});
+})();

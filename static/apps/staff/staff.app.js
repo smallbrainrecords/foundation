@@ -20,9 +20,7 @@
 
 
     var StaffApp = angular.module('StaffApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', // Core module along with angularJS
-        'app.services',
-        'sharedModule', 'httpModule', 'myTools', 'inr', 'todos', 'document', 'TemplateCache',  // Development module
-
+        'app.services', 'sharedModule', 'httpModule', 'myTools', 'inr', 'todos', 'document', 'TemplateCache',  // Development module
         'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', 'angular-spinkit', '720kb.datepicker',// 3rd party module
         'ui.bootstrap', 'pickadate', 'cgPrompt', 'view.file', 'angularMoment', 'checklist-model']);
 
@@ -33,7 +31,7 @@
 
         $routeProvider
             .when('/', {
-                templateUrl: '/static/apps/staff/partials/home.template.html',
+                templateUrl: '/static/apps/staff/home-page/home.template.html',
                 controller: 'HomeCtrl'
             })
             .when('/manage/setting', {
@@ -41,39 +39,35 @@
                 controller: 'SettingPageController'
             })
             .when("/todo/:todo_id", {
-                templateUrl: '/static/apps/staff/partials/staff-todo-page.template.html',
+                templateUrl: '/static/apps/staff/staff-todo-page/staff-todo-page.template.html',
                 controller: 'TodoCtrl'
             })
             .when('/manage/sharing', {
-
-                templateUrl: '/static/apps/admin/manage-sharing-page/manage-sharing.html',
+                templateUrl: '/static/apps/staff/manage-sharing-page/share-management.template.html',
                 controller: 'ManageSharingCtrl'
             })
             .when('/manage/sharing/:patientId', {
-
-                templateUrl: '/static/apps/common/directives/patient_sharing/manage_sharing_patient.html',
+                templateUrl: '/static/apps/staff/manage-sharing-patient-page/patient-sharing.template.html',
                 controller: 'ManageSharingPatientCtrl'
             })
             .when('/manage/sharing/problem/:patientId/:sharing_patient_id', {
-
-                templateUrl: '/static/apps/admin/manage-sharing-problem/manage-sharing-problem.html',
+                templateUrl: '/static/apps/staff/manage-sharing-problem-page/manage-sharing-problem.html',
                 controller: 'ManageSharingProblemCtrl'
             })
             .when('/manage/common_problems', {
-
-                templateUrl: '/static/apps/staff/partials/problem-common.template.html',
+                templateUrl: '/static/apps/staff/problem-common-page/problem-common.template.html',
                 controller: 'ManageCommonProblemCtrl'
             })
             .when('/manage/upload_documents', {
-                templateUrl: '/static/apps/common/directives/document/document-upload-page.template.html',
+                templateUrl: '/static/apps/staff/upload-document-page/document-upload-page.template.html',
                 controller: 'UploadDocumentsCtrl'
             })
             .when('/manage/uploaded', {
-                templateUrl: '/static/apps/common/directives/document/document-uploaded-page.template.html',
+                templateUrl: '/static/apps/staff/uploaded-document-page/document-uploaded-page.template.html',
                 controller: 'UploadedDocumentsPageCtrl'
             })
             .when('/manage/document/:documentId', {
-                templateUrl: '/static/apps/common/directives/document/document-page.template.html',
+                templateUrl: '/static/apps/document-detail-page/document-page.template.html',
                 controller: 'ViewDocumentCtrl'
             }).otherwise('/');
     });
