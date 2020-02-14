@@ -44,7 +44,7 @@
 
         return {
             restrict: 'E',
-            templateUrl: '/static/apps/patient/directives/templates/todo.html',
+            templateUrl: '/static/apps/patient/directives/todo-directive/todo.html',
             scope: {
                 todoList: '=',
                 showProblem: '=',

@@ -1,5 +1,5 @@
-/**
- * Copyright (c) Small Brain Records 2014-2018 Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+/*
+ * Copyright (c) Small Brain Records 2014-2020. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,7 +12,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 (function () {
 
@@ -27,7 +27,7 @@
     function colonCancerDirective(toaster, prompt, CollapseService, colonService, problemService, patientService, $routeParams) {
         return {
             restrict: 'E',
-            templateUrl: '/static/apps/patient/directives/templates/colon_cancer.html',
+            templateUrl: '/static/apps/patient/directives/colon-cancer-directive/colon_cancer.html',
             scope: {
                 colon_cancer: '=colonCancer',
                 orderAdded: '=',

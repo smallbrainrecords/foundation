@@ -78,96 +78,99 @@
          */
         $routeProvider
             .when('/', {
-                templateUrl: '/static/apps/patient/partials/home.html',
+                templateUrl: '/static/apps/patient/home-page/home.html',
                 controller: 'HomeCtrl'
             })
             .when('/edit/:section?', {
-                templateUrl: '/static/apps/patient/partials/edit.html',
+                templateUrl: '/static/apps/patient/edit-profile-page/edit.html',
                 controller: 'EditUserCtrl'
             })
             .when('/problem/:problem_id', {
-                templateUrl: '/static/apps/patient/partials/problem.html',
+                templateUrl: '/static/apps/patient/problem-page/problem.html',
                 controller: 'ProblemsCtrl'
             })
             .when('/goal/:goal_id', {
-                templateUrl: '/static/apps/patient/partials/goal.html',
+                templateUrl: '/static/apps/patient/goal-page/goal.html',
                 controller: 'GoalsCtrl'
             })
             .when('/encounter/:encounter_id', {
-                templateUrl: '/static/apps/patient/partials/encounter-page.template.html',
+                templateUrl: '/static/apps/patient/encounter-page/encounter-page.template.html',
                 controller: 'EncounterPageCtrl'
             })
             .when("/todo/:todo_id", {
-                templateUrl: '/static/apps/patient/partials/patient-todo-page.template.html',
+                templateUrl: '/static/apps/patient/patient-todo-page/patient-todo-page.template.html',
                 controller: 'TodoCtrl'
             })
-            .when("/a1c/:a1c_id/add_different_order", {
-                templateUrl: '/static/apps/common/directives/a1c/add_different_order.html',
-                controller: 'AddDifferentOrderCtrl'
-            })
-            .when("/a1c/:a1c_id/enter_new_value", {
-                templateUrl: '/static/apps/common/directives/a1c/enter_new_value.html',
-                controller: 'EnterNewValueCtrl'
-            })
-            .when("/a1c/:a1c_id/edit_or_delete_values", {
-                templateUrl: '/static/apps/common/directives/a1c/edit_or_delete_values.html',
-                controller: 'EditOrDeleteValuesCtrl'
-            })
-            .when("/observation_value/:value_id/edit_value", {
-                templateUrl: '/static/apps/common/directives/a1c/edit_value.html',
-                controller: 'EditValueCtrl'
-            })
             .when('/manage/sharing', {
-                templateUrl: '/static/apps/common/directives/patient_sharing/manage_sharing_patient.html',
+                // templateUrl: '/static/apps/patient/manage-sharing/user-sharing.controller.js',
+                templateUrl: '/static/apps/patient/manage-sharing/manage_sharing_patient.html',
                 controller: 'ManageSharingPatientCtrl'
             })
             .when('/manage/sharing/problem/:sharing_patient_id', {
-                templateUrl: '/static/apps/patient/partials/manage_sharing_problem.html',
+                templateUrl: '/static/apps/patient/manage-sharing-problem/manage-sharing-problem.html',
                 controller: 'ManageSharingProblemCtrl'
             })
+            .when('/medication/:medication_id', {
+                templateUrl: '/static/apps/patient/medication-page/medication-page.html',
+                controller: 'MedicationCtrl'
+            })
+            .when("/a1c/:a1c_id/add_different_order", {
+                templateUrl: '/static/apps/patient/a1c-new-order-page/add_different_order.html',
+                controller: 'AddDifferentOrderCtrl'
+            })
+            .when("/a1c/:a1c_id/enter_new_value", {
+                templateUrl: '/static/apps/patient/a1c-new-value-page/enter_new_value.html',
+                controller: 'EnterNewValueCtrl'
+            })
+            .when("/a1c/:a1c_id/edit_or_delete_values", {
+                templateUrl: '/static/apps/patient/a1c-edit-delete-value-page/edit_or_delete_values.html',
+                controller: 'EditOrDeleteValuesCtrl'
+            })
+            .when("/observation_value/:value_id/edit_value", {
+                templateUrl: '/static/apps/patient/a1c-edit-value-page/edit_value.html',
+                controller: 'EditValueCtrl'
+            })
             .when("/colon_cancer/:colon_id/add_new_study", {
-                templateUrl: '/static/apps/common/directives/colon_cancer/add_new_study.html',
+                templateUrl: '/static/apps/patient/colon-cancer-create-page/add_new_study.html',
                 controller: 'AddNewStudyCtrl'
             })
             .when("/colon_cancer/:colon_id/edit_study/:study_id", {
-                templateUrl: '/static/apps/common/directives/colon_cancer/edit_study.html',
+                templateUrl: '/static/apps/patient/colon-cancer-edit-page/edit_study.html',
                 controller: 'EditStudyCtrl'
             })
+
             .when('/data/view', {
-                templateUrl: '/static/apps/common/directives/observation/vitals_table_view_ctrl.html',
+                templateUrl: '/static/apps/patient/observation-table-page/vitals_table_view_ctrl.html',
                 controller: 'ObservationTableCtrl'
             })
             .when('/data/:data_id', {
-                templateUrl: '/static/apps/common/directives/observation/data.html',
+                templateUrl: '/static/apps/patient/observation-page/data.html',
                 controller: 'DataCtrl'
             })
             .when('/data/:data_id/add_data', {
-                templateUrl: '/static/apps/common/directives/observation/add_data.html',
+                templateUrl: '/static/apps/patient/observation-add-data-page/add_data.html',
                 controller: 'AddDataCtrl'
             })
             .when('/data/:data_id/show_all_data', {
-                templateUrl: '/static/apps/common/directives/observation/show_all_data.html',
+                templateUrl: '/static/apps/patient/observation-list-data-page/show_all_data.html',
                 controller: 'ShowAllDataCtrl'
             })
             .when('/data/:dataId/edit/:componentValueIds', {
-                templateUrl: '/static/apps/common/directives/observation/edit_data.html',
+                templateUrl: '/static/apps/patient/observation-data-detail-page/edit_data.html',
                 controller: 'IndividualDataCtrl'
             })
             .when('/data/:data_id/settings', {
-                templateUrl: '/static/apps/common/directives/observation/settings.html',
+                templateUrl: '/static/apps/patient/observation-setting-page/settings.html',
                 controller: 'DataSettingsCtrl'
             })
-            .when('/medication/:medication_id', {
-                templateUrl: '/static/apps/patient/partials/medication-page.html',
-                controller: 'MedicationCtrl'
-            })
+
             .when('/document/:documentId', {
-                templateUrl: '/static/apps/common/directives/document/document-page.template.html',
+                templateUrl: '/static/apps/document-detail-page/document-page.template.html',
                 controller: 'ViewDocumentCtrl',
             })
             .when('/todo-laboratory/:todoId', {
-                controller: 'PrintCtrl',
-                templateUrl: '/static/apps/common/directives/todo-laboratory/print.template.html'
+                templateUrl: '/static/apps/patient/todo-laboratory-print-page/print.template.html',
+                controller: 'PrintCtrl'
             })
             .otherwise('/');
     });

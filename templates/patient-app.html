@@ -49,53 +49,54 @@
 {% block content %}
     <script src="/static/apps/patient/patient.app.js" type="text/javascript"></script>
 
-    <script src="/static/apps/patient/controllers/home.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/problems.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/goals.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/encounter-page.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/home-page/home.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/problem-page/problems.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/goal-page/goals.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/encounter-page/encounter-page.controller.js" type="text/javascript"></script>
     <script src="/static/apps/patient/controllers/encounter-bfdi.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/todo.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/user-edit.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/user-sharing.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/controllers/medication.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/patient-todo-page/todo.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/edit-profile-page/user-edit.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/manage-sharing/user-sharing.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/manage-sharing-problem/manage-sharing-problem.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/medication-page/medication.controller.js" type="text/javascript"></script>
     <script src="/static/apps/patient/controllers/user-portrait-update-dialog.controller.js"
             type="text/javascript"></script>
 
 
     <!--A1C module's components-->
-    <script src="/static/apps/common/directives/a1c/a1c-new-order.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/a1c/a1c-new-value.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/a1c/a1c-edit-delete-value.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/a1c/a1c-edit-value.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/a1c-new-order-page/a1c-new-order.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/a1c-new-value-page/a1c-new-value.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/a1c-edit-delete-value-page/a1c-edit-delete-value.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/a1c-edit-value-page/a1c-edit-value.controller.js" type="text/javascript"></script>
 
     <!-- Colon cancer widget-->
-    <script src="/static/apps/common/directives/colon_cancer/colon-cancer-edit-study.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/colon_cancer/colon-cancer-new-study.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/colon-cancer-edit-page/colon-cancer-edit-study.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/colon-cancer-create-page/colon-cancer-new-study.controller.js" type="text/javascript"></script>
 
     <!-- Observation | Data module-->
-    <script src="/static/apps/common/directives/observation/observation.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/observation/observation-add-data.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/observation/observation-list-data.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/observation/observation-data-detail.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/observation/observation-setting.controller.js" type="text/javascript"></script>
-    <script src="/static/apps/common/directives/observation/observation-table.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/observation-page/observation.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/observation-add-data-page/observation-add-data.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/observation-list-data-page/observation-list-data.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/observation-data-detail-page/observation-data-detail.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/observation-setting-page/observation-setting.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/observation-table-page/observation-table.controller.js" type="text/javascript"></script>
 
     <!-- Todo module-->
     <script src="/static/apps/common/directives/todo/todo-item.component.js" type="text/javascript"></script>
 
     <!--Directives | Component-->
     <script src="/static/apps/patient/directives/timeline.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/todo.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/a1c.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/problem.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/colon-cancer.directive.js" type="text/javascript"></script>
-    <script src="/static/apps/patient/directives/medication.directive.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/directives/todo-directive/todo.directive.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/directives/a1c-directive/a1c.directive.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/directives/problem-directive/problem.directive.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/directives/colon-cancer-directive/colon-cancer.directive.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/directives/medication-directive/medication.directive.js" type="text/javascript"></script>
     <script src="/static/apps/common/directives/encounter-event.directive.js" type="text/javascript"></script>
 
     <!-- Problem note component-->
     <script src="/static/apps/common/directives/problem-note/problem-note.component.js" type="text/javascript"></script>
     <!--Todo laboratory-->
-    <script src="/static/apps/common/directives/todo-laboratory/print.controller.js" type="text/javascript"></script>
+    <script src="/static/apps/patient/todo-laboratory-print-page/print.controller.js" type="text/javascript"></script>
     <script src="/static/apps/common/directives/todo-laboratory/todo-laboratory.component.js" type="text/javascript"></script>
 
     <script src="/static/libs/ngPrint/ngPrint.min.js"></script>
