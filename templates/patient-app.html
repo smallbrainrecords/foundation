@@ -26,8 +26,7 @@
         {% if patient_profile.portrait_image %}
         <img alt="" class="profileThumb" src="{{ patient_profile.portrait_image.url }}">
         {% endif %}
-        {{ patient.get_full_name }} {% localtime off %} {{ patient_profile.date_of_birth | date:"m/d/Y" }} {%
-        endlocaltime %}
+        {{ patient.get_full_name }} {% localtime off %} {{ patient_profile.date_of_birth | date:"m/d/Y" }} {% endlocaltime %}
     </a>
 </li>
 
@@ -127,7 +126,7 @@
 <input class="form-control" id="fit_and_well" type="hidden" value="{{ fit_and_well }}"/>
 
 <div id='ng-app' ng-app='ManagerApp'
-     ng-init="user_id={{ user.id }}active_user={{ active_user }}patient_id={{ patient.id }}patient_info={{ patient_info }} bleeding_risk={{ bleeding_risk }}">
+     ng-init="user_id={{ user.id }};active_user={{ active_user }};patient_id={{ patient.id }};patient_info={{ patient_info }} ;bleeding_risk={{ bleeding_risk }}">
     <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
 
     <div autoscroll='true' ng-view>
@@ -135,8 +134,7 @@
     </div>
 
     {% verbatim %}
-    <div class='bottom-bar' id='encounter-bar' ng-controller='EncountersMainCtrl'
-         ng-if="active_user.permissions.indexOf('add_encounter') != -1">
+    <div class='bottom-bar' id='encounter-bar' ng-controller='EncountersMainCtrl' ng-if="active_user.permissions.indexOf('add_encounter') != -1">
 
         <!-- Client UI response for recording states-->
         <div class='row' id='encounter-box'>
@@ -189,7 +187,7 @@
 
                     <div class='col-md-6'>
                         <div class="input-group">
-                            <input class='form-control' ng-model='event_summary' placeholder='What are you doing right now ?'
+                            <input title="" class='form-control' ng-model='event_summary' placeholder='What are you doing right now ?'
                                    type='text'>
                             <span class="input-group-btn">
                                 <button class='btn btn-default' ng-click='add_event_summary()'>
@@ -205,6 +203,7 @@
     </div>
     {% endverbatim %}
 </div>
+
 {% endblock %}
 {% block page_js %}
 {% endblock %}
