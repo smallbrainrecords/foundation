@@ -19,7 +19,7 @@
     'use strict';
 
 
-    angular.module('todos', ['sharedModule', 'ngDialog'])
+    angular.module('todos', ['app.services', 'ngDialog'])
         .config(function ($routeProvider, $httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';

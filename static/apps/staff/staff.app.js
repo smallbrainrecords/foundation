@@ -20,7 +20,7 @@
 
 
     var StaffApp = angular.module('StaffApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', // Core module along with angularJS
-        'app.services', 'sharedModule', 'httpModule', 'myTools', 'inr', 'todos', 'document', 'TemplateCache',  // Development module
+        'app.services', 'myTools', 'inr', 'todos', 'document', 'TemplateCache',  // Development module
         'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', 'angular-spinkit', '720kb.datepicker',// 3rd party module
         'ui.bootstrap', 'pickadate', 'cgPrompt', 'view.file', 'angularMoment', 'checklist-model']);
 

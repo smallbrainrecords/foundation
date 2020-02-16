@@ -17,8 +17,7 @@
 (function () {
     "use strict";
 
-    angular.module('inr', ['ui.bootstrap', 'sharedModule', 'xeditable', 'angular-spinkit', 'app.services',
-        'httpModule', 'ngDialog', 'toaster', 'monospaced.elastic'])
+    angular.module('inr', ['ui.bootstrap', 'xeditable', 'angular-spinkit', 'app.services', 'ngDialog', 'toaster', 'monospaced.elastic'])
         .config(function ($routeProvider, $httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
