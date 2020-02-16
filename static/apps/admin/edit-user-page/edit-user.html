@@ -1,37 +1,24 @@
 <div class='row'>
     <div class='col-md-12'>
-        <hr>
-        <center><b> <a href='/project/admin'><i class='glyphicon glyphicon-arrow-left'></i> Back To Admin </a> </b></center>
-        <hr>
-
-        <center><b> Edit Patient Profile </b></center>
-
+        <b class="text-center">
+            <a ng-href='/project/admin'><i class='glyphicon glyphicon-arrow-left'></i> Back To Admin </a>
+        </b>
     </div>
-
 </div>
-
-
 <div class='row'>
-
     <div class='col-md-3'>
-
-        <div style='position:fixed; top:200px;'>
-
-            <center><b> Options </b></center>
-
+        <section id="menu" style='position:fixed; top:200px;'>
             <ul style='list-style-type:none; '>
                 <li>
                     <button class='btn btn-link' ng-click='navigate("basicInfo")'>
                         Basic Information
                     </button>
                 </li>
-
                 <li>
                     <button class='btn btn-link' ng-click='navigate("profileInfo")'>
                         Profile Information
                     </button>
                 </li>
-
                 <li>
                     <button class='btn btn-link' ng-click='navigate("image-info")'>
                         Update image
@@ -42,13 +29,11 @@
                         Email Information
                     </button>
                 </li>
-
                 <li>
                     <button class='btn btn-link' ng-click='navigate("passwordInfo")'>
                         Password Information
                     </button>
                 </li>
-
                 <li ng-show='user_profile.role=="patient"'>
                     <button class='btn btn-link' ng-click='navigate("physiciansInfo")'>
                         Physicians assigned
@@ -64,25 +49,19 @@
                         Manage patient
                     </button>
                 </li>
-
             </ul>
 
-            <hr>
-
             <ul ng-if='user_profile.role=="physician"' style='list-style-type:none; '>
-
                 <li>
                     <button class='btn btn-link' ng-click='navigate("patientsAssignedInfo")'>
                         Patients assigned
                     </button>
                 </li>
-
                 <li>
                     <button class='btn btn-link' ng-click='navigate("nursesAssignedInfo")'>
                         Nurses assigned
                     </button>
                 </li>
-
                 <li>
                     <button class='btn btn-link' ng-click='navigate("midLevelAssignedInfo")'>
                         Mid Level assigned
@@ -93,92 +72,42 @@
                         Secretary assigned
                     </button>
                 </li>
-
             </ul>
-
-        </div>
-
+        </section>
     </div>
-
     <div class='col-md-9'>
-
-
-        <div class='panel panel-default' id='basicInfo'>
-
+        <section class='panel panel-default' id='basicInfo'>
             <div class='panel-heading'><b> Basic Information </b></div>
-
             <div class='panel-body'>
-
-
-                <form class='form' ng-submit='update_basic_profile()'>
-
-
+                <form class='form' ng-submit='updateProfile()'>
                     <div class='form-group'>
-
-                        <label> First Name </label>
-
-                        <input type='text' ng-model='user_profile.user.first_name' class='form-control'>
-
+                        <label for="first_name"> First Name </label>
+                        <input type='text' ng-model='user_profile.user.first_name' id="first_name" class='form-control'>
                     </div>
-
                     <div class='form-group'>
-
-                        <label> Last Name </label>
-
-                        <input type='text' ng-model='user_profile.user.last_name' class='form-control'>
-
+                        <label for="last_name"> Last Name </label>
+                        <input type='text' ng-model='user_profile.user.last_name' id="last_name" class='form-control'>
                     </div>
-
-
                     <div class='form-group'>
-
-                        <label> Email </label>
-
-                        <input type='text' ng-model='user_profile.user.email' class='form-control' disabled>
-
+                        <label for="email"> Email </label>
+                        <input type='text' ng-model='user_profile.user.email' id="email" class='form-control' disabled>
                     </div>
-
-
                     <div class='form-group'>
-
-                        <label> Username </label>
-
-                        <input type='text' ng-model='user_profile.user.username' class='form-control' disabled>
-
+                        <label for="username"> Username </label>
+                        <input type='text' ng-model='user_profile.user.username' id="username" class='form-control'
+                               disabled>
                     </div>
-
-
                     <div class='form-group'>
-
-                        <center>
-
-                            <input type='submit' value='Update' class='btn btn-default btn-lg'>
-
-                        </center>
-
+                        <input type='submit' value='Update' class='btn btn-default btn-lg'>
                     </div>
-
-
                 </form>
-
-
             </div>
-
-        </div>
-
-
-        <div class='panel panel-default' id='profileInfo'>
-
+        </section>
+        <section class='panel panel-default' id='profileInfo'>
             <div class='panel-heading'><b> Profile Information </b></div>
-
             <div class='panel-body'>
-
-
-                <form class='form' ng-submit='update_profile()'>
-
-
+                <form class='form' ng-submit='updateProfile()'>
                     <div class='form-group'>
-
                         <label> Date of birth </label>
                         <datepicker date-format="dd/MM/yyyy" selector="form-control">
                             <div class="input-group">
@@ -188,177 +117,99 @@
                                         class="fa fa-lg fa-calendar"></i></span>
                             </div>
                         </datepicker>
-
                     </div>
-
                     <div class='form-group'>
-
-                        <label> Phone/Contact </label>
-
-                        <input type='text' ng-model='user_profile.phone_number' class='form-control' required>
-
+                        <label for="phone-number"> Phone/Contact </label>
+                        <input id="phone-number" type='text' ng-model='user_profile.phone_number' class='form-control'
+                               required>
                     </div>
-
-
                     <div class='form-group'>
-
-                        <label> Sex </label>
-
-                        <select ng-model='user_profile.sex' class='form-control'>
+                        <label for="sex"> Sex </label>
+                        <select ng-model='user_profile.sex' class='form-control' id="sex">
                             <option value=''> ----</option>
                             <option value='male'> Male</option>
                             <option value='female'> Female</option>
                         </select>
                     </div>
-
                     <div class='form-group'>
-
-                        <label> Role </label>
-
-                        <select ng-model='user_profile.role' class='form-control'>
+                        <label for="role"> Role </label>
+                        <select ng-model='user_profile.role' class='form-control' id="role">
                             <option value=''> ----</option>
-
-                            <option value='physician'> Physician</option>
-                            <option value='patient'> Patient</option>
-                            <option value='admin'> Admin</option>
-
+                            <option value='admin'>Admin</option>
+                            <option value='physician'>Physician</option>
+                            <option value='mid-level'>Mid Level PA/NP</option>
+                            <option value='nurse'>Nurse</option>
+                            <option value='secretary'>Secretary</option>
+                            <option value='patient'>Patient</option>
                         </select>
                     </div>
-
-
                     <div class='form-group'>
-
                         <label> Summary </label>
-
                         <textarea ng-model='user_profile.summary' class='form-control'></textarea>
                     </div>
-
-
                     <div class='form-group text-center'>
-
-
                         <input type='submit' value='Save' class='btn btn-default btn-lg'>
-
                     </div>
-
-
                 </form>
-
-
             </div>
-
-        </div>
-
-        <div class='panel panel-default' id='image-info'>
-
+        </section>
+        <section class='panel panel-default' id='image-info'>
             <div class='panel-heading'><b>Update image</b></div>
-
             <div class='panel-body'>
-
-
                 <form class='form' ng-submit='updateImage()'>
-
                     <div class='form-group'>
-
                         <img ng-src='{{ user_profile.cover_image }}' class='cover' alt='Cover Image'>
-
-
                         <label> Cover Image </label>
-
                         <input type='file' file-model='files.cover_image'>
                     </div>
-
-
                     <div class='form-group'>
-
                         <img ng-src='{{ user_profile.portrait_image }}' class='thumbnail' alt='Portrait Image'>
-
                         <label> Portrait Image </label>
-
                         <input type='file' file-model='files.portrait_image'>
                     </div>
-
-
                     <div class='form-group text-center'>
-
                         <input type='submit' value='Update' class='btn btn-default btn-lg'>
-
-
                     </div>
-
-
                 </form>
-
-
             </div>
-
-        </div>
-
-        <div class='panel panel-default' id='emailInfo'>
-
+        </section>
+        <section class='panel panel-default' id='emailInfo'>
             <div class='panel-heading'><b> Email </b></div>
             <div class='panel-body'>
-
-
-                <form class='form' ng-submit='update_email()'>
-
+                <form class='form' ng-submit='updateEmail()'>
                     <div class='form-group'>
                         <label> Email </label>
                         <input type='text' class='form-control' ng-model='user_profile.user.email'>
                     </div>
-
                     <div class='form-group'>
-
                         <input type='submit' value='Change Email' class='btn btn-default btn-lg'>
-
                     </div>
-
                 </form>
-
-
             </div>
-        </div>
-
-        <div class='panel panel-default' id='passwordInfo'>
-
+        </section>
+        <section class='panel panel-default' id='passwordInfo'>
             <div class='panel-heading'><b> Password </b></div>
             <div class='panel-body'>
-
-
-                <form class='form' ng-submit='update_password()'>
-
+                <form class='form' ng-submit='updatePassword()'>
                     <div class='form-group'>
                         <label> New Password </label>
                         <input type='password' class='form-control' ng-model='password_form.new_password'>
                     </div>
-
-
                     <div class='form-group'>
                         <label> Verify Password </label>
                         <input type='password' class='form-control' ng-model='password_form.verify_password'>
                     </div>
-
                     <div class='form-group'>
-
                         <input type='submit' value='Change Password' class='btn btn-default btn-lg'>
-
                     </div>
-
                 </form>
-
-
             </div>
-        </div>
-
-
-        <div class='non-physician-view' ng-if='show_physician_assigned(user_profile.role)==true'>
+        </section>
+        <section class='non-physician-view' ng-if="showAssignedPhysician(user_profile.role)">
             <div class='panel panel-default' id='physiciansInfo'>
-
                 <div class='panel-heading'><b> Physicians Assigned </b></div>
                 <div class='panel-body'>
-
-                    <form class='form' ng-submit='assign_physician(assign_physician_form)'>
-
+                    <form class='form' ng-submit='assignPhysician(assign_physician_form)'>
                         <div class='form-group'>
                             <label> Select physician </label>
                             <select ng-model='assign_physician_form.physician_id' class='form-control' required>
@@ -369,13 +220,10 @@
                                 </option>
                             </select>
                         </div>
-
                         <div class='form-group'>
                             <input type='submit' value='Assign' class='btn btn-default'>
                         </div>
-
                     </form>
-
                     <hr>
                     <b> Assigned physicians </b>
                     <hr>
@@ -396,31 +244,21 @@
                                 {{ physician.user.username }}
                             </td>
                             <td>
-                                <button class='btn btn-default' ng-click='unassign_physician(physician.user.id)'>
+                                <button class='btn btn-default' ng-click='unassignPhysician(physician.user.id)'>
                                     Unassign
                                 </button>
                             </td>
                         </tr>
                         </tbody>
                     </table>
-
-
                 </div>
             </div>
-        </div>
-
-
-        <div class='physician-view' ng-if='user_profile.role=="physician"'>
-
+        </section>
+        <section class='physician-view' ng-if='user_profile.role=="physician"'>
             <div class='panel panel-default' id='patientsAssignedInfo'>
-
                 <div class='panel-heading'> Patients Assigned</div>
-
                 <div class='panel-body'>
-
-
-                    <form class='form' ng-submit='assign_member(assign_patient_form)'>
-
+                    <form class='form' ng-submit='assignMember(assign_patient_form)'>
                         <div class='form-group'>
                             <label> Select patient </label>
                             <select ng-model='assign_patient_form.user_id' class='form-control' required>
@@ -431,21 +269,18 @@
                                 </option>
                             </select>
                         </div>
-
                         <div class='form-group'>
                             <input type='submit' value='Assign' class='btn btn-default'>
                         </div>
-
                     </form>
-
                     <hr>
-
-
                     <table class='table'>
                         <thead>
-                        <th> Name</th>
-                        <th> Username</th>
-                        <th> Actions</th>
+                        <tr>
+                            <th> Name</th>
+                            <th> Username</th>
+                            <th> Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
                         <tr ng-repeat='patient in patients'>
@@ -454,51 +289,40 @@
                             <td> {{ patient.user.username }}
                             </td>
                             <td>
-                                <button class='btn btn-default' ng-click='unassign_member(patient,"patient")'>
+                                <button class='btn btn-default' ng-click='unassignMember(patient,"patient")'>
                                     Unassign
                                 </button>
                             </td>
                         </tr>
                         </tbody>
                     </table>
-
-
                 </div>
-
             </div>
-
             <div class='panel panel-default' id='nursesAssignedInfo'>
-
                 <div class='panel-heading'> Nurses Assigned</div>
-
                 <div class='panel-body'>
-
-
-                    <form class='form' ng-submit='assign_member(assign_nurse_form)'>
-
+                    <form class='form' ng-submit='assignMember(assign_nurse_form)'>
                         <div class='form-group'>
-                            <label> Select nurse </label>
-                            <select ng-model='assign_nurse_form.user_id' class='form-control' required>
+                            <label for="assignee"> Select nurse </label>
+                            <select ng-model='assign_nurse_form.user_id' class='form-control' required id="assignee">
                                 <option value=''> ----</option>
                                 <option ng-repeat='nurse in nurses_list' value='{{ nurse.user.id }}'>
                                     {{ nurse.user.first_name }} {{ nurse.user.last_name }} @ {{ nurse.user.username }}
                                 </option>
                             </select>
                         </div>
-
                         <div class='form-group'>
                             <input type='submit' value='Assign' class='btn btn-default'>
                         </div>
-
                     </form>
-
                     <hr>
-
                     <table class='table'>
                         <thead>
-                        <th> Name</th>
-                        <th> Username</th>
-                        <th> Actions</th>
+                        <tr>
+                            <th> Name</th>
+                            <th> Username</th>
+                            <th> Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
                         <tr ng-repeat='staff in team.nurses'>
@@ -507,30 +331,19 @@
                             <td> {{ staff.user.username }}
                             </td>
                             <td>
-                                <button class='btn btn-default' ng-click='unassign_member(staff,"nurse")'>
+                                <button class='btn btn-default' ng-click='unassignMember(staff,"nurse")'>
                                     Unassign
                                 </button>
                             </td>
                         </tr>
                         </tbody>
                     </table>
-
-
                 </div>
-
             </div>
-
-
             <div class='panel panel-default' id='midLevelAssignedInfo'>
-
                 <div class='panel-heading'> Mid-Level Assigned</div>
-
                 <div class='panel-body'>
-
-
-                    <form class='form' ng-submit='assign_member(assign_mid_level_form)'>
-
-
+                    <form class='form' ng-submit='assignMember(assign_mid_level_form)'>
                         <div class='form-group'>
                             <label> Select Mid-Level PA/NP </label>
                             <select ng-model='assign_mid_level_form.user_id' class='form-control' required>
@@ -540,20 +353,18 @@
                                 </option>
                             </select>
                         </div>
-
                         <div class='form-group'>
                             <input type='submit' value='Assign' class='btn btn-default'>
                         </div>
-
                     </form>
-
                     <hr>
-
                     <table class='table'>
                         <thead>
-                        <th> Name</th>
-                        <th> Username</th>
-                        <th> Actions</th>
+                        <tr>
+                            <th> Name</th>
+                            <th> Username</th>
+                            <th> Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
                         <tr ng-repeat='staff in team.mid_level_staffs'>
@@ -562,30 +373,19 @@
                             <td> {{ staff.user.username }}
                             </td>
                             <td>
-                                <button class='btn btn-default' ng-click='unassign_member(staff,"mid-level")'>
+                                <button class='btn btn-default' ng-click='unassignMember(staff,"mid-level")'>
                                     Unassign
                                 </button>
                             </td>
                         </tr>
                         </tbody>
                     </table>
-
-
                 </div>
-
             </div>
-
-
             <div class='panel panel-default' id='secretaryAssignedInfo'>
-
                 <div class='panel-heading'> Secretary Assigned</div>
-
                 <div class='panel-body'>
-
-
-                    <form class='form' ng-submit='assign_member(assign_secretary_form)'>
-
-
+                    <form class='form' ng-submit='assignMember(assign_secretary_form)'>
                         <div class='form-group'>
                             <label> Select secretary </label>
                             <select ng-model='assign_secretary_form.user_id' class='form-control' required>
@@ -595,20 +395,18 @@
                                 </option>
                             </select>
                         </div>
-
                         <div class='form-group'>
                             <input type='submit' value='Assign' class='btn btn-default'>
                         </div>
-
                     </form>
-
                     <hr>
-
                     <table class='table'>
                         <thead>
-                        <th> Name</th>
-                        <th> Username</th>
-                        <th> Actions</th>
+                        <tr>
+                            <th> Name</th>
+                            <th> Username</th>
+                            <th> Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
                         <tr ng-repeat='staff in team.secretaries'>
@@ -617,45 +415,38 @@
                             <td> {{ staff.user.username }}
                             </td>
                             <td>
-                                <button class='btn btn-default' ng-click='unassign_member(staff,"secretary")'>
+                                <button class='btn btn-default' ng-click='unassignMember(staff,"secretary")'>
                                     Unassign
                                 </button>
                             </td>
                         </tr>
                         </tbody>
                     </table>
-
-
                 </div>
-
             </div>
-
-
-        </div>
-
-        <div class='panel panel-default' id='manageSharing' ng-if="user_profile.role=='patient'">
-
+        </section>
+        <section class='panel panel-default' id='manageSharing' ng-if="user_profile.role=='patient'">
             <div class='panel-heading'>
                 Sharing care
             </div>
-
             <div class='panel-body'>
-                <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
+                <a ng-href="#/manage/sharing/" class='btn btn-sm btn-default'>
                     Manage
                 </a>
-
                 <h4>People I can access:</h4>
                 <table class='table'>
                     <thead>
-                    <th> Name</th>
-                    <th> Actions</th>
+                    <tr>
+                        <th> Name</th>
+                        <th> Actions</th>
+                    </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat='p in shared_patients'>
                         <td> {{ p.user.first_name }} {{ p.user.last_name }}
                         </td>
                         <td>
-                            <a href="/u/patient/manage/{{ p.user.id }}" class='btn btn-sm btn-default'>
+                            <a ng-href="/u/patient/manage/{{ p.user.id }}" class='btn btn-sm btn-default'>
                                 Access chart
                             </a>
                         </td>
@@ -663,19 +454,20 @@
                     </tbody>
                 </table>
                 <br>
-
                 <h4>People that can access me:</h4>
                 <table class='table'>
                     <thead>
-                    <th> Name</th>
-                    <th> Actions</th>
+                    <tr>
+                        <th> Name</th>
+                        <th> Actions</th>
+                    </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat='p in sharing_patients'>
                         <td> {{ p.user.first_name }} {{ p.user.last_name }}
                         </td>
                         <td>
-                            <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
+                            <a ng-href="#/manage/sharing/" class='btn btn-sm btn-default'>
                                 Manage
                             </a>
                         </td>
@@ -683,19 +475,17 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-        <div class='panel panel-default' id='managePatient' ng-if="user_profile.role=='patient'">
-
+        </section>
+        <section class='panel panel-default' id='managePatient' ng-if="user_profile.role=='patient'">
             <div class='panel-heading'>
                 Manage patient
             </div>
-
             <div class='panel-body'>
                 <form class="form-horizontal">
                     <div class="form-group">
                         <div class='col-md-12'>
-                            <label>Reason:</label>
-                            <textarea class="form-control" ng-model='user_profile.active_reason'></textarea>
+                            <label for="reason">Reason:</label>
+                            <textarea id="reason" class="form-control" ng-model='user_profile.active_reason'></textarea>
                         </div>
                     </div>
                     <div class="form-group">
@@ -706,14 +496,13 @@
                     </div>
                     <div class="form-group">
                         <div class='col-md-12'>
-                            <button class="btn btn-default" ng-click="update_active();">Update</button>
+                            <button class="btn btn-default" ng-click="updateActive();">Update</button>
                         </div>
                     </div>
                 </form>
-
                 <form>
                     <div class="form-group">
-                        <p>Deceased date:</p>
+                        <label>Deceased date:</label>
                         <datepicker date-format="MM/dd/yyyy" selector="form-control">
                             <div class="input-group">
                                 <input class="form-control" placeholder="Choose a date"
@@ -724,10 +513,10 @@
                         </datepicker>
                     </div>
                     <div class="form-group">
-                        <button class="btn btn-default" ng-click="update_deceased_date();">Update</button>
+                        <button class="btn btn-default" ng-click="updateDeceasedDate();">Update</button>
                     </div>
                 </form>
             </div>
-        </div>
+        </section>
     </div>
 </div>

@@ -20,23 +20,21 @@
 
 
     angular.module('AdminApp')
-        .controller('EditUserCtrl', function ($scope, $routeParams, ngDialog, adminService, $location, $anchorScroll, toaster) {
-
-            $scope.staff_roles = ['nurse', 'secretary', 'mid-level'];
-            $scope.update_basic_profile = update_basic_profile;
-            $scope.update_profile = update_profile;
-            $scope.update_email = update_email;
-            $scope.update_password = update_password;
+        .controller('EditUserCtrl', function ($scope, $routeParams, adminService, toaster) {
+            $scope.updateBasicProfile = updateBasicProfile;
+            $scope.updateProfile = updateProfile;
+            $scope.updateEmail = updateEmail;
+            $scope.updatePassword = updatePassword;
             $scope.navigate = navigate;
-            $scope.show_physician_assigned = show_physician_assigned;
-            $scope.assign_physician = assign_physician;
-            $scope.unassign_physician = unassign_physician;
-            $scope.assign_member = assign_member;
-            $scope.unassign_member = unassign_member;
-            $scope.remove_item_by_id = remove_item_by_id;
-            $scope.update_active = update_active;
-            $scope.update_deceased_date = update_deceased_date;
+            $scope.showAssignedPhysician = showPhysicianAssigned;
+            $scope.assignPhysician = assignPhysician;
+            $scope.unassignPhysician = unassignPhysician;
+            $scope.assignMember = assignMember;
+            $scope.unassignMember = unassignMember;
+            $scope.updateActive = updateActive;
+            $scope.updateDeceasedDate = updateDeceasedDate;
             $scope.updateImage = updateImage;
+            $scope.removeItemById = removeItemById;
 
             init();
 
@@ -98,7 +96,7 @@
             }
 
 
-            function update_basic_profile() {
+            function updateBasicProfile() {
 
                 var form = {};
 
@@ -118,7 +116,7 @@
 
             }
 
-            function update_profile() {
+            function updateProfile() {
 
                 var form = {};
                 form.user_id = $scope.user_id;
@@ -161,7 +159,7 @@
                     });
             }
 
-            function update_email() {
+            function updateEmail() {
 
                 var form = {};
 
@@ -183,7 +181,7 @@
                     });
             }
 
-            function update_password() {
+            function updatePassword() {
 
                 var form = {};
 
@@ -206,25 +204,23 @@
             }
 
             function navigate(l) {
-                /* Replace by directive */
-
                 $("html, body").animate({scrollTop: $('#' + l).offset().top - 100}, 500);
             }
 
-            function show_physician_assigned(role) {
+            function showPhysicianAssigned(role) {
 
                 var permitted = ['patient', 'nurse', 'secretary', 'mid-level'];
                 return permitted.indexOf(role) > -1;
             }
 
-            function assign_physician(form) {
+            function assignPhysician(form) {
                 form.user_id = $scope.user_id;
                 form.member_type = $scope.user_profile.role;
 
                 adminService.assignMember(form).then(function (data) {
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Assigned Physician');
-                        var new_physician = $scope.remove_item_by_id($scope.unassigned_physicians, form.physician_id);
+                        var new_physician = $scope.removeItemById($scope.unassigned_physicians, form.physician_id);
                         $scope.assigned_physicians.push(new_physician);
 
                     } else {
@@ -236,7 +232,7 @@
 
             }
 
-            function unassign_physician(physician_id) {
+            function unassignPhysician(physician_id) {
                 var form = {};
                 form.physician_id = physician_id;
                 form.user_id = $scope.user_id;
@@ -246,45 +242,44 @@
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Unassigned Physician');
 
-                        var old_physician = $scope.remove_item_by_id($scope.assigned_physicians, form.physician_id);
+                        var old_physician = $scope.removeItemById($scope.assigned_physicians, form.physician_id);
                         $scope.unassigned_physicians.push(old_physician);
                     }
                 });
 
             }
 
-            function assign_member(form) {
+            function assignMember(form) {
                 /* Physician specific */
                 form.physician_id = $scope.user_id;
-
-                console.log(form);
-
                 adminService.assignMember(form).then(function (data) {
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Added member');
-
-                        if (form.member_type == 'patient') {
-                            var new_member = $scope.remove_item_by_id($scope.unassigned_patients, form.user_id);
-                            $scope.patients.push(new_member);
-                        } else if (form.member_type == 'nurse') {
-                            var new_member = $scope.remove_item_by_id($scope.nurses_list, form.user_id);
-                            $scope.team.nurses.push(new_member);
-                        } else if (form.member_type == 'secretary') {
-                            var new_member = $scope.remove_item_by_id($scope.secretaries_list, form.user_id);
-                            $scope.team.secretaries.push(new_member);
-                        } else if (form.member_type == 'mid-level') {
-                            var new_member = $scope.remove_item_by_id($scope.mid_level_staffs_list, form.user_id);
-                            $scope.team.mid_level_staffs.push(new_member);
+                        switch (form.member_type) {
+                            case 'patient' :
+                                var new_member = $scope.removeItemById($scope.unassigned_patients, form.user_id);
+                                $scope.patients.push(new_member);
+                                break;
+                            case 'nurse' :
+                                var new_member = $scope.removeItemById($scope.nurses_list, form.user_id);
+                                $scope.team.nurses.push(new_member);
+                                break;
+                            case 'secretary' :
+                                var new_member = $scope.removeItemById($scope.secretaries_list, form.user_id);
+                                $scope.team.secretaries.push(new_member);
+                                break;
+                            case 'mid-level' :
+                                var new_member = $scope.removeItemById($scope.mid_level_staffs_list, form.user_id);
+                                $scope.team.mid_level_staffs.push(new_member);
+                                break;
                         }
-
                         form.user_id = '';
                     }
-
                 });
 
             }
 
-            function unassign_member(member, member_type) {
+            function unassignMember(member, member_type) {
                 /* Physician specific */
                 var form = {};
                 form.user_id = member.user.id;
@@ -297,16 +292,16 @@
                         toaster.pop('success', 'Done', 'Unassigned member');
 
                         if (form.member_type == 'patient') {
-                            var user_profile = $scope.remove_item_by_id($scope.patients, form.user_id);
+                            var user_profile = $scope.removeItemById($scope.patients, form.user_id);
                             $scope.unassigned_patients.push(user_profile);
                         } else if (form.member_type == 'nurse') {
-                            var user_profile = $scope.remove_item_by_id($scope.team.nurses, form.user_id);
+                            var user_profile = $scope.removeItemById($scope.team.nurses, form.user_id);
                             $scope.nurses_list.push(user_profile);
                         } else if (form.member_type == 'secretary') {
-                            var user_profile = $scope.remove_item_by_id($scope.team.secretaries, form.user_id);
+                            var user_profile = $scope.removeItemById($scope.team.secretaries, form.user_id);
                             $scope.secretaries_list.push(user_profile);
                         } else if (form.member_type == 'mid-level') {
-                            var user_profile = $scope.remove_item_by_id($scope.team.mid_level_staffs, form.user_id);
+                            var user_profile = $scope.removeItemById($scope.team.mid_level_staffs, form.user_id);
                             $scope.mid_level_staffs_list.push(user_profile);
                         }
                     }
@@ -315,11 +310,10 @@
 
             }
 
-            function remove_item_by_id(items, item_id) {
+            function removeItemById(items, item_id) {
                 var target = null;
                 var target_value = null;
                 angular.forEach(items, function (value, key) {
-                    console.log(value, key);
                     if (value.user.id == item_id) {
                         target = key;
                         target_value = value;
@@ -332,7 +326,7 @@
                 return target_value;
             }
 
-            function update_active() {
+            function updateActive() {
 
                 var form = {};
 
@@ -354,7 +348,7 @@
 
             }
 
-            function update_deceased_date() {
+            function updateDeceasedDate() {
 
                 var form = {};
 
@@ -381,6 +375,4 @@
             }
         });
     /* End of controller */
-
-
 })();
