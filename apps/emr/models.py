@@ -298,7 +298,8 @@ class Encounter(models.Model):
 
     def duration(self):
         if self.stoptime:
-            return str(self.stoptime - self.starttime)
+            # Ignore microsecond part, min to seond
+            return str(self.stoptime.replace(microsecond=0) - self.starttime.replace(microsecond=0))
         else:
             return 0
 
