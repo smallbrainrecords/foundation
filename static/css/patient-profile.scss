@@ -1,7 +1,7 @@
-@import "../apps/common/directives/todo/todo.scss";
-@import "../apps/common/directives/todo/todo-item.scss";
+@import "todo";
+@import "todo-item";
 @import "todo-page";
-@import "../apps/common/directives/medication/medication.scss";
+@import "medication";
 
 .nav>li>a{
   padding-right:5px;
