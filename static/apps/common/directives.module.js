@@ -368,7 +368,7 @@
         }
     }
 
-    angular.module('myTools', [])
+    angular.module('app.directives', [])
         .config(function ($httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';

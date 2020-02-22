@@ -16,7 +16,7 @@
  */
 (function () {
     'use strict';
-    angular.module('AdminApp', ['app.services', 'myTools', 'ngRoute', 'ngCookies', 'ngDialog', 'toaster', '720kb.datepicker'])
+    angular.module('AdminApp', ['app.services', 'app.directives', 'ngRoute', 'ngCookies', 'ngDialog', 'toaster', '720kb.datepicker'])
         .config(function ($routeProvider, $httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
