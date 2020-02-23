@@ -54,12 +54,12 @@ todo-item .members-wrapper {
   background: #EEEFF1;
   padding: 15px;
   margin-bottom: 20px;
-  border-radius: 2px; }
+  border-radius: 3px; }
 #comments .comment-history .comment, #comments-list .comment-history .comment {
   background: #EEEFF1;
   padding: 15px;
   margin-bottom: 10px;
-  border-radius: 2px; }
+  border-radius: 3px; }
   #comments .comment-history .comment .username, #comments-list .comment-history .comment .username {
     font-weight: bold; }
   #comments .comment-history .comment .comment-content-wrapper, #comments-list .comment-history .comment .comment-content-wrapper {
@@ -67,7 +67,7 @@ todo-item .members-wrapper {
     #comments .comment-history .comment .comment-content-wrapper .comment-content, #comments-list .comment-history .comment .comment-content-wrapper .comment-content {
       background: white;
       padding: 10px;
-      border-radius: 5px; }
+      border-radius: 3px; }
   #comments .comment-history .comment textarea, #comments-list .comment-history .comment textarea {
     margin-bottom: 15px; }
 
@@ -125,9 +125,9 @@ body {
     width: 168px;
     margin: 0 30px;
     height: 168px;
-    -webkit-border-radius: 2px;
-    -moz-border-radius: 2px;
-    border-radius: 2px; }
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px; }
     .profile-section .profile-picture img {
       width: 100%;
       height: 100%; }
@@ -270,7 +270,7 @@ body {
     font-weight: 700; }
 
 .profileThumb {
-  border-radius: 2px;
+  border-radius: 3px;
   width: 20px;
   height: 20px;
   margin-right: 10px; }
@@ -417,7 +417,7 @@ inr-bfdi {
   border-bottom: none; }
   .tab-problems .nav.nav-tabs li.active a {
     background: #808080;
-    border-radius: 5px;
+    border-radius: 3px;
     color: white; }
 
 .dube-btn-pin-unpin {
@@ -501,11 +501,6 @@ todo .new-tagged-todo {
 
 .ngdialog-buttons {
   margin-top: 10px; }
-
-.todo-member:hover {
-  background: red;
-  color: white;
-  cursor: pointer; }
 
 .todo-label-front {
   cursor: pointer;

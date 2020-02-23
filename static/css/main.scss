@@ -233,29 +233,8 @@ body {
 
 button {
   outline: none;
-  border: 0px;
+  border: 0;
 }
-
-/*tbody {*/
-/*height: 180px;*/
-/*}*/
-
-/*tbody button {*/
-/*padding: 6px;*/
-/*}*/
-
-/*&*/
-/*.datepicker-mode-1,*/
-
-/*&*/
-/*.datepicker-mode-2 {*/
-
-/*tbody button {*/
-/*height: 65px;*/
-/*}*/
-
-/*}*/
-/*}*/
 
 .timepicker.dropdown-menu {
   padding: 0 4px;
@@ -263,19 +242,26 @@ button {
 
 button {
   outline: none;
-  border: 0px;
+  border: 0;
 }
 
 tbody button {
   padding: 6px;
 }
 
-/*}*/
 
 .todo-member {
   background: rgba(68, 48, 48, 0.15);
   padding: 5px;
-  margin-right: 5px;
+  margin: 5px;
+  border-radius: 3px;
+  display: inline-block;
+
+  &:hover {
+    background: #ff1629;
+    color: white;
+    cursor: pointer;
+  }
 }
 
 .due-date {
@@ -286,6 +272,21 @@ tbody button {
 .top-left-0 {
   top: 0;
   left: 0;
+}
+
+.todo-label {
+  width: auto;
+  height: auto;
+  color: white;
+  padding: 5px;
+  text-decoration: none;
+  display: inline-block;
+  margin: 5px;
+  border-radius: 3px;
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
 .labeled-list a.todo-label {
@@ -318,7 +319,7 @@ tbody button {
 
 .home-page-tabs .nav {
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 3px;
   border-top: none;
   margin-bottom: 40px;
   /*margin-top: -50px;*/
@@ -326,7 +327,7 @@ tbody button {
 
 .medication-page-tabs .nav {
   border-top: 1px solid #ddd;
-  margin-top: 0px;
+  margin-top: 0;
 }
 
 .home-page-tabs .nav > li {
@@ -357,7 +358,7 @@ tbody button {
 
 .my-story {
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -375,7 +376,7 @@ tbody button {
 }
 
 .my-story-list li button {
-  border-radius: 0px;
+  border-radius: 0;
   border: none;
 }
 
@@ -411,7 +412,7 @@ tbody button {
 .masonry-brick img {
   width: 100%;
   border: 2px solid #f5f5f5;
-  border-radius: 5px;
+  border-radius: 3px;
 }
 
 todo-laboratory {

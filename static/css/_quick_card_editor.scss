@@ -1,7 +1,9 @@
 .quick-card-editor {
   z-index: 10;
+
   a {
     text-decoration: none;
+    cursor: pointer;
   }
 
   input, button {
