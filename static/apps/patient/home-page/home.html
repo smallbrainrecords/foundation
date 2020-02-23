@@ -158,7 +158,7 @@
                                                         ng-show="problem.authenticated==false">(not authenticated)</span>
                                                     <a ng-repeat="label in problem.labels" class="todo-label"
                                                        ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
-                                                    </span> -->
+                                                    </span>
                                                     <span ng-repeat="p in sharing_patients"
                                                           ng-if="isInArray(p.problems, problem.id)">
                                                             <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
