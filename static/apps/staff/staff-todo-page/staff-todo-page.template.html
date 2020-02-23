@@ -171,7 +171,9 @@
 
                             <a href ng-click="changeDueDate(todo)"><i class="fa fa-clock-o"></i>Change Due Date</a>
 
-                            <a href ng-click="changeAttachment(todo)"><i class="fa fa-link"></i>Attachment</a>
+<!--                            <a href ng-click="changeAttachment(todo)"><i class="fa fa-paperclip fa-flip-vertical"></i>Attachment</a>-->
+
+                            <a ngf-select ng-model="files"><i class="fa fa-paperclip fa-flip-vertical"></i>Attachment</a>
 
                         </div>
                         <!-- end buttons -->
@@ -263,16 +265,16 @@
                         <!-- end change due date -->
 
                         <!-- begin change attachment -->
-                        <div ng-if="todo.change_attachment" class="quick-card-editor-lv2">
-                            <div class="quick-card-editor-lv2-header">
-                                <a href ng-click="changeAttachment(todo); $event.stopPropagation();"><i
-                                        class="fa fa-close"></i></a>
-                            </div>
-                            <p>
-                                <input type='file' file-model="attachment">
-                                <button class="btn btn-default" ng-click="addAttachment(todo, attachment)">Save</button>
-                            </p>
-                        </div>
+<!--                        <div ng-if="todo.change_attachment" class="quick-card-editor-lv2">-->
+<!--                            <div class="quick-card-editor-lv2-header">-->
+<!--                                <a href ng-click="changeAttachment(todo); $event.stopPropagation();"><i-->
+<!--                                        class="fa fa-close"></i></a>-->
+<!--                            </div>-->
+<!--                            <p>-->
+<!--                                <input type='file' file-model="attachment">-->
+<!--                                <button class="btn btn-default" ng-click="addAttachment(todo, attachment)">Save</button>-->
+<!--                            </p>-->
+<!--                        </div>-->
                         <!-- end change attachment -->
 
                         <!-- begin change member -->

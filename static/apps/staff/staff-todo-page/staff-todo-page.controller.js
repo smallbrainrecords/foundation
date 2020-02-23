@@ -66,7 +66,7 @@
             $scope.changeDueDate = changeDueDate;
             $scope.changeDueDate2 = changeDueDate2;
             $scope.saveTodoDueDate = saveTodoDueDate;
-            $scope.changeAttachment = changeAttachment;
+            // $scope.changeAttachment = changeAttachment;
             $scope.addAttachment = addAttachment;
             $scope.deleteAttachment = deleteAttachment;
             $scope.confirmDeleteAttachment = confirmDeleteAttachment;
@@ -99,6 +99,11 @@
 
                 todoService.fetchLabels($scope.user_id).then(function (data) {
                     $scope.labels = data['labels'];
+                });
+
+                $scope.$watch('files', function () {
+                    if ($scope.files)
+                        addAttachment($scope.todo, $scope.files);
                 });
 
                 $interval(function () {
@@ -367,21 +372,20 @@
             }
 
             // Attachment
-            function changeAttachment(todo) {
-                todo.change_attachment = (todo.change_attachment != true) ? true : false;
-            }
+            // function changeAttachment(todo) {
+            //     todo.change_attachment = (todo.change_attachment != true) ? true : false;
+            // }
 
             function addAttachment(todo, attachment) {
-                var form = {};
+                let form = {};
                 form.todo_id = $scope.todo_id;
 
                 todoService.addAttachment(form, attachment).then(function (data) {
-                    if (data['success'] == true) {
+                    if (data['success']) {
                         toaster.pop('success', 'Done', 'Attachment uploaded!');
-                        var attachment = data['attachment'];
-                        console.log($scope.attachments);
+                        let attachment = data['attachment'];
                         $scope.attachments.push(attachment);
-                    } else if (data['success'] == false) {
+                    } else if (!data['success']) {
                         toaster.pop('error', 'Error', 'Please fill valid data');
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
