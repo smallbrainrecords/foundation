@@ -317,44 +317,11 @@ tbody button {
   width: 100%;
 }
 
-.home-page-tabs .nav {
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  border-top: none;
-  margin-bottom: 40px;
-  /*margin-top: -50px;*/
-}
-
 .medication-page-tabs .nav {
   border-top: 1px solid #ddd;
   margin-top: 0;
 }
 
-.home-page-tabs .nav > li {
-  display: inline-block;
-  float: none;
-  margin: 0 !important;
-}
-
-.home-page-tabs .nav .nav-pills > li {
-  margin: 0 !important;
-}
-
-.home-page-tabs .nav > li a {
-  color: #337ab7;
-  font-weight: 700;
-  padding: 13px 30px;
-  border-right: 1px solid #ddd;
-  background: none !important;
-  border-radius: 0;
-  cursor: pointer;
-}
-
-.home-page-tabs .nav-pills > li.active > a,
-.home-page-tabs .nav-pills > li.active > a:hover,
-.home-page-tabs .nav-pills > li.active > a:focus {
-  color: grey;
-}
 
 .my-story {
   border: 1px solid #ddd;
@@ -415,6 +382,16 @@ tbody button {
   border-radius: 3px;
 }
 
+#signature {
+  position: relative;
+  right: 0;
+  width: 250px !important;;
+}
+
+.inactive {
+  color: lightgrey;
+}
+
 todo-laboratory {
 
   .label-wrapper {
@@ -438,13 +415,6 @@ todo-laboratory {
 
 }
 
-#signature {
-  position: relative;
-  right: 0;
-  width: 250px !important;;
-}
-
-// Todo laboratory print styling
 @media print {
   #print-template {
     #signature {
@@ -478,6 +448,35 @@ todo-laboratory {
   }
 }
 
-.inactive {
-  color: lightgrey;
+.home-page-tabs {
+  z-index: -1;
+
+  .nav {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    border-top: none;
+    margin-bottom: 40px;
+
+    & > li {
+      display: inline-block;
+      float: none;
+      margin: 0 !important;
+
+      a {
+        color: #337ab7;
+        font-weight: 700;
+        padding: 13px 30px;
+        border-right: 1px solid #ddd;
+        background: none !important;
+        border-radius: 0;
+        cursor: pointer;
+      }
+    }
+
+    .nav-pills {
+      & > li {
+        margin: 0 !important;
+      }
+    }
+  }
 }

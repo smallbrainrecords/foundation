@@ -1,0 +1,98 @@
+/*!
+ * Copyright (c) Small Brain Records 2014-2020. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+patient-profile-picture {
+  display: block;
+  margin-bottom: 50px; }
+  patient-profile-picture a, patient-profile-picture a:hover {
+    text-decoration: none !important; }
+  patient-profile-picture #user-pictures {
+    position: relative; }
+  patient-profile-picture #cover-picture {
+    position: relative;
+    height: 312px;
+    background-repeat: no-repeat;
+    background-size: cover;
+    cursor: pointer; }
+    patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit {
+      position: absolute;
+      padding: 5px 10px;
+      color: white;
+      left: 20px;
+      top: 20px;
+      font-size: 1em; }
+      patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit .glyphicon-camera {
+        margin-right: 5px; }
+      patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit .btn-text {
+        visibility: hidden; }
+    patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit {
+      background-color: #000;
+      opacity: 0.5;
+      border: 1px solid #fff;
+      border-radius: 4px;
+      display: flex;
+      align-items: baseline; }
+      patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit .glyphicon-camera {
+        transform: scale(0.9); }
+      patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit .btn-text {
+        visibility: visible; }
+  patient-profile-picture #profile-picture {
+    background: #fff;
+    border: 1px solid #cccccc;
+    padding: 5px;
+    position: absolute;
+    bottom: -30px;
+    width: 170px;
+    margin: 0 30px;
+    height: 170px;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    cursor: pointer; }
+    patient-profile-picture #profile-picture img {
+      width: 100%;
+      height: 100%; }
+    patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera {
+      visibility: hidden;
+      position: absolute;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      display: flex;
+      justify-content: flex-start;
+      align-items: baseline;
+      background-color: #000;
+      opacity: 0.5;
+      color: white;
+      padding: 5px; }
+      patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera .glyphicon-camera {
+        margin-right: 5px; }
+      patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera:hover {
+        opacity: 0.9; }
+    patient-profile-picture #profile-picture:hover .btn-profile-picture-edit.btn-camera {
+      visibility: visible; }
+  patient-profile-picture #profile-info {
+    position: absolute;
+    display: block;
+    bottom: 0;
+    left: 230px;
+    border: none;
+    z-index: 1; }
+    patient-profile-picture #profile-info .user-name {
+      color: #fff;
+      font-size: 56px; }
+
+/*# sourceMappingURL=patient-profile-picture.css.map */

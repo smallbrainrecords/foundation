@@ -18,7 +18,7 @@
     'use strict';
     var ManagerApp = angular.module('ManagerApp',
         ['ui.router', 'ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
-            'app.services', 'app.filters', 'app.components','app.directives',
+            'app.services', 'app.filters', 'app.components',
             "ngSanitize",
             "com.2fdevs.videogular", "com.2fdevs.videogular.plugins.controls", "com.2fdevs.videogular.plugins.buffering",
             '720kb.datepicker',

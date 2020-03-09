@@ -19,9 +19,8 @@
     'use strict';
 
 
-    angular.module('app.services').service('patientService',
-        function ($http, $q, $cookies, $rootScope, $filter, httpService) {
-
+    angular.module('app.services')
+        .service('patientService', function ($http, $q, $cookies, $rootScope, $filter, httpService) {
             return {
                 activeUser: null,
                 patientInfo: null,
@@ -103,8 +102,24 @@
                 addNarrative: addNarrative,
                 fetchNarrative: fetchNarrative,
                 loadAllNarrative: loadAllNarrative,
-                getProblems: getProblems
+                getProblems: getProblems,
+                removeCoverImage: removeCoverImage,
+                updateCoverImage: updateCoverImage
             };
+
+            function updateCoverImage(patientId, file) {
+                let url = `/u/users/${patientId}/cover`;
+                let fd = new FormData();
+                fd.append('cover_image', file);
+                $http.post(url, fd, {headers: {'Content-Type': undefined, 'X-CSRFToken': $cookies.get('csrftoken')}})
+            }
+
+            function removeCoverImage(patientId) {
+                let data = {};
+                let url = `/u/users/${patientId}/cover`;
+
+                return httpService.delete(url, data);
+            }
 
             function csrf_token() {
                 return $cookies.get('csrftoken');
@@ -310,7 +325,7 @@
 
                 let fd = new FormData();
 
-                fd.append('csrfmiddlewaretoken', this.csrf_token());
+                fd.append('csrfmiddlewaretoken', $cookies.get('csrftoken'));
 
                 angular.forEach(form, function (value, key) {
                     fd.append(key, value);
@@ -323,7 +338,7 @@
 
                 $http.post(uploadUrl, fd, {
                     transformRequest: angular.identity,
-                    headers: {'Content-Type': undefined, 'X-CSRFToken': this.csrf_token()}
+                    headers: {'Content-Type': undefined, 'X-CSRFToken': $cookies.get('csrftoken')}
                 })
                     .success(function (data) {
                         deferred.resolve(data);

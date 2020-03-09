@@ -379,38 +379,9 @@ tbody button {
 .io-box .table-responsive .listinrvalue tbody td input {
   width: 100%; }
 
-.home-page-tabs .nav {
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  border-top: none;
-  margin-bottom: 40px;
-  /*margin-top: -50px;*/ }
-
 .medication-page-tabs .nav {
   border-top: 1px solid #ddd;
   margin-top: 0; }
-
-.home-page-tabs .nav > li {
-  display: inline-block;
-  float: none;
-  margin: 0 !important; }
-
-.home-page-tabs .nav .nav-pills > li {
-  margin: 0 !important; }
-
-.home-page-tabs .nav > li a {
-  color: #337ab7;
-  font-weight: 700;
-  padding: 13px 30px;
-  border-right: 1px solid #ddd;
-  background: none !important;
-  border-radius: 0;
-  cursor: pointer; }
-
-.home-page-tabs .nav-pills > li.active > a,
-.home-page-tabs .nav-pills > li.active > a:hover,
-.home-page-tabs .nav-pills > li.active > a:focus {
-  color: grey; }
 
 .my-story {
   border: 1px solid #ddd;
@@ -459,6 +430,14 @@ tbody button {
   border: 2px solid #f5f5f5;
   border-radius: 3px; }
 
+#signature {
+  position: relative;
+  right: 0;
+  width: 250px !important; }
+
+.inactive {
+  color: lightgrey; }
+
 todo-laboratory .label-wrapper {
   display: inline-block;
   margin-bottom: -6px;
@@ -474,11 +453,6 @@ todo-laboratory .label-wrapper {
     width: auto;
     padding: 0 10px;
     text-decoration: none; }
-
-#signature {
-  position: relative;
-  right: 0;
-  width: 250px !important; }
 
 @media print {
   #print-template {
@@ -500,7 +474,26 @@ todo-laboratory .label-wrapper {
       line-height: 20px !important;
       list-style-type: none !important;
       text-align: left !important; } }
-.inactive {
-  color: lightgrey; }
+.home-page-tabs {
+  z-index: -1; }
+  .home-page-tabs .nav {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    border-top: none;
+    margin-bottom: 40px; }
+    .home-page-tabs .nav > li {
+      display: inline-block;
+      float: none;
+      margin: 0 !important; }
+      .home-page-tabs .nav > li a {
+        color: #337ab7;
+        font-weight: 700;
+        padding: 13px 30px;
+        border-right: 1px solid #ddd;
+        background: none !important;
+        border-radius: 0;
+        cursor: pointer; }
+    .home-page-tabs .nav .nav-pills > li {
+      margin: 0 !important; }
 
 /*# sourceMappingURL=main.css.map */

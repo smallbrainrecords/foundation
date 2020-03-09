@@ -18,10 +18,13 @@
 
     'use strict';
 
-    angular.module('httpModule', ['toaster']).config(function ($httpProvider) {
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-    }).service('httpService', HttpService);
+    angular.module('httpModule', ['toaster'])
+        .config(function ($httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        })
+        .service('httpService', HttpService);
+
     HttpService.$inject = ['$http', '$q', '$cookies', 'toaster'];
 
     /**
@@ -33,24 +36,7 @@
      */
     function HttpService($http, $q, $cookies, toaster) {
 
-
-        /**
-         *
-         * @returns {*|string}
-         */
-        this.csrf_token = function () {
-            return $cookies.get('csrftoken');
-        };
-
-
-        /**
-         *
-         * @param data
-         * @param url
-         * @returns {*}
-         */
         this.post = function (data, url) {
-
             const deferred = $q.defer();
 
             $http({
@@ -59,29 +45,20 @@
                 'data': $.param(data),
                 'headers': {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'X-CSRFToken': this.csrf_token()
+                    'X-CSRFToken': $cookies.get('csrftoken')
                 }
             }).success(function (data) {
                 deferred.resolve(data);
-            }).error(function (data) {
-                deferred.resolve(data);
+            }).error(function (error) {
+                console.error(`${url} --- ${JSON.stringify(data)} --- ${JSON.stringify(error)}`)
+                deferred.resolve(error);
             });
-
             return deferred.promise;
-
         };
 
-        /**
-         *
-         * @param data
-         * @param url
-         * @returns {*}
-         */
+
         this.postJson = function (data, url) {
-
             const deferred = $q.defer();
-
-            //data.csrfmiddlewaretoken = this.csrf_token();
 
             $http({
                 'method': 'POST',
@@ -89,27 +66,19 @@
                 'data': data,
                 'headers': {
                     'Content-Type': 'application/json; charset=UTF-8',
-                    'X-CSRFToken': this.csrf_token()
+                    'X-CSRFToken': $cookies.get('csrftoken')
                 }
             }).success(function (data) {
                 deferred.resolve(data);
-
-            }).error(function (data) {
-                deferred.resolve(data);
-
+            }).error(function (error) {
+                console.error(`${url} --- ${JSON.stringify(data)} --- ${JSON.stringify(error)}`)
+                deferred.resolve(error);
             });
-
             return deferred.promise;
 
         };
 
-        /**
-         *
-         * @param params
-         * @param url
-         * @param cache
-         * @returns {*}
-         */
+
         this.get = function (params, url, cache = false) {
 
             const deferred = $q.defer();
@@ -120,15 +89,55 @@
                 'params': params,
                 'headers': {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'X-CSRFToken': this.csrf_token()
+                    'X-CSRFToken': $cookies.get('csrftoken')
                 },
                 'cache': cache
             }).success(function (data) {
                 deferred.resolve(data);
-            }).error(function (data) {
-                deferred.resolve(data);
+            }).error(function (error) {
+                console.error(`${url} --- ${JSON.stringify(data)} --- ${JSON.stringify(error)}`)
+                deferred.resolve(error);
             });
 
+            return deferred.promise;
+        }
+
+        this.put = function (url, data, contentType) {
+            const deferred = $q.defer();
+            $http({
+                'method': 'PUT',
+                'url': url,
+                'data': data,
+                'headers': {
+                    'Content-Type': contentType,
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            }).success(function (data) {
+                deferred.resolve(data);
+            }).error(function (error) {
+                console.error(`${url} --- ${JSON.stringify(data)} --- ${JSON.stringify(error)}`)
+                deferred.resolve(error);
+            });
+            return deferred.promise;
+        };
+
+        this.delete = function (url, data) {
+            const deferred = $q.defer();
+
+            $http({
+                'method': 'DELETE',
+                'url': url,
+                'data': data,
+                'headers': {
+                    'Content-Type': 'application/json; charset=UTF-8',
+                    'X-CSRFToken': $cookies.get('csrftoken')
+                }
+            }).success(function (data) {
+                deferred.resolve(data);
+            }).error(function (error) {
+                console.error(`${url} --- ${JSON.stringify(data)} --- ${JSON.stringify(error)}`)
+                deferred.resolve(error);
+            });
             return deferred.promise;
         }
     }

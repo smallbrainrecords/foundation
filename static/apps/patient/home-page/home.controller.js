@@ -113,9 +113,6 @@
         $scope.isInArray = isInArray;
         $scope.nameFavoriteEvent = nameFavoriteEvent;
         $scope.nurseSubmitBDFI = nurseSubmitBDFI;
-        $scope.on_cover_picture_remove = onCoverPictureRemove;
-        $scope.on_cover_picture_reposition = onCoverPictureReposition;
-        $scope.on_cover_picture_upload = onCoverPictureUpload;
         $scope.open_problem = openProblem;
         $scope.permitted = permitted;
         $scope.problemTermChanged = problemTermChanged;
@@ -135,7 +132,6 @@
         $scope.update_patient_note = updatePatientNote;
         $scope.update_problem_list_note = updateProblemListNote;
         $scope.updateStatusCallback = changeTodoList;
-        $scope.updateProfilePicture = updateProfilePicture;
         $scope.updateSummary = updateSummary;
         $scope.view_my_story_tab = viewMyStoryTab;
         $scope.addProblemIsSelected = addProblemIsSelected;
@@ -918,57 +914,6 @@
             encounterService.nameFavoriteEvent(form).then(function (data) {
                 encounter_event.is_named = false;
                 toaster.pop('success', 'Done', 'Named favorite!');
-            });
-        }
-
-        /**
-         * Callback when user choose new cover image from computer
-         */
-        function onCoverPictureUpload(file) {
-            var form = {};
-            form.user_id = $scope.patient_info.user.id;
-            form.phone_number = $scope.patient_info.phone_number;
-            form.sex = $scope.patient_info.sex;
-            form.role = $scope.patient_info.role;
-            form.summary = $scope.patient_info.summary;
-            form.date_of_birth = $scope.patient_info.date_of_birth;
-            var files = {cover_image: file[0]};
-            patientService.updateProfile(form, files).then(function (data) {
-                if (data['success'] == true) {
-                    toaster.pop('success', 'Done', 'Patient updated!');
-                    $scope.patient_info = data['info'];
-                } else if (data['success'] == false) {
-                    toaster.pop('error', 'Error', 'Please fill valid data');
-                } else {
-                    toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                }
-            });
-        }
-
-        /**
-         * Callback when user choosing thee reposition action
-         */
-        function onCoverPictureReposition() {
-            $scope.is_reposition_flag = true;
-            console.log("On cover image starting reposition .....");
-        }
-
-        /**
-         * Callback when user click on remove cover image
-         */
-        function onCoverPictureRemove() {
-            alert("Function under-construction we will update asap");
-        }
-
-        /**
-         * Update profile picture handler
-         * Open prompt require user choosing upload method
-         */
-        function updateProfilePicture() {
-            ngDialog.open({
-                controller: 'PortraitUpdCtrl',
-                template: 'portraitUpdateDialog',
-                scope: $scope
             });
         }
 

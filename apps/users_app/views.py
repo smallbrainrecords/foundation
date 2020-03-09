@@ -146,7 +146,8 @@ def register_user(request):
         errors = []
         if not form.is_valid():
             errors.append('Please fill data')
-            return render(request, 'users/../../templates/login.html', {"register_form": form, "register_errors": errors})
+            return render(request, 'users/../../templates/login.html',
+                          {"register_form": form, "register_errors": errors})
 
         email = form.cleaned_data['email']
         password = form.cleaned_data['password']
@@ -156,12 +157,14 @@ def register_user(request):
 
         if len(password) <= 2 or password != verify_password:
             errors.append('Passwords must match')
-            return render(request, 'users/../../templates/login.html', {"register_form": form, "register_errors": errors})
+            return render(request, 'users/../../templates/login.html',
+                          {"register_form": form, "register_errors": errors})
 
         user_exists = User.objects.filter(Q(email=email) | Q(username=email)).exists()
         if user_exists:
             errors.append('User with same email or username already exists')
-            return render(request, 'users/../../templates/login.html', {"register_form": form, "register_errors": errors})
+            return render(request, 'users/../../templates/login.html',
+                          {"register_form": form, "register_errors": errors})
 
         current = datetime.datetime.now()
         user = User(username=email, email=email, first_name=first_name,
@@ -1175,4 +1178,32 @@ def get_user_problem(request, patient_id):
 
     resp['success'] = True
     resp['data'] = ProblemSerializer(problems, many=True).data
+    return ajax_response(resp)
+
+
+@login_required
+def cover(request, user_id):
+    """
+    Method to update user's cover image
+    :param request:
+    :param user_id:
+    :return:
+    """
+    resp = {'success': False}
+    if request.method == 'DELETE':
+        profile = UserProfile.objects.get(id=user_id)
+        profile.cover_image = '/static/images/cover.png'
+        profile.save()
+        resp['success'] = True
+    if request.method == 'POST':  # TODO: While can't we upload file via PUT method
+        form = UpdateProfileForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return ajax_response(resp)
+        cover_image = form.cleaned_data['cover_image']
+
+        profile = UserProfile.objects.get(id=user_id)
+        profile.cover_image = cover_image
+        profile.save()
+        resp['success'] = True
+
     return ajax_response(resp)

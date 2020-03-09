@@ -20,12 +20,5 @@
      * GOD class for holding all system REST communication
      * app.services <--INJECT-- sharedModule <--INJECT-- httpModule
      */
-    angular.module('app.components', ['app.services'])
-        .config(function ($httpProvider) {
-            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        })
-        .run(function run($http, $cookies) {
-            $http.defaults.headers.common["X-CSRFToken"] = $cookies.get('csrftoken')
-        })
+    angular.module('app.components', ['app.services', 'app.directives','ngFileUpload']);
 })();

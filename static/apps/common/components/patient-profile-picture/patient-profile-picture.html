@@ -1,0 +1,51 @@
+<!--
+  ~ Copyright (c) Small Brain Records 2014-2020. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU Affero General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>
+  -->
+
+<section id="user-pictures">
+    <section id="cover-picture" sb-background-img="{{$ctrl.profile.cover_image}}">
+        <div class="dropdown">
+            <a class="btn-cover-picture-edit btn-camera" data-toggle="dropdown">
+                <span class="glyphicon glyphicon-camera"></span>
+                <span class="btn-text">Update Cover Photo</span>
+            </a>
+            <ul class="dropdown-menu cover-photo-menu">
+                <li>
+                    <a ngf-select="$ctrl.onCoverPictureUpload($file)" ngf-pattern="'image/*'" ngf-accept="'image/*'">
+                        <i class="glyphicon glyphicon-plus"></i> Upload photo
+                    </a>
+                </li>
+                <li ng-if="$ctrl.profile.cover_image">
+                    <a ng-click="$ctrl.onCoverPictureRemove()">
+                        <i class="glyphicon glyphicon-remove"></i> Remove
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="profile-picture">
+        <img ng-src="{{$ctrl.profile.portrait_image}}" alt="Profile image">
+        <a ng-click="$ctrl.updateProfilePicture()" class="btn-camera btn-profile-picture-edit">
+            <span class="glyphicon glyphicon-camera"></span>
+            <span class="btn-text float-right">Update Profile Picture</span>
+        </a>
+    </section>
+
+    <section id="profile-info">
+        <span class="user-name float-left"><strong>{{ $ctrl.profile.user.first_name }} {{ $ctrl.profile.user.last_name }}, {{ $ctrl.profile.date_of_birth | age }}</strong></span>
+    </section>
+</section>
