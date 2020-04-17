@@ -459,13 +459,19 @@ def get_observation_values(request, observation_id):
     :return:
     """
     resp = {'success': False}
+    observation_unit = None
     observation = Observation.objects.get(id=observation_id)
-    observation_unit = ObservationUnit.objects.filter(is_used=True).filter(observation_id=observation_id).get()
+    # Incase observation's unit is not specific then we should not load it
+    observation_unit_query_set = ObservationUnit.objects.filter(is_used=True).filter(observation_id=observation_id)
+    if observation_unit_query_set.exists():
+        observation_unit = observation_unit_query_set.get()
+
     #  TODO: Value list return is not string
     observation_component_ids = ObservationComponent.objects.values_list('id', flat=True).filter(
         observation_id=observation_id)
     observation_components_labels = ObservationComponent.objects.values_list('name', flat=True).filter(
         observation_id=observation_id)
+
     # Normalize list before passing to query
     observation_values = get_observation_value_pair(",".join(map(str, observation_component_ids)))
 
@@ -479,7 +485,7 @@ def get_observation_values(request, observation_id):
     resp['data'] = {
         'id': observation_id,
         'name': observation.name,
-        'unit': observation_unit.value_unit,
+        'unit': observation_unit.value_unit if observation_unit is not None else '',
         'label': "/".join(map(str, observation_components_labels)),
         'values': observation_values
     }
