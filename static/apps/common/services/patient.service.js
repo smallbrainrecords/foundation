@@ -491,8 +491,8 @@
                 return httpService.post(form, url);
             }
 
-            function getMedications(patient_id) {
-                let params = {};
+            function getMedications(patient_id, medicationStatus) {
+                let params = {status: medicationStatus};
                 let url = `/medication/${patient_id}/get_medications`;
                 return httpService.get(params, url);
             }

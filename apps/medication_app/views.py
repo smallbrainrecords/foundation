@@ -42,15 +42,21 @@ def list_terms(request):
 @login_required
 def get_medications(request, patient_id):
     """
-
+    Get current patient using medication. Default return active only medication.
+    TODO: How to retrieve inactive => then adding query parameter to form
     :param request:
     :param patient_id: Patient user id
     :return:
     """
     resp = {'success': False}
+    current = request.GET.get("status")
 
     if permissions_accessed(request.user, int(patient_id)):
         medications = Medication.objects.filter(patient__id=patient_id).order_by('name')
+        if current == "true":
+            medications.filter(current=True)
+        if current == "false":
+            medications.filter(current=False)
 
         resp['success'] = True
         resp['info'] = MedicationSerializer(medications, many=True).data

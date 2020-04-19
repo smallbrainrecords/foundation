@@ -280,7 +280,7 @@
                 });
 
                 // Medication TODO 02/03/2017 refactor to problem service
-                patientService.getMedications($scope.patient_id).then(function (data) {
+                patientService.getMedications($scope.patient_id, true).then(function (data) {
                     if (data['success'] == true) {
                         $scope.medications = data['info'];
                         $scope.hasPinnedMedication = false;
