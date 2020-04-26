@@ -57,7 +57,7 @@ from emr.manage_patient_permissions import ROLE_PERMISSIONS
 
 from emr.manage_patient_permissions import check_access
 
-
+@timeit
 def permissions_accessed(user, obj_user_id):
     """
     Check whether or not clinical staff(s) can control patient
@@ -241,7 +241,6 @@ def manage_patient(request, user_id):
         problem.save()
     else:
         problem = Problem.objects.filter(patient=user, concept_id='102499006').first()
-    print(problem.id)
 
     context['fit_and_well'] = problem.id
     context['patient'] = user

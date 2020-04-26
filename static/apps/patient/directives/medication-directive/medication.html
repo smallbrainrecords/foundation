@@ -58,7 +58,7 @@
                         <tr ng-repeat='medication in medications track by $index'
                             ng-show='medication.current'>
                             <td>
-                                <a class="cursor-pointer" ng-click='open_medication(medication)'
+                                <a sb-click-track class="cursor-pointer" ng-click='open_medication(medication)'
                                    ng-bind="medication.name"></a>
                             </td>
                             <td>
@@ -92,7 +92,7 @@
                         <tr ng-repeat='medication in medications'
                             ng-show='!medication.current'>
                             <td>
-                                <a class="cursor-pointer" ng-click='open_medication(medication)'
+                                <a sb-click-track class="cursor-pointer" ng-click='open_medication(medication)'
                                    ng-bind="medication.name"></a>
                             </td>
                             <td>

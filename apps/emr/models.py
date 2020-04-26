@@ -1207,3 +1207,12 @@ class VWTopPatients(models.Model):
     class Meta:
         managed = False
         db_table = "vw_top_patients"
+
+
+class EncounterMedication(models.Model):
+    encounter = models.ForeignKey(to=Encounter, related_name='medications')
+    medication = models.ForeignKey(to=Medication, related_name='encounters')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'emr_encounter_medication'

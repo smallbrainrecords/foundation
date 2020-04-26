@@ -29,13 +29,12 @@ class MedicationTextNoteSerializer(serializers.ModelSerializer):
             'id',
             'author',
             'note',
-            'medication',
             'datetime',
         )
 
 
 class MedicationSerializer(serializers.ModelSerializer):
-    author = SafeUserSerializer()
+    # author = SafeUserSerializer()
     patient = SafeUserSerializer()
     medication_notes = MedicationTextNoteSerializer(many=True, read_only=True)
 
@@ -44,7 +43,6 @@ class MedicationSerializer(serializers.ModelSerializer):
 
         fields = (
             'id',
-            'author',
             'patient',
             'medication_notes',
             'name',

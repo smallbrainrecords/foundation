@@ -172,7 +172,7 @@
                         <!-- begin change medication -->
                         <div class="quick-card-editor-lv2" ng-if="change_pinned_medication" id="problem-medication-select">
                             <div class="quick-card-editor-lv2-header">
-                                <a href ng-click="close_change_medication(); $event.stopPropagation();"><i
+                                <a sb-click-track ng-click="close_change_medication(); $event.stopPropagation();"><i
                                         class="fa fa-close"></i></a>
                             </div>
                             <div class="checkbox" ng-repeat="medication in medications track by $index">

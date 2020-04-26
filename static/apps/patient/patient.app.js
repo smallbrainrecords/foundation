@@ -17,17 +17,14 @@
 (function () {
     'use strict';
     var ManagerApp = angular.module('ManagerApp',
-        ['ui.router', 'ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
-            'app.services', 'app.filters', 'app.components',
-            "ngSanitize",
+        ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', 'ui.router', 'ui.bootstrap', 'ui.sortable',
             "com.2fdevs.videogular", "com.2fdevs.videogular.plugins.controls", "com.2fdevs.videogular.plugins.buffering",
-            '720kb.datepicker',
-            'app.constant', 'colon_cancers', 'a1c', 'medication', 'problems',
-            'todos', 'medication-component', 'inr', 'document', 'TemplateCache',
-            'timeLine', 'chart.js', 'toaster', 'ui.sortable', 'pickadate',
-            'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker',
-            'cfp.hotkeys', 'ui.bootstrap', 'view.file', 'angularMoment', 'indexedDB', 'angular-spinkit',
-            'infinite-scroll', 'wu.masonry', 'fancyboxplus', 'ngPrint']);
+            '720kb.datepicker', 'timeLine', 'chart.js', 'toaster', 'pickadate','cgPrompt', 'angularAudioRecorder',
+            'ngFileUpload', 'ngAudio', 'webcam', 'color.picker','cfp.hotkeys', 'view.file', 'angularMoment',
+            'indexedDB', 'angular-spinkit', 'infinite-scroll', 'wu.masonry', 'fancyboxplus', 'ngPrint',
+            'app.services', 'app.filters', 'app.components', 'app.directives', 'app.constant',
+            'colon_cancers', 'a1c', 'medication', 'problems', 'todos', 'medication-component', 'inr', 'document',
+            'TemplateCache']);
     ManagerApp.config(function ($stateProvider, $routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
         $indexedDBProvider.connection('andromedaHealthIndexedDB')
             .upgradeDatabase(1, function (event, db, tx) {

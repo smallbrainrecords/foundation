@@ -21,16 +21,16 @@ from rest_framework.decorators import api_view
 from reversion.models import Version
 
 from common.views import *
-from emr.models import Medication, MedicationTextNote, MedicationPinToProblem, ToDo, TodoActivity, VWMedications
+from emr.models import Medication, MedicationTextNote, ToDo, TodoActivity, VWMedications
 from emr.mysnomedct import VWMedicationsSerializers
 from emr.operations import op_add_todo_event
-from medication_app.operations import op_medication_event, op_pin_medication_to_problem_for_all_controlled_patient, \
-    count_pinned_have_same_medication_concept_id_and_problem_concept_id
+from medication_app.operations import *
 from users_app.views import permissions_accessed
 from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
 
 
 @login_required
+@timeit
 def list_terms(request):
     # We list snomed given a query
     query = request.GET['query']
@@ -40,10 +40,27 @@ def list_terms(request):
 
 
 @login_required
+@timeit
+def on_medication_accessed(request, patient_id, medication_id):
+    """
+
+    :param request:
+    :param patient_id:
+    :param medication_id:
+    :return:
+    """
+    resp = {'success': False}
+    # Do add item to encounter stuff here
+    op_track_medication_during_encounter(patient_id, medication_id)
+    resp['success'] = True
+    return ajax_response(resp)
+
+
+@login_required
+@timeit
 def get_medications(request, patient_id):
     """
     Get current patient using medication. Default return active only medication.
-    TODO: How to retrieve inactive => then adding query parameter to form
     :param request:
     :param patient_id: Patient user id
     :return:
@@ -64,6 +81,7 @@ def get_medications(request, patient_id):
 
 
 @login_required
+@timeit
 def get_medication(request, patient_id, medication_id):
     resp = {'success': False}
     history_list = []
@@ -91,6 +109,7 @@ def get_medication(request, patient_id, medication_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def add_medication(request, patient_id):
     resp = {'success': False}
 
@@ -110,11 +129,14 @@ def add_medication(request, patient_id):
         resp['medication'] = MedicationSerializer(medication).data
         resp['success'] = True
 
+    print("MEDICATION_ADDED")
+    op_track_medication_during_encounter(patient_id, medication.id)
     return ajax_response(resp)
 
 
 @login_required
 @api_view(["POST"])
+@timeit
 def add_medication_note(request, patient_id, medication_id):
     resp = {'success': False}
     note = request.POST.get("note", None)
@@ -135,10 +157,13 @@ def add_medication_note(request, patient_id, medication_id):
         resp['note'] = MedicationTextNoteSerializer(note).data
         resp['success'] = True
 
+    print("MEDICATION_NOTE_ADDED")
+    op_track_medication_during_encounter(patient_id, medication_id)
     return ajax_response(resp)
 
 
 @login_required
+@timeit
 def edit_note(request, note_id):
     resp = {'success': False}
 
@@ -148,11 +173,13 @@ def edit_note(request, note_id):
         note.save()
         resp['note'] = MedicationTextNoteSerializer(note).data
         resp['success'] = True
-
+    print("MEDICATION_NOTE_EDITED")
+    op_track_medication_during_encounter(note.medication.patient_id, note.medication.id)
     return ajax_response(resp)
 
 
 @login_required
+@timeit
 def delete_note(request, note_id):
     resp = {'success': False}
     note = MedicationTextNote.objects.get(id=note_id)
@@ -160,10 +187,13 @@ def delete_note(request, note_id):
         note.delete()
         resp['success'] = True
 
+    print("MEDICATION_NOTE_DELETED")
+    op_track_medication_during_encounter(note.medication.patient_id, note.medication.id)
     return ajax_response(resp)
 
 
 @login_required
+@timeit
 def get_pins(request, medication_id):
     pins = MedicationPinToProblem.objects.filter(medication_id=medication_id)
     resp = {'success': True, 'pins': MedicationPinToProblemSerializer(pins, many=True).data}
@@ -172,6 +202,7 @@ def get_pins(request, medication_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def pin_to_problem(request, patient_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -198,6 +229,7 @@ def pin_to_problem(request, patient_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def change_active_medication(request, patient_id, medication_id):
     """
     :param request:
@@ -218,10 +250,13 @@ def change_active_medication(request, patient_id, medication_id):
     resp['medication'] = MedicationSerializer(medication).data
     resp['success'] = True
 
+    print("MEDICATION_UPDATED")
+    op_track_medication_during_encounter(patient_id, medication_id)
     return ajax_response(resp)
 
 
 @login_required
+@timeit
 def change_dosage(request, patient_id, medication_id):
     """
     Change dosage in medication detail page
@@ -267,4 +302,27 @@ def change_dosage(request, patient_id, medication_id):
     resp['medication'] = MedicationSerializer(medication).data
     resp['history'] = {'date': datetime.now().isoformat(), 'comment': comment}
     resp['success'] = True
+
+    print("MEDICATION_UPDATED")
+    op_track_medication_during_encounter(patient_id, medication_id)
     return ajax_response(resp)
+
+
+@login_required
+@timeit
+def get_medication_encounter(request, medication_id):
+    """
+    Encounter's related event app
+    Get medication related encounter
+    :param request:
+    :param patient_id:
+    :param medication_id:
+    :return:
+    """
+    resp = {'success': False}
+    medication_encounter = EncounterMedication.objects.filter(medication_id=medication_id)
+
+    resp['success'] = True
+    resp['encounters'] = [encounter.encounter_id for encounter in medication_encounter]
+    return ajax_response(resp)
+    pass

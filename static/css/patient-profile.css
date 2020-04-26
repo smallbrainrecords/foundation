@@ -1,35 +1,42 @@
 todo .new-tagged-todo {
-  background: #F2DEDE; }
-  todo .new-tagged-todo input[type='checkbox']:before {
-    content: "*";
-    left: 2px;
-    position: absolute;
-    font-size: 2em;
-    top: 10px; }
+  background: #F2DEDE;
+}
+todo .new-tagged-todo input[type=checkbox]:before {
+  content: "*";
+  left: 2px;
+  position: absolute;
+  font-size: 2em;
+  top: 10px;
+}
 
 todo-item .label-wrapper {
   display: inline-block;
   margin-bottom: -6px;
   overflow: hidden;
-  position: relative; }
-  todo-item .label-wrapper a.todo-label {
-    float: left;
-    width: 20px;
-    height: 20px;
-    text-align: center;
-    padding: 0;
-    display: block;
-    margin: 0 2px;
-    clear: none; }
-  todo-item .label-wrapper a.todo-label-name {
-    color: #fff;
-    width: auto;
-    padding: 0 10px;
-    text-decoration: none; }
+  position: relative;
+}
+todo-item .label-wrapper a.todo-label {
+  float: left;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  padding: 0;
+  display: block;
+  margin: 0 2px;
+  clear: none;
+}
+todo-item .label-wrapper a.todo-label-name {
+  color: #fff;
+  width: auto;
+  padding: 0 10px;
+  text-decoration: none;
+}
 todo-item .attachment-glance {
-  margin-bottom: 10px; }
+  margin-bottom: 10px;
+}
 todo-item .members-wrapper {
-  margin-bottom: 10px; }
+  margin-bottom: 10px;
+}
 
 .todo-label-front {
   width: 20px;
@@ -38,43 +45,61 @@ todo-item .members-wrapper {
   padding: 0;
   display: inline-block;
   margin: 0 2px;
-  clear: none; }
+  clear: none;
+}
 
 .quick-info, .tagged-member {
-  margin-bottom: 10px; }
+  margin-bottom: 10px;
+}
 
 .quick-card-editor-label a.todo-label-name {
   margin-right: 4px;
-  margin-bottom: 4px; }
+  margin-bottom: 4px;
+}
 
 #comments textarea, #comments-list textarea {
   width: 100%;
-  resize: none; }
+  resize: none;
+}
 #comments form.new-comment, #comments-list form.new-comment {
   background: #EEEFF1;
   padding: 15px;
   margin-bottom: 20px;
-  border-radius: 3px; }
+  border-radius: 3px;
+}
 #comments .comment-history .comment, #comments-list .comment-history .comment {
   background: #EEEFF1;
   padding: 15px;
   margin-bottom: 10px;
-  border-radius: 3px; }
-  #comments .comment-history .comment .username, #comments-list .comment-history .comment .username {
-    font-weight: bold; }
-  #comments .comment-history .comment .comment-content-wrapper, #comments-list .comment-history .comment .comment-content-wrapper {
-    margin-bottom: 15px; }
-    #comments .comment-history .comment .comment-content-wrapper .comment-content, #comments-list .comment-history .comment .comment-content-wrapper .comment-content {
-      background: white;
-      padding: 10px;
-      border-radius: 3px; }
-  #comments .comment-history .comment textarea, #comments-list .comment-history .comment textarea {
-    margin-bottom: 15px; }
+  border-radius: 3px;
+}
+#comments .comment-history .comment .username, #comments-list .comment-history .comment .username {
+  font-weight: bold;
+}
+#comments .comment-history .comment .comment-content-wrapper, #comments-list .comment-history .comment .comment-content-wrapper {
+  margin-bottom: 15px;
+}
+#comments .comment-history .comment .comment-content-wrapper .comment-content, #comments-list .comment-history .comment .comment-content-wrapper .comment-content {
+  background: white;
+  padding: 10px;
+  border-radius: 3px;
+}
+#comments .comment-history .comment textarea, #comments-list .comment-history .comment textarea {
+  margin-bottom: 15px;
+}
 
 /*Stytle for medication related component*/
 @media (min-width: 992px) {
   #medication-page #medication-header .medication-action-control {
-    text-align: right; } }
+    text-align: right;
+  }
+}
+#medication-page .note-box textarea {
+  margin-bottom: 16px;
+}
+#medication-page .note-box a {
+  margin-right: 4px;
+}
 
 /*!
  * Copyright (c) Small Brain Records 2014-2020. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
@@ -93,191 +118,238 @@ todo-item .members-wrapper {
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 patient-profile-picture {
-  display: block; }
-  patient-profile-picture a, patient-profile-picture a:hover {
-    text-decoration: none !important; }
-  patient-profile-picture #user-pictures {
-    position: relative; }
-  patient-profile-picture #cover-picture {
-    position: relative;
-    height: 312px !important;
-    background-repeat: no-repeat;
-    background-size: cover;
-    cursor: pointer;
-    border: 1px solid #ddd;
-    border-bottom: none; }
-    patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit {
-      position: absolute;
-      padding: 5px 10px;
-      color: white;
-      left: 20px;
-      top: 20px;
-      font-size: 1em; }
-      patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit .glyphicon-camera {
-        margin-right: 5px; }
-      patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit .btn-text {
-        visibility: hidden; }
-    patient-profile-picture #cover-picture .dropdown-menu.cover-photo-menu {
-      font-size: 12px;
-      top: 47px;
-      left: 20px;
-      border-radius: 0; }
-    patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit {
-      background-color: #000;
-      opacity: 0.5;
-      border: 1px solid #fff;
-      border-radius: 4px;
-      display: flex;
-      align-items: baseline; }
-      patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit .glyphicon-camera {
-        transform: scale(0.9); }
-      patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit .btn-text {
-        visibility: visible; }
-  patient-profile-picture #profile-picture {
-    background: #fff;
-    border: 1px solid #cccccc;
-    padding: 5px;
-    position: absolute;
-    bottom: -30px;
-    width: 170px;
-    margin: 0 30px;
-    height: 170px;
-    -webkit-border-radius: 2px;
-    -moz-border-radius: 2px;
-    border-radius: 2px;
-    cursor: pointer; }
-    patient-profile-picture #profile-picture img {
-      width: 100%;
-      height: 100%; }
-    patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera {
-      visibility: hidden;
-      position: absolute;
-      right: 0;
-      left: 0;
-      bottom: 0;
-      display: flex;
-      justify-content: flex-start;
-      align-items: baseline;
-      background-color: #000;
-      opacity: 0.5;
-      color: white;
-      padding: 5px; }
-      patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera .glyphicon-camera {
-        margin-right: 5px; }
-      patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera:hover {
-        opacity: 0.9; }
-    patient-profile-picture #profile-picture:hover .btn-profile-picture-edit.btn-camera {
-      visibility: visible; }
-  patient-profile-picture #profile-info {
-    position: absolute;
-    display: block;
-    bottom: 0;
-    left: 230px;
-    border: none;
-    z-index: 1; }
-    patient-profile-picture #profile-info .user-name {
-      color: #fff;
-      font-size: 56px; }
+  display: block;
+}
+patient-profile-picture a, patient-profile-picture a:hover {
+  text-decoration: none !important;
+}
+patient-profile-picture #user-pictures {
+  position: relative;
+}
+patient-profile-picture #cover-picture {
+  position: relative;
+  height: 312px !important;
+  background-repeat: no-repeat;
+  background-size: cover;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-bottom: none;
+}
+patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit {
+  position: absolute;
+  padding: 5px 10px;
+  color: white;
+  left: 20px;
+  top: 20px;
+  font-size: 1em;
+}
+patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit .glyphicon-camera {
+  margin-right: 5px;
+}
+patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit .btn-text {
+  visibility: hidden;
+}
+patient-profile-picture #cover-picture .dropdown-menu.cover-photo-menu {
+  font-size: 12px;
+  top: 47px;
+  left: 20px;
+  border-radius: 0;
+}
+patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit {
+  background-color: #000;
+  opacity: 0.5;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  display: flex;
+  align-items: baseline;
+}
+patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit .glyphicon-camera {
+  transform: scale(0.9);
+}
+patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit .btn-text {
+  visibility: visible;
+}
+patient-profile-picture #profile-picture {
+  background: #fff;
+  border: 1px solid #cccccc;
+  padding: 5px;
+  position: absolute;
+  bottom: -30px;
+  width: 170px;
+  margin: 0 30px;
+  height: 170px;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+patient-profile-picture #profile-picture img {
+  width: 100%;
+  height: 100%;
+}
+patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera {
+  visibility: hidden;
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  background-color: #000;
+  opacity: 0.5;
+  color: white;
+  padding: 5px;
+}
+patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera .glyphicon-camera {
+  margin-right: 5px;
+}
+patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera:hover {
+  opacity: 0.9;
+}
+patient-profile-picture #profile-picture:hover .btn-profile-picture-edit.btn-camera {
+  visibility: visible;
+}
+patient-profile-picture #profile-info {
+  position: absolute;
+  display: block;
+  bottom: 0;
+  left: 230px;
+  border: none;
+  z-index: 1;
+}
+patient-profile-picture #profile-info .user-name {
+  color: #fff;
+  font-size: 56px;
+}
 
 .nav > li > a {
   padding-right: 5px;
-  padding-left: 5px; }
+  padding-left: 5px;
+}
 
 body {
-  padding-top: 70px; }
+  padding-top: 70px;
+}
 
 #dvmain {
-  min-height: 550px; }
+  min-height: 550px;
+}
 
 .uib-datepicker:active, .uib-datepicker:focus, .uib-datepicker:hover, .uib-datepicker:visited {
-  outline: none !important; }
+  outline: none !important;
+}
 
 .profile-section {
   position: relative;
   height: 315px;
   margin-bottom: 50px;
-  border: none; }
-  .profile-section .panel-body {
-    padding: 0;
-    width: 100%;
-    height: 100%; }
-  .profile-section .cover-image {
-    position: absolute;
-    width: 100%;
-    max-width: 100%;
-    top: 0;
-    height: 100%;
-    background: #639df9; }
-    .profile-section .cover-image:hover + .dropdown .btn-camera {
-      background-color: #000;
-      opacity: 0.7; }
-      .profile-section .cover-image:hover + .dropdown .btn-camera .glyphicon-camera {
-        font-size: 1em; }
-      .profile-section .cover-image:hover + .dropdown .btn-camera .btn-text {
-        display: inline-block; }
-  .profile-section .btn-cover-picture-edit {
-    left: 20px; }
-    .profile-section .btn-cover-picture-edit:hover {
-      border: 1px solid #fff; }
-  .profile-section .profile-picture {
-    background: #fff;
-    border: 1px solid #cccccc;
-    padding: 5px;
-    position: absolute;
-    bottom: -20px;
-    width: 168px;
-    margin: 0 30px;
-    height: 168px;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    border-radius: 3px; }
-    .profile-section .profile-picture img {
-      width: 100%;
-      height: 100%; }
-    .profile-section .profile-picture .btn-profile-picture-edit {
-      bottom: 5px;
-      width: 94%; }
-      .profile-section .profile-picture .btn-profile-picture-edit .glyphicon-camera {
-        vertical-align: middle; }
-      .profile-section .profile-picture .btn-profile-picture-edit .btn-text {
-        width: 80%; }
-    .profile-section .profile-picture:hover .btn-camera {
-      background-color: #000;
-      opacity: 0.7; }
-      .profile-section .profile-picture:hover .btn-camera .glyphicon-camera {
-        font-size: 1em; }
-      .profile-section .profile-picture:hover .btn-camera .btn-text {
-        display: inline-block; }
-  .profile-section .bottom-info {
-    line-height: 30px;
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    padding: 5px 10px;
-    border: none;
-    width: 75%; }
-    .profile-section .bottom-info .patient-name {
-      color: #fff;
-      font-size: 56px; }
-  .profile-section .btn-camera {
-    color: #c2c1c0;
-    position: absolute;
-    cursor: pointer;
-    text-decoration: none;
-    padding: 5px; }
-    .profile-section .btn-camera .glyphicon-camera {
-      display: inline-block;
-      font-size: 1.5em; }
-    .profile-section .btn-camera .btn-text {
-      color: #fff;
-      display: none; }
-    .profile-section .btn-camera:hover {
-      background-color: #000;
-      opacity: 0.7; }
-      .profile-section .btn-camera:hover .glyphicon-camera {
-        font-size: 1em; }
-      .profile-section .btn-camera:hover .btn-text {
-        display: inline-block; }
+  border: none;
+}
+.profile-section .panel-body {
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+.profile-section .cover-image {
+  position: absolute;
+  width: 100%;
+  max-width: 100%;
+  top: 0;
+  height: 100%;
+  background: #639df9;
+}
+.profile-section .cover-image:hover + .dropdown .btn-camera {
+  background-color: #000;
+  opacity: 0.7;
+}
+.profile-section .cover-image:hover + .dropdown .btn-camera .glyphicon-camera {
+  font-size: 1em;
+}
+.profile-section .cover-image:hover + .dropdown .btn-camera .btn-text {
+  display: inline-block;
+}
+.profile-section .btn-cover-picture-edit {
+  left: 20px;
+}
+.profile-section .btn-cover-picture-edit:hover {
+  border: 1px solid #fff;
+}
+.profile-section .profile-picture {
+  background: #fff;
+  border: 1px solid #cccccc;
+  padding: 5px;
+  position: absolute;
+  bottom: -20px;
+  width: 168px;
+  margin: 0 30px;
+  height: 168px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+}
+.profile-section .profile-picture img {
+  width: 100%;
+  height: 100%;
+}
+.profile-section .profile-picture .btn-profile-picture-edit {
+  bottom: 5px;
+  width: 94%;
+}
+.profile-section .profile-picture .btn-profile-picture-edit .glyphicon-camera {
+  vertical-align: middle;
+}
+.profile-section .profile-picture .btn-profile-picture-edit .btn-text {
+  width: 80%;
+}
+.profile-section .profile-picture:hover .btn-camera {
+  background-color: #000;
+  opacity: 0.7;
+}
+.profile-section .profile-picture:hover .btn-camera .glyphicon-camera {
+  font-size: 1em;
+}
+.profile-section .profile-picture:hover .btn-camera .btn-text {
+  display: inline-block;
+}
+.profile-section .bottom-info {
+  line-height: 30px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 5px 10px;
+  border: none;
+  width: 75%;
+}
+.profile-section .bottom-info .patient-name {
+  color: #fff;
+  font-size: 56px;
+}
+.profile-section .btn-camera {
+  color: #c2c1c0;
+  position: absolute;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 5px;
+}
+.profile-section .btn-camera .glyphicon-camera {
+  display: inline-block;
+  font-size: 1.5em;
+}
+.profile-section .btn-camera .btn-text {
+  color: #fff;
+  display: none;
+}
+.profile-section .btn-camera:hover {
+  background-color: #000;
+  opacity: 0.7;
+}
+.profile-section .btn-camera:hover .glyphicon-camera {
+  font-size: 1em;
+}
+.profile-section .btn-camera:hover .btn-text {
+  display: inline-block;
+}
 
 .bottom-info {
   line-height: 30px;
@@ -286,107 +358,137 @@ body {
   bottom: 0;
   padding: 5px 10px;
   border: none;
-  width: 75%; }
-  .bottom-info .patient-name {
-    color: #fff;
-    font-size: 56px; }
+  width: 75%;
+}
+.bottom-info .patient-name {
+  color: #fff;
+  font-size: 56px;
+}
 
 .float-right {
-  float: right; }
+  float: right;
+}
 
 .float-left {
-  float: left; }
+  float: left;
+}
 
 .align-center {
-  text-align: center; }
+  text-align: center;
+}
 
 .btn-upload, .btn-take-photo {
   cursor: pointer;
   line-height: 36px;
-  padding: 28px 0; }
+  padding: 28px 0;
+}
 
 .preview-image {
-  margin: auto; }
+  margin: auto;
+}
 
 .dropdown li a {
-  padding: 3px 10px; }
+  padding: 3px 10px;
+}
 
 .dropdown.open .btn-camera {
   background-color: #000;
-  opacity: 0.7; }
-  .dropdown.open .btn-camera .glyphicon-camera {
-    font-size: 1em; }
-  .dropdown.open .btn-camera .btn-text {
-    display: inline-block; }
+  opacity: 0.7;
+}
+.dropdown.open .btn-camera .glyphicon-camera {
+  font-size: 1em;
+}
+.dropdown.open .btn-camera .btn-text {
+  display: inline-block;
+}
 .dropdown.open .fa.fa-sort-asc {
   position: absolute;
   top: -8px;
   font-size: 2em;
   color: #FFF;
-  left: 20px; }
+  left: 20px;
+}
 
 #audio-player {
   padding: 0;
-  list-style: none; }
-  #audio-player li {
-    display: inline-block; }
-    #audio-player li.progress-wrapper {
-      width: 200px; }
-      #audio-player li.progress-wrapper div.progress {
-        height: 10px;
-        margin-bottom: 0; }
+  list-style: none;
+}
+#audio-player li {
+  display: inline-block;
+}
+#audio-player li.progress-wrapper {
+  width: 200px;
+}
+#audio-player li.progress-wrapper div.progress {
+  height: 10px;
+  margin-bottom: 0;
+}
 
 .list-group {
-  list-style: none; }
+  list-style: none;
+}
 
 .graph-header {
-  color: white; }
+  color: white;
+}
 
 .graph-view-mode .mode-active {
   background: #FF2C55;
-  color: white; }
+  color: white;
+}
 .graph-view-mode .mode-inactive {
   background: #FED7D0;
-  color: #C03C51; }
+  color: #C03C51;
+}
 
 .no-padding {
-  padding: 0 !important; }
+  padding: 0 !important;
+}
 
 .no-margin {
-  margin: 0 !important; }
+  margin: 0 !important;
+}
 
 .headerWrap {
   padding: 10px 15px;
   display: block;
-  vertical-align: middle; }
-  .headerWrap a {
-    color: #000;
-    cursor: pointer;
-    font-weight: 700; }
+  vertical-align: middle;
+}
+.headerWrap a {
+  color: #000;
+  cursor: pointer;
+  font-weight: 700;
+}
 
 .profileThumb {
   border-radius: 3px;
   width: 20px;
   height: 20px;
-  margin-right: 10px; }
+  margin-right: 10px;
+}
 
 .vitals_info div.vital-wrapper {
   width: 100%;
-  min-width: 300px; }
-  .vitals_info div.vital-wrapper div.vital-item {
-    width: 24%;
-    display: inline-block;
-    text-align: center;
-    border-right: 1px solid #C2C2C2;
-    cursor: pointer; }
-    .vitals_info div.vital-wrapper div.vital-item:last-child {
-      border-color: #FFFFFF; }
-    .vitals_info div.vital-wrapper div.vital-item a {
-      padding: 0;
-      text-decoration: none; }
+  min-width: 300px;
+}
+.vitals_info div.vital-wrapper div.vital-item {
+  width: 24%;
+  display: inline-block;
+  text-align: center;
+  border-right: 1px solid #C2C2C2;
+  cursor: pointer;
+}
+.vitals_info div.vital-wrapper div.vital-item:last-child {
+  border-color: #FFFFFF;
+}
+.vitals_info div.vital-wrapper div.vital-item a {
+  padding: 0;
+  text-decoration: none;
+}
 
 a.btn-manage {
-  margin-bottom: 20px; }
+  margin-bottom: 20px;
+}
 
 .drop-box {
   cursor: pointer;
@@ -396,97 +498,133 @@ a.btn-manage {
   line-height: 50px;
   text-align: center;
   padding-top: 25px;
-  margin-top: 50px; }
+  margin-top: 50px;
+}
 
 .dragover {
-  border: 5px dashed blue; }
+  border: 5px dashed blue;
+}
 
 .btn-remove {
-  cursor: pointer; }
+  cursor: pointer;
+}
 
 #document-tag-page .labeled-list {
-  display: inline-block; }
+  display: inline-block;
+}
 #document-tag-page .dube-btn-pin-unpin {
-  margin-right: 20px; }
+  margin-right: 20px;
+}
 #document-tag-page .todo-label {
-  cursor: pointer; }
+  cursor: pointer;
+}
 
 .flex-container {
-  display: flex; }
-  .flex-container .flex-item {
-    align-self: center; }
+  display: flex;
+}
+.flex-container .flex-item {
+  align-self: center;
+}
 
 .panel-heading {
-  cursor: pointer; }
+  cursor: pointer;
+}
 
 .problem-controlled {
   background: #DFF0D8;
   z-index: 1000;
-  margin: 0; }
-  .problem-controlled.affix-top, .problem-controlled.affix {
-    top: 50px; }
+  margin: 0;
+}
+.problem-controlled.affix-top, .problem-controlled.affix {
+  top: 50px;
+}
 
 .problem-uncontrolled {
   z-index: 1000;
-  margin: 0; }
-  .problem-uncontrolled.affix {
-    top: 50px; }
+  margin: 0;
+}
+.problem-uncontrolled.affix {
+  top: 50px;
+}
 
 #time-range-select.affix {
-  top: 50px; }
+  top: 50px;
+}
 
 #homepage-data-time-range-header {
   top: 50px;
-  z-index: 1; }
+  z-index: 1;
+}
 
 .graph-data-list {
-  margin-top: 60px; }
+  margin-top: 60px;
+}
 
 @media (max-width: 768px) {
   .problem-uncontrolled, .problem-controlled {
-    max-width: 720px; }
+    max-width: 720px;
+  }
 
   #time-range-select {
-    max-width: 720px; }
+    max-width: 720px;
+  }
 
   #homepage-data-time-range-header {
-    max-width: 720px; } }
+    max-width: 720px;
+  }
+}
 @media (min-width: 768px) {
   .problem-uncontrolled, .problem-controlled {
-    min-width: 720px; }
+    min-width: 720px;
+  }
 
   #time-range-select {
-    max-width: 720px; }
+    max-width: 720px;
+  }
 
   #homepage-data-time-range-header {
-    max-width: 720px; } }
+    max-width: 720px;
+  }
+}
 @media (min-width: 992px) {
   .problem-uncontrolled, .problem-controlled {
-    min-width: 940px; }
+    min-width: 940px;
+  }
 
   #time-range-select {
-    max-width: 940px; }
+    max-width: 940px;
+  }
 
   #homepage-data-time-range-header {
-    max-width: 940px; } }
+    max-width: 940px;
+  }
+}
 @media (min-width: 1200px) {
   .problem-uncontrolled, .problem-controlled {
-    min-width: 1140px; }
+    min-width: 1140px;
+  }
 
   #time-range-select {
-    max-width: 1140px; }
+    max-width: 1140px;
+  }
 
   #homepage-data-time-range-header {
-    max-width: 570px; } }
+    max-width: 570px;
+  }
+}
 #view_document_page .uploaded_document .document_icon {
-  margin-right: 10px; }
+  margin-right: 10px;
+}
 #view_document_page .uploaded_document .document-name {
-  vertical-align: top; }
+  vertical-align: top;
+}
 #view_document_page a {
-  text-decoration: none; }
+  text-decoration: none;
+}
 
 .inr-component a {
-  cursor: pointer; }
+  cursor: pointer;
+}
 
 inr-bfdi {
   display: block;
@@ -499,73 +637,95 @@ inr-bfdi {
   background-color: rgba(255, 255, 255, 0.9);
   padding: 10px;
   overflow-y: auto;
-  overflow-x: hidden; }
-  inr-bfdi #result-set {
-    border-bottom: 2px solid #808080; }
-  inr-bfdi .flex-item {
-    margin: 0 10px; }
+  overflow-x: hidden;
+}
+inr-bfdi #result-set {
+  border-bottom: 2px solid #808080;
+}
+inr-bfdi .flex-item {
+  margin: 0 10px;
+}
 
 .patient-match-result {
-  padding: 10px; }
+  padding: 10px;
+}
 
 .tab-problems .nav.nav-tabs {
-  border-bottom: none; }
-  .tab-problems .nav.nav-tabs li.active a {
-    background: #808080;
-    border-radius: 3px;
-    color: white; }
+  border-bottom: none;
+}
+.tab-problems .nav.nav-tabs li.active a {
+  background: #808080;
+  border-radius: 3px;
+  color: white;
+}
 
 .dube-btn-pin-unpin {
-  margin-right: 20px; }
+  margin-right: 20px;
+}
 
 #profile-summary {
   margin-top: 20px;
-  margin-bottom: 20px; }
-  #profile-summary label, #profile-summary textarea, #profile-summary button {
-    margin-bottom: 10px; }
+  margin-bottom: 20px;
+}
+#profile-summary label, #profile-summary textarea, #profile-summary button {
+  margin-bottom: 10px;
+}
 
 .audit-log {
   border-bottom: 1px solid #eee;
   padding: 10px 0;
-  margin: 0; }
-  .audit-log:last-child {
-    border: none; }
-  .audit-log .datetime {
-    font-weight: bold; }
+  margin: 0;
+}
+.audit-log:last-child {
+  border: none;
+}
+.audit-log .datetime {
+  font-weight: bold;
+}
 
 todo .new-tagged-todo {
-  background: #F2DEDE; }
-  todo .new-tagged-todo input[type='checkbox']:before {
-    content: "*";
-    left: 2px;
-    position: absolute;
-    font-size: 2em;
-    top: 10px; }
+  background: #F2DEDE;
+}
+todo .new-tagged-todo input[type=checkbox]:before {
+  content: "*";
+  left: 2px;
+  position: absolute;
+  font-size: 2em;
+  top: 10px;
+}
 
 #image-info .cover {
   width: 100%;
-  max-height: 315px; }
+  max-height: 315px;
+}
 #image-info .thumbnail {
   width: 160px;
-  height: 160px; }
+  height: 160px;
+}
 
 #bdfi .form-group input {
   margin: 5px;
-  max-width: 150px; }
+  max-width: 150px;
+}
 
 .cursor {
-  cursor: pointer; }
+  cursor: pointer;
+}
 
 #document-header {
-  margin-bottom: 20px; }
-  #document-header .document-name {
-    vertical-align: top; }
+  margin-bottom: 20px;
+}
+#document-header .document-name {
+  vertical-align: top;
+}
 
 #problem-image image {
-  margin: auto; }
+  margin: auto;
+}
 
 .ngdialog-buttons .btn {
-  margin-right: 5px; }
+  margin-right: 5px;
+}
 
 .member-tagging {
   width: 100%;
@@ -575,60 +735,77 @@ todo .new-tagged-todo {
   padding: 5px;
   text-decoration: none;
   color: #444;
-  cursor: pointer; }
-  .member-tagging:hover, .member-tagging:active, .member-tagging:focus {
-    text-decoration: none; }
-  .member-tagging .fa-check {
-    color: #999; }
-  .member-tagging:hover {
-    background: #298FCA;
-    color: white;
-    text-decoration: none; }
-    .member-tagging:hover .fa-check {
-      color: white; }
+  cursor: pointer;
+}
+.member-tagging:hover, .member-tagging:active, .member-tagging:focus {
+  text-decoration: none;
+}
+.member-tagging .fa-check {
+  color: #999;
+}
+.member-tagging:hover {
+  background: #298FCA;
+  color: white;
+  text-decoration: none;
+}
+.member-tagging:hover .fa-check {
+  color: white;
+}
 
 .hint {
   font-size: 10px;
-  font-style: italic; }
+  font-style: italic;
+}
 
 .member-search-box {
-  margin-bottom: 5px; }
+  margin-bottom: 5px;
+}
 
 .ngdialog-buttons {
-  margin-top: 10px; }
+  margin-top: 10px;
+}
 
 .todo-label-front {
   cursor: pointer;
   text-decoration: none;
-  vertical-align: text-bottom; }
-  .todo-label-front .todo-label-name {
-    display: none; }
-  .todo-label-front:hover {
-    width: auto;
-    height: auto;
-    padding: 2px 5px; }
-    .todo-label-front:hover .todo-label-name {
-      color: white;
-      display: inline-block; }
+  vertical-align: text-bottom;
+}
+.todo-label-front .todo-label-name {
+  display: none;
+}
+.todo-label-front:hover {
+  width: auto;
+  height: auto;
+  padding: 2px 5px;
+}
+.todo-label-front:hover .todo-label-name {
+  color: white;
+  display: inline-block;
+}
 
 #related-encounters .encounter-item {
   border-bottom: 1px solid #CCC;
   display: block;
   padding-bottom: 5px;
-  margin-bottom: 5px; }
-  #related-encounters .encounter-item:last-child {
-    border-bottom: none; }
+  margin-bottom: 5px;
+}
+#related-encounters .encounter-item:last-child {
+  border-bottom: none;
+}
 
 .auto-ordering {
   display: flex;
-  flex-direction: column-reverse; }
+  flex-direction: column-reverse;
+}
 
 #encounter-related-problem .problem-item {
   border-bottom: 1px solid #CCC;
   display: block;
   padding-bottom: 5px;
-  margin-bottom: 5px; }
-  #encounter-related-problem .problem-item:last-child {
-    border-bottom: none; }
+  margin-bottom: 5px;
+}
+#encounter-related-problem .problem-item:last-child {
+  border-bottom: none;
+}
 
 /*# sourceMappingURL=patient-profile.css.map */

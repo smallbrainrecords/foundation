@@ -18,24 +18,33 @@
 
     'use strict';
 
-    angular.module('app.services').service('medicationService',
-        function ($http, $q, $cookies, httpService) {
+    angular.module('app.services')
+        .service('medicationService', function ($http, $q, $cookies, httpService) {
             return {
-                csrf_token: csrf_token,
+                listTerms: listTerms,
                 addMedication: addMedication,
+                fetchMedicationInfo: fetchMedicationInfo,
                 addMedicationNote: addMedicationNote,
                 editNote: editNote,
                 deleteNote: deleteNote,
-                fetchMedicationInfo: fetchMedicationInfo,
                 fetchPinToProblem: fetchPinToProblem,
                 medicationPinToProblem: medicationPinToProblem,
-                listTerms: listTerms,
                 changeActiveMedication: changeActiveMedication,
                 changeDosage: changeDosage,
+                trackMedication: trackMedication,
+                getRelatedEncounters: getRelatedEncounters
             };
 
-            function csrf_token() {
-                return $cookies.get('csrftoken');
+            function getRelatedEncounters(medicationId) {
+                let url = `/medication/${medicationId}/encounters`;
+                let params = {};
+                return httpService.get(params, url);
+            }
+
+            function trackMedication(patientId, medicationId) {
+                let url = `/medication/${patientId}/${medicationId}/access`;
+                let params = {};
+                return httpService.get(params, url);
             }
 
             function addMedication(form) {

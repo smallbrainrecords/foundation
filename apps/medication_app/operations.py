@@ -14,7 +14,8 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from emr.models import Encounter, EncounterEvent, ProblemActivity, MedicationPinToProblem, PatientController, Problem
+from emr.models import Encounter, EncounterEvent, ProblemActivity, MedicationPinToProblem, PatientController, Problem, \
+    EncounterMedication
 
 
 def op_medication_event(medication, actor, patient, summary):
@@ -86,4 +87,22 @@ def op_pin_medication_to_problem_for_all_controlled_patient(actor, pinned_instan
         pin = MedicationPinToProblem(author=actor, medication=medication, problem=problem)
         pin.save()
 
+    pass
+
+
+def op_track_medication_during_encounter(patient_id, medication_id):
+    """
+    TODO: This can make to a separated encounter medication app
+    :param patient_id:
+    :param medication_id:
+    :return:
+    """
+    encounters = Encounter.objects.filter(patient_id=patient_id).order_by('-id')
+    if encounters.exists():
+        encounter = encounters[0]
+
+        if encounter.is_active() and not EncounterMedication.objects.filter(encounter=encounter,
+                                                                            medication_id=medication_id).exists():
+            medication_encounter = EncounterMedication(encounter=encounter, medication_id=medication_id)
+            medication_encounter.save()
     pass

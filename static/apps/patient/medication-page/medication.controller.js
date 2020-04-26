@@ -20,20 +20,24 @@
 
 
     angular.module('ManagerApp')
-        .controller('MedicationCtrl', function ($scope, $routeParams, ngDialog, problemService, sharedService,
-                                                toaster, $location, patientService, $filter, medicationService, prompt) {
+        .controller('MedicationCtrl', function ($scope, $routeParams, $filter, $location, prompt, toaster,
+                                                sharedService, patientService, problemService, medicationService) {
 
+            // States
+            $scope.medicationId = $routeParams.medication_id;
             $scope.showMedicationSearch = false;
             $scope.showMedicationHistory = false;
-            $scope.medication_id = $routeParams.medication_id;
+            $scope.showPinToNewProblem = false;
             $scope.medicationHistory = [];
             $scope.medicationNoteHistory = [];
-            $scope.showPinToNewProblem = false;
+            $scope.encounters = [];
 
-            $scope.seeMedicationHistory = seeMedicationHistory;
+            // Behaviors
+            $scope.toggleMedicationHistory = toggleMedicationHistory;
+            $scope.toggleMedicationSearch = toggleMedicationSearch;
+            $scope.togglePinToNewProblem = togglePinToNewProblem;
             $scope.addNote = addNote;
             $scope.isInPins = isInPins;
-            $scope.togglePinToNewProblem = togglePinToNewProblem;
             $scope.medicationPinToProblem = medicationPinToProblem;
             $scope.openProblem = openProblem;
             $scope.changeActiveMedication = changeActiveMedication;
@@ -47,41 +51,59 @@
 
             function init() {
 
-                medicationService.fetchMedicationInfo($scope.patient_id, $scope.medication_id).then(function (data) {
+                medicationService.fetchMedicationInfo($scope.patient_id, $scope.medicationId).then(data => {
                     $scope.medication = data['info'];
                     $scope.medicationHistory = data['history'];
                     $scope.medicationNoteHistory = data['noteHistory'];
                 });
 
                 // pin to problem
-                problemService.fetchProblems($scope.patient_id).then(function (data) {
+                problemService.fetchProblems($scope.patient_id).then(data => {
                     $scope.problems = data['problems'];
 
-                    medicationService.fetchPinToProblem($scope.medication_id).then(function (data) {
+                    medicationService.fetchPinToProblem($scope.medicationId).then(data => {
                         $scope.pins = data['pins'];
 
-                        angular.forEach($scope.problems, function (problem) {
+                        angular.forEach($scope.problems, problem => {
                             if ($scope.isInPins($scope.pins, problem)) {
                                 problem.pin = true;
                             }
                         });
                     });
                 });
+
+                medicationService.getRelatedEncounters($scope.medicationId).then(response => {
+                    $scope.encounters = response['encounters'];
+                })
             }
 
-            function seeMedicationHistory() {
-                $scope.medication.showMedicationHistory = !$scope.medication.showMedicationHistory;
+            function toggleMedicationHistory() {
+                $scope.showMedicationSearch = false;
+                $scope.showPinToNewProblem = false;
+                $scope.showMedicationHistory = !$scope.showMedicationHistory;
+            }
+
+            function togglePinToNewProblem() {
+                $scope.showMedicationSearch = false;
+                $scope.showMedicationHistory = false;
+                $scope.showPinToNewProblem = !$scope.showPinToNewProblem;
+            }
+
+            function toggleMedicationSearch() {
+                $scope.showMedicationHistory = false;
+                $scope.showPinToNewProblem = false;
+                $scope.showMedicationSearch = !$scope.showMedicationSearch;
             }
 
             function addNote(form, oldNote) {
-                if (form.note == '')
+                if (form.note === '')
                     return;
 
                 form.medication_id = $scope.medication.id;
                 form.patient_id = $scope.patient_id;
 
                 medicationService.addMedicationNote(form)
-                    .then(function (data) {
+                    .then(data => {
                         $scope.medicationNoteHistory.push(data['note']);
                         if (typeof oldNote !== 'undefined')
                             form.note = oldNote;
@@ -91,7 +113,7 @@
 
             function isInPins(array, item) {
                 var is_existed = false;
-                angular.forEach(array, function (value, key2) {
+                angular.forEach(array, (value, key2) => {
                     if (value.problem === item.id) {
                         is_existed = true;
                     }
@@ -99,19 +121,16 @@
                 return is_existed;
             }
 
-            function togglePinToNewProblem() {
-                $scope.showPinToNewProblem = !$scope.showPinToNewProblem;
-            }
 
             function medicationPinToProblem(medication_id, problem_id) {
-                var form = {};
+                let form = {};
                 form.medication_id = medication_id;
                 form.problem_id = problem_id;
 
-                medicationService.medicationPinToProblem($scope.patient_id, form).then(function (data) {
-                    if (data['success'] == true) {
+                medicationService.medicationPinToProblem($scope.patient_id, form).then(data => {
+                    if (data['success']) {
                         toaster.pop('success', 'Done', 'Pinned problem!');
-                    } else if (data['success'] == false) {
+                    } else if (data['success']) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -124,15 +143,15 @@
             }
 
             function changeActiveMedication() {
-                medicationService.changeActiveMedication($scope.patient_id, $scope.medication_id)
-                    .then(function (response) {
+                medicationService.changeActiveMedication($scope.patient_id, $scope.medicationId)
+                    .then(response => {
                         toaster.pop('success', 'Done', 'Changed successfully!');
                     });
             }
 
             function changeDosage(medication) {
                 medicationService.changeDosage($scope.patient_id, $scope.medication.id, medication)
-                    .then(function (response) {
+                    .then(response => {
                         if (response.data.success) {
                             toaster.pop('success', 'Done', 'Changed successfully!');
                             $scope.showMedicationSearch = false;
@@ -146,7 +165,7 @@
 
             function updateNoteHistory(note) {
                 medicationService.editNote(note)
-                    .then(function (data) {
+                    .then(data => {
                         if (data.success) {
                             note.editMode = false;
                             toaster.pop('success', 'Done', 'Edited note success');
@@ -162,9 +181,9 @@
                 prompt({
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
-                }).then(function (result) {
+                }).then(result => {
                     medicationService.deleteNote(note)
-                        .then(function (data) {
+                        .then(data => {
                             if (data.success) {
                                 var index = $scope.medicationNoteHistory.indexOf(note);
                                 $scope.medicationNoteHistory.splice(index, 1);
