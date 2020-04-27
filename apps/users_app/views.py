@@ -57,6 +57,7 @@ from emr.manage_patient_permissions import ROLE_PERMISSIONS
 
 from emr.manage_patient_permissions import check_access
 
+
 @timeit
 def permissions_accessed(user, obj_user_id):
     """
@@ -98,6 +99,7 @@ def permissions_accessed(user, obj_user_id):
     return permitted
 
 
+@timeit
 def is_patient(user):
     try:
         profile = UserProfile.objects.get(user=user)
@@ -106,6 +108,7 @@ def is_patient(user):
         return False
 
 
+@timeit
 def login_user(request):
     if request.method == "GET":
         return render(request, 'users/../../templates/login.html', {})
@@ -135,11 +138,13 @@ def login_user(request):
             return render(request, 'users/../../templates/login.html', content)
 
 
+@timeit
 def logout_user(request):
     logout(request.user)
     return HttpResponseRedirect('/')
 
 
+@timeit
 def register_user(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -178,6 +183,7 @@ def register_user(request):
 
 
 @login_required
+@timeit
 def home(request):
     if request.method == 'GET':
         user = request.user
@@ -211,6 +217,7 @@ def home(request):
 
 # Users
 @login_required
+@timeit
 def manage_patient(request, user_id):
     context = {}
     allowed = False
@@ -264,6 +271,7 @@ def manage_patient(request, user_id):
 # Users
 # TODO: Clean up later
 @login_required
+@timeit
 def get_patient_info(request, patient_id):
     resp = {}
     patient_user = User.objects.get(id=patient_id)
@@ -365,6 +373,7 @@ def get_patient_info(request, patient_id):
 
 
 @login_required
+@timeit
 def get_timeline_info(request, patient_id):
     # Timeline Problems
     timeline_problems = Problem.objects.filter(patient_id=patient_id)
@@ -373,6 +382,7 @@ def get_timeline_info(request, patient_id):
 
 
 @login_required
+@timeit
 def get_patient_todos_info(request, patient_id):
     resp = {}
     todos = ToDo.objects.filter(patient_id=patient_id).order_by("order")
@@ -389,6 +399,7 @@ def get_patient_todos_info(request, patient_id):
 # Users
 @permissions_required(["update_patient_profile"])
 @login_required
+@timeit
 def update_patient_summary(request, patient_id):
     resp = {}
     new_summary = request.POST.get('summary')
@@ -401,6 +412,7 @@ def update_patient_summary(request, patient_id):
 
 @permissions_required(["update_patient_profile"])
 @login_required
+@timeit
 def update_patient_note(request, patient_id):
     resp = {}
     new_note = request.POST.get('note')
@@ -413,6 +425,7 @@ def update_patient_note(request, patient_id):
 
 @permissions_required(["update_patient_profile"])
 @login_required
+@timeit
 def update_patient_password(request, patient_id):
     resp = {'success': False, 'message': ''}
 
@@ -431,6 +444,7 @@ def update_patient_password(request, patient_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def update_basic_profile(request, patient_id):
     resp = {'success': False}
 
@@ -454,6 +468,7 @@ def update_basic_profile(request, patient_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def update_profile(request, patient_id):
     resp = {'success': False}
 
@@ -497,6 +512,7 @@ def update_profile(request, patient_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def update_patient_email(request, patient_id):
     resp = {'success': False}
     form = UpdateEmailForm(request.POST)
@@ -514,6 +530,7 @@ def update_patient_email(request, patient_id):
 
 
 @login_required
+@timeit
 def fetch_active_user(request):
     resp = {}
     user_profile = UserProfile.objects.get(user=request.user)
@@ -526,6 +543,7 @@ def fetch_active_user(request):
 
 
 @login_required
+@timeit
 def staff(request):
     content = {}
     user = request.user
@@ -555,6 +573,7 @@ def staff(request):
 
 
 @login_required
+@timeit
 def get_patient_members(request, user_id):
     resp = {}
 
@@ -571,6 +590,7 @@ def get_patient_members(request, user_id):
 
 
 @login_required
+@timeit
 def get_patients_list(request):
     """
     Get top patient list data
@@ -636,6 +656,7 @@ def get_patients_list(request):
 @permissions_required(["add_sharing_patient"])
 @login_required
 @api_view(["POST"])
+@timeit
 def add_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {'success': False}
 
@@ -658,6 +679,7 @@ def add_sharing_patient(request, patient_id, sharing_patient_id):
 @permissions_required(["remove_sharing_patient"])
 @login_required
 @api_view(["POST"])
+@timeit
 def remove_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {}
 
@@ -671,6 +693,7 @@ def remove_sharing_patient(request, patient_id, sharing_patient_id):
 @permissions_required(["add_sharing_patient"])
 @login_required
 @api_view(["POST"])
+@timeit
 def change_sharing_my_story(request, patient_id, sharing_patient_id):
     sharing_patient = SharingPatient.objects.get(sharing_id=sharing_patient_id, shared_id=patient_id)
     sharing_patient.is_my_story_shared = not sharing_patient.is_my_story_shared
@@ -681,6 +704,7 @@ def change_sharing_my_story(request, patient_id, sharing_patient_id):
 
 
 @login_required
+@timeit
 def get_sharing_patients(request, patient_id):
     resp = {}
     sharing_patients = SharingPatient.objects.filter(shared_id=patient_id)
@@ -694,6 +718,7 @@ def get_sharing_patients(request, patient_id):
 
 
 @login_required
+@timeit
 def get_todos_physicians(request, user_id):
     resp = {}
     team_members = PhysicianTeam.objects.filter(member_id=user_id)
@@ -717,6 +742,7 @@ def get_todos_physicians(request, user_id):
 
 
 @login_required
+@timeit
 def user_info(request, user_id):
     user_profile = UserProfile.objects.get(user_id=user_id)
     resp = {}
@@ -727,6 +753,7 @@ def user_info(request, user_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def search(request, user_id):
     user = User.objects.get(id=user_id)
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -795,6 +822,7 @@ def search(request, user_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def staff_search(request):
     user_profile = UserProfile.objects.get(user=request.user)
     if user_profile.role == 'patient':
@@ -854,6 +882,7 @@ def staff_search(request):
 
 
 @login_required
+@timeit
 def update_last_access_tagged_todo(request, user_id):
     """
     Update last time user access the tagged todo frame.
@@ -876,6 +905,7 @@ def update_last_access_tagged_todo(request, user_id):
 
 
 @login_required
+@timeit
 def get_general_setting(request):
     resp = {'success': False}
     data = {}
@@ -888,6 +918,7 @@ def get_general_setting(request):
 
 
 @login_required
+@timeit
 def update_general_setting(request):
     resp = {'success': False}
     json_body = json.loads(request.body)
@@ -902,6 +933,7 @@ def update_general_setting(request):
 
 
 @login_required()
+@timeit
 def get_user_todo(request, patient_id):
     """
     API for querying patient todo
@@ -926,6 +958,7 @@ def get_user_todo(request, patient_id):
 
 
 @login_required
+@timeit
 def get_most_recent_encounter(request, patient_id):
     """
 
@@ -980,6 +1013,7 @@ def get_most_recent_encounter(request, patient_id):
 
 
 @login_required
+@timeit
 def get_user_vitals(request, patient_id):
     """
     TODO: Get last core vitals
@@ -1091,6 +1125,7 @@ def get_user_vitals(request, patient_id):
 
 
 @login_required
+@timeit
 def set_user_medicare(request, patient_id):
     """
 
@@ -1110,6 +1145,7 @@ def set_user_medicare(request, patient_id):
 
 
 @login_required
+@timeit
 def get_user_narratives(request, patient_id):
     """
 
@@ -1129,6 +1165,7 @@ def get_user_narratives(request, patient_id):
     return ajax_response(resp)
 
 
+@timeit
 def add_narratives(request, patient_id):
     """
 
@@ -1154,6 +1191,7 @@ def add_narratives(request, patient_id):
 
 
 @login_required
+@timeit
 def get_all_narratives(request, patient_id):
     """
 
@@ -1171,6 +1209,7 @@ def get_all_narratives(request, patient_id):
 
 
 @login_required
+@timeit
 def get_user_problem(request, patient_id):
     resp = {'success': False}
     problems = Problem.objects.filter(patient_id=patient_id)
@@ -1181,6 +1220,7 @@ def get_user_problem(request, patient_id):
 
 
 @login_required
+@timeit
 def cover(request, user_id):
     """
     Method to update user's cover image

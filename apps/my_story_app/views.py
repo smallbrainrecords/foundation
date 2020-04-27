@@ -27,6 +27,7 @@ from .serializers import MyStoryTextComponentEntrySerializer, MyStoryTextCompone
 
 
 @login_required
+@timeit
 def track_tab_click(request):
     resp = {'success': False}
     if request.POST.get("tab_id", None):
@@ -72,6 +73,7 @@ def get_my_story(request, patient_id):
 
 
 @login_required
+@timeit
 def get_tab_info(request, tab_id):
     resp = {'success': False}
     tab_info = MyStoryTab.objects.get(id=tab_id)
@@ -84,6 +86,7 @@ def get_tab_info(request, tab_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
+@timeit
 def add_tab(request, patient_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -109,6 +112,7 @@ def add_tab(request, patient_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
+@timeit
 def add_text(request, patient_id, tab_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -150,6 +154,7 @@ def add_text(request, patient_id, tab_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
+@timeit
 def delete_tab(request, patient_id, tab_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -167,6 +172,7 @@ def delete_tab(request, patient_id, tab_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
+@timeit
 def save_tab(request, patient_id, tab_id):
     resp = {}
     resp['success'] = False
@@ -185,6 +191,7 @@ def save_tab(request, patient_id, tab_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
+@timeit
 def delete_text_component(request, patient_id, component_id):
     resp = {}
     resp['success'] = False
@@ -202,6 +209,7 @@ def delete_text_component(request, patient_id, component_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["save_text_component"])
+@timeit
 def save_text_component(request, patient_id, component_id):
     resp = {}
     resp['success'] = False
@@ -224,6 +232,7 @@ def save_text_component(request, patient_id, component_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["save_text_component"])
+@timeit
 def save_text_component_entry(request, patient_id, component_id):
     resp = {}
     resp['success'] = False

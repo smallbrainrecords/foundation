@@ -26,6 +26,7 @@ from .serializers import AOneCTextNoteSerializer, AOneCSerializer
 
 
 # set problem authentication to false if not physician, admin
+@timeit
 def set_problem_authentication_false(actor_profile, problem):
     role = actor_profile.role
     authenticated = role in ["physician", "admin"]
@@ -34,6 +35,7 @@ def set_problem_authentication_false(actor_profile, problem):
 
 
 @login_required
+@timeit
 def track_a1c_click(request, a1c_id):
     actor = request.user
     a1c_info = AOneC.objects.get(id=a1c_id)
@@ -47,6 +49,7 @@ def track_a1c_click(request, a1c_id):
 
 
 @login_required
+@timeit
 def get_a1c_info(request, a1c_id):
     a1c_info = AOneC.objects.get(id=a1c_id)
     resp = {}
@@ -58,6 +61,7 @@ def get_a1c_info(request, a1c_id):
 # Note
 @permissions_required(["add_a1c_note"])
 @login_required
+@timeit
 def add_note(request, a1c_id):
     resp = {}
     note = request.POST.get("note")
@@ -71,6 +75,7 @@ def add_note(request, a1c_id):
 
 @permissions_required(["edit_a1c_note"])
 @login_required
+@timeit
 def edit_note(request, note_id):
     resp = {}
 
@@ -85,6 +90,7 @@ def edit_note(request, note_id):
 
 @permissions_required(["delete_a1c_note"])
 @login_required
+@timeit
 def delete_note(request, note_id):
     resp = {}
 
@@ -96,6 +102,7 @@ def delete_note(request, note_id):
 
 @permissions_required(["add_a1c"])
 @login_required
+@timeit
 def patient_refused(request, a1c_id):
     a1c = AOneC.objects.get(id=a1c_id)
     observation = a1c.observation
@@ -125,6 +132,7 @@ def patient_refused(request, a1c_id):
 # Value
 @permissions_required(["add_a1c"])
 @login_required
+@timeit
 def add_value(request, component_id):
     resp = {}
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -161,6 +169,7 @@ def add_value(request, component_id):
 
 @permissions_required(["delete_observation_component"])
 @login_required
+@timeit
 def delete_value(request, value_id):
     resp = {}
     ObservationValue.objects.get(id=value_id).delete()
@@ -169,6 +178,7 @@ def delete_value(request, value_id):
 
 
 @login_required
+@timeit
 def get_observation_value_info(request, value_id):
     resp = {}
 
@@ -183,6 +193,7 @@ def get_observation_value_info(request, value_id):
 
 @permissions_required(["edit_observation_component"])
 @login_required
+@timeit
 def edit_value(request, value_id):
     resp = {}
 
@@ -200,6 +211,7 @@ def edit_value(request, value_id):
 # Value Note
 @permissions_required(["add_a1c_note"])
 @login_required
+@timeit
 def add_value_note(request, value_id):
     resp = {}
 
@@ -213,6 +225,7 @@ def add_value_note(request, value_id):
 
 @permissions_required(["edit_a1c_note"])
 @login_required
+@timeit
 def edit_value_note(request, note_id):
     resp = {}
     note = request.POST.get('note')
@@ -228,6 +241,7 @@ def edit_value_note(request, note_id):
 
 @permissions_required(["delete_a1c_note"])
 @login_required
+@timeit
 def delete_value_note(request, note_id):
     resp = {}
 

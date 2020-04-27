@@ -14,9 +14,11 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from common.views import timeit
 from emr.models import ProblemActivity, SharingPatient, AOneC, ColonCancerScreening
 
 
+@timeit
 def add_problem_activity(problem, user, activity, put_type=None):
     new_activity = ProblemActivity(problem=problem, author=user, activity=activity)
     if put_type == 'input':
@@ -26,6 +28,7 @@ def add_problem_activity(problem, user, activity, put_type=None):
     new_activity.save()
 
 
+@timeit
 def check_problem_access(user, problem):
     """
 
@@ -39,6 +42,7 @@ def check_problem_access(user, problem):
         return True
 
 
+@timeit
 def get_available_widget(problem_info):
     """
 

@@ -14,8 +14,10 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from common.views import timeit
 
 
+@timeit
 def fetch_document_label_set(document):
     """
     Load all labels associated with a document which either direct pinned to this document or label via pinned todo

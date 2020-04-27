@@ -14,10 +14,11 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-
+from common.views import timeit
 from emr.models import TodoActivity, UserProfile
 
 
+@timeit
 def add_todo_activity(todo, user, activity, comment=None, attachment=None):
     new_activity = TodoActivity(todo=todo, author=user, activity=activity)
     if comment:
@@ -27,6 +28,7 @@ def add_todo_activity(todo, user, activity, comment=None, attachment=None):
     new_activity.save()
 
 
+@timeit
 def is_patient(user):
     try:
         profile = UserProfile.objects.get(user=user)
@@ -36,6 +38,7 @@ def is_patient(user):
 
 
 # set problem authentication to false if not physician, admin
+@timeit
 def set_problem_authentication_false(request, todo):
     if todo.problem:
         problem = todo.problem

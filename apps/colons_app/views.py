@@ -28,6 +28,7 @@ from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySeriali
 
 
 @login_required
+@timeit
 def track_colon_click(request, colon_id):
     resp = {'success': False}
     colon_info = ColonCancerScreening.objects.get(id=colon_id)
@@ -43,6 +44,7 @@ def track_colon_click(request, colon_id):
 
 
 @login_required
+@timeit
 def get_colon_info(request, colon_id):
     resp = {'success': False}
     colon_info = ColonCancerScreening.objects.get(id=colon_id)
@@ -66,6 +68,7 @@ def get_colon_info(request, colon_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def add_study(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -90,6 +93,7 @@ def add_study(request, colon_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def delete_study(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -102,6 +106,7 @@ def delete_study(request, study_id):
 
 
 @login_required
+@timeit
 def get_study_info(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -112,6 +117,7 @@ def get_study_info(request, study_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def edit_study(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -130,6 +136,7 @@ def edit_study(request, study_id):
 
 
 @login_required
+@timeit
 def upload_study_image(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -154,6 +161,7 @@ def upload_study_image(request, study_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def delete_study_image(request, study_id, image_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -170,6 +178,7 @@ def delete_study_image(request, study_id, image_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def add_study_image(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -197,6 +206,7 @@ def add_study_image(request, study_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def add_factor(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -232,6 +242,7 @@ def add_factor(request, colon_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def delete_factor(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -258,6 +269,7 @@ def delete_factor(request, colon_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def refuse(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -277,6 +289,7 @@ def refuse(request, colon_id):
 
 @login_required
 @api_view(["POST"])
+@timeit
 def not_appropriate(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -296,6 +309,7 @@ def not_appropriate(request, colon_id):
 
 # Note
 @login_required
+@timeit
 def add_note(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -309,6 +323,7 @@ def add_note(request, colon_id):
 
 
 @login_required
+@timeit
 def edit_note(request, note_id):
     resp = {'success': False}
     note = ColonCancerTextNote.objects.get(id=note_id)
@@ -321,6 +336,7 @@ def edit_note(request, note_id):
 
 
 @login_required
+@timeit
 def delete_note(request, note_id):
     resp = {'success': False}
     note = ColonCancerTextNote.objects.get(id=note_id)

@@ -14,10 +14,12 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from common.views import timeit
 from emr.models import Encounter, EncounterEvent, ProblemActivity, MedicationPinToProblem, PatientController, Problem, \
     EncounterMedication
 
 
+@timeit
 def op_medication_event(medication, actor, patient, summary):
     """
     Log medication event to encounter & pinned problem \n
@@ -48,6 +50,7 @@ def op_medication_event(medication, actor, patient, summary):
     pass
 
 
+@timeit
 def count_pinned_have_same_medication_concept_id_and_problem_concept_id(actor, medication, problem):
     """
     Finding number of pinned instance having same pair of medication's concept id and problem's concept id
@@ -66,6 +69,7 @@ def count_pinned_have_same_medication_concept_id_and_problem_concept_id(actor, m
     pass
 
 
+@timeit
 def op_pin_medication_to_problem_for_all_controlled_patient(actor, pinned_instance_set, medication, problem):
     """
     Pin medication to any instance of problem for all the patients associated with that physician.
@@ -90,6 +94,7 @@ def op_pin_medication_to_problem_for_all_controlled_patient(actor, pinned_instan
     pass
 
 
+@timeit
 def op_track_medication_during_encounter(patient_id, medication_id):
     """
     TODO: This can make to a separated encounter medication app

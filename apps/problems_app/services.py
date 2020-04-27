@@ -16,11 +16,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from datetime import datetime, timedelta
 
+from common.views import timeit
 from emr.models import ToDo, Problem, ProblemActivity, ProblemSegment
 
 
 class ProblemService(object):
     @staticmethod
+    @timeit
     def populate_multiplicity(problems_json):
         for problem in problems_json:
             todo = ToDo.objects.filter(problem_id=problem['id'], accomplished=False).count()
@@ -34,6 +36,7 @@ class ProblemService(object):
                 problem['multiply'] = todo * event
 
     @staticmethod
+    @timeit
     def update_from_timeline_data(problem_json):
         problem = Problem.objects.get(id=int(problem_json['id']))
         start_date = datetime.strptime(problem_json['events'][0]['startTime'], "%d/%m/%Y %H:%M:%S")

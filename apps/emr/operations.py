@@ -14,10 +14,12 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from common.views import timeit
 from .models import Encounter, EncounterEvent, EncounterTodoRecord
 from .models import EncounterProblemRecord
 
 
+@timeit
 def op_add_event(physician, patient, event_summary, problem=None, todo=False):
     latest_encounter = Encounter.objects.filter(physician=physician, patient=patient).order_by('-id')
 
@@ -45,6 +47,7 @@ def op_add_event(physician, patient, event_summary, problem=None, todo=False):
     return True
 
 
+@timeit
 def op_add_todo_event(physician, patient, event_summary, todo=None, problem=False):
     latest_encounter = Encounter.objects.filter(
         physician=physician,

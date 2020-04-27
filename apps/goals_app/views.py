@@ -27,6 +27,7 @@ from .serializers import GoalSerializer
 
 # Goals
 @login_required
+@timeit
 def get_goal_info(request, goal_id):
     resp = {}
     goal = Goal.objects.get(id=goal_id)
@@ -39,6 +40,7 @@ def get_goal_info(request, goal_id):
 # Goals
 @permissions_required(["add_goal"])
 @login_required
+@timeit
 def add_patient_goal(request, patient_id):
     resp = {}
     goal_name = request.POST.get('name')
@@ -57,6 +59,7 @@ def add_patient_goal(request, patient_id):
 # Goals
 @permissions_required(["modify_goal"])
 @login_required
+@timeit
 def update_goal_status(request, patient_id, goal_id):
     resp = {}
     patient = User.objects.get(id=patient_id)
@@ -94,6 +97,7 @@ def update_goal_status(request, patient_id, goal_id):
 # Goals
 @permissions_required(["modify_goal"])
 @login_required
+@timeit
 def add_goal_note(request, patient_id, goal_id):
     resp = {}
 
@@ -125,6 +129,7 @@ def add_goal_note(request, patient_id, goal_id):
 
 @permissions_required(["modify_goal"])
 @login_required
+@timeit
 def change_name(request, patient_id, goal_id):
     resp = {}
     patient = User.objects.get(id=patient_id)

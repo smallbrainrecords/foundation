@@ -14,9 +14,11 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from common.views import timeit
 from emr.models import ObservationValue
 
 
+@timeit
 def get_vitals_table_component(patient_id, component_name):
     return ObservationValue.objects.filter(component__name=component_name).filter(
         component__observation__subject_id=patient_id).order_by(
