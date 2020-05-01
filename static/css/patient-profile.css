@@ -543,7 +543,7 @@ a.btn-manage {
   z-index: 1000;
   margin: 0;
 }
-.problem-uncontrolled.affix {
+.problem-uncontrolled.affix-top, .problem-uncontrolled.affix {
   top: 50px;
 }
 
