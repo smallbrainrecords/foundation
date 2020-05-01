@@ -151,7 +151,7 @@
                 $scope.pending_todos = patientService.getProblemTodo($scope.problem_id);
 
                 patientService.fetchProblemInfo($scope.problem_id)
-                    .then(function (data) {
+                    .then(data => {
                         $scope.loading = false;
 
                         if (data.success) {
@@ -391,9 +391,9 @@
 
                 });
 
-                // $interval(function () {
-                //     $scope.refresh_problem_activity();
-                // }, 10000);
+                $interval(function () {
+                    $scope.refresh_problem_activity();
+                }, 10000);
             }
 
             /**
