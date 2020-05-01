@@ -31,7 +31,7 @@
                 </div>
             </form>
             <div class="todo-list-wrapper">
-                <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
+                <div infinite-scroll="loadMoreTodo(false)" >
                     <todo todo-list="pending_todos" accomplished="false" show-problem="true"
                           on-status-changed-success="updateStatusCallback"
                           labels="labels" members="members"
@@ -315,7 +315,7 @@
                             </form>
 
                             <div class="todo-list-wrapper">
-                                <div infinite-scroll="loadMoreTodo(false)" infinite-scroll-distance="5">
+                                <div infinite-scroll="loadMoreTodo(false)" >
                                     <todo todo-list="pending_todos" show-problem="true"
                                           on-status-changed-success="updateStatusCallback"
                                           labels="labels" members="members"
