@@ -197,7 +197,7 @@
         </div>
 
         <div class='col-md-6 text-right'>
-            <div class='form-group form-inline' ng-show='permitted(["modify_problem"])'>
+            <div class='form-inline' ng-show='permitted(["modify_problem"])'>
                 <label for="start-date">Start date </label>
                 <div class="input-group">
                     <input id="start-date" class='form-control'
@@ -267,7 +267,7 @@
                     </form>
 
                     <!-- Scroll view-->
-                    <div infinite-scroll="loadMoreTodo(false)" >
+                    <div infinite-scroll="loadMoreTodo(false)">
                         <!--on-status-changed-success="updateStatusCallback"-->
                         <todo active-user="active_user" labels="labels"
                               members="members" patient-id="patient_id"
