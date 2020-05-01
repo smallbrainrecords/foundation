@@ -4,7 +4,9 @@
 
 <section ng-if="hasAccess">
     <!--Problem header-->
-    <section class='row' fixed-zone id='problem-header' ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"' offset-orientation='top'
+    <section class='row' fixed-zone id='problem-header'
+             ng-class='problem.is_controlled==true ? "problem-controlled" : "problem-uncontrolled"'
+             offset-orientation='top'
              offset-top='100'>
         <div class="col-md-6">
             <div class="todo">
@@ -19,7 +21,7 @@
                     <!-- end label -->
                     <!-- begin sharing patients -->
                     <span ng-if="isInArray(p.problems, problem.id)" ng-repeat="p in sharing_patients">
-                        <img class='tiny-img' ng-src="{{ p.portrait_image }}" title="{{ p.user.first_name }}">
+                        <img class='tiny-img' ng-src="{{ p.portrait_image }}" title="{{ p.user.first_name }}" alt="">
                     </span>
                     <!-- end sharing patients -->
                     <a class="btn-custom" href ng-click="edit_problem=!edit_problem"><i class="fa fa-pencil"></i></a>
@@ -31,7 +33,8 @@
                     <div class="quick-card-editor-text">
                         <div class='row' ng-show='permitted(["change_problem_name"])'>
                             <div class='col-md-12'>
-                                <input class='form-control' id='problemTermInput' ng-change="problem_name_changed(problem_term);" ng-model='problem_term'
+                                <input class='form-control' id='problemTermInput'
+                                       ng-change="problem_name_changed(problem_term);" ng-model='problem_term'
                                        ng-model-options="{ updateOn: 'default blur', debounce: { default: 1000, blur: 500 } }"
                                        placeholder='Search Problem....'
                                        type='text'>
@@ -120,7 +123,8 @@
                             </div>
                             <input ng-model="problem_label_component.name" type="text">
                             <a class="todo-label" href ng-class="component.css_class"
-                               ng-click="selectProblemLabelComponent(component)" ng-repeat="component in problem_labels_component">
+                               ng-click="selectProblemLabelComponent(component)"
+                               ng-repeat="component in problem_labels_component">
                                 <i class="fa fa-check"
                                    ng-if="component.css_class==problem_label_component.css_class"></i>
                             </a>
@@ -169,7 +173,8 @@
                         </div>
                         <!-- end change data -->
                         <!-- begin change medication -->
-                        <div class="quick-card-editor-lv2" ng-if="change_pinned_medication" id="problem-medication-select">
+                        <div class="quick-card-editor-lv2" ng-if="change_pinned_medication"
+                             id="problem-medication-select">
                             <div class="quick-card-editor-lv2-header">
                                 <a sb-click-track ng-click="close_change_medication(); $event.stopPropagation();"><i
                                         class="fa fa-close"></i></a>
@@ -192,17 +197,22 @@
         </div>
 
         <div class='col-md-6 text-right'>
-            <form class='form form-inline'>
-                <div class='form-group'>
-                    <label for="start_date">Problem start date</label>
-                    <input class='form-control' id="start_date" ng-model='problem.start_date' type='text'>
+            <div class='form-group form-inline' ng-show='permitted(["modify_problem"])'>
+                <label for="start-date">Start date </label>
+                <div class="input-group">
+                    <input id="start-date" class='form-control'
+                           uib-datepicker-popup="{{startDateFormat}}"
+                           popup-placement="bottom-right"
+                           is-open="startDateOpen"
+                           datepicker-options="startDateOptions"
+                           ng-change="update_start_date(startDate)"
+                           ng-model='startDate'>
+                    <span class="input-group-btn">
+                    <button type="button" class="btn btn-default" ng-click="startDateOpen =!startDateOpen "><i
+                            class="fa fa-calendar"></i></button>
+                    </span>
                 </div>
-                <div class='form-group'>
-                    <button class='btn btn-default' ng-click='update_start_date()'
-                            ng-show='permitted(["modify_problem"])'> Update
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </section>
 
@@ -213,20 +223,23 @@
                 <div class='col-md-4'>
                     <!--Only show if edit mode is enabled-->
                     <div class="checkbox">
-                        <input id="controller-switch" ng-disabled='!permitted(["set_problem_controlled"])' ng-model='problem.is_controlled'
+                        <input id="controller-switch" ng-disabled='!permitted(["set_problem_controlled"])'
+                               ng-model='problem.is_controlled'
                                type='checkbox'>
                         <label for="controller-switch"> Is controlled </label>
                     </div>
                 </div>
                 <div class='col-md-4'>
                     <div class="checkbox">
-                        <input id="authenticated-switch" ng-disabled='!permitted(["set_problem_authenticated"])' ng-model='problem.authenticated'
+                        <input id="authenticated-switch" ng-disabled='!permitted(["set_problem_authenticated"])'
+                               ng-model='problem.authenticated'
                                type='checkbox'>
                         <label for="authenticated-switch">Is authenticated</label></div>
                 </div>
                 <div class='col-md-4'>
                     <div class="checkbox">
-                        <input id="active-switch" ng-disabled='!permitted(["set_problem_active"])' ng-model='problem.is_active'
+                        <input id="active-switch" ng-disabled='!permitted(["set_problem_active"])'
+                               ng-model='problem.is_active'
                                type='checkbox'>
                         <label for="active-switch">Is active</label></div>
                 </div>
@@ -243,7 +256,8 @@
                     <!-- Form adding new todo(wiki_note_form is out of scope w/ problem controller)-->
                     <form ng-submit='add_todo(todo_form)'>
                         <div class='input-group'>
-                            <input class='form-control' id='todoNameInput' ng-attr-tabindex="{{ problemWikiNote ? 3: 2}}"
+                            <input class='form-control' id='todoNameInput'
+                                   ng-attr-tabindex="{{ problemWikiNote ? 3: 2}}"
                                    ng-model='todo_form.name'
                                    type='text'>
                             <span class="input-group-btn">
@@ -262,7 +276,8 @@
                     </div>
 
                     <!--Toggle button-->
-                    <button class='btn btn-default btn-block' ng-bind='show_accomplished_todos?"Hide accomplished Tasks ":"Show accomplished Tasks"'
+                    <button class='btn btn-default btn-block'
+                            ng-bind='show_accomplished_todos?"Hide accomplished Tasks ":"Show accomplished Tasks"'
                             ng-click='toggle_accomplished_todos()'>
                     </button>
 
@@ -302,7 +317,8 @@
                           colon-cancer="colon_cancers"
                           labels="labels"
                           members="members"
-                          order-added="colonCancersOrderAdded" order-status-changed="colonCancersOrderStatusChanged"></colon-cancer>
+                          order-added="colonCancersOrderAdded"
+                          order-status-changed="colonCancersOrderStatusChanged"></colon-cancer>
         </div>
     </section>
 
@@ -547,8 +563,9 @@
                             <li ng-repeat="document in pinned_document | orderBy:'created_on':true track by $index">
                                 <div>
                                     <a class="todo-label-front" ng-class="label.css_class"
-                                       ng-repeat="label in document.labels track by $index"><span class="todo-label-name"
-                                                                        ng-bind="label.name"></span></a>
+                                       ng-repeat="label in document.labels track by $index"><span
+                                            class="todo-label-name"
+                                            ng-bind="label.name"></span></a>
                                     <a class="flex-item document_name" href="#/document/{{ document.id }}"
                                        ng-bind="document.document_name"></a>
                                     <span class="flex-item document_uploaded_date pull-right"
@@ -570,7 +587,8 @@
                     <div class='panel-body'>
                         <div masonry="{ gutter: 10}">
                             <div class="masonry-brick" ng-repeat='image in problem_images track by $index'>
-                                <i class="fa fa-times" ng-click='delete_problem_image(image)' ng-show='permitted(["delete_problem_image"])'
+                                <i class="fa fa-times" ng-click='delete_problem_image(image)'
+                                   ng-show='permitted(["delete_problem_image"])'
                                    title="Delete image"></i>
                                 <a class="problem-images-gallery" fancyboxable="img-{{$index}}" href='{{ image.image }}'
                                    id="img-{{$index}}" rel="problem-images-gallery">
@@ -600,7 +618,8 @@
             <i aria-hidden="true" class="fa fa-caret-down" ng-if="problem_activity_collapse"></i>
             <i aria-hidden="true" class="fa fa-caret-right" ng-if="!problem_activity_collapse"></i>
             Problem activity
-            <button class="btn btn-default" ng-click="problem_activity_see_all=!problem_activity_see_all; $event.stopPropagation();"
+            <button class="btn btn-default"
+                    ng-click="problem_activity_see_all=!problem_activity_see_all; $event.stopPropagation();"
                     ng-show="problem_activity_collapse">See
                 all
             </button>
@@ -670,9 +689,3 @@
 
     <div class="overlay" ng-click="edit_problem = false" ng-show="edit_problem"></div>
 </section>
-
-<script type='text/javascript'>
-    $(document).ready(function () {
-        $("#start_date").datepicker({dateFormat: 'mm/dd/yy'});
-    });
-</script>

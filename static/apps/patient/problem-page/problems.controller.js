@@ -21,7 +21,7 @@
 
     angular.module('ManagerApp')
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
-                                              $filter, ngDialog, toaster, todoService, prompt, $cookies, $location,
+                                              $filter, ngDialog, toaster, todoService, prompt, $cookies, $location, uibDateParser,
                                               dataService, medicationService, CollapseService, Upload, $timeout, LABELS) {
 
             $scope.activities = [];
@@ -69,7 +69,13 @@
             $scope.pendingTodoLoaded = false;
             $scope.encounter_collapse = false;
             $scope.editMode = false;
-
+            $scope.startDateFormat = 'dd/MM/yyyy';
+            $scope.startDate = new Date();
+            $scope.startDateOpen = false;
+            $scope.startDateOptions = {
+                showWeeks: false,
+                startingDay: 1
+            };
             // Init hot key binding
             $scope.add_goal = add_goal;
             $scope.addHistoryNote = addHistoryNote;
@@ -149,12 +155,10 @@
                         $scope.loading = false;
 
                         if (data.success) {
-                            // $scope.hasAccess = false;
-                            // }
                             $scope.hasAccess = true;
 
                             $scope.problem = data['info'];
-
+                            $scope.startDate = moment($scope.problem.start_date, "MM/DD/YYYY").toDate();
                             $scope.sharing_patients = data['sharing_patients'];
 
                             // problem time line
@@ -387,10 +391,9 @@
 
                 });
 
-                $interval(function () {
-                    $scope.refresh_problem_activity();
-                }, 10000);
-
+                // $interval(function () {
+                //     $scope.refresh_problem_activity();
+                // }, 10000);
             }
 
             /**
@@ -837,22 +840,16 @@
                     $scope.problem.authenticated = false;
             }
 
-            function update_start_date() {
+            function update_start_date(date) {
 
-                let form = {};
-
-                form.patient_id = $scope.patient_id;
-                form.problem_id = $scope.problem.id;
-                form.start_date = $scope.problem.start_date;
-
-                if (!moment(form.start_date, "MM/DD/YYYY", true).isValid()) {
-                    toaster.pop('error', 'Error', 'Please enter a valid date!');
-                    return false;
-                }
+                let form = {
+                    patient_id: $scope.patient_id,
+                    problem_id: $scope.problem.id,
+                    start_date: moment(date).format("MM/DD/YYYY")
+                };
 
                 problemService.updateStartDate(form).then(function (data) {
                     toaster.pop('success', 'Done', 'Updated Start Date');
-                    $scope.set_authentication_false();
                     $scope.timeline.problems[0].events[0].startTime = convertDateTime($scope.problem);
                     $scope.timeline_changed.push({changing: new Date().getTime()});
                 });
