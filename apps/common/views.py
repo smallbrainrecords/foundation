@@ -61,8 +61,15 @@ def timeit(method):
         ts = time.time()
         result = method(*args, **kw)
         te = time.time()
+        level = "Info"
 
-        print('Time it: %r (%r, %r) %2.2f sec' % (method.__name__, args, kw, te - ts))
+        if 1 <= te - ts < 5:
+            level = "Warning"
+
+        if te - ts >= 5:
+            level = "Critical"
+
+        print('[%r] Time it: %r (%r, %r) %2.2f sec' % (level, method.__name__, args, kw, te - ts))
         return result
 
     return timed
