@@ -3,6 +3,7 @@
 @import "todo-page";
 @import "medication";
 @import "patient-profile-picture";
+@import "colors";
 
 .nav > li > a {
   padding-right: 5px;
@@ -44,11 +45,11 @@ body {
     max-width: 100%;
     top: 0;
     height: 100%;
-    background: #639df9;
+    background: $color7;
 
     &:hover + .dropdown {
       .btn-camera {
-        background-color: #000;
+        background-color: $color4;
         opacity: 0.7;
 
         .glyphicon-camera {
@@ -66,13 +67,13 @@ body {
     left: 20px;
 
     &:hover {
-      border: 1px solid #fff;
+      border: 1px solid $color4;
     }
   }
 
   .profile-picture {
-    background: #fff;
-    border: 1px solid #cccccc;
+    background: $color4;
+    border: 1px solid $color6;
     padding: 5px;
     position: absolute;
     bottom: -20px;
@@ -103,7 +104,7 @@ body {
 
     &:hover {
       .btn-camera {
-        background-color: #000;
+        background-color: $color4;
         opacity: 0.7;
 
         .glyphicon-camera {
@@ -128,13 +129,13 @@ body {
     width: 75%;
 
     .patient-name {
-      color: #fff;
+      color: $color4;
       font-size: 56px;
     }
   }
 
   .btn-camera {
-    color: #c2c1c0;
+    color: $color8;
     //width: 100%;
     position: absolute;
     cursor: pointer;
@@ -147,12 +148,12 @@ body {
     }
 
     .btn-text {
-      color: #fff;
+      color: $color4;
       display: none;
     }
 
     &:hover {
-      background-color: #000;
+      background-color: $color4;
       opacity: 0.7;
 
       .glyphicon-camera {
@@ -177,7 +178,7 @@ body {
   width: 75%;
 
   .patient-name {
-    color: #fff;
+    color: $color4;
     font-size: 56px;
   }
 }
@@ -214,7 +215,7 @@ body {
 
 .dropdown.open {
   .btn-camera {
-    background-color: #000;
+    background-color: $color4;
     opacity: 0.7;
 
     .glyphicon-camera {
@@ -230,7 +231,7 @@ body {
     position: absolute;
     top: -8px;
     font-size: 2em;
-    color: #FFF;
+    color: $color4;
     left: 20px;
   }
 }
@@ -259,18 +260,18 @@ body {
 }
 
 .graph-header {
-  color: white;
+  color: $color5;
 }
 
 .graph-view-mode {
   .mode-active {
-    background: #FF2C55;
-    color: white;
+    background: $color9;
+    color: $color5;
   }
 
   .mode-inactive {
-    background: #FED7D0;
-    color: #C03C51;
+    background: $color10;
+    color: $color11;
   }
 }
 
@@ -288,7 +289,7 @@ body {
   display: block;
 
   a {
-    color: #000;
+    color: $color4;
     cursor: pointer;
     font-weight: 700;
   }
@@ -312,11 +313,11 @@ body {
       width: 24%;
       display: inline-block;
       text-align: center;
-      border-right: 1px solid #C2C2C2;
+      border-right: 1px solid $color12;
       cursor: pointer;
 
       &:last-child {
-        border-color: #FFFFFF;
+        border-color: $color13;
       }
 
       a {
@@ -333,8 +334,8 @@ a.btn-manage {
 
 .drop-box {
   cursor: pointer;
-  background: #F8F8F8;
-  border: 5px dashed #DDD;
+  background: $color14;
+  border: 5px dashed $color3;
   //width: 200px;
   height: 100px;
   line-height: 50px;
@@ -379,7 +380,7 @@ a.btn-manage {
 }
 
 .problem-controlled {
-  background: #DFF0D8;
+  background: $color15;
   z-index: 1000;
   margin: 0;
 
@@ -502,7 +503,7 @@ inr-bfdi {
   overflow-x: hidden;
 
   #result-set {
-    border-bottom: 2px solid #808080;
+    border-bottom: 2px solid $color16;
   }
 
   .flex-item {
@@ -525,9 +526,9 @@ inr-bfdi {
 
     li.active {
       a {
-        background: #808080;
+        background: $color16;
         border-radius: 3px;
-        color: white;
+        color: $color5;
       }
     }
   }
@@ -547,7 +548,7 @@ inr-bfdi {
 }
 
 .audit-log {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid $color17;
   padding: 10px 0;
   margin: 0;
 
@@ -562,7 +563,7 @@ inr-bfdi {
 
 todo {
   .new-tagged-todo {
-    background: #F2DEDE;
+    background: $color2;
 
     input[type='checkbox']:before {
       content: "*";
@@ -624,7 +625,7 @@ todo {
   display: block;
   padding: 5px;
   text-decoration: none;
-  color: #444;
+  color: $color18;
   cursor: pointer;
 
   &:hover, &:active, &:focus {
@@ -632,16 +633,16 @@ todo {
   }
 
   .fa-check {
-    color: #999;
+    color: $color19;
   }
 
   &:hover {
-    background: #298FCA;
-    color: white;
+    background: $color20;
+    color: $color5;
     text-decoration: none;
 
     .fa-check {
-      color: white;
+      color: $color5;
     }
   }
 }
@@ -675,7 +676,7 @@ todo {
     padding: 2px 5px;
 
     .todo-label-name {
-      color: white;
+      color: $color5;
       display: inline-block;
     }
   }
@@ -684,7 +685,7 @@ todo {
 // Problem page
 #related-encounters {
   .encounter-item {
-    border-bottom: 1px solid #CCC;
+    border-bottom: 1px solid $color21;
     display: block;
     padding-bottom: 5px;
     margin-bottom: 5px;
@@ -703,7 +704,7 @@ todo {
 // Encounter page
 #encounter-related-problem {
   .problem-item {
-    border-bottom: 1px solid #CCC;
+    border-bottom: 1px solid $color21;
     display: block;
     padding-bottom: 5px;
     margin-bottom: 5px;

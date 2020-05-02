@@ -1,3 +1,4 @@
+@import "colors";
 html {
   min-height: 100%;
   min-width: 100%;
@@ -95,34 +96,34 @@ body {
 }
 
 a:link {
-  color: #0000FF;
+  color: $color38;
   text-decoration: underline;
 }
 
 a:visited {
-  color: #800080;
+  color: $color39;
   text-decoration: underline;
 }
 
 a:hover {
-  color: #0000FF;
+  color: $color38;
   text-decoration: underline;
 }
 
 a:active {
-  color: #EE0000;
+  color: $color40;
   text-decoration: underline;
 }
 
 a.nontext {
-  color: black;
+  color: $color4;
   text-decoration: none;
   font-style: normal;
   font-weight: normal;
 }
 
 .normal_text {
-  color: #000000;
+  color: $color41;
   direction: ltr;
   font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
   font-size: 14px;
@@ -139,7 +140,7 @@ a.nontext {
 }
 
 .Text_Simple {
-  color: #6B6B6B;
+  color: $color42;
   font-family: open-sans, sans-serif;
   font-size: 15px;
   font-weight: 300;
@@ -148,7 +149,7 @@ a.nontext {
 }
 
 .Title_Small {
-  color: #3E3E3E;
+  color: $color43;
   font-family: fira-sans, sans-serif;
   font-size: 30px;
   font-weight: 700;
@@ -159,7 +160,7 @@ a.nontext {
 }
 
 .Text_Subhead {
-  color: #6B6B6B;
+  color: $color42;
   font-family: open-sans, sans-serif;
   font-size: 17px;
   font-weight: 600;
@@ -479,7 +480,7 @@ p, h1, h2, h3, h4, h5, h6, ol, ul, span.actAsPara {
 #muse_css_mq {
   position: absolute;
   display: none;
-  background-color: #FFFFFE;
+  background-color: $color44;
 }
 
 .fluid_height_spacer {
@@ -498,8 +499,8 @@ p, h1, h2, h3, h4, h5, h6, ol, ul, span.actAsPara {
 }
 
 .version.index {
-  color: #0000E0;
-  background-color: #25EB57;
+  color: $color45;
+  background-color: $color46;
 }
 
 #page {
@@ -507,7 +508,7 @@ p, h1, h2, h3, h4, h5, h6, ol, ul, span.actAsPara {
   min-height: 412.6218709164564px;
   background-image: none;
   border-width: 0px;
-  border-color: #000000;
+  border-color: $color41;
   background-color: transparent;
   padding-top: 25px;
   padding-bottom: 62.37812908354363px;
@@ -865,7 +866,7 @@ p, h1, h2, h3, h4, h5, h6, ol, ul, span.actAsPara {
 }
 
 #muse_css_mq, .html {
-  background-color: #FFFFFF;
+  background-color: $color13;
 }
 
 body {

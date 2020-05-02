@@ -1,3 +1,4 @@
+@import "colors";
 body {
   margin-bottom: 50px;
 }
@@ -27,7 +28,7 @@ h4 {
 .problem_data, .goal_notes, .goal_data {
   padding: 10px;
   display: none;
-  background: #FFF;
+  background: $color4;
 }
 
 #inactive_problems, #accomplished_todos {
@@ -46,7 +47,7 @@ h4 {
 }
 
 #encounter_summary input[type="text"] {
-  border: 1px solid #000;
+  border: 1px solid $color4;
   width: 500px;
 }
 

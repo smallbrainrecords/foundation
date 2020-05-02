@@ -1,3 +1,4 @@
+@import "colors";
 todo-item {
 
   // View mode
@@ -19,7 +20,7 @@ todo-item {
     }
 
     a.todo-label-name {
-      color: #fff;
+      color: $color4;
       width: auto;
       padding: 0 10px;
       text-decoration: none;

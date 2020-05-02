@@ -1,3 +1,19 @@
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
 todo .new-tagged-todo {
   background: #F2DEDE;
 }
@@ -9,6 +25,22 @@ todo .new-tagged-todo input[type=checkbox]:before {
   top: 10px;
 }
 
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
 todo-item .label-wrapper {
   display: inline-block;
   margin-bottom: -6px;
@@ -26,7 +58,7 @@ todo-item .label-wrapper a.todo-label {
   clear: none;
 }
 todo-item .label-wrapper a.todo-label-name {
-  color: #fff;
+  color: #000;
   width: auto;
   padding: 0 10px;
   text-decoration: none;
@@ -38,6 +70,22 @@ todo-item .members-wrapper {
   margin-bottom: 10px;
 }
 
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
 .todo-label-front {
   width: 20px;
   height: 20px;
@@ -89,6 +137,22 @@ todo-item .members-wrapper {
 }
 
 /*Stytle for medication related component*/
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
 @media (min-width: 992px) {
   #medication-page #medication-header .medication-action-control {
     text-align: right;
@@ -103,6 +167,22 @@ todo-item .members-wrapper {
 
 /*!
  * Copyright (c) Small Brain Records 2014-2020. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -138,7 +218,7 @@ patient-profile-picture #cover-picture {
 patient-profile-picture #cover-picture .btn-camera.btn-cover-picture-edit {
   position: absolute;
   padding: 5px 10px;
-  color: white;
+  color: #fff;
   left: 20px;
   top: 20px;
   font-size: 1em;
@@ -158,7 +238,7 @@ patient-profile-picture #cover-picture .dropdown-menu.cover-photo-menu {
 patient-profile-picture #cover-picture:hover .btn-camera.btn-cover-picture-edit {
   background-color: #000;
   opacity: 0.5;
-  border: 1px solid #fff;
+  border: 1px solid #000;
   border-radius: 4px;
   display: flex;
   align-items: baseline;
@@ -198,7 +278,7 @@ patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera {
   align-items: baseline;
   background-color: #000;
   opacity: 0.5;
-  color: white;
+  color: #fff;
   padding: 5px;
 }
 patient-profile-picture #profile-picture .btn-profile-picture-edit.btn-camera .glyphicon-camera {
@@ -219,10 +299,26 @@ patient-profile-picture #profile-info {
   z-index: 1;
 }
 patient-profile-picture #profile-info .user-name {
-  color: #fff;
+  color: #000;
   font-size: 56px;
 }
 
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
 .nav > li > a {
   padding-right: 5px;
   padding-left: 5px;
@@ -273,10 +369,10 @@ body {
   left: 20px;
 }
 .profile-section .btn-cover-picture-edit:hover {
-  border: 1px solid #fff;
+  border: 1px solid #000;
 }
 .profile-section .profile-picture {
-  background: #fff;
+  background: #000;
   border: 1px solid #cccccc;
   padding: 5px;
   position: absolute;
@@ -322,7 +418,7 @@ body {
   width: 75%;
 }
 .profile-section .bottom-info .patient-name {
-  color: #fff;
+  color: #000;
   font-size: 56px;
 }
 .profile-section .btn-camera {
@@ -337,7 +433,7 @@ body {
   font-size: 1.5em;
 }
 .profile-section .btn-camera .btn-text {
-  color: #fff;
+  color: #000;
   display: none;
 }
 .profile-section .btn-camera:hover {
@@ -361,7 +457,7 @@ body {
   width: 75%;
 }
 .bottom-info .patient-name {
-  color: #fff;
+  color: #000;
   font-size: 56px;
 }
 
@@ -405,7 +501,7 @@ body {
   position: absolute;
   top: -8px;
   font-size: 2em;
-  color: #FFF;
+  color: #000;
   left: 20px;
 }
 
@@ -429,12 +525,12 @@ body {
 }
 
 .graph-header {
-  color: white;
+  color: #fff;
 }
 
 .graph-view-mode .mode-active {
   background: #FF2C55;
-  color: white;
+  color: #fff;
 }
 .graph-view-mode .mode-inactive {
   background: #FED7D0;
@@ -493,7 +589,7 @@ a.btn-manage {
 .drop-box {
   cursor: pointer;
   background: #F8F8F8;
-  border: 5px dashed #DDD;
+  border: 5px dashed #ddd;
   height: 100px;
   line-height: 50px;
   text-align: center;
@@ -656,7 +752,7 @@ inr-bfdi .flex-item {
 .tab-problems .nav.nav-tabs li.active a {
   background: #808080;
   border-radius: 3px;
-  color: white;
+  color: #fff;
 }
 
 .dube-btn-pin-unpin {
@@ -745,11 +841,11 @@ todo .new-tagged-todo input[type=checkbox]:before {
 }
 .member-tagging:hover {
   background: #298FCA;
-  color: white;
+  color: #fff;
   text-decoration: none;
 }
 .member-tagging:hover .fa-check {
-  color: white;
+  color: #fff;
 }
 
 .hint {
@@ -779,7 +875,7 @@ todo .new-tagged-todo input[type=checkbox]:before {
   padding: 2px 5px;
 }
 .todo-label-front:hover .todo-label-name {
-  color: white;
+  color: #fff;
   display: inline-block;
 }
 

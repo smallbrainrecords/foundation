@@ -1,6 +1,7 @@
 @import "_variables.scss";
-@import "_colors.scss";
+@import "colors";
 @import "_quick_card_editor";
+@import "colors";
 
 body {
   font-family: 'Source Sans Pro', sans-serif !important;
@@ -33,20 +34,20 @@ a {
 .item-box {
   min-height: 50px;
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid $color21;
   cursor: pointer;
 }
 
 .green-box {
-  background-color: #dff0d8;
-  border-color: #d6e9c6;
-  color: #3c763d;
+  background-color: $color15;
+  border-color: $color22;
+  color: $color23;
 }
 
 .red-box {
-  background-color: #f2dede !important;
-  border-color: #ebccd1 !important;
-  color: #a94442 !important;
+  background-color: $color2 !important;
+  border-color: $color24 !important;
+  color: $color25 !important;
 }
 
 #ngdialog1.large-modal .ngdialog-content {
@@ -89,7 +90,7 @@ a {
 }
 
 .bottom-bar #encounter-box {
-  /*width:90%;*/
+
   margin: 0 auto;
 }
 
@@ -97,18 +98,15 @@ a {
   height: 50px;
 }
 
-/*ce-entity ce-flag {*/
-/*font-weight: bold;*/
-/*}*/
 
-.nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+.nav-pills > a:hover, .nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
   background-color: grey;
-  color: white;
+  color: $color3 !important;
 }
 
 .activity-item img {
-  /*height:75px;*/
-  /*width: 75px;*/
+
+
 }
 
 .cover-image {
@@ -120,14 +118,13 @@ a {
   cursor: pointer !important;
 }
 
-/*    TO DO     */
 
 .todo {
   position: relative;
 }
 
 .btn-custom {
-  color: #999;
+  color: $color19;
   display: none;
   position: absolute;
   right: 10px;
@@ -165,18 +162,18 @@ a {
 }
 
 .problem-uncontrolled {
-  background-color: #f2dede !important;
-  border-color: #ebccd1 !important;
-  color: #a94442 !important;
+  background-color: $color2 !important;
+  border-color: $color24 !important;
+  color: $color25 !important;
 }
 
 .btn-custom:hover {
-  color: #4d4d4d;
+  color: $color26;
 }
 
 
 #problem-header .todo input {
-  color: black;
+  color: $color4;
 }
 
 
@@ -190,31 +187,31 @@ a {
 }
 
 .todo-label-green {
-  background-color: #61bd4f !important;
+  background-color: $color27 !important;
 }
 
 .todo-label-yellow {
-  background-color: #f2d600 !important;
+  background-color: $color28 !important;
 }
 
 .todo-label-orange {
-  background-color: #ffab4a !important;
+  background-color: $color29 !important;
 }
 
 .todo-label-red {
-  background-color: #eb5a46 !important;
+  background-color: $color30 !important;
 }
 
 .todo-label-purple {
-  background-color: #c377e0 !important;
+  background-color: $color31 !important;
 }
 
 .todo-label-blue {
-  background-color: #0079bf !important;
+  background-color: $color32 !important;
 }
 
 .todo-label-sky {
-  background-color: #00c2e0 !important;
+  background-color: $color33 !important;
 }
 
 
@@ -262,8 +259,8 @@ tbody button {
   display: inline-block;
 
   &:hover {
-    background: #ff1629;
-    color: white;
+    background: $color34;
+    color: $color5;
     cursor: pointer;
   }
 }
@@ -281,7 +278,7 @@ tbody button {
 .todo-label {
   width: auto;
   height: auto;
-  color: white;
+  color: $color5;
   padding: 5px;
   text-decoration: none;
   display: inline-block;
@@ -296,7 +293,7 @@ tbody button {
 .labeled-list a.todo-label {
   width: auto;
   height: auto;
-  color: white;
+  color: $color5;
   padding: 2px 5px;
   text-decoration: none;
   margin-bottom: 2px;
@@ -308,7 +305,7 @@ tbody button {
 }
 
 .io-box {
-  border: 1px solid #ccc;
+  border: 1px solid $color21;
   margin-bottom: 10px;
   padding: 10px;
 }
@@ -322,19 +319,19 @@ tbody button {
 }
 
 .medication-page-tabs .nav {
-  border-top: 1px solid #ddd;
+  border-top: 1px solid $color3;
   margin-top: 0;
 }
 
 
 .my-story {
-  border: 1px solid #ddd;
+  border: 1px solid $color3;
   border-radius: 3px;
   overflow: hidden;
 }
 
 .my-story-left {
-  border-right: 1px solid #ddd;
+  border-right: 1px solid $color3;
   padding-top: 10px;
   //padding-bottom: 10px;
   margin-bottom: -1000px;
@@ -352,13 +349,13 @@ tbody button {
 }
 
 .my-story-list li button.active {
-  color: black;
+  color: $color4;
   font-weight: bold;
   border-left: 3px solid black;
 }
 
 .data-frame {
-  background: #ddd;
+  background: $color3;
   border: none;
 }
 
@@ -372,7 +369,7 @@ tbody button {
 
   .fa.fa-times {
     position: absolute;
-    color: #d9534f;
+    color: $color35;
     font-size: 3rem;
     cursor: pointer;
     right: 0;
@@ -382,7 +379,7 @@ tbody button {
 
 .masonry-brick img {
   width: 100%;
-  border: 2px solid #f5f5f5;
+  border: 2px solid $color36;
   border-radius: 3px;
 }
 
@@ -410,7 +407,7 @@ todo-laboratory {
       display: inline-block;;
       margin: 0 2px;
       clear: none;
-      color: #fff;
+      color: $color4;
       width: auto;
       padding: 0 10px;
       text-decoration: none;
@@ -456,7 +453,7 @@ todo-laboratory {
   z-index: -1;
 
   .nav {
-    border: 1px solid #ddd;
+    border: 1px solid $color3;
     border-radius: 3px;
     border-top: none;
     margin-bottom: 40px;
@@ -467,10 +464,10 @@ todo-laboratory {
       margin: 0 !important;
 
       a {
-        color: #337ab7;
+        color: $color37;
         font-weight: 700;
         padding: 13px 30px;
-        border-right: 1px solid #ddd;
+        border-right: 1px solid $color3;
         background: none !important;
         border-radius: 0;
         cursor: pointer;

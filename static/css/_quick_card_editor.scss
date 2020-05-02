@@ -27,7 +27,7 @@
 
       &:hover {
         background: rgba(0, 0, 0, .8);
-        color: #fff;
+        color: $color4;
         -webkit-transform: translateX(5px);
         transform: translateX(5px);
       }
@@ -78,7 +78,7 @@
         background: none;
         margin: 0px;
         padding: 0px;
-        color: black;
+        color: $color4;
         transition: none;
         -webkit-transform: none !important;
         transform: none !important;
@@ -90,7 +90,7 @@
 
       i {
         font-size: 10px;
-        text-shadow: 0 0 5px rgba(0, 0, 0, .2), 0 0 2px #000;
+        text-shadow: 0 0 5px rgba(0, 0, 0, .2), 0 0 2px $color4;
         margin: 0;
       }
     }
@@ -117,7 +117,7 @@
     }
 
     a.todo-label-name {
-      color: #fff;
+      color: $color4;
       width: auto;
       padding: 0 10px;
       text-decoration: none;
@@ -182,7 +182,7 @@ todo {
 }
 
 #problem-medication-select {
-  color: black;
+  color: $color4;
   max-height: 250px;
   overflow-y: scroll;
 }

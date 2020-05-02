@@ -1,30 +1,54 @@
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
 body {
-  margin-bottom: 50px; }
+  margin-bottom: 50px;
+}
 
 body {
   background: white;
-  font: 15px arial, sans-serif; }
+  font: 15px arial, sans-serif;
+}
 
 .true, .false {
   font-size: 1.25em;
-  padding: 10px; }
+  padding: 10px;
+}
 
 .true {
-  background: green; }
+  background: green;
+}
 
 .false {
-  background: red; }
+  background: red;
+}
 
 h4 {
-  font-style: italic; }
+  font-style: italic;
+}
 
 .problem_data, .goal_notes, .goal_data {
   padding: 10px;
   display: none;
-  background: #FFF; }
+  background: #000;
+}
 
 #inactive_problems, #accomplished_todos {
-  display: none; }
+  display: none;
+}
 
 #encounter_summary {
   padding: 10px;
@@ -33,19 +57,24 @@ h4 {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 2; }
+  z-index: 2;
+}
 
-#encounter_summary input[type="text"] {
+#encounter_summary input[type=text] {
   border: 1px solid #000;
-  width: 500px; }
+  width: 500px;
+}
 
-.current_todo input[type="button"] {
-  display: none; }
+.current_todo input[type=button] {
+  display: none;
+}
 
 #show .problem_data {
-  padding-bottom: 100px; }
+  padding-bottom: 100px;
+}
 
 textarea {
-  width: 100%; }
+  width: 100%;
+}
 
 /*# sourceMappingURL=patient.css.map */

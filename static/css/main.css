@@ -40,7 +40,7 @@
 }
 .quick-card-editor .quick-card-editor-buttons a:hover {
   background: rgba(0, 0, 0, 0.8);
-  color: #fff;
+  color: #000;
   -webkit-transform: translateX(5px);
   transform: translateX(5px);
 }
@@ -83,7 +83,7 @@
   background: none;
   margin: 0px;
   padding: 0px;
-  color: black;
+  color: #000;
   transition: none;
   -webkit-transform: none !important;
   transform: none !important;
@@ -115,7 +115,7 @@
   clear: none;
 }
 .quick-card-editor .quick-card-editor-label a.todo-label-name {
-  color: #fff;
+  color: #000;
   width: auto;
   padding: 0 10px;
   text-decoration: none;
@@ -167,11 +167,27 @@ todo .quick-card-editor-card {
 }
 
 #problem-medication-select {
-  color: black;
+  color: #000;
   max-height: 250px;
   overflow-y: scroll;
 }
 
+/*!
+ * Copyright (c) Small Brain Records 2014-2019. Kevin Perdue, James Ryan with contributors Timothy Clemens and Dinh Ngoc Anh
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
 body {
   font-family: "Source Sans Pro", sans-serif !important;
 }
@@ -202,18 +218,18 @@ a:hover {
 .item-box {
   min-height: 50px;
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid #CCC;
   cursor: pointer;
 }
 
 .green-box {
-  background-color: #dff0d8;
+  background-color: #DFF0D8;
   border-color: #d6e9c6;
   color: #3c763d;
 }
 
 .red-box {
-  background-color: #f2dede !important;
+  background-color: #F2DEDE !important;
   border-color: #ebccd1 !important;
   color: #a94442 !important;
 }
@@ -256,7 +272,6 @@ a:hover {
 }
 
 .bottom-bar #encounter-box {
-  /*width:90%;*/
   margin: 0 auto;
 }
 
@@ -264,17 +279,9 @@ a:hover {
   height: 50px;
 }
 
-/*ce-entity ce-flag {*/
-/*font-weight: bold;*/
-/*}*/
-.nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+.nav-pills > a:hover, .nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
   background-color: grey;
-  color: white;
-}
-
-.activity-item img {
-  /*height:75px;*/
-  /*width: 75px;*/
+  color: #ddd !important;
 }
 
 .cover-image {
@@ -286,7 +293,6 @@ a:hover {
   cursor: pointer !important;
 }
 
-/*    TO DO     */
 .todo {
   position: relative;
 }
@@ -326,7 +332,7 @@ a:hover {
 }
 
 .problem-uncontrolled {
-  background-color: #f2dede !important;
+  background-color: #F2DEDE !important;
   border-color: #ebccd1 !important;
   color: #a94442 !important;
 }
@@ -336,7 +342,7 @@ a:hover {
 }
 
 #problem-header .todo input {
-  color: black;
+  color: #000;
 }
 
 .thumbnail-custom {
@@ -420,7 +426,7 @@ tbody button {
 }
 .todo-member:hover {
   background: #ff1629;
-  color: white;
+  color: #fff;
   cursor: pointer;
 }
 
@@ -436,7 +442,7 @@ tbody button {
 .todo-label {
   width: auto;
   height: auto;
-  color: white;
+  color: #fff;
   padding: 5px;
   text-decoration: none;
   display: inline-block;
@@ -450,7 +456,7 @@ tbody button {
 .labeled-list a.todo-label {
   width: auto;
   height: auto;
-  color: white;
+  color: #fff;
   padding: 2px 5px;
   text-decoration: none;
   margin-bottom: 2px;
@@ -462,7 +468,7 @@ tbody button {
 }
 
 .io-box {
-  border: 1px solid #ccc;
+  border: 1px solid #CCC;
   margin-bottom: 10px;
   padding: 10px;
 }
@@ -504,7 +510,7 @@ tbody button {
 }
 
 .my-story-list li button.active {
-  color: black;
+  color: #000;
   font-weight: bold;
   border-left: 3px solid black;
 }
@@ -559,7 +565,7 @@ todo-laboratory .label-wrapper a.todo-label {
   display: inline-block;
   margin: 0 2px;
   clear: none;
-  color: #fff;
+  color: #000;
   width: auto;
   padding: 0 10px;
   text-decoration: none;

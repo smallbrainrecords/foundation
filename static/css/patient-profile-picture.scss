@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+@import "colors";
 patient-profile-picture {
   display: block;
 
@@ -31,13 +32,13 @@ patient-profile-picture {
     background-repeat: no-repeat;
     background-size: cover;
     cursor: pointer;
-    border: 1px solid #ddd;
+    border: 1px solid $color3;
     border-bottom: none;
 
     .btn-camera.btn-cover-picture-edit {
       position: absolute;
       padding: 5px 10px;
-      color: white;
+      color: $color5;
       left: 20px;
       top: 20px;
       font-size: 1em;
@@ -60,9 +61,9 @@ patient-profile-picture {
 
     &:hover {
       .btn-camera.btn-cover-picture-edit {
-        background-color: #000;
+        background-color: $color4;
         opacity: 0.5;
-        border: 1px solid #fff;
+        border: 1px solid $color4;
         border-radius: 4px;
         display: flex;
         align-items: baseline;
@@ -79,8 +80,8 @@ patient-profile-picture {
   }
 
   #profile-picture {
-    background: #fff;
-    border: 1px solid #cccccc;
+    background: $color5;
+    border: 1px solid $color6;
     padding: 5px;
     position: absolute;
     bottom: -30px;
@@ -106,9 +107,9 @@ patient-profile-picture {
       display: flex;
       justify-content: flex-start;
       align-items: baseline;
-      background-color: #000;
+      background-color: $color4;
       opacity: 0.5;
-      color: white;
+      color: $color5;
       padding: 5px;
 
       .glyphicon-camera {
@@ -145,7 +146,7 @@ patient-profile-picture {
     z-index: 1;
 
     .user-name {
-      color: #fff;
+      color: $color4;
       font-size: 56px;
     }
   }

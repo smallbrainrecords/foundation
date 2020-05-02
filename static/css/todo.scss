@@ -1,6 +1,7 @@
+@import "colors";
 todo {
   .new-tagged-todo {
-    background: #F2DEDE;
+    background: $color2;
 
     input[type='checkbox']:before {
       content: "*";

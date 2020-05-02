@@ -8,4 +8,13 @@ Frontend include 3 module based on system roles
     - All filters (Each filter is single file)
     - All services (Each service is single file)
 
+TODO list
 [ ] Unify how datepicker is initialized.
+[ ] Single entry for interceptor
+[ ] Unify document & attachment
+[ ] Backend API document
+[ ] https://trello.com/c/v1o5iEi1
+- UX while change user's type but did not saved the change the hidden UI being showed. This behavior could be a vulnerable to change personal information if you have right to changing the user's type.
+[ ] UX for navigation backward then forward
+[ ] Labeled todo list UI & UX ->hold all
+[ ] Unify all service to single modules

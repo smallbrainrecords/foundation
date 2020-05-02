@@ -1,7 +1,1 @@
-{
-  "version": 3,
-  "mappings": "",
-  "sources": [],
-  "names": [],
-  "file": "setting-page.css"
-}
+{"version":3,"sourceRoot":"","sources":["_colors.scss"],"names":[],"mappings":"AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA","file":"setting-page.css"}
