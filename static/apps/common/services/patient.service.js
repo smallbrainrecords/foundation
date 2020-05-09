@@ -21,6 +21,7 @@
 
     angular.module('app.services')
         .service('patientService', function ($http, $q, $cookies, $rootScope, $filter, httpService) {
+            console.log("service");
             return {
                 activeUser: null,
                 patientInfo: null,

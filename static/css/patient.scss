@@ -14,11 +14,11 @@ body {
 }
 
 .true {
-  background: green;
+  background: $color23;
 }
 
 .false {
-  background: red;
+  background: $color40;
 }
 
 h4 {
@@ -38,7 +38,7 @@ h4 {
 
 #encounter_summary {
   padding: 10px;
-  background: yellow;
+  background: $color28;
   position: fixed;
   left: 0;
   right: 0;

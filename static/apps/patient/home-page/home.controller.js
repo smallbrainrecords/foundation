@@ -43,7 +43,8 @@
      */
     function HomeCtrl($scope, patientService, problemService, encounterService, ngDialog, sharedService, dataService,
                       toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
-
+        console.log("controller");
+        $scope.patientService = patientService;
         $scope.btnBDFISubmitted = false;
         $scope.collapse = CollapseService;
         $scope.datas = [];

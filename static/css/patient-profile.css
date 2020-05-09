@@ -904,4 +904,12 @@ todo .new-tagged-todo input[type=checkbox]:before {
   border-bottom: none;
 }
 
+#profile-navigation {
+  position: fixed;
+  top: 200px;
+}
+#profile-navigation ul {
+  list-style-type: none;
+}
+
 /*# sourceMappingURL=patient-profile.css.map */

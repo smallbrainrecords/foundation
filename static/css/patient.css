@@ -29,11 +29,11 @@ body {
 }
 
 .true {
-  background: green;
+  background: #3c763d;
 }
 
 .false {
-  background: red;
+  background: #EE0000;
 }
 
 h4 {
@@ -52,7 +52,7 @@ h4 {
 
 #encounter_summary {
   padding: 10px;
-  background: yellow;
+  background: #f2d600;
   position: fixed;
   left: 0;
   right: 0;

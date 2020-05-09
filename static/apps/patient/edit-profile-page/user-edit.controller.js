@@ -20,42 +20,70 @@
 
 
     angular.module('ManagerApp')
-        .controller('EditUserCtrl', function ($scope, $routeParams, ngDialog, sharedService, patientService, $location, $anchorScroll, toaster) {
+        .controller('EditUserCtrl', function ($scope, $routeParams, patientService, $location, $anchorScroll, toaster, DATEPICKER_OPTS, moment) {
 
-            // $scope.user_id = $('#patient_id').val();
-            $scope.staff_roles = ['nurse', 'secretary', 'mid-level'];
-            $scope.insurance = {}; // Patient insurance form
+            $scope.DATEPICKER_OPTS = DATEPICKER_OPTS;
+            $scope.dateFormat = 'MM/dd/yyyy';
+            $scope.datePickerOpened = false;
 
-            $scope.updateImage = updateImage;
-            $scope.update_basic_profile = update_basic_profile;
-            $scope.update_profile = update_profile;
-            $scope.update_email = update_email;
-            $scope.update_patient_password = update_patient_password;
+            $scope.profileInfoFormModel = {
+                dateOfBirth: new Date(),
+                phoneNumber: "",
+                sex: "",
+                summary: ""
+            };
+
+            $scope.insuranceForm = {
+                medicare: "",
+                note: ""
+            };
+            $scope.old_password = "";
+            $scope.password = "";
+            $scope.repassword = "";
+
             $scope.navigate = navigate;
+            $scope.updateBasicProfile = updateBasicProfile;
+            $scope.updateProfile = updateProfile;
+            $scope.updateImage = updateImage;
+            $scope.updateEmail = updateEmail;
+            $scope.updatePatientPassword = updatePatientPassword;
             $scope.submitInsurance = submitInsurance;
 
             init();
 
-            function init() {
-
-                // patientService.fetchActiveUser().then(function (data) {
-                //     $scope.active_user = data['user_profile'];
-                // });
-
-                patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
-                    // $scope.patient_info = data['info'];
-                    $scope.sharing_patients = data['sharing_patients'];
-                    $scope.shared_patients = data['shared_patients'];
-                });
-                $scope.insurance.medicare = $scope.patient_info.insurance_medicare;
-                $scope.insurance.note = $scope.patient_info.insurance_note;
-                $scope.files = {};
-                setTimeout(() => {
-                    navigate($routeParams.section);
-                }, 500);
+            function convertAPItoModelForm() {
+                $scope.profileInfoFormModel.dateOfBirth = moment($scope.patient_info.date_of_birth, "MM/DD/YYYY").toDate();
+                $scope.profileInfoFormModel.phoneNumber = $scope.patient_info.phone_number;
+                $scope.profileInfoFormModel.sex = $scope.patient_info.sex;
+                $scope.profileInfoFormModel.summary = $scope.patient_info.summary;
             }
 
-            function update_basic_profile() {
+            function init() {
+                patientService.fetchPatientInfo($scope.patient_id)
+                    .then((data) => {
+                        $scope.sharing_patients = data['sharing_patients'];
+                        $scope.shared_patients = data['shared_patients'];
+                    });
+
+                // DAO -> DTO
+                convertAPItoModelForm();
+
+                $scope.insuranceForm.medicare = $scope.patient_info.insurance_medicare;
+                $scope.insuranceForm.note = $scope.patient_info.insurance_note;
+
+                $scope.files = {};
+
+                setTimeout(() => {
+                    navigate($routeParams.section);
+                }, 1000);
+            }
+
+            function navigate(l) {
+                $location.hash(l);
+                $anchorScroll();
+            }
+
+            function updateBasicProfile() {
 
                 let form = {};
 
@@ -63,69 +91,60 @@
                 form.first_name = $scope.patient_info.user.first_name;
                 form.last_name = $scope.patient_info.user.last_name;
 
-                patientService.updateBasicProfile(form).then(function (data) {
+                patientService.updateBasicProfile(form).then(data => {
 
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Patient updated!');
                     } else if (!data['success']) {
                         toaster.pop('error', 'Error', 'Please fill valid data');
-                    } else {
-                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
                 });
             }
 
-            function update_profile() {
+            function updateProfile() {
 
-                let form = {};
-                form.user_id = $scope.patient_id;
-                form.phone_number = $scope.patient_info.phone_number;
-                form.sex = $scope.patient_info.sex;
-                form.role = $scope.patient_info.role;
-                form.summary = $scope.patient_info.summary;
-                form.date_of_birth = $scope.patient_info.date_of_birth;
-
+                let form = {
+                    user_id: $scope.patient_id,
+                    role: $scope.patient_info.role,
+                    date_of_birth: moment($scope.profileInfoFormModel.dateOfBirth).format('MM/DD/YYYY'),
+                    phone_number: $scope.profileInfoFormModel.phoneNumber,
+                    sex: $scope.profileInfoFormModel.sex,
+                    summary: $scope.profileInfoFormModel.summary,
+                };
                 let files = $scope.files;
 
-                patientService.updateProfile(form, files).then(function (data) {
-
-                    if (data['success']) {
-                        toaster.pop('success', 'Done', 'Patient updated!');
-                        $scope.patient_info = data['info'];
-                    } else if (!data['success']) {
-                        toaster.pop('error', 'Error', 'Please fill valid data');
-                    } else {
-                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
-                    }
-
-                });
-
+                patientService.updateProfile(form, files)
+                    .then(function (data) {
+                        if (data['success']) {
+                            toaster.pop('success', 'Done', 'Patient updated!');
+                            $scope.patient_info = data['info'];
+                            convertAPItoModelForm();
+                        } else if (!data['success']) {
+                            toaster.pop('error', 'Error', 'Please fill valid data');
+                        }
+                    });
             }
 
-            function update_email() {
+            function updateEmail() {
 
                 let form = {};
 
                 form.user_id = $scope.patient_id;
                 form.email = $scope.patient_info.user.email;
 
-                patientService.updateEmail(form).then(function (data) {
+                patientService.updateEmail(form).then(data => {
 
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Patient updated!');
 
                     } else if (!data['success']) {
                         toaster.pop('error', 'Error', 'Please fill valid data');
-                    } else {
-                        toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                     }
-
                 });
 
             }
 
-            // change patient password
-            function update_patient_password() {
+            function updatePatientPassword() {
 
                 if ($scope.old_password == undefined || $scope.password == undefined || $scope.repassword == undefined) {
                     toaster.pop('error', 'Error', 'Please enter password');
@@ -142,7 +161,7 @@
                     'repassword': $scope.repassword,
                 };
 
-                patientService.updatePatientPassword(form).then(function (data) {
+                patientService.updatePatientPassword(form).then(data => {
                     if (data.success) {
                         toaster.pop('success', 'Done', 'Patient password updated!');
                         $scope.old_password = null;
@@ -155,11 +174,6 @@
 
             }
 
-            function navigate(l) {
-                /* Replace by directive */
-                $("html, body").animate({scrollTop: $('#' + l).offset().top - 100}, 500);
-            }
-
             function updateImage() {
                 let form = {};
                 form.user_id = $scope.patient_id;
@@ -167,23 +181,19 @@
 
 
                 patientService.updateProfile(form, files)
-                    .then(function (data) {
+                    .then(data => {
                         if (data['success']) {
                             toaster.pop('success', 'Done', 'Updated');
                         } else {
                             toaster.pop('error', 'Error', 'Update failed');
                         }
-                    }, function () {
-                        toaster.pop('error', 'Error', 'Something went wrong! We fix ASAP');
                     });
             }
 
             function submitInsurance() {
-                patientService.updateMedicare($scope.patient_id, $scope.insurance);
+                patientService.updateMedicare($scope.patient_id, $scope.insuranceForm);
             }
 
         });
     /* End of controller */
-
-
 })();

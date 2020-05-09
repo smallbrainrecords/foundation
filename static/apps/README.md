@@ -7,6 +7,8 @@ Frontend include 3 module based on system roles
     - All component (Have controller, template)filter
     - All filters (Each filter is single file)
     - All services (Each service is single file)
+Date format: MM/DD/YYYY
+
 
 TODO list
 [ ] Unify how datepicker is initialized.

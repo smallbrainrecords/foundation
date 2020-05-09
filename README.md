@@ -29,6 +29,10 @@
 18. project_admin_app
 19. site_pages_app
 
-# Document modules
+# Admin functions
+## Manage users
+- Add user
+- Edit user
+- Deactive user
 
-# Document modules
+## Patient Administration

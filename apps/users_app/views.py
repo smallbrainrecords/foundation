@@ -1136,7 +1136,7 @@ def set_user_medicare(request, patient_id):
     resp = {'success': False}
 
     user_profile = UserProfile.objects.get(user_id=patient_id)
-    user_profile.insurance_medicare = request.POST.get('medicare', False)
+    user_profile.insurance_medicare = "true" == request.POST.get('medicare')
     user_profile.insurance_note = request.POST.get('note', '')
     user_profile.save()
 

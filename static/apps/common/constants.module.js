@@ -17,6 +17,14 @@
 (function () {
     'use strict';
     angular.module('app.constant', [])
+        .constant('ROLES', {
+            ADMIN: 'nurse',
+            PHYSICIAN: 'doctor',
+            NURSE: 'nurse',
+            SECRETARY: 'secretary',
+            MID_LEVEL: 'mid-level',
+            PATIENT: 'patient'
+        })
         .constant('RECORDER_STATUS', {
             isRecording: 0,
             isPaused: 1,
@@ -51,5 +59,24 @@
         .constant('PROBLEM_NOTE_TYPE', {
             WIKI: 'wiki',
             HISTORY: 'history'
-        });
+        })
+        .constant('LABELS', [
+            {name: 'green', css_class: 'todo-label-green'},
+            {name: 'yellow', css_class: 'todo-label-yellow'},
+            {name: 'orange', css_class: 'todo-label-orange'},
+            {name: 'red', css_class: 'todo-label-red'},
+            {name: 'purple', css_class: 'todo-label-purple'},
+            {name: 'blue', css_class: 'todo-label-blue'},
+            {name: 'sky', css_class: 'todo-label-sky'},
+        ])
+        .constant('DATEPICKER_OPTS', {
+            showWeeks: false,
+            startingDay: 1
+        })
+        .constant('VIEW_MODES', [
+            {label: 'All', value: 0},
+            {label: 'Week', value: 1},
+            {label: 'Month', value: 2},
+            {label: 'Year', value: 3},
+        ]);
 })();

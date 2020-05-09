@@ -1,25 +1,15 @@
 <div class='row'>
-    <div class='col-md-12 text-center'>
-        <hr>
-        <b> <a href='#/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Manage Patient </a> </b>
-        <hr>
-        <b> Edit Patient Profile </b>
-    </div>
-</div>
-
-<div class='row'>
     <div class='col-md-3'>
-        <div style='position:fixed; top:200px;'>
-            <center><b> Options </b></center>
-            <ul style='list-style-type:none; '>
+        <div id="profile-navigation">
+            <ul>
                 <li>
-                    <button class='btn btn-link' ng-click='navigate("basicInfo")'>
+                    <button class='btn btn-link' ng-click='navigate("basic-info")'>
                         Basic Information
                     </button>
                 </li>
 
                 <li>
-                    <button class='btn btn-link' ng-click='navigate("profileInfo")'>
+                    <button class='btn btn-link' ng-click='navigate("profile-info")'>
                         Profile Information
                     </button>
                 </li>
@@ -30,18 +20,18 @@
                     </button>
                 </li>
                 <li>
-                    <button class='btn btn-link' ng-click='navigate("emailInfo")'>
+                    <button class='btn btn-link' ng-click='navigate("email-info")'>
                         Email Information
                     </button>
                 </li>
 
                 <li>
-                    <button class='btn btn-link' ng-click='navigate("passwordInfo")'>
+                    <button class='btn btn-link' ng-click='navigate("password-info")'>
                         Password Information
                     </button>
                 </li>
                 <li>
-                    <button class='btn btn-link' ng-click='navigate("managePatient")'>
+                    <button class='btn btn-link' ng-click='navigate("manage-patient")'>
                         Manage Sharing
                     </button>
                 </li>
@@ -53,218 +43,227 @@
             </ul>
 
         </div>
-
     </div>
 
     <div class='col-md-9'>
+        <section id="basic-info">
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Basic Information</div>
+                <div class='panel-body'>
 
-        <div class='panel panel-default' id='basicInfo'>
-            <div class='panel-heading'><b> Basic Information </b></div>
-            <div class='panel-body'>
+                    <form class='form' ng-submit='updateBasicProfile()'>
 
-                <form class='form' ng-submit='update_basic_profile()'>
+                        <div class='form-group'>
+                            <label for="first-name"> First Name </label>
+                            <input id="first-name" type='text' ng-model='patient_info.user.first_name'
+                                   class='form-control'>
+                        </div>
+                        <div class='form-group'>
+                            <label for="last-name"> Last Name </label>
+                            <input id="last-name" type='text' ng-model='patient_info.user.last_name'
+                                   class='form-control'>
+                        </div>
+                        <div class='form-group'>
+                            <input type='submit' value='Update' class='btn btn-primary pull-right'>
+                        </div>
 
-                    <div class='form-group'>
-                        <label> First Name </label>
-                        <input type='text' ng-model='patient_info.user.first_name' class='form-control'>
-                    </div>
-                    <div class='form-group'>
-                        <label> Last Name </label>
-                        <input type='text' ng-model='patient_info.user.last_name' class='form-control'>
-                    </div>
-                    <div class='form-group'>
-                        <input type='submit' value='Update' class='btn btn-primary'>
-                    </div>
+                    </form>
 
-                </form>
-
+                </div>
             </div>
-        </div>
+        </section>
+        <section id='profile-info'>
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Profile Information</div>
+                <div class='panel-body'>
+                    <form class='form' name="profileInfoForm" novalidate ng-submit='updateProfile()'>
 
-        <div class='panel panel-default' id='profileInfo'>
-            <div class='panel-heading'><b> Profile Information </b></div>
-            <div class='panel-body'>
-
-                <form class='form' ng-submit='update_profile()'>
-
-                    <div class='form-group'>
-                        <label> Date of birth </label>
-                        <datepicker date-format="MM/dd/yyyy" selector="form-control">
+                        <div class='form-group'>
+                            <label for="date-of-birth"> Date of birth</label>
                             <div class="input-group">
-                                <input class="form-control" placeholder="Choose a date"
-                                       ng-model="patient_info.date_of_birth" title=""/>
-                                <span class="input-group-addon" style="cursor: pointer"><i
-                                        class="fa fa-lg fa-calendar"></i></span>
+                                <input id="date-of-birth"
+                                       class="form-control"
+                                       placeholder="Choose a date"
+                                       uib-datepicker-popup="{{dateFormat}}"
+                                       datepicker-options="DATEPICKER_OPTS"
+                                       is-open="datePickerOpened"
+                                       ng-model='profileInfoFormModel.dateOfBirth'/>
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default"
+                                            ng-click="datePickerOpened =!datePickerOpened ">
+                                        <i class="fa fa-calendar"></i>
+                                    </button>
+                                </span>
                             </div>
-                        </datepicker>
-                    </div>
-                    <div class='form-group'>
-                        <label> Phone/Contact </label>
-                        <input type='text' ng-model='patient_info.phone_number' class='form-control'>
-                    </div>
+                        </div>
+                        <div class='form-group'>
+                            <label for="phone-number">
+                                Phone/Contact
+                            </label>
+                            <input id="phone-number" type='text' ng-model='profileInfoFormModel.phoneNumber'
+                                   class='form-control'>
+                        </div>
 
-                    <div class='form-group'>
+                        <div class='form-group'>
 
-                        <label> Sex </label>
-                        <select ng-model='patient_info.sex' class='form-control'>
-                            <option value=''> ----</option>
-                            <option value='male'> Male</option>
-                            <option value='female'> Female</option>
-                        </select>
-                    </div>
-                    <div class='form-group'>
-                        <label> Summary </label>
-                        <textarea ng-model='patient_info.summary' class='form-control'></textarea>
-                    </div>
+                            <label for="sex">
+                                Sex
+                            </label>
 
-                    <!--<div class='form-group'>-->
-                    <!--<img ng-src='{{ patient_info.cover_image }}' class='thumbnail' alt='Cover Image'>-->
-                    <!--<label> Cover Image </label>-->
-                    <!--<input type='file' file-model='files.cover_image'>-->
-                    <!--</div>-->
-                    <!--<div class='form-group'>-->
-                    <!--<img ng-src='{{ patient_info.portrait_image }}' class='thumbnail' alt='Portrait Image'>-->
-                    <!--<label> Portrait Image </label>-->
-                    <!--<input type='file' file-model='files.portrait_image'>-->
-                    <!--</div>-->
+                            <select id="sex" ng-model='profileInfoFormModel.sex' class='form-control'>
+                                <option value=''> ----</option>
+                                <option value='male'> Male</option>
+                                <option value='female'> Female</option>
+                            </select>
+                        </div>
+                        <div class='form-group'>
+                            <label for="summary">
+                                Summary
+                            </label>
+                            <textarea id="summary" ng-model='profileInfoFormModel.summary' class='form-control'
+                                      msd-elastic></textarea>
+                        </div>
 
-                    <div class='form-group'>
-                        <input type='submit' value='Update' class='btn btn-primary'>
-                    </div>
-
-                </form>
+                        <div class='form-group'>
+                            <input type='submit' value='Update' class='btn btn-primary pull-right'>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+        </section>
+        <section id='image-info'>
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Profile Image</div>
+                <div class='panel-body'>
 
-        <div class='panel panel-default' id='image-info'>
-            <div class='panel-heading'><b> Profile Images </b></div>
-            <div class='panel-body'>
+                    <form class='form' ng-submit='updateImage()'>
 
-                <form class='form' ng-submit='updateImage()'>
+                        <div class='form-group'>
+                            <img ng-src='{{ patient_info.cover_image }}' class='cover' alt='Cover Image'>
+                            <label> Cover Image </label>
+                            <input type='file' file-model='files.cover_image'>
+                        </div>
+                        <div class='form-group'>
+                            <img ng-src='{{ patient_info.portrait_image }}' class='thumbnail' alt='Portrait Image'>
+                            <label> Portrait Image </label>
+                            <input type='file' file-model='files.portrait_image'>
+                        </div>
+                        <div class='form-group'>
+                            <input type='submit' value='Update' class='btn btn-primary pull-right'>
+                        </div>
 
-                    <div class='form-group'>
-                        <img ng-src='{{ patient_info.cover_image }}' class='cover' alt='Cover Image'>
-                        <label> Cover Image </label>
-                        <input type='file' file-model='files.cover_image'>
-                    </div>
-                    <div class='form-group'>
-                        <img ng-src='{{ patient_info.portrait_image }}' class='thumbnail' alt='Portrait Image'>
-                        <label> Portrait Image </label>
-                        <input type='file' file-model='files.portrait_image'>
-                    </div>
-                    <div class='form-group'>
-                        <input type='submit' value='Update' class='btn btn-primary'>
-                    </div>
-
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
+        </section>
+        <section id='email-info'>
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Email</div>
+                <div class='panel-body'>
 
-        <div class='panel panel-default' id='emailInfo'>
-            <div class='panel-heading'><b> Email </b></div>
-            <div class='panel-body'>
+                    <form class='form' ng-submit='updateEmail()'>
 
-                <form class='form' ng-submit='update_email()'>
+                        <div class='form-group'>
+                            <label for="email"> Email </label>
+                            <input id="email" type='text' class='form-control' ng-model='patient_info.user.email'>
+                        </div>
 
-                    <div class='form-group'>
-                        <label> Email </label>
-                        <input type='text' class='form-control' ng-model='patient_info.user.email'>
-                    </div>
+                        <div class='form-group'>
+                            <input type='submit' value='Change Email' class='btn btn-primary pull-right'>
 
-                    <div class='form-group'>
-                        <input type='submit' value='Change Email' class='btn btn-primary'>
+                        </div>
 
-                    </div>
-
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
+        </section>
+        <section id='password-info'>
+            <div class='panel panel-default'>
+                <div class='panel-heading'>Password</div>
+                <div class='panel-body'>
 
-        <div class='panel panel-default' id='passwordInfo'>
-            <div class='panel-heading'><b> Password </b></div>
-            <div class='panel-body'>
+                    <form class='form' ng-submit="updatePatientPassword()">
 
-                <form class='form'>
+                        <div class='form-group'>
+                            <label for="old-password"> Current Password </label>
+                            <input id="old-password" type='password' class='form-control' ng-model='old_password'>
+                        </div>
 
-                    <div class='form-group'>
-                        <label> Current Password </label>
-                        <input type='password' class='form-control' ng-model='old_password'>
-                    </div>
-
-                    <div class='form-group'>
-                        <label> New Password </label>
-                        <input type='password' class='form-control' ng-model='password'>
-                    </div>
+                        <div class='form-group'>
+                            <label for="password"> New Password </label>
+                            <input id="password" type='password' class='form-control' ng-model='password'>
+                        </div>
 
 
-                    <div class='form-group'>
-                        <label> Verify Password </label>
-                        <input type='password' class='form-control' ng-model='repassword'>
-                    </div>
+                        <div class='form-group'>
+                            <label for="re-password"> Verify Password </label>
+                            <input id="re-password" type='password' class='form-control' ng-model='repassword'>
+                        </div>
 
-                    <div class='form-group'>
-                        <button class='btn btn-primary' ng-click='update_patient_password()'>
-                            Change Password
-                        </button>
-                    </div>
+                        <div class='form-group'>
+                            <button class='btn btn-primary pull-right' type="submit">
+                                Change Password
+                            </button>
+                        </div>
 
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
+        </section>
+        <section id='manage-patient'>
+            <div class='panel panel-default'>
 
-        <div class='panel panel-default' id='managePatient'>
+                <div class='panel-heading'>Manage Sharing</div>
+                <div class='panel-body'>
+                    <a ng-href="#/manage/sharing/" class='btn btn-sm btn-default'>
+                        Manage
+                    </a>
 
-            <div class='panel-heading'><b> Manage Sharing </b></div>
-            <div class='panel-body'>
-                <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
-                    Manage
-                </a>
+                    <h4>People that can access me: </h4>
+                    <table class='table'>
+                        <thead>
+                        <tr>
+                            <th> Name</th>
+                            <th> Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat='p in sharing_patients'>
+                            <td> {{ p.user.first_name }} {{ p.user.last_name }}
+                            </td>
+                            <td>
+                                <a ng-href="#/manage/sharing/" class='btn btn-sm btn-default'>
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <br>
 
-                <h4>People that can access me: </h4>
-                <table class='table'>
-                    <thead>
-                    <tr>
-                        <th> Name</th>
-                        <th> Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat='p in sharing_patients'>
-                        <td> {{ p.user.first_name }} {{ p.user.last_name }}
-                        </td>
-                        <td>
-                            <a href="#/manage/sharing/" class='btn btn-sm btn-default'>
-                                Manage
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-                <br>
-
-                <h4>People I can access: </h4>
-                <table class='table'>
-                    <thead>
-                    <tr>
-                        <th> Name</th>
-                        <th> Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat='p in shared_patients'>
-                        <td> {{ p.user.first_name }} {{ p.user.last_name }}
-                        </td>
-                        <td>
-                            <a href="/u/patient/manage/{{ p.user.id }}" class='btn btn-sm btn-default'>
-                                Access chart
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                    <h4>People I can access: </h4>
+                    <table class='table'>
+                        <thead>
+                        <tr>
+                            <th> Name</th>
+                            <th> Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat='p in shared_patients'>
+                            <td> {{ p.user.first_name }} {{ p.user.last_name }}
+                            </td>
+                            <td>
+                                <a ng-href="/u/patient/manage/{{ p.user.id }}" class='btn btn-sm btn-default'>
+                                    Access chart
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-
+        </section>
         <section id="insurance">
             <div class='panel panel-default'>
                 <div class='panel-heading'><b> Insurance </b></div>
@@ -273,18 +272,18 @@
                     <form novalidate ng-submit="submitInsurance()">
                         <div class="form-group">
                             <div class="checkbox">
-                                <input type="checkbox" id="insurance-medicare" ng-model="insurance.medicare"
+                                <input type="checkbox" id="insurance-medicare" ng-model="insuranceForm.medicare"
                                        title="Patient has medicare">
                                 <label for="insurance-medicare"> Patient has Medicare </label>
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="insurance-note"></label>
-                            <textarea name="insurance-note" id="insurance-note" msd-elastic class="form-control"
-                                      ng-model="insurance.note"></textarea>
+                            <textarea id="insurance-note" msd-elastic class="form-control"
+                                      ng-model="insuranceForm.note"></textarea>
                         </div>
                         <div class="form-group">
-                            <button class="btn btn-primary" type="submit"> Submit</button>
+                            <button class="btn btn-primary pull-right" type="submit"> Submit</button>
                         </div>
                     </form>
                 </div>
@@ -292,13 +291,3 @@
         </section>
     </div>
 </div>
-
-
-<script type='text/javascript'>
-
-    $(document).ready(function () {
-
-        $("#dob").datepicker({dateFormat: 'mm/dd/yy'});
-
-    });
-</script>
