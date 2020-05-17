@@ -114,7 +114,6 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        # 'APP_DIRS': True,
         'OPTIONS': {
             ''
             'context_processors': [
@@ -129,7 +128,6 @@ TEMPLATES = [
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
-                #     'django.template.loaders.eggs.Loader',
             ],
             'debug': True
         }
@@ -160,16 +158,8 @@ INSTALLED_APPS = (
 )
 
 AUTHENTICATION_BACKENDS = (
-    #    'social_auth.backends.google.GoogleOAuth2Backend',
     'django.contrib.auth.backends.ModelBackend',
 )
-
-# GOOGLE_OAUTH2_CLIENT_ID = ''
-# GOOGLE_OAUTH2_CLIENT_SECRET = ''
-# GOOGLE_WHITE_LISTED_DOMAINS = []
-# SOCIAL_AUTH_USER_MODEL = 'auth.User'
-# SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
-
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 1800
@@ -181,7 +171,6 @@ SESSION_SECURITY_PASSIVE_URLS = {}
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
-# LOGIN_URL          = '/login/google-oauth2/'
 LOGIN_URL = '/u/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGIN_ERROR_URL = '/login-error/'
@@ -234,41 +223,3 @@ try:
     from local_settings import *
 except ImportError as e:
     pass
-
-    # ADMINS = (
-    #     ('', ''),('', ''),
-    # )
-    #    Imported from local_settings.py
-
-    # MANAGERS =
-    #    Imported from local_settings.py
-
-    # DATABASES = {
-    #
-    # }
-    #    Imported from local_settings.py
-
-    # Make this unique, and don't share it with anybody.
-    # SECRET_KEY = ''   # Imported from local_settings.py
-
-    # ALLOWED_HOSTS = [
-    #     '',
-    # ]
-    #    Imported from local_settings.py
-
-    # SITE_ID =    # Imported from local_settings.py
-
-    # The following is imported from local_settings.py
-    # EMAIL_USE_TLS = True
-    # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    # EMAIL_HOST = ''
-    # EMAIL_HOST_PASSWORD = ''
-    # EMAIL_HOST_USER = ''
-    # EMAIL_PORT = 
-    # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-    # RAVEN_CONFIG = {
-    #     'dsn': '',   #Imported from local_settings.py
-    #      If you are using git, you can also automatically configure the
-    #      release based on the git info.
-    # }

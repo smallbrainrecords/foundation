@@ -604,11 +604,11 @@ def get_patients_list(request):
 
     if user_profile.role == 'admin':
         patients = UserProfile.objects.filter(role='patient').filter(user__is_active=True)
-        patient_ids = [x.patient.id for x in patients]
+        patient_ids = [x.user_id for x in patients]
 
     elif user_profile.role == 'patient':
         patients = UserProfile.objects.filter(role='patient').exclude(user=request.user).filter(user__is_active=True)
-        patient_ids = [x.patient.id for x in patients]
+        patient_ids = [x.user_id.id for x in patients]
 
     elif user_profile.role == 'physician':
         patient_controllers = PatientController.objects.filter(physician=request.user)
