@@ -102,7 +102,7 @@
             return deferred.promise;
         }
 
-        this.put = function (url, data, contentType) {
+        this.put = function (url, data, contentType = 'application/json; charset=UTF-8') {
             const deferred = $q.defer();
             $http({
                 'method': 'PUT',

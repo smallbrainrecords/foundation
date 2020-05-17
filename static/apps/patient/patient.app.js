@@ -120,14 +120,6 @@
                     templateUrl: '/static/apps/patient/a1c-edit-value-page/edit_value.html',
                     controller: 'EditValueCtrl'
                 })
-                .when("/colon_cancer/:colon_id/add_new_study", {
-                    templateUrl: '/static/apps/patient/colon-cancer-create-page/add_new_study.html',
-                    controller: 'AddNewStudyCtrl'
-                })
-                .when("/colon_cancer/:colon_id/edit_study/:study_id", {
-                    templateUrl: '/static/apps/patient/colon-cancer-edit-page/edit_study.html',
-                    controller: 'EditStudyCtrl'
-                })
                 .when('/data/view', {
                     templateUrl: '/static/apps/patient/observation-table-page/vitals_table_view_ctrl.html',
                     controller: 'ObservationTableCtrl'

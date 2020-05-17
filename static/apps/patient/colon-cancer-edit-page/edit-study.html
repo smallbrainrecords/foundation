@@ -1,0 +1,58 @@
+<section ng-if="!checkPermitted(study, active_user) && !loading">You can not access this page</section>
+<section ng-if="checkPermitted(study, active_user)">
+    <div class='panel panel-default'>
+        <div class='panel-body'>
+            <a ng-href='#/problem/{{ colon_cancer.problem.id }}'><b> Back to problem page </b></a>
+        </div><!-- End of Panel Body -->
+    </div>
+
+    <div class='panel panel-default'>
+        <div class='panel-heading'>
+            Edit Study
+        </div>
+        <div class='panel-body'>
+            <form name="colonCancerForm" novalidate ng-submit="saveStudy()">
+                <div class='form-group'>
+                    <label for="finding"> Finding </label>
+                    <select id="finding" class='form-control'
+                            ng-model="colonCancerStudyFormModel.finding"
+                            ng-options="option.label for option in findingSet"
+                            required>
+                    </select>
+                </div>
+                <div class='form-group'>
+                    <label for="result"> Result </label>
+                    <select id="result" class='form-control' ng-model="colonCancerStudyFormModel.result"
+                            ng-options="result for result in colonCancerStudyFormModel.finding.result"
+                            required>
+                    </select>
+                </div>
+                <div class='form-group'>
+                    <label for="due-date"> Date </label>
+                    <div class="input-group">
+                        <input id="due-date" type='text' class='form-control' ng-model='colonCancerStudyFormModel.date'
+                               required
+                               popup-placement="bottom-right"
+                               uib-datepicker-popup="{{dateConfig.DATE_FORMAT}}"
+                               is-open="isOpened" datepicker-options="dateConfig.DATEPICKER_OPTS">
+                        <span class="input-group-btn">
+                        <button type="button" class="btn" ng-click="isOpened= !isOpened">
+                            <i class="fa fa-calendar"></i>
+                        </button>
+                    </span>
+                    </div>
+                </div>
+                <div class='form-group'>
+                    <label for="note"> Note </label>
+                    <textarea msd-elastic id="note" class='form-control' required
+                              ng-model='colonCancerStudyFormModel.note'></textarea>
+                </div>
+                <div class='form-group'>
+                    <button ng-disabled="colonCancerForm.$invalid" id="btn-form-submit"
+                            class="btn btn-primary float-right" type="submit">Save
+                    </button>
+                </div>
+            </form>
+        </div><!-- End of Panel Body -->
+    </div>
+</section>

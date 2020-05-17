@@ -17,6 +17,47 @@
 (function () {
     'use strict';
     angular.module('app.constant', [])
+        .constant('COLON_FINDING', [
+            {
+                'label': 'fecal occult blood test',
+                'result': [
+                    'all negative',
+                    'one positive',
+                    'two positive',
+                    'all positive',
+                ]
+            },
+            {
+                'label': 'colonoscopy',
+                'result': [
+                    'no polyps',
+                    'hyperplastic polyps < 10 mm',
+                    'adenomatous polyps',
+                    'serrated polyps',
+                    'cancer',
+                ]
+            },
+            {
+                'label': 'fecal immunochemical test',
+                'result': [
+                    'positive',
+                    'negative',
+                ]
+            },
+            {
+                'label': 'other',
+                'result': [
+                    'positive',
+                    'negative',
+                ]
+            },
+        ])
+        .constant('COLON_FINDING_RESULT', {
+            'FECAL_OCCULT_BLOOD_TEST': [],
+            'COLONOSCOPY': [],
+            'FECAL_IMMUNOCHEMICAL_TEST': [],
+            'OTHER': []
+        })
         .constant('ROLES', {
             ADMIN: 'nurse',
             PHYSICIAN: 'doctor',
@@ -69,6 +110,13 @@
             {name: 'blue', css_class: 'todo-label-blue'},
             {name: 'sky', css_class: 'todo-label-sky'},
         ])
+        .constant('DATE_CONFIG', {
+            'DATE_FORMAT': 'MM/dd/yyyy', // Input date to parse
+            'DATEPICKER_OPTS': {
+                showWeeks: false,
+                startingDay: 1
+            }
+        })
         .constant('DATEPICKER_OPTS', {
             showWeeks: false,
             startingDay: 1

@@ -19,31 +19,29 @@
     'use strict';
 
     angular.module('app.services')
-        .service('colonService', function ($http, $q, $cookies, httpService) {
+        .service('colonService', function ($q, $cookies, httpService) {
             return {
-                csrf_token: csrf_token,
                 fetchColonCancerInfo: fetchColonCancerInfo,
                 fetchColonCancerStudyInfo: fetchColonCancerStudyInfo,
                 addNewStudy: addNewStudy,
+                updateStudy: updateStudy,
                 deleteStudy: deleteStudy,
                 saveStudy: saveStudy,
-                deleteStudyImage: deleteStudyImage,
-                addImage: addImage,
                 addFactor: addFactor,
                 deleteFactor: deleteFactor,
                 refuse: refuse,
-                not_appropriate: not_appropriate,
+                notAppropriate: notAppropriate,
                 trackColonCancerClickEvent: trackColonCancerClickEvent,
                 addNote: addNote,
                 editNote: editNote,
                 deleteNote: deleteNote
             };
 
-            function csrf_token() {
-
-                return $cookies.get('csrftoken');
-            }
-
+            /**
+             * @deprecated
+             * @param colon_id
+             * @returns {*}
+             */
             function fetchColonCancerInfo(colon_id) {
                 let url = `/colon_cancer/${colon_id}/info`;
                 let params = {};
@@ -62,7 +60,7 @@
 
             function addNewStudy(colon_id, study) {
                 let url = `/colon_cancer/${colon_id}/add_study`;
-                return httpService.post(study, url);
+                return httpService.postJson(study, url);
             }
 
             function deleteStudy(study) {
@@ -70,39 +68,19 @@
                 return httpService.post(study, url);
             }
 
+            /**
+             * @deprecated
+             * @param study
+             * @returns {*}
+             */
             function saveStudy(study) {
                 let url = `/colon_cancer/${study.id}/edit_study`;
                 return httpService.post(study, url);
             }
 
-            function deleteStudyImage(form) {
-
-                let url = `/colon_cancer/study/${form.study_id}/image/${form.image_id}/delete/`;
-                return httpService.post(form, url);
-            }
-
-            function addImage(form, file) {
-                let deferred = $q.defer();
-
-                let uploadUrl = `/colon_cancer/study/${form.study_id}/addImage`;
-
-                let fd = new FormData();
-
-                fd.append(0, file);
-
-                $http.post(uploadUrl, fd, {
-                    transformRequest: angular.identity,
-                    headers: {'Content-Type': undefined, 'X-CSRFToken': this.csrf_token()}
-                })
-                    .success(function (data) {
-                        deferred.resolve(data);
-                    })
-                    .error(function (data) {
-                        deferred.resolve(data);
-
-                    });
-
-                return deferred.promise;
+            function updateStudy(colonCancerId, studyId, study) {
+                let url = `/colon_cancer/${colonCancerId}/studies/${studyId}`;
+                return httpService.put(url, study);
             }
 
             function addFactor(colon_id, factor) {
@@ -121,7 +99,7 @@
                 return httpService.post(form, url);
             }
 
-            function not_appropriate(colon_id) {
+            function notAppropriate(colon_id) {
                 let form = {};
                 let url = `/colon_cancer/${colon_id}/not_appropriate`;
                 return httpService.post(form, url);
@@ -149,5 +127,4 @@
                 return httpService.post(form, url);
             }
         });
-
 })();

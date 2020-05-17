@@ -14,6 +14,8 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+
+import dateutil
 from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import api_view
 
@@ -72,19 +74,29 @@ def get_colon_info(request, colon_id):
 def add_study(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
+    request_data = json.loads(request.body)
     if permissions_accessed(request.user, colon.patient.id):
-        actor_profile = UserProfile.objects.get(user=request.user)
-        study_date = datetime.strptime(request.POST.get('date'), '%m/%d/%Y').date()
+        finding = request_data.get("finding", None)
+        result = request_data.get("result", None)
+        study_date = dateutil.parser.parse(request_data.get('date'))
+        note = request_data.get("note", None)
 
-        study = ColonCancerStudy.objects.create(colon=colon,
-                                                finding=request.POST.get("finding", None),
-                                                result=request.POST.get("result", None),
-                                                note=request.POST.get("note", None),
-                                                study_date=study_date,
-                                                last_updated_user=request.user,
+        study = ColonCancerStudy.objects.create(colon=colon, finding=finding, result=result, note=note,
+                                                study_date=study_date, last_updated_user=request.user,
                                                 author=request.user)
         study.save()
 
+        if finding == "colonoscopy" and result == "adenomatous polyps":
+            risk_factor_value = 'personal history of adenomatous polyp'
+            RiskFactor.objects.create(colon=colon, factor=risk_factor_value)
+
+            colon.risk = 'high'
+            colon.last_risk_updated_user = request.user
+            colon.last_risk_updated_date = datetime.now().date()
+            colon.todo_past_five_years = False
+            colon.save()
+
+        # If studying
         resp['study'] = ColonCancerStudySerializer(study).data
         resp['success'] = True
 
@@ -224,15 +236,15 @@ def add_factor(request, colon_id):
                 for f in factors:
                     f.delete()
 
-            if RiskFactor.objects.filter(colon=colon).count() == 1 and request.POST.get("value",
-                                                                                        None) == 'no known risk':
-                colon.risk = 'normal'
-            else:
-                colon.risk = 'high'
-            colon.last_risk_updated_user = request.user
-            colon.last_risk_updated_date = datetime.now().date()
-            colon.todo_past_five_years = False
-            colon.save()
+                if RiskFactor.objects.filter(colon=colon).count() == 1 and request.POST.get("value",
+                                                                                            None) == 'no known risk':
+                    colon.risk = 'normal'
+                else:
+                    colon.risk = 'high'
+                colon.last_risk_updated_user = request.user
+                colon.last_risk_updated_date = datetime.now().date()
+                colon.todo_past_five_years = False
+                colon.save()
             resp['factor'] = RiskFactorSerializer(factor).data
             resp['info'] = ColonCancerScreeningSerializer(colon).data
             resp['success'] = True
@@ -344,3 +356,76 @@ def delete_note(request, note_id):
         note.delete()
         resp['success'] = True
     return ajax_response(resp)
+
+
+@login_required
+@timeit
+def get_colon_cancer_studies(request, colon_id):
+    pass
+
+
+@login_required
+@timeit
+def colon_cancer_study(request, colon_id, study_id):
+    resp = {'success': False}
+    request_data = json.loads(request.body)
+
+    if request.method == "GET":
+        pass
+    if request.method == "POST":
+        pass
+    if request.method == "PUT":
+        colon = ColonCancerScreening.objects.get(id=colon_id)
+        if permissions_accessed(request.user, colon.patient.id):
+            study = ColonCancerStudy.objects.get(id=study_id)
+            finding = request_data.get("finding", None)
+            result = request_data.get("result", None)
+            study_date = dateutil.parser.parse(request_data.get('date'))
+            note = request_data.get("note", None)
+
+            study.finding = finding
+            study.result = result
+            study.study_date = study_date
+            study.note = note
+            study.save()
+
+        # if finding == "colonoscopy" and result == "adenomatous polyps":
+        #     risk_factor_value = 'personal history of adenomatous polyp'
+        #     RiskFactor.objects.create(colon=colon, factor=risk_factor_value)
+        #
+        #     colon.risk = 'high'
+        #     colon.last_risk_updated_user = request.user
+        #     colon.last_risk_updated_date = datetime.now().date()
+        #     colon.todo_past_five_years = False
+        #     colon.save()
+
+        # If studying
+        resp['study'] = ColonCancerStudySerializer(study).data
+        resp['success'] = True
+    if request.method == "DELETE":
+        pass
+    return ajax_response(resp)
+
+
+@login_required
+@timeit
+def get_risk_factors(request, colon_id):
+    pass
+
+
+@login_required
+@timeit
+def risk_factor(request, colon_id, risk_factor_id):
+    pass
+
+
+@login_required
+@timeit
+def get_notes(request, colon_id):
+    pass
+
+
+@login_required
+@timeit
+def note(request, colon_id, note_id):
+    pass

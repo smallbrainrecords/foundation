@@ -18,16 +18,25 @@
 
     'use strict';
 
-    angular.module('colon_cancers', []).config(function ($httpProvider) {
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-    }).directive('colonCancer', colonCancerDirective);
+    angular.module('colon_cancers', [])
+        .config(($routeProvider) => {
+            $routeProvider
+                .when("/colon_cancer/:colonId/add_new_study", {
+                    templateUrl: '/static/apps/patient/colon-cancer-create-page/add-study.html',
+                    controller: 'AddNewStudyCtrl'
+                })
+                .when("/colon_cancer/:colonId/edit_study/:studyId", {
+                    templateUrl: '/static/apps/patient/colon-cancer-edit-page/edit-study.html',
+                    controller: 'EditStudyCtrl'
+                });
+        })
+        .directive('colonCancer', colonCancerDirective);
     colonCancerDirective.$inject = ['toaster', 'prompt', 'CollapseService', 'colonService', 'problemService', 'patientService', '$routeParams'];
 
     function colonCancerDirective(toaster, prompt, CollapseService, colonService, problemService, patientService, $routeParams) {
         return {
             restrict: 'E',
-            templateUrl: '/static/apps/patient/directives/colon-cancer-directive/colon_cancer.html',
+            templateUrl: '/static/apps/patient/directives/colon-cancer-directive/colon-cancer.html',
             scope: {
                 colon_cancer: '=colonCancer',
                 orderAdded: '=',
@@ -37,19 +46,36 @@
                 members: "="
             },
             link: function (scope, element, attr) {
+                scope.showFactors = false;
                 scope.set_header = generateHeaderTitle;
-                scope.open_colon = open_colon;
-                scope.delete_study = delete_study;
-                scope.change_factor = change_factor;
+                scope.show_note = false
+                scope.see_past_studies = false;
+                scope.factors = [
+                    {value: 'no known risk', checked: false},
+                    {value: 'personal history of colorectal cancer', checked: false},
+                    {value: 'personal history of adenomatous polyp', checked: false},
+                    {value: "personal history of ulcerative colitis or Crohn's disease", checked: false},
+                    {value: 'abdominal radiation for childhood cancer', checked: false},
+                    {value: 'family history of colorectal cancer or an adenomatous polyp', checked: false},
+                    {
+                        value: 'High-risk genetic syndromes: Lynch syndrome or Familial adenomatous polyposis',
+                        checked: false
+                    },
+                ];
+
+                scope.openColon = openColon;
+                scope.deleteStudy = deleteStudy;
+                scope.changeFactor = changeFactor;
                 scope.refuse = refuse;
-                scope.not_appropriate = not_appropriate;
-                scope.repeat_todo = repeat_todo;
-                scope.add_note = add_note;
+                scope.notAppropriate = notAppropriate;
+                scope.repeatTodo = repeatTodo;
+                scope.addNote = addNote;
                 scope.toggleEditNote = toggleEditNote;
                 scope.toggleSaveNote = toggleSaveNote;
                 scope.deleteNote = deleteNote;
                 scope.todoStatusChanged = todoStatusChanged;
                 scope.addNewOrder = addNewOrder;
+
                 init();
 
                 scope.$on('todoListUpdated', (event, args) => {
@@ -65,18 +91,6 @@
 
                     scope.show_colon_collapse = CollapseService.show_colon_collapse;
 
-                    scope.factors = [
-                        {value: 'no known risk', checked: false},
-                        {value: 'personal history of colorectal cancer', checked: false},
-                        {value: 'personal history of adenomatous polyp', checked: false},
-                        {value: "personal history of ulcerative colitis or Crohn's disease", checked: false},
-                        {value: 'abdominal radiation for childhood cancer', checked: false},
-                        {value: 'family history of colorectal cancer or an adenomatous polyp', checked: false},
-                        {
-                            value: 'High-risk genetic syndromes: Lynch syndrome or Familial adenomatous polyposis',
-                            checked: false
-                        },
-                    ];
 
                     angular.forEach(scope.colon_cancer.colon_risk_factors, function (colon_risk_factor, key) {
                         angular.forEach(scope.factors, function (factor, key) {
@@ -115,8 +129,7 @@
 
                 }
 
-                /**
-                 */
+
                 function generateHeaderTitle() {
                     scope.header = '';
                     if (scope.colon_cancer.patient) {
@@ -142,7 +155,7 @@
                                 });
                             }
 
-                            if (scope.colon_cancer.not_appropriate) {
+                            if (scope.colon_cancer.notAppropriate) {
                                 texts.push({
                                     text: "Not appropriate on " + moment(scope.colon_cancer.not_appropriate_on).format("MM/DD/YYYY"),
                                     date: moment(scope.colon_cancer.not_appropriate_on)
@@ -178,7 +191,7 @@
                     }
                 }
 
-                function open_colon() {
+                function openColon() {
                     if (!scope.show_colon_collapse) {
                         var form = {};
                         form.colon_cancer_id = scope.colon_cancer.id;
@@ -192,7 +205,7 @@
                     }
                 }
 
-                function delete_study(study) {
+                function deleteStudy(study) {
                     prompt({
                         "title": "Are you sure?",
                         "message": "Deleting a study is forever. There is no undo."
@@ -207,7 +220,7 @@
                     });
                 }
 
-                function change_factor(factor) {
+                function changeFactor(factor) {
                     if (factor.checked) {
                         colonService.addFactor(scope.colon_cancer.id, factor).then(function (data) {
                             toaster.pop('success', 'Done', 'Added factor successfully');
@@ -241,15 +254,15 @@
                     });
                 }
 
-                function not_appropriate() {
-                    colonService.not_appropriate(scope.colon_cancer.id).then(function (data) {
+                function notAppropriate() {
+                    colonService.notAppropriate(scope.colon_cancer.id).then(function (data) {
                         toaster.pop('success', 'Done', 'Set appropriate successfully');
                         scope.colon_cancer = data['info'];
                         scope.set_header();
                     });
                 }
 
-                function repeat_todo(todo_repeat) {
+                function repeatTodo(todo_repeat) {
                     let form = {
                         name: todo_repeat.name,
                         due_date: todo_repeat.due_date,
@@ -259,26 +272,14 @@
                     };
 
                     patientService.addProblemTodo(form).then((data) => {
-                        // scope.problem_todos.push(data['todo']);
-                        // scope.orderAdded(data.todo);
-
-                        // scope.colon_cancer.colon_cancer_todos.push(data['todo']);
                         toaster.pop('success', 'Done', 'Added Todo!');
                         scope.set_header();
                     });
 
-                    // problemService.addTodo(form).then((data) => {
-                    //     // scope.problem_todos.push(data['todo']);
-                    //     scope.orderAdded(data.todo);
-                    //
-                    //     scope.colon_cancer.colon_cancer_todos.push(data['todo']);
-                    //     toaster.pop('success', 'Done', 'Added Todo!');
-                    //     scope.set_header();
-                    // });
                 }
 
                 // note
-                function add_note(form) {
+                function addNote(form) {
                     if (_.isEmpty(form.note))
                         return;
 
@@ -362,7 +363,6 @@
                     function addTodoSuccess(data) {
                         form.name = '';
                         toaster.pop('success', 'Done', 'Added Todo!');
-                        // $location.url('/problem/' + $scope.colon_cancer.problem.id);
                     }
                 }
             }
