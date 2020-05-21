@@ -611,38 +611,16 @@ def get_patients_list(request):
         patient_ids = [x.user_id.id for x in patients]
 
     elif user_profile.role == 'physician':
-        patient_controllers = PatientController.objects.filter(physician=request.user)
+        patient_controllers = PatientController.objects.filter(physician=request.user).filter(patient__is_active=True)
         patient_ids = [x.patient.id for x in patient_controllers]
-        # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids).filter(patient__is_active=True)
         patient_ids = [x.patient.id for x in patient_controllers]
-        # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
     result = TopPatientSerializer(VWTopPatients.objects.filter(id__in=patient_ids), many=True).data
-
-    # patients_list = UserProfileSerializer(patients, many=True).data
-    # six_weeks_earlier = datetime.datetime.now() - relativedelta(weeks=6)
-    # for patient in patients_list:
-    #     todo_count = ToDo.objects.filter(patient__id=patient['user']['id'], accomplished=False).count()
-    #     problem_count = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True,
-    #                                            is_controlled=False).count()
-    #     encounter_count = Encounter.objects.filter(patient__id=patient['user']['id'],
-    #                                                starttime__gte=six_weeks_earlier.date()).count()
-    #     document_count = Document.objects.filter(patient__id=patient['user']['id'],
-    #                                              created_on__gte=six_weeks_earlier.date()).count()
-    #
-    #     patient["todo"] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3)
-    #     patient["problem"] = (float(problem_count) if problem_count != 0 else float(1))
-    #     patient["encounter"] = float(encounter_count) if encounter_count != 0 else float(1)
-    #     patient["document"] = (float(document_count) if document_count != 0 else float(1)) / 2
-    #     patient['multiply'] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3) * (
-    #         float(problem_count) if problem_count != 0 else float(1)) * (
-    #                               float(encounter_count) if encounter_count != 0 else float(1)) * (
-    #                                   (float(document_count) if document_count != 0 else float(1)) / 2)
 
     # Will sort patient list by providing sort_by otherwise will sort by 'multiply' key
     resp = {
