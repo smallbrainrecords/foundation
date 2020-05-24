@@ -18,10 +18,6 @@
     "use strict";
 
     angular.module('medication-component', [])
-        .config(function ($routeProvider, $httpProvider) {
-            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        })
         .component('medicationSearch', {
             bindings: {
                 searchTerm: '<',
@@ -74,7 +70,8 @@
          * List term callback
          * @param data
          */
-        function listTermSuccessCallback(data) {
+        function listTermSuccessCallback(response) {
+            let data = response.data;
             ctrl.medicationTerms = data;
         }
 

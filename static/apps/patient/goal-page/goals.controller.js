@@ -37,14 +37,16 @@
 
             //sharedService.initHotkey($scope);
 
-            patientService.fetchActiveUser().then(function (data) {
+            patientService.fetchActiveUser().then(function (response) {
+                let data = response.data;
 
                 $scope.active_user = data['user_profile'];
 
             });
 
 
-            patientService.fetchGoalInfo(goal_id).then(function (data) {
+            patientService.fetchGoalInfo(goal_id).then(function (response) {
+                let data = response.data;
 
                 $scope.goal = data['goal'];
                 $scope.goal_notes = data['goal_notes'];
@@ -57,7 +59,7 @@
 
             $scope.$watch('[goal.is_controlled,goal.accomplished]', function (newVal, oldVal) {
 
-                if ($scope.loading == true) {
+                if ($scope.loading === true) {
                     return false;
                 }
 
@@ -71,7 +73,8 @@
                 form.is_controlled = $scope.goal.is_controlled;
                 form.accomplished = $scope.goal.accomplished;
 
-                goalService.updateGoalStatus(form).then(function (data) {
+                goalService.updateGoalStatus(form).then(function (response) {
+                    let data = response.data;
 
                     toaster.pop('success', 'Done', 'Updated Goal Status');
 
@@ -89,7 +92,8 @@
 
                 form.new_note = $scope.new_note;
 
-                goalService.addNote(form).then(function (data) {
+                goalService.addNote(form).then(function (response) {
+                    let data = response.data;
 
                     $scope.goal_notes.unshift(data['note']);
 
@@ -109,7 +113,7 @@
             };
 
             $scope.change_goal_name = function (new_goal_name) {
-                if (new_goal_name == '' || new_goal_name == undefined) {
+                if (new_goal_name === '' || new_goal_name === undefined) {
                     return false;
                 }
 
@@ -118,12 +122,13 @@
                 form.patient_id = $scope.patient_id;
                 form.goal_id = $scope.goal_id;
 
-                goalService.changeGoalName(form).then(function (data) {
-                    if (data['success'] == true) {
+                goalService.changeGoalName(form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Goal name changed successfully');
                         $scope.goal = data['goal'];
                         $scope.edit_goal = false;
-                    } else if (data['success'] == false) {
+                    } else if (data['success'] === false) {
                         toaster.pop('error', 'Error', data['msg']);
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong');
@@ -134,7 +139,7 @@
 
             $scope.permitted = function (permissions) {
 
-                if ($scope.active_user == undefined) {
+                if ($scope.active_user === undefined) {
                     return false;
                 }
                 var user_permissions = $scope.active_user.permissions;

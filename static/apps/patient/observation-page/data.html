@@ -1,6 +1,6 @@
 <section class='panel panel-default'>
     <div class='panel-body'>
-        <a href='#/'><b> Back to home page </b></a>
+        <a href='#!'><b> Back to home page </b></a>
     </div>
 </section>
 
@@ -66,13 +66,13 @@
                         </button>
                     </div>
                 </form>
-                <a ng-href="#/data/{{ data.id }}/show_all_data" class="btn btn-default btn-block">Show all data</a>
-                <a ng-href="#/data/{{ data.id }}/add_data" class="btn btn-default btn-block" ng-if="data.code != '39156-5'">Add data point</a>
+                <a ng-href="#!data/{{ data.id }}/show_all_data" class="btn btn-default btn-block">Show all data</a>
+                <a ng-href="#!data/{{ data.id }}/add_data" class="btn btn-default btn-block" ng-if="data.code != '39156-5'">Add data point</a>
                 <button class="btn btn-default btn-block" ng-click="toggle_pin_to_new_problem();"
                         ng-if="active_user.role == 'patient' || active_user.role == 'admin' || active_user.id== data.author.profile.id || true">
                     Pin to new problem
                 </button>
-                <a class="btn btn-default btn-block" href="#/data/{{ data.id }}/settings">Settings</a>
+                <a class="btn btn-default btn-block" href="#!data/{{ data.id }}/settings">Settings</a>
             </div>
         </div>
     </div>

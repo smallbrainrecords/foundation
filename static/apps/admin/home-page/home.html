@@ -15,12 +15,12 @@
             </div>
             <div class='panel-body'>
 
-                <a class='btn btn-default' href='#/add/user'>
+                <a class='btn btn-default' href='#!add/user'>
                     Add User
                 </a>
                 </br>
                 </br>
-                <a class='btn btn-default' href='#/manage/sharing'>
+                <a class='btn btn-default' href='#!manage/sharing'>
                     Manage sharing between patients
                 </a>
 
@@ -74,7 +74,7 @@
                         <td> {{ user.sex }}</td>
                         <td> {{ user.phone_number }}</td>
                         <td>
-                            <a href='#/edit/{{ user.user.id }}/' class='btn btn-sm btn-default'>
+                            <a href='#!edit/{{ user.user.id }}/' class='btn btn-sm btn-default'>
                                 Edit
                             </a>
                             <a href='/u/patient/manage/{{ user.user.id }}/' class='btn btn-sm btn-default'

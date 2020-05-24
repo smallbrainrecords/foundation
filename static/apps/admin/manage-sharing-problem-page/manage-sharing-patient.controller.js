@@ -26,19 +26,24 @@
             init();
 
             function init() {
-                adminService.fetchActiveUser().then(function (data) {
+                adminService.fetchActiveUser().then(function (response) {
+                    let data = response.data;
                     $scope.active_user = data['user_profile'];
                 });
-                adminService.getUserInfo($scope.patient_id).then(function (data) {
+                adminService.getUserInfo($scope.patient_id).then(function (response) {
+                    let data = response.data;
                     $scope.shared_patient = data['user_profile'];
                 });
-                adminService.getUserInfo($scope.sharing_patient_id).then(function (data) {
+                adminService.getUserInfo($scope.sharing_patient_id).then(function (response) {
+                    let data = response.data;
                     $scope.sharing_patient = data['user_profile'];
                 });
-                adminService.fetchProblems($scope.patient_id).then(function (data) {
+                adminService.fetchProblems($scope.patient_id).then(function (response) {
+                    let data = response.data;
                     $scope.problems = data['problems'];
                 });
-                adminService.fetchSharingProblems($scope.patient_id, $scope.sharing_patient_id).then(function (data) {
+                adminService.fetchSharingProblems($scope.patient_id, $scope.sharing_patient_id).then(function (response) {
+                    let data = response.data;
                     $scope.sharing_problems = data['sharing_problems'];
                 });
             }
@@ -46,7 +51,7 @@
             function inArray(array, item) {
                 var is_existed = false;
                 angular.forEach(array, function (value, key2) {
-                    if (value.id == item.id) {
+                    if (value.id === item.id) {
                         is_existed = true;
                     }
                 });
@@ -57,19 +62,21 @@
                 var is_existed = false;
                 var index;
                 angular.forEach($scope.sharing_problems, function (value, key2) {
-                    if (value.id == problem.id) {
+                    if (value.id === problem.id) {
                         is_existed = true;
                         index = key2;
                     }
                 });
                 if (is_existed) {
                     $scope.sharing_problems.splice(index, 1);
-                    adminService.removeSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function (data) {
+                    adminService.removeSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Removed problem');
                     });
                 } else {
                     $scope.sharing_problems.push(problem);
-                    adminService.addSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function (data) {
+                    adminService.addSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Added problem');
                     });
                 }

@@ -31,13 +31,14 @@
 
             function init() {
 
-                a1cService.fetchA1cInfo($scope.a1c_id).then(function (data) {
+                a1cService.fetchA1cInfo($scope.a1c_id).then(function (response) {
+                    let data = response.data;
                     $scope.a1c = data['info'];
                 });
             }
 
             function addValue(value) {
-                if (value == undefined) {
+                if (value === undefined) {
                     toaster.pop('error', 'Error', 'Please enter float value!');
                     return false;
                 }
@@ -46,11 +47,12 @@
                     return false;
                 }
 
-                if (value.date == undefined) {
+                if (value.date === undefined) {
                     value.date = moment().format("YYYY-MM-DD");
                 }
                 value.component_id = $scope.a1c.observation.observation_components[0].id;
-                a1cService.addNewValue(value).then(function (data) {
+                a1cService.addNewValue(value).then(function (response) {
+                    let data = response.data;
                     toaster.pop('success', 'Done', 'Added New value!');
                     $location.url('/problem/' + $scope.a1c.problem.id);
                 });
@@ -58,21 +60,23 @@
 
             function addValueRefused(value) {
                 value = {};
-                if (value.date == undefined) {
+                if (value.date === undefined) {
                     value.date = moment().format("YYYY-MM-DD");
                 }
                 value.patient_refused_A1C = true;
                 value.a1c_id = $scope.a1c_id;
-                a1cService.addValueRefused(value).then(function (data) {
+                a1cService.addValueRefused(value).then(function (response) {
+                    let data = response.data;
                     toaster.pop('success', 'Done', 'Patient refused!');
                     $location.url('/problem/' + $scope.a1c.problem.id);
                 });
             }
 
             function add_note(form) {
-                if (form.note == '') return;
+                if (form.note === '') return;
                 form.a1c_id = $scope.a1c_id;
-                a1cService.addNote(form).then(function (data) {
+                a1cService.addNote(form).then(function (response) {
+                    let data = response.data;
                     $scope.a1c.a1c_notes.push(data['note']);
                     form.note = '';
                     toaster.pop('success', 'Done', 'Added Note!');
@@ -84,7 +88,8 @@
             }
 
             function toggleSaveNote(note) {
-                a1cService.editNote(note).then(function (data) {
+                a1cService.editNote(note).then(function (response) {
+                    let data = response.data;
                     note.edit = false;
                     toaster.pop('success', 'Done', 'Edited note successfully');
                 });
@@ -95,7 +100,8 @@
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
                 }).then(function (result) {
-                    a1cService.deleteNote(note).then(function (data) {
+                    a1cService.deleteNote(note).then(function (response) {
+                        let data = response.data;
                         var index = $scope.a1c.a1c_notes.indexOf(note);
                         $scope.a1c.a1c_notes.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted note successfully');

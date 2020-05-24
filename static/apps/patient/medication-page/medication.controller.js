@@ -51,17 +51,20 @@
 
             function init() {
 
-                medicationService.fetchMedicationInfo($scope.patient_id, $scope.medicationId).then(data => {
+                medicationService.fetchMedicationInfo($scope.patient_id, $scope.medicationId).then(response => {
+                    let data = response.data;
                     $scope.medication = data['info'];
                     $scope.medicationHistory = data['history'];
                     $scope.medicationNoteHistory = data['noteHistory'];
                 });
 
                 // pin to problem
-                problemService.fetchProblems($scope.patient_id).then(data => {
+                problemService.fetchProblems($scope.patient_id).then(response => {
+                    let data = response.data;
                     $scope.problems = data['problems'];
 
-                    medicationService.fetchPinToProblem($scope.medicationId).then(data => {
+                    medicationService.fetchPinToProblem($scope.medicationId).then(response => {
+                        let data = response.data;
                         $scope.pins = data['pins'];
 
                         angular.forEach($scope.problems, problem => {
@@ -73,7 +76,8 @@
                 });
 
                 medicationService.getRelatedEncounters($scope.medicationId).then(response => {
-                    $scope.encounters = response['encounters'];
+                    let data = response.data;
+                    $scope.encounters = data['encounters'];
                 })
             }
 
@@ -103,7 +107,8 @@
                 form.patient_id = $scope.patient_id;
 
                 medicationService.addMedicationNote(form)
-                    .then(data => {
+                    .then(response => {
+                        let data = response.data;
                         $scope.medicationNoteHistory.push(data['note']);
                         if (typeof oldNote !== 'undefined')
                             form.note = oldNote;
@@ -127,7 +132,8 @@
                 form.medication_id = medication_id;
                 form.problem_id = problem_id;
 
-                medicationService.medicationPinToProblem($scope.patient_id, form).then(data => {
+                medicationService.medicationPinToProblem($scope.patient_id, form).then(response => {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Pinned problem!');
                     } else if (data['success']) {
@@ -145,6 +151,7 @@
             function changeActiveMedication() {
                 medicationService.changeActiveMedication($scope.patient_id, $scope.medicationId)
                     .then(response => {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Changed successfully!');
                     });
             }
@@ -152,11 +159,12 @@
             function changeDosage(medication) {
                 medicationService.changeDosage($scope.patient_id, $scope.medication.id, medication)
                     .then(response => {
-                        if (response.data.success) {
+                        let data = response.data;
+                        if (data.success) {
                             toaster.pop('success', 'Done', 'Changed successfully!');
                             $scope.showMedicationSearch = false;
-                            $scope.medication = response.data.medication;
-                            $scope.medicationHistory.unshift(response.data.history)
+                            $scope.medication = data.medication;
+                            $scope.medicationHistory.unshift(data.history)
                         } else {
                             toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
                         }
@@ -165,7 +173,8 @@
 
             function updateNoteHistory(note) {
                 medicationService.editNote(note)
-                    .then(data => {
+                    .then(response => {
+                        let data = response.data;
                         if (data.success) {
                             note.editMode = false;
                             toaster.pop('success', 'Done', 'Edited note success');
@@ -183,7 +192,8 @@
                     "message": "Deleting a note is forever. There is no undo."
                 }).then(result => {
                     medicationService.deleteNote(note)
-                        .then(data => {
+                        .then(response => {
+                            let data = response.data;
                             if (data.success) {
                                 var index = $scope.medicationNoteHistory.indexOf(note);
                                 $scope.medicationNoteHistory.splice(index, 1);

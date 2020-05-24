@@ -121,14 +121,11 @@
                     transformRequest: angular.identity,
 
                     headers: {'Content-Type': undefined}
-                })
-                    .success(function (data) {
-                        deferred.resolve(data);
-                    })
-                    .error(function (data) {
-                        deferred.resolve(data);
-
-                    });
+                }).then(function (data) {
+                    deferred.resolve(data);
+                }, function (data) {
+                    deferred.resolve(data);
+                });
 
                 return deferred.promise;
 

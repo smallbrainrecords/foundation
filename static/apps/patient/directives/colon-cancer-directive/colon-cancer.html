@@ -12,7 +12,7 @@
                             <div>
                                 <span><b>Most recent study</b></span>
                                 <div class="pull-right">
-                                    <a ng-href="#/colon_cancer/{{ colon_cancer.id }}/add_new_study"
+                                    <a ng-href="#!colon_cancer/{{ colon_cancer.id }}/add_new_study"
                                        class="btn btn-default">
                                         Add new study
                                     </a>
@@ -31,7 +31,7 @@
                                     <span>Last updated by</span> <b>{{colon_cancer.colon_studies[0].last_updated_user.username}}</b>
                                     on <span class="created-datetime">{{colon_cancer.colon_studies[0].last_updated_date|date:'M/d/yyyy'}}</span>
                                     - <a
-                                        ng-href="#/colon_cancer/{{ colon_cancer.id }}/edit_study/{{ colon_cancer.colon_studies[0].id}}/"
+                                        ng-href="#!colon_cancer/{{ colon_cancer.id }}/edit_study/{{ colon_cancer.colon_studies[0].id}}/"
                                         class="edit-link">Edit</a>
                                 </p>
                             </div>
@@ -64,7 +64,7 @@
                                 }}.</p>
                             <p ng-if="study.note">Note: {{ study.note }}</p>
                             <p>
-                                <a href="#/colon_cancer/{{ colon_cancer.id }}/edit_study/{{ study.id }}/"
+                                <a href="#!colon_cancer/{{ colon_cancer.id }}/edit_study/{{ study.id }}/"
                                    class="btn btn-link"
                                    ng-if="active_user.role == 'physician' || active_user.role == 'admin' || active_user.id == study.author.id">Edit</a>
                                 <a href class="btn btn-link" ng-click="deleteStudy(study)"

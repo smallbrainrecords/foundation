@@ -44,7 +44,8 @@
 
             function init() {
                 patientService.fetchEncounterInfo($scope.encounter_id)
-                    .then(function (data) {
+                    .then(function (response) {
+                        let data = response.data;
                         $scope.encounter = data['encounter'];
                         $rootScope.encounter_events = $scope.encounter_events = data['encounter_events'];
                         $scope.encounterDocuments = data['encounter_documents'];
@@ -59,7 +60,7 @@
                                 };
 
                                 if ($routeParams.startAt != null) {
-                                    if (myAudio != null) {
+                                    if (true) {
                                         myAudio.currentTime = parseInt($routeParams.startAt);
                                         myAudio.play();
                                     }
@@ -75,7 +76,8 @@
                 form.encounter_id = $scope.encounter_id;
                 form.patient_id = $scope.patient_id;
                 form.note = $scope.encounter.note;
-                encounterService.updateNote(form).then(function (data) {
+                encounterService.updateNote(form).then(function (response) {
+                    let data = response.data;
                     toaster.pop('success', 'Done', 'Updated note!');
 
                 });
@@ -90,9 +92,10 @@
                 form.patient_id = $scope.patient_id;
                 var file = $scope.video_file;
 
-                encounterService.uploadVideo(form, file).then(function (data) {
+                encounterService.uploadVideo(form, file).then(function (response) {
+                    let data = response.data;
 
-                    if (data['success'] == true) {
+                    if (data['success'] === true) {
 
                         toaster.pop('success', 'Done', 'Uploaded Video!');
                     }
@@ -107,8 +110,9 @@
                 form.patient_id = $scope.patient_id;
                 var file = $scope.audio_file;
 
-                encounterService.uploadAudio(form, file).then(function (data) {
-                    if (data['success'] == true) {
+                encounterService.uploadAudio(form, file).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Uploaded Audio!');
                     }
                 });
@@ -121,10 +125,11 @@
                 var form = {};
                 form.encounter_id = $scope.encounter_id;
                 form.patient_id = $scope.patient_id;
-                form.timestamp = (myAudio != undefined && myAudio != null) ? myAudio.currentTime : 0;
+                form.timestamp = (myAudio != undefined && true) ? myAudio.currentTime : 0;
                 // form.summary = $scope.summary;
-                encounterService.addTimestamp(form).then(function (data) {
-                    if (data['success'] == true) {
+                encounterService.addTimestamp(form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         $scope.encounter_events.push(data['encounter_event']);
                         toaster.pop('success', 'Done', 'Added timestamp!');
                     } else {
@@ -137,7 +142,8 @@
                 var form = {};
                 form.encounter_event_id = encounter_event.id;
                 form.is_favorite = true;
-                encounterService.markFavoriteEvent(form).then(function (data) {
+                encounterService.markFavoriteEvent(form).then(function (response) {
+                    let data = response.data;
                     encounter_event.is_favorite = true;
                     toaster.pop('success', 'Done', 'Marked favorite!');
                 });
@@ -147,7 +153,8 @@
                 var form = {};
                 form.encounter_event_id = encounter_event.id;
                 form.is_favorite = false;
-                encounterService.markFavoriteEvent(form).then(function (data) {
+                encounterService.markFavoriteEvent(form).then(function (response) {
+                    let data = response.data;
                     encounter_event.is_favorite = false;
                     toaster.pop('success', 'Done', 'Unmarked favorite!');
                 });
@@ -157,7 +164,8 @@
                 var form = {};
                 form.encounter_event_id = encounter_event.id;
                 form.name_favorite = encounter_event.name_favorite;
-                encounterService.nameFavoriteEvent(form).then(function (data) {
+                encounterService.nameFavoriteEvent(form).then(function (response) {
+                    let data = response.data;
                     encounter_event.is_named = false;
                     toaster.pop('success', 'Done', 'Named favorite!');
                 });
@@ -171,7 +179,8 @@
                     var form = {};
                     form.encounter_id = $scope.encounter_id;
                     form.patient_id = $scope.patient_id;
-                    encounterService.deleteEncounter(form).then(function (data) {
+                    encounterService.deleteEncounter(form).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Deleted encounter!');
                         $location.url('/');
                     });

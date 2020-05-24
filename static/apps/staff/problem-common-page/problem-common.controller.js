@@ -31,11 +31,13 @@
             $scope.ready = false;
             $scope.problems = [];
 
-            staffService.fetchActiveUser().then(function (data) {
+            staffService.fetchActiveUser().then(function (response) {
+                let data = response.data;
                 $scope.active_user = data['user_profile'];
                 $scope.ready = true;
 
-                staffService.getCommonProblems($scope.active_user.user.id).then(function (data) {
+                staffService.getCommonProblems($scope.active_user.user.id).then(function (response) {
+                    let data = response.data;
                     $scope.problems = data['problems'];
                 });
             });
@@ -44,14 +46,15 @@
             $scope.$watch('chronic_problem', function (newVal, oldVal) {
 
                 console.log(newVal);
-                if (newVal == undefined) {
+                if (newVal === undefined) {
                     return false;
                 }
 
                 $scope.unset_new_problem($scope.new_chronic_problem);
 
                 if (newVal.length > 2) {
-                    staffService.listTerms(newVal).then(function (data) {
+                    staffService.listTerms(newVal).then(function (response) {
+                        let data = response.data;
                         $scope.chronic_problem_terms = data;
                     });
                 } else {
@@ -62,15 +65,15 @@
 
             $scope.$watch('acute_problem', function (newVal, oldVal) {
 
-                console.log(newVal);
-                if (newVal == undefined) {
+                if (newVal === undefined) {
                     return false;
                 }
 
                 $scope.unset_new_problem($scope.new_acute_problem);
 
                 if (newVal.length > 2) {
-                    staffService.listTerms(newVal).then(function (data) {
+                    staffService.listTerms(newVal).then(function (response) {
+                        let data = response.data;
                         $scope.acute_problem_terms = data;
                     });
                 } else {
@@ -97,7 +100,7 @@
 
                 var c = confirm("Are you sure?");
 
-                if (c == false) {
+                if (c === false) {
                     return false;
                 }
 
@@ -108,14 +111,15 @@
                 form.problem_type = type;
                 form.active = new_problem.active;
 
-                staffService.addCommonProblem(form).then(function (data) {
+                staffService.addCommonProblem(form).then(function (response) {
+                    let data = response.data;
 
-                    if (data['success'] == true) {
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'New Problem added successfully');
                         $scope.problems.push(data['common_problem']);
                         $scope.unset_new_problem(new_problem);
 
-                    } else if (data['success'] == false) {
+                    } else if (data['success'] === false) {
                         toaster.pop('error', 'Error', data['msg']);
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong');
@@ -128,13 +132,13 @@
             };
 
             $scope.add_new_problem = function (problem_term, concept_id, new_problem, type) {
-                if (problem_term == '' || problem_term == undefined || concept_id == '' || concept_id == undefined) {
+                if (problem_term === '' || problem_term === undefined || concept_id === '' || concept_id === undefined) {
                     return false;
                 }
 
                 var c = confirm("Are you sure?");
 
-                if (c == false) {
+                if (c === false) {
                     return false;
                 }
 
@@ -145,12 +149,13 @@
                 form.concept_id = concept_id;
                 form.problem_type = type;
 
-                staffService.addCommonProblem(form).then(function (data) {
-                    if (data['success'] == true) {
+                staffService.addCommonProblem(form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'New Problem added successfully');
                         $scope.problems.push(data['common_problem']);
                         $scope.unset_new_problem(new_problem);
-                    } else if (data['success'] == false) {
+                    } else if (data['success'] === false) {
                         toaster.pop('error', 'Error', data['msg']);
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong');
@@ -159,11 +164,12 @@
             };
 
             $scope.remove_common_problem = function (problem) {
-                staffService.removeCommonProblem(problem.id).then(function (data) {
-                    if (data['success'] == true) {
+                staffService.removeCommonProblem(problem.id).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Removed Problem successfully');
                         $scope.problems.splice($scope.problems.indexOf(problem), 1);
-                    } else if (data['success'] == false) {
+                    } else if (data['success'] === false) {
                         toaster.pop('error', 'Error', data['msg']);
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong');

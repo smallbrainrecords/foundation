@@ -32,13 +32,14 @@
         init();
 
         function init() {
-            dataService.fetchDataInfo($scope.data_id).then(function (data) {
+            dataService.fetchDataInfo($scope.data_id).then(function (response) {
+                let data = response.data;
                 $scope.data = data['info'];
             });
         }
 
         function add_data(new_data) {
-            if (new_data.time == "" || new_data.time == undefined) {
+            if (new_data.time === "" || new_data.time === undefined) {
                 new_data.time = moment().format("HH:mm");
             }
             if (!moment(new_data.time, "HH:mm").isValid()) {
@@ -49,10 +50,11 @@
 
             angular.forEach($scope.data.observation_components, function (component, key) {
                 new_data.value = component.new_value;
-                dataService.addData($scope.patient_id, component.id, new_data).then(function (data) {
+                dataService.addData($scope.patient_id, component.id, new_data).then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Added data!');
-                        if (key == $scope.data.observation_components.length - 1)
+                        if (key === $scope.data.observation_components.length - 1)
                             $location.url('/data/' + $scope.data_id);
                     } else {
                         toaster.pop('error', 'Error', 'Invalid entered data format!');

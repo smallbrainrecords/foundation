@@ -38,7 +38,8 @@
 
         function init() {
 
-            dataService.fetchDataInfo($scope.dataID).then(function (data) {
+            dataService.fetchDataInfo($scope.dataID).then(function (response) {
+                let data = response.data;
                 $scope.data = data['info'];
 
                 // Rotate multi component values & also generate edit link  which is easier for data displaying(ex [[1,2,3,4],[1,2,3,4]] -> [[1,1],[2,2],[3,3],[4,4]])
@@ -71,7 +72,8 @@
         function deleteData() {
             dataService.deleteComponentValues($scope.patient_id, $scope.componentValueIds)
                 .then(function (response) {
-                    if (response.data['success']) {
+                    let data = response.data;
+                    if (data['success']) {
                         toaster.pop('success', 'Done', 'Deleted data!');
                         $location.url('/data/' + $scope.data.id + '/show_all_data');
                     } else {
@@ -99,7 +101,8 @@
             $scope.editForm.datetime = $scope.editForm.date + " " + $scope.editForm.time;
             _.map($scope.editComponentValue, (value, index) => {
                 $scope.editForm.value_quantity = _.findWhere($scope.data.observation_components, {id: value.component}).new_value;
-                dataService.saveData($scope.patient_id, value.id, $scope.editForm).then(function (data) {
+                dataService.saveData($scope.patient_id, value.id, $scope.editForm).then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Saved data!');
                         $scope.editFinished(index, data.info);

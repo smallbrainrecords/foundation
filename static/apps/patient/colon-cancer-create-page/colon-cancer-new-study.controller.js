@@ -59,7 +59,8 @@
             };
 
             colonService.addNewStudy($routeParams.colonId, colonCancerStudyDataModel)
-                .then((data) => {
+                .then((response) => {
+                    let data = response.data;
                     if (data.success)
                         toaster.pop('success', 'Done', 'Saved study!');
                 });

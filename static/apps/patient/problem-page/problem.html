@@ -501,7 +501,7 @@
                                    type='checkbox'>
                             <label for="eff{{ eff_problem.id }}" ng-if='eff_problem.effecting==true'
                                    style='font-size:14px; font-weight:bold'>
-                                <a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
+                                <a href='#!problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
                             </label>
                             <label for="eff{{ eff_problem.id }}" ng-if='eff_problem.effecting!=true'>
                                 {{ eff_problem.problem_name }}
@@ -524,7 +524,7 @@
                                    type='checkbox'>
                             <label for="effected_{{ eff_problem.id }}" ng-if='eff_problem.effected==true'
                                    style='font-size:14px; font-weight:bold'>
-                                <a href='#/problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
+                                <a href='#!problem/{{ eff_problem.id }}'> {{ eff_problem.problem_name }} </a>
                             </label>
                             <label for="effected_{{ eff_problem.id }}" ng-if='eff_problem.effected!=true'>
                                 {{ eff_problem.problem_name }}
@@ -546,7 +546,7 @@
                 Related Encounters ({{ related_encounters.length }})
             </div>
             <div class='panel-body' ng-show="encounter_collapse" style='max-height:275px; overflow:auto;padding:15px;'>
-                <a class="encounter-item" href='#/encounter/{{ encounter.id }}'
+                <a class="encounter-item" href='#!encounter/{{ encounter.id }}'
                    ng-repeat='encounter in related_encounters track by $index'> {{ encounter.starttime|date }}</a>
             </div>
         </div>
@@ -566,7 +566,7 @@
                                        ng-repeat="label in document.labels track by $index"><span
                                             class="todo-label-name"
                                             ng-bind="label.name"></span></a>
-                                    <a class="flex-item document_name" href="#/document/{{ document.id }}"
+                                    <a class="flex-item document_name" href="#!document/{{ document.id }}"
                                        ng-bind="document.document_name"></a>
                                     <span class="flex-item document_uploaded_date pull-right"
                                           ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
@@ -665,7 +665,7 @@
                         <li class='list-group-item' ng-class='goal.is_controlled==true ? "green-box" : "red-box" '
                             ng-repeat='goal in problem_goals'
                             ng-show='goal.accomplished==false'>
-                            <a class='btn btn-default' href='#/goal/{{ goal.id }}'> View </a>
+                            <a class='btn btn-default' href='#!goal/{{ goal.id }}'> View </a>
                             {{ goal.goal }}
                         </li>
                     </ul>
@@ -678,7 +678,7 @@
                         <li class='list-group-item' ng-class='goal.is_controlled==true ? "green-box" : "red-box" '
                             ng-repeat='goal in problem_goals'
                             ng-show='goal.accomplished==true'>
-                            <a class='btn btn-default' href='#/goal/{{ goal.id }}'> View </a>
+                            <a class='btn btn-default' href='#!goal/{{ goal.id }}'> View </a>
                             {{ goal.goal }}
                         </li>
                     </ul>

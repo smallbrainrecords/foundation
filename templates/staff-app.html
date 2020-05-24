@@ -51,29 +51,29 @@
                     <b> Username </b>: {{ user.username }}
                 </p>
 
-                <a class='btn btn-default btn-manage' href='/project/admin/#/add/user'>Add User</a>
+                <a class='btn btn-default btn-manage' href='/project/admin/#!add/user'>Add User</a>
 
-                <a class='btn btn-default btn-manage' href='/#/manage/sharing'>
+                <a class='btn btn-default btn-manage' href='/#!manage/sharing'>
                     Manage patient sharing
                 </a>
 
                 {% if user_profile.role == 'mid-level' or user_profile.role == 'physician' %}
-                <a class='btn btn-default btn-manage' href='/#/manage/common_problems'>
+                <a class='btn btn-default btn-manage' href='/#!manage/common_problems'>
                     Add common problems
                 </a>
 
                 {% endif %}
                 {% if user_profile.role != 'patient' %}
-                <a class='btn btn-default btn-manage' href='/#/manage/upload_documents'>
+                <a class='btn btn-default btn-manage' href='/#!manage/upload_documents'>
                     Upload documents
                 </a>
 
-                <a class='btn btn-default btn-manage' href='/#/manage/uploaded'>
+                <a class='btn btn-default btn-manage' href='/#!manage/uploaded'>
                     Manage uploaded documents
                 </a>
                 {% if user_profile.role == 'admin' or user_profile.role == 'physician' %}
 
-                <a class='btn btn-default btn-manage' href='/#/manage/setting'>
+                <a class='btn btn-default btn-manage' href='/#!manage/setting'>
                     Settings
                 </a>
                 {% endif %}

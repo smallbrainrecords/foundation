@@ -12,7 +12,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http:
  */
 (function () {
 
@@ -24,15 +24,14 @@
                                           ngDialog, toaster, prompt,
                                           staffService, physicianService, todoService, sharedService) {
 
-            // Properties
-            // $scope.user_id = $('#user_id').val();
+
             $scope.taggedTodoCollapsed = false;
             $scope.lastTimeTaggedTodoAccessed = null;
             $scope.showAccomplishedTaggedTodos = false;
             $scope.newTaggedTodo = 0;
             $scope.todos_ready = false;
 
-            // $scope.users = [];
+
             $scope.new_list = {};
             $scope.new_list.labels = [];
             $scope.todo_lists = [];
@@ -47,7 +46,7 @@
             $scope.sortingKey = "";
             $scope.isDescending = true;
 
-            // Function definitions
+
             $scope.openTaggedTodo = openTaggedTodo;
             $scope.closeTaggedTodo = closeTaggedTodo;
             $scope.add_todo = add_todo;
@@ -65,63 +64,62 @@
             init();
 
             function init() {
-                staffService.getPatientsList().then(function (data) {
+                staffService.getPatientsList().then(function (response) {
+                    let data = response.data;
                     $scope.patients_list = data['patients_list'];
                 });
 
-                staffService.fetchActiveUser().then(function (data) {
+                staffService.fetchActiveUser().then(function (response) {
+                    let data = response.data;
 
                     $scope.active_user = data['user_profile'];
                     $scope.lastTimeTaggedTodoAccessed = $scope.active_user.last_access_tagged_todo;
 
-                    var role_form = {
+                    if ($scope.active_user.role === 'physician') {
 
-                        'actor_role': $scope.active_user.role,
-                        'actor_id': $scope.active_user.user.id
-                    };
-
-                    if ($scope.active_user.role == 'physician') {
-                        // physicianService.getUsersList(role_form).then(function (data) {
-                        //     $scope.users = data;
-                        // });
 
                         var form = {'physician_id': $scope.active_user.user.id};
-                        physicianService.getPhysicianData(form).then(function (data) {
+                        physicianService.getPhysicianData(form).then(function (response) {
+                            let data = response.data;
 
-                            // $scope.patients = data['patients'];
+
                             $scope.team = data['team'];
 
                         });
                     }
 
-                    // Refresh new todo for secretary
-                    if ($scope.active_user.role == 'secretary') {
+
+                    if ($scope.active_user.role === 'secretary') {
                         $scope.refresh_todos_physicians();
                         $interval(function () {
                             $scope.refresh_todos_physicians();
                         }, 10000);
                     }
 
-                    if ($scope.active_user.role == 'secretary' || $scope.active_user.role == 'mid-level' || $scope.active_user.role == 'nurse') {
-                        staffService.getAllTodos($scope.user_id).then(function (data) {
+                    if ($scope.active_user.role === 'secretary' || $scope.active_user.role === 'mid-level' || $scope.active_user.role === 'nurse') {
+                        staffService.getAllTodos($scope.user_id).then(function (response) {
+                            let data = response.data;
                             $scope.all_todos_list = data['all_todos_list'];
                         });
                     }
 
                 });
 
-                staffService.getUserTodoList($scope.user_id).then(function (data) {
+                staffService.getUserTodoList($scope.user_id).then(function (response) {
+                    let data = response.data;
                     $scope.tagged_todos = data['tagged_todos'];
                     $scope.personal_todos = data['personal_todos'];
                     $scope.newTaggedTodo = data['new_tagged_todo'];
                     $scope.todos_ready = true;
                 });
 
-                todoService.fetchLabels($scope.user_id).then(function (data) {
+                todoService.fetchLabels($scope.user_id).then(function (response) {
+                    let data = response.data;
                     $scope.labels = data['labels'];
                 });
 
-                staffService.fetchLabeledTodoList($scope.user_id).then(function (data) {
+                staffService.fetchLabeledTodoList($scope.user_id).then(function (response) {
+                    let data = response.data;
                     $scope.todo_lists = data['todo_lists'];
                 });
 
@@ -133,7 +131,7 @@
              * @param form
              */
             function add_todo(form) {
-                if (form == undefined || form.name.trim().length < 1) {
+                if (form === undefined || form.name.trim().length < 1) {
                     return false;
                 }
 
@@ -162,8 +160,9 @@
                         controllerAs: 'vm'
                     });
 
-                    dueDateDialog.closePromise.then(function (data) {
-                        if (!_.isUndefined(data.value) && '$escape' != data.value)
+                    dueDateDialog.closePromise.then(function (response) {
+                        let data = response.data;
+                        if (!_.isUndefined(data.value) && '$escape' !== data.value)
                             form.due_date = moment(data.value, acceptedFormat).toString();
                         staffService.addToDo(form).then(addTodoSuccess);
                     })
@@ -202,7 +201,8 @@
                 form.visibility = visibility;
                 if (form.name && form.labels.length > 0) {
                     staffService.addToDoList(form)
-                        .then(function (data) {
+                        .then(function (response) {
+                            let data = response.data;
                             if (data.success) {
 
                                 var new_list = data['new_list'];
@@ -213,7 +213,8 @@
                             } else {
                                 toaster.pop('error', 'Error', "You don't have permission to do this action");
                             }
-                        }, function (data) {
+                        }, function (response) {
+                            let data = response.data;
                             toaster.pop('error', 'Error', "Something when wrong, We fix this ASAP");
 
                         });
@@ -232,7 +233,8 @@
                     "message": "Deleting a todo list is forever. There is no undo."
                 }).then(function (result) {
                     staffService.deleteToDoList(list)
-                        .then(function (data) {
+                        .then(function (response) {
+                            let data = response.data;
                             if (data.success) {
                                 var index = $scope.todo_lists.indexOf(list);
                                 $scope.todo_lists.splice(index, 1);
@@ -250,7 +252,8 @@
              *
              */
             function refresh_todos_physicians() {
-                staffService.getTodosPhysicians($scope.user_id).then(function (data) {
+                staffService.getTodosPhysicians($scope.user_id).then(function (response) {
+                    let data = response.data;
                     $scope.new_generated_todos_list = data['new_generated_todos_list'];
                     $scope.new_generated_physicians_list = data['new_generated_physicians_list'];
                 })
@@ -280,7 +283,7 @@
             function getNewTodos(list) {
                 var number = 0;
                 angular.forEach(list.todos, function (value, key) {
-                    if (list.expanded.indexOf(value.id) == -1) {
+                    if (list.expanded.indexOf(value.id) === -1) {
                         number += 1;
                     }
                 });
@@ -301,14 +304,15 @@
 
                     var is_existed = false;
                     angular.forEach(list.todos, function (value, key) {
-                        if (list.expanded.indexOf(value.id) == -1) {
+                        if (list.expanded.indexOf(value.id) === -1) {
                             list.expanded.push(value.id);
                             is_existed = true;
                         }
                     });
 
                     if (is_existed) {
-                        staffService.openTodoList(form).then(function (data) {
+                        staffService.openTodoList(form).then(function (response) {
+                            let data = response.data;
                         });
                     }
                 }
@@ -318,6 +322,7 @@
                 $scope.taggedTodoCollapsed = false;
 
                 staffService.updateLastTimeAccessTaggedTodo($scope.user_id).then(function (response) {
+                    let data = response.data;
                     $scope.lastTimeTaggedTodoAccessed = new Date();
                 });
             }
@@ -327,32 +332,34 @@
             }
 
             function sortBy(sortKey) {
-                // If sorting same column then reverse the sorting order, otherwise set default sorting order is descending
+
                 $scope.isDescending = (_.isEqual($scope.sortingKey, sortKey)) ? !$scope.isDescending : true;
-                // Update sorting key
+
                 $scope.sortingKey = sortKey;
                 staffService.getTopPatientList($scope.sortingKey, $scope.isDescending)
-                    .then(function (data) {
+                    .then(function (response) {
+                        let data = response.data;
                         $scope.patients_list = data['patients_list'];
                     });
             }
 
             function refreshPendingUsers() {
-                sharedService.getPendingRegistrationUsersList().then(function (data) {
+                sharedService.getPendingRegistrationUsersList().then(function (response) {
+                    let data = response.data;
                     $scope.pendingUsers = data;
                 });
             }
 
             function updatePendingUser(user, status) {
                 switch (status) {
-                    case 1: // Approve
-                        if (user.role == 'patient') {
+                    case 1:
+                        if (user.role === 'patient') {
                             sharedService.approveUser(user).then(userUpdateSucceed);
                         } else {
                             alert("Please assign role!");
                         }
                         break;
-                    case 0: // Reject
+                    case 0:
                         sharedService.rejectUser(user).then(userUpdateSucceed);
                         break;
                 }

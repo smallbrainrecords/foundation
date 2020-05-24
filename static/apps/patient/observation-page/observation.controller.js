@@ -48,19 +48,22 @@
                 }
             });
 
-            dataService.fetchDataInfo($scope.data_id).then(function (data) {
+            dataService.fetchDataInfo($scope.data_id).then(function (response) {
+                let data = response.data;
                 $scope.data = data['info'];
 
                 // Default data chart
-                if ($scope.data.graph == null || $scope.data.graph == undefined)
+                if ($scope.data.graph == null)
                     $scope.data.graph = 'Line';
                 refreshGraph();
             });
 
-            problemService.fetchProblems($scope.patient_id).then(function (data) {
+            problemService.fetchProblems($scope.patient_id).then(function (response) {
+                let data = response.data;
                 $scope.problems = data['problems'];
 
-                dataService.fetchPinToProblem($scope.data_id).then(function (data) {
+                dataService.fetchPinToProblem($scope.data_id).then(function (response) {
+                    let data = response.data;
                     $scope.pins = data['pins'];
 
                     angular.forEach($scope.problems, function (problem) {
@@ -112,7 +115,8 @@
             var form = {};
             form.data_id = data_id;
             form.problem_id = problem_id;
-            dataService.dataPinToProblem($scope.patient_id, form).then(function (data) {
+            dataService.dataPinToProblem($scope.patient_id, form).then(function (response) {
+                let data = response.data;
                 if (data['success']) {
                     toaster.pop('success', 'Done', 'Pinned problem!');
                 } else if (!data['success']) {
@@ -134,7 +138,8 @@
             angular.forEach($scope.data.observation_components, function (component, key) {
                 quickEntryDataObj.value = component.new_value;
                 dataService.addData($scope.patient_id, component.id, quickEntryDataObj)
-                    .then(function (data) {
+                    .then(function (response) {
+                        let data = response.data;
                         if (data['success']) {
                             toaster.pop('success', 'Done', 'Added data!');
                             // Empty entered data

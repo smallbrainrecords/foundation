@@ -20,11 +20,10 @@
 
 
     angular.module('StaffApp')
-        .controller('ManageSharingCtrl', function (
-            $scope, $routeParams, ngDialog,
-            staffService, $location, $anchorScroll, toaster) {
+        .controller('ManageSharingCtrl', function ($scope, $routeParams, ngDialog, staffService) {
 
-            staffService.getPatientsList().then(function (data) {
+            staffService.getPatientsList().then(function (response) {
+                let data = response.data;
                 $scope.patients_list = data['patients_list'];
             });
 

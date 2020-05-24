@@ -18,10 +18,6 @@
     "use strict";
 
     angular.module('inr', ['ui.bootstrap', 'xeditable', 'angular-spinkit', 'app.services', 'ngDialog', 'toaster', 'monospaced.elastic'])
-        .config(function ($routeProvider, $httpProvider) {
-            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        })
         .directive('inr', INR);
 
     INR.$inject = ['uibDateParser', 'toaster', 'ngDialog', '$routeParams', '$filter', 'inrService', 'patientService'];

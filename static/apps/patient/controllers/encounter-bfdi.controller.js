@@ -143,30 +143,32 @@
                     console.warn("startEncounter");
 
                     /* Send Request is Backend */
-                    patientService.startNewEncounter($scope.patient_id).then(response => {
-                        if (response.success) {
-                            // 1st Notify that encounter is create successfully in server side and load object to scope and service
-                            toaster.pop('success', 'Done', 'New Encounter Started');
-                            $scope.activeEncounter = encounterService.activeEncounter = response.encounter;
-                            $scope.elapsedTime = 0; // This is out of encounter recorder
-                            $scope.uploadAudioStatus = AUDIO_UPLOAD_STATUS.isInitialize;
+                    patientService.startNewEncounter($scope.patient_id)
+                        .then(response => {
+                            let data = response.data;
+                            if (data.success) {
+                                // 1st Notify that encounter is create successfully in server side and load object to scope and service
+                                toaster.pop('success', 'Done', 'New Encounter Started');
+                                $scope.activeEncounter = encounterService.activeEncounter = data.encounter;
+                                $scope.elapsedTime = 0; // This is out of encounter recorder
+                                $scope.uploadAudioStatus = AUDIO_UPLOAD_STATUS.isInitialize;
 
-                            // 2nd Doing recorder task. This section is controlled under general site setting
-                            if (sharedService.settings.browser_audio_recording) {
-                                $scope.encounterCtrl = recorderService.controller("audioInput");
-                                if ($scope.encounterCtrl.isAvailable) {
-                                    $scope.encounterCtrl.startRecord();
+                                // 2nd Doing recorder task. This section is controlled under general site setting
+                                if (sharedService.settings.browser_audio_recording) {
+                                    $scope.encounterCtrl = recorderService.controller("audioInput");
+                                    if ($scope.encounterCtrl.isAvailable) {
+                                        $scope.encounterCtrl.startRecord();
+                                    }
                                 }
+                            } else {
+                                ngDialog.open({
+                                    template: data.message,
+                                    plain: true
+                                });
                             }
-                        } else {
-                            ngDialog.open({
-                                template: response.message,
-                                plain: true
-                            });
-                        }
-                    }, function () {
-                        alert("Something are went wrong, we are fixing ASAP!");
-                    });
+                        }, function () {
+                            alert("Something are went wrong, we are fixing ASAP!");
+                        });
                 }
             }
 
@@ -296,7 +298,8 @@
                     'event_summary': $scope.event_summary,
                     'encounter_id': encounterService.activeEncounter.id
                 };
-                patientService.addEventSummary(form).then(function (data) {
+                patientService.addEventSummary(form).then(function (response) {
+                    let data = response.data;
                     if (data.success) {
                         $scope.event_summary = '';
                     } else {

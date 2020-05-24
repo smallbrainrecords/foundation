@@ -21,7 +21,6 @@
     UploadedDocumentsPageCtrl.$inject = ["$scope", "documentService"];
 
     function UploadedDocumentsPageCtrl($scope, documentService) {
-        // Properties definition
         $scope.user_id = $('#user_id').val();
         $scope.documents = [];
         $scope.currentPage = 1;
@@ -50,9 +49,10 @@
                 show_pinned: $scope.showPinned
             };
 
-            documentService.getUploadedDocument(form).then(function (resp) {
-                $scope.documents = resp.data.documents;
-                $scope.totalItems = resp.data.total;
+            documentService.getUploadedDocument(form).then(function (response) {
+                let data = response.data;
+                $scope.documents = data.documents;
+                $scope.totalItems = data.total;
             });
         }
     }

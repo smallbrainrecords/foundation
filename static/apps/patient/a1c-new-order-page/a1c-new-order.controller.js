@@ -26,18 +26,19 @@
 
             function init() {
 
-                a1cService.fetchA1cInfo($scope.a1c_id).then(function (data) {
+                a1cService.fetchA1cInfo($scope.a1c_id).then(function (response) {
+                    let data = response.data;
                     $scope.a1c = data['info'];
                 });
             }
 
 
             function add_todo(form) {
-                if (form == undefined) {
+                if (form === undefined) {
                     return false;
                 }
 
-                if (form.month != '' && form.month != undefined) {
+                if (form.month !== '' && form.month !== undefined) {
                     form.due_date = moment().add(form.month, "months").format("MM/DD/YYYY");
                     form.name = 'a1c repeats in ' + form.month + ' months';
                 }

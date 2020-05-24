@@ -340,14 +340,11 @@
                 $http.post(uploadUrl, fd, {
                     transformRequest: angular.identity,
                     headers: {'Content-Type': undefined, 'X-CSRFToken': $cookies.get('csrftoken')}
-                })
-                    .success(function (data) {
-                        deferred.resolve(data);
-                    })
-                    .error(function (data) {
-                        deferred.resolve(data);
-
-                    });
+                }).then(function (data) {
+                    deferred.resolve(data);
+                }, function (data) {
+                    deferred.resolve(data);
+                });
 
                 return deferred.promise;
             }
@@ -538,12 +535,13 @@
                     page: this.pendingTodoPage,
                     all: false
                 }, `/u/users/${patientID}/todos`, true)
-                    .then((resp) => {
-                        if (resp.success) {
+                    .then((response) => {
+                        let data = response.data;
+                        if (data.success) {
                             this.pendingTodoPage++;
                             // Save data to global storage
-                            this.pendingTodo = this.pendingTodo.concat(resp.data);
-                            this.pendingTodoLoaded = resp.data.length === 0;
+                            this.pendingTodo = this.pendingTodo.concat(data.data);
+                            this.pendingTodoLoaded = data.data.length === 0;
 
                             $rootScope.$broadcast('todoListUpdated');
                         }
@@ -634,14 +632,14 @@
                 if (todo.accomplished) {
                     // Item is change state from pending -> accomplished
                     _.map(this.pendingTodo, (ele, idx) => {
-                        if (!_.isUndefined(ele) && todo.id == ele.id) {
+                        if (!_.isUndefined(ele) && todo.id === ele.id) {
                             this.pendingTodo.splice(idx, 1);
                             this.accomplishedTodo.push(todo);
                         }
                     });
                 } else {
                     _.map(this.accomplishedTodo, (ele, idx) => {
-                        if (!_.isUndefined(ele) && todo.id == ele.id) {
+                        if (!_.isUndefined(ele) && todo.id === ele.id) {
                             this.accomplishedTodo.splice(idx, 1);
                             this.pendingTodo.push(todo);
                         }

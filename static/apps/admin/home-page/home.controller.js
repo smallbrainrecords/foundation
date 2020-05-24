@@ -24,21 +24,25 @@
 
             function init() {
                 $scope.users = [];
-                adminService.fetchActiveUser().then(function (data) {
+                adminService.fetchActiveUser().then(function (response) {
+                    let data = response.data;
                     $scope.active_user = data['user_profile'];
                     let role_form = {
                         'actor_role': $scope.active_user.role,
                         'actor_id': $scope.active_user.user.id
                     };
-                    adminService.getUsersList(role_form).then(function (data) {
+                    adminService.getUsersList(role_form).then(function (response) {
+                        let data = response.data;
                         $scope.users = data;
                     });
-                    adminService.getPendingRegistrationUsersList(role_form).then(function (data) {
+                    adminService.getPendingRegistrationUsersList(role_form).then(function (response) {
+                        let data = response.data;
                         $scope.pending_users = data;
                     });
                     if ($scope.active_user.role === 'physician') {
                         var form = {'physician_id': $scope.active_user.user.id};
-                        adminService.getPhysicianData(form).then(function (data) {
+                        adminService.getPhysicianData(form).then(function (response) {
+                            let data = response.data;
                             $scope.patients = data['patients'];
                             $scope.team = data['team'];
                         });
@@ -47,7 +51,8 @@
             }
 
             function refresh_pending_users() {
-                adminService.getPendingRegistrationUsersList().then(function (data) {
+                adminService.getPendingRegistrationUsersList().then(function (response) {
+                    let data = response.data;
                     $scope.pending_users = data;
                 });
             }

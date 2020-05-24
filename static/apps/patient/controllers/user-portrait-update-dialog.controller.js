@@ -162,7 +162,8 @@
 
                 let files = $scope.files;
 
-                patientService.updateProfile(form, files).then(function (data) {
+                patientService.updateProfile(form, files).then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         $scope.$emit('portrait_image_updated', {data: data['info']});
                         $scope.closeThisDialog();

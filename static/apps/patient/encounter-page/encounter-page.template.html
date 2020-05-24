@@ -1,4 +1,4 @@
-<a href='#/'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
+<a href='#!'><b> <i class='glyphicon glyphicon-arrow-left'></i> Back to Manage Patient </b></a>
 <hr>
 <section id="encounter-info">
     <h4> Encounter : <span ng-if="encounter.starttime">{{ encounter.starttime | date:'medium' }}</span> <span
@@ -178,7 +178,7 @@
         <div class='panel-heading'> Related Problems</div>
         <div class='panel-body' style='max-height:275px; overflow:auto;padding:15px;'>
             <div class='problem-item' ng-repeat='problem in related_problems'>
-                <a href='#/problem/{{ problem.id }}'>{{ problem.problem_name }} </a>
+                <a href='#!problem/{{ problem.id }}'>{{ problem.problem_name }} </a>
             </div>
         </div>
     </div>

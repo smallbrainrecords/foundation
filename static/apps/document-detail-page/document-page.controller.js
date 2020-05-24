@@ -534,7 +534,8 @@
             $scope.new_problem.set = false;
 
             if (term.length > 2) {
-                sharedService.listTerms(term).then(function (data) {
+                sharedService.listTerms(term).then(function (response) {
+                    let data = response.data;
                     $scope.problem_terms = data;
                 });
             } else {

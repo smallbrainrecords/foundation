@@ -17,7 +17,7 @@
 
 {% block patient_header %}
 <li>
-    <a href="#/edit/profileInfo" title="Edit profile">
+    <a href="#!edit/profileInfo" title="Edit profile">
         Phone: {{ patient.profile.phone_number }}
     </a>
 </li>
@@ -40,7 +40,7 @@
        role="button">
         <span class="caret"></span></a>
     <ul class="dropdown-menu">
-        <li><a href='#/edit/'>My account</a></li>
+        <li><a href='#!edit/'>My account</a></li>
         <li><a href='/logout'>Logout</a></li>
     </ul>
 </li>

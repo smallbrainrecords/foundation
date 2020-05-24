@@ -17,8 +17,9 @@
 (function () {
     'use strict';
     angular.module('AdminApp')
-        .controller('ManageSharingCtrl', function ($scope, $routeParams, ngDialog, adminService, $location, $anchorScroll, toaster) {
-            adminService.getPatientsList().then(function (data) {
+        .controller('ManageSharingCtrl', function ($scope, $routeParams, ngDialog, adminService) {
+            adminService.getPatientsList().then(function (response) {
+                let data = response.data;
                 $scope.patients_list = data['patients_list'];
             });
         });

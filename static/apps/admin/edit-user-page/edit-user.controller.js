@@ -50,21 +50,24 @@
 
                 $scope.assign_physician_form = {};
 
-                adminService.fetchActiveUser().then(function (data) {
+                adminService.fetchActiveUser().then(function (response) {
+                    let data = response.data;
                     $scope.active_user = data['user_profile'];
                 });
 
 
-                adminService.getUserInfo($scope.user_id).then(function (data) {
+                adminService.getUserInfo($scope.user_id).then(function (response) {
+                    let data = response.data;
 
                     $scope.user_profile = data['user_profile'];
 
-                    if ($scope.user_profile.role == 'physician') {
+                    if ($scope.user_profile.role === 'physician') {
 
                         // physicians
                         var form = {'physician_id': $scope.user_id};
 
-                        adminService.getPhysicianData(form).then(function (data) {
+                        adminService.getPhysicianData(form).then(function (response) {
+                            let data = response.data;
 
                             $scope.team = data['team'];
                             $scope.patients = data['patients'];
@@ -80,7 +83,8 @@
                         var form = {'user_id': $scope.user_id};
                         form.member_type = $scope.user_profile.role;
 
-                        adminService.getAssignedPhysicians(form).then(function (data) {
+                        adminService.getAssignedPhysicians(form).then(function (response) {
+                            let data = response.data;
                             $scope.assigned_physicians = data['physicians'];
                             $scope.unassigned_physicians = data['unassigned_physicians'];
                         });
@@ -104,7 +108,8 @@
                 form.first_name = $scope.user_profile.user.first_name;
                 form.last_name = $scope.user_profile.user.last_name;
 
-                adminService.updateBasicProfile(form).then(function (data) {
+                adminService.updateBasicProfile(form).then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Updated');
                     } else {
@@ -129,7 +134,8 @@
                 var files = $scope.files;
 
                 adminService.updateProfile(form, files)
-                    .then(function (data) {
+                    .then(function (response) {
+                        let data = response.data;
                         if (data['success']) {
                             toaster.pop('success', 'Done', 'Updated');
                         } else {
@@ -148,7 +154,8 @@
 
 
                 adminService.updateProfile(form, files)
-                    .then(function (data) {
+                    .then(function (response) {
+                        let data = response.data;
                         if (data['success']) {
                             toaster.pop('success', 'Done', 'Updated');
                         } else {
@@ -170,7 +177,8 @@
                 /* Files */
 
                 adminService.updateEmail(form)
-                    .then(function (data) {
+                    .then(function (response) {
+                        let data = response.data;
                         if (data['success']) {
                             toaster.pop('success', 'Done', 'Updated');
                         } else {
@@ -191,7 +199,8 @@
 
                 /* Files */
 
-                adminService.updatePassword(form).then(function (data) {
+                adminService.updatePassword(form).then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Updated');
                     } else {
@@ -217,10 +226,11 @@
                 form.user_id = $scope.user_id;
                 form.member_type = $scope.user_profile.role;
 
-                adminService.assignMember(form).then(function (data) {
-                    if (data['success'] == true) {
+                adminService.assignMember(form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Assigned Physician');
-                        var new_physician = $scope.removeItemById($scope.unassigned_physicians, form.physician_id);
+                        var new_physician = $scope.removeItemById($scope.unassigned_physicians, parseInt(form.physician_id));
                         $scope.assigned_physicians.push(new_physician);
 
                     } else {
@@ -238,8 +248,9 @@
                 form.user_id = $scope.user_id;
                 form.member_type = $scope.user_profile.role;
 
-                adminService.unassignMember(form).then(function (data) {
-                    if (data['success'] == true) {
+                adminService.unassignMember(form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Unassigned Physician');
 
                         var old_physician = $scope.removeItemById($scope.assigned_physicians, form.physician_id);
@@ -252,24 +263,25 @@
             function assignMember(form) {
                 /* Physician specific */
                 form.physician_id = $scope.user_id;
-                adminService.assignMember(form).then(function (data) {
-                    if (data['success'] == true) {
+                adminService.assignMember(form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Added member');
                         switch (form.member_type) {
                             case 'patient' :
-                                var new_member = $scope.removeItemById($scope.unassigned_patients, form.user_id);
+                                var new_member = $scope.removeItemById($scope.unassigned_patients, parseInt(form.user_id));
                                 $scope.patients.push(new_member);
                                 break;
                             case 'nurse' :
-                                var new_member = $scope.removeItemById($scope.nurses_list, form.user_id);
+                                var new_member = $scope.removeItemById($scope.nurses_list, parseInt(form.user_id));
                                 $scope.team.nurses.push(new_member);
                                 break;
                             case 'secretary' :
-                                var new_member = $scope.removeItemById($scope.secretaries_list, form.user_id);
+                                var new_member = $scope.removeItemById($scope.secretaries_list, parseInt(form.user_id));
                                 $scope.team.secretaries.push(new_member);
                                 break;
                             case 'mid-level' :
-                                var new_member = $scope.removeItemById($scope.mid_level_staffs_list, form.user_id);
+                                var new_member = $scope.removeItemById($scope.mid_level_staffs_list, parseInt(form.user_id));
                                 $scope.team.mid_level_staffs.push(new_member);
                                 break;
                         }
@@ -286,21 +298,22 @@
                 form.member_type = member_type;
                 form.physician_id = $scope.user_id;
 
-                adminService.unassignMember(form).then(function (data) {
+                adminService.unassignMember(form).then(function (response) {
+                    let data = response.data;
 
-                    if (data['success'] == true) {
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Unassigned member');
 
-                        if (form.member_type == 'patient') {
+                        if (form.member_type === 'patient') {
                             var user_profile = $scope.removeItemById($scope.patients, form.user_id);
                             $scope.unassigned_patients.push(user_profile);
-                        } else if (form.member_type == 'nurse') {
+                        } else if (form.member_type === 'nurse') {
                             var user_profile = $scope.removeItemById($scope.team.nurses, form.user_id);
                             $scope.nurses_list.push(user_profile);
-                        } else if (form.member_type == 'secretary') {
+                        } else if (form.member_type === 'secretary') {
                             var user_profile = $scope.removeItemById($scope.team.secretaries, form.user_id);
                             $scope.secretaries_list.push(user_profile);
-                        } else if (form.member_type == 'mid-level') {
+                        } else if (form.member_type === 'mid-level') {
                             var user_profile = $scope.removeItemById($scope.team.mid_level_staffs, form.user_id);
                             $scope.mid_level_staffs_list.push(user_profile);
                         }
@@ -314,7 +327,7 @@
                 var target = null;
                 var target_value = null;
                 angular.forEach(items, function (value, key) {
-                    if (value.user.id == item_id) {
+                    if (value.user.id === item_id) {
                         target = key;
                         target_value = value;
                     }
@@ -336,7 +349,8 @@
                     $scope.user_profile.active_reason = '';
                 form.active_reason = $scope.user_profile.active_reason;
 
-                adminService.updateActive(form).then(function (data) {
+                adminService.updateActive(form).then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Updated');
                     } else {
@@ -355,7 +369,7 @@
                 form.user_id = $scope.user_id;
                 form.deceased_date = $scope.user_profile.deceased_date;
 
-                if (form.deceased_date == '') {
+                if (form.deceased_date === '') {
 
                 } else if (!moment(form.deceased_date, "MM/DD/YYYY", true).isValid()) {
                     toaster.pop('error', 'Error', 'Please enter a valid date!');
@@ -363,7 +377,8 @@
                     return false;
                 }
 
-                adminService.updateDeceasedDate(form).then(function (data) {
+                adminService.updateDeceasedDate(form).then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Updated');
                     } else {

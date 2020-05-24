@@ -295,12 +295,14 @@
                 });
                 if (!is_existed) {
                     todo.labels.push(label);
-                    todoService.addTodoLabel(label.id, todo.id).then(function (data) {
+                    todoService.addTodoLabel(label.id, todo.id).then(function (response) {
+                        let data = response.data;
                         data.success ? toaster.pop('success', "Done", "Added Todo label!") : toaster.pop('error', 'Warning', 'Something went wrong!');
                     });
                 } else {
                     todo.labels.splice(existed_key, 1);
-                    todoService.removeTodoLabel(existed_id, todo.id).then(function (data) {
+                    todoService.removeTodoLabel(existed_id, todo.id).then(function (response) {
+                        let data = response.data;
                         data.success ? toaster.pop('success', "Done", "Removed Todo label!") : toaster.pop('error', 'Warning', 'Something went wrong!');
                     });
                 }
@@ -365,12 +367,14 @@
 
                 if (!is_existed) {
                     todo.members.push(member.user);
-                    todoService.addTodoMember(todo, member).then(function (data) {
+                    todoService.addTodoMember(todo, member).then(function (response) {
+                        let data = response.data;
                         data.success ? toaster.pop('success', "Done", "Added member!") : toaster.pop('error', 'Warning', 'Something went wrong!');
                     });
                 } else {
                     todo.members.splice(existed_key, 1);
-                    todoService.removeTodoMember(todo, member).then(function (data) {
+                    todoService.removeTodoMember(todo, member).then(function (response) {
+                        let data = response.data;
                         data.success ? toaster.pop('success', "Done", "Removed member!") : toaster.pop('error', 'Warning', 'Something went wrong!');
                     });
                 }

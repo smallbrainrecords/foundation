@@ -149,7 +149,8 @@
             $scope.pending_todos = patientService.pendingTodo;
             $scope.accomplished_todos = patientService.accomplishedTodo;
 
-            patientService.fetchPatientInfo($scope.patient_id).then(function (data) {
+            patientService.fetchPatientInfo($scope.patient_id).then(function (response) {
+                let data = response.data;
                 $scope.acutes = data['acutes_list'];
                 $scope.chronics = data['chronics_list'];
 
@@ -184,7 +185,8 @@
                             var form = {};
                             form.problems = $scope.sortingLogProblem;
                             form.patient_id = $scope.patient_id;
-                            patientService.updateProblemOrder(form).then(function (data) {
+                            patientService.updateProblemOrder(form).then(function (response) {
+                                let data = response.data;
                                 toaster.pop('success', 'Done', 'Updated Problem Order');
                             });
                         }
@@ -196,14 +198,16 @@
                 };
             });
 
-            problemService.fetchLabeledProblemList($scope.patient_id, $scope.user_id).then(function (data) {
+            problemService.fetchLabeledProblemList($scope.patient_id, $scope.user_id).then(function (response) {
+                let data = response.data;
                 $scope.problem_lists = data['problem_lists'];
                 $scope.problems_ready = true;
             });
 
             // Documentation
-            patientService.getDocuments($scope.patient_id).then(function (data) {
-                if (data['success'] == true) {
+            patientService.getDocuments($scope.patient_id).then(function (response) {
+                let data = response.data;
+                if (data['success'] === true) {
                     $scope.documents = data['info'];
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -215,18 +219,21 @@
             });
 
             // TODO: This should be set to global usage
-            todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
+            todoService.fetchTodoMembers($scope.patient_id).then(function (response) {
+                let data = response.data;
                 $scope.members = data['members'];
             });
 
             // TODO: This should be set to global usage
-            todoService.fetchLabels($scope.patient_id).then(function (data) {
+            todoService.fetchLabels($scope.patient_id).then(function (response) {
+                let data = response.data;
                 $scope.labels = data['labels'];
             });
 
 
             // TODO: Low priority load
-            patientService.getMyStory($scope.patient_id).then(function (data) {
+            patientService.getMyStory($scope.patient_id).then(function (response) {
+                let data = response.data;
                 if (data['success']) {
                     $scope.my_story_tabs = data['info'];
                     $scope.selected_tab = $scope.my_story_tabs[0];
@@ -235,13 +242,14 @@
             });
 
             // TODO: Low priority load
-            patientService.getDatas($scope.patient_id).then(function (data) {
+            patientService.getDatas($scope.patient_id).then(function (response) {
+                let data = response.data;
                 if (data['success']) {
                     $scope.datas = data['info'];
                     // TODO: DRY
                     angular.forEach($scope.datas, function (data, key) {
                         // Default graph type
-                        if (data.graph == null || data.graph == undefined)
+                        if (data.graph == null)
                             data.graph = 'Line';
                         // Temporary data using for generate graph
                         var tmpData = angular.copy(data);
@@ -272,10 +280,10 @@
                         }
                     });
                     if ($scope.active_user) {
-                        if ($scope.active_user.role == 'patient') {
+                        if ($scope.active_user.role === 'patient') {
                             $scope.mostCommonData = dataService.generateMostCommonData($scope.datas);
                         }
-                        if ($scope.active_user.role == 'nurse') {
+                        if ($scope.active_user.role === 'nurse') {
                             console.log('aaaa');
                             $scope.mostCommonData = [];
                             // Related to https://trello.com/c/0aJybixw
@@ -329,7 +337,8 @@
                                 var form = {};
                                 form.datas = $scope.sortingLogData;
                                 form.patient_id = $scope.patient_id;
-                                patientService.updateDataOrder(form).then(function (data) {
+                                patientService.updateDataOrder(form).then(function (response) {
+                                    let data = response.data;
                                     toaster.pop('success', 'Done', 'Updated Data Order');
                                 });
                             }
@@ -345,7 +354,8 @@
                             var form = {};
                             form.patient_id = $scope.patient_id;
                             form.observation_id = data.id;
-                            patientService.trackDataClickEvent(form).then(function (data) {
+                            patientService.trackDataClickEvent(form).then(function (response) {
+                                let data = response.data;
                             });
                             $location.path('/data/' + data.id);
                         }
@@ -356,7 +366,8 @@
             });
 
             // TODO: Low priority load
-            patientService.getMedications($scope.patient_id).then(function (data) {
+            patientService.getMedications($scope.patient_id).then(function (response) {
+                let data = response.data;
                 if (data['success']) {
                     $scope.medications = data['info'];
                 } else {
@@ -403,22 +414,22 @@
             });
 
             $scope.$on('tabPressed', function (event, args) {
-                if ('mystory' == $scope.collapse.show_homepage_tab) {
+                if ('mystory' === $scope.collapse.show_homepage_tab) {
                     // Finding current DOM element which is focused
                     var activeElement = document.activeElement;
                     if (activeElement && _.contains(activeElement.classList, 'tab-components')) {
                         var nextFocusedComponentId = parseInt(activeElement.id) + 1;
                         var currentComponent = $scope.myStoryTabTextComponentArray[activeElement.id - 1];
                         var nextComponent = $scope.myStoryTabTextComponentArray[activeElement.id];
-                        if (nextComponent.tab != currentComponent.tab) {
+                        if (nextComponent.tab !== currentComponent.tab) {
                             var nexTabToBeActivated = _.find($scope.my_story_tabs, function (tab) {
-                                return nextComponent.tab == tab.id;
+                                return nextComponent.tab === tab.id;
                             });
                             $scope.view_my_story_tab(nexTabToBeActivated)
                         }
                     } else {
                         // Finding next tab which have at least one component after the selected tabs which does not have any text component
-                        while ($scope.selected_tab.my_story_tab_components.length == 0) {
+                        while ($scope.selected_tab.my_story_tab_components.length === 0) {
                             $scope.selected_tab = _.find($scope.my_story_tabs, function (tab) {
                                 return tab.my_story_tab_components.length > 0 && tab.id >= $scope.selected_tab.id
                             });
@@ -427,7 +438,7 @@
 
                         // Finding first component of actived tab
                         var component = _.find($scope.myStoryTabTextComponentArray, function (component) {
-                            return component.tab == $scope.selected_tab.id;
+                            return component.tab === $scope.selected_tab.id;
                         });
                         var nextFocusedComponentId = $scope.myStoryTabTextComponentArray.indexOf(component) + 1;
                     }
@@ -483,7 +494,8 @@
         function problemTermChanged(term) {
             $scope.unset_new_problem();
             if (term.length > 2) {
-                patientService.listTerms(term).then(function (data) {
+                patientService.listTerms(term).then(function (response) {
+                    let data = response.data;
                     $scope.problem_terms = data;
                 });
             } else {
@@ -495,7 +507,8 @@
             var form = {};
             form.patient_id = $scope.patient_id;
             form.timeline_data = newData;
-            problemService.updateByPTW(form).then(function (data) {
+            problemService.updateByPTW(form).then(function (response) {
+                let data = response.data;
                 toaster.pop('success', 'Done', 'Updated Problems');
             });
         }
@@ -541,7 +554,8 @@
 
         function addGoal(form) {
             form.patient_id = $scope.patient_id;
-            patientService.addGoal(form).then(function (data) {
+            patientService.addGoal(form).then(function (response) {
+                let data = response.data;
                 var new_goal = data['goal'];
                 $scope.goals.push(new_goal);
                 toaster.pop('success', "Done", "New goal created successfully!");
@@ -550,7 +564,7 @@
         }
 
         function addTodo(form) {
-            if (form == undefined || form.name.trim().length < 1) {
+            if (form === undefined || form.name.trim().length < 1) {
                 return false;
             }
             form.patient_id = $scope.patient_id;
@@ -581,7 +595,8 @@
                         }
                     },
                     controllerAs: 'vm'
-                }).closePromise.then(function (data) {
+                }).closePromise.then(function (response) {
+                    let data = response.data;
                     if (!_.isUndefined(data.value) && '$escape' !== data.value && '$document' !== data.value)
                         form.due_date = moment(data.value, acceptedFormat).toString();
                     sharedService.addToDo(form).then(postAddTodo);
@@ -664,7 +679,7 @@
 
         function addProblem() {
             var c = confirm("Are you sure?");
-            if (c == false) {
+            if (c === false) {
                 return false;
             }
             var form = {};
@@ -672,8 +687,9 @@
             form.term = $scope.new_problem.term;
             form.code = $scope.new_problem.code;
             form.active = $scope.new_problem.active;
-            patientService.addProblem(form).then(function (data) {
-                if (data['success'] == true) {
+            patientService.addProblem(form).then(function (response) {
+                let data = response.data;
+                if (data['success'] === true) {
                     toaster.pop('success', 'Done', 'New Problem added successfully');
                     $scope.problems.push(data['problem']);
                     $scope.problem_term = '';
@@ -683,7 +699,7 @@
 
                     //
                     $scope.open_problem(data['problem']);
-                } else if (data['success'] == false) {
+                } else if (data['success'] === false) {
                     alert(data['msg']);
                 } else {
                     alert("Something went wrong");
@@ -692,18 +708,19 @@
         }
 
         function addNewProblem(problem_term) {
-            if (problem_term == '' || problem_term == undefined) {
+            if (problem_term === '' || problem_term === undefined) {
                 return false;
             }
             var c = confirm("Are you sure?");
-            if (c == false) {
+            if (c === false) {
                 return false;
             }
             var form = {};
             form.patient_id = $scope.patient_id;
             form.term = problem_term;
-            patientService.addProblem(form).then(function (data) {
-                if (data['success'] == true) {
+            patientService.addProblem(form).then(function (response) {
+                let data = response.data;
+                if (data['success'] === true) {
                     toaster.pop('success', 'Done', 'New Problem added successfully');
                     $scope.problems.push(data['problem']);
                     $scope.problem_term = '';
@@ -713,7 +730,7 @@
 
                     $scope.open_problem(data['problem']);
 
-                } else if (data['success'] == false) {
+                } else if (data['success'] === false) {
                     toaster.pop('error', 'Error', data['msg']);
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong');
@@ -726,7 +743,8 @@
             form.patient_id = $scope.patient_id;
             form.cproblem = problem;
             form.type = type;
-            patientService.addCommonProblem(form).then(function (data) {
+            patientService.addCommonProblem(form).then(function (response) {
+                let data = response.data;
                 if (data['success']) {
                     toaster.pop('success', 'Done', 'New Problem added successfully');
                     $scope.problems.push(data['problem']);
@@ -752,7 +770,7 @@
         }
 
         function permitted(permissions) {
-            if ($scope.active_user == undefined) {
+            if ($scope.active_user === undefined) {
                 return false;
             }
             var user_permissions = $scope.active_user.permissions;
@@ -777,7 +795,8 @@
             form.user_id = $scope.user_id;
             form.patient_id = $scope.patient_id;
             if (form.name && form.labels.length > 0) {
-                problemService.addProblemList(form).then(function (data) {
+                problemService.addProblemList(form).then(function (response) {
+                    let data = response.data;
                     var new_list = data['new_list'];
                     $scope.problem_lists.push(new_list);
                     $scope.new_list = {};
@@ -799,7 +818,8 @@
                 "title": "Are you sure?",
                 "message": "Deleting a problem list is forever. There is no undo."
             }).then(function (result) {
-                problemService.deleteProblemList(list).then(function (data) {
+                problemService.deleteProblemList(list).then(function (response) {
+                    let data = response.data;
                     var index = $scope.problem_lists.indexOf(list);
                     $scope.problem_lists.splice(index, 1);
                     toaster.pop('success', 'Done', 'Problem List removed successfully');
@@ -811,7 +831,8 @@
 
         function renameList(list) {
             if (list.name) {
-                problemService.renameProblemList(list).then(function (data) {
+                problemService.renameProblemList(list).then(function (response) {
+                    let data = response.data;
                     list.rename = false;
                     toaster.pop('success', 'Done', 'Problem List renamed successfully');
                 });
@@ -825,7 +846,8 @@
                 'list_id': list.id,
                 'note': list.note
             };
-            problemService.updateProblemListNote(form).then(function (data) {
+            problemService.updateProblemListNote(form).then(function (response) {
+                let data = response.data;
                 toaster.pop('success', 'Done', 'Problem list note updated!');
             });
         }
@@ -854,7 +876,7 @@
             var is_existed = false;
             angular.forEach(array, function (list, key2) {
                 angular.forEach(list.problems, function (value, key) {
-                    if (value.id == item.id) {
+                    if (value.id === item.id) {
                         is_existed = true;
                     }
                 });
@@ -865,7 +887,7 @@
         function isInArray(array, item) {
             var is_existed = false;
             angular.forEach(array, function (value, key2) {
-                if (value == item) {
+                if (value === item) {
                     is_existed = true;
                 }
             });
@@ -873,12 +895,12 @@
         }
 
         function checkSharedProblem(problem, sharing_patients) {
-            if ($scope.patient_id == $scope.user_id || ($scope.active_user.hasOwnProperty('role') && $scope.active_user.role != 'patient')) {
+            if ($scope.patient_id === $scope.user_id || ($scope.active_user.hasOwnProperty('role') && $scope.active_user.role !== 'patient')) {
                 return true;
             } else {
                 var is_existed = false;
                 angular.forEach(sharing_patients, function (p, key) {
-                    if (!is_existed && p.user.id == $scope.user_id) {
+                    if (!is_existed && p.user.id === $scope.user_id) {
                         is_existed = $scope.isInArray(p.problems, problem.id);
                     }
                 });
@@ -892,7 +914,8 @@
                 'patient_id': $scope.patient_id,
                 'note': $scope.patient_info.note
             };
-            patientService.updatePatientNote(form).then(function (data) {
+            patientService.updatePatientNote(form).then(function (response) {
+                let data = response.data;
                 toaster.pop('success', 'Done', 'Patient note updated!');
             });
         }
@@ -902,7 +925,8 @@
             var form = {};
             form.encounter_event_id = encounter_event.id;
             form.is_favorite = false;
-            encounterService.markFavoriteEvent(form).then(function (data) {
+            encounterService.markFavoriteEvent(form).then(function (response) {
+                let data = response.data;
                 $scope.favorites.splice($scope.favorites.indexOf(encounter_event), 1);
                 toaster.pop('success', 'Done', 'Unmarked favorite!');
             });
@@ -912,7 +936,8 @@
             var form = {};
             form.encounter_event_id = encounter_event.id;
             form.name_favorite = encounter_event.name_favorite;
-            encounterService.nameFavoriteEvent(form).then(function (data) {
+            encounterService.nameFavoriteEvent(form).then(function (response) {
+                let data = response.data;
                 encounter_event.is_named = false;
                 toaster.pop('success', 'Done', 'Named favorite!');
             });
@@ -925,12 +950,12 @@
 
             CollapseService.ChangeHomepageTab(tab);
 
-            if ($scope.collapse.show_homepage_tab == "data") {
+            if ($scope.collapse.show_homepage_tab === "data") {
                 var form = {};
                 form.patient_id = $scope.patient_id;
                 patientService.trackDataClickEvent(form);
             }
-            if ($scope.collapse.show_homepage_tab == "mystory") {
+            if ($scope.collapse.show_homepage_tab === "mystory") {
                 $scope.$broadcast('tabPressed', null);
             }
         }
@@ -943,13 +968,14 @@
             if (new_tab.name) {
                 var form = {};
                 form.name = new_tab.name;
-                if ($scope.active_user.role == 'patient')
+                if ($scope.active_user.role === 'patient')
                     form.private = new_tab.private;
-                if ($scope.active_user.role == 'admin' || $scope.active_user.role == 'physician')
+                if ($scope.active_user.role === 'admin' || $scope.active_user.role === 'physician')
                     form.all_patients = new_tab.all_patients;
                 form.patient_id = $scope.patient_id;
-                patientService.addMyStoryTab(form).then(function (data) {
-                    if (data['success'] == true) {
+                patientService.addMyStoryTab(form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         $scope.my_story_tabs.push(data['tab']);
                         new_tab.name = '';
                         new_tab.private = true;
@@ -985,15 +1011,16 @@
             var form = {};
             form.name = new_text.name;
             form.text = new_text.text;
-            if ($scope.active_user.role == 'patient')
+            if ($scope.active_user.role === 'patient')
                 form.private = new_text.private;
-            if (tab.is_all && ($scope.active_user.role == 'admin' || $scope.active_user.role == 'physician'))
+            if (tab.is_all && ($scope.active_user.role === 'admin' || $scope.active_user.role === 'physician'))
                 form.all_patients = new_text.all_patients;
             form.concept_id = new_text.concept_id;
             form.patient_id = $scope.patient_id;
             form.tab_id = tab.id;
-            patientService.addMyStoryText(form).then(function (data) {
-                if (data['success'] == true) {
+            patientService.addMyStoryText(form).then(function (response) {
+                let data = response.data;
+                if (data['success'] === true) {
                     tab.my_story_tab_components.push(data['component']);
                     new_text.name = '';
                     new_text.text = '';
@@ -1022,8 +1049,9 @@
                 "title": "Are you sure?",
                 "message": "Deleting a tab is forever. There is no undo."
             }).then(function (result) {
-                patientService.deleteMyStoryTab($scope.patient_id, selected_tab.id).then(function (data) {
-                    if (data['success'] == true) {
+                patientService.deleteMyStoryTab($scope.patient_id, selected_tab.id).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         var index = $scope.my_story_tabs.indexOf(selected_tab);
                         $scope.my_story_tabs.splice(index, 1);
                         if ($scope.my_story_tabs.length > 0)
@@ -1045,8 +1073,9 @@
                 form.name = selected_tab.name;
                 form.tab_id = selected_tab.id;
                 form.patient_id = $scope.patient_id;
-                patientService.saveMyStoryTab(form).then(function (data) {
-                    if (data['success'] == true) {
+                patientService.saveMyStoryTab(form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         $scope.show_edit_my_story_tab = false;
                         toaster.pop('success', "Done", "Saved tab successfully!");
                     } else {
@@ -1066,8 +1095,9 @@
                 "title": "Are you sure?",
                 "message": "Deleting a text component is forever. There is no undo."
             }).then(function (result) {
-                patientService.deleteMyStoryText($scope.patient_id, component.id).then(function (data) {
-                    if (data['success'] == true) {
+                patientService.deleteMyStoryText($scope.patient_id, component.id).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         var index = $scope.selected_tab.my_story_tab_components.indexOf(component);
                         $scope.selected_tab.my_story_tab_components.splice(index, 1);
                         toaster.pop('success', "Done", "Deleted text component successfully!");
@@ -1086,8 +1116,9 @@
             form.concept_id = component.concept_id;
             form.component_id = component.id;
             form.patient_id = $scope.patient_id;
-            patientService.saveMyStoryText(form).then(function (data) {
-                if (data['success'] == true) {
+            patientService.saveMyStoryText(form).then(function (response) {
+                let data = response.data;
+                if (data['success'] === true) {
                     toaster.pop('success', "Done", "Saved text component successfully!");
                 } else {
                     toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');
@@ -1101,8 +1132,9 @@
             form.component_id = component.id;
             form.entry_id = entry.id;
             form.patient_id = $scope.patient_id;
-            patientService.saveMyStoryTextEntry(form).then(function (data) {
-                if (data['success'] == true) {
+            patientService.saveMyStoryTextEntry(form).then(function (response) {
+                let data = response.data;
+                if (data['success'] === true) {
                     component.text_component_entries.unshift(data['entry']);
                     if (typeof oldText !== 'undefined')
                         entry.text = oldText;
@@ -1119,12 +1151,12 @@
 
         function checkSharedMyStory() {
             if ($scope.active_user) {
-                if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
+                if ($scope.patient_id === $scope.user_id || $scope.active_user.role !== 'patient') {
                     return true;
                 } else {
                     var is_shared = false;
                     angular.forEach($scope.sharing_patients, function (user, key) {
-                        if (user.id == $scope.active_user.id && user.is_my_story_shared) {
+                        if (user.id === $scope.active_user.id && user.is_my_story_shared) {
                             is_shared = true;
                         }
                     });
@@ -1145,8 +1177,9 @@
             form.unit = new_data_type.unit;
             form.color = new_data_type.color;
             form.patient_id = $scope.patient_id;
-            patientService.addNewDataType(form).then(function (data) {
-                if (data['success'] == true) {
+            patientService.addNewDataType(form).then(function (response) {
+                let data = response.data;
+                if (data['success'] === true) {
                     $scope.datas.push(data['observation']);
                     new_data_type.name = '';
                     new_data_type.code = '';
@@ -1163,7 +1196,7 @@
             var is_inr = false;
             angular.forEach(datas, function (data, key) {
                 angular.forEach(data.observation_components, function (component, key2) {
-                    if (component.component_code == code) {
+                    if (component.component_code === code) {
                         is_inr = true;
                     }
                 });
@@ -1178,17 +1211,18 @@
             new_data.datetime = moment().format("MM/DD/YYYY HH:mm");
             new_data.value = component.new_value;
             dataService.addData($scope.patient_id, component.id, new_data)
-                .then(function (data) {
+                .then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Added data!');
                         angular.forEach($scope.datas, function (sdata, data_key) {
                             angular.forEach(sdata.observation_components, function (scomponent, component_key) {
-                                if (scomponent.id == component.id) {
+                                if (scomponent.id === component.id) {
                                     scomponent.observation_component_values.push(data['value']);
                                 }
                             });
                             // Default graph type
-                            if (sdata.graph == null || sdata.graph == undefined)
+                            if (sdata.graph == null)
                                 sdata.graph = 'Line';
                             // Temporary data using for generate graph
                             var tmpData = angular.copy(sdata);
@@ -1279,7 +1313,7 @@
                 event = {};
                 event['event_id'] = value.event_id;
                 event['state'] = getTimelineWidgetState(value);
-                if (key == 0) {
+                if (key === 0) {
                     event['startTime'] = convertDateTime(problem);
                 } else {
                     event['startTime'] = convertDateTime(temp);
@@ -1311,7 +1345,8 @@
                 'patient_id': $scope.patient_id,
                 'summary': $scope.patient_info.summary
             };
-            patientService.updatePatientSummary(form).then(function (data) {
+            patientService.updatePatientSummary(form).then(function (response) {
+                let data = response.data;
                 toaster.pop('success', 'Done', 'Patient summary updated!');
             });
         }
@@ -1361,7 +1396,7 @@
                 $scope.btnBDFISubmitted = false;
                 let components = _.pluck($scope.mostCommonData, 'observation_components');
                 angular.forEach(_.flatten(components), function (value, key) {
-                    if (component.id != value.id)
+                    if (component.id !== value.id)
                         value.new_value = "";
                 });
             }

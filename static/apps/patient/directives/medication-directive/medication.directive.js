@@ -35,14 +35,15 @@
                 scope.new_medication = {set: false};
 
                 scope.$watch('manual_medication.name', function (newVal, oldVal) {
-                    if (newVal == undefined) {
+                    if (newVal === undefined) {
                         return false;
                     }
 
                     scope.unset_new_medication();
 
                     if (newVal.length > 2) {
-                        medicationService.listTerms(newVal).then(function (data) {
+                        medicationService.listTerms(newVal).then(function (response) {
+                            let data = response.data;
                             scope.medication_terms = data;
                         });
                     } else {
@@ -63,12 +64,13 @@
 
                 scope.add_medication = function (form) {
                     // Preventing adding medication with empty name
-                    if (form.name == '')
+                    if (form.name === '')
                         return;
 
                     form.search_str = scope.manual_medication.name;
                     form.patient_id = scope.patient_id;
-                    medicationService.addMedication(form).then(function (data) {
+                    medicationService.addMedication(form).then(function (response) {
+                        let data = response.data;
                         if (data.success) {
                             toaster.pop('success', 'Done', 'Added medication!');
                             scope.medications.push(data['medication']);

@@ -76,18 +76,19 @@
 
                 };
 
-                patientService.getToDo($rootScope.patient_id, false, true, 1).then((resp) => {
-                    if (resp.success) {
-                        ctrl.patientTodos = resp.data;
+                patientService.getToDo($rootScope.patient_id, false, true, 1).then((response) => {
+                    let data = response.data;
+                    if (data.success) {
+                        ctrl.patientTodos = data.data;
 
                         ctrl.patientTodos.map((todo, idx) => {
-                            if (todo.id == ctrl.todoId) {
+                            if (todo.id === ctrl.todoId) {
                                 selectItemToPrint(null, todo, idx);
                             }
                         });
 
                         // Load all label for all user
-                        let allLabels = _.flatten(_.pluck(resp.data, 'labels'));
+                        let allLabels = _.flatten(_.pluck(data.data, 'labels'));
                         const map = new Map();
                         for (const item of allLabels) {
                             if (!map.has(item.id)) {
@@ -102,9 +103,10 @@
                     }
                 });
 
-                patientService.getProblems($rootScope.patient_id).then((resp) => {
-                    if (resp.data.success)
-                        ctrl.patientProblems = resp.data.data;
+                patientService.getProblems($rootScope.patient_id).then((response) => {
+                    let data = response.data;
+                    if (data.success)
+                        ctrl.patientProblems = data.data;
                 });
             };
 

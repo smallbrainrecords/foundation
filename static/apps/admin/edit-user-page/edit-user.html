@@ -430,7 +430,7 @@
                 Sharing care
             </div>
             <div class='panel-body'>
-                <a ng-href="#/manage/sharing/" class='btn btn-sm btn-default'>
+                <a ng-href="#!manage/sharing/{{ p.user.id }}" class='btn btn-sm btn-default'>
                     Manage
                 </a>
                 <h4>People I can access:</h4>
@@ -467,7 +467,7 @@
                         <td> {{ p.user.first_name }} {{ p.user.last_name }}
                         </td>
                         <td>
-                            <a ng-href="#/manage/sharing/" class='btn btn-sm btn-default'>
+                            <a ng-href="#!/manage/sharing/{{ p.user.id }}" class='btn btn-sm btn-default'>
                                 Manage
                             </a>
                         </td>

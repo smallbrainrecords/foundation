@@ -19,7 +19,7 @@
     'use strict';
 
     angular.module('app.services')
-        .service('staffService', function ($q, $cookies, $http, httpService) {
+        .service('staffService', function ($cookies, httpService) {
 
             return {
                 user: {},
@@ -119,7 +119,7 @@
 
             function deleteToDoList(form) {
                 let url = `/todo/todo/${form.id}/deleteTodoList`;
-                return httpService.post(form, url);
+                return httpService.postJson(form, url);
             }
 
             function getTodosPhysicians(user_id) {

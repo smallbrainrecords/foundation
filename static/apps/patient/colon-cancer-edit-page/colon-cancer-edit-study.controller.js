@@ -43,12 +43,14 @@
 
             function init() {
                 // TODO: To be improved
-                colonService.fetchColonCancerInfo($routeParams.colonId).then(function (data) {
+                colonService.fetchColonCancerInfo($routeParams.colonId).then((response) => {
+                    let data = response.data;
                     $scope.colon_cancer = data['info'];
                 });
 
                 colonService.fetchColonCancerStudyInfo($routeParams.studyId)
-                    .then((data) => {
+                    .then((response) => {
+                        let data = response.data;
                         $scope.study = data['info'];
                         $scope.colonCancerStudyFormModel.finding = $scope.findingSet.find(finding => finding.label === $scope.study.finding);
                         $scope.colonCancerStudyFormModel.result = $scope.study.result;
@@ -66,7 +68,8 @@
                 };
 
                 colonService.updateStudy($routeParams.colonId, $routeParams.studyId, colonCancerStudyDataModel)
-                    .then((data) => {
+                    .then((response) => {
+                        let data = response.data;
                         if (data.success)
                             toaster.pop('success', 'Done', 'Saved study!');
                     });

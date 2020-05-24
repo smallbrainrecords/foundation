@@ -151,7 +151,8 @@
                 $scope.pending_todos = patientService.getProblemTodo($scope.problem_id);
 
                 patientService.fetchProblemInfo($scope.problem_id)
-                    .then(data => {
+                    .then(response => {
+                        let data = response.data;
                         $scope.loading = false;
 
                         if (data.success) {
@@ -171,12 +172,14 @@
                             $scope.availableWidgets = data['available_widgets'];
                             if (_.contains($scope.availableWidgets, 'a1c')) {
                                 problemService.fetchA1c($scope.problem_id).then(function (response) {
+                                    let data = response.data;
                                     $scope.a1c = response['a1c'];
                                 });
                             }
 
                             if (_.contains($scope.availableWidgets, 'colon_cancers')) {
                                 problemService.fetchColonCancerss($scope.problem_id).then(function (response) {
+                                    let data = response.data;
                                     $scope.colon_cancers = response['colon_cancers'];
                                 });
                             }
@@ -193,15 +196,18 @@
                         }
                     });
 
-                todoService.fetchTodoMembers($scope.patient_id).then(function (data) {
+                todoService.fetchTodoMembers($scope.patient_id).then(function (response) {
+                    let data = response.data;
                     $scope.members = data['members'];
                 });
 
-                todoService.fetchLabels($scope.patient_id).then(function (data) {
+                todoService.fetchLabels($scope.patient_id).then(function (response) {
+                    let data = response.data;
                     $scope.labels = data['labels'];
                 });
 
-                problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function (data) {
+                problemService.fetchLabels($scope.patient_id, $scope.user_id).then(function (response) {
+                    let data = response.data;
                     $scope.problem_labels = data['labels'];
                 });
 
@@ -220,14 +226,16 @@
                 });
 
                 // Pinned observation component (aka data)
-                problemService.fetchPinToProblem($scope.problem_id).then(function (data) {
+                problemService.fetchPinToProblem($scope.problem_id).then(function (response) {
+                    let data = response.data;
                     // TODO: Deprecated check
                     $scope.pins = data['pins'];
                     $scope.problem_pins = data['problem_pins'];
                     $scope.hasPinnedGraph = false;
 
                     $scope.datas = [];
-                    patientService.getDatas($scope.patient_id).then(function (data) {
+                    patientService.getDatas($scope.patient_id).then(function (response) {
+                        let data = response.data;
                         if (data['success']) {
                             $scope.datas = data['info'];
                             angular.forEach($scope.datas, function (data, key) {
@@ -242,7 +250,7 @@
                                 data.pin = is_pin;
 
                                 // Default graph type
-                                if (data.graph == null || data.graph === undefined)
+                                if (data.graph == null)
                                     data.graph = 'Line';
 
                                 // Temporary data using for generate graph
@@ -284,16 +292,18 @@
                 });
 
                 // Medication TODO 02/03/2017 refactor to problem service
-                patientService.getMedications($scope.patient_id, true).then(function (data) {
-                    if (data['success'] == true) {
+                patientService.getMedications($scope.patient_id, true).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         $scope.medications = data['info'];
                         $scope.hasPinnedMedication = false;
-                        problemService.fetchMedicationPinToProblem($scope.problem_id).then(function (data) {
+                        problemService.fetchMedicationPinToProblem($scope.problem_id).then(function (response) {
+                            let data = response.data;
                             $scope.medication_pins = data['pins'];
                             angular.forEach($scope.medications, function (medication, key) {
                                 var is_pin = false;
                                 angular.forEach($scope.medication_pins, function (pin, key) {
-                                    if (medication.id == pin.medication.id) {
+                                    if (medication.id === pin.medication.id) {
                                         is_pin = true;
                                         $scope.hasPinnedMedication = true;
                                         medication.pin_author = pin.author.id;
@@ -309,28 +319,31 @@
 
                 // Goal
                 problemService.getRelatedGoals($scope.problem_id).then(function (response) {
+                    let data = response.data;
                     $scope.problem_goals = response.data.goals;
                     $scope.hasAccomplishedGoal = _.pluck(response.data.goals, 'accomplished');
                 });
 
                 // Image
                 problemService.getRelatedImages($scope.problem_id).then(function (response) {
+                    let data = response.data;
                     $scope.problem_images = response.data['images'];
 
                 });
 
                 // Effecting & Effected problems
                 problemService.getProblemRelationships($scope.problem_id).then(function (response) {
+                    let data = response.data;
                     $scope.effecting_problems = response.data['effecting_problems'];
                     $scope.effected_problems = response.data['effected_problems'];
                     var patient_problems = response.data['patient_problems'];
                     for (var index in patient_problems) {
                         var id = patient_problems[index].id;
-                        if ($scope.id_exists(id, $scope.effecting_problems) == true) {
+                        if ($scope.id_exists(id, $scope.effecting_problems) === true) {
                             patient_problems[index].effecting = true
                         }
 
-                        if ($scope.id_exists(id, $scope.effected_problems) == true) {
+                        if ($scope.id_exists(id, $scope.effected_problems) === true) {
                             patient_problems[index].effected = true
                         }
                     }
@@ -339,6 +352,7 @@
 
                 // Activity
                 problemService.getProblemActivity($scope.problem_id, 0).then(function (response) {
+                    let data = response.data;
                     $scope.activities = response['activities'];
                     if (response['activities'].length) {
                         $scope.current_activity = _.first(response['activities']).id;
@@ -347,22 +361,24 @@
 
                 // Encounter
                 problemService.getRelatedEncounters($scope.problem_id).then(function (response) {
+                    let data = response.data;
                     $scope.related_encounters = response.encounters;
                 });
 
                 // Document
                 problemService.getRelatedDocuments($scope.problem_id).then(function (response) {
+                    let data = response.data;
                     $scope.pinned_document = response.data.documents;
                 });
 
                 // Watcher & callback
                 $scope.$watch('[problem.is_controlled,problem.authenticated, problem.is_active]', function (nV, oV) {
 
-                    if ($scope.loading == true) {
+                    if ($scope.loading === true) {
                         return false;
                     }
 
-                    if (angular.equals(oV, [undefined, undefined, undefined]) == true) {
+                    if (angular.equals(oV, [undefined, undefined, undefined]) === true) {
                         return false;
                     }
 
@@ -378,13 +394,15 @@
                     $scope.timeline.problems[0].events.splice(-1, 1);
                     $scope.timeline.problems[0].events.push(event);
 
-                    problemService.updateProblemStatus(form).then(function (data) {
+                    problemService.updateProblemStatus(form).then(function (response) {
+                        let data = response.data;
                         var form_problem = {};
 
                         form_problem.patient_id = $scope.patient_id;
                         form_problem.timeline_data = $scope.timeline;
                         $scope.problem.start_date = convertDateTimeBack($scope.timeline.problems[0].events[0].startTime);
-                        problemService.updateStateToPTW(form_problem).then(function (data) {
+                        problemService.updateStateToPTW(form_problem).then(function (response) {
+                            let data = response.data;
                             toaster.pop('success', 'Done', 'Updated Problem Status');
                         });
                     });
@@ -486,7 +504,7 @@
                     event['event_id'] = value.event_id;
                     event['state'] = getTimelineWidgetState(value);
 
-                    if (key == 0) {
+                    if (key === 0) {
                         event['startTime'] = convertDateTime(problem);
                     } else {
                         event['startTime'] = convertDateTime(temp);
@@ -528,7 +546,7 @@
                 angular.forEach($scope.datas, function (data, key) {
 
                     // Default graph type
-                    if (data.graph == null || data.graph === undefined)
+                    if (data.graph == null)
                         data.graph = 'Line';
 
                     // Temporary data using for generate graph
@@ -552,7 +570,8 @@
                 form.timeline_data = newData;
                 $scope.problem.start_date = convertDateTimeBack(newData.problems[0].events[0].startTime);
 
-                problemService.updateByPTW(form).then(function (data) {
+                problemService.updateByPTW(form).then(function (response) {
+                    let data = response.data;
                     toaster.pop('success', 'Done', 'Updated Problem');
                 });
             }
@@ -565,7 +584,8 @@
                     var form = {};
                     form.problem_id = $scope.problem_id;
                     form.patient_id = $scope.patient_id;
-                    problemService.deleteProblem(form).then(function (data) {
+                    problemService.deleteProblem(form).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Deleted problem successfully');
                         $location.url('/');
                     });
@@ -578,7 +598,8 @@
 
                 $scope.unset_new_problem();
                 if (problem_term.length > 2) {
-                    patientService.listTerms(problem_term).then(function (data) {
+                    patientService.listTerms(problem_term).then(function (response) {
+                        let data = response.data;
                         $scope.problem_terms = data;
                     });
                 } else {
@@ -606,7 +627,7 @@
 
                 var c = confirm("Are you sure?");
 
-                if (c == false) {
+                if (c === false) {
                     return false;
                 }
 
@@ -615,9 +636,10 @@
                 form.code = $scope.new_problem.code;
                 form.problem_id = $scope.problem_id;
 
-                problemService.changeProblemName(form).then(function (data) {
+                problemService.changeProblemName(form).then(function (response) {
+                    let data = response.data;
 
-                    if (data['success'] == true) {
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Problem name changed successfully');
                         $scope.problem = data['problem'];
                         $scope.problem_term = '';
@@ -626,7 +648,7 @@
                         $('#problemTermInput').focus();
                         $scope.set_authentication_false();
 
-                    } else if (data['success'] == false) {
+                    } else if (data['success'] === false) {
                         alert(data['msg']);
                     } else {
                         alert("Something went wrong");
@@ -639,13 +661,13 @@
             }
 
             function change_new_problem_name(problem_term) {
-                if (problem_term == '' || problem_term == undefined) {
+                if (problem_term === '' || problem_term === undefined) {
                     return false;
                 }
 
                 var c = confirm("Are you sure?");
 
-                if (c == false) {
+                if (c === false) {
                     return false;
                 }
 
@@ -654,9 +676,10 @@
                 form.term = problem_term;
                 form.problem_id = $scope.problem_id;
 
-                problemService.changeProblemName(form).then(function (data) {
+                problemService.changeProblemName(form).then(function (response) {
+                    let data = response.data;
 
-                    if (data['success'] == true) {
+                    if (data['success'] === true) {
                         toaster.pop('success', 'Done', 'Problem name changed successfully');
                         $scope.problem = data['problem'];
                         $scope.problem_term = '';
@@ -664,7 +687,7 @@
                         /* Not-angular-way */
                         $('#problemTermInput').focus();
                         $scope.set_authentication_false();
-                    } else if (data['success'] == false) {
+                    } else if (data['success'] === false) {
                         toaster.pop('error', 'Error', data['msg']);
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong');
@@ -694,12 +717,13 @@
 
             function saveCreateProblemLabel(problem) {
                 if ($scope.problem_label_component.css_class != null) {
-                    problemService.saveCreateLabel($scope.problem_id, $scope.problem_label_component).then(function (data) {
-                        if (data['success'] == true) {
-                            if (data['new_status'] == true) {
+                    problemService.saveCreateLabel($scope.problem_id, $scope.problem_label_component).then(function (response) {
+                        let data = response.data;
+                        if (data['success'] === true) {
+                            if (data['new_status'] === true) {
                                 $scope.problem_labels.push(data['new_label']);
                             }
-                            if (data['status'] == true) {
+                            if (data['status'] === true) {
                                 problem.labels.push(data['label']);
                                 toaster.pop('success', "Done", "Added Problem label!");
                             }
@@ -712,7 +736,7 @@
             }
 
             function editProblemLabel(label) {
-                label.edit_label = (label.edit_label != true) ? true : false;
+                label.edit_label = (label.edit_label != true);
             }
 
             function selectEditProblemLabelComponent(label, component) {
@@ -721,12 +745,13 @@
 
             function saveEditProblemLabel(label) {
                 if (label.css_class != null) {
-                    problemService.saveEditLabel(label, $scope.patient_id, $scope.user_id).then(function (data) {
-                        if (data['success'] == true) {
+                    problemService.saveEditLabel(label, $scope.patient_id, $scope.user_id).then(function (response) {
+                        let data = response.data;
+                        if (data['success'] === true) {
                             label.css_class = data['label']['css_class'];
-                            if (data['status'] == true) {
+                            if (data['status'] === true) {
                                 angular.forEach($scope.problem.labels, function (value, key) {
-                                    if (value.id == label.id) {
+                                    if (value.id === label.id) {
                                         value.css_class = label.css_class;
                                     }
                                 });
@@ -747,7 +772,7 @@
                 var existed_id;
 
                 angular.forEach(problem.labels, function (value, key) {
-                    if (value.name == label.name) {
+                    if (value.name === label.name) {
                         is_existed = true;
                         existed_key = key;
                         existed_id = value.id;
@@ -755,8 +780,9 @@
                 });
                 if (!is_existed) {
                     problem.labels.push(label);
-                    problemService.addProblemLabel(label.id, problem.id).then(function (data) {
-                        if (data['success'] == true) {
+                    problemService.addProblemLabel(label.id, problem.id).then(function (response) {
+                        let data = response.data;
+                        if (data['success'] === true) {
                             toaster.pop('success', "Done", "Added Problem label!");
                         } else {
                             toaster.pop('error', 'Warning', 'Something went wrong!');
@@ -764,8 +790,9 @@
                     });
                 } else {
                     problem.labels.splice(existed_key, 1);
-                    problemService.removeProblemLabel(existed_id, problem.id).then(function (data) {
-                        if (data['success'] == true) {
+                    problemService.removeProblemLabel(existed_id, problem.id).then(function (response) {
+                        let data = response.data;
+                        if (data['success'] === true) {
                             toaster.pop('success', "Done", "Removed Problem label!");
                         } else {
                             toaster.pop('error', 'Warning', 'Something went wrong!');
@@ -780,17 +807,18 @@
                     "title": "Are you sure?",
                     "message": "Deleting a label is forever. There is no undo."
                 }).then(function (result) {
-                    problemService.deleteLabel(label).then(function (data) {
+                    problemService.deleteLabel(label).then(function (response) {
+                        let data = response.data;
                         var index = $scope.problem_labels.indexOf(label);
                         $scope.problem_labels.splice(index, 1);
 
                         var index2;
                         angular.forEach($scope.problem.labels, function (value, key) {
-                            if (value.id == label.id) {
+                            if (value.id === label.id) {
                                 index2 = key;
                             }
                         });
-                        if (index2 != undefined)
+                        if (index2 !== undefined)
                             $scope.problem.labels.splice(index2, 1);
 
                         toaster.pop('success', 'Done', 'Deleted label successfully');
@@ -821,7 +849,8 @@
                 form.user_id = $scope.user_id;
                 form.patient_id = $scope.patient_id;
                 if (form.name && form.labels.length > 0) {
-                    problemService.addProblemList(form).then(function (data) {
+                    problemService.addProblemList(form).then(function (response) {
+                        let data = response.data;
                         $scope.new_list = {};
                         $scope.new_list.labels = [];
                         toaster.pop('success', 'Done', 'New Problem List added successfully');
@@ -848,7 +877,8 @@
                     start_date: moment(date).format("MM/DD/YYYY")
                 };
 
-                problemService.updateStartDate(form).then(function (data) {
+                problemService.updateStartDate(form).then(function (response) {
+                    let data = response.data;
                     toaster.pop('success', 'Done', 'Updated Start Date');
                     $scope.timeline.problems[0].events[0].startTime = convertDateTime($scope.problem);
                     $scope.timeline_changed.push({changing: new Date().getTime()});
@@ -859,7 +889,8 @@
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
 
-                problemService.addHistoryNote(form).then(function (data) {
+                problemService.addHistoryNote(form).then(function (response) {
+                    let data = response.data;
 
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Added History Note');
@@ -894,7 +925,8 @@
 
                 form.patient_id = $scope.patient_id;
                 form.problem_id = $scope.problem.id;
-                problemService.addGoal(form).then(function (data) {
+                problemService.addGoal(form).then(function (response) {
+                    let data = response.data;
 
                     form.name = '';
                     $scope.problem_goals.push(data['goal']);
@@ -1057,7 +1089,7 @@
 
                 var c = confirm("Are you sure ?");
 
-                if (c == false) {
+                if (c === false) {
                     return false;
                 }
 
@@ -1066,7 +1098,8 @@
                 form.problem_id = $scope.problem.id;
                 form.image_id = image.id;
 
-                problemService.deleteProblemImage(form).then(function (data) {
+                problemService.deleteProblemImage(form).then(function (response) {
+                    let data = response.data;
 
                     var image_index = $scope.problem_images.indexOf(image);
 
@@ -1082,7 +1115,7 @@
 
                 angular.forEach(item_list, function (value) {
 
-                    if (value == id) {
+                    if (value === id) {
                         found = true;
                     }
 
@@ -1100,7 +1133,8 @@
                 form.source_id = source.id;
                 form.target_id = problem.id;
                 form.relationship = effecting;
-                problemService.relateProblem(form).then(function (data) {
+                problemService.relateProblem(form).then(function (response) {
+                    let data = response.data;
                     toaster.pop('success', "Done", "Updated relationship !");
                     $scope.set_authentication_false();
                 });
@@ -1117,7 +1151,8 @@
                 form.target_id = target.id;
                 form.relationship = effected;
 
-                problemService.relateProblem(form).then(function (data) {
+                problemService.relateProblem(form).then(function (response) {
+                    let data = response.data;
                     toaster.pop('success', "Done", "Updated relationship !");
                     $scope.set_authentication_false();
 
@@ -1132,7 +1167,7 @@
              */
             function permitted(permissions) {
 
-                if ($scope.active_user == undefined) {
+                if ($scope.active_user === undefined) {
                     return false;
                 }
 
@@ -1157,7 +1192,8 @@
             }
 
             function refresh_problem_activity() {
-                problemService.getProblemActivity($scope.problem_id, $scope.current_activity).then(function (data) {
+                problemService.getProblemActivity($scope.problem_id, $scope.current_activity).then(function (response) {
+                    let data = response.data;
                     if (data['activities'].length) {
                         for (var i = data['activities'].length - 1; i >= 0; i--) {
                             $scope.activities.unshift(data['activities'][i]);
@@ -1172,10 +1208,11 @@
                 $scope.show_accomplished_todos = !$scope.show_accomplished_todos;
                 if (!$scope.accomplishedTodoLoaded) {
                     problemService.getRelatedTodos($scope.problem_id, true, $scope.accomplishedTodoPage, true)
-                        .then((resp) => {
-                            if (resp.success) {
+                        .then((response) => {
+                            let data = response.data;
+                            if (data.success) {
                                 // if loading from remote then replace it cuz it fresh & trusted data source
-                                $scope.accomplished_todos = resp.data;
+                                $scope.accomplished_todos = data.data;
                                 $scope.accomplishedTodoLoaded = true;
                             }
                         });
@@ -1186,11 +1223,7 @@
 
                 var flag = $scope.show_accomplished_goals;
 
-                if (flag == true) {
-                    flag = false;
-                } else {
-                    flag = true;
-                }
+                flag = flag !== true;
 
                 $scope.show_accomplished_goals = flag;
             }
@@ -1198,12 +1231,12 @@
             function checkSharedProblem(problem, sharing_patients) {
                 if ($scope.active_user) {
 
-                    if ($scope.patient_id == $scope.user_id || $scope.active_user.role != 'patient') {
+                    if ($scope.patient_id === $scope.user_id || $scope.active_user.role !== 'patient') {
                         return true;
                     } else {
                         var is_existed = false;
                         angular.forEach(sharing_patients, function (p, key) {
-                            if (!is_existed && p.user.id == $scope.user_id) {
+                            if (!is_existed && p.user.id === $scope.user_id) {
                                 is_existed = $scope.isInArray(p.problems, problem.id);
                             }
                         });
@@ -1222,7 +1255,7 @@
             function isInArray(array, item) {
                 var is_existed = false;
                 angular.forEach(array, function (value, key2) {
-                    if (value == item) {
+                    if (value === item) {
                         is_existed = true;
                     }
                 });
@@ -1247,7 +1280,8 @@
                 form.data_id = data_id;
                 form.problem_id = problem_id;
 
-                dataService.dataPinToProblem($scope.patient_id, form).then(function (data) {
+                dataService.dataPinToProblem($scope.patient_id, form).then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Pinned data!');
                         if (data.inr)
@@ -1280,8 +1314,9 @@
                 form.medication_id = medication.id;
                 form.problem_id = problem_id;
 
-                medicationService.medicationPinToProblem($scope.patient_id, form).then(function (data) {
-                    if (data['success'] == true) {
+                medicationService.medicationPinToProblem($scope.patient_id, form).then(function (response) {
+                    let data = response.data;
+                    if (data['success'] === true) {
                         var is_pin = false;
                         angular.forEach($scope.medications, function (medication, key) {
                             if (medication.pin)
@@ -1289,7 +1324,7 @@
                             $scope.hasPinnedMedication = is_pin;
                         });
                         toaster.pop('success', 'Done', 'Pinned problem!');
-                    } else if (data['success'] == false) {
+                    } else if (data['success'] === false) {
                         toaster.pop('error', 'Error', 'Something went wrong, please try again!');
                     } else {
                         toaster.pop('error', 'Error', 'Something went wrong, we are fixing it asap!');

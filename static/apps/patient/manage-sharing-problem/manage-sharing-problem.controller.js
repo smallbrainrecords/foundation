@@ -29,19 +29,23 @@
             var sharing_patient_id = $routeParams.sharing_patient_id;
             $scope.sharing_patient_id = sharing_patient_id;
 
-            patientService.fetchActiveUser().then(function (data) {
+            patientService.fetchActiveUser().then(function (response) {
+                let data = response.data;
                 $scope.active_user = data['user_profile'];
             });
 
-            patientService.getUserInfo($scope.sharing_patient_id).then(function (data) {
+            patientService.getUserInfo($scope.sharing_patient_id).then(function (response) {
+                let data = response.data;
                 $scope.sharing_patient = data['user_profile'];
             });
 
-            problemService.fetchProblems($scope.patient_id).then(function (data) {
+            problemService.fetchProblems($scope.patient_id).then(function (response) {
+                let data = response.data;
                 $scope.problems = data['problems'];
             });
 
-            problemService.fetchSharingProblems($scope.patient_id, $scope.sharing_patient_id).then(function (data) {
+            problemService.fetchSharingProblems($scope.patient_id, $scope.sharing_patient_id).then(function (response) {
+                let data = response.data;
                 $scope.sharing_problems = data['sharing_problems'];
                 $scope.is_my_story_shared = data['is_my_story_shared'];
             });
@@ -51,7 +55,7 @@
             $scope.inArray = function (array, item) {
                 var is_existed = false;
                 angular.forEach(array, function (value, key2) {
-                    if (value.id == item.id) {
+                    if (value.id === item.id) {
                         is_existed = true;
                     }
                 });
@@ -62,7 +66,7 @@
                 var is_existed = false;
                 var index;
                 angular.forEach($scope.sharing_problems, function (value, key2) {
-                    if (value.id == problem.id) {
+                    if (value.id === problem.id) {
                         is_existed = true;
                         index = key2;
                     }
@@ -70,13 +74,15 @@
 
                 if (is_existed) {
                     $scope.sharing_problems.splice(index, 1);
-                    problemService.removeSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function (data) {
+                    problemService.removeSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Removed problem');
                     });
                 } else {
                     $scope.sharing_problems.push(problem);
 
-                    problemService.addSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function (data) {
+                    problemService.addSharingProblems($scope.patient_id, $scope.sharing_patient_id, problem.id).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Added problem');
                     });
 
@@ -84,7 +90,8 @@
             };
 
             $scope.changeSharingMyStory = function () {
-                patientService.changeSharingMyStory($scope.patient_id, $scope.sharing_patient_id).then(function (data) {
+                patientService.changeSharingMyStory($scope.patient_id, $scope.sharing_patient_id).then(function (response) {
+                    let data = response.data;
                     toaster.pop('success', 'Done', 'Changed sharing my story');
                 });
             };

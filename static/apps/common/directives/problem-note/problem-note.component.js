@@ -65,7 +65,8 @@
 
             problemService.addNote(ctrl.problemId, form)
                 .then(response => {
-                    if (response.data.success) {
+                    let data = response.data;
+                    if (data.success) {
                         // Notify
                         toaster.pop('success', 'Done', 'Wiki note added');
 
@@ -73,7 +74,7 @@
                         ctrl.noteList.unshift(ctrl.latestNote);
 
                         // Newly note added is latest one
-                        ctrl.latestNote = response.data.note;
+                        ctrl.latestNote = data.note;
 
                         // Reset the form
                         ctrl.note = "";
@@ -82,8 +83,8 @@
                         $('#todoNameInput').focus();
 
                         // Push newly added todo to active todo list
-                        if (response.data.hasOwnProperty('todo')) {
-                            patientService.addTodoCallback(response.data.todo);
+                        if (data.hasOwnProperty('todo')) {
+                            patientService.addTodoCallback(data.todo);
                         }
                     } else {
                         toaster.pop('error', 'Warning', 'Action Failed');
@@ -120,9 +121,10 @@
 
             problemService.loadMoreProblemNotes(ctrl.problemId, PROBLEM_NOTE_TYPE.WIKI, lastLoadedItem == null ? null : lastLoadedItem.id, limit)
                 .then(response => {
-                    if (response.data.success) {
-                        ctrl.noteStorage = response.data.notes;
-                        ctrl.total = response.data.total;
+                    let data = response.data;
+                    if (data.success) {
+                        ctrl.noteStorage = data.notes;
+                        ctrl.total = data.total;
                         if (callback) callback();
                     }
                 }, () => {

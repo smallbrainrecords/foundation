@@ -114,7 +114,8 @@
                 let files = $scope.files;
 
                 patientService.updateProfile(form, files)
-                    .then(function (data) {
+                    .then(function (response) {
+                        let data = response.data;
                         if (data['success']) {
                             toaster.pop('success', 'Done', 'Patient updated!');
                             $scope.patient_info = data['info'];
@@ -146,11 +147,11 @@
 
             function updatePatientPassword() {
 
-                if ($scope.old_password == undefined || $scope.password == undefined || $scope.repassword == undefined) {
+                if ($scope.old_password === undefined || $scope.password === undefined || $scope.repassword === undefined) {
                     toaster.pop('error', 'Error', 'Please enter password');
                     return false;
                 }
-                if ($scope.password != $scope.repassword) {
+                if ($scope.password !== $scope.repassword) {
                     toaster.pop('error', 'Error', 'Password must match');
                     return false;
                 }

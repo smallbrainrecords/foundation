@@ -266,7 +266,7 @@
              * @param idArray
              */
             function deleteComponentValues(patientId, idArray) {
-                return $http.delete(`/data/${patientId}/delete`, {
+                return httpService.delete(`/data/${patientId}/delete`, {
                     data: {
                         component_values: idArray
                     }

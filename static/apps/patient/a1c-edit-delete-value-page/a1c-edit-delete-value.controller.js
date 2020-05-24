@@ -18,9 +18,9 @@
     'use strict';
     angular.module('ManagerApp')
 
-    /**
-     * This should be named to value listing page
-     */
+        /**
+         * This should be named to value listing page
+         */
         .controller('EditOrDeleteValuesCtrl', function ($scope, $routeParams, a1cService, ngDialog, problemService,
                                                         sharedService, toaster, patientService, prompt) {
 
@@ -31,7 +31,8 @@
             init();
 
             function init() {
-                a1cService.fetchA1cInfo($scope.a1c_id).then(function (data) {
+                a1cService.fetchA1cInfo($scope.a1c_id).then(function (response) {
+                    let data = response.data;
                     $scope.a1c = data['info'];
 
                     if ($scope.a1c.observation.observation_components.length > 0)
@@ -44,7 +45,8 @@
                     "title": "Are you sure?",
                     "message": "Deleting a value is forever. There is no undo."
                 }).then(function (result) {
-                    a1cService.deleteValue(value).then(function (data) {
+                    a1cService.deleteValue(value).then(function (response) {
+                        let data = response.data;
                         let index = $scope.first_component.observation_component_values.indexOf(value);
                         $scope.first_component.observation_component_values.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted value successfully');

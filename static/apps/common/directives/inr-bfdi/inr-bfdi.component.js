@@ -20,9 +20,9 @@
     angular.module('inr')
         .directive('inrBfdi', inrBfdi);
 
-    inrBfdi.$inject = ["toaster", "inrService", "$http"];
+    inrBfdi.$inject = ["toaster", "inrService"];
 
-    function inrBfdi(toaster, inrService, $http) {
+    function inrBfdi(toaster, inrService) {
         return {
             restrict: 'E',
             templateUrl: '/static/apps/common/directives/inr-bfdi/inr-bfdi.template.html',
@@ -69,7 +69,7 @@
              * @param viewValue
              */
             function findPatient(viewValue) {
-                if (viewValue != '') {
+                if (viewValue !== '') {
                     return inrService.findPatient(viewValue).then(function (response) {
                         scope.results = response.data.patients;
                     });

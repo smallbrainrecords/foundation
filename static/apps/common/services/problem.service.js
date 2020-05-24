@@ -18,8 +18,8 @@
 
     'use strict';
 
-    angular.module('app.services').service('problemService',
-        function ($http, $q, $cookies, httpService) {
+    angular.module('app.services')
+        .service('problemService', function ($http, $q, $cookies, httpService) {
 
             return {
                 updateProblemStatus: updateProblemStatus,

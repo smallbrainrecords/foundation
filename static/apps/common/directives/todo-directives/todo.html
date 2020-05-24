@@ -14,7 +14,7 @@
                         ng-class="isDueDate(item.due_date)">{{ item.due_date }}</span></span>
 
                 <span ng-if="item.problem">for problem <a
-                        href="/u/patient/manage/{{ item.patient.id }}/#/problem/{{ item.problem.id }}">{{ item.problem.problem_name }}</a></span>
+                        href="/u/patient/manage/{{ item.patient.id }}/#!problem/{{ item.problem.id }}">{{ item.problem.problem_name }}</a></span>
 
                 <span ng-if="item.patient"> for patient
 						<a href="/u/patient/manage/{{ item.patient.id }}/">{{ item.patient.first_name }} {{ item.patient.last_name }}</a>

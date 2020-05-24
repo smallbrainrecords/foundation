@@ -94,7 +94,7 @@
 
                     angular.forEach(scope.colon_cancer.colon_risk_factors, function (colon_risk_factor, key) {
                         angular.forEach(scope.factors, function (factor, key) {
-                            if (colon_risk_factor.factor == factor.value) {
+                            if (colon_risk_factor.factor === factor.value) {
                                 factor.checked = true;
                             }
                         });
@@ -106,12 +106,12 @@
                             scope.last_study = scope.colon_cancer.colon_studies[0];
                             scope.todo_repeat.name = scope.last_study.finding;
 
-                            if (scope.last_study.finding == 'fecal occult blood test' || scope.last_study.finding == 'fecal immunochemical test') {
+                            if (scope.last_study.finding === 'fecal occult blood test' || scope.last_study.finding === 'fecal immunochemical test') {
                                 scope.todo_repeat.year = 1;
-                            } else if (scope.last_study.finding == 'colonoscopy') {
-                                if (scope.last_study.result == 'no polyps') {
+                            } else if (scope.last_study.finding === 'colonoscopy') {
+                                if (scope.last_study.result === 'no polyps') {
                                     scope.todo_repeat.year = 10;
-                                } else if (scope.last_study.result == 'adenomatous polyps' || scope.last_study.result == 'serrated polyps') {
+                                } else if (scope.last_study.result === 'adenomatous polyps' || scope.last_study.result === 'serrated polyps') {
                                     scope.todo_repeat.year = 3;
                                     scope.todo_repeat.name = 'surveillance colonoscopy for high risk polyp';
                                 } else {
@@ -195,7 +195,8 @@
                     if (!scope.show_colon_collapse) {
                         var form = {};
                         form.colon_cancer_id = scope.colon_cancer.id;
-                        colonService.trackColonCancerClickEvent(form).then(function (data) {
+                        colonService.trackColonCancerClickEvent(form).then(function (response) {
+                            let data = response.data;
                             CollapseService.ChangeColonCollapse();
                             scope.show_colon_collapse = CollapseService.show_colon_collapse;
                         });
@@ -210,7 +211,8 @@
                         "title": "Are you sure?",
                         "message": "Deleting a study is forever. There is no undo."
                     }).then(function (result) {
-                        colonService.deleteStudy(study).then(function (data) {
+                        colonService.deleteStudy(study).then(function (response) {
+                            let data = response.data;
                             var index = scope.colon_cancer.colon_studies.indexOf(study);
                             scope.colon_cancer.colon_studies.splice(index, 1);
                             toaster.pop('success', 'Done', 'Deleted study successfully');
@@ -222,7 +224,8 @@
 
                 function changeFactor(factor) {
                     if (factor.checked) {
-                        colonService.addFactor(scope.colon_cancer.id, factor).then(function (data) {
+                        colonService.addFactor(scope.colon_cancer.id, factor).then(function (response) {
+                            let data = response.data;
                             toaster.pop('success', 'Done', 'Added factor successfully');
                             scope.colon_cancer = data['info'];
                             angular.forEach(scope.factors, function (factor, key) {
@@ -230,7 +233,7 @@
                             });
                             angular.forEach(scope.colon_cancer.colon_risk_factors, function (colon_risk_factor, key) {
                                 angular.forEach(scope.factors, function (factor, key) {
-                                    if (colon_risk_factor.factor == factor.value) {
+                                    if (colon_risk_factor.factor === factor.value) {
                                         factor.checked = true;
                                     }
                                 });
@@ -238,7 +241,8 @@
                             scope.set_header();
                         });
                     } else {
-                        colonService.deleteFactor(scope.colon_cancer.id, factor).then(function (data) {
+                        colonService.deleteFactor(scope.colon_cancer.id, factor).then(function (response) {
+                            let data = response.data;
                             toaster.pop('success', 'Done', 'Deleted factor successfully');
                             scope.colon_cancer = data['info'];
                             scope.set_header();
@@ -247,7 +251,8 @@
                 }
 
                 function refuse() {
-                    colonService.refuse(scope.colon_cancer.id).then(function (data) {
+                    colonService.refuse(scope.colon_cancer.id).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Refused successfully');
                         scope.colon_cancer = data['info'];
                         scope.set_header();
@@ -255,7 +260,8 @@
                 }
 
                 function notAppropriate() {
-                    colonService.notAppropriate(scope.colon_cancer.id).then(function (data) {
+                    colonService.notAppropriate(scope.colon_cancer.id).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Set appropriate successfully');
                         scope.colon_cancer = data['info'];
                         scope.set_header();
@@ -271,7 +277,8 @@
                         colon_cancer_id: scope.colon_cancer.id,
                     };
 
-                    patientService.addProblemTodo(form).then((data) => {
+                    patientService.addProblemTodo(form).then((response) => {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Added Todo!');
                         scope.set_header();
                     });
@@ -285,7 +292,8 @@
 
                     form.colon_cancer_id = scope.colon_cancer.id;
 
-                    colonService.addNote(form).then(function (data) {
+                    colonService.addNote(form).then(function (response) {
+                        let data = response.data;
                         scope.colon_cancer.colon_notes.push(data['note']);
                         form.note = '';
                         toaster.pop('success', 'Done', 'Added Note!');
@@ -297,7 +305,8 @@
                 }
 
                 function toggleSaveNote(note) {
-                    colonService.editNote(note).then(function (data) {
+                    colonService.editNote(note).then(function (response) {
+                        let data = response.data;
                         note.edit = false;
                         toaster.pop('success', 'Done', 'Edited note successfully');
                     });
@@ -308,7 +317,8 @@
                         "title": "Are you sure?",
                         "message": "Deleting a note is forever. There is no undo."
                     }).then(function (result) {
-                        colonService.deleteNote(note).then(function (data) {
+                        colonService.deleteNote(note).then(function (response) {
+                            let data = response.data;
                             var index = scope.colon_cancer.colon_notes.indexOf(note);
                             scope.colon_cancer.colon_notes.splice(index, 1);
                             toaster.pop('success', 'Done', 'Deleted note successfully');

@@ -29,7 +29,8 @@
         function init() {
             dataService.getObservationValues($routeParams.data_id)
                 .then((response) => {
-                    $scope.data = response.data;
+                    let data = response.data;
+                    $scope.data = data;
                 });
         }
     }

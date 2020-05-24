@@ -375,12 +375,12 @@
                                         <div class='item-box'
                                              ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
                                             <a class='btn  btn-default btn-sm'
-                                               ng-href='#/goal/{{ goal.id }}'>
+                                               ng-href='#!goal/{{ goal.id }}'>
                                                 View
                                             </a>
 
                                             {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                                ng-href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                                ng-href="#!problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
                                         </div>
                                     </li>
                                 </ul>
@@ -394,12 +394,12 @@
                                         <div class='item-box'
                                              ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
                                             <a class='btn  btn-default btn-sm'
-                                               ng-href='#/goal/{{ goal.id }}'>
+                                               ng-href='#!goal/{{ goal.id }}'>
                                                 View
                                             </a>
 
                                             {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                                ng-href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                                ng-href="#!problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
                                         </div>
                                     </li>
                                 </ul>
@@ -441,7 +441,7 @@
 
                             <ul class='ul-clean no-padding'>
                                 <li ng-repeat='encounter in encounters'>
-                                    <a ng-href='#/encounter/{{ encounter.id }}'>
+                                    <a href='#!encounter/{{ encounter.id }}'>
                                         From <b> {{ encounter.starttime | date:'medium' }} </b> to
                                         <b>{{ encounter.stoptime | date:'medium' }}</b>
                                     </a>
@@ -480,7 +480,7 @@
                                                     </span>
                                                     <span ng-if="!event.is_named">
                                                         {{ event.name_favorite }}
-                                                        <a ng-href='#/encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
+                                                        <a ng-href='#!encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
                                                            class="btn btn-default" target="_blank">Listen</a>
                                                         <button class="btn btn-default"
                                                                 ng-click="event.is_named=!event.is_named;">Name</button>
@@ -795,7 +795,7 @@
                 <div class='panel-body'>
                     <div class="row">
                         <div class="col-md-6 no-padding">
-                            <a target="_blank" ng-href="#/data/view" class="btn btn-default btn-block">Table view of
+                            <a target="_blank" ng-href="#!data/view" class="btn btn-default btn-block">Table view of
                                 vitals</a>
                             <div class="btn-group btn-group-justified graph-view-mode"
                                  id="homepage-data-time-range-header"
@@ -942,7 +942,7 @@
                                         <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
                                            ng-class="label.css_class"><span ng-bind="label.name"
                                                                             class="todo-label-name"></span></a>
-                                        <a ng-href="#/document/{{ document.id }}" class="flex-item document_name"
+                                        <a ng-href="#!document/{{ document.id }}" class="flex-item document_name"
                                            target="_blank"
                                            ng-bind="document.document_name"></a>
                                         <span class="flex-item document_uploaded_date pull-right"

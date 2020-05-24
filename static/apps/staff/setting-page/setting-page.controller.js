@@ -39,7 +39,8 @@
 
         function init() {
             staffService.fetchActiveUser($('#user_id').val())
-                .then(function (data) {
+                .then(function (response) {
+                    let data = response.data;
                     $scope.user = data;
                 });
 

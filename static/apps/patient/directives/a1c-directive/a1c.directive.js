@@ -93,7 +93,7 @@
 
                 function set_authentication_false() {
                     if (scope.problem) {
-                        if (scope.active_user.role != "physician" && scope.active_user.role != "admin")
+                        if (scope.active_user.role !== "physician" && scope.active_user.role !== "admin")
                             scope.problem.authenticated = false;
                     }
                 }
@@ -102,7 +102,8 @@
                     if (!scope.show_a1c_collapse) {
                         var form = {};
                         form.a1c_id = scope.a1c.id;
-                        a1cService.trackA1cClickEvent(form).then(function (data) {
+                        a1cService.trackA1cClickEvent(form).then(function (response) {
+                            let data = response.data;
                             CollapseService.ChangeA1cCollapse();
                             scope.show_a1c_collapse = CollapseService.show_a1c_collapse;
                         });
@@ -133,9 +134,10 @@
                 }
 
                 function add_note(form) {
-                    if (form.note == '') return;
+                    if (form.note === '') return;
                     form.a1c_id = scope.a1c.id;
-                    a1cService.addNote(form).then(function (data) {
+                    a1cService.addNote(form).then(function (response) {
+                        let data = response.data;
                         scope.a1c.a1c_notes.push(data['note']);
                         form.note = '';
                         toaster.pop('success', 'Done', 'Added Note!');
@@ -147,7 +149,8 @@
                 }
 
                 function toggleSaveNote(note) {
-                    a1cService.editNote(note).then(function (data) {
+                    a1cService.editNote(note).then(function (response) {
+                        let data = response.data;
                         note.edit = false;
                         toaster.pop('success', 'Done', 'Edited note successfully');
                     });
@@ -158,7 +161,8 @@
                         "title": "Are you sure?",
                         "message": "Deleting a note is forever. There is no undo."
                     }).then(function (result) {
-                        a1cService.deleteNote(note).then(function (data) {
+                        a1cService.deleteNote(note).then(function (response) {
+                            let data = response.data;
                             var index = scope.a1c.a1c_notes.indexOf(note);
                             scope.a1c.a1c_notes.splice(index, 1);
                             toaster.pop('success', 'Done', 'Deleted note successfully');

@@ -77,6 +77,7 @@
         function onCoverPictureRemove() {
             // Save to persistence
             patientService.removeCoverImage(ctrl.profile.id).then((response) => {
+                let data = response.data;
                 delete ctrl.profile.cover_image;
             });
         }

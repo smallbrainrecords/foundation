@@ -5,7 +5,7 @@
         <div class='row'>
 
             <div class='col-md-12'>
-                <a href='#/problem/{{ a1c.problem.id }}'><b> Back to problem page </b></a>
+                <a href='#!problem/{{ a1c.problem.id }}'><b> Back to problem page </b></a>
             </div>
         </div>
 
@@ -35,7 +35,7 @@
                         <td ng-class="{'text-danger': value.value_quantity > 7.5}"> {{ value.value_quantity| number:1 }} </td>
                         <td> {{ value.effective_datetime|date:'M/d/yyyy' }} </td>
                         <td>
-                            <a href="#/observation_value/{{ value.id }}/edit_value"
+                            <a href="#!observation_value/{{ value.id }}/edit_value"
                                ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">Edit</a>
                             <a href ng-click="deleteValue(value)"
                                ng-if="active_user.role == 'physician' || active_user.role == 'admin' || (active_user.role == 'patient' && active_user.user.id == value.author.id)">Delete</a>

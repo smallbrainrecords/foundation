@@ -84,14 +84,12 @@
                     transformRequest: angular.identity,
 
                     headers: {'Content-Type': undefined, 'X-CSRFToken': this.csrf_token()}
-                })
-                    .success(function (data) {
-                        deferred.resolve(data);
-                    })
-                    .error(function (data) {
-                        deferred.resolve(data);
+                }).then(function (data) {
+                    deferred.resolve(data);
+                }, function (data) {
+                    deferred.resolve(data);
 
-                    });
+                });
 
                 return deferred.promise;
 
@@ -115,14 +113,11 @@
                     transformRequest: angular.identity,
 
                     headers: {'Content-Type': undefined, 'X-CSRFToken': this.csrf_token()}
-                })
-                    .success(function (data) {
-                        deferred.resolve(data);
-                    })
-                    .error(function (data) {
-                        deferred.resolve(data);
-
-                    });
+                }).then(function (data) {
+                    deferred.resolve(data);
+                }, function (data) {
+                    deferred.resolve(data);
+                });
 
                 return deferred.promise;
 

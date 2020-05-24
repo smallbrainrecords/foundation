@@ -34,7 +34,8 @@
         init();
 
         function init() {
-            dataService.fetchDataInfo($scope.data_id).then(function (data) {
+            dataService.fetchDataInfo($scope.data_id).then(function (response) {
+                let data = response.data;
                 $scope.data = data['info'];
             });
         }
@@ -51,7 +52,8 @@
             form.color = data.color;
             form.patient_id = $scope.patient_id;
             form.data_id = $scope.data_id;
-            dataService.saveDataType(form).then(function (data) {
+            dataService.saveDataType(form).then(function (response) {
+                let data = response.data;
                 if (data['success']) {
                     toaster.pop('success', "Done", "Saved Data Type successfully!");
                     $scope.show_edit_data = false;
@@ -63,7 +65,8 @@
 
         function deleteData() {
             dataService.deleteData($scope.patient_id, $scope.data_id)
-                .then(function (data) {
+                .then(function (response) {
+                    let data = response.data;
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Deleted data!');
                         $location.url('/');
@@ -81,7 +84,8 @@
             form.data_id = $scope.data.id;
             form.graph_type = $scope.data.graph;
 
-            dataService.updateGraphType(form).then(function (data) {
+            dataService.updateGraphType(form).then(function (response) {
+                let data = response.data;
                 if (data['success']) {
                     toaster.pop('success', 'Done', 'Graph type ');
                 } else {

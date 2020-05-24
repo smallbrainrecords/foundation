@@ -36,7 +36,8 @@
 
             function init() {
 
-                a1cService.fetchObservationValueInfo($scope.value_id).then(function (data) {
+                a1cService.fetchObservationValueInfo($scope.value_id).then(function (response) {
+                    let data = response.data;
                     $scope.value = data['info'];
                     $scope.a1c_id = data['a1c_id'];
                     $scope.today = moment();
@@ -50,7 +51,8 @@
                     "title": "Are you sure?",
                     "message": "Deleting a value is forever. There is no undo."
                 }).then(function (result) {
-                    a1cService.deleteValue(value).then(function (data) {
+                    a1cService.deleteValue(value).then(function (response) {
+                        let data = response.data;
                         toaster.pop('success', 'Done', 'Deleted value successfully');
                         $location.url('/a1c/' + $scope.a1c_id + '/edit_or_delete_values');
                     });
@@ -73,7 +75,8 @@
                 form.value_id = value_id;
                 form.value_quantity = value_quantity;
                 form.effective_datetime = effective_datetime;
-                a1cService.editValue(form).then(function (data) {
+                a1cService.editValue(form).then(function (response) {
+                    let data = response.data;
                     $scope.value = data['info'];
                     $scope.a1c_date = moment($scope.value.effective_datetime);
                     $scope.a1c_date_format = moment($scope.value.effective_datetime).format("YYYY-MM-DD");
@@ -82,9 +85,10 @@
             }
 
             function add_note(form) {
-                if (form.note == '') return;
+                if (form.note === '') return;
                 form.value_id = $scope.value_id;
-                a1cService.addValueNote(form).then(function (data) {
+                a1cService.addValueNote(form).then(function (response) {
+                    let data = response.data;
                     $scope.value.observation_value_notes.push(data['note']);
                     form.note = '';
                     toaster.pop('success', 'Done', 'Added Note!');
@@ -96,7 +100,8 @@
             }
 
             function toggleSaveNote(note) {
-                a1cService.editValueNote(note).then(function (data) {
+                a1cService.editValueNote(note).then(function (response) {
+                    let data = response.data;
                     note.edit = false;
                     toaster.pop('success', 'Done', 'Edited note successfully');
                 });
@@ -107,7 +112,8 @@
                     "title": "Are you sure?",
                     "message": "Deleting a note is forever. There is no undo."
                 }).then(function (result) {
-                    a1cService.deleteValueNote(note).then(function (data) {
+                    a1cService.deleteValueNote(note).then(function (response) {
+                        let data = response.data;
                         var index = $scope.value.observation_value_notes.indexOf(note);
                         $scope.value.observation_value_notes.splice(index, 1);
                         toaster.pop('success', 'Done', 'Deleted note successfully');

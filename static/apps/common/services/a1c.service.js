@@ -19,7 +19,7 @@
     'use strict';
 
     angular.module('app.services')
-        .service('a1cService', function ($http, $q, $cookies, httpService) {
+        .service('a1cService', function ($cookies, httpService) {
 
             return {
                 csrf_token: csrf_token,

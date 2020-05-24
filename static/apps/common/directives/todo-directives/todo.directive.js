@@ -88,7 +88,8 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                                         }
                                     }
 
-                                    todoService.updateTodoOrder(form).then(function (data) {
+                                    todoService.updateTodoOrder(form).then(function (response) {
+                                        let data = response.data;
                                         toaster.pop('success', 'Done', 'Updated Todo');
                                     });
                                 }
@@ -112,8 +113,9 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
 
                     scope.update_todo_status = function (todo) {
                         scope.dragged = true;
-                        todoService.updateTodoStatus(todo).then(function (data) {
-                            if (data['success'] == true) {
+                        todoService.updateTodoStatus(todo).then(function (response) {
+                            let data = response.data;
+                            if (data['success'] === true) {
                                 toaster.pop('success', "Done", "Updated Todo status !");
                             } else {
                                 toaster.pop('error', 'Warning', 'Something went wrong!');
@@ -128,7 +130,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                             if (!todo.patient)
                                 $location.url('/todo/' + todo.id);
                             else
-                                location.href = '/u/patient/manage/' + todo.patient.id + '/#/todo/' + todo.id;
+                                location.href = '/u/patient/manage/' + todo.patient.id + '/#!todo/' + todo.id;
                         }
                     };
 
@@ -141,14 +143,15 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                         });
 
                         if (scope.is_tagged) {
-                            todoService.fetchTodoMembers(todo.patient.id).then(function (data) {
+                            todoService.fetchTodoMembers(todo.patient.id).then(function (response) {
+                                let data = response.data;
                                 scope.members = data['members'];
                             });
                         }
                     };
 
                     scope.closeThisTodo = function (todo) {
-                        if (currentTodo != undefined)
+                        if (currentTodo !== undefined)
                             todo.todo = currentTodo;
                         todo.changed = false;
                         scope.todo_changed = false;
@@ -157,8 +160,9 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     };
 
                     scope.saveTodoText = function (todo) {
-                        todoService.changeTodoText(todo).then(function (data) {
-                            if (data['success'] == true) {
+                        todoService.changeTodoText(todo).then(function (response) {
+                            let data = response.data;
+                            if (data['success'] === true) {
                                 toaster.pop('success', "Done", "Updated Todo text!");
                                 todo.changed = false;
                                 scope.todo_changed = false;
@@ -174,13 +178,14 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     };
 
                     scope.saveTodoDueDate = function (todo) {
-                        todoService.changeTodoDueDate(todo).then(function (data) {
+                        todoService.changeTodoDueDate(todo).then(function (response) {
+                            let data = response.data;
                             todo.change_due_date = !todo.change_due_date;
-                            if (data['success'] == true) {
+                            if (data['success'] === true) {
                                 if (scope.allowDueDateNotification)
                                     toaster.pop('success', "Done", "Due date Updated!");
                                 scope.allowDueDateNotification = true;
-                            } else if (data['success'] == false) {
+                            } else if (data['success'] === false) {
                                 todo.due_date = data['todo']['due_date'];
                                 toaster.pop('error', 'Error', 'Invalid date format');
                                 scope.allowDueDateNotification = false;
@@ -191,7 +196,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     };
 
                     scope.createLabel = function (todo) {
-                        todo.create_label = (todo.create_label != true) ? true : false;
+                        todo.create_label = (todo.create_label !== true);
                     };
 
                     scope.selectLabelComponent = function (component) {
@@ -201,12 +206,13 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     scope.saveCreateLabel = function (todo) {
                         scope.label_component.is_all = null;
                         if (scope.label_component.css_class != null) {
-                            todoService.saveCreateLabel(todo.id, scope.label_component).then(function (data) {
-                                if (data['success'] == true) {
-                                    if (data['new_status'] == true) {
+                            todoService.saveCreateLabel(todo.id, scope.label_component).then(function (response) {
+                                let data = response.data;
+                                if (data['success'] === true) {
+                                    if (data['new_status'] === true) {
                                         scope.labels.push(data['new_label']);
                                     }
-                                    if (data['status'] == true) {
+                                    if (data['status'] === true) {
                                         todo.labels.push(data['label']);
                                         toaster.pop('success', "Done", "Added Todo label!");
                                     }
@@ -221,12 +227,13 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     scope.saveCreateLabelAll = function (todo) {
                         scope.label_component.is_all = true;
                         if (scope.label_component.css_class != null) {
-                            todoService.saveCreateLabel(todo.id, scope.label_component).then(function (data) {
-                                if (data['success'] == true) {
-                                    if (data['new_status'] == true) {
+                            todoService.saveCreateLabel(todo.id, scope.label_component).then(function (response) {
+                                let data = response.data;
+                                if (data['success'] === true) {
+                                    if (data['new_status'] === true) {
                                         scope.labels.push(data['new_label']);
                                     }
-                                    if (data['status'] == true) {
+                                    if (data['status'] === true) {
                                         todo.labels.push(data['label']);
                                         toaster.pop('success', "Done", "Added Todo label!");
                                     }
@@ -239,7 +246,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     };
 
                     scope.editLabel = function (label) {
-                        label.edit_label = (label.edit_label != true) ? true : false;
+                        label.edit_label = label.edit_label !== true;
                     };
 
                     scope.selectEditLabelComponent = function (label, component) {
@@ -248,13 +255,14 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
 
                     scope.saveEditLabel = function (label) {
                         if (label.css_class != null) {
-                            todoService.saveEditLabel(label).then(function (data) {
-                                if (data['success'] == true) {
+                            todoService.saveEditLabel(label).then(function (response) {
+                                let data = response.data;
+                                if (data['success'] === true) {
                                     label.css_class = data['label']['css_class'];
-                                    if (data['status'] == true) {
+                                    if (data['status'] === true) {
                                         angular.forEach(scope.problem_todos, function (todo, key) {
                                             angular.forEach(todo.labels, function (value, key2) {
-                                                if (value.id == label.id) {
+                                                if (value.id === label.id) {
                                                     value.css_class = label.css_class;
                                                 }
                                             });
@@ -280,7 +288,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                         var existed_id;
 
                         angular.forEach(todo.labels, function (value, key) {
-                            if (value.name == label.name) {
+                            if (value.name === label.name) {
                                 is_existed = true;
                                 existed_key = key;
                                 existed_id = value.id;
@@ -288,8 +296,9 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                         });
                         if (!is_existed) {
                             todo.labels.push(label);
-                            todoService.addTodoLabel(label.id, todo.id).then(function (data) {
-                                if (data['success'] == true) {
+                            todoService.addTodoLabel(label.id, todo.id).then(function (response) {
+                                let data = response.data;
+                                if (data['success'] === true) {
                                     toaster.pop('success', "Done", "Added Todo label!");
                                 } else {
                                     toaster.pop('error', 'Warning', 'Something went wrong!');
@@ -297,8 +306,9 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                             });
                         } else {
                             todo.labels.splice(existed_key, 1);
-                            todoService.removeTodoLabel(existed_id, todo.id).then(function (data) {
-                                if (data['success'] == true) {
+                            todoService.removeTodoLabel(existed_id, todo.id).then(function (response) {
+                                let data = response.data;
+                                if (data['success'] === true) {
                                     toaster.pop('success', "Done", "Removed Todo label!");
                                 } else {
                                     toaster.pop('error', 'Warning', 'Something went wrong!');
@@ -314,18 +324,19 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                             "message": "Deleting a label is forever. There is no undo."
                         }).then(function (result) {
                             var currentLabel = label;
-                            todoService.deleteLabel(label).then(function (data) {
+                            todoService.deleteLabel(label).then(function (response) {
+                                let data = response.data;
                                 var index = scope.labels.indexOf(currentLabel);
                                 scope.labels.splice(index, 1);
 
                                 angular.forEach(scope.problem_todos, function (todo, key) {
                                     var index2;
                                     angular.forEach(todo.labels, function (value, key2) {
-                                        if (value.id == currentLabel.id) {
+                                        if (value.id === currentLabel.id) {
                                             index2 = key2;
                                         }
                                     });
-                                    if (index2 != undefined)
+                                    if (index2 !== undefined)
                                         todo.labels.splice(index2, 1);
                                 });
 
@@ -337,7 +348,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     };
 
                     scope.changeMember = function (todo) {
-                        todo.change_member = (todo.change_member != true) ? true : false;
+                        todo.change_member = todo.change_member !== true;
                     };
 
                     scope.changeTodoMember = function (todo, member) {
@@ -347,7 +358,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                         var existed_id;
 
                         angular.forEach(todo.members, function (value, key) {
-                            if (value.id == member.id) {
+                            if (value.id === member.id) {
                                 is_existed = true;
                                 existed_key = key;
                                 existed_id = value.id;
@@ -355,8 +366,9 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                         });
                         if (!is_existed) {
                             todo.members.push(member);
-                            todoService.addTodoMember(todo, member).then(function (data) {
-                                if (data['success'] == true) {
+                            todoService.addTodoMember(todo, member).then(function (response) {
+                                let data = response.data;
+                                if (data['success'] === true) {
                                     toaster.pop('success', "Done", "Added member!");
                                 } else {
                                     toaster.pop('error', 'Warning', 'Something went wrong!');
@@ -364,8 +376,9 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                             });
                         } else {
                             todo.members.splice(existed_key, 1);
-                            todoService.removeTodoMember(todo, member).then(function (data) {
-                                if (data['success'] == true) {
+                            todoService.removeTodoMember(todo, member).then(function (response) {
+                                let data = response.data;
+                                if (data['success'] === true) {
                                     toaster.pop('success', "Done", "Removed member!");
                                 } else {
                                     toaster.pop('error', 'Warning', 'Something went wrong!');
@@ -383,7 +396,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                             scope.current_todo.change_label = false;
                             scope.current_todo.change_member = false;
                             scope.current_todo.create_label = false;
-                            scope.current_todo == null;
+                            scope.current_todo = null;
                         }
                     };
 

@@ -67,7 +67,8 @@
                                             form.patient_id = scope.patient_id;
                                         }
 
-                                        patientService.updateProblemOrder(form).then(function (data) {
+                                        patientService.updateProblemOrder(form).then(function (response) {
+                                            let data = response.data;
                                             toaster.pop('success', 'Done', 'Updated Problem Order');
                                         });
                                     }
