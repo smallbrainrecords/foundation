@@ -353,9 +353,9 @@
                 // Activity
                 problemService.getProblemActivity($scope.problem_id, 0).then(function (response) {
                     let data = response.data;
-                    $scope.activities = response['activities'];
-                    if (response['activities'].length) {
-                        $scope.current_activity = _.first(response['activities']).id;
+                    $scope.activities = data.activities;
+                    if (data.activities.length) {
+                        $scope.current_activity = _.first(data.activities).id;
                     }
                 });
 
@@ -1194,11 +1194,11 @@
             function refresh_problem_activity() {
                 problemService.getProblemActivity($scope.problem_id, $scope.current_activity).then(function (response) {
                     let data = response.data;
-                    if (data['activities'].length) {
-                        for (var i = data['activities'].length - 1; i >= 0; i--) {
-                            $scope.activities.unshift(data['activities'][i]);
+                    if (data.activities.length) {
+                        for (var i = data.activities.length - 1; i >= 0; i--) {
+                            $scope.activities.unshift(data.activities[i]);
                         }
-                        $scope.current_activity = data['activities'][0].id;
+                        $scope.current_activity = data.activities[0].id;
                     }
                 })
             }

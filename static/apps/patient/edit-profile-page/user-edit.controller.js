@@ -91,7 +91,8 @@
                 form.first_name = $scope.patient_info.user.first_name;
                 form.last_name = $scope.patient_info.user.last_name;
 
-                patientService.updateBasicProfile(form).then(data => {
+                patientService.updateBasicProfile(form).then(response => {
+                    let data = response.data;
 
                     if (data['success']) {
                         toaster.pop('success', 'Done', 'Patient updated!');
@@ -133,12 +134,13 @@
                 form.user_id = $scope.patient_id;
                 form.email = $scope.patient_info.user.email;
 
-                patientService.updateEmail(form).then(data => {
+                patientService.updateEmail(form).then(response => {
+                    let data = response.data;
 
-                    if (data['success']) {
+                    if (data.success) {
                         toaster.pop('success', 'Done', 'Patient updated!');
 
-                    } else if (!data['success']) {
+                    } else if (!data.success) {
                         toaster.pop('error', 'Error', 'Please fill valid data');
                     }
                 });
@@ -162,7 +164,8 @@
                     'repassword': $scope.repassword,
                 };
 
-                patientService.updatePatientPassword(form).then(data => {
+                patientService.updatePatientPassword(form).then(response => {
+                    let data = response.data;
                     if (data.success) {
                         toaster.pop('success', 'Done', 'Patient password updated!');
                         $scope.old_password = null;
@@ -182,8 +185,9 @@
 
 
                 patientService.updateProfile(form, files)
-                    .then(data => {
-                        if (data['success']) {
+                    .then(response => {
+                        let data = response.data;
+                        if (data.success) {
                             toaster.pop('success', 'Done', 'Updated');
                         } else {
                             toaster.pop('error', 'Error', 'Update failed');
@@ -192,7 +196,14 @@
             }
 
             function submitInsurance() {
-                patientService.updateMedicare($scope.patient_id, $scope.insuranceForm);
+                patientService.updateMedicare($scope.patient_id, $scope.insuranceForm).then(response => {
+                    let data = response.data;
+                    if (data.success) {
+                        toaster.pop('success', 'Done', 'Updated');
+                    } else {
+                        toaster.pop('error', 'Error', 'Update failed');
+                    }
+                });
             }
 
         });
