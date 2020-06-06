@@ -90,7 +90,6 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
     'compressor.finders.CompressorFinder',
 )
 
@@ -141,9 +140,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
     'mptt',
     'reversion',
@@ -151,15 +148,22 @@ INSTALLED_APPS = (
     'pain',
     'genericadmin',
     'compressor',
-    'cronjobs',
     'session_security',
     'raven.contrib.django.raven_compat',
     'django_crontab',
 )
 
+CRONJOBS = [
+    ('0 0 * * *', 'emr.cron.a1c_order_was_automatically_generated'),
+    ('0 0 * * *', 'emr.cron.physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times'),
+    ('0 0 * * *', 'emr.cron.physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_3_times'),
+    ('0 0 * * *', 'emr.cron.problem_relationship_auto_pinning_for_3_times_matched'),
+]
+
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
+
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 1800

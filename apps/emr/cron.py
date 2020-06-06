@@ -35,7 +35,6 @@ def age(when, on=None):
     return on.year - when.year - was_earlier
 
 
-@cronjobs.register
 def review_colorectal_cancer_risk_assessment():
     print('Starting cron review_colorectal_cancer_risk_assessment...')
 
@@ -69,7 +68,6 @@ def review_colorectal_cancer_risk_assessment():
     print('')
 
 
-@cronjobs.register
 def patient_needs_a_plan_for_colorectal_cancer_screening():
     print('Starting cron patient_needs_a_plan_for_colorectal_cancer_screening...')
 
@@ -108,7 +106,6 @@ def patient_needs_a_plan_for_colorectal_cancer_screening():
     print('')
 
 
-@cronjobs.register
 def a1c_order_was_automatically_generated():
     print('Starting cron a1c_order_was_automatically_generated...')
 
@@ -147,7 +144,6 @@ def a1c_order_was_automatically_generated():
 
 
 @timeit
-@cronjobs.register
 def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times():
     """
     Refer: https://trello.com/c/DSAQoLCw -> https://trello.com/c/UDwAXH4H
@@ -195,7 +191,6 @@ def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_time
     print('')
 
 
-@cronjobs.register
 def physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_3_times():
     # then that medication is added to all patients for that problem
 
@@ -223,7 +218,6 @@ def physician_adds_the_same_medication_to_the_same_problem_concept_id_more_than_
     print('')
 
 
-@cronjobs.register
 def problem_relationship_auto_pinning_for_3_times_matched():
     """
     https://trello.com/c/TWI2l0UU
