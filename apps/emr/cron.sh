@@ -4,10 +4,10 @@
 LOG_FILE="/var/www/andromeda/cronlogs/smallbrain-cronjob.log"
 
 # cd to project directory
-cd /var/www/andromeda/foundation
+cd /var/www/andromeda/smallbrain2/foundation
 
 # activate virtualenv
-source /home/softdevelop_vd/Env/foundation/bin/activate
+source /var/www/andromeda/smallbrain2/env.smallbrain2/bin/activate
 
 # using echo to add lines & characters to make log file easier to read 
 

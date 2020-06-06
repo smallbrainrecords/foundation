@@ -173,14 +173,14 @@
                             if (_.contains($scope.availableWidgets, 'a1c')) {
                                 problemService.fetchA1c($scope.problem_id).then(function (response) {
                                     let data = response.data;
-                                    $scope.a1c = response['a1c'];
+                                    $scope.a1c = data['a1c'];
                                 });
                             }
 
                             if (_.contains($scope.availableWidgets, 'colon_cancers')) {
                                 problemService.fetchColonCancerss($scope.problem_id).then(function (response) {
                                     let data = response.data;
-                                    $scope.colon_cancers = response['colon_cancers'];
+                                    $scope.colon_cancers = data['colon_cancers'];
                                 });
                             }
 

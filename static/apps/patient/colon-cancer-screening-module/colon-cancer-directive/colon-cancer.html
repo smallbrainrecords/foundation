@@ -9,15 +9,6 @@
                 <div class="io-box" id="recent-screening">
                     <div class="row" ng-if="colon_cancer.colon_studies.length > 0">
                         <div class="col-md-12">
-                            <div>
-                                <span><b>Most recent study</b></span>
-                                <div class="pull-right">
-                                    <a ng-href="#!colon_cancer/{{ colon_cancer.id }}/add_new_study"
-                                       class="btn btn-default">
-                                        Add new study
-                                    </a>
-                                </div>
-                            </div>
                             <div class="study-wrapper">
                                 <p>Study: <span ng-bind="colon_cancer.colon_studies[0].finding"></span>,
                                     <span ng-bind="colon_cancer.colon_studies[0].result"></span></p>
@@ -44,7 +35,9 @@
                             degree relative with colorectal cancer or adenomatous polyps.
                         </div>
                     </div>
-
+                    <a ng-href="#!colon_cancer/{{ colon_cancer.id }}/add_new_study" class="btn btn-primary btn-block">Add
+                        new study
+                    </a>
                     <button class='btn btn-default btn-block'
                             ng-click="see_past_studies=!see_past_studies">View past studies
                     </button>

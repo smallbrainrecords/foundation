@@ -18,25 +18,14 @@
 
     'use strict';
 
-    angular.module('colon_cancers', [])
-        .config(($routeProvider) => {
-            $routeProvider
-                .when("/colon_cancer/:colonId/add_new_study", {
-                    templateUrl: '/static/apps/patient/colon-cancer-create-page/add-study.html',
-                    controller: 'AddNewStudyCtrl'
-                })
-                .when("/colon_cancer/:colonId/edit_study/:studyId", {
-                    templateUrl: '/static/apps/patient/colon-cancer-edit-page/edit-study.html',
-                    controller: 'EditStudyCtrl'
-                });
-        })
+    angular.module('colon_cancers')
         .directive('colonCancer', colonCancerDirective);
     colonCancerDirective.$inject = ['toaster', 'prompt', 'CollapseService', 'colonService', 'problemService', 'patientService', '$routeParams'];
 
     function colonCancerDirective(toaster, prompt, CollapseService, colonService, problemService, patientService, $routeParams) {
         return {
             restrict: 'E',
-            templateUrl: '/static/apps/patient/directives/colon-cancer-directive/colon-cancer.html',
+            templateUrl: '/static/apps/patient/colon-cancer-screening-module/colon-cancer-directive/colon-cancer.html',
             scope: {
                 colon_cancer: '=colonCancer',
                 orderAdded: '=',
