@@ -12,226 +12,331 @@
     <link href="/static/node_modules/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
     <!-- Version 3.x -->
     <link href="/static/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-
+    <link href="/static/node_modules/bootstrap/dist/css/bootstrap-theme.min.css" rel="stylesheet" type="text/css">
     <link href="/static/css/landing_page.css" rel="stylesheet" type="text/css"/>
-
-    <link href="/static/css/main.css" rel="stylesheet" type="text/css">
-    <link href="/static/css/patient-profile.css" rel="stylesheet" type="text/css">
+    <!--    <link href="/static/css/main.css" rel="stylesheet" type="text/css">-->
+    <!--    <link href="/static/css/patient-profile.css" rel="stylesheet" type="text/css">-->
     {% endcompress %}
 
+    <script src="/static/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 </head>
 {% load static %}
 <body>
 
 <nav class="navbar navbar-default navbar-fixed-top">
-    <div class="container-fluid container">
+    <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
             <button class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse"
                     type="button">
                 <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/u/login">Login</a>
+            <a class="navbar-brand">Smallbrain</a>
         </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a class="navbar-brand" href="/u/login">Login</a></li>
+            </ul>
+        </div><!-- /.container-fluid -->
     </div><!-- /.container-fluid -->
 </nav>
 
-<div class="clearfix borderbox" id="page"><!-- column -->
-    <div class="clip_frame colelem" id="u210"><!-- image -->
-        <img alt="cover" class="block" data-heightwidthratio="0.13695652173913042" data-image-height="126"
-             data-image-width="920" id="u210_img" src="{% static 'images/docpic-crop-u210.jpg' %}"/>
-    </div>
-    <div class="clearfix colelem" data-pintopage="page_fixedCenter" data-sizePolicy="fluidWidth" id="u97-4">
-        <!-- content -->
-        <h1>SMALL BRAIN RECORDS</h1>
-    </div>
-    <div class="clearfix colelem" data-pintopage="page_fixedCenter" data-sizePolicy="fluidWidth" id="u94-6">
-        <!-- content -->
-        <p>Small Brain is a web based clinical information system.&nbsp; It's a radically different model than first
-            generation EHRs.&nbsp; Our system has been designed to handle complex patients while capturing the most
-            objective data generated during the encounter, all the while reducing time charting.</p>
-        <p>We have worked with leading information scientists and physicians to create something revolutionary.&nbsp;
-            Check it out for yourself, it's an open source project so if you have the skills we will help you get
-            started.&nbsp; If you need us to do all the tech work we can make that happen too.</p>
-    </div>
-    <div class="clearfix colelem" data-pintopage="page_fixedCenter" data-sizePolicy="fluidWidth" id="u100-4">
-        <!-- content -->
-        <p>Featured in:</p>
-    </div>
-    <div class="clearfix colelem" id="pu101"><!-- group -->
-        <a class="nonblock nontext clip_frame grpelem" href="https://www.nytimes.com/2017/08/18/health/recording-your-doctors-appointment.html"
-           id="u101" target="_blank">
-            <!-- image --><img alt="" class="block"
-                               data-heightwidthratio="0.16831683168316833"
-                               data-image-height="34"
-                               data-image-width="202" id="u101_img"
-                               src="{% static 'images/the-new-youk-times.jpg' %}"/></a>
-        <a class="nonblock nontext clip_frame grpelem" href="https://www.aarp.org/health/healthy-living/info-2017/audio-recording-your-doctor-visit-fd.html"
-           id="u105">
-            <!-- image --><img alt="" class="block"
-                               data-heightwidthratio="1"
-                               data-image-height="103" data-image-width="103" id="u105_img" src="{% static 'images/aarp.jpg' %}"/></a>
-        <a class="nonblock nontext clip_frame grpelem" data-pintopage="page_fixedCenter"
-           data-sizePolicy="fluidWidthHeight" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5519830/"
-           id="u109"><!-- image --><img alt="" class="block"
-                                                                data-heightwidthratio="0.5572139303482587"
-                                                                data-image-height="112" data-image-width="201"
-                                                                id="u109_img" src="{% static 'images/jmir.jpg' %}"/></a>
-        <a class="nonblock nontext clip_frame grpelem" href="http://www.medicaleconomics.com/medical-economics-blog/should-patients-be-allowed-record-their-doctors"
-           id="u103">
-            <!-- image --><img class="block" data-heightwidthratio="0.37662337662337664"
-                               data-image-height="58"
-                               data-image-width="154" id="u103_img"
-                               src="{% static 'images/medical-economics.png' %}"/></a>
-        <a class="nonblock nontext clip_frame grpelem" href="https://www.medscape.com/viewarticle/895560" id="u106">
-            <!-- image --><img class="block" data-heightwidthratio="0.2392638036809816"
-                               data-image-height="39"
-                               data-image-width="163" id="u440_img"
-                               src="{% static 'images/1280px-medscape_logosvg.png' %}"/></a>
-    </div>
-    <div class="clearfix colelem" id="pu107"><!-- group -->
-        <a class="nonblock nontext clip_frame grpelem" href="http://www.cbc.ca/radio/whitecoat/from-er-to-office-how-the-practice-of-medicine-is-changing-1.4307446/forget-what-the-doctor-said-this-md-records-visits-so-you-can-listen-back-1.4307921"
-           id="u107">
-            <!-- image --><img alt="" class="block"
-                               data-heightwidthratio="0.5619047619047619"
-                               data-image-height="59" data-image-width="105" id="u107_img"
-                               src="{% static 'images/cbc.jpg' %}"/></a>
-        <a class="nonblock nontext clip_frame grpelem" href="http://www.openrecordings.org/" id="u111">
-            <!-- image --><img alt="" class="block"
-                               data-heightwidthratio="0.8073394495412844"
-                               data-image-height="88"
-                               data-image-width="109" id="u111_img"
-                               src="{% static 'images/open-recording.jpg' %}"/></a>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u231-10"><!-- content -->
-        <p>Like all great stories it started around a fire.&nbsp; Kevin Perdue and James Ryan were reflecting on the
-            strange state of clinical informations systems and soon began to dream of making something truly cool.</p>
-        <p>&nbsp;</p>
-        <p>We began by getting help.&nbsp; One of our earliest advisors was Charles Friedman who became our
-            Gandalf, and without his caring support would not have been brave enough to leave the Shire.&nbsp; Here's a
-            <a class="nonblock" href="https://www.youtube.com/watch?v=jAmPJKFZC7c" target="_blank">link</a> to a video
-            of one of the lectures he invited us to give.</p>
-    </div>
-    <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
-        <!-- content -->
-        <h2>The Thing itself</h2>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u243-4"><!-- content -->
-        <p>Small brain records is a problem, task, encounter based system.&nbsp; Its goal is to allow complex patients
-            to be managed safely while ensuring that the data collected during clinical care is accurate and
-            objective.</p>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u245-15"><!-- content -->
-        <p>The system is web based and allows patients and their care team to collaboratively manage their health.&nbsp;
-            Problems can be accessed by patients and physicians, and notes, images, orders and other relevant data can
-            be added or reviewed by both user types.</p>
-        <p>Tasks are also collaborative, allowing patients and their care team to manage the Todo list, and each
-            Todo provides a space for task specific communication.&nbsp; The system automatically connects the task with
-            the relevant clinical problem, and any clinical encounters it is referenced in.</p>
-        <p>Encounters are audio recorded, compressed and uploaded all in the browser.&nbsp; The system automatically
-            annotates the audio recording linking the appropriate parts of the encounter to each relevant problem and
-            task.&nbsp;&nbsp;&nbsp; <a class="nonblock" href="https://vimeo.com/user35042652" target="_blank">Here are
-                some videos of the system in use.</a></p>
-        <p>&nbsp;</p>
-        <p>&nbsp;</p>
-        <p>&nbsp;</p>
-        <p id="u245-13">Human health is difficult to model with a series of static word documents.&nbsp; By providing
-            dynamic modules our system uses the finest techniques to engage the user.</p>
-    </div>
-    <div class="Text_Simple clearfix colelem" data-pintopage="page_fixedCenter" data-sizePolicy="fixed" id="u421-4">
-        <!-- content -->
-        <p>&quot;Futuristic and has great potential... Looking forward to your next iteration.&quot;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            Jiajie Zhang</p>
-    </div>
-    <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
-        <!-- content -->
-        <h2>Learning enabled</h2>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
-        <p>The system has been built to learn how I practice medicine, how I heal, how I recommend, how I use the system
-            itself.&nbsp; The the set of actions we as physicians undertakes to care for patients is finite and
-            categorical.&nbsp; We started with a simple ontology for our prototype, and since then have continued to add
-            and sub-categorize.&nbsp; This data set informs the system how I work, both in the context of a particular
-            patient, but also in the context of a particular clinical problem and task. With continued use the system
-            can predict what I will do next as I navigate through it, and so the buttons I click today are teaching the
-            system how to follow and predict me autonomously.&nbsp; This is what you want as a unique clinician.</p>
-        <p>By starting with the most elemental model of healing we ensure that changes in technology will not
-            disturb the evolution of the system.&nbsp; We tested our model against every recorded instance of the
-            healing act on the planet.&nbsp; You can drop this puppy into the hands of a tech happy shaman in the wild
-            and they will find it as helpful as an urban internal medicine physician.</p>
-        <p>&nbsp;</p>
-        <p>Clinical data and user actions:</p>
-        <p>A system that can simultaneously measure and run feedback loops. manual user efforts transferred to machine
-            operations.&nbsp; A learning health system inside a virtual cycle, inside a learning health system.</p>
-    </div>
-    <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
-        <!-- content -->
-        <h2>Open source</h2>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
-        <p>The system is AGPL V3.&nbsp; The code is on github.&nbsp; email Jim at ryanjam4@msu.edu&nbsp; for repository
-            access.</p>
-        <p>&nbsp;</p>
-        <p>We believe that&nbsp; healthcare needs tools to start exploring, and people to explore with.&nbsp; Our hearts
-            and minds are tired of continued steps to maximize profits at the expense of scientific growth and clinical
-            use.&nbsp; Startups promising wonders that don't materialize. The need to explore is a real&nbsp; human
-            desire that when undertaken with love, patience and great advisors can yield a thing that can remedy some of
-            the negative feelings that health care has been plagued with.</p>
-    </div>
-    <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
-        <!-- content -->
-        <h2>Transparent and collaborative</h2>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
-        <p>Patient's and their care givers have never had such deep access and privileges to collaborate in their health
-            records.&nbsp; As Glynn Elwin said &quot;it's like Open Notes on steroids&quot;.&nbsp; Patients can log in
-            and add problems, add notes to current problems that become part of the legal document, add images, data
-            points and even data types.&nbsp; Tasks, orders, referrals etc. can be discussed in a meaningful way that
-            retains the clinical context. Patients can grant access to family members or other individuals that they
-            trust to help them on the health journey.&nbsp; Encounters are audio recorded and easy to access on most
-            modern devices.&nbsp; Particular discussions can quickly be found in the appropriate problem and easily
-            tagged for quick access.&nbsp; We see our system as the logical conclusion of a patient portal ie. one
-            unified system that enables deep collaboration. Have a <a class="nonblock"
-                                                                      href="https://vimeo.com/267133078"
-                                                                      target="_blank">look at this video</a> that shows
-            the basic features of the system from the patient's perspective.</p>
-    </div>
+<div class="clearfix borderbox"><!-- column -->
+    <section>
+        <div class="container">
+            <div class="clip_frame colelem" id="u210"><!-- image -->
+                <img alt="cover" class="block" data-heightwidthratio="0.13695652173913042" data-image-height="126"
+                     data-image-width="920" id="u210_img" src="{% static 'images/docpic-crop-u210.jpg' %}"/>
+            </div>
+            <div class="clearfix colelem" data-pintopage="page_fixedCenter" data-sizePolicy="fluidWidth" id="u97-4">
+                <!-- content -->
+                <h1>SMALL BRAIN RECORDS</h1>
+            </div>
+            <div class="clearfix colelem" data-pintopage="page_fixedCenter" data-sizePolicy="fluidWidth" id="u94-6">
+                <!-- content -->
+                <p>Small Brain is a web based clinical information system.&nbsp; It's a radically different model than
+                    first
+                    generation EHRs.&nbsp; Our system has been designed to handle complex patients while capturing the
+                    most
+                    objective data generated during the encounter, all the while reducing time charting.</p>
+                <p>We have worked with leading information scientists and physicians to create something revolutionary.&nbsp;
+                    Check it out for yourself, it's an open source project so if you have the skills we will help you
+                    get
+                    started.&nbsp; If you need us to do all the tech work we can make that happen too.</p>
+            </div>
+        </div>
+    </section>
 
-    <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
-        <!-- content -->
-        <h2>FHIR integration</h2>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
-        <p>We're still in FHIR prototype mode but getting closer to full FHIR integration.&nbsp; Currently we have three
-            prototype clinical modules built to experiment with modular design {a colon cancer, A1C, and warfarin
-            management application}.&nbsp;&nbsp; These have been guiding our next architectural step toward full FHIR
-            use.&nbsp; We have a FHIR server up and running and will be testing simple data exchange.
-            Ultimately our system can be used as a stand alone, or in concert with other systems.</p>
-    </div>
-    <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
-        <!-- content -->
-        <h2>Advisors</h2>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
-        <p>Our current advisors are Charles Friedman , John Beasley, and Timothy Pletcher.&nbsp; We would also not have
-            journeyed this far without the support and guidance of many others, in particular Martin Wehlou, Mark
-            Leavitt, and Josh Mandel.</p>
-    </div>
-    <div class="Text_Simple clearfix colelem" data-pintopage="page_fixedCenter" data-sizePolicy="fixed" id="u426-4">
-        <!-- content -->
-        <p>&quot;very exciting&quot; John Ioannidis</p>
-    </div>
-    <div class="Text_Simple clearfix colelem" id="u243-4"><!-- content -->
-        <p>If you are a resident or practicing physician with a passion for designing tools that facilitate care and are
-            interested in beta-testing some of the features of our system, we would love to work with you. Feel free to
-            read our research journal&nbsp; <a class="nonblock"
-                                               href="https://digitaltransformationofhealth.blogspot.com/"
-                                               target="_blank">The Digital Transformation of Primary Care.</a></p>
-        <p>&nbsp;</p>
+    <section>
+        <div class="container">
+            <div class="clearfix colelem" data-pintopage="page_fixedCenter" data-sizePolicy="fluidWidth" id="u100-4">
+                <!-- content -->
+                <p>Featured in:</p>
+            </div>
+            <div class="clearfix colelem" id="pu101"><!-- group -->
+                <a class="nonblock nontext clip_frame grpelem"
+                   href="https://www.nytimes.com/2017/08/18/health/recording-your-doctors-appointment.html"
+                   id="u101" target="_blank">
+                    <!-- image --><img alt="" class="block"
+                                       data-heightwidthratio="0.16831683168316833"
+                                       data-image-height="34"
+                                       data-image-width="202" id="u101_img"
+                                       src="{% static 'images/the-new-youk-times.jpg' %}"/></a>
+                <a class="nonblock nontext clip_frame grpelem"
+                   href="https://www.aarp.org/health/healthy-living/info-2017/audio-recording-your-doctor-visit-fd.html"
+                   id="u105">
+                    <!-- image --><img alt="" class="block"
+                                       data-heightwidthratio="1"
+                                       data-image-height="103" data-image-width="103" id="u105_img"
+                                       src="{% static 'images/aarp.jpg' %}"/></a>
+                <a class="nonblock nontext clip_frame grpelem" data-pintopage="page_fixedCenter"
+                   data-sizePolicy="fluidWidthHeight" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5519830/"
+                   id="u109"><!-- image --><img alt="" class="block"
+                                                data-heightwidthratio="0.5572139303482587"
+                                                data-image-height="112" data-image-width="201"
+                                                id="u109_img" src="{% static 'images/jmir.jpg' %}"/></a>
+                <a class="nonblock nontext clip_frame grpelem"
+                   href="http://www.medicaleconomics.com/medical-economics-blog/should-patients-be-allowed-record-their-doctors"
+                   id="u103">
+                    <!-- image --><img class="block" data-heightwidthratio="0.37662337662337664"
+                                       data-image-height="58"
+                                       data-image-width="154" id="u103_img"
+                                       src="{% static 'images/medical-economics.png' %}"/></a>
+                <a class="nonblock nontext clip_frame grpelem" href="https://www.medscape.com/viewarticle/895560"
+                   id="u106">
+                    <!-- image --><img class="block" data-heightwidthratio="0.2392638036809816"
+                                       data-image-height="39"
+                                       data-image-width="163" id="u440_img"
+                                       src="{% static 'images/1280px-medscape_logosvg.png' %}"/></a>
+            </div>
+            <div class="clearfix colelem" id="pu107"><!-- group -->
+                <a class="nonblock nontext clip_frame grpelem"
+                   href="http://www.cbc.ca/radio/whitecoat/from-er-to-office-how-the-practice-of-medicine-is-changing-1.4307446/forget-what-the-doctor-said-this-md-records-visits-so-you-can-listen-back-1.4307921"
+                   id="u107">
+                    <!-- image --><img alt="" class="block"
+                                       data-heightwidthratio="0.5619047619047619"
+                                       data-image-height="59" data-image-width="105" id="u107_img"
+                                       src="{% static 'images/cbc.jpg' %}"/></a>
+                <a class="nonblock nontext clip_frame grpelem" href="http://www.openrecordings.org/" id="u111">
+                    <!-- image --><img alt="" class="block"
+                                       data-heightwidthratio="0.8073394495412844"
+                                       data-image-height="88"
+                                       data-image-width="109" id="u111_img"
+                                       src="{% static 'images/open-recording.jpg' %}"/></a>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="Text_Simple clearfix colelem" id="u231-10"><!-- content -->
+                <p>Like all great stories it started around a fire.&nbsp; Kevin Perdue and James Ryan were reflecting on
+                    the
+                    strange state of clinical informations systems and soon began to dream of making something truly
+                    cool.</p>
+                <p>&nbsp;</p>
+                <p>We began by getting help.&nbsp; One of our earliest advisors was Charles Friedman who became our
+                    Gandalf, and without his caring support would not have been brave enough to leave the Shire.&nbsp;
+                    Here's a
+                    <a class="nonblock" href="https://www.youtube.com/watch?v=jAmPJKFZC7c" target="_blank">link</a> to a
+                    video
+                    of one of the lectures he invited us to give.</p>
+            </div>
+
+            <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
+                <!-- content -->
+                <h2>The Thing itself</h2>
+            </div>
+            <div class="Text_Simple clearfix colelem" id="u243-4"><!-- content -->
+                <p>Small brain records is a problem, task, encounter based system.&nbsp; Its goal is to allow complex
+                    patients
+                    to be managed safely while ensuring that the data collected during clinical care is accurate and
+                    objective.</p>
+            </div>
+            <div class="Text_Simple clearfix colelem" id="u245-15"><!-- content -->
+                <p>The system is web based and allows patients and their care team to collaboratively manage their
+                    health.&nbsp;
+                    Problems can be accessed by patients and physicians, and notes, images, orders and other relevant
+                    data can
+                    be added or reviewed by both user types.</p>
+                <p>Tasks are also collaborative, allowing patients and their care team to manage the Todo list, and each
+                    Todo provides a space for task specific communication.&nbsp; The system automatically connects the
+                    task with
+                    the relevant clinical problem, and any clinical encounters it is referenced in.</p>
+                <p>Encounters are audio recorded, compressed and uploaded all in the browser.&nbsp; The system
+                    automatically
+                    annotates the audio recording linking the appropriate parts of the encounter to each relevant
+                    problem and
+                    task.&nbsp;&nbsp;&nbsp; <a class="nonblock" href="https://vimeo.com/user35042652" target="_blank">Here
+                        are
+                        some videos of the system in use.</a></p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p id="u245-13">Human health is difficult to model with a series of static word documents.&nbsp; By
+                    providing
+                    dynamic modules our system uses the finest techniques to engage the user.</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <blockquote class="blockquote-reverse">
+                    <p>"Futuristic and has great potential... Looking forward to your next iteration.&quot;</p>
+                    <footer>Jiajie Zhang</footer>
+                </blockquote>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
+                <!-- content -->
+                <h2>Learning enabled</h2>
+            </div>
+            <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
+                <p>The system has been built to learn how I practice medicine, how I heal, how I recommend, how I use
+                    the system
+                    itself.&nbsp; The the set of actions we as physicians undertakes to care for patients is finite and
+                    categorical.&nbsp; We started with a simple ontology for our prototype, and since then have
+                    continued to add
+                    and sub-categorize.&nbsp; This data set informs the system how I work, both in the context of a
+                    particular
+                    patient, but also in the context of a particular clinical problem and task. With continued use the
+                    system
+                    can predict what I will do next as I navigate through it, and so the buttons I click today are
+                    teaching the
+                    system how to follow and predict me autonomously.&nbsp; This is what you want as a unique
+                    clinician.</p>
+                <p>By starting with the most elemental model of healing we ensure that changes in technology will not
+                    disturb the evolution of the system.&nbsp; We tested our model against every recorded instance of
+                    the
+                    healing act on the planet.&nbsp; You can drop this puppy into the hands of a tech happy shaman in
+                    the wild
+                    and they will find it as helpful as an urban internal medicine physician.</p>
+                <p>&nbsp;</p>
+                <p>Clinical data and user actions:</p>
+                <p>A system that can simultaneously measure and run feedback loops. manual user efforts transferred to
+                    machine
+                    operations.&nbsp; A learning health system inside a virtual cycle, inside a learning health
+                    system.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
+                <!-- content -->
+                <h2>Open source</h2>
+            </div>
+            <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
+                <p>The system is AGPL V3.&nbsp; The code is on github.&nbsp; email Jim at ryanjam4@msu.edu&nbsp; for
+                    repository
+                    access.</p>
+                <p>&nbsp;</p>
+                <p>We believe that&nbsp; healthcare needs tools to start exploring, and people to explore with.&nbsp;
+                    Our hearts
+                    and minds are tired of continued steps to maximize profits at the expense of scientific growth and
+                    clinical
+                    use.&nbsp; Startups promising wonders that don't materialize. The need to explore is a real&nbsp;
+                    human
+                    desire that when undertaken with love, patience and great advisors can yield a thing that can remedy
+                    some of
+                    the negative feelings that health care has been plagued with.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
+                <!-- content -->
+                <h2>Transparent and collaborative</h2>
+            </div>
+            <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
+                <p>Patient's and their care givers have never had such deep access and privileges to collaborate in
+                    their health
+                    records.&nbsp; As Glynn Elwin said &quot;it's like Open Notes on steroids&quot;.&nbsp; Patients can
+                    log in
+                    and add problems, add notes to current problems that become part of the legal document, add images,
+                    data
+                    points and even data types.&nbsp; Tasks, orders, referrals etc. can be discussed in a meaningful way
+                    that
+                    retains the clinical context. Patients can grant access to family members or other individuals that
+                    they
+                    trust to help them on the health journey.&nbsp; Encounters are audio recorded and easy to access on
+                    most
+                    modern devices.&nbsp; Particular discussions can quickly be found in the appropriate problem and
+                    easily
+                    tagged for quick access.&nbsp; We see our system as the logical conclusion of a patient portal ie.
+                    one
+                    unified system that enables deep collaboration. Have a <a class="nonblock"
+                                                                              href="https://vimeo.com/267133078"
+                                                                              target="_blank">look at this video</a>
+                    that shows
+                    the basic features of the system from the patient's perspective.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
+                <!-- content -->
+                <h2>FHIR integration</h2>
+            </div>
+            <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
+                <p>We're still in FHIR prototype mode but getting closer to full FHIR integration.&nbsp; Currently we
+                    have three
+                    prototype clinical modules built to experiment with modular design {a colon cancer, A1C, and
+                    warfarin
+                    management application}.&nbsp;&nbsp; These have been guiding our next architectural step toward full
+                    FHIR
+                    use.&nbsp; We have a FHIR server up and running and will be testing simple data exchange.
+                    Ultimately our system can be used as a stand alone, or in concert with other systems.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="Title_Small clearfix colelem" data-pintopage="page_fluidx" data-sizePolicy="fixed" id="u246-4">
+                <!-- content -->
+                <h2>Advisors</h2>
+            </div>
+            <div class="Text_Simple clearfix colelem" id="u495-4"><!-- content -->
+                <p>Our current advisors are Charles Friedman , John Beasley, and Timothy Pletcher.&nbsp; We would also
+                    not have journeyed this far without the support and guidance of many others, in particular Martin
+                    Wehlou, Mark Leavitt, and Josh Mandel.</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <blockquote class="blockquote-reverse">
+                    <p>Very exciting</p>
+                    <footer> John Ioannidis</footer>
+                </blockquote>
+            </div>
+
+            <div class="Text_Simple clearfix colelem" id="u243-4"><!-- content -->
+                <p>If you are a resident or practicing physician with a passion for designing tools that facilitate
+                    care and are
+                    interested in beta-testing some of the features of our system, we would love to work with you.
+                    Feel free to
+                    read our research journal&nbsp; <a class="nonblock"
+                                                       href="https://digitaltransformationofhealth.blogspot.com/"
+                                                       target="_blank">The Digital Transformation of Primary
+                        Care.</a></p>
+            </div>
+        </div>
+    </section>
+</div>
+<footer>
+    <div class="container">
         <p>email me: James Ryan: ryanjam4@msu.edu, or Kevin Perdue:&nbsp; kevin.perdue+smallbrain@gmail.com</p>
     </div>
-    <div class="verticalspacer" data-content-above-spacer="3094" data-content-below-spacer="61" data-offset-top="3094"
-         data-pintopage="page_fixedLeft" data-sizePolicy="fixed"></div>
-</div>
+</footer>
 </body>
 </html>
