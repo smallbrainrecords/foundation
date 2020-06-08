@@ -21,10 +21,14 @@ html {
   -ms-text-size-adjust: none;
 }
 
+a {
+  text-decoration: none;
+}
+
 body, div, dl, dt, dd, ul, ol, li, nav, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, button, textarea, p, blockquote, th, td, a {
-  margin: 0px;
-  padding: 0px;
-  border-width: 0px;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
   border-style: solid;
   border-color: transparent;
   -webkit-transform-origin: left top;
@@ -52,11 +56,11 @@ button.submit-btn {
 
 table {
   border-collapse: collapse;
-  border-spacing: 0px;
+  border-spacing: 0;
 }
 
 fieldset, img {
-  border: 0px;
+  border: 0;
   border-style: solid;
   -webkit-transform-origin: left top;
   -ms-transform-origin: left top;
@@ -145,14 +149,14 @@ a.nontext {
   font-size: 14px;
   font-style: normal;
   font-weight: normal;
-  letter-spacing: 0px;
+  letter-spacing: 0;
   line-height: 17px;
   text-align: left;
   text-decoration: none;
-  text-indent: 0px;
+  text-indent: 0;
   text-transform: none;
-  vertical-align: 0px;
-  padding: 0px;
+  vertical-align: 0;
+  padding: 0;
 }
 
 .Text_Simple {
@@ -161,7 +165,7 @@ a.nontext {
   font-size: 15px;
   font-weight: 300;
   line-height: 19px;
-  padding: 0px;
+  padding: 0;
 }
 
 .Title_Small {
@@ -172,7 +176,7 @@ a.nontext {
   letter-spacing: 2px;
   line-height: 42px;
   text-align: left;
-  padding: 0px;
+  padding: 0;
 }
 
 .Text_Subhead {
@@ -181,13 +185,13 @@ a.nontext {
   font-size: 17px;
   font-weight: 600;
   line-height: 22px;
-  padding: 0px;
+  padding: 0;
 }
 
 .list0 li:before {
   position: absolute;
   right: 100%;
-  letter-spacing: 0px;
+  letter-spacing: 0;
   text-decoration: none;
   font-weight: normal;
   font-style: normal;
@@ -213,7 +217,7 @@ a.nontext {
 }
 
 .nls-None.rtl-list, .nls-None .list1.rtl-list, .nls-None .list2.rtl-list, .nls-None .list3.rtl-list, .nls-None .list4.rtl-list, .nls-None .list5.rtl-list, .nls-None .list6.rtl-list, .nls-None .list7.rtl-list, .nls-None .list8.rtl-list {
-  padding-left: 0px;
+  padding-left: 0;
   padding-right: 34px;
 }
 
@@ -223,7 +227,7 @@ a.nontext {
 }
 
 .nls-None.rtl-list > li:before, .nls-None .list1.rtl-list > li:before, .nls-None .list2.rtl-list > li:before, .nls-None .list3.rtl-list > li:before, .nls-None .list4.rtl-list > li:before, .nls-None .list5.rtl-list > li:before, .nls-None .list6.rtl-list > li:before, .nls-None .list7.rtl-list > li:before, .nls-None .list8.rtl-list > li:before {
-  margin-right: 0px;
+  margin-right: 0;
   margin-left: 6px;
 }
 
@@ -261,7 +265,7 @@ a.nontext {
   content: " ";
   visibility: hidden;
   display: block;
-  height: 0px;
+  height: 0;
   clear: both;
 }
 
@@ -275,8 +279,8 @@ a.nontext {
 
 .popup_anchor {
   position: relative;
-  width: 0px;
-  height: 0px;
+  width: 0;
+  height: 0;
 }
 
 .allow_click_through * {
@@ -342,8 +346,8 @@ textarea {
 
 .wrapped-input {
   position: absolute;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
   background: transparent;
   border: none;
 }
@@ -385,8 +389,8 @@ textarea {
 
 .fullscreen {
   overflow: hidden;
-  left: 0px;
-  top: 0px;
+  left: 0;
+  top: 0;
   position: fixed;
   height: 100%;
   width: 100%;
@@ -410,20 +414,20 @@ textarea {
 .scroll_wrapper {
   position: absolute;
   overflow: auto;
-  left: 0px;
-  right: 0px;
-  top: 0px;
-  bottom: 0px;
-  padding-top: 0px;
-  padding-bottom: 0px;
-  margin-top: 0px;
-  margin-bottom: 0px;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .browser_width > * {
   position: absolute;
-  left: 0px;
-  right: 0px;
+  left: 0;
+  right: 0;
 }
 
 .grpelem, .accordion_wrapper {
@@ -434,12 +438,12 @@ textarea {
 .fld-checkbox input[type=checkbox], .fld-radiobutton input[type=radio] {
   position: absolute;
   overflow: hidden;
-  clip: rect(0px, 0px, 0px, 0px);
+  clip: rect(0, 0, 0, 0);
   height: 1px;
   width: 1px;
   margin: -1px;
-  padding: 0px;
-  border: 0px;
+  padding: 0;
+  border: 0;
 }
 
 .fld-checkbox input[type=checkbox] + label, .fld-radiobutton input[type=radio] + label {
@@ -462,13 +466,13 @@ p, h1, h2, h3, h4, h5, h6, ol, ul, span.actAsPara {
 .superscript {
   vertical-align: super;
   font-size: 66%;
-  line-height: 0px;
+  line-height: 0;
 }
 
 .subscript {
   vertical-align: sub;
   font-size: 66%;
-  line-height: 0px;
+  line-height: 0;
 }
 
 .horizontalSlideShow {
@@ -522,7 +526,7 @@ p, h1, h2, h3, h4, h5, h6, ol, ul, span.actAsPara {
   z-index: 1;
   min-height: 412.6218709165px;
   background-image: none;
-  border-width: 0px;
+  border-width: 0;
   border-color: #000000;
   background-color: transparent;
   padding-top: 25px;
@@ -564,7 +568,7 @@ p, h1, h2, h3, h4, h5, h6, ol, ul, span.actAsPara {
   position: relative;
   width: 95.84%;
   margin-left: 2.09%;
-  left: 0px;
+  left: 0;
 }
 
 #u100-4 {
