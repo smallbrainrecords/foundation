@@ -23,45 +23,27 @@
         .controller('ProblemsCtrl', function ($scope, $routeParams, $interval, patientService, problemService, sharedService,
                                               $filter, ngDialog, toaster, todoService, prompt, $cookies, $location, uibDateParser,
                                               dataService, medicationService, CollapseService, Upload, $timeout, LABELS) {
+            console.log(`controller: ProblemsCtrl`)
+            $scope.problem_id = $routeParams.problem_id;
 
-            $scope.activities = [];
-            $scope.availableWidgets = [];
-            $scope.historyNoteTotal = 0;
-            $scope.change_pinned_data = false;
+            // Configurations
+            $scope.changePinnedData = false;
             $scope.change_pinned_medication = false;
             $scope.change_problem_label = false;
             $scope.create_label_problems_list = false;
             $scope.create_problem_label = false;
-            $scope.current_activity = 0;
             $scope.hasAccess = false;
-            $scope.historyNoteForm = {};
+            $scope.startDateFormat = 'dd/MM/yyyy';
+            $scope.startDateOpen = false;
+            $scope.startDateOptions = {
+                showWeeks: false,
+                startingDay: 1
+            };
             $scope.isOtherPatientNoteShowing = false;
             $scope.loading = true;
-            $scope.medications = [];
-            $scope.new_list = {};
-            $scope.new_list.labels = [];
-            $scope.new_problem = {set: false};
-            $scope.problem_id = $routeParams.problem_id;
-            $scope.problem_label_component = {};
-            $scope.problem_terms = [];
-            $scope.problem_activity_collapse = false;
-            $scope.problem_activity_see_all = false;
-
-            $scope.related_encounters = [];
-            $scope.show_accomplished_goals = false;
-            $scope.show_accomplished_todos = false;
-            $scope.viewMode = 'Year';
-
-            $scope.problemWikiNote = "";
-            $scope.onProblemWikiNoteChanged = onProblemWikiNoteChanged;
-
-            $scope.problem_labels_component = LABELS;
             $scope.edit_problem = false;
             $scope.show_inactive_medications = false;
             $scope.showMedicationSearch = false;
-
-            $scope.pending_todos = [];
-            $scope.accomplished_todos = [];
             $scope.todoIsLoading = false;
             $scope.pendingTodoPage = 1;
             $scope.accomplishedTodoPage = 1;
@@ -69,15 +51,39 @@
             $scope.pendingTodoLoaded = false;
             $scope.encounter_collapse = false;
             $scope.editMode = false;
-            $scope.startDateFormat = 'dd/MM/yyyy';
+            $scope.problem_activity_collapse = false;
+            $scope.problem_activity_see_all = false;
+            $scope.show_accomplished_goals = false;
+            $scope.show_accomplished_todos = false;
+            $scope.viewMode = 'Year';
+
+            // Data holders from services or server-side
+            $scope.activities = [];
+            $scope.availableWidgets = [];
+            $scope.current_activity = 0;
+            $scope.historyNoteTotal = 0;
+            $scope.medications = [];
+            $scope.pending_todos = [];
+            $scope.accomplished_todos = [];
+            $scope.problem_terms = [];
+            $scope.related_encounters = [];
+
+            // Page input form
             $scope.startDate = new Date();
-            $scope.startDateOpen = false;
-            $scope.startDateOptions = {
-                showWeeks: false,
-                startingDay: 1
+            $scope.historyNoteForm = {};
+            $scope.new_list = {
+                labels: []
             };
+            $scope.new_problem = {set: false};
+            $scope.problem_label_component = {};
+            $scope.problemWikiNote = "";
+
+            $scope.problem_labels_component = LABELS;
+
+
             // Init hot key binding
             $scope.add_goal = add_goal;
+            $scope.onProblemWikiNoteChanged = onProblemWikiNoteChanged;
             $scope.addHistoryNote = addHistoryNote;
             $scope.add_new_list_label = add_new_list_label;
             $scope.add_problem_list = add_problem_list;
@@ -148,8 +154,6 @@
             init();
 
             function init() {
-                $scope.pending_todos = patientService.getProblemTodo($scope.problem_id);
-
                 patientService.fetchProblemInfo($scope.problem_id)
                     .then(response => {
                         let data = response.data;
@@ -1268,11 +1272,11 @@
             }
 
             function open_change_data() {
-                $scope.change_pinned_data = true;
+                $scope.changePinnedData = true;
             }
 
             function close_change_data() {
-                $scope.change_pinned_data = false;
+                $scope.changePinnedData = false;
             }
 
             function data_pin_to_problem(data_id, problem_id) {

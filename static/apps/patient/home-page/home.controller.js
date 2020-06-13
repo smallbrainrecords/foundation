@@ -43,7 +43,7 @@
      */
     function HomeCtrl($scope, patientService, problemService, encounterService, ngDialog, sharedService, dataService,
                       toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
-        console.log("controller");
+        console.log("controller: HomeCtrl");
         $scope.patientService = patientService;
         $scope.btnBDFISubmitted = false;
         $scope.collapse = CollapseService;
@@ -73,7 +73,7 @@
         $scope.show_add_new_data_type = false;
         $scope.show_edit_my_story_tab = false;
         $scope.show_previous_entries = false;
-        $scope.graphicFrameIsCollapsed = true;
+        $scope.graphicFrameIsCollapsed = false;
         $scope.viewMode = 'Year';
         $scope.sortingLogProblem = [];
         $scope.sortedProblem = false;
@@ -452,11 +452,13 @@
             // Load graphics frame only when it is opened
             $scope.$watch('graphicFrameIsCollapsed', (newVal, oldVal) => {
                 if (!newVal) {
-                    patientService.fetchPainAvatars($scope.patient_id).then((data) => {
+                    patientService.fetchPainAvatars($scope.patient_id).then((response) => {
+                        let data = response.data;
                         $scope.pain_avatars = data['pain_avatars'];
                     });
 
-                    patientService.fetchTimeLineProblem($scope.patient_id).then((data) => {
+                    patientService.fetchTimeLineProblem($scope.patient_id).then((response) => {
+                        let data = response.data;
                         var timeline_problems = [];
                         angular.forEach(data['timeline_problems'], function (value, key) {
                             var timeline_problem = (value.problem_segment.length !== undefined && value.problem_segment.length > 0) ? parseTimelineWithSegment(value) : parseTimelineWithoutSegment(value);
@@ -514,7 +516,8 @@
         }
 
         function fetchTimeLineProblem(data) {
-            patientService.fetchTimeLineProblem($scope.patient_id).then(function (data2) {
+            patientService.fetchTimeLineProblem($scope.patient_id).then(function (response) {
+                let data2 = response.data;
                 var timeline_problems = [];
                 angular.forEach(data2['timeline_problems'], function (value, key) {
                     if (value.problem_segment.length !== undefined && value.problem_segment.length > 0) {
@@ -542,7 +545,8 @@
             $scope.show_accomplished_todos = !$scope.show_accomplished_todos;
             // $scope.todos_ready = false;
             if (!$scope.accomplishedTodoLoaded) {
-                patientService.getToDo($scope.patient_id, true, true, $scope.accomplishedTodoPage).then((resp) => {
+                patientService.getToDo($scope.patient_id, true, true, $scope.accomplishedTodoPage).then((response) => {
+                    let resp = response.data;
                     if (resp.success) {
                         // if loading from remote then replace it cuz it fresh & trusted data source
                         $scope.accomplished_todos = resp.data;
