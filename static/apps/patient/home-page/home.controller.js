@@ -144,11 +144,11 @@
         init();
 
         function init() {
-
-
             $scope.pending_todos = patientService.pendingTodo;
             $scope.accomplished_todos = patientService.accomplishedTodo;
 
+            // Each time reload the controller need to reset loading flag
+            patientService.pendingTodoLoaded = false;
             patientService.fetchPatientInfo($scope.patient_id).then(function (response) {
                 let data = response.data;
                 $scope.acutes = data['acutes_list'];
@@ -488,7 +488,7 @@
                 // patientService.pendingTodoLoaded -> data/service flag
                 $scope.todoIsLoading = true;
 
-                patientService.loadMoreTodo($scope.patient_id);
+                patientService.progressiveTodoLoading($scope.patient_id);
             }
         }
 

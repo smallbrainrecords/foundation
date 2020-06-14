@@ -43,7 +43,6 @@
             addToDo: addToDo,
             addProblem: addProblem,
             listTerms: listTerms,
-            getTodoList: getTodoList,
             getPendingRegistrationUsersList: getPendingRegistrationUsersList,
             approveUser: approveUser,
             rejectUser: rejectUser,
@@ -262,19 +261,6 @@
             var url = `/p/patient/${form.patient_id}/problems/add/new_common_problem`;
 
             return httpService.post(form, url);
-        }
-
-        /**
-         * Condition
-         * @param userID
-         * @param isAccomplished
-         * @param loadAll
-         */
-        function getTodoList(userID, isAccomplished = false, loadAll = false) {
-            return httpService.get({
-                accomplished: isAccomplished,
-                all: true
-            }, `/u/users/${userID}/todos`, true)
         }
 
         function getPendingRegistrationUsersList(form) {

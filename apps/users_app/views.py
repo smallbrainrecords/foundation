@@ -617,7 +617,8 @@ def get_patients_list(request):
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids).filter(patient__is_active=True)
+        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids).filter(
+            patient__is_active=True)
         patient_ids = [x.patient.id for x in patient_controllers]
 
     result = TopPatientSerializer(VWTopPatients.objects.filter(id__in=patient_ids), many=True).data
@@ -920,18 +921,28 @@ def get_user_todo(request, patient_id):
     :return:
     """
     resp = {'success': False}
+    exclude = request.GET.getlist('exclude', [])
+    context = request.GET.get('context', "default")  # default | problem w/ problem's id | document w/ document's id
+    context_id = request.GET.get('context-id', None)
     is_accomplished = request.GET.get('accomplished') == 'true'
-    page = int(request.GET.get('page', 1))
     load_all = request.GET.get('all', 'false') == 'true'
-    per_page = 5  # Default
+    item_per_page = request.GET.get('item-per-page', 5)
 
     # Filter todo type and pagination
-    todo = ToDo.objects.filter(patient_id=patient_id, accomplished=is_accomplished).order_by("order")
+    todo_query_set = ToDo.objects.exclude(id__in=exclude).filter(patient_id=patient_id).filter(
+        accomplished=is_accomplished)
+
+    if context == "problem" and context_id is not None:
+        todo_query_set = todo_query_set.filter(problem_id=context_id)
+    # Later we could extend context loading over here
+    if context == "document" and context_id is not None:
+        pass
+
     if not load_all:
-        todo = todo[per_page * (page - 1):per_page * page]
+        todo_query_set = todo_query_set[:item_per_page]
 
     resp['success'] = True
-    resp['data'] = TodoSerializer(todo, many=True).data
+    resp['data'] = TodoSerializer(todo_query_set, many=True).data
     return ajax_response(resp)
 
 

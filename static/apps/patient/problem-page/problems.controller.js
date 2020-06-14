@@ -154,6 +154,9 @@
             init();
 
             function init() {
+                // Each time reload the controller need to reset loading flag
+                patientService.pendingTodoLoaded = false;
+
                 patientService.fetchProblemInfo($scope.problem_id)
                     .then(response => {
                         let data = response.data;
@@ -1391,7 +1394,7 @@
                 if (!$scope.todoIsLoading) {
                     $scope.todoIsLoading = true;
 
-                    patientService.loadMoreTodo($scope.patient_id);
+                    patientService.progressiveTodoLoading($scope.patient_id, "problem", $scope.problem_id);
                 }
             }
         });

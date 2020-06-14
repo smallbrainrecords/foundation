@@ -37,7 +37,7 @@
                 loaded: 0,
                 getMostRecentEncounter: getMostRecentEncounter,
                 progressiveTodoLoading: progressiveTodoLoading,
-                loadMoreTodo: loadMoreTodo,
+                getToDo: getToDo,
                 addINRTodo: addINRTodo,
                 addProblemTodo: addProblemTodo,
                 addTodoCallback: addTodoCallback,
@@ -97,7 +97,6 @@
                 trackTabClickEvent: trackTabClickEvent,
                 getMedications: getMedications,
                 getDocuments: getDocuments,
-                getToDo: getToDo,
                 getVitalTableViews: getVitalTableViews,
                 updateMedicare: updateMedicare,
                 addNarrative: addNarrative,
@@ -523,31 +522,6 @@
                 }, `/u/users/${patient_id}/todos`, true)
             }
 
-            function loadMoreTodo(patientID) {
-                // Ignore if todo is fully loaded
-                if (this.pendingTodoLoaded) {
-                    $rootScope.$broadcast('todoListUpdated');
-                    return;
-                }
-
-                httpService.get({
-                    accomplished: false,
-                    page: this.pendingTodoPage,
-                    all: false
-                }, `/u/users/${patientID}/todos`, true)
-                    .then((response) => {
-                        let data = response.data;
-                        if (data.success) {
-                            this.pendingTodoPage++;
-                            // Save data to global storage
-                            this.pendingTodo = this.pendingTodo.concat(data.data);
-                            this.pendingTodoLoaded = data.data.length === 0;
-
-                            $rootScope.$broadcast('todoListUpdated');
-                        }
-                    });
-            }
-
             function addINRTodo(patientId, todo) {
                 return $http.post(`/inr/${patientId}/order/add`, todo).then((resp) => {
                     this.pendingTodo.unshift(resp.data.order);
@@ -655,27 +629,40 @@
             /**
              * Load patient todo item util it fully loaded
              * @param patientID
+             * @param context
+             * @param relatedId
+             * @param accomplished
+             * @param loadAll
+             * @param size
              */
-            function progressiveTodoLoading(patientID) {
-                do {
-                    httpService.get({
-                        accomplished: false,
-                        page: this.pendingTodoPage,
-                        all: false
-                    }, `/u/users/${patientID}/todos`, true)
-                        .then((resp) => {
-                            if (resp.success) {
-                                this.pendingTodoPage++;
-                                // Save data to global storage
-                                this.pendingTodo = this.pendingTodo.concat(resp.data);
-                                this.pendingTodoLoaded = resp.data.length === 0;
+            function progressiveTodoLoading(patientID, context = "default", relatedId = null, accomplished = false, loadAll = false, size = 5) {
+                // Ignore if todo is fully loaded
+                if (this.pendingTodoLoaded) {
+                    $rootScope.$broadcast('todoListUpdated');
+                    return;
+                }
 
-                                $rootScope.$broadcast('todoListUpdated');
-                            }
-                            // Either success of failed do reload again
-                            this.progressiveTodoLoading();
-                        });
-                } while (this.pendingTodoLoaded);
+                httpService.get({
+                    "exclude": _.pluck(this.pendingTodo, 'id'),
+                    "accomplished": accomplished,
+                    "context": context,
+                    "context-id": relatedId,
+                    "all": loadAll,
+                    "item-per-page": size,
+                }, `/u/users/${patientID}/todos`, true)
+                    .then((response) => {
+                        let resp = response.data;
+                        if (resp.success) {
+                            this.pendingTodoPage++;
+                            // Save data to global storage
+                            this.pendingTodo = this.pendingTodo.concat(resp.data);
+                            this.pendingTodoLoaded = resp.data.length === 0;
+
+                            // $rootScope.$broadcast('todoListUpdated');
+                            $rootScope.$broadcast('todoListUpdated');
+
+                        }
+                    });
             }
 
 

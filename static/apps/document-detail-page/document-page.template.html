@@ -193,7 +193,7 @@
                 <ul class="ul-clean no-padding" ng-show="!enableProblemPin">
                     <li ng-repeat="problem in active_probs | filter:{'pin':true} track by $index">
                         <a class="item-box flex-container" ng-class='problem.is_controlled ? "green-box" : "red-box" '
-                           href="/u/patient/manage/{{ problem.patient }}/#/problem/{{ problem.id }}">
+                           href="/u/patient/manage/{{ problem.patient }}/#!/problem/{{ problem.id }}">
                             <span ng-bind="problem.problem_name" class="flex-item"></span>
                             <span ng-show="!problem.authenticated" class="flex-item">(not authenticated)</span>
                         </a>
@@ -212,9 +212,8 @@
             <div class="panel-body">
                 <!--Add todo form-->
                 <div class='form-inline' ng-show='permitted(["add_todo"])'>
-                    <label for="todoNameInput"> Todo name </label>
                     <div class='input-group'>
-                        <input type='text' ng-model='new_todo.name' title="Todo name"
+                        <input type='text' ng-model='new_todo.name' title="Todo name" placeholder="Todo name"
                                class="form-control" id='todoNameInput' ng-click="$event.stopPropagation();">
                         <span class="input-group-btn">
                             <button type='button' class='btn btn-default'
@@ -239,7 +238,7 @@
                 <ul class="ul-clean no-padding" ng-show="!enableTodoPin">
                     <li ng-repeat="todo in active_todos | filter:{'pin':true} track by $index">
                         <a class="item-box flex-container" ng-click="$event.stopPropagation();"
-                           href="/u/patient/manage/{{ todo.patient.id }}/#/todo/{{ todo.id }}">
+                           href="/u/patient/manage/{{ todo.patient.id }}/#!/todo/{{ todo.id }}">
                             <span ng-bind="todo.todo" class="flex-item"></span> <span ng-if="todo.due_date"
                                                                                       class="flex-item">&nbsp;due by <span
                                 ng-class="isDueDate(todo.due_date)">{{ todo.due_date }}</span></span>

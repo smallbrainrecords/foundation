@@ -39,7 +39,7 @@
             ctrl.todoId = parseInt($routeParams.todoId);
             ctrl.activeUser = $rootScope.active_user;
             ctrl.patientProblems = [];
-            ctrl.problem2Print=[];
+            ctrl.problem2Print = [];
             ctrl.patientTodos = [];
             ctrl.patientTodoLabels = [];
             ctrl.printForm = {};
@@ -76,32 +76,33 @@
 
                 };
 
-                patientService.getToDo($rootScope.patient_id, false, true, 1).then((response) => {
-                    let data = response.data;
-                    if (data.success) {
-                        ctrl.patientTodos = data.data;
+                patientService.getToDo($rootScope.patient_id, false, true)
+                    .then((response) => {
+                        let data = response.data;
+                        if (data.success) {
+                            ctrl.patientTodos = data.data;
 
-                        ctrl.patientTodos.map((todo, idx) => {
-                            if (todo.id === ctrl.todoId) {
-                                selectItemToPrint(null, todo, idx);
-                            }
-                        });
+                            ctrl.patientTodos.map((todo, idx) => {
+                                if (todo.id === ctrl.todoId) {
+                                    selectItemToPrint(null, todo, idx);
+                                }
+                            });
 
-                        // Load all label for all user
-                        let allLabels = _.flatten(_.pluck(data.data, 'labels'));
-                        const map = new Map();
-                        for (const item of allLabels) {
-                            if (!map.has(item.id)) {
-                                map.set(item.id, true);    // set any value to Map
-                                ctrl.patientTodoLabels.push({
-                                    id: item.id,
-                                    name: item.name,
-                                    css_class: item.css_class
-                                });
+                            // Load all label for all user
+                            let allLabels = _.flatten(_.pluck(data.data, 'labels'));
+                            const map = new Map();
+                            for (const item of allLabels) {
+                                if (!map.has(item.id)) {
+                                    map.set(item.id, true);    // set any value to Map
+                                    ctrl.patientTodoLabels.push({
+                                        id: item.id,
+                                        name: item.name,
+                                        css_class: item.css_class
+                                    });
+                                }
                             }
                         }
-                    }
-                });
+                    });
 
                 patientService.getProblems($rootScope.patient_id).then((response) => {
                     let data = response.data;

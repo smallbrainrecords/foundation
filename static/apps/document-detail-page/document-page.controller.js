@@ -19,7 +19,7 @@
     angular.module('document', ['ngFileUpload', 'toaster', 'app.services'])
         .controller('ViewDocumentCtrl', ViewDocumentCtrl);
 
-    ViewDocumentCtrl.$inject = ['$scope', 'sharedService', '$routeParams', '$location', 'toaster', 'documentService', 'ngDialog', '$http', '$cookies', 'todoService', '$window'];
+    ViewDocumentCtrl.$inject = ['$scope', 'patientService', 'sharedService', '$routeParams', '$location', 'toaster', 'documentService', 'ngDialog', '$http', '$cookies', 'todoService', '$window'];
 
     /**
      * @param $scope
@@ -35,7 +35,7 @@
      * @param $window
      * @constructor
      */
-    function ViewDocumentCtrl($scope, sharedService, $routeParams, $location, toaster, documentService, ngDialog, $http, $cookies, todoService, $window) {
+    function ViewDocumentCtrl($scope, patientService, sharedService, $routeParams, $location, toaster, documentService, ngDialog, $http, $cookies, todoService, $window) {
 
         // PROPERTIES DEFINITION
         $scope.document = {};
@@ -258,10 +258,9 @@
          * @param patientId
          */
         function getPatientInfo(patientId) {
-            sharedService.getTodoList(patientId, false, true)
+            patientService.getToDo(patientId, false, true)
                 .then((response) => {
-                    $scope.active_todos = response.data;
-
+                    $scope.active_todos = response.data.data;
                     // Direct pinned todo
                     let document_todo_pk = _.pluck($scope.document.todos, 'id');
                     _.map($scope.active_todos, function (value, key) {
