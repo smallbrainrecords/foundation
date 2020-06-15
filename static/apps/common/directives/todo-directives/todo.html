@@ -1,7 +1,7 @@
-<div class="todos-container" ng-show='problem_todos.length'>
+<div class="todos-container"  ng-if="todoList.length > 0">
     <!-- begin sortable -->
-    <ul ui-sortable="sortableOptions" ng-model="problem_todos" class="no-padding">
-        <li ng-repeat="item in problem_todos |orderBy:'tagged_status' | filter :{'accomplished':accomplished} track by $index"
+    <ul ui-sortable="sortableOptions" ng-model="todoList" class="no-padding">
+        <li ng-repeat="item in todoList |orderBy:'tagged_status' | filter :{'accomplished':accomplished} track by $index"
             class="list-group-item todo staff-todo" ng-click="open_todo(item)"
             ng-class="{'active-element': item.changed,'new-tagged-todo':  (item.hasOwnProperty('tagged_status') && item.tagged_status != 2 )}">
 
@@ -45,7 +45,7 @@
             </div>
             <!-- end show item -->
 
-            <!-- begin change item -->
+            <!-- begin edit item -->
             <div class="quick-card-editor" id="main-menu" ng-show='item.changed'>
                 <div class="row">
                     <div class="col-md-8">
@@ -69,7 +69,7 @@
                                 <a ng-click="closeThisTodo(item)"><i class="fa fa-close"></i></a>
                                 <a ng-click="changeLabel(item)"><i class="fa fa-tags"></i>Edit label</a>
                                 <a ng-click="changeDueDate(item)"><i class="fa fa-clock-o"></i>Change Due Date</a>
-                                <a ng-if="is_tagged" ng-click="changeMember(item)"><i class="fa fa-user"></i>Members</a>
+                                <a ng-if="isTagged" ng-click="changeMember(item)"><i class="fa fa-user"></i>Members</a>
                             </div>
                             <!-- end buttons -->
 
@@ -168,7 +168,7 @@
                     </div>
                 </div>
             </div>
-            <!-- end change item -->
+            <!-- end edit item -->
         </li>
     </ul>
     <!-- end sortable -->

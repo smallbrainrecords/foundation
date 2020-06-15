@@ -37,17 +37,17 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     if (scope.todos_ready) {
                         scope.lastTimeTaggedTodoAccessed = scope.$eval(attr.lastAccessed);
                         scope.accomplished = scope.$eval(attr.accomplished);
-                        scope.show_problem = scope.$eval(attr.showProblem);
-                        scope.is_tagged = scope.$eval(attr.isTagged);
-                        scope.is_list = scope.$eval(attr.isList);
-                        scope.problem_todos = scope.$eval(attr.ngModel);
-                        scope.current_todo = null;
+                        scope.showProblem = scope.$eval(attr.showProblem);
+                        scope.isTagged = scope.$eval(attr.isTagged);
+                        scope.isList = scope.$eval(attr.isList);
+                        scope.todoList = scope.$eval(attr.ngModel);
+                        scope.currentTodo = null; // stand for todo form
                         scope.sortingLog = [];
                         scope.sorted = false;
                         scope.dragged = false;
 
                         var currentTodo;
-                        var tmpList = scope.problem_todos;
+                        var tmpList = scope.todoList;
 
                         // label
                         scope.labels_component = [
@@ -78,10 +78,10 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                                     var form = {};
 
                                     form.todos = scope.sortingLog;
-                                    if (scope.is_list) {
-                                        form.list_id = scope.is_list;
+                                    if (scope.isList) {
+                                        form.list_id = scope.isList;
                                     } else {
-                                        if (scope.is_tagged)
+                                        if (scope.isTagged)
                                             form.tagged_user_id = scope.user_id;
                                         else {
                                             form.staff_id = scope.user_id;
@@ -142,7 +142,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                             todo.changed = true;
                         });
 
-                        if (scope.is_tagged) {
+                        if (scope.isTagged) {
                             todoService.fetchTodoMembers(todo.patient.id).then(function (response) {
                                 let data = response.data;
                                 scope.members = data['members'];
@@ -260,7 +260,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                                 if (data['success'] === true) {
                                     label.css_class = data['label']['css_class'];
                                     if (data['status'] === true) {
-                                        angular.forEach(scope.problem_todos, function (todo, key) {
+                                        angular.forEach(scope.todoList, function (todo, key) {
                                             angular.forEach(todo.labels, function (value, key2) {
                                                 if (value.id === label.id) {
                                                     value.css_class = label.css_class;
@@ -329,7 +329,7 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                                 var index = scope.labels.indexOf(currentLabel);
                                 scope.labels.splice(index, 1);
 
-                                angular.forEach(scope.problem_todos, function (todo, key) {
+                                angular.forEach(scope.todoList, function (todo, key) {
                                     var index2;
                                     angular.forEach(todo.labels, function (value, key2) {
                                         if (value.id === currentLabel.id) {
@@ -389,20 +389,21 @@ function todoDirective(todoService, staffService, toaster, $location, $timeout, 
                     };
 
                     scope.clickOutSide = function () {
-                        if (scope.current_todo != null) {
-                            scope.current_todo.changed = false;
+                        if (scope.currentTodo != null) {
+                            scope.currentTodo.changed = false;
                             scope.todo_changed = false;
-                            scope.current_todo.change_due_date = false;
-                            scope.current_todo.change_label = false;
-                            scope.current_todo.change_member = false;
-                            scope.current_todo.create_label = false;
+                            scope.currentTodo.change_due_date = false;
+                            scope.currentTodo.change_label = false;
+                            scope.currentTodo.change_member = false;
+                            scope.currentTodo.create_label = false;
                             scope.current_todo = null;
                         }
                     };
 
                     scope.removeMember = function (todo, member, memberIdx) {
                         todo.members.splice(memberIdx, 1);
-                        todoService.removeTodoMember(todo, member).then((data) => {
+                        todoService.removeTodoMember(todo, member).then((response) => {
+                            let data = response.data;
                             if (data.success) {
                                 toaster.pop('success', "Done", "Removed member!");
                                 scope.set_authentication_false();

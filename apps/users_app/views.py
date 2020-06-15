@@ -45,7 +45,7 @@ from emr.models import MyStoryTab, MyStoryTextComponent
 
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
-from .serializers import UserProfileSerializer, NarrativeSerializer, TopPatientSerializer
+from .serializers import UserProfileSerializer, NarrativeSerializer, TopPatientSerializer, UserTodoSerializer
 from todo_app.serializers import TodoSerializer
 from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
 
@@ -942,7 +942,8 @@ def get_user_todo(request, patient_id):
         todo_query_set = todo_query_set[:item_per_page]
 
     resp['success'] = True
-    resp['data'] = TodoSerializer(todo_query_set, many=True).data
+    resp['data'] = UserTodoSerializer(todo_query_set, many=True).data
+
     return ajax_response(resp)
 
 

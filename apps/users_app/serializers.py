@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from emr.models import UserProfile, Narrative, VWTopPatients
+from emr.models import UserProfile, Narrative, VWTopPatients, ToDo, Problem
 
 
 class SafeUserProfileSerializer(serializers.ModelSerializer):
@@ -148,3 +148,50 @@ class TopPatientSerializer(serializers.ModelSerializer):
             float(obj.problem_count) if obj.problem_count != 0 else float(1)) * (
                    float(obj.encounter_count) if obj.encounter_count != 0 else float(1)) * (
                        (float(obj.document_count) if obj.document_count != 0 else float(1)) / 2)
+
+
+class ProblemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Problem
+
+        fields = (
+            'id',
+            'problem_name',
+            'patient_id'
+        )
+
+
+class TodoMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'username',
+        )
+
+
+class UserTodoSerializer(serializers.ModelSerializer):
+    patient = SafeUserSerializer()
+    problem = ProblemSerializer()
+    members = TodoMemberSerializer(many=True)
+    due_date = serializers.DateTimeField(format='%m/%d/%Y')
+
+    class Meta:
+        model = ToDo
+
+        fields = (
+            'id',
+            'todo',
+            'accomplished',
+            'due_date',
+            'patient',
+            'labels',
+            'members',
+            'problem',
+            'comments',
+            'attachments',
+            'document_set',
+        )

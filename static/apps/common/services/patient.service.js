@@ -75,10 +75,6 @@
                 updateTodoOrder: updateTodoOrder,
                 updateProblemOrder: updateProblemOrder,
                 updatePatientNote: updatePatientNote,
-                getPatientsList: getPatientsList,
-                getSharingPatients: getSharingPatients,
-                addSharingPatient: addSharingPatient,
-                removeSharingPatient: removeSharingPatient,
                 changeSharingMyStory: changeSharingMyStory,
                 getUserInfo: getUserInfo,
                 addCommonProblem: addCommonProblem,
@@ -371,29 +367,6 @@
 
             }
 
-            function getPatientsList() {
-                let form = {};
-                let url = '/u/patients/';
-                return httpService.post(form, url);
-            }
-
-            function getSharingPatients(patient_id) {
-                let form = {};
-                let url = `/u/sharing_patients/${patient_id}`;
-                return httpService.post(form, url);
-            }
-
-            function addSharingPatient(form) {
-                let url = `/u/patient/add_sharing_patient/${form.patient_id}/${form.sharing_patient_id}`;
-                return httpService.post(form, url);
-            }
-
-            function removeSharingPatient(patient_id, sharing_patient_id) {
-                let form = {};
-                let url = `/u/patient/remove_sharing_patient/${patient_id}/${sharing_patient_id}`;
-                return httpService.post(form, url);
-            }
-
             function changeSharingMyStory(patient_id, sharing_patient_id) {
                 let form = {};
                 let url = `/u/patient/change_sharing_my_story/${patient_id}/${sharing_patient_id}`;
@@ -512,7 +485,6 @@
              * @param is_accomplished
              * @param page
              * @param loadAll
-             * @returns {HttpPromise}
              */
             function getToDo(patient_id, is_accomplished = false, loadAll = false, page = 1) {
                 return httpService.get({
@@ -658,7 +630,6 @@
                             this.pendingTodo = this.pendingTodo.concat(resp.data);
                             this.pendingTodoLoaded = resp.data.length === 0;
 
-                            // $rootScope.$broadcast('todoListUpdated');
                             $rootScope.$broadcast('todoListUpdated');
 
                         }
