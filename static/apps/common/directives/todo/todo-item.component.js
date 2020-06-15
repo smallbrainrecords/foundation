@@ -409,7 +409,8 @@
                 todo.members.splice(memberIdx, 1);
 
                 // Delegate to service to handle detail work and synch other usage
-                todoService.removeTodoMember(todo, member).then((data) => {
+                todoService.removeTodoMember(todo, member).then((response) => {
+                    let data = response.data;
                     data.success ? toaster.pop('success', "Done", "Removed member!") : toaster.pop('error', 'Error', 'Failed to remove member!');
                 });
             }
