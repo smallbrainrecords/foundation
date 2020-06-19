@@ -594,7 +594,6 @@ a.btn-manage {
   line-height: 50px;
   text-align: center;
   padding-top: 25px;
-  margin-top: 50px;
 }
 
 .dragover {
@@ -650,10 +649,6 @@ a.btn-manage {
 #homepage-data-time-range-header {
   top: 50px;
   z-index: 1;
-}
-
-.graph-data-list {
-  margin-top: 60px;
 }
 
 @media (max-width: 768px) {
