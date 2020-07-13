@@ -21,9 +21,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.shortcuts import render, render_to_response
+from django.shortcuts import render
 
-from users_app.operations import get_vitals_table_component
+from users_app.operations import get_vitals_table_component, is_patient
 
 try:
     from PIL import Image, ImageOps
@@ -45,7 +45,10 @@ from emr.models import MyStoryTab, MyStoryTextComponent
 
 from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
 from goals_app.serializers import GoalSerializer
-from .serializers import UserProfileSerializer, NarrativeSerializer, TopPatientSerializer, UserTodoSerializer
+from .serializers import UserProfileSerializer, NarrativeSerializer, TopPatientSerializer, UserTodoSerializer, \
+    PatientSearchResultSerializer, ProblemNoteSearchResultSerializer, GoalSearchResultSerializer, \
+    EncounterEventSearchResultSerializer, MyStoryTabSearchResultSerializer, MyStoryTextComponentSearchResultSerializer, \
+    DocumentSearchResultSerializer, TodoSearchResultSerializer
 from todo_app.serializers import TodoSerializer
 from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
 
@@ -56,92 +59,6 @@ import datetime
 from emr.manage_patient_permissions import ROLE_PERMISSIONS
 
 from emr.manage_patient_permissions import check_access
-
-
-@timeit
-def permissions_accessed(user, obj_user_id):
-    """
-    Check whether or not clinical staff(s) can control patient
-    :param user: Clinical staff
-    :param obj_user_id: Patient
-    :return:
-    """
-    permitted = False
-
-    user_profile = UserProfile.objects.get(user=user)
-    if user_profile.role == 'admin':
-        permitted = True
-
-    elif user_profile.role == 'patient':
-        if user.id == obj_user_id:
-            permitted = True
-        sharing_patients = SharingPatient.objects.filter(shared_id=obj_user_id)
-        patient_ids = [x.sharing.id for x in sharing_patients]
-        if user.id in patient_ids:
-            permitted = True
-
-    elif user_profile.role == 'physician':
-        patient_controllers = PatientController.objects.filter(physician=user)
-        patient_ids = [x.patient.id for x in patient_controllers]
-        patient_ids.append(user.id)
-        if obj_user_id in patient_ids:
-            permitted = True
-
-    elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
-        team_members = PhysicianTeam.objects.filter(member=user)
-        physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
-        patient_ids = [x.patient.id for x in patient_controllers]
-        patient_ids.append(user.id)
-        if obj_user_id in patient_ids:
-            permitted = True
-
-    return permitted
-
-
-@timeit
-def is_patient(user):
-    try:
-        profile = UserProfile.objects.get(user=user)
-        return profile.role == 'patient'
-    except UserProfile.DoesNotExist:
-        return False
-
-
-@timeit
-def login_user(request):
-    if request.method == "GET":
-        return render(request, 'users/../../templates/login.html', {})
-    elif request.method == 'POST':
-        logout(request)
-        form = LoginForm(request.POST)
-
-        errors = []
-        if not form.is_valid():
-            errors.append('Please fill valid data.')
-            content = {'login_errors': errors, 'form': form}
-            return render(request, 'users/../../templates/login.html', content)
-
-        username = form.cleaned_data['username']
-        password = form.cleaned_data['password']
-
-        user = authenticate(username=username, password=password)
-        if user and user.is_active:
-            login(request, user)
-            return HttpResponseRedirect('/u/home/')
-        else:
-            if not user:
-                errors.append('Incorrect username or password.')
-            elif not user.is_active:
-                errors.append('User is not verified or active.')
-            content = {'login_errors': errors, 'form': form}
-            return render(request, 'users/../../templates/login.html', content)
-
-
-@timeit
-def logout_user(request):
-    logout(request.user)
-    return HttpResponseRedirect('/')
 
 
 @timeit
@@ -182,6 +99,36 @@ def register_user(request):
         return HttpResponseRedirect('/u/home')
 
 
+@timeit
+def login_user(request):
+    if request.method == "GET":
+        return render(request, 'users/../../templates/login.html', {})
+    elif request.method == 'POST':
+        logout(request)
+        form = LoginForm(request.POST)
+
+        errors = []
+        if not form.is_valid():
+            errors.append('Please fill valid data.')
+            content = {'login_errors': errors, 'form': form}
+            return render(request, 'users/../../templates/login.html', content)
+
+        username = form.cleaned_data['username']
+        password = form.cleaned_data['password']
+
+        user = authenticate(username=username, password=password)
+        if user and user.is_active:
+            login(request, user)
+            return HttpResponseRedirect('/u/home/')
+        else:
+            if not user:
+                errors.append('Incorrect username or password.')
+            elif not user.is_active:
+                errors.append('User is not verified or active.')
+            content = {'login_errors': errors, 'form': form}
+            return render(request, 'users/../../templates/login.html', content)
+
+
 @login_required
 @timeit
 def home(request):
@@ -213,6 +160,36 @@ def home(request):
             return HttpResponseRedirect('/u/staff/')
 
         return HttpResponse('Something went wrong !')
+
+
+@login_required
+@timeit
+def staff(request):
+    content = {}
+    user = request.user
+    user_profile = UserProfile.objects.get(user=user)
+    if user_profile.role == 'patient' or user_profile.role == 'admin':
+        return HttpResponseRedirect('/')
+    physicians = PhysicianTeam.objects.filter(member=user)
+
+    physician_ids = [x.physician.id for x in physicians]
+    patients = PatientController.objects.filter(physician__id__in=physician_ids)
+    patient_ids = [x.patient.id for x in patients]
+    patients = User.objects.filter(id__in=patient_ids).filter(is_active=True)
+
+    physicians = [x.physician for x in physicians]
+
+    content['physicians'] = physicians
+    content['patients'] = patients
+    content['user'] = user
+    content['user_profile'] = user_profile
+
+    # TODO
+    user_profile_serialized = UserProfileSerializer(user_profile).data
+    user_profile_serialized['permissions'] = ROLE_PERMISSIONS[user_profile.role]
+    content['active_user'] = json.dumps(user_profile_serialized)
+
+    return render(request, 'staff-app.html', content)
 
 
 # Users
@@ -263,13 +240,15 @@ def manage_patient(request, user_id):
     context['bleeding_risk'] = json.dumps(Medication.objects.filter(current=True).filter(
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists())
 
-    # context = RequestContext(request, context)
     return render(request, 'patient-app.html', context)
-    # return render_to_response("patient-app.html", context)
 
 
-# Users
-# TODO: Clean up later
+@timeit
+def logout_user(request):
+    logout(request.user)
+    return HttpResponseRedirect('/')
+
+
 @login_required
 @timeit
 def get_patient_info(request, patient_id):
@@ -544,36 +523,6 @@ def fetch_active_user(request):
 
 @login_required
 @timeit
-def staff(request):
-    content = {}
-    user = request.user
-    user_profile = UserProfile.objects.get(user=user)
-    if user_profile.role == 'patient' or user_profile.role == 'admin':
-        return HttpResponseRedirect('/')
-    physicians = PhysicianTeam.objects.filter(member=user)
-
-    physician_ids = [x.physician.id for x in physicians]
-    patients = PatientController.objects.filter(physician__id__in=physician_ids)
-    patient_ids = [x.patient.id for x in patients]
-    patients = User.objects.filter(id__in=patient_ids).filter(is_active=True)
-
-    physicians = [x.physician for x in physicians]
-
-    content['physicians'] = physicians
-    content['patients'] = patients
-    content['user'] = user
-    content['user_profile'] = user_profile
-
-    # TODO
-    user_profile_serialized = UserProfileSerializer(user_profile).data
-    user_profile_serialized['permissions'] = ROLE_PERMISSIONS[user_profile.role]
-    content['active_user'] = json.dumps(user_profile_serialized)
-
-    return render(request, 'staff-app.html', content)
-
-
-@login_required
-@timeit
 def get_patient_members(request, user_id):
     resp = {}
 
@@ -730,25 +679,22 @@ def user_info(request, user_id):
     return ajax_response(resp)
 
 
-@login_required
-@api_view(["POST"])
 @timeit
-def search(request, user_id):
-    user = User.objects.get(id=user_id)
-    actor_profile = UserProfile.objects.get(user=request.user)
-    patient_profile = UserProfile.objects.get(user=user)
-
-    # Allowed viewers
-    # The patient, admin/physician, and other patients the patient has shared
-    allowed = False
-    allowed = check_access(patient_profile.user, actor_profile)
-
-    if not allowed:
-        return HttpResponse("Not allowed")
-    if not is_patient(user):
-        return HttpResponse("Error: this user isn't a patient")
-
+def search_all(request):
+    """
+    If actor is patient return first 5 result for each category if exist
+    If actor is not patient then do search result is patient profile / we could extend with 5 result (how to sort this 5 item)
+    :param request:
+    :param user_id:
+    :return:
+    """
+    actor_profile = request.user.profile
+    query = request.GET.get("query", None)
+    scope = request.GET.get("scope", {})
     patient_ids = []
+    context = {}
+    # 2. Answer question who could access who data information
+    # We could migrate this to common method to gather patient we could accessed
     if actor_profile.role == 'admin':
         patients = UserProfile.objects.filter(role='patient')
         patient_ids = [x.user.id for x in patients]
@@ -760,104 +706,48 @@ def search(request, user_id):
         physician_ids = [x.physician.id for x in team_members]
         patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
+    elif actor_profile.role == 'patient':
+        patient_ids = [request.user.profile.id]  # and shared patient
 
-    context = {}
-    query = request.POST.get("query", None)
     if query:
-        notes = ProblemNote.objects.filter(note__icontains=query, problem__patient=user)
-        context['notes'] = notes
+        patients = UserProfile.objects.filter(
+            Q(user__first_name__icontains=query) | Q(user__last_name__icontains=query), role='patient',
+            user_id__in=patient_ids)
+        context['patients'] = PatientSearchResultSerializer(patients, many=True).data
 
-        goals = Goal.objects.filter(goal__icontains=query, patient=user)
-        context['goals'] = goals
+        inactive_patients = UserProfile.objects.filter(
+            Q(user__first_name__icontains=query) | Q(user__last_name__icontains=query), role='patient',
+            user__is_active=False, user_id__in=patient_ids)
+        context['inactive_patients'] = PatientSearchResultSerializer(inactive_patients, many=True).data
 
-        todos = ToDo.objects.filter(todo__icontains=query, patient=user)
-        context['todos'] = todos
+        if 'notes' in scope:
+            notes = ProblemNote.objects.filter(note__icontains=query, problem__patient_id__in=patient_ids)
+            context['notes'] = ProblemNoteSearchResultSerializer(notes, many=True).data
+        if 'goals' in scope:
+            goals = Goal.objects.filter(goal__icontains=query, patient_id__in=patient_ids)
+            context['goals'] = GoalSearchResultSerializer(goals, many=True).data
 
-        summaries = EncounterEvent.objects.filter(summary__icontains=query, encounter__patient=user)
-        context['summaries'] = summaries
+        if 'todos' in scope:
+            todos = ToDo.objects.filter(todo__icontains=query, patient_id__in=patient_ids)
+            context['todos'] = TodoSearchResultSerializer(todos, many=True).data
 
-        tabs = MyStoryTab.objects.filter(name__icontains=query, patient=user)
-        context['tabs'] = tabs
+        if 'summaries' in scope:
+            summaries = EncounterEvent.objects.filter(summary__icontains=query, encounter__patient_id__in=patient_ids)
+            context['summaries'] = EncounterEventSearchResultSerializer(summaries, many=True).data
 
-        text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient=user)
-        context['text_components'] = text_components
+        if 'tabs' in scope:
+            tabs = MyStoryTab.objects.filter(name__icontains=query, patient_id__in=patient_ids)
+            context['tabs'] = MyStoryTabSearchResultSerializer(tabs, many=True).data
 
-        documents = Document.objects.filter(Q(document__icontains=query), patient=user)
-        context['documents'] = documents
-        if request.user.profile.role is not 'patient':
-            patients = UserProfile.objects.filter(role='patient').filter(
-                Q(user__first_name__icontains=query)
-                | Q(user__last_name__icontains=query)
-            ).filter(user_id__in=patient_ids)
-            context['patients'] = patients
+        if 'text_components' in scope:
+            text_components = MyStoryTextComponent.objects.filter(name__icontains=query, patient_id__in=patient_ids)
+            context['text_components'] = MyStoryTextComponentSearchResultSerializer(text_components, many=True).data
 
-    context['patient'] = user
-    context['user_role'] = actor_profile.role
-    context['patient_profile'] = patient_profile
+        if 'documents' in scope:
+            documents = Document.objects.filter(document__icontains=query, patient_id__in=patient_ids)
+            context['documents'] = DocumentSearchResultSerializer(documents, many=True).data
 
-    # context = RequestContext(request, context)
-    return render_to_response("patient-search.html", context)
-
-
-@login_required
-@api_view(["POST"])
-@timeit
-def staff_search(request):
-    user_profile = UserProfile.objects.get(user=request.user)
-    if user_profile.role == 'patient':
-        return HttpResponse("Not allowed")
-    patient_ids = []
-    if user_profile.role == 'admin':
-        patients = UserProfile.objects.filter(role='patient')
-        patient_ids = [x.user.id for x in patients]
-    elif user_profile.role == 'physician':
-        patient_controllers = PatientController.objects.filter(physician=request.user)
-        patient_ids = [x.patient.id for x in patient_controllers]
-    elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
-        team_members = PhysicianTeam.objects.filter(member=request.user)
-        physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
-        patient_ids = [x.patient.id for x in patient_controllers]
-
-    context = {}
-    query = request.POST.get("query", None)
-    if query:
-        notes = ProblemNote.objects.filter(note__icontains=query, problem__patient__id__in=patient_ids)
-        context['notes'] = notes
-
-        goals = Goal.objects.filter(goal__icontains=query, patient__id__in=patient_ids)
-        context['goals'] = goals
-
-        todos = ToDo.objects.filter(todo__icontains=query, patient__id__in=patient_ids)
-        context['todos'] = todos
-
-        summaries = EncounterEvent.objects.filter(summary__icontains=query, encounter__patient__id__in=patient_ids)
-        context['summaries'] = summaries
-
-        tabs = MyStoryTab.objects.filter(name__icontains=query, patient__id__in=patient_ids)
-        context['tabs'] = tabs
-
-        text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient__id__in=patient_ids)
-        context['text_components'] = text_components
-
-        documents = Document.objects.filter(Q(document__icontains=query))
-        context['documents'] = documents
-
-        if request.user.profile.role is not 'patient':
-            active_patients = UserProfile.objects.filter(role='patient').filter(
-                Q(user__first_name__icontains=query)
-                | Q(user__last_name__icontains=query)
-            ).filter(user_id__in=patient_ids).filter(user__is_active=True)
-            inactive_patients = UserProfile.objects.filter(role='patient').filter(
-                Q(user__first_name__icontains=query)
-                | Q(user__last_name__icontains=query)
-            ).filter(user_id__in=patient_ids).filter(user__is_active=False)
-            context['active_patients'] = active_patients
-            context['inactive_patients'] = inactive_patients
-    context['user_profile'] = user_profile
-
-    # context = RequestContext(request, context)
-    return render_to_response("staff-search.html", context)
+    return ajax_response(context)
 
 
 @login_required

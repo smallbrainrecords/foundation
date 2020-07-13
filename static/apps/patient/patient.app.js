@@ -16,8 +16,14 @@
  */
 (function () {
     'use strict';
-    angular.module('ManagerApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', 'ui.router', 'ui.bootstrap', 'ui.sortable', "com.2fdevs.videogular", "com.2fdevs.videogular.plugins.controls", "com.2fdevs.videogular.plugins.buffering", '720kb.datepicker', 'timeLine', 'chart.js', 'toaster', 'cgPrompt', 'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker', 'cfp.hotkeys', 'view.file', 'angularMoment', 'indexedDB', 'angular-spinkit', 'infinite-scroll', 'wu.masonry', 'fancyboxplus', 'ngPrint', 'app.services', 'app.filters', 'app.components', 'app.directives', 'app.constant', 'colon_cancers', 'a1c', 'medication', 'problems', 'todos', 'medication-component', 'inr', 'document', 'TemplateCache'])
-        .config(function ($stateProvider, $routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
+    angular.module('ManagerApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
+        'ui.bootstrap', 'ui.sortable', "com.2fdevs.videogular", "com.2fdevs.videogular.plugins.controls",
+        "com.2fdevs.videogular.plugins.buffering", '720kb.datepicker', 'timeLine', 'chart.js', 'toaster', 'cgPrompt',
+        'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker', 'cfp.hotkeys', 'view.file',
+        'angularMoment', 'indexedDB', 'angular-spinkit', 'infinite-scroll', 'wu.masonry', 'fancyboxplus', 'ngPrint',
+        'app.services', 'app.filters', 'app.components', 'app.directives', 'app.constant', 'colon_cancers', 'a1c',
+        'medication', 'problems', 'todos', 'medication-component', 'inr', 'document', 'TemplateCache','app.searchModule'])
+        .config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
             console.log("config");
             $indexedDBProvider.connection('andromedaHealthIndexedDB')
                 .upgradeDatabase(1, function (event, db, tx) {
@@ -56,13 +62,6 @@
                 chartColors: ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF']
             });
 
-            let aboutState = {
-                name: 'Laboratory',
-                url: '/laboratory',
-                component: 'todoLaboratory'
-            };
-
-            $stateProvider.state(aboutState);
             /**
              * Application route
              */
@@ -357,8 +356,12 @@
                 });
             }
         })
-        .run(function (CollapseService, sharedService, patientService) {
+        .run(function (CollapseService, sharedService, $rootScope) {
             console.log("run");
+            $rootScope.$on('$routeChangeSuccess',(angularEvent,current,previous)=>{
+               $rootScope.currentPage = current.$$route.controller;
+            });
+
             sharedService.getSettings().then(function (response) {
                 angular.forEach(response.data.settings, function (value, key) {
                     sharedService.settings[key] = JSON.parse(value);

@@ -25,7 +25,7 @@ from emr.models import Medication, MedicationTextNote, ToDo, TodoActivity, VWMed
 from emr.mysnomedct import VWMedicationsSerializers
 from emr.operations import op_add_todo_event
 from medication_app.operations import *
-from users_app.views import permissions_accessed
+from users_app.operations import permissions_accessed
 from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
 
 

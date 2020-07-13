@@ -1,0 +1,146 @@
+<section id="search-result-page">
+    <div id="search-box" class="input-group">
+        <input title="" class="form-control" placeholder="Search" type="text" ng-model="searchQuery"
+               ng-change="searchParamUpdated()" ng-focus="onFocus()"
+               ng-model-options="{updateOn: 'keyup' ,debounce: 1500}">
+        <span class="input-group-addon" ng-click="searchIsFocused? closeSearch(): return;">
+            <i class="fa" ng-class="searchIsFocused?'fa-close':'fa-search'"></i>
+        </span>
+    </div>
+    <wave-spinner ng-if="searchIsLoading"></wave-spinner>
+
+    <section id="search-result" ng-if="!searchIsLoading">
+        <div class='panel panel-default' ng-if="patients.length != 0 ">
+            <div class='panel-heading'>Patients</div>
+            <div class='panel-body'>
+                <div ng-repeat="patient in patients track by $index" class="search-result-item">
+                    <a href='/u/patient/manage/{{ patient.userId }}/'>
+                        {{ patient.fullName }} - {{ patient.dob | date:'mediumDate' }}
+                    </a>
+                    <a href='/project/admin/#!/edit/{{ patient.userId }}/'>
+                        Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class='panel panel-default' ng-if="inactivePatients.length != 0 ">
+            <div class='panel-heading'>In active Patients</div>
+            <div class='panel-body'>
+                <div ng-repeat="patient in inactivePatients track by $index" class="search-result-item">
+                    <a href='/u/patient/manage/{{ patient.userId }}/'>
+                        {{ patient.fullName }} - {{ patient.dob | date:'mediumDate' }}
+                    </a>
+                    <a href='/project/admin/#!/edit/{{ patient.userId }}/'>
+                        Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class='panel panel-default' ng-if="notes.length != 0 ">
+            <div class='panel-heading'> Notes</div>
+            <div class='panel-body'>
+                <div ng-repeat=" note in notes track by $index" class="search-result-item">
+                <span>
+                    <b> {{ note.author.first_name }} {{ note.author.last_name }} - {{ note.author.username
+                        }} </b> : {{ note.note}}
+                </span>
+                    <span>
+                    {{ note.createdAt | date:"mediumDate" }} at {{ note.createdAt | date:"shortTime" }}
+                    <a href='/u/patient/manage/{{ note.patient.id }}/'>
+                        {{ note.patient.first_name }} {{ note.patient.last_name }}
+                    </a>
+                </span>
+                </div>
+            </div>
+        </div>
+
+        <div class='panel panel-default' ng-if="todos.length != 0 ">
+            <div class='panel-heading'> Todos</div>
+            <div class='panel-body'>
+                <div ng-repeat="todo in todos track by $index" ng-class="search-result-item">
+                    <span ng-bind="todo.todo"></span>
+                    <span>
+                        {{ todo.createdAt | date:"mediumDate" }} at {{ todo.createdAt | date:"shortTime" }}
+                        <a href='/u/patient/manage/{{ todo.patient.id }}'>
+                            {{ todo.patient.first_name }} {{ todo.patient.last_name }}
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class='panel panel-default' ng-if="goals.length != 0 ">
+            <div class='panel-heading'> Goals</div>
+            <div class='panel-body'>
+                <div ng-repeat="goal in goals track by $index" class="search-result-item">
+                    <span>{{ goal.goal }}</span>
+                    <span>
+                    {{ goal.createdAt | date:"mediumDate" }}
+                    <a href='/u/patient/manage/{{ goal.patient.id }}/'>
+                        {{ goal.patient.first_name }} {{ goal.patient.last_name }}
+                    </a>
+                </span>
+                </div>
+            </div>
+        </div>
+
+        <div class='panel panel-default' ng-if="summaries.length != 0 ">
+            <div class='panel-heading'> Summaries</div>
+            <div class='panel-body'>
+                <div ng-repeat="summary in summaries track by $index" class="search-result-item">
+                    <span ng-bind-html="summary.summary"></span>
+                    <span>
+                    {{ summary.createdAt | date:"mediumDate" }} at {{ summary.createdAt | date:"shortTime" }}
+                    <a href='/u/patient/manage/{{ summary.patient.id }}'>
+                        {{ summary.patient.first_name }} {{ summary.patient.last_name }}
+                    </a>
+                </span>
+                </div>
+            </div>
+        </div>
+
+        <div class='panel panel-default' ng-if="tabs.length != 0 ">
+            <div class='panel-heading'> My Story Tabs</div>
+            <div class='panel-body'>
+                <div ng-repeat="tab in tabs track by $index" class="search-result-item">
+                    <span ng-bind="tab.name"></span>
+                    <span>
+                        {{ tab.createdAt | date:"mediumDate" }} at {{ tab.createdAt | date:"shortTime" }}
+                        <a href='/u/patient/manage/{{ tab.patient.id }}'>
+                            {{ tab.patient.first_name }} {{ tab.patient.last_name }}
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class='panel panel-default' ng-if="textComponents.length != 0 ">
+            <div class='panel-heading'> My Story Text Components</div>
+            <div class='panel-body'>
+                <div ng-repeat="textComponent in textComponents track by $index" class="search-result-item">
+                    <span ng-bind="textComponent.name"></span>
+                    <span> {{ textComponent.createdAt | date:"mediumDate"}} at {{ textComponent.createdAt | date:"shortTime"
+                        }}
+                        <a href='/u/patient/manage/{{ text_component.patient.id }}'>
+                            {{ textComponent.patient.first_name }} {{ textComponent.patient.last_name }}
+                        </a>
+                </span>
+                </div>
+            </div>
+        </div>
+
+        <div class='panel panel-default' ng-if="documents.length != 0 ">
+            <div class='panel-heading'> Documents</div>
+            <div class='panel-body'>
+                <div ng-repeat="document in documents track by $index" class="search-result-item">
+                    <span ng-bind="document.document_name"></span>
+                    (<a ng-if="document.patient" ng-href='/u/patient/manage/{{ document.patient.id }}'>
+                    {{ document.patient.first_name}} - {{ document.patient.last_name}}
+                </a>)
+                </div>
+            </div>
+        </div>
+    </section>
+</section>

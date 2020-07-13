@@ -17,7 +17,10 @@
 (function () {
 
     'use strict';
-    angular.module('StaffApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', 'app.services','app.constant', 'app.directives', 'inr', 'todos', 'document', 'TemplateCache', 'toaster', 'ngFileUpload', 'dndLists', 'ui.sortable', 'angular-spinkit', '720kb.datepicker', 'ui.bootstrap', 'cgPrompt', 'view.file', 'angularMoment', 'checklist-model'])
+    angular.module('StaffApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', 'app.services',
+        'app.searchModule', 'app.constant', 'app.directives', 'inr', 'todos', 'document', 'TemplateCache', 'toaster',
+        'ngFileUpload', 'dndLists', 'ui.sortable', 'angular-spinkit', '720kb.datepicker', 'ui.bootstrap', 'cgPrompt',
+        'view.file', 'angularMoment', 'checklist-model'])
         .config(function ($routeProvider, $httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -63,5 +66,10 @@
                     templateUrl: '/static/apps/document-detail-page/document-page.template.html',
                     controller: 'ViewDocumentCtrl'
                 }).otherwise('/');
+        })
+        .run(($rootScope) => {
+            $rootScope.$on('$routeChangeSuccess', (angularEvent, current, previous) => {
+                $rootScope.currentPage = current.$$route.controller;
+            });
         });
 })();

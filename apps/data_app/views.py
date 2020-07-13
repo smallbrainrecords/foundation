@@ -29,7 +29,7 @@ from emr.models import Observation, ObservationComponent, ObservationOrder, \
     Inr, UserProfile
 from emr.operations import op_add_event
 from inr_app.serializers import InrSerializer
-from users_app.views import permissions_accessed
+from users_app.operations import permissions_accessed
 from .serializers import ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
 
 

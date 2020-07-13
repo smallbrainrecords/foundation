@@ -77,7 +77,8 @@
                 <td>
                     {{ todo.todo }}
                     <span ng-if="todo.patient"> for patient
-                      <a href="/u/patient/manage/{{ todo.patient.id }}/">{{ todo.patient.first_name }} {{ todo.patient.last_name }}</a>
+                      <a href="/u/patient/manage/{{ todo.patient.id }}/">{{ todo.patient.first_name
+                          }} {{ todo.patient.last_name }}</a>
                     </span>
                 </td>
             </tr>
@@ -126,7 +127,7 @@
     <div class='panel-heading' ng-click="openTodoList(list);">
         <i aria-hidden="true" class="fa fa-caret-down" ng-if="list.collapse"></i>
         <i aria-hidden="true" class="fa fa-caret-right" ng-if="!list.collapse"></i>
-        {{ list.name }} ({{(list.todos | filter:{'accomplished':false}).length}} todos, {{ getNewTodos(list)}} are new)
+        {{ list.name }} ({{(list.todos | filter:{'accomplished': false}).length}} todos, {{ getNewTodos(list)}} are new)
         <a class="btn btn-danger" href ng-click="delete_list(list)"
            ng-if="list.collapse && list.user.id == active_user.id">Delete</a></div>
     <div class='panel-body' ng-if="list.collapse">
@@ -265,5 +266,15 @@
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<div class='panel panel-default'>
+    <div class='panel-heading'>
+        Physicians Assigned
+    </div>
+    <div class='panel-body'>
+        <p ng-repeat="physician in physicians">{{physician.first_name}} {{physician.last_name}}
+            {{physician.username}}</p>
     </div>
 </div>

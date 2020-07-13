@@ -1,53 +1,154 @@
 {% extends "base.html" %}
 {% block title %}  Manage Patient - {{ patient.get_full_name }} {{patient}}  {% endblock %}
 {% load tz %}
-
-{% block search %}
-<form action="{% url 'search' patient.id %}" class="navbar-form navbar-left" method="post" target="_blank">
-    {% csrf_token %}
-    <input name='patient_id' type='hidden' value='{{ patient.id }}'>
-    <div class="input-group">
-        <input class="form-control" name="query" placeholder="Search" type="text">
-        <span class="input-group-btn">
-                <button class="btn btn-default" type="submit">Submit</button>
-            </span>
-    </div>
-</form>
-{% endblock %}
-
-{% block patient_header %}
-<li>
-    <a href="#!/edit/profileInfo" title="Edit profile">
-        Phone: {{ patient.profile.phone_number }}
-    </a>
-</li>
-<li>
-    <a class="headerWrap" href="#!" title="My account">
-        {% if patient_profile.portrait_image %}
-        <img alt="" class="profileThumb" src="{{ patient_profile.portrait_image.url }}">
-        {% endif %}
-        {{ patient.get_full_name }} {% localtime off %} {{ patient_profile.date_of_birth | date:"m/d/Y" }} {% endlocaltime %}
-    </a>
-</li>
-
-<!--Vitals infos-->
-<li class="vitals" id="vitals_blood_pressure"></li>
-<li class="vitals" id="vitals_body_temperature"></li>
-<li class="vitals" id="vitals_weight"></li>
-<li class="vitals" id="vitals_heart_rate"></li>
-<li class="dropdown">
-    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown" href="#"
-       role="button">
-        <span class="caret"></span></a>
-    <ul class="dropdown-menu">
-        <li><a href='#!/edit'>My account</a></li>
-        <li><a href='/logout'>Logout</a></li>
-    </ul>
-</li>
-
-{% endblock %}
-
 {% block content %}
+<section id='ng-app' ng-app='ManagerApp'
+         ng-init="user_id={{ user.id }};active_user={{ active_user }};patient_id={{ patient.id }};patient_info={{ patient_info }} ;bleeding_risk={{ bleeding_risk }}">
+    <!-- TODO: Patient_Id is an User_ID-->
+    <!-- TODO: Patient_Info is an UserProfile instant-->
+    <!-- TODO: User_Id is an User_ID instant-->
+    <!-- TODO: active_user is an UserProfile instant-->
+    <input class="form-control" id="user_id" type="hidden" value="{{ user.id }}"/>
+    <input class="form-control" id="active_user" type="hidden" value="{{ active_user }}"/>
+    <input class="form-control" id="patient_id" type="hidden" value="{{ patient.id }}"/>
+    <input class="form-control" id="patient_info" type="hidden" value="{{ patient_info }}"/>
+    <input class="form-control" id="bleeding_risk" type="hidden" value="{{ bleeding_risk }}"/>
+    <input class="form-control" id="fit_and_well" type="hidden" value="{{ fit_and_well }}"/>
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button class="navbar-toggle collapsed" data-target="#navbar-collapse" data-toggle="collapse"
+                        type="button">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">Andromeda Health <span ng-bind="test"></span></a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <search-component ng-if="currentPage != 'searchPageComponent'" ></search-component>
+
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="#!/edit/profileInfo" title="Edit profile">
+                            Phone: {{ patient.profile.phone_number }}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="headerWrap" href="#!" title="My account">
+                            {% if patient_profile.portrait_image %}
+                            <img alt="" class="profileThumb" src="{{ patient_profile.portrait_image.url }}">
+                            {% endif %}
+                            {{ patient.get_full_name }} {% localtime off %}
+                            {{ patient_profile.date_of_birth | date:"m/d/Y" }} {% endlocaltime %}
+                        </a>
+                    </li>
+
+                    <!--Vitals infos => should me migrate to Django context directly or moving over angular-->
+                    <li class="vitals" id="vitals_blood_pressure"></li>
+                    <li class="vitals" id="vitals_body_temperature"></li>
+                    <li class="vitals" id="vitals_weight"></li>
+                    <li class="vitals" id="vitals_heart_rate"></li>
+                    <li class="dropdown">
+                        <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown"
+                           href="#" role="button">
+                            <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href='#!/edit'>My account</a></li>
+                            <li><a href='/logout'>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+    </nav>
+
+    <div autoscroll='true' ng-view class="container">
+        Loading ....
+    </div>
+
+    {% verbatim %}
+    <div class='bottom-bar' id='encounter-bar' ng-controller='EncountersMainCtrl'
+         ng-if="active_user.permissions.indexOf('add_encounter') != -1">
+
+        <!-- Client UI response for recording states-->
+        <div class='row' id='encounter-box'>
+            <!-- Don't have an active encounter-->
+            <div class='col-md-12' ng-show='activeEncounter == null'>
+                <button class='btn btn-warning btn-md' ng-click='start_encounter()'>
+                    Start Encounter
+                </button>
+            </div>
+
+            <!-- Having an active encounter-->
+            <div class='col-md-12' ng-show='activeEncounter != null'>
+                <div class='row'>
+                    <div class='col-md-6'>
+                        <div ng-show="activeEncounter.recorder_status != 2">
+                            <button class='btn btn-warning btn-md' ng-click='stop_encounter()'> Stop Encounter
+                            </button>
+
+                            <span ng-show="settings.browser_audio_recording">
+                                <!-- This is control used to record audio in client side-->
+                                <ng-audio-recorder audio-model='recordedInput' id='audioInput'
+                                                   on-conversion-complete="conversionComplete()"
+                                                   on-conversion-start="conversionStart()"
+                                                   on-record-complete="recordComplete()"
+                                                   on-record-start="recordStart()"
+                                                   show-player="false"
+                                                   style="display: none">
+                                    <div ng-if="!recorder.isAvailable"> Your browser is not support recording</div>
+                                </ng-audio-recorder>
+
+                                <!-- Pause/Resume recorder while encountering | Disable while converting -->
+                                <button class="btn btn-default" ng-click='toggle_recorder()' type="button">
+                                    <span aria-hidden="true" class="glyphicon glyphicon-play"
+                                          ng-if="activeEncounter.recorder_status==1" title="Resume"></span>
+                                    <span aria-hidden="true" class="glyphicon glyphicon-pause"
+                                          ng-if="activeEncounter.recorder_status==0" title="Pause"></span>
+                                </button>
+                            </span>
+
+                            <button class='btn btn-default btn-md' ng-click='view_encounter()'> View Encounter
+                            </button>
+                            <span>Recorded time: {{ elapsedTime * 1000 | duration }}</span>
+                        </div>
+
+                        <!--Audio conversion & uploading status only if there is stop command-->
+                        <div ng-show="activeEncounter.recorder_status == 2">
+                            <label ng-if="encounterCtrl.status.isConverting">Converting encounter...</label>
+                            <label ng-if="encounterUploading">Uploading encounter...</label>
+                        </div>
+                    </div>
+
+                    <div class='col-md-6'>
+                        <div class="input-group">
+                            <input title="" class='form-control' ng-model='event_summary'
+                                   placeholder='What are you doing right now ?'
+                                   type='text'>
+                            <span class="input-group-btn">
+                                <button class='btn btn-default' ng-click='add_event_summary()'>
+                                    Add Event Summary
+                                </button>
+                            </span>
+                        </div><!-- /input-group -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    {% endverbatim %}
+    <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
+
+</section>
+{% endblock %}
+
+{% block page_js %}
 <script src="/static/apps/patient/patient.app.js" type="text/javascript"></script>
 
 <script src="/static/apps/patient/home-page/home.controller.js" type="text/javascript"></script>
@@ -116,102 +217,6 @@
         type="text/javascript"></script>
 
 <script src="/static/libs/ngPrint/ngPrint.min.js"></script>
-
-<!-- TODO: Patient_Id is an User_ID-->
-<!-- TODO: Patient_Info is an UserProfile instant-->
-<!-- TODO: User_Id is an User_ID instant-->
-<!-- TODO: active_user is an UserProfile instant-->
-<input class="form-control" id="user_id" type="hidden" value="{{ user.id }}"/>
-<input class="form-control" id="active_user" type="hidden" value="{{ active_user }}"/>
-<input class="form-control" id="patient_id" type="hidden" value="{{ patient.id }}"/>
-<input class="form-control" id="patient_info" type="hidden" value="{{ patient_info }}"/>
-<input class="form-control" id="bleeding_risk" type="hidden" value="{{ bleeding_risk }}"/>
-<input class="form-control" id="fit_and_well" type="hidden" value="{{ fit_and_well }}"/>
-
-<div id='ng-app' ng-app='ManagerApp'
-     ng-init="user_id={{ user.id }};active_user={{ active_user }};patient_id={{ patient.id }};patient_info={{ patient_info }} ;bleeding_risk={{ bleeding_risk }}">
-    <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
-
-    <div autoscroll='true' ng-view>
-        Loading ....
-    </div>
-
-    {% verbatim %}
-    <div class='bottom-bar' id='encounter-bar' ng-controller='EncountersMainCtrl'
-         ng-if="active_user.permissions.indexOf('add_encounter') != -1">
-
-        <!-- Client UI response for recording states-->
-        <div class='row' id='encounter-box'>
-            <!-- Don't have an active encounter-->
-            <div class='col-md-12' ng-show='activeEncounter == null'>
-                <button class='btn btn-warning btn-md' ng-click='start_encounter()'>
-                    Start Encounter
-                </button>
-            </div>
-
-            <!-- Having an active encounter-->
-            <div class='col-md-12' ng-show='activeEncounter != null'>
-                <div class='row'>
-                    <div class='col-md-6'>
-                        <div ng-show="activeEncounter.recorder_status != 2">
-                            <button class='btn btn-warning btn-md' ng-click='stop_encounter()'> Stop Encounter
-                            </button>
-
-                            <span ng-show="settings.browser_audio_recording">
-                                <!-- This is control used to record audio in client side-->
-                                <ng-audio-recorder audio-model='recordedInput' id='audioInput'
-                                                   on-conversion-complete="conversionComplete()"
-                                                   on-conversion-start="conversionStart()"
-                                                   on-record-complete="recordComplete()"
-                                                   on-record-start="recordStart()"
-                                                   show-player="false"
-                                                   style="display: none">
-                                    <div ng-if="!recorder.isAvailable"> Your browser is not support recording</div>
-                                </ng-audio-recorder>
-
-                                <!-- Pause/Resume recorder while encountering | Disable while converting -->
-                                <button class="btn btn-default" ng-click='toggle_recorder()' type="button">
-                                    <span aria-hidden="true" class="glyphicon glyphicon-play"
-                                          ng-if="activeEncounter.recorder_status==1" title="Resume"></span>
-                                    <span aria-hidden="true" class="glyphicon glyphicon-pause"
-                                          ng-if="activeEncounter.recorder_status==0" title="Pause"></span>
-                                </button>
-                            </span>
-
-                            <button class='btn btn-default btn-md' ng-click='view_encounter()'> View Encounter
-                            </button>
-                            <span>Recorded time: {{ elapsedTime*1000 | duration }}</span>
-                        </div>
-
-                        <!--Audio conversion & uploading status only if there is stop command-->
-                        <div ng-show="activeEncounter.recorder_status == 2">
-                            <label ng-if="encounterCtrl.status.isConverting">Converting encounter...</label>
-                            <label ng-if="encounterUploading">Uploading encounter...</label>
-                        </div>
-                    </div>
-
-                    <div class='col-md-6'>
-                        <div class="input-group">
-                            <input title="" class='form-control' ng-model='event_summary'
-                                   placeholder='What are you doing right now ?'
-                                   type='text'>
-                            <span class="input-group-btn">
-                                <button class='btn btn-default' ng-click='add_event_summary()'>
-                                    Add Event Summary
-                                </button>
-                            </span>
-                        </div><!-- /input-group -->
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-    {% endverbatim %}
-</div>
-
-{% endblock %}
-{% block page_js %}
 {% endblock %}
 {% block page_css %}
 {% endblock %}

@@ -20,14 +20,16 @@ from django.conf.urls import url
 from users_app.views import *
 
 urlpatterns = [
+    url(r'^register/$', register_user),
     url(r'^login/$', login_user),
     url(r'^logout/$', logout_user),
-    url(r'^register/$', register_user),
+
     url(r'^home/$', home),
     url(r'^staff/$', staff),
-    url(r'^staff/search$', staff_search, name="staff_search"),
-    url(r'^patient/manage/(?P<user_id>\d+)/search$', search, name="search"),
     url(r'^patient/manage/(?P<user_id>\d+)/$', manage_patient),
+
+    url(r'^search$', search_all),
+
     url(r'^patient/(?P<patient_id>\d+)/info$', get_patient_info),
     url(r'^patient/(?P<patient_id>\d+)/timelineinfo$', get_timeline_info),
     url(r'^patient/(?P<patient_id>\d+)/patient_todos_info$', get_patient_todos_info),

@@ -54,7 +54,7 @@ todo-item .label-wrapper a.todo-label {
   text-align: center;
   padding: 0;
   display: block;
-  margin: 0 2px;
+  margin: 0 5px;
   clear: none;
 }
 todo-item .label-wrapper a.todo-label-name {
@@ -92,7 +92,7 @@ todo-item .members-wrapper {
   text-align: center;
   padding: 0;
   display: inline-block;
-  margin: 0 2px;
+  margin: 0 5px;
   clear: none;
 }
 
@@ -476,7 +476,7 @@ body {
 .btn-upload, .btn-take-photo {
   cursor: pointer;
   line-height: 36px;
-  padding: 28px 0;
+  padding: 30px 0;
 }
 
 .preview-image {
@@ -484,7 +484,7 @@ body {
 }
 
 .dropdown li a {
-  padding: 3px 10px;
+  padding: 5px 10px;
 }
 
 .dropdown.open .btn-camera {
@@ -867,7 +867,7 @@ todo .new-tagged-todo input[type=checkbox]:before {
 .todo-label-front:hover {
   width: auto;
   height: auto;
-  padding: 2px 5px;
+  padding: 5px;
 }
 .todo-label-front:hover .todo-label-name {
   color: #fff;

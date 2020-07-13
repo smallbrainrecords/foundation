@@ -31,7 +31,7 @@
                 </div>
             </form>
             <div class="todo-list-wrapper">
-                <div infinite-scroll="loadMoreTodo(false)" >
+                <div infinite-scroll="loadMoreTodo(false)">
                     <todo todo-list="pending_todos" accomplished="false" show-problem="true"
                           on-status-changed-success="updateStatusCallback"
                           labels="labels" members="members"
@@ -315,7 +315,7 @@
                             </form>
 
                             <div class="todo-list-wrapper">
-                                <div infinite-scroll="loadMoreTodo(false)" >
+                                <div infinite-scroll="loadMoreTodo(false)">
                                     <todo todo-list="pending_todos" show-problem="true"
                                           on-status-changed-success="updateStatusCallback"
                                           labels="labels" members="members"
@@ -380,7 +380,8 @@
                                             </a>
 
                                             {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                                ng-href="#!problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                                ng-href="#!problem/{{ goal.problem.id }}">{{ goal.problem.problem_name
+                                            }}</a></span>
                                         </div>
                                     </li>
                                 </ul>
@@ -399,7 +400,8 @@
                                             </a>
 
                                             {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                                ng-href="#!problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                                ng-href="#!problem/{{ goal.problem.id }}">{{ goal.problem.problem_name
+                                            }}</a></span>
                                         </div>
                                     </li>
                                 </ul>
@@ -509,7 +511,7 @@
                             <br>
                             <p>
                                 Last edited by: {{ narratives.latest.author }}
-                                on {{ narratives.latest.datetime|date:'M/d/yyyy' }}
+                                on {{ narratives.latest.datetime | date:'M/d/yyyy' }}
                                 <button class="btn btn-link" ng-click="loadMore(narratives.nextPage)" tabindex="-1">
                                     See previous entries({{ narratives.total }})
                                 </button>
@@ -519,7 +521,7 @@
                             <br>
                             <div ng-repeat="narrative in narrativeHistories" ng-if="!$first" ng-show="showNarrative">
                                 <span ng-bind="narrative.description"></span>
-                                <p>by {{ narrative.author }} on {{ narrative.datetime|date:'M/d/yyyy' }}</p>
+                                <p>by {{ narrative.author }} on {{ narrative.datetime | date:'M/d/yyyy' }}</p>
                             </div>
                         </div>
                     </div>
@@ -662,7 +664,7 @@
                                               ng-model-options="{updateOn: 'blur', debounce: 1000}" title=""></textarea>
 
                                     <p>Last edited by: {{ entry.author.username }}
-                                        on {{ entry.datetime|date:'M/d/yyyy' }}
+                                        on {{ entry.datetime | date:'M/d/yyyy' }}
                                         <button class="btn btn-link" ng-click="see_previous_entries()" tabindex="-1">
                                             See previous entries ({{ component.text_component_entries.length - 1 }})
                                         </button>
@@ -678,7 +680,7 @@
                                 <div ng-show="show_previous_entries">
                                     <div ng-repeat="entry in component.text_component_entries" ng-if="!$first">
                                         <span ng-bind="entry.text"></span>
-                                        <p>by {{ entry.author.username }} on {{ entry.datetime|date:'M/d/yyyy' }}</p>
+                                        <p>by {{ entry.author.username }} on {{ entry.datetime | date:'M/d/yyyy' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -828,7 +830,7 @@
                                                           ng-if="unit.is_used"> {{ unit.value_unit }}</span>
 
                                                 </h3>
-                                                <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+                                                <span>{{ data.chartLabel[data.chartLabel.length - 1]}}</span>
 
                                             </div>
                                         </div>
@@ -861,7 +863,7 @@
                                                     <span ng-repeat='unit in data.observation_units'
                                                           ng-if="unit.is_used"> {{ unit.value_unit }}</span>
                                                 </h3>
-                                                <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
+                                                <span>{{ data.chartLabel[data.chartLabel.length - 1]}}</span>
                                             </div>
                                         </div>
                                         <div ng-if="data.observation_components.length > 0">

@@ -24,7 +24,7 @@ from emr.models import ColonCancerScreening, UserProfile, ColonCancerStudy, Colo
     ColonCancerTextNote
 from emr.operations import op_add_event
 from users_app.serializers import SafeUserSerializer
-from users_app.views import permissions_accessed
+from users_app.operations import permissions_accessed
 from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySerializer, RiskFactorSerializer, \
     ColonCancerTextNoteSerializer, StudyImageSerializer
 

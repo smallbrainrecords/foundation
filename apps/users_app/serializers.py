@@ -17,8 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from twisted.trial._synctest import Todo
 
-from emr.models import UserProfile, Narrative, VWTopPatients, ToDo, Problem
+from emr.models import UserProfile, Narrative, VWTopPatients, ToDo, Problem, ProblemNote, Goal, EncounterEvent, \
+    Document, MyStoryTextComponent, MyStoryTab
 
 
 class SafeUserProfileSerializer(serializers.ModelSerializer):
@@ -194,4 +196,152 @@ class UserTodoSerializer(serializers.ModelSerializer):
             'comments',
             'attachments',
             'document_set',
+        )
+
+
+class PatientSearchResultSerializer(serializers.ModelSerializer):
+    userId = serializers.SerializerMethodField()
+    fullName = serializers.SerializerMethodField()
+    dob = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+
+        fields = (
+            'userId',
+            'fullName',
+            'dob'
+        )
+
+    def get_userId(self, obj):
+        return obj.id
+
+    def get_fullName(self, obj):
+        return obj.user.get_full_name()
+
+    def get_dob(self, obj):
+        return obj.date_of_birth.isoformat()
+
+
+class ProblemNoteSearchResultSerializer(serializers.ModelSerializer):
+    author = SafeUserSerializer()
+    createdAt = serializers.SerializerMethodField()
+    patient = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProblemNote
+
+        fields = (
+            'author',
+            'note',
+            'patient',
+            'createdAt',
+        )
+
+    def get_createdAt(self, obj):
+        return obj.created_on.isoformat()
+
+    def get_patient(self, obj):
+        return SafeUserSerializer(obj.problem.patient).data
+
+
+class GoalSearchResultSerializer(serializers.ModelSerializer):
+    createdAt = serializers.SerializerMethodField()
+    patient = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Goal
+
+        fields = (
+            'goal',
+            'patient',
+            'createdAt',
+        )
+
+    def get_createdAt(self, obj):
+        return obj.start_date.isoformat()
+
+    def get_patient(self, obj):
+        return SafeUserSerializer(obj.problem.patient).data
+
+
+class EncounterEventSearchResultSerializer(serializers.ModelSerializer):
+    patient = serializers.SerializerMethodField()
+    createdAt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EncounterEvent
+
+        fields = (
+            'summary',
+            'patient',
+            'createdAt',
+        )
+
+    def get_createdAt(self, obj):
+        return obj.datetime.isoformat()
+
+    def get_patient(self, obj):
+        return SafeUserSerializer(obj.encounter.patient).data
+
+
+class TodoSearchResultSerializer(serializers.ModelSerializer):
+    patient = SafeUserSerializer()
+    createdAt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ToDo
+
+        fields = (
+            'todo',
+            'patient',
+            'createdAt',
+        )
+
+    def get_createdAt(self, obj):
+        return obj.created_on.isoformat()
+
+
+class MyStoryTabSearchResultSerializer(serializers.ModelSerializer):
+    patient = SafeUserSerializer()
+    createdAt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MyStoryTab
+
+        fields = (
+            'name',
+            'patient',
+            'createdAt',
+        )
+
+    def get_createdAt(self, obj):
+        return obj.datetime.isoformat()
+
+
+class MyStoryTextComponentSearchResultSerializer(serializers.ModelSerializer):
+    patient = SafeUserSerializer()
+
+    class Meta:
+        model = MyStoryTextComponent
+
+        fields = (
+            'name',
+            'patient',
+            'createdAt',
+        )
+
+    def get_createdAt(self, obj):
+        return obj.datetime.isoformat()
+
+
+class DocumentSearchResultSerializer(serializers.ModelSerializer):
+    patient = SafeUserSerializer()
+
+    class Meta:
+        model = Document
+
+        fields = (
+            'document_name',
+            'patient',
         )

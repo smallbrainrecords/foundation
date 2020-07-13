@@ -198,7 +198,7 @@ body {
 .btn-upload, .btn-take-photo {
   cursor: pointer;
   line-height: 36px;
-  padding: 28px 0;
+  padding: 30px 0;
 }
 
 .preview-image {
@@ -208,7 +208,7 @@ body {
 .dropdown {
   li {
     a {
-      padding: 3px 10px;
+      padding: 5px 10px;
     }
   }
 }
@@ -673,7 +673,7 @@ todo {
   &:hover {
     width: auto;
     height: auto;
-    padding: 2px 5px;
+    padding:  5px;
 
     .todo-label-name {
       color: $color5;

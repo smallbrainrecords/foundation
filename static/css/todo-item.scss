@@ -1,4 +1,5 @@
 @import "colors";
+
 todo-item {
 
   // View mode
@@ -15,7 +16,7 @@ todo-item {
       text-align: center;
       padding: 0;
       display: block;
-      margin: 0 2px;
+      margin: 0 5px;
       clear: none;
     }
 
@@ -34,34 +35,4 @@ todo-item {
   .members-wrapper {
     margin-bottom: 10px;
   }
-
-//  //  Editing mode
-//  .quick-card-editor {
-//
-//    padding-right: 150px;
-//
-//    .quick-card-editor-label {
-//      margin-bottom: initial !important;
-//      z-index: 99 !important;
-//    }
-//
-//    .input-group {
-//      z-index: 99;
-//    }
-//
-//    .quick-card-editor-lv2 {
-//      border-radius: 3px;
-//
-//      ._720kb-datepicker-calendar {
-//        position: relative;
-//        visibility: visible;
-//      }
-//    }
-//
-//    .quick-card-editor-lv3 {
-//      a.todo-label {
-//        width: 100%;
-//      }
-//    }
-//  }
 }

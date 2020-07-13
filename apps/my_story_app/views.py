@@ -22,7 +22,7 @@ from rest_framework.decorators import api_view
 from common.views import *
 from emr.models import MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry, PatientController
 from emr.operations import op_add_event
-from users_app.views import permissions_accessed
+from users_app.operations import permissions_accessed
 from .serializers import MyStoryTextComponentEntrySerializer, MyStoryTextComponentSerializer, MyStoryTabSerializer
 
 

@@ -1,0 +1,22 @@
+<div class="navbar-form navbar-left">
+    <div class="input-group">
+        <input title="" class="form-control" placeholder="Search" type="text" ng-model="$ctrl.searchQuery"
+               ng-change="$ctrl.searchParamUpdated()" ng-focus="$ctrl.onFocus()">
+        <a class="input-group-addon" ng-href="#!/search" ng-if="$ctrl.searchIsFocused">
+            <i class="fa fa-external-link"></i>
+        </a>
+        <span class="input-group-addon" ng-click="$ctrl.searchIsFocused? $ctrl.onBlurred(): return;">
+            <i class="fa" ng-class="$ctrl.searchIsFocused?'fa-close':'fa-search'"></i>
+        </span>
+    </div>
+    <section id="search-result" ng-if="$ctrl.searchIsFocused">
+        <div ng-repeat="patient in $ctrl.patients" class="search-result-item">
+            <a ng-href='/u/patient/manage/{{ patient.userId }}/'>
+                {{ patient.fullName }} - {{ patient.dob | date:'mediumDate' }}
+            </a>
+            <a ng-href='/project/admin/#!/edit/{{ patient.userId }}/' class="btn btn-default">
+                Edit
+            </a>
+        </div>
+    </section>
+</div>

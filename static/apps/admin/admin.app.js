@@ -16,7 +16,7 @@
  */
 (function () {
     'use strict';
-    angular.module('AdminApp', ['app.services', 'app.directives','app.constant', 'ngRoute', 'ngCookies', 'ngDialog', 'toaster', '720kb.datepicker'])
+    angular.module('AdminApp', ['app.services', 'app.directives', 'app.constant', 'ngRoute', 'ngCookies', 'ngDialog', 'toaster', 'app.searchModule', '720kb.datepicker'])
         .config(function ($routeProvider, $httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -46,5 +46,10 @@
                     templateUrl: '/static/apps/admin/manage-sharing-problem-page/manage-sharing-problem.html',
                     controller: 'ManageSharingProblemCtrl'
                 }).otherwise('/');
+        })
+        .run(($rootScope) => {
+            $rootScope.$on('$routeChangeSuccess', (angularEvent, current, previous) => {
+                $rootScope.currentPage = current.$$route.controller;
+            });
         });
 })();

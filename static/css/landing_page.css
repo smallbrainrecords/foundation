@@ -213,12 +213,12 @@ a.nontext {
 }
 
 .nls-None, .nls-None .list1, .nls-None .list2, .nls-None .list3, .nls-None .list4, .nls-None .list5, .nls-None .list6, .nls-None .list7, .nls-None .list8 {
-  padding-left: 34px;
+  padding-left: 35px;
 }
 
 .nls-None.rtl-list, .nls-None .list1.rtl-list, .nls-None .list2.rtl-list, .nls-None .list3.rtl-list, .nls-None .list4.rtl-list, .nls-None .list5.rtl-list, .nls-None .list6.rtl-list, .nls-None .list7.rtl-list, .nls-None .list8.rtl-list {
   padding-left: 0;
-  padding-right: 34px;
+  padding-right: 35px;
 }
 
 .nls-None .list2 > li:before, .nls-None .list5 > li:before, .nls-None .list8 > li:before {
@@ -441,7 +441,6 @@ textarea {
   clip: rect(0, 0, 0, 0);
   height: 1px;
   width: 1px;
-  margin: -1px;
   padding: 0;
   border: 0;
 }
@@ -530,7 +529,7 @@ p, h1, h2, h3, h4, h5, h6, ol, ul, span.actAsPara {
   border-color: #000000;
   background-color: transparent;
   padding-top: 25px;
-  padding-bottom: 62.3781290835px;
+  padding-bottom: 65px;
   width: 100%;
   max-width: 960px;
   margin-left: auto;
