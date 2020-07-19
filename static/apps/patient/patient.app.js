@@ -16,13 +16,16 @@
  */
 (function () {
     'use strict';
-    angular.module('ManagerApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
+    angular.module('ManagerApp', [
+        'ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
         'ui.bootstrap', 'ui.sortable', "com.2fdevs.videogular", "com.2fdevs.videogular.plugins.controls",
         "com.2fdevs.videogular.plugins.buffering", '720kb.datepicker', 'timeLine', 'chart.js', 'toaster', 'cgPrompt',
         'angularAudioRecorder', 'ngFileUpload', 'ngAudio', 'webcam', 'color.picker', 'cfp.hotkeys', 'view.file',
         'angularMoment', 'indexedDB', 'angular-spinkit', 'infinite-scroll', 'wu.masonry', 'fancyboxplus', 'ngPrint',
-        'app.services', 'app.filters', 'app.components', 'app.directives', 'app.constant', 'colon_cancers', 'a1c',
-        'medication', 'problems', 'todos', 'medication-component', 'inr', 'document', 'TemplateCache','app.searchModule'])
+        'TemplateCache',
+        'app.filters', 'app.components', 'app.directives', 'app.constant', 'app.services',
+        'colon_cancers', 'a1c', 'medication', 'problems', 'todos', 'medication-component', 'inr', 'document', 'app.searchModule', 'app.patientSharingModule'
+    ])
         .config(function ($routeProvider, recorderServiceProvider, ChartJsProvider, $httpProvider, $indexedDBProvider) {
             console.log("config");
             $indexedDBProvider.connection('andromedaHealthIndexedDB')
@@ -89,15 +92,6 @@
                 .when("/todo/:todo_id", {
                     templateUrl: '/static/apps/patient/patient-todo-page/patient-todo-page.template.html',
                     controller: 'TodoCtrl'
-                })
-                .when('/manage/sharing', {
-                    // templateUrl: '/static/apps/patient/manage-sharing/user-sharing.controller.js',
-                    templateUrl: '/static/apps/patient/manage-sharing/manage_sharing_patient.html',
-                    controller: 'ManageSharingPatientCtrl'
-                })
-                .when('/manage/sharing/problem/:sharing_patient_id', {
-                    templateUrl: '/static/apps/patient/manage-sharing-problem/manage-sharing-problem.html',
-                    controller: 'ManageSharingProblemCtrl'
                 })
                 .when('/medication/:medication_id', {
                     templateUrl: '/static/apps/patient/medication-page/medication-page.html',
@@ -358,8 +352,8 @@
         })
         .run(function (CollapseService, sharedService, $rootScope) {
             console.log("run");
-            $rootScope.$on('$routeChangeSuccess',(angularEvent,current,previous)=>{
-               $rootScope.currentPage = current.$$route.controller;
+            $rootScope.$on('$routeChangeSuccess', (angularEvent, current, previous) => {
+                $rootScope.currentPage = current.$$route.controller;
             });
 
             sharedService.getSettings().then(function (response) {

@@ -175,6 +175,11 @@
                 return httpService.post(form, url);
             }
 
+            /**
+             * Migrate over shared service
+             * @deprecated
+             * @return {*}
+             */
             function getPatientsList() {
                 let form = {};
                 let url = '/u/patients/';

@@ -407,21 +407,16 @@
                                 </ul>
                             </div>
                         </div>
-                        <div role="tabpanel" class="tab-pane tab-add-goal"
-                             ng-show='permitted(["add_goal"])'>
-                            <div class='row'>
-                                <div class='col-md-10 col-md-offset-1'>
-                                    <form role='form' ng-submit='add_goal(new_goal)'>
-                                        <div class='form-group'>
-                                            <label> Goal Name </label>
-                                            <input type='text' ng-model='new_goal.name'
-                                                   class='form-control'>
-                                        </div>
-                                        <button type='submit' class='btn btn-default'> Add Goal</button>
-
-                                    </form>
+                        <div role="tabpanel" class="tab-pane tab-add-goal" ng-show='permitted(["add_goal"])'>
+                            <form role='form' ng-submit='add_goal(new_goal)'>
+                                <div class="input-group">
+                                    <input type='text' ng-model='new_goal.name' class='form-control'>
+                                    <span class="input-group-btn">
+                                                <button type='submit' class='btn btn-default'> Add Goal</button>
+                                            </span>
                                 </div>
-                            </div>
+
+                            </form>
                         </div>
                     </div>
                 </div>

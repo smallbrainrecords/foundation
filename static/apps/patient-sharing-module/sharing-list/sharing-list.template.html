@@ -1,0 +1,33 @@
+<h3 class="text-center">
+    <a href='/'><i class='glyphicon glyphicon-arrow-left'></i> Back To Home </a>
+</h3>
+<h3 class="text-center"> Manage Sharing Between Patients </h3>
+<div class='panel panel-default' id='nursesAssignedInfo'>
+    <div class='panel-heading'> Patients Assigned</div>
+    <div class='panel-body'>
+        <table class='table'>
+            <thead>
+            <tr>
+                <th> Name</th>
+                <th> Username</th>
+                <th> Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat='patient in patientList'>
+                <td>
+                    <span ng-bind="patient.name"></span>
+                </td>
+                <td>
+                    <span ng-bind="patient.username"></span>
+                </td>
+                <td>
+                    <a ng-href='#!manage/sharing/{{ patient.id }}' class='btn btn-sm btn-default'>
+                        Manage Sharing
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

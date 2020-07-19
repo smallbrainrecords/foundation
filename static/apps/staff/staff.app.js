@@ -17,8 +17,11 @@
 (function () {
 
     'use strict';
-    angular.module('StaffApp', ['ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize', 'app.services',
-        'app.searchModule', 'app.constant', 'app.directives', 'inr', 'todos', 'document', 'TemplateCache', 'toaster',
+    angular.module('StaffApp', [
+        'app.searchModule','app.patientSharingModule', 'inr', 'todos', 'document',
+        'app.services', 'app.constant', 'app.directives',
+        'TemplateCache', 'toaster',
+        'ngRoute', 'ngCookies', 'ngDialog', 'ngAnimate', 'ngSanitize',
         'ngFileUpload', 'dndLists', 'ui.sortable', 'angular-spinkit', '720kb.datepicker', 'ui.bootstrap', 'cgPrompt',
         'view.file', 'angularMoment', 'checklist-model'])
         .config(function ($routeProvider, $httpProvider) {
@@ -37,18 +40,6 @@
                 .when("/todo/:todo_id", {
                     templateUrl: '/static/apps/staff/staff-todo-page/staff-todo-page.template.html',
                     controller: 'TodoCtrl'
-                })
-                .when('/manage/sharing', {
-                    templateUrl: '/static/apps/staff/manage-sharing-page/share-management.template.html',
-                    controller: 'ManageSharingCtrl'
-                })
-                .when('/manage/sharing/:patientId', {
-                    templateUrl: '/static/apps/staff/manage-sharing-patient-page/patient-sharing.template.html',
-                    controller: 'ManageSharingPatientCtrl'
-                })
-                .when('/manage/sharing/problem/:patientId/:sharing_patient_id', {
-                    templateUrl: '/static/apps/staff/manage-sharing-problem-page/manage-sharing-problem.html',
-                    controller: 'ManageSharingProblemCtrl'
                 })
                 .when('/manage/common_problems', {
                     templateUrl: '/static/apps/staff/problem-common-page/problem-common.template.html',

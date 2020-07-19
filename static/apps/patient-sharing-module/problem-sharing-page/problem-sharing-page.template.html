@@ -1,0 +1,22 @@
+<h3 class="text-center">
+    <a ng-href='#!manage/sharing/{{patientId}}'><i class='glyphicon glyphicon-arrow-left'></i> Back To Manage Sharing Page </a>
+</h3>
+
+<h3 class="text-center"> Manage Sharing Problems </h3>
+
+
+<div class='row'>
+    <div class='col-md-4'>
+        patient <b>{{ sharingPatient.user.first_name }} {{ sharingPatient.user.last_name }}</b> can access
+    </div>
+    <div class='col-md-4'>
+        <p ng-repeat="problem in problems">
+            <input title="" type="checkbox" checked="checked" ng-checked="isShared(sharingProblems,problem)"
+                   ng-click="changeSharingProblem(problem);">
+            <span ng-bind="problem.problem_name"></span>
+        </p>
+    </div>
+    <div class='col-md-4'>
+        of patient <b>{{ sharedPatient.user.first_name }} {{ sharedPatient.user.last_name }}</b>
+    </div>
+</div>

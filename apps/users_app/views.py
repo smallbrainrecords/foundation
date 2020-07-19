@@ -197,7 +197,6 @@ def staff(request):
 @timeit
 def manage_patient(request, user_id):
     context = {}
-    allowed = False
 
     try:
         user = User.objects.get(id=user_id)
@@ -556,8 +555,10 @@ def get_patients_list(request):
         patient_ids = [x.user_id for x in patients]
 
     elif user_profile.role == 'patient':
-        patients = UserProfile.objects.filter(role='patient').exclude(user=request.user).filter(user__is_active=True)
-        patient_ids = [x.user_id.id for x in patients]
+        sharing_patients = SharingPatient.objects.filter(shared=request.user)
+        patient_ids = [x.sharing.id for x in sharing_patients]
+        # patients = UserProfile.objects.filter(role='patient').exclude(user=request.user).filter(user__is_active=True)
+        # patient_ids = [x.user_id for x in patients]
 
     elif user_profile.role == 'physician':
         patient_controllers = PatientController.objects.filter(physician=request.user).filter(patient__is_active=True)
@@ -626,8 +627,7 @@ def change_sharing_my_story(request, patient_id, sharing_patient_id):
     sharing_patient = SharingPatient.objects.get(sharing_id=sharing_patient_id, shared_id=patient_id)
     sharing_patient.is_my_story_shared = not sharing_patient.is_my_story_shared
     sharing_patient.save()
-    resp = {}
-    resp['success'] = True
+    resp = {'success': True}
     return ajax_response(resp)
 
 
@@ -673,9 +673,7 @@ def get_todos_physicians(request, user_id):
 @timeit
 def user_info(request, user_id):
     user_profile = UserProfile.objects.get(user_id=user_id)
-    resp = {}
-    resp['success'] = True
-    resp['user_profile'] = UserProfileSerializer(user_profile).data
+    resp = {'success': True, 'user_profile': UserProfileSerializer(user_profile).data}
     return ajax_response(resp)
 
 
@@ -685,7 +683,6 @@ def search_all(request):
     If actor is patient return first 5 result for each category if exist
     If actor is not patient then do search result is patient profile / we could extend with 5 result (how to sort this 5 item)
     :param request:
-    :param user_id:
     :return:
     """
     actor_profile = request.user.profile
@@ -904,83 +901,83 @@ def get_user_vitals(request, patient_id):
     """
     resp = {'success': False}
     # Last 5 days
-    weightQuerySet = get_vitals_table_component(patient_id, 'weight')
+    weight_query_set = get_vitals_table_component(patient_id, 'weight')
     weight = []
     for idx in range(5):
         try:
-            weight.append(weightQuerySet[idx].value_quantity.__str__())
+            weight.append(weight_query_set[idx].value_quantity.__str__())
         except IndexError:
             weight.append(0)
     weight.reverse()
 
-    heightQuerySet = get_vitals_table_component(patient_id, 'height')
+    height_query_set = get_vitals_table_component(patient_id, 'height')
     height = []
     for idx in range(5):
         try:
-            height.append(heightQuerySet[idx].value_quantity.__str__())
+            height.append(height_query_set[idx].value_quantity.__str__())
         except IndexError:
             height.append(0)
     height.reverse()
 
-    bmiQuerySet = get_vitals_table_component(patient_id, 'body mass index')
+    bmi_query_set = get_vitals_table_component(patient_id, 'body mass index')
     bmi = []
     for idx in range(5):
         try:
-            bmi.append(bmiQuerySet[idx].value_quantity.__str__())
+            bmi.append(bmi_query_set[idx].value_quantity.__str__())
         except IndexError:
             bmi.append(0)
     bmi.reverse()
 
-    systolicQuerySet = get_vitals_table_component(patient_id, 'systolic')
+    systolic_query_set = get_vitals_table_component(patient_id, 'systolic')
     systolic = []
     for idx in range(5):
         try:
-            systolic.append(systolicQuerySet[idx].value_quantity.__str__())
+            systolic.append(systolic_query_set[idx].value_quantity.__str__())
         except IndexError:
             systolic.append(0)
     systolic.reverse()
 
-    diastolicQuerySet = get_vitals_table_component(patient_id, 'diastolic')
+    diastolic_query_set = get_vitals_table_component(patient_id, 'diastolic')
     diastolic = []
     for idx in range(5):
         try:
-            diastolic.append(diastolicQuerySet[idx].value_quantity.__str__())
+            diastolic.append(diastolic_query_set[idx].value_quantity.__str__())
         except IndexError:
             diastolic.append(0)
     diastolic.reverse()
 
-    temperatureQuerySet = get_vitals_table_component(patient_id, 'body temperature')
+    temperature_query_set = get_vitals_table_component(patient_id, 'body temperature')
     temperature = []
     for idx in range(5):
         try:
-            temperature.append(temperatureQuerySet[idx].value_quantity.__str__())
+            temperature.append(temperature_query_set[idx].value_quantity.__str__())
         except IndexError:
             temperature.append(0)
     temperature.reverse()
 
-    pulseQuerySet = get_vitals_table_component(patient_id, 'heart rate')
+    pulse_query_set = get_vitals_table_component(patient_id, 'heart rate')
     pulse = []
     for idx in range(5):
         try:
-            pulse.append(pulseQuerySet[idx].value_quantity.__str__())
+            pulse.append(pulse_query_set[idx].value_quantity.__str__())
         except IndexError:
             pulse.append(0)
     pulse.reverse()
 
-    respiratory_rateQuerySet = get_vitals_table_component(patient_id, 'respiratory rate')
+    respiratory_rate_query_set = get_vitals_table_component(patient_id, 'respiratory rate')
     respiratory_rate = []
     for idx in range(5):
         try:
-            respiratory_rate.append(respiratory_rateQuerySet[idx].value_quantity.__str__())
+            respiratory_rate.append(respiratory_rate_query_set[idx].value_quantity.__str__())
         except IndexError:
             respiratory_rate.append(0)
     respiratory_rate.reverse()
 
-    a1cQuerySet = get_vitals_table_component(patient_id, 'a1c')
+    a1c_query_set = get_vitals_table_component(patient_id, 'a1c')
     a1c = []
     for idx in range(5):
         try:
-            a1c.append(a1cQuerySet[idx].value_quantity.__str__())
+            a1c.append(a1c_query_set[idx].value_quantity.__str__())
         except IndexError:
             a1c.append(0)
     a1c.reverse()

@@ -50,28 +50,28 @@
                             <b> Username </b>: {{ user.username }}
                         </p>
 
-                        <a class='btn btn-default btn-manage' href='/project/admin/#!add/user'>Add User</a>
+                        <a class='btn btn-default btn-block btn-manage' href='/project/admin/#!add/user'>Add User</a>
 
-                        <a class='btn btn-default btn-manage' href='/#!manage/sharing'>
+                        <a class='btn btn-default btn-block btn-manage' href='/#!manage/sharing'>
                             Manage patient sharing
                         </a>
 
                         {% if user_profile.role == 'mid-level' or user_profile.role == 'physician' %}
-                        <a class='btn btn-default btn-manage' href='/#!manage/common_problems'>
+                        <a class='btn btn-default btn-block btn-manage' href='/#!manage/common_problems'>
                             Add common problems
                         </a>
                         {% endif %}
 
                         {% if user_profile.role != 'patient' %}
-                        <a class='btn btn-default btn-manage' href='/#!manage/upload_documents'>
+                        <a class='btn btn-default btn-block btn-manage' href='/#!manage/upload_documents'>
                             Upload documents
                         </a>
-                        <a class='btn btn-default btn-manage' href='/#!manage/uploaded'>
+                        <a class='btn btn-default btn-block btn-manage' href='/#!manage/uploaded'>
                             Manage uploaded documents
                         </a>
 
                         {% if user_profile.role == 'admin' or user_profile.role == 'physician' %}
-                        <a class='btn btn-default btn-manage' href='/#!manage/setting'>
+                        <a class='btn btn-default btn-block btn-manage' href='/#!manage/setting'>
                             Settings
                         </a>
                         {% endif %}
@@ -99,11 +99,6 @@
 <!--Controllers-->
 <script src="/static/apps/staff/home-page/home.controller.js" type="text/javascript"></script>
 <script src="/static/apps/staff/staff-todo-page/staff-todo-page.controller.js" type="text/javascript"></script>
-<script src="/static/apps/staff/manage-sharing-page/share-management.controller.js" type="text/javascript"></script>
-<script src="/static/apps/staff/manage-sharing-patient-page/share-management.controller.js"
-        type="text/javascript"></script>
-<script src="/static/apps/staff/manage-sharing-problem-page/share-management.controller.js"
-        type="text/javascript"></script>
 <script src="/static/apps/staff/problem-common-page/problem-common.controller.js" type="text/javascript"></script>
 <script src="/static/apps/staff/upload-document-page/document-upload.controller.js" type="text/javascript"></script>
 <script src="/static/apps/staff/uploaded-document-page/document-uploaded.controller.js" type="text/javascript"></script>

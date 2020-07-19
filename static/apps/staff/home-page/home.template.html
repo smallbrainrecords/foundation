@@ -57,7 +57,7 @@
             </tr>
             </tbody>
         </table>
-        <a class="btn btn-default" href ng-click="show_all=!show_all">
+        <a class="btn btn-default btn-block" href ng-click="show_all=!show_all">
             <span ng-bind='show_all? "Not show all":"Show all"'></span>
         </a>
     </div>
@@ -70,7 +70,9 @@
     <div class='panel-body'>
         <table class='table'>
             <thead>
-            <th> Name</th>
+            <tr>
+                <th> Name</th>
+            </tr>
             </thead>
             <tbody>
             <tr ng-repeat='todo in new_generated_todos_list'>
@@ -100,18 +102,20 @@
         <i aria-hidden="true" class="fa " ng-class="showLabeledTodoList?'fa-caret-down':'fa-caret-right'"></i>
         <span ng-bind="showLabeledTodoList ?'Labeled to do lists':'Add new labeled todo list' "></span>
     </div>
-    <div class='panel-body' ng-show="showLabeledTodoList">
-        <form class='form-inline' role='form'>
-            <div class='form-group'>
+    <div class='panel-body' ng-if="showLabeledTodoList">
+        <form class='' role='form'>
+            <div class='input-group'>
                 <input title="" placeholder="Labeled to do list name" class="form-control" ng-model='new_list.name'
                        type='text'>
+                <span class="input-group-btn">
+                    <button class='btn btn-primary' ng-click="add_todo_list(new_list,1)" type='button'>Add list only for me
+                    </button>
+                    <button class='btn btn-danger' ng-click="add_todo_list(new_list,0)"
+                            ng-if="['admin','physician'].indexOf(active_user.role) != -1" type='button'>Add list for all users
+                    </button>
+                </span>
             </div>
-
-            <button class='btn btn-primary' ng-click="add_todo_list(new_list,1)" type='button'>Add list only for me
-            </button>
-            <button class='btn btn-danger' ng-click="add_todo_list(new_list,0)"
-                    ng-if="['admin','physician'].indexOf(active_user.role) != -1" type='button'>Add list for all users
-            </button>
+            <!--            TODO create label component: Input label, action select & unslect & remove -->
             <div class="form-group">
                 <a ng-repeat="label in labels track by $index" class="todo-label" href ng-class="label.css_class"
                    ng-click="add_new_list_label(new_list, label)">
@@ -124,12 +128,14 @@
 </div>
 <div class='panel panel-default' ng-init="list.show_accomplished=false;list.collapse=false;"
      ng-repeat="list in todo_lists track by $index">
-    <div class='panel-heading' ng-click="openTodoList(list);">
-        <i aria-hidden="true" class="fa fa-caret-down" ng-if="list.collapse"></i>
-        <i aria-hidden="true" class="fa fa-caret-right" ng-if="!list.collapse"></i>
-        {{ list.name }} ({{(list.todos | filter:{'accomplished': false}).length}} todos, {{ getNewTodos(list)}} are new)
-        <a class="btn btn-danger" href ng-click="delete_list(list)"
-           ng-if="list.collapse && list.user.id == active_user.id">Delete</a></div>
+    <div class='panel-heading flex ' ng-click="openTodoList(list);">
+        <span>
+            <i aria-hidden="true" class="fa" ng-class="list.collapse?'fa-caret-down':'fa-caret-right'"></i>
+            {{ list.name }} ({{(list.todos | filter:{'accomplished': false}).length}} todos, {{ getNewTodos(list)}} are new)
+        </span>
+        <a class="btn btn-danger" ng-click="delete_list(list)" ng-if="list.collapse && list.user.id == active_user.id">Delete</a>
+    </div>
+
     <div class='panel-body' ng-if="list.collapse">
         <todo accomplished="false" is-list="list.id" ng-model="list.todos" show-problem="true"></todo>
         <a class='btn btn-default btn-block' ng-click='list.show_accomplished=!list.show_accomplished'>

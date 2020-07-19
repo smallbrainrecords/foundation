@@ -440,17 +440,17 @@ tbody button {
 }
 
 .todo-label {
-  width: auto;
-  height: auto;
   color: #fff;
-  padding: 5px;
+  padding: 5px 15px;
   text-decoration: none;
   display: inline-block;
   margin: 5px;
-  border-radius: 3px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: bold;
 }
-.todo-label:hover {
-  text-decoration: none;
+.todo-label a {
+  color: #fff;
 }
 
 .labeled-list a.todo-label {
@@ -625,6 +625,9 @@ todo-laboratory .label-wrapper a.todo-label {
   margin: 0 !important;
 }
 
+search-component .navbar-form {
+  border: none;
+}
 search-component .input-group input {
   border-right: 0;
 }

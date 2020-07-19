@@ -14,28 +14,19 @@
                 Options
             </div>
             <div class='panel-body'>
-
-                <a class='btn btn-default' href='#!add/user'>
+                <a class='btn btn-default btn-block' ng-href='#!add/user'>
                     Add User
                 </a>
-                </br>
-                </br>
-                <a class='btn btn-default' href='#!manage/sharing'>
+                <a class='btn btn-default btn-block' ng-href='#!manage/sharing'>
                     Manage sharing between patients
                 </a>
-
             </div>
         </div>
-
-
     </div>
 
 
     <div class='col-md-9'>
-
         <div class='panel panel-default'>
-
-
             <div class='panel-heading'>
                 Registered Users
             </div>
@@ -194,10 +185,11 @@
 
                     <table class='table'>
                         <thead>
-                        <th> Name</th>
-                        <th> Username</th>
-                        <th> Contact Number</th>
-
+                        <tr>
+                            <th> Name</th>
+                            <th> Username</th>
+                            <th> Contact Number</th>
+                        </tr>
                         </thead>
                         <tbody>
                         <tr ng-repeat='nurse  in team.nurses'>
@@ -221,10 +213,11 @@
 
                     <table class='table'>
                         <thead>
-                        <th> Name</th>
-                        <th> Username</th>
-                        <th> Contact Number</th>
-
+                        <tr>
+                            <th> Name</th>
+                            <th> Username</th>
+                            <th> Contact Number</th>
+                        </tr>
                         </thead>
                         <tbody>
                         <tr ng-repeat='staff  in team.mid_level_staffs'>
@@ -248,10 +241,11 @@
 
                     <table class='table'>
                         <thead>
-                        <th> Name</th>
-                        <th> Username</th>
-                        <th> Contact Number</th>
-
+                        <tr>
+                            <th> Name</th>
+                            <th> Username</th>
+                            <th> Contact Number</th>
+                        </tr>
                         </thead>
                         <tbody>
                         <tr ng-repeat='staff  in team.secretaries'>

@@ -24,6 +24,7 @@
     function sharedService($http, $cookies, Upload, httpService) {
         return {
             settings: {},
+            getPatientsList: getPatientsList,
             uploadDocument: uploadDocument,
             addCommonProblem: addCommonProblem,
             deleteDocumentTag: deleteDocumentTag,
@@ -47,6 +48,16 @@
             approveUser: approveUser,
             rejectUser: rejectUser,
         };
+
+        /**
+         *
+         * @return {*}
+         */
+        function getPatientsList() {
+            let form = {};
+            let url = '/u/patients/';
+            return httpService.post(form, url);
+        }
 
         /**
          * Upload multiple documentation

@@ -98,7 +98,7 @@
                                disabled>
                     </div>
                     <div class='form-group'>
-                        <input type='submit' value='Update' class='btn btn-default btn-lg'>
+                        <input type='submit' value='Update' class='btn btn-default float-right'>
                     </div>
                 </form>
             </div>
@@ -148,7 +148,7 @@
                         <textarea ng-model='user_profile.summary' class='form-control'></textarea>
                     </div>
                     <div class='form-group text-center'>
-                        <input type='submit' value='Save' class='btn btn-default btn-lg'>
+                        <input type='submit' value='Save' class='btn btn-default float-right'>
                     </div>
                 </form>
             </div>
@@ -168,7 +168,7 @@
                         <input type='file' file-model='files.portrait_image'>
                     </div>
                     <div class='form-group text-center'>
-                        <input type='submit' value='Update' class='btn btn-default btn-lg'>
+                        <input type='submit' value='Update' class='btn btn-default float-right'>
                     </div>
                 </form>
             </div>
@@ -182,7 +182,7 @@
                         <input type='text' class='form-control' ng-model='user_profile.user.email'>
                     </div>
                     <div class='form-group'>
-                        <input type='submit' value='Change Email' class='btn btn-default btn-lg'>
+                        <input type='submit' value='Change Email' class='btn btn-default float-right'>
                     </div>
                 </form>
             </div>
@@ -193,14 +193,14 @@
                 <form class='form' ng-submit='updatePassword()'>
                     <div class='form-group'>
                         <label> New Password </label>
-                        <input type='password' class='form-control' ng-model='password_form.new_password'>
+                        <input title="" type='password' class='form-control' ng-model='password_form.new_password'>
                     </div>
                     <div class='form-group'>
                         <label> Verify Password </label>
-                        <input type='password' class='form-control' ng-model='password_form.verify_password'>
+                        <input title="" type='password' class='form-control' ng-model='password_form.verify_password'>
                     </div>
                     <div class='form-group'>
-                        <input type='submit' value='Change Password' class='btn btn-default btn-lg'>
+                        <input type='submit' value='Change Password' class='btn btn-default float-right'>
                     </div>
                 </form>
             </div>
@@ -270,7 +270,7 @@
                             </select>
                         </div>
                         <div class='form-group'>
-                            <input type='submit' value='Assign' class='btn btn-default'>
+                            <input type='submit' value='Assign' class='btn btn-default float-right'>
                         </div>
                     </form>
                     <hr>
@@ -312,7 +312,7 @@
                             </select>
                         </div>
                         <div class='form-group'>
-                            <input type='submit' value='Assign' class='btn btn-default'>
+                            <input type='submit' value='Assign' class='btn btn-default float-right'>
                         </div>
                     </form>
                     <hr>
@@ -354,7 +354,7 @@
                             </select>
                         </div>
                         <div class='form-group'>
-                            <input type='submit' value='Assign' class='btn btn-default'>
+                            <input type='submit' value='Assign' class='btn btn-default float-right'>
                         </div>
                     </form>
                     <hr>
@@ -396,7 +396,7 @@
                             </select>
                         </div>
                         <div class='form-group'>
-                            <input type='submit' value='Assign' class='btn btn-default'>
+                            <input type='submit' value='Assign' class='btn btn-default float-right'>
                         </div>
                     </form>
                     <hr>
@@ -427,12 +427,12 @@
         </section>
         <section class='panel panel-default' id='manageSharing' ng-if="user_profile.role=='patient'">
             <div class='panel-heading'>
-                Sharing care
-            </div>
-            <div class='panel-body'>
+                <span>Sharing care</span>
                 <a ng-href="#!manage/sharing/{{ p.user.id }}" class='btn btn-sm btn-default'>
                     Manage
                 </a>
+            </div>
+            <div class='panel-body'>
                 <h4>People I can access:</h4>
                 <table class='table'>
                     <thead>

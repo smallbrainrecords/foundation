@@ -60,7 +60,8 @@
 
             function init() {
                 patientService.fetchPatientInfo($scope.patient_id)
-                    .then((data) => {
+                    .then((response) => {
+                        let data = response.data;
                         $scope.sharing_patients = data['sharing_patients'];
                         $scope.shared_patients = data['shared_patients'];
                     });

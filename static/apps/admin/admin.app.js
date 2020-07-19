@@ -16,7 +16,7 @@
  */
 (function () {
     'use strict';
-    angular.module('AdminApp', ['app.services', 'app.directives', 'app.constant', 'ngRoute', 'ngCookies', 'ngDialog', 'toaster', 'app.searchModule', '720kb.datepicker'])
+    angular.module('AdminApp', ['app.patientSharingModule', 'app.searchModule', 'app.services', 'app.directives', 'app.constant', 'ngRoute', 'ngCookies', 'ngDialog', 'toaster', '720kb.datepicker'])
         .config(function ($routeProvider, $httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -34,18 +34,7 @@
                     templateUrl: '/static/apps/admin/edit-user-page/edit-user.html',
                     controller: 'EditUserCtrl'
                 })
-                .when('/manage/sharing', {
-                    templateUrl: '/static/apps/admin/manage-sharing-page/manage-sharing.html',
-                    controller: 'ManageSharingCtrl'
-                })
-                .when('/manage/sharing/:patientId', {
-                    templateUrl: '/static/apps/admin/manage-sharing-patient-page/manage-sharing-patient.html',
-                    controller: 'ManageSharingPatientCtrl'
-                })
-                .when('/manage/sharing/problem/:patientId/:sharing_patient_id', {
-                    templateUrl: '/static/apps/admin/manage-sharing-problem-page/manage-sharing-problem.html',
-                    controller: 'ManageSharingProblemCtrl'
-                }).otherwise('/');
+                .otherwise('/');
         })
         .run(($rootScope) => {
             $rootScope.$on('$routeChangeSuccess', (angularEvent, current, previous) => {

@@ -15,12 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 (function () {
+
     'use strict';
-    angular.module('AdminApp')
-        .controller('ManageSharingCtrl', function ($scope, $routeParams, ngDialog, adminService) {
-            adminService.getPatientsList().then(function (response) {
-                let data = response.data;
-                $scope.patients_list = data['patients_list'];
-            });
-        });
+
+
+    angular.module('app.patientSharingModule')
+        .controller('SharingListCtrl', SharingListCtrl);
+    SharingListCtrl.$inject = ['$scope', 'sharedService','$routeParams','$route'];
+
+    function SharingListCtrl($scope, sharedService,$routeParams,$route) {
+        $scope.patientList = [];
+
+        init()
+
+        function init() {
+            sharedService.getPatientsList()
+                .then((response) => {
+                    let data = response.data;
+                    $scope.patientList = data['patients_list'];
+                });
+        }
+    }
 })();
