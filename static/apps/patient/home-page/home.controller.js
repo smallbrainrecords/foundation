@@ -600,7 +600,7 @@
                     },
                     controllerAs: 'vm'
                 }).closePromise.then(function (response) {
-                    let data = response.data;
+                    let data = response;
                     if (!_.isUndefined(data.value) && '$escape' !== data.value && '$document' !== data.value)
                         form.due_date = moment(data.value, acceptedFormat).toString();
                     sharedService.addToDo(form).then(postAddTodo);
