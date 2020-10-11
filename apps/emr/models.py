@@ -19,12 +19,14 @@ import mimetypes
 import os
 
 import reversion
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 
 from emr.managers import AOneCManager, ProblemManager, ProblemNoteManager, EncounterManager, \
     TodoManager, ColonCancerScreeningManager, ColonCancerStudyManager
+
+User = get_user_model()
 
 # DATA
 ROLE_CHOICES = (
