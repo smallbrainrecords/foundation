@@ -14,17 +14,25 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+import os
 from datetime import timedelta
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
+from django.forms import forms
+from django.shortcuts import render_to_response
+from django.views.decorators.csrf import csrf_exempt
+from pydub import AudioSegment
 from rest_framework.decorators import api_view
 
 from common.views import *
-from emr.models import Encounter, EncounterEvent, ObservationValue
-from emr.models import EncounterProblemRecord
+from emr.models import Encounter, EncounterEvent, EncounterProblemRecord, get_path, ObservationValue
 from problems_app.serializers import ProblemSerializer
-from .serializers import EncounterSerializer, EncounterEventSerializer
+from .serializers import EncounterEventSerializer, EncounterSerializer
+
+User = get_user_model()
 
 
 # Encounter
@@ -223,6 +231,72 @@ def mark_favorite(request, encounter_event_id):
     EncounterEvent.objects.filter(id=encounter_event_id).update(is_favorite=is_favorite)
     resp['success'] = True
     return ajax_response(resp)
+
+
+@api_view(["POST"])
+@csrf_exempt
+def upload_audio_chunks(request, encounter_id):
+    """
+    Append new chunk to audio file
+    """
+    # print request.POST
+    form = forms.Form(request.POST, request.FILES)
+    # print(form.files['data'])
+    resp = {'success': False}
+    enc = Encounter.objects.filter(id=encounter_id)  # TODO: filter stoptime=None
+    # if not enc.exists():
+    #     resp['msg'] = 'Encounter is already stopped'
+    #     return ajax_response(resp)
+    # else:
+    #     enc = enc.first()
+    enc = enc.first()
+
+    audio_chunk = request.FILES['audio']
+
+    sound = AudioSegment.from_file(audio_chunk, codec='opus')
+    sound.export(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload.wav')), format="wav")
+    enc.audio = get_path(enc, 'upload.wav')
+    enc.save()
+
+    # if not enc.audio:
+    #     print 'Init audio file'
+    #
+    #     from django.core.files.storage import DefaultStorage
+    #     storage = DefaultStorage()
+    #
+    #     # audio_chunk.name = 'upload.wav'
+    #     # audio = audio_chunk
+    #     # enc.audio = audio
+    #     # enc.save()
+    #     sound = AudioSegment.from_file(audio_chunk, codec='opus')
+    #     sound.export(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload.wav')), format="wav")
+    #     enc.audio = get_path(enc, 'upload.wav')
+    #     enc.save()
+    # else:
+    #     print 'Merge audio file'
+    #
+    #     from django.core.files.storage import DefaultStorage
+    #     storage = DefaultStorage()
+    #     # f = storage.open(enc.audio.name, mode='rb')
+    #     # audio = audioop.add(f.read(), audio_chunk.read(), 2)
+    #     combined = AudioSegment.empty()
+    #     combined += AudioSegment.from_wav(storage.open(enc.audio.name, mode='rb'))
+    #
+    #     print audio_chunk
+    #     sound = AudioSegment.from_file(audio_chunk, codec='opus')
+    #     sound.export(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload1.wav')), format="wav")
+    #
+    #     combined += AudioSegment.from_wav(storage.open(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload1.wav'))))
+    #
+    #     combined.export(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload.wav')), format="wav")
+
+    resp['success'] = True
+    resp['msg'] = 'Saved'
+    return ajax_response(resp)
+
+
+def upload_audio_chunks_test(request):
+    return render_to_response('encounters/test_audio.html')
 
 
 @permissions_required(["add_encounter_timestamp"])

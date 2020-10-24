@@ -33,8 +33,10 @@ urlpatterns = [
     url(r'^encounter/(?P<encounter_id>\d+)/recorder_status$', toggle_encounter_recorder),
     url(r'^encounter/(?P<encounter_id>\d+)/audio_played$', increase_audio_played_count),
     url(r'^encounter/(?P<encounter_id>\d+)/event$', add_encounter_event),
+    url(r'^encounter/(?P<encounter_id>\d+)/chunks$', upload_audio_chunks),
     url(r'^encounter/add/event_summary$', add_event_summary),
 
     url(r'^encounter_event/(?P<encounter_event_id>\d+)/mark_favorite$', mark_favorite),
-    url(r'^encounter_event/(?P<encounter_event_id>\d+)/name_favorite$', name_favorite),
+
+    url(r'^encounter_event/test$', upload_audio_chunks_test),
 ]
