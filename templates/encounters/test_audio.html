@@ -238,7 +238,7 @@
     let chunks = [];
 
     let onSuccess = function (stream) {
-      const options = {mimeType: 'audio/webm;codecs=opus'};
+      const options = {mimeType: 'audio/webm; codecs=opus'};
       const mediaRecorder = new MediaRecorder(stream, options);
 
       visualize(stream);
@@ -321,7 +321,7 @@
 
         chunks.push(chunk);
 
-        const blob = new Blob(chunks, {'type': 'audio/webm; codecs=opus'});
+        const blob = new Blob([chunk,], {'type': 'audio/webm; codecs=opus'});
         const fd = new FormData();
         fd.append('fname', 'test.wav');
         fd.append('audio', blob);

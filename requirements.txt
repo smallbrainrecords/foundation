@@ -31,7 +31,6 @@ MySQL-python==1.2.5
 oauth2==1.9.0.post1
 pathlib==1.0.1
 Pillow==2.8.1
-pydub==0.24.1
 PyHamcrest==1.9.0
 python-dateutil==2.8.0
 python-openid==2.2.5

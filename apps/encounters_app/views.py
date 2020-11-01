@@ -21,10 +21,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
-from django.forms import forms
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
-from pydub import AudioSegment
 from rest_framework.decorators import api_view
 
 from common.views import *
@@ -239,56 +237,22 @@ def upload_audio_chunks(request, encounter_id):
     """
     Append new chunk to audio file
     """
-    # print request.POST
-    form = forms.Form(request.POST, request.FILES)
-    # print(form.files['data'])
     resp = {'success': False}
-    enc = Encounter.objects.filter(id=encounter_id)  # TODO: filter stoptime=None
-    # if not enc.exists():
-    #     resp['msg'] = 'Encounter is already stopped'
-    #     return ajax_response(resp)
-    # else:
-    #     enc = enc.first()
-    enc = enc.first()
+    enc = Encounter.objects.get(id=encounter_id)  # TODO: filter stoptime=None
 
     audio_chunk = request.FILES['audio']
 
-    sound = AudioSegment.from_file(audio_chunk, codec='opus')
-    sound.export(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload.wav')), format="wav")
-    enc.audio = get_path(enc, 'upload.wav')
-    enc.save()
+    f_name = 'audio.webm'
 
-    # if not enc.audio:
-    #     print 'Init audio file'
-    #
-    #     from django.core.files.storage import DefaultStorage
-    #     storage = DefaultStorage()
-    #
-    #     # audio_chunk.name = 'upload.wav'
-    #     # audio = audio_chunk
-    #     # enc.audio = audio
-    #     # enc.save()
-    #     sound = AudioSegment.from_file(audio_chunk, codec='opus')
-    #     sound.export(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload.wav')), format="wav")
-    #     enc.audio = get_path(enc, 'upload.wav')
-    #     enc.save()
-    # else:
-    #     print 'Merge audio file'
-    #
-    #     from django.core.files.storage import DefaultStorage
-    #     storage = DefaultStorage()
-    #     # f = storage.open(enc.audio.name, mode='rb')
-    #     # audio = audioop.add(f.read(), audio_chunk.read(), 2)
-    #     combined = AudioSegment.empty()
-    #     combined += AudioSegment.from_wav(storage.open(enc.audio.name, mode='rb'))
-    #
-    #     print audio_chunk
-    #     sound = AudioSegment.from_file(audio_chunk, codec='opus')
-    #     sound.export(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload1.wav')), format="wav")
-    #
-    #     combined += AudioSegment.from_wav(storage.open(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload1.wav'))))
-    #
-    #     combined.export(os.path.join(settings.MEDIA_ROOT, get_path(enc, 'upload.wav')), format="wav")
+    if not enc.audio:
+        # Create first chunk
+        audio_chunk.name = f_name
+        enc.audio = audio_chunk
+        enc.save()
+    else:
+        # Append raw data to saved file
+        with open(os.path.join(settings.MEDIA_ROOT, get_path(enc, f_name)), 'a') as f:
+            f.write(audio_chunk.read())
 
     resp['success'] = True
     resp['msg'] = 'Saved'
