@@ -54,7 +54,7 @@
     "popper.js": "^1.16.1",
     "restangular": "^1.6.1",
     "tinycolor": "0.0.1",
-    "underscore": "^1.10.2",
+    "underscore": "^1.12.1",
     "videogular": "^2.2.1",
     "view-file-ng": "git+https://github.com/grtjn/view-file-ng.git",
     "webcam": "^3.2.1",
