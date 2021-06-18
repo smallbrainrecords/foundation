@@ -77,11 +77,11 @@
     <p>Special instructions: {{$ctrl.printForm.notes}}</p>
     <p>Tests Ordered:</p>
     <ul>
-        <li ng-repeat="todo in $ctrl.printForm.todos track by $index">
+        <div ng-repeat="todo in $ctrl.printForm.todos track by $index" class="d-flex">
             <b>{{ todo.todo }} </b>
             {{ todo.problem? ": for "+ todo.problem.problem_name + todo.problem.concept_id : ""}}
             {{ todo.due_date ? "due by " + todo.due_date : ""}}
-        </li>
+        </div>
     </ul>
 
     <p>Associated diagnosis:</p>
