@@ -448,8 +448,6 @@
                     }, 0);
                 }
             });
-
-            // Load graphics frame only when it is opened
         }
 
         $scope.$on('todoListUpdated', function (event, args) {
