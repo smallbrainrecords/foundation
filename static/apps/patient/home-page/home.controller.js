@@ -450,31 +450,6 @@
             });
 
             // Load graphics frame only when it is opened
-            $scope.$watch('graphicFrameIsCollapsed', (newVal, oldVal) => {
-                if (!newVal) {
-                    patientService.fetchPainAvatars($scope.patient_id).then((response) => {
-                        let data = response.data;
-                        $scope.pain_avatars = data['pain_avatars'];
-                    });
-
-                    patientService.fetchTimeLineProblem($scope.patient_id).then((response) => {
-                        let data = response.data;
-                        var timeline_problems = [];
-                        angular.forEach(data['timeline_problems'], function (value, key) {
-                            var timeline_problem = (value.problem_segment.length !== undefined && value.problem_segment.length > 0) ? parseTimelineWithSegment(value) : parseTimelineWithoutSegment(value);
-                            if ($scope.checkSharedProblem(timeline_problem, $scope.sharing_patients))
-                                timeline_problems.push(timeline_problem);
-                        });
-                        $scope.timeline = {
-                            Name: $scope.patient_info['user']['first_name'] + $scope.patient_info['user']['last_name'],
-                            birthday: convertDateTimeBirthday($scope.patient_info['date_of_birth']),
-                            problems: timeline_problems
-                        };
-                        $scope.timeline_ready = true;
-                        $scope.timeline_changed = [{changing: new Date().getTime()}];
-                    });
-                }
-            });
         }
 
         $scope.$on('todoListUpdated', function (event, args) {
