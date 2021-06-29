@@ -522,25 +522,6 @@
                     </div>
                 </div>
             </div>
-            <div class="panel panel-default">
-                <div class="panel-heading" ng-click="graphicFrameIsCollapsed = !graphicFrameIsCollapsed">
-                    <i class="fa" ng-class="graphicFrameIsCollapsed?'fa-caret-right':'fa-caret-down'"></i>
-                    Graphics
-                </div>
-                <div class="panel-body" ng-show="!graphicFrameIsCollapsed">
-                    <section id="pain-history">
-                        <a ng-href="/patient/{{ patient_id }}/pain/add_pain_avatar" class='btn btn-default pull-right'
-                           ng-show='permitted(["update_pain"])'> Update Pain </a>
-                        <h4>Pain history</h4>
-                        <div class="text-center" pain-avatar pain-data='pain_avatars'></div>
-                    </section>
-
-                    <section id="problem-timeline">
-                        <h4>Problems timeline</h4>
-                        <problem-timeline ng-model="timeline"></problem-timeline>
-                    </section>
-                </div>
-            </div>
         </div>
 
         <div role="tabpanel" class="tab-pane tab-mystory"
