@@ -3,6 +3,7 @@ from test.common import build_driver, login, load_data, PATIENT_USER
 from django.test import LiveServerTestCase
 from emr.models import User, UserProfile
 
+
 class TestPatientLogin(LiveServerTestCase):
     """
     Login test as patient user.
@@ -29,12 +30,12 @@ class TestPatientLogin(LiveServerTestCase):
             # Prepare test
             load_data()
             driver = build_driver()
-            
+
             # Login as patient
-            login(driver, 
-                base_url=self.live_server_url,
-                username=PATIENT_USER['email'], 
-                password=PATIENT_USER['password'])
+            login(driver,
+                  base_url=self.live_server_url,
+                  username=PATIENT_USER['email'],
+                  password=PATIENT_USER['password'])
 
             assert str(driver.current_url).startswith('{}/u/patient/manage/'.format(
                 self.live_server_url)), 'Login failed: user -> {}, {}'.format(PATIENT_USER['username'], PATIENT_USER['password'])
@@ -51,10 +52,10 @@ class TestPatientLogin(LiveServerTestCase):
             driver = build_driver()
 
             # Login test
-            login(driver, 
-                base_url=self.live_server_url,
-                username=PATIENT_USER['email'], 
-                password=PATIENT_USER['password'] + 'xyz')
+            login(driver,
+                  base_url=self.live_server_url,
+                  username=PATIENT_USER['email'],
+                  password=PATIENT_USER['password'] + 'xyz')
 
             assert driver.current_url == '{}/u/login/'.format(
                 self.live_server_url), 'Login with incorrent password failed: user -> {}'.format(PATIENT_USER['username'])
