@@ -3,6 +3,7 @@ async-timeout==2.0.1
 attrs==18.2.0
 autobahn==19.1.1
 Automat==0.7.0
+autopep8==1.5.7
 certifi==2019.6.16
 channels==2.1.3
 constantly==15.1.0
@@ -16,6 +17,7 @@ django-cronjobs==0.2.3
 django-crontab==0.7.1
 django-genericadmin==0.7.0
 django-js-asset==1.2.1
+django-liveserver==0.1a2
 django-mptt==0.9.1
 django-mptt-admin==0.6.0
 django-ranged-response==0.2.0
@@ -31,14 +33,18 @@ MySQL-python==1.2.5
 oauth2==1.9.0.post1
 pathlib==1.0.1
 Pillow==2.8.1
+pkg-resources==0.0.0
+pycodestyle==2.7.0
 PyHamcrest==1.9.0
 python-dateutil==2.8.0
 python-openid==2.2.5
 pytz==2018.9
 raven==6.10.0
+selenium==3.141.0
 sentry-sdk==0.12.2
 six==1.12.0
 sqlparse==0.3.0
+toml==0.10.2
 Twisted==18.9.0
 txaio==18.8.1
 urllib3==1.25.3
