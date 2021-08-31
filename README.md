@@ -93,3 +93,18 @@ python manage.py runserver
 - Deactivate user
 
 ## Patient Administration
+
+
+## Run tests
+
+The test are using `LiveServerTestCase` from django.test and `Selenium`.
+
+Use `python manage.py test test` to run test.
+
+# Test coverage
+
+Run following commands to generate a coverage report.
+
+`coverage run --source='.' manage.py test test`
+`coverage report`
+
