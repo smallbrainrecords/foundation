@@ -218,17 +218,13 @@ def add_todo(driver, username, title, physician_full_name=None):
 
     add_without_date_button.click()
 
-    # Submit
-
-    submit_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
-        EC.presence_of_element_located((By.XPATH, '/html/body/div[8]/div[2]/form/button')
-                                       ))
     # Tag physician
 
     if physician_full_name:
 
-        tag_dialog_div = driver.find_element_by_xpath(
-            '//*[@id="ngdialog2"]/div[2]')
+        tag_dialog_div = WebDriverWait(driver, WAIT_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="ngdialog2"]/div[2]')
+                                           ))
 
         physicians = tag_dialog_div.find_elements_by_tag_name('a')
 
@@ -236,6 +232,12 @@ def add_todo(driver, username, title, physician_full_name=None):
             if physician.text == physician_full_name:
                 physician.click()
                 break
+
+    # Submit
+
+    submit_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[8]/div[2]/form/button')
+                                       ))
 
     submit_button.click()
 
@@ -272,8 +274,6 @@ def assing_physician_to_patient(driver, patient_username, physician_username):
     Args:
         patient_username (str): username of the patient.
         physician_username (str): username of the physician.
-
-    Edit patient page is required.
     """
 
     # Select physician
