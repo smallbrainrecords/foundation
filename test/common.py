@@ -693,3 +693,4 @@ def assing_physician_to_patient(driver, patient_username, physician_username):
             break
 
     sleep(SHORT_WAIT_TIMEOUT)
+    
