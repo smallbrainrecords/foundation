@@ -9,7 +9,6 @@ from django.contrib.auth.models import User
 from emr.models import UserProfile
 from emr.models import Encounter
 import os
-from selenium.webdriver.common.action_chains import ActionChains
 import filecmp
 from selenium.webdriver.remote.webelement import WebElement
 
