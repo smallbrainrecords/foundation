@@ -16,7 +16,6 @@ from selenium.webdriver.remote.webelement import WebElement
 SHORT_WAIT_TIMEOUT = 3  # seconds
 WAIT_TIMEOUT = 30  # seconds
 ENCOUNTER_WAIT_TIMEOUT = 10  # seconds
-WAIT_TIMEOUT_HUGE = 6000  # seconds
 PATIENT_ID = 2 # id of patient on DB
 PHYSICIAN_ID = 1 # id of physician on DB
 PATH_TO_AUDIO = 'test/test_encounter/audioSample1.mp3'
@@ -695,4 +694,3 @@ def assing_physician_to_patient(driver, patient_username, physician_username):
 
     sleep(SHORT_WAIT_TIMEOUT)
  
-

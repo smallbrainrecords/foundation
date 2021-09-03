@@ -61,3 +61,4 @@ class TestAddDocument(LiveServerTestCase):
    
         finally:
             driver.quit()
+            
