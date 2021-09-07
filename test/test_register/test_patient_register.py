@@ -1,7 +1,6 @@
 """Test register for patient"""
 from test.common import build_driver, login, register_patient, load_data, PATIENT_USER, TEMP_PATIENT_USER
 from django.test import LiveServerTestCase
-from emr.models import User, UserProfile
 
 
 class TestPatientRegister(LiveServerTestCase):
