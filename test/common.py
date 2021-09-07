@@ -138,7 +138,7 @@ def add_todo(driver, username, title, physician_full_name=None):
 
     submit_button.click()
 
-    sleep(SHORT_WAIT_TIMEOU
+    sleep(SHORT_WAIT_TIMEOUT)
 
 
 def register_patient(driver, base_url, email, password, first_name, last_name):
