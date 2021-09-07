@@ -86,6 +86,7 @@ def drop_files(element, files, offsetX=0, offsetY=0):
 #Make future web drivers able to use drop_files method
 WebElement.drop_files = drop_files
 
+
 def load_data():
     """
     Load data into test database
@@ -93,7 +94,8 @@ def load_data():
     _create_user(ADMIN_USER)
     _create_user(PATIENT_USER)
     _create_user(PHYSICIAN_USER)
-
+    
+    
 def add_todo(driver, username, title, physician_full_name=None):
     """Add a todo.
     Args:
@@ -138,6 +140,7 @@ def add_todo(driver, username, title, physician_full_name=None):
 
     sleep(SHORT_WAIT_TIMEOUT)
 
+    
 def register_patient(driver, base_url, email, password, first_name, last_name):
     """
     Complete a register patient form
@@ -299,6 +302,56 @@ def manage_patient(driver, username):
 
     sleep(SHORT_WAIT_TIMEOUT)
 
+
+def add_todo(driver, username, title, physician_full_name=None):
+    """Add a todo.
+
+    Args:
+        username (str): Username of the patient.
+        title (str): title of the todo.
+    """
+    # Add title
+
+    todo = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'todoNameInput')
+                                       ))
+    todo.send_keys(title)
+    driver.find_element_by_xpath(
+        '//*[@id="tab-content"]/div/div[1]/div[1]/div[2]/div/div[2]/form/div/span/button').click()
+
+    # Add without date
+    add_without_date_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ngdialog1"]/div[2]/div/div[2]/button[2]')
+                                       ))
+
+    add_without_date_button.click()
+
+    # Tag physician
+
+    if physician_full_name:
+
+        tag_dialog_div = WebDriverWait(driver, WAIT_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="ngdialog2"]/div[2]')
+                                           ))
+
+        physicians = tag_dialog_div.find_elements_by_tag_name('a')
+
+        for physician in physicians:
+            if physician.text == physician_full_name:
+                physician.click()
+                break
+
+    # Submit
+
+    submit_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[8]/div[2]/form/button')
+                                       ))
+
+    submit_button.click()
+
+    sleep(SHORT_WAIT_TIMEOUT)
+
+
 def edit_patient(driver, username):
     """Go to edit patient page.
 
@@ -451,6 +504,7 @@ def get_encounter_audio_route_DB(physician_id,patient_id):
     
     return encounter.audio
 
+  
 def _get_complete_media_route(cwd,audio_route, only_media_folder):
     """
     Gets the complete audio encounter route to on the media folder
@@ -482,6 +536,7 @@ def assert_audio_encounter(cwd,audio_route):
     only_media_folder = 2
     return os.path.isfile(_get_complete_media_route(cwd,audio_route,only_media_folder))
 
+  
 def add_encounter(driver,live_server_url):
     """
     Creates an encounter while managing a patient on a admin account
@@ -509,6 +564,7 @@ def add_encounter(driver,live_server_url):
     driver.get('{}/u/patient/manage/2/#/encounter/1'.format(live_server_url))
     sleep(SHORT_WAIT_TIMEOUT)
 
+    
 def delete_document_from_media (cwd):
     """
     Deletes document from media file
@@ -518,6 +574,7 @@ def delete_document_from_media (cwd):
     complete_document_media_route = os.path.join (cwd,PATH_TO_DOCUMENT_MEDIA)
     os.remove(complete_document_media_route)
 
+    
 def delete_document_media_folder(cwd):
     """
     Deletes document media folder
@@ -542,6 +599,7 @@ def delete_audio_from_media(cwd,audio_route):
         complete_audio_media_route = _get_complete_media_route(cwd,audio_route,only_media_folder)
         os.remove(complete_audio_media_route)
 
+        
 def delete_test_patient_media_folder(cwd,audio_route):
     """
     Deletes a patient audio folder from media folder
@@ -554,6 +612,7 @@ def delete_test_patient_media_folder(cwd,audio_route):
     if len(os.listdir(complete_audio_media_route) ) == 0:
         os.rmdir(complete_audio_media_route)
 
+        
 def assert_audio_conversion(cwd,audio_route):
     """
     Verify if audio conversion was successful
@@ -566,6 +625,7 @@ def assert_audio_conversion(cwd,audio_route):
     complete_audio_test_route= os.path.join (cwd,PATH_TO_AUDIO)
     return filecmp.cmp(complete_audio_media_route,complete_audio_test_route,shallow=False)
 
+  
 def assert_add_document(cwd):
     """
     Verify if add document was successful
@@ -638,6 +698,7 @@ def upload_audio(driver,cwd):
     driver.refresh()  
     sleep(SHORT_WAIT_TIMEOUT)
 
+    
 def add_document(driver,cwd):
     """
     Creates an encounter while managing a patient on an admin account
@@ -668,6 +729,7 @@ def add_document(driver,cwd):
     dropzone.drop_files(complete_document_test_route)
     sleep(SHORT_WAIT_TIMEOUT)    
 
+    
 def assing_physician_to_patient(driver, patient_username, physician_username):
     """Assing a physician with a patient.
     Args:
