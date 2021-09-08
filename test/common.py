@@ -43,7 +43,8 @@ PHYSICIAN_USER = {'username': 'physician@mail.com', 'first_name': 'physician_Fn'
                   'last_name': 'physician_Ln', 'password': 'abc12345', 'role': 'Physician', 'email': 'physician@mail.com'}
 TEMP_PHYSICIAN_USER = {'username': 'temp-physician@mail.com', 'first_name': 'physician_Fn-temp',
                        'last_name': 'physician_Ln-temp', 'password': 'abc12345', 'role': 'Physician', 'email': 'temp-physician@mail.com'}
-
+TEMP_ADMIN_USER = {'username': 'temp-admin@mail.com', 'first_name': 'admin_Fn-temp', 'last_name': 'admin_Ln-temp',
+              'password': 'abc12345', 'role': 'Admin', 'email': 'temp-admin@mail.com'}
 
 def build_driver():
     """
