@@ -41,7 +41,7 @@ class TestSecretaryRegister(LiveServerTestCase):
             assert driver.current_url == '{}/project/{}/#/'.format(
                 self.live_server_url, ADMIN_USER['username']), 'Login failed: user -> {}, {}'.format(ADMIN_USER['username'], ADMIN_USER['password'])
 
-            # Register physician
+            # Register secretary
             register_user_by_admin(driver,
                                    first_name=TEMP_SECRETARY_USER['first_name'],
                                    last_name=TEMP_SECRETARY_USER['last_name'],
