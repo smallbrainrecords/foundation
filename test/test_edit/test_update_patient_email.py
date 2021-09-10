@@ -57,7 +57,7 @@ class TestUpdatePatientEmail(LiveServerTestCase):
                 PATIENT_USER['username'])
 
             assert user.email == new_email, 'Email of the patient hasn\'t been updated failed.'
-            
+
         finally:
             driver.quit()
 
@@ -96,6 +96,6 @@ class TestUpdatePatientEmail(LiveServerTestCase):
                 PATIENT_USER['username'])
 
             assert user.email == new_email, 'Email of the patient hasn\'t been updated for one email that is already in used.'
-            
+
         finally:
             driver.quit()
