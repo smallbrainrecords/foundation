@@ -706,3 +706,19 @@ def assing_physician_to_patient(driver, patient_username, physician_username):
             break
 
     sleep(SHORT_WAIT_TIMEOUT)
+
+def logout(driver):
+    """
+    Press the logout buttom
+
+    Args:
+        driver : web driver
+    """
+    # Click Logout
+    logout_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH,
+                                        '/html/body/nav/div/div[2]/ul/li/a')))
+
+    logout_button.click()
+
+    sleep(SHORT_WAIT_TIMEOUT)
