@@ -706,3 +706,38 @@ def assing_physician_to_patient(driver, patient_username, physician_username):
             break
 
     sleep(SHORT_WAIT_TIMEOUT)
+
+
+def update_basic_information(driver, first_name, last_name):
+    """
+    Update basic information of an user
+    
+    Args:
+        driver: web driver
+        first_name (str): New first name of the user.
+        last_name (str): New last name of the user.
+    """
+    # Change first name
+    first_name_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'first_name')))
+    
+    first_name_input.clear()
+    first_name_input.send_keys(first_name)
+    
+    # Change last name
+    last_name_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'last_name')))
+    
+    last_name_input.clear()
+    last_name_input.send_keys(last_name)
+    
+    # Submit button
+    submit_buttom = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[1]/div[2]/form/div[5]/input')))
+
+    submit_buttom.click()
+    
+    sleep(SHORT_WAIT_TIMEOUT)
+
+def get_user(username):
+    return User.objects.get(username=username)
