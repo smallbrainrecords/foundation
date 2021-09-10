@@ -70,4 +70,22 @@ class TestUpdatePatientProfile(LiveServerTestCase):
         """
         Test assign physician to patient user.
         """
-        pass
+        try:
+            # Prepare test
+            load_data()
+            driver = build_driver()
+
+            # Login as admin
+            login(driver,
+                  base_url=self.live_server_url,
+                  username=ADMIN_USER['username'],
+                  password=ADMIN_USER['password'])
+
+            assert driver.current_url == '{}/project/{}/#/'.format(
+                self.live_server_url, ADMIN_USER['username']), 'Login failed: user -> {}, {}'.format(ADMIN_USER['username'], ADMIN_USER['password'])
+
+            # Edit patient
+            edit_patient(driver, PATIENT_USER['username'])
+
+            assert str(driver.current_url).startswith('{}/project/{}/#/edit/'.format(
+                self.live_server_url, ADMIN_USER['username'])), 'Edit patient failed: patient -> {}'.format(PATIENT_USER['username'])
