@@ -837,6 +837,9 @@ def update_profile_information(driver, date_of_birth, phone, sex, summary):
         EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[2]/div[2]/form/div[6]/input')))
 
     submit_buttom.click()
+
+    sleep(SHORT_WAIT_TIMEOUT)
+
     
 
 def update_email(driver, email):

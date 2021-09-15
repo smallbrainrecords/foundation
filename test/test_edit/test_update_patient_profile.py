@@ -77,7 +77,8 @@ class TestUpdatePatientProfile(LiveServerTestCase):
             driver = build_driver()
 
             USER_PROFILE_DATA = {
-                'date_of_birth': date(1998, 10, 10),
+                'date_of_birth': date(1985, 10, 10),
+                'date_of_birth_str': '10/10/1985',
                 'phone': '878787878',
                 'sex': 'Male',
                 'summary': 'Summary updated'
@@ -101,7 +102,7 @@ class TestUpdatePatientProfile(LiveServerTestCase):
             # Update profile
             update_profile_information(driver,
                                        date_of_birth=str(
-                                           USER_PROFILE_DATA['date_of_birth']),
+                                           USER_PROFILE_DATA['date_of_birth_str']),
                                        phone=USER_PROFILE_DATA['phone'],
                                        sex=USER_PROFILE_DATA['sex'],
                                        summary=USER_PROFILE_DATA['summary'])
