@@ -52,6 +52,7 @@ TEMP_SECRETARY_USER = {'username': 'temp-secretary@mail.com', 'first_name': 'sec
 TEMP_NURSE_USER = {'username': 'temp-nurse@mail.com', 'first_name': 'nurse_Fn-temp',
                        'last_name': 'nurse_Ln-temp', 'password': 'abc12345', 'role': 'Nurse', 'email': 'temp-nurse@mail.com'}
 
+
 def build_driver():
     """
     Build the web driver.
