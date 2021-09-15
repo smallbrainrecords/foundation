@@ -45,6 +45,12 @@ TEMP_PHYSICIAN_USER = {'username': 'temp-physician@mail.com', 'first_name': 'phy
                        'last_name': 'physician_Ln-temp', 'password': 'abc12345', 'role': 'Physician', 'email': 'temp-physician@mail.com'}
 TEMP_ADMIN_USER = {'username': 'temp-admin@mail.com', 'first_name': 'admin_Fn-temp', 'last_name': 'admin_Ln-temp',
               'password': 'abc12345', 'role': 'Admin', 'email': 'temp-admin@mail.com'}
+TEMP_MID_LEVEL_USER = {'username': 'temp-mid-level@mail.com', 'first_name': 'mid-level_Fn-temp',
+                       'last_name': 'mid-level_Ln-temp', 'password': 'abc12345', 'role': 'Mid Level PA/NP', 'email': 'temp-mid-level@mail.com'}
+TEMP_SECRETARY_USER = {'username': 'temp-secretary@mail.com', 'first_name': 'secretary_Fn-temp',
+                       'last_name': 'secretary_Ln-temp', 'password': 'abc12345', 'role': 'Secretary', 'email': 'temp-secretary@mail.com'}
+TEMP_NURSE_USER = {'username': 'temp-nurse@mail.com', 'first_name': 'nurse_Fn-temp',
+                       'last_name': 'nurse_Ln-temp', 'password': 'abc12345', 'role': 'Nurse', 'email': 'temp-nurse@mail.com'}
 
 def build_driver():
     """
