@@ -65,7 +65,8 @@ def build_driver():
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument("--disable-popup-blocking")
 
-    return webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', options=chrome_options)
+    # return webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', options=chrome_options)
+    return webdriver.Chrome()
 
 
 def drop_files(element, files, offsetX=0, offsetY=0):
@@ -763,9 +764,84 @@ def assing_physician_to_patient(driver, patient_username, physician_username):
     sleep(SHORT_WAIT_TIMEOUT)
 
 
-def update_email(driver, email):
+def update_basic_information(driver, first_name, last_name):
     """
     Update basic information of an user
+    
+    Args:
+        driver: web driver
+        first_name (str): New first name of the user.
+        last_name (str): New last name of the user.
+    """
+    # Change first name
+    first_name_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'first_name')))
+    
+    first_name_input.clear()
+    first_name_input.send_keys(first_name)
+    
+    # Change last name
+    last_name_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'last_name')))
+    
+    last_name_input.clear()
+    last_name_input.send_keys(last_name)
+    
+    # Submit button
+    submit_buttom = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[1]/div[2]/form/div[5]/input')))
+
+    submit_buttom.click()
+    
+    sleep(SHORT_WAIT_TIMEOUT)
+
+
+def update_profile_information(driver, date_of_birth, phone, sex, summary):
+    """
+    Update profile information of an user
+    
+    Args:
+        driver: web driver
+        date_of_birth (str): New date of birth of the patient.
+        phone (str): New phone number of the user.
+        phone (str): New summary of the user.
+    """
+    # Change date of birth
+    date_of_birth_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[2]/div[2]/form/div[1]/datepicker/div/input')))
+    
+    date_of_birth_input.clear()
+    date_of_birth_input.send_keys(date_of_birth)
+    
+    # Change phone
+    phone_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'phone-number')))
+    
+    phone_input.clear()
+    phone_input.send_keys(phone)
+    
+    # Assign sex
+    select_sex = Select(driver.find_element_by_id('sex'))
+
+    select_sex.select_by_visible_text(sex)
+    
+    # Change summary
+    summary_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[2]/div[2]/form/div[5]/textarea')))
+    
+    summary_input.clear()
+    summary_input.send_keys(summary)
+
+    # Submit button
+    submit_buttom = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[2]/div[2]/form/div[6]/input')))
+
+    submit_buttom.click()
+    
+
+def update_email(driver, email):
+    """
+    Update user email.
     
     Args:
         driver: web driver
@@ -790,12 +866,12 @@ def update_email(driver, email):
 def get_user(username):
     """
     Get an user from database by its username.
+
     Args:
         username (str): Username of the user.
     """
     return User.objects.get(username=username)
 
-  
   
 def logout(driver, is_patient=False):
     """
@@ -819,4 +895,3 @@ def logout(driver, is_patient=False):
     logout_button.click()
     
     sleep(SHORT_WAIT_TIMEOUT)
-
