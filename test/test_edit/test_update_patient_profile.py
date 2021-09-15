@@ -1,9 +1,10 @@
 """
 Test update patient profile using admin account.
 """
-from test.common import build_driver, login, edit_patient, assing_physician_to_patient, update_basic_information, load_data, get_user, PATIENT_USER, ADMIN_USER, PHYSICIAN_USER
+from test.common import build_driver, login, edit_patient, assing_physician_to_patient, update_basic_information, update_profile_information, load_data, get_user, PATIENT_USER, ADMIN_USER, PHYSICIAN_USER
 from django.test import LiveServerTestCase
 from emr.models import User, UserProfile
+from datetime import date
 
 
 class TestUpdatePatientProfile(LiveServerTestCase):
@@ -75,6 +76,13 @@ class TestUpdatePatientProfile(LiveServerTestCase):
             load_data()
             driver = build_driver()
 
+            USER_PROFILE_DATA = {
+                'date_of_birth': date(1998, 10, 10),
+                'phone': '878787878',
+                'sex': 'Male',
+                'summary': 'Summary updated'
+            }
+
             # Login as admin
             login(driver,
                   base_url=self.live_server_url,
@@ -89,3 +97,33 @@ class TestUpdatePatientProfile(LiveServerTestCase):
 
             assert str(driver.current_url).startswith('{}/project/{}/#/edit/'.format(
                 self.live_server_url, ADMIN_USER['username'])), 'Edit patient failed: patient -> {}'.format(PATIENT_USER['username'])
+
+            # Update profile
+            update_profile_information(driver,
+                                       date_of_birth=str(
+                                           USER_PROFILE_DATA['date_of_birth']),
+                                       phone=USER_PROFILE_DATA['phone'],
+                                       sex=USER_PROFILE_DATA['sex'],
+                                       summary=USER_PROFILE_DATA['summary'])
+
+            # Check results
+            user = get_user(PATIENT_USER['username'])
+            user_profile = UserProfile.objects.get(user=user)
+
+            assert user, 'The patient \'{}\' is not found'.format(
+                PATIENT_USER['username'])
+
+            assert user_profile, 'User profile of \'{}\' is not found'.format(
+                PATIENT_USER['username'])
+
+            assert user_profile.date_of_birth.date(
+            ) == USER_PROFILE_DATA['date_of_birth'], 'Date of birth of the user hasn\'t been updated.'
+            assert user_profile.sex == USER_PROFILE_DATA['sex'].lower(
+            ), 'Sex of the user hasn\'t been updated.'
+            assert user_profile.phone_number == USER_PROFILE_DATA[
+                'phone'], 'Phone number of the user hasn\'t been updated.'
+            assert user_profile.summary == USER_PROFILE_DATA[
+                'summary'], 'Summary of the user hasn\'t been updated.'
+
+        finally:
+            driver.quit()
