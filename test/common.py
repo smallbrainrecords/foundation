@@ -285,6 +285,46 @@ def approve_user(driver, username, role):
     assert user_found, 'User to be approved is not found. Username -> {}'.format(
         username)
 
+def reject_user(driver, username):
+    """
+    Reject an user waitting for approval using admin account.
+    """
+    table = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/table')
+                                       ))
+
+    users = table.find_elements_by_tag_name('tr')
+    del users[0]  # Remove table headers
+
+    user_found = False
+
+    if len(users) > 1:
+        # Search in users waiting approval.
+        for idx, user in enumerate(users):
+            user = user.text.split()
+
+            if user[2] == username:
+                user_found = True
+
+                # Reject
+                driver.find_element_by_xpath(
+                    '/html/body/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/table/tbody/tr/td[4]/button[2]'.format(idx+1)).click()
+                break
+    elif len(users) == 1:
+        user = users[0].text.split()
+
+        if user[2] == username:
+            user_found = True
+
+            # Reject
+            driver.find_element_by_xpath(
+                '/html/body/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/table/tbody/tr/td[4]/button[2]').click()
+
+    sleep(SHORT_WAIT_TIMEOUT)
+
+    assert user_found, 'User hasn\'t been rejected. Username -> {}'.format(
+        username)
+
 
 def manage_patient(driver, username):
     """Go to manage a patient.
