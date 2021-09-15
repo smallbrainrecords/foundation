@@ -763,6 +763,40 @@ def assing_physician_to_patient(driver, patient_username, physician_username):
     sleep(SHORT_WAIT_TIMEOUT)
 
 
+def update_email(driver, email):
+    """
+    Update basic information of an user
+    
+    Args:
+        driver: web driver
+        email (str): New email of the user.
+    """
+    # Change email
+    email_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[4]/div[2]/form/div[1]/input')))
+
+    email_input.clear()
+    email_input.send_keys(email)
+
+    # Submit button
+    submit_buttom = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[4]/div[2]/form/div[2]/input')))
+
+    submit_buttom.click()
+
+    sleep(SHORT_WAIT_TIMEOUT)
+
+
+def get_user(username):
+    """
+    Get an user from database by its username.
+    Args:
+        username (str): Username of the user.
+    """
+    return User.objects.get(username=username)
+
+  
+  
 def logout(driver, is_patient=False):
     """
     Press the logout buttom
@@ -785,3 +819,4 @@ def logout(driver, is_patient=False):
     logout_button.click()
     
     sleep(SHORT_WAIT_TIMEOUT)
+
