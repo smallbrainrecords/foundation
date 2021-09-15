@@ -18,8 +18,8 @@ from selenium.webdriver.remote.webelement import WebElement
 SHORT_WAIT_TIMEOUT = 3  # seconds
 WAIT_TIMEOUT = 30  # seconds
 ENCOUNTER_WAIT_TIMEOUT = 10  # seconds
-PATIENT_ID = 2 # id of patient on DB
-PHYSICIAN_ID = 1 # id of physician on DB
+PATIENT_ID = 2  # id of patient on DB
+PHYSICIAN_ID = 1  # id of physician on DB
 PATH_TO_AUDIO = 'test/test_encounter/audioSample1.mp3'
 PATH_TO_DOCUMENT = 'test/test_documents/documentSample1.txt'
 PATH_TO_DOCUMENT_MEDIA = 'media/documents/documentSample1.txt'
@@ -43,6 +43,14 @@ PHYSICIAN_USER = {'username': 'physician@mail.com', 'first_name': 'physician_Fn'
                   'last_name': 'physician_Ln', 'password': 'abc12345', 'role': 'Physician', 'email': 'physician@mail.com'}
 TEMP_PHYSICIAN_USER = {'username': 'temp-physician@mail.com', 'first_name': 'physician_Fn-temp',
                        'last_name': 'physician_Ln-temp', 'password': 'abc12345', 'role': 'Physician', 'email': 'temp-physician@mail.com'}
+TEMP_ADMIN_USER = {'username': 'temp-admin@mail.com', 'first_name': 'admin_Fn-temp', 'last_name': 'admin_Ln-temp',
+              'password': 'abc12345', 'role': 'Admin', 'email': 'temp-admin@mail.com'}
+TEMP_MID_LEVEL_USER = {'username': 'temp-mid-level@mail.com', 'first_name': 'mid-level_Fn-temp',
+                       'last_name': 'mid-level_Ln-temp', 'password': 'abc12345', 'role': 'Mid Level PA/NP', 'email': 'temp-mid-level@mail.com'}
+TEMP_SECRETARY_USER = {'username': 'temp-secretary@mail.com', 'first_name': 'secretary_Fn-temp',
+                       'last_name': 'secretary_Ln-temp', 'password': 'abc12345', 'role': 'Secretary', 'email': 'temp-secretary@mail.com'}
+TEMP_NURSE_USER = {'username': 'temp-nurse@mail.com', 'first_name': 'nurse_Fn-temp',
+                       'last_name': 'nurse_Ln-temp', 'password': 'abc12345', 'role': 'Nurse', 'email': 'temp-nurse@mail.com'}
 
 
 def build_driver():
@@ -75,18 +83,19 @@ def drop_files(element, files, offsetX=0, offsetY=0):
     driver = element.parent
     is_local = not driver._is_remote or '127.0.0.1' in driver.command_executor._url
     paths = []
-    
+
     # ensure files are present, and upload to the remote server if session is remote
-    for file in (files if isinstance(files, list) else [files]) :
-        if not os.path.isfile(file) :
+    for file in (files if isinstance(files, list) else [files]):
+        if not os.path.isfile(file):
             raise IOError
         paths.append(file if is_local else element._upload(file))
-    
+
     value = '\n'.join(paths)
     elm_input = driver.execute_script(JS_DROP_FILES, element, offsetX, offsetY)
     elm_input._execute('sendKeysToElement', {'value': [value], 'text': value})
 
-#Make future web drivers able to use drop_files method
+
+# Make future web drivers able to use drop_files method
 WebElement.drop_files = drop_files
 
 
@@ -97,8 +106,8 @@ def load_data():
     _create_user(ADMIN_USER)
     _create_user(PATIENT_USER)
     _create_user(PHYSICIAN_USER)
-    
-    
+
+
 def add_todo(driver, username, title, physician_full_name=None):
     """Add a todo.
     Args:
@@ -145,14 +154,14 @@ def add_todo(driver, username, title, physician_full_name=None):
 def register_patient(driver, base_url, email, password, first_name, last_name):
     """
     Complete a register patient form
-    
+
     Args:
         driver: web driver.
         base_url: live server url
         username (str): username of the user.
         password (str): password of the user.
     """
-    
+
     driver.get(base_url)
 
     # Go to login page
@@ -225,7 +234,7 @@ def approve_user(driver, username, role):
     """
     Description:
         Approves an user
-    
+
     Args:
         driver: web driver.
         username (str): username of the user.
@@ -278,6 +287,46 @@ def approve_user(driver, username, role):
     assert user_found, 'User to be approved is not found. Username -> {}'.format(
         username)
 
+def reject_user(driver, username):
+    """
+    Reject an user waitting for approval using admin account.
+    """
+    table = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/table')
+                                       ))
+
+    users = table.find_elements_by_tag_name('tr')
+    del users[0]  # Remove table headers
+
+    user_found = False
+
+    if len(users) > 1:
+        # Search in users waiting approval.
+        for idx, user in enumerate(users):
+            user = user.text.split()
+
+            if user[2] == username:
+                user_found = True
+
+                # Reject
+                driver.find_element_by_xpath(
+                    '/html/body/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/table/tbody/tr/td[4]/button[2]'.format(idx+1)).click()
+                break
+    elif len(users) == 1:
+        user = users[0].text.split()
+
+        if user[2] == username:
+            user_found = True
+
+            # Reject
+            driver.find_element_by_xpath(
+                '/html/body/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/table/tbody/tr/td[4]/button[2]').click()
+
+    sleep(SHORT_WAIT_TIMEOUT)
+
+    assert user_found, 'User hasn\'t been rejected. Username -> {}'.format(
+        username)
+
 
 def manage_patient(driver, username):
     """Go to manage a patient.
@@ -303,7 +352,7 @@ def manage_patient(driver, username):
 
     sleep(SHORT_WAIT_TIMEOUT)
 
-    
+
 def edit_patient(driver, username):
     """Go to edit patient page.
 
@@ -341,7 +390,7 @@ def assing_physician_to_patient(driver, patient_username, physician_username):
     # Select physician
     select_physician = WebDriverWait(driver, WAIT_TIMEOUT).until(
         EC.presence_of_element_located((By.XPATH,
-        '//*[@id="physiciansInfo"]/div[2]/form/div[1]/select')
+                                        '//*[@id="physiciansInfo"]/div[2]/form/div[1]/select')
                                        ))
     # Use Select wrapper
     select_physician = Select(select_physician)
@@ -444,7 +493,7 @@ def _create_user(user_data):
     user_profile.save()
 
 
-def get_encounter_audio_route_DB(physician_id,patient_id):
+def get_encounter_audio_route_DB(physician_id, patient_id):
     """
     Gets part of the route of an audio encounter for a user from the DB
 
@@ -452,12 +501,13 @@ def get_encounter_audio_route_DB(physician_id,patient_id):
         physician_id (int): db id of physician
         patient_id (int): db id of patient
     """
-    encounter=Encounter.objects.get(physician=PHYSICIAN_ID,patient =PATIENT_ID)
-    
+    encounter = Encounter.objects.get(
+        physician=PHYSICIAN_ID, patient=PATIENT_ID)
+
     return encounter.audio
 
-          
-def _get_complete_media_route(cwd,audio_route, only_media_folder):
+
+def _get_complete_media_route(cwd, audio_route, only_media_folder):
     """
     Gets the complete audio encounter route to on the media folder
 
@@ -468,17 +518,17 @@ def _get_complete_media_route(cwd,audio_route, only_media_folder):
     new_audio_route = 'media'
     if only_media_folder == 2:
         new_audio_route = 'media/' + str(audio_route)
-    
+
     else:
         str_audio_route = str(audio_route)
-        list_audio_route = str_audio_route.split('/')   
+        list_audio_route = str_audio_route.split('/')
         new_audio_route = new_audio_route + '/' + list_audio_route[0]
 
-    complete_audio_media_route = os.path.join (cwd,new_audio_route)
+    complete_audio_media_route = os.path.join(cwd, new_audio_route)
     return complete_audio_media_route
 
 
-def assert_audio_encounter(cwd,audio_route):
+def assert_audio_encounter(cwd, audio_route):
     """
     Verify if the audio sample is on the media file
     Args:
@@ -486,20 +536,20 @@ def assert_audio_encounter(cwd,audio_route):
         audio_route: db stored audio route per encounter
     """
     only_media_folder = 2
-    return os.path.isfile(_get_complete_media_route(cwd,audio_route,only_media_folder))
+    return os.path.isfile(_get_complete_media_route(cwd, audio_route, only_media_folder))
 
 
-def add_encounter(driver,live_server_url):
+def add_encounter(driver, live_server_url):
     """
     Creates an encounter while managing a patient on a admin account
     Args:
         driver : web driver
         live_server_url: url of test
     """
-    start_encounter_button = WebDriverWait(driver, 
-        WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, 
-        '//*[@id="encounter-box"]/div[1]/button')))
-    
+    start_encounter_button = WebDriverWait(driver,
+                                           WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH,
+                                                                                               '//*[@id="encounter-box"]/div[1]/button')))
+
     # Start encounter
     start_encounter_button.click()
     sleep(ENCOUNTER_WAIT_TIMEOUT)
@@ -508,22 +558,22 @@ def add_encounter(driver,live_server_url):
     driver.find_element_by_xpath(
         '//*[@id="encounter-box"]/div[2]/div/div[1]/div[1]/button[1]').click()
     sleep(SHORT_WAIT_TIMEOUT)
-    
+
     # Refresh the page
     driver.refresh()
-    
+
     # Go to encounter
     driver.get('{}/u/patient/manage/2/#/encounter/1'.format(live_server_url))
     sleep(SHORT_WAIT_TIMEOUT)
 
 
-def delete_document_from_media (cwd):
+def delete_document_from_media(cwd):
     """
     Deletes document from media file
     Args:
         cwd: current working directory
     """
-    complete_document_media_route = os.path.join (cwd,PATH_TO_DOCUMENT_MEDIA)
+    complete_document_media_route = os.path.join(cwd, PATH_TO_DOCUMENT_MEDIA)
     os.remove(complete_document_media_route)
 
 
@@ -534,12 +584,13 @@ def delete_document_media_folder(cwd):
         cwd: current working directory
     """
     PATH_TO_DOCUMENT_FOLDER
-    complete_document_media_folder_route = os.path.join (cwd,PATH_TO_DOCUMENT_FOLDER)
-    if len(os.listdir(complete_document_media_folder_route) ) == 0:
+    complete_document_media_folder_route = os.path.join(
+        cwd, PATH_TO_DOCUMENT_FOLDER)
+    if len(os.listdir(complete_document_media_folder_route)) == 0:
         os.rmdir(complete_document_media_folder_route)
 
 
-def delete_audio_from_media(cwd,audio_route):
+def delete_audio_from_media(cwd, audio_route):
     """
     Deletes an audio from media folder
     Args:
@@ -548,11 +599,12 @@ def delete_audio_from_media(cwd,audio_route):
     """
     if(str(audio_route) != ''):
         only_media_folder = 2
-        complete_audio_media_route = _get_complete_media_route(cwd,audio_route,only_media_folder)
+        complete_audio_media_route = _get_complete_media_route(
+            cwd, audio_route, only_media_folder)
         os.remove(complete_audio_media_route)
 
 
-def delete_test_patient_media_folder(cwd,audio_route):
+def delete_test_patient_media_folder(cwd, audio_route):
     """
     Deletes a patient audio folder from media folder
     Args:
@@ -560,12 +612,13 @@ def delete_test_patient_media_folder(cwd,audio_route):
         audio_route: db stored audio route per encounter
     """
     only_media_folder = 1
-    complete_audio_media_route = _get_complete_media_route(cwd,audio_route,only_media_folder)
-    if len(os.listdir(complete_audio_media_route) ) == 0:
+    complete_audio_media_route = _get_complete_media_route(
+        cwd, audio_route, only_media_folder)
+    if len(os.listdir(complete_audio_media_route)) == 0:
         os.rmdir(complete_audio_media_route)
 
 
-def assert_audio_conversion(cwd,audio_route):
+def assert_audio_conversion(cwd, audio_route):
     """
     Verify if audio conversion was successful
     Args:
@@ -573,9 +626,10 @@ def assert_audio_conversion(cwd,audio_route):
         audio_route: db stored audio route per encounter
     """
     only_media_folder = 2
-    complete_audio_media_route = _get_complete_media_route(cwd,audio_route,only_media_folder)
-    complete_audio_test_route= os.path.join (cwd,PATH_TO_AUDIO)
-    return filecmp.cmp(complete_audio_media_route,complete_audio_test_route,shallow=False)
+    complete_audio_media_route = _get_complete_media_route(
+        cwd, audio_route, only_media_folder)
+    complete_audio_test_route = os.path.join(cwd, PATH_TO_AUDIO)
+    return filecmp.cmp(complete_audio_media_route, complete_audio_test_route, shallow=False)
 
 
 def assert_add_document(cwd):
@@ -584,12 +638,12 @@ def assert_add_document(cwd):
     Args:
         cwd: current working directory
     """
-    complete_document_media_route = os.path.join (cwd,PATH_TO_DOCUMENT_MEDIA)
-    complete_document_test_route= os.path.join (cwd,PATH_TO_DOCUMENT)
-    return filecmp.cmp(complete_document_media_route,complete_document_media_route,shallow=False)
+    complete_document_media_route = os.path.join(cwd, PATH_TO_DOCUMENT_MEDIA)
+    complete_document_test_route = os.path.join(cwd, PATH_TO_DOCUMENT)
+    return filecmp.cmp(complete_document_media_route, complete_document_media_route, shallow=False)
 
 
-def upload_audio(driver,cwd):
+def upload_audio(driver, cwd):
     """
     Creates an encounter while managing a patient on an admin account
     Args:
@@ -598,88 +652,89 @@ def upload_audio(driver,cwd):
     """
     # Expand driver window
     driver.maximize_window()
-    
+
     # Start encounter
-    start_encounter_button = WebDriverWait(driver, 
-        WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, 
-        '//*[@id="encounter-box"]/div[1]/button')))
+    start_encounter_button = WebDriverWait(driver,
+                                           WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH,
+                                                                                               '//*[@id="encounter-box"]/div[1]/button')))
     start_encounter_button.click()
     sleep(SHORT_WAIT_TIMEOUT)
-    
+
     # Go to encounter info while encounter is active
-    view_encounter_button = WebDriverWait(driver, 
-        WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, 
-        '//*[@id="encounter-box"]/div[2]/div/div[1]/div[1]/button[2]')))
+    view_encounter_button = WebDriverWait(driver,
+                                          WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH,
+                                                                                              '//*[@id="encounter-box"]/div[2]/div/div[1]/div[1]/button[2]')))
     sleep(SHORT_WAIT_TIMEOUT)
     view_encounter_button.click()
     sleep(SHORT_WAIT_TIMEOUT)
 
     # Stop encounter
-    stop_encounter_button = WebDriverWait(driver, 
-        WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, 
-        '//*[@id="encounter-box"]/div[2]/div/div[1]/div[1]/button[1]')))
+    stop_encounter_button = WebDriverWait(driver,
+                                          WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH,
+                                                                                              '//*[@id="encounter-box"]/div[2]/div/div[1]/div[1]/button[1]')))
     stop_encounter_button.click()
     sleep(SHORT_WAIT_TIMEOUT)
-    
+
     # Delete encounter
-    audio_route = get_encounter_audio_route_DB(PHYSICIAN_ID,PATIENT_ID)
-    delete_audio_from_media(cwd,audio_route)
+    audio_route = get_encounter_audio_route_DB(PHYSICIAN_ID, PATIENT_ID)
+    delete_audio_from_media(cwd, audio_route)
 
     # Upload audio
-    upload_audio_input = WebDriverWait(driver, 
-        WAIT_TIMEOUT).until(EC.presence_of_element_located((By.ID, 'audio_file')))
-    
+    upload_audio_input = WebDriverWait(driver,
+                                       WAIT_TIMEOUT).until(EC.presence_of_element_located((By.ID, 'audio_file')))
+
     # Find route to audio on test_encounters
-    complete_audio_test_route= os.path.join (cwd,PATH_TO_AUDIO)
-    
+    complete_audio_test_route = os.path.join(cwd, PATH_TO_AUDIO)
+
     # Upload audio file
     upload_audio_input.send_keys(complete_audio_test_route)
     sleep(SHORT_WAIT_TIMEOUT)
-    submit_audio_upload_button = WebDriverWait(driver, 
-        WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, 
-        '//*[@id="ng-app"]/div[2]/section[2]/div/div[2]/div[2]/form/div[2]/button'))) 
+    submit_audio_upload_button = WebDriverWait(driver,
+                                               WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH,
+                                                                                                   '//*[@id="ng-app"]/div[2]/section[2]/div/div[2]/div[2]/form/div[2]/button')))
     sleep(SHORT_WAIT_TIMEOUT)
-    
+
     # Submit audio upload file
-    driver.execute_script("arguments[0].scrollIntoView();", submit_audio_upload_button)
+    driver.execute_script(
+        "arguments[0].scrollIntoView();", submit_audio_upload_button)
     sleep(SHORT_WAIT_TIMEOUT)
     driver.execute_script("arguments[0].click();", submit_audio_upload_button)
     sleep(SHORT_WAIT_TIMEOUT)
-    
+
     # Refresh the page
-    driver.refresh()  
+    driver.refresh()
     sleep(SHORT_WAIT_TIMEOUT)
 
 
-def add_document(driver,cwd):
+def add_document(driver, cwd):
     """
     Creates an encounter while managing a patient on an admin account
-    
+
     Args:
         driver : web driver
         cwd: current working directoryr
     """
     # Start encounter
-    data_tab_button = WebDriverWait(driver, 
-        WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, 
-        '//*[@id="patient-profile-header"]/div[1]/ul/li[3]/a')))
-    
+    data_tab_button = WebDriverWait(driver,
+                                    WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH,
+                                                                                        '//*[@id="patient-profile-header"]/div[1]/ul/li[3]/a')))
+
     # Go to add document route
     sleep(SHORT_WAIT_TIMEOUT)
     driver.execute_script('arguments[0].scrollIntoView();', data_tab_button)
     sleep(SHORT_WAIT_TIMEOUT)
     driver.execute_script("arguments[0].click();", data_tab_button)
     sleep(SHORT_WAIT_TIMEOUT)
-    
+
     # Drop a single file
-    dropzone = WebDriverWait(driver, 
-        WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH, 
-        '//*[@id="tab-content"]/div/div[3]/div/div/div/div[2]/div[1]'))) 
+    dropzone = WebDriverWait(driver,
+                             WAIT_TIMEOUT).until(EC.presence_of_element_located((By.XPATH,
+                                                                                 '//*[@id="tab-content"]/div/div[3]/div/div/div/div[2]/div[1]')))
     sleep(SHORT_WAIT_TIMEOUT)
-    complete_document_test_route= os.path.join (cwd,PATH_TO_DOCUMENT)
-    sleep(SHORT_WAIT_TIMEOUT) 
+    complete_document_test_route = os.path.join(cwd, PATH_TO_DOCUMENT)
+    sleep(SHORT_WAIT_TIMEOUT)
     dropzone.drop_files(complete_document_test_route)
-    sleep(SHORT_WAIT_TIMEOUT)    
+    sleep(SHORT_WAIT_TIMEOUT)
 
 
 def assing_physician_to_patient(driver, patient_username, physician_username):
@@ -783,6 +838,28 @@ def update_profile_information(driver, date_of_birth, phone, sex, summary):
 
     submit_buttom.click()
     
+
+def update_email(driver, email):
+    """
+    Update user email.
+    
+    Args:
+        driver: web driver
+        email (str): New email of the user.
+    """
+    # Change email
+    email_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[4]/div[2]/form/div[1]/input')))
+
+    email_input.clear()
+    email_input.send_keys(email)
+
+    # Submit button
+    submit_buttom = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[4]/div[2]/form/div[2]/input')))
+
+    submit_buttom.click()
+
     sleep(SHORT_WAIT_TIMEOUT)
 
 
@@ -794,3 +871,27 @@ def get_user(username):
         username (str): Username of the user.
     """
     return User.objects.get(username=username)
+
+  
+def logout(driver, is_patient=False):
+    """
+    Press the logout buttom
+
+    Args:
+        driver : web driver
+    """
+    logout_button_xpath = '/html/body/nav/div/div[2]/ul/li/a'
+
+    if is_patient:
+        logout_button_xpath = '/html/body/nav/div/div[2]/ul/li[7]/ul/li[2]/a'
+        
+        # Click dropdown
+        WebDriverWait(driver, WAIT_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, '/html/body/nav/div/div[2]/ul/li[7]/a/span'))).click()
+
+    # Click Logout
+    logout_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, logout_button_xpath)))
+    logout_button.click()
+    
+    sleep(SHORT_WAIT_TIMEOUT)
