@@ -30,10 +30,10 @@ class TestAdminLogin(LiveServerTestCase):
             driver = build_driver()
 
             # Login as admin
-            login(driver, 
-                base_url=self.live_server_url, 
-                username=ADMIN_USER['username'], 
-                password=ADMIN_USER['password'])
+            login(driver,
+                  base_url=self.live_server_url,
+                  username=ADMIN_USER['username'],
+                  password=ADMIN_USER['password'])
 
             # Check results
             assert driver.current_url == '{}/project/{}/#/'.format(
@@ -49,15 +49,14 @@ class TestAdminLogin(LiveServerTestCase):
             # Prepare test
             load_data()
             driver = build_driver()
-            
+
             # Login as admin
             login(driver,
-                base_url=self.live_server_url, 
-                username=ADMIN_USER['username'], 
-                password=ADMIN_USER['password'] + 'xyz')
+                  base_url=self.live_server_url,
+                  username=ADMIN_USER['username'],
+                  password=ADMIN_USER['password'] + 'xyz')
 
             assert driver.current_url == '{}/u/login/'.format(
                 self.live_server_url), 'Login with incorrent password failed: user -> {}'.format(ADMIN_USER['username'])
         finally:
             driver.quit()
-

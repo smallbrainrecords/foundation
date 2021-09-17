@@ -1,9 +1,11 @@
-"""Test register physician"""
-from test.common import build_driver, login, register_user_by_admin, load_data, TEMP_PHYSICIAN_USER, ADMIN_USER
+"""
+Test secretary register using admin account.
+"""
+from test.common import build_driver, login, register_user_by_admin, load_data, TEMP_SECRETARY_USER, ADMIN_USER
 from django.test import LiveServerTestCase
 
 
-class TestPhysicianRegister(LiveServerTestCase):
+class TestSecretaryRegister(LiveServerTestCase):
     """
     Register physician test using an admin user.
     """
@@ -12,18 +14,18 @@ class TestPhysicianRegister(LiveServerTestCase):
         """
         Prepare environment before run the tests
         """
-        super(TestPhysicianRegister, cls).setUpClass()
+        super(TestSecretaryRegister, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         """
         Clean up the environment and db after all tests have finished.
         """
-        super(TestPhysicianRegister, cls).tearDownClass()
+        super(TestSecretaryRegister, cls).tearDownClass()
 
-    def test_register_physician(self):
+    def test_register_secretary(self):
         """
-        Test register physician using an admin user.
+        Test register secreatry using an admin user.
         """
         try:
             # Prepare test
@@ -39,14 +41,14 @@ class TestPhysicianRegister(LiveServerTestCase):
             assert driver.current_url == '{}/project/{}/#/'.format(
                 self.live_server_url, ADMIN_USER['username']), 'Login failed: user -> {}, {}'.format(ADMIN_USER['username'], ADMIN_USER['password'])
 
-            # Register physician
+            # Register secretary
             register_user_by_admin(driver,
-                                   first_name=TEMP_PHYSICIAN_USER['first_name'],
-                                   last_name=TEMP_PHYSICIAN_USER['last_name'],
-                                   username=TEMP_PHYSICIAN_USER['username'],
-                                   email=TEMP_PHYSICIAN_USER['email'],
-                                   role=TEMP_PHYSICIAN_USER['role'],
-                                   password=TEMP_PHYSICIAN_USER['password'])
+                                   first_name=TEMP_SECRETARY_USER['first_name'],
+                                   last_name=TEMP_SECRETARY_USER['last_name'],
+                                   username=TEMP_SECRETARY_USER['username'],
+                                   email=TEMP_SECRETARY_USER['email'],
+                                   role=TEMP_SECRETARY_USER['role'],
+                                   password=TEMP_SECRETARY_USER['password'])
 
         finally:
             driver.quit()

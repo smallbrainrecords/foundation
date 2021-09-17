@@ -1,29 +1,31 @@
-"""Test approve patient register"""
-from test.common import build_driver, login, register_patient, approve_user, load_data, ADMIN_USER, TEMP_PATIENT_USER
+"""
+Test reject patient register
+"""
+from test.common import build_driver, login, register_patient, reject_user, load_data, ADMIN_USER, TEMP_PATIENT_USER, reject_user
 from django.test import LiveServerTestCase
 
 
-class TestApprovePatientRegister(LiveServerTestCase):
+class TestRejectPatientRegister(LiveServerTestCase):
     """
-    Approve patient register test using admin user.
+    Reject patient register test using admin user.
     """
     @classmethod
     def setUpClass(cls):
         """
         Prepare environment before run the tests
         """
-        super(TestApprovePatientRegister, cls).setUpClass()
+        super(TestRejectPatientRegister, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         """
         Clean up the environment and db after all tests have finished.
         """
-        super(TestApprovePatientRegister, cls).tearDownClass()
+        super(TestRejectPatientRegister, cls).tearDownClass()
 
-    def test_approve_patient_register(self):
+    def test_reject_patient_register(self):
         """
-        Test approve register patient using admin user.
+        Test reject register patient using admin user.
         """
         try:
             # Prepare test (part 1)
@@ -59,8 +61,9 @@ class TestApprovePatientRegister(LiveServerTestCase):
             assert driver.current_url == '{}/project/{}/#/'.format(
                 self.live_server_url, ADMIN_USER['username']), 'Login failed: user -> {}, {}'.format(ADMIN_USER['username'], ADMIN_USER['password'])
 
-            # Approve patient
-            approve_user(
-                driver, TEMP_PATIENT_USER['username'], TEMP_PATIENT_USER['role'])
+            # Reject patient
+            reject_user(
+                driver, TEMP_PATIENT_USER['username'])
+        
         finally:
             driver.quit()
