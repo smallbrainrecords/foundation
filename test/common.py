@@ -65,8 +65,7 @@ def build_driver():
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument("--disable-popup-blocking")
 
-    # return webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', options=chrome_options)
-    return webdriver.Chrome()
+    return webdriver.Chrome(options=chrome_options)
 
 
 def drop_files(element, files, offsetX=0, offsetY=0):
