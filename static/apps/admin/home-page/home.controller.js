@@ -69,9 +69,9 @@
                 }
 
                 function userUpdateSucceed() {
-                    let index = $scope.pendingUsers.indexOf(user);
+                    let index = $scope.pending_users.indexOf(user);
                     if (index > -1) {
-                        $scope.pendingUsers.splice(index, 1);
+                        $scope.pending_users.splice(index, 1);
                     }
                 }
             }
