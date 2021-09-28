@@ -16,11 +16,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 import logging
 
+import dateutil
 from common.views import *
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import render
+from django.utils import timezone
 from emr.models import PatientController, PhysicianTeam, UserProfile
 from users_app.serializers import UserProfileSerializer
 
@@ -296,7 +298,8 @@ def create_user(request):
             role = form.cleaned_data['role']
             password = form.cleaned_data['password']
             verify_password = form.cleaned_data['verify_password']
-            date_of_birth = form.cleaned_data['date_of_birth']
+            # date_of_birth = dateutil.parser.parse(form.cleaned_data['date_of_birth'], ignoretz=True)
+            date_of_birth = dateutil.parser.parse(request.POST.get('date_of_birth'), ignoretz=True)
             sex = form.cleaned_data['sex']
             phone_number = form.cleaned_data['phone_number']
             cover_image = form.cleaned_data['cover_image']
@@ -325,7 +328,7 @@ def create_user(request):
                 logging.error('Creating User')
 
                 try:
-                    current_time = datetime.now()
+                    current_time = timezone.now()
                     new_user = User.objects.create(
                         first_name=first_name,
                         last_name=last_name,

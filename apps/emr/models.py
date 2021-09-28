@@ -250,6 +250,10 @@ class UserProfile(models.Model):
     last_access_tagged_todo = models.DateTimeField(null=True, blank=True)
     insurance_medicare = models.BooleanField(default=False)
     insurance_note = models.TextField(blank=True)
+    weight_updated_date = models.DateTimeField(null=True, blank=True)
+    height_updated_date = models.DateTimeField(null=True, blank=True)
+    height_changed_first_time = models.BooleanField(default=False)
+
 
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
