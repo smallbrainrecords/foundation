@@ -31,6 +31,7 @@ from emr.operations import op_add_event
 from inr_app.serializers import InrSerializer
 from users_app.views import permissions_accessed
 from .serializers import ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
+from datetime import datetime
 
 
 @login_required
@@ -279,47 +280,63 @@ def add_new_data(request, patient_id, component_id):
 
         # DB stuff
         effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
-        value = ObservationValue(author=request.user, component_id=component_id,
-                                 effective_datetime=effective_datetime, value_quantity=float(value_quantity))
-        value.save()
+        userProfile = UserProfile.objects.get(id=patient_id)
+        if (userProfile.weight_updated_date == None or userProfile.weight_updated_date.date() < datetime.now().date() or userProfile.height_updated_date == None or userProfile.height_updated_date.date() < datetime.now().date()):
+            value = ObservationValue(author=request.user, component_id=component_id,
+                                    effective_datetime=effective_datetime, value_quantity=float(value_quantity))
+            
+            value.save()
 
-        # Auto add bmi data if observation component is weight or height
-        # TODO: Need to improve this block of code - https://trello.com/c/PaSdgs3k
-        bmiComponent = ObservationComponent.objects.filter(component_code='39156-5').filter(
-            observation__subject=patient).first()
-        #  TODO: Later when finished refactor model relationship and patient
-        if value.component.name == 'weight':
-            # Calculation
-            heightComponent = ObservationComponent.objects.filter(component_code='8302-2').filter(
-                observation__subject_id=int(patient_id)).get()
-            height = get_observation_most_common_value(heightComponent, effective_datetime)
-            bmiValue = round(float(value.value_quantity) * 703 / pow(height, 2), 2)
-
-            # DB stuff transaction
-            ObservationValue(author=request.user, component=bmiComponent,
-                             effective_datetime=effective_datetime, value_quantity=bmiValue).save()
             # Save log
-            summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
+            summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(value.value_quantity,
+                                                                            value.component.observation.name)
             op_add_event(request.user, value.component.observation.subject, summary)
 
-        if value.component.name == 'height':
-            # Calculation
-            weightComponent = ObservationComponent.objects.filter(component_code='3141-9').filter(
+            # Auto add bmi data if observation component is weight or height
+            # TODO: Need to improve this block of code - https://trello.com/c/PaSdgs3k
+            bmiComponent = ObservationComponent.objects.filter(component_code='39156-5').filter(
+                observation__subject=patient).first()
+            #  TODO: Later when finished refactor model relationship and patient
+            if value.component.name == 'weight':
+                # Calculation
+                heightComponent = ObservationComponent.objects.filter(component_code='8302-2').filter(
                 observation__subject_id=int(patient_id)).get()
-            weight = get_observation_most_common_value(weightComponent, effective_datetime)
-            bmiValue = round(weight * 703 / pow(float(value.value_quantity), 2), 2)
+                height = get_observation_most_common_value(heightComponent, effective_datetime)
+                if (height > 1 and value.value_quantity > 1 and (userProfile.weight_updated_date == None or userProfile.weight_updated_date.date() < datetime.now().date())):
+                    bmiValue = round(float(value.value_quantity) * 703 / pow(height, 2), 2)
+                    # DB stuff transaction
+                    ObservationValue(author=request.user, component=bmiComponent,
+                                effective_datetime=effective_datetime, value_quantity=bmiValue).save()
+                
+                    # Save log
+                    summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
+                    op_add_event(request.user, value.component.observation.subject, summary)
+                    
+                if userProfile.weight_updated_date == None or userProfile.weight_updated_date.date() < datetime.now().date():
+                    userProfile.weight_updated_date = datetime.now()
+                    userProfile.save()
 
-            # DB stuff transaction
-            ObservationValue(author=request.user, component=bmiComponent,
-                             effective_datetime=effective_datetime, value_quantity=bmiValue).save()
-            # Save log
-            summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
-            op_add_event(request.user, value.component.observation.subject, summary)
-
-        # Save log
-        summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(value.value_quantity,
-                                                                          value.component.observation.name)
-        op_add_event(request.user, value.component.observation.subject, summary)
+            if value.component.name == 'height':
+                # Calculation
+                weightComponent = ObservationComponent.objects.filter(component_code='3141-9').filter(
+                    observation__subject_id=int(patient_id)).get()
+                weight = get_observation_most_common_value(weightComponent, effective_datetime)
+                if (weight > 1 and value.value_quantity > 1 and userProfile.height_changed_first_time == False ):
+                    bmiValue = round(weight * 703 / pow(float(value.value_quantity), 2), 2)
+                    # DB stuff transaction
+                    ObservationValue(author=request.user, component=bmiComponent,
+                                effective_datetime=effective_datetime, value_quantity=bmiValue).save()
+                    # Save log
+                    summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
+                    op_add_event(request.user, value.component.observation.subject, summary)
+                if userProfile.height_changed_first_time == False:
+                    userProfile.height_changed_first_time = True
+                    userProfile.height_updated_date = datetime.now()
+                    userProfile.save()
+                else:
+                    if userProfile.height_updated_date.date() < datetime.now().date():
+                        userProfile.height_updated_date = datetime.now()
+                        userProfile.save()   
 
         resp['value'] = ObservationValueSerializer(value).data
         resp['success'] = True
