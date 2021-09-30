@@ -114,3 +114,112 @@ def edit_problem_term(driver, new_problem_term):
     alert.accept()
 
     sleep(SHORT_WAIT_TIMEOUT)
+
+
+def add_problem_goal(driver, goal):
+    """
+    Add problem's goal.
+
+    Args:
+        driver (webdriver): Current driver.
+        goal (str): Problem goal name.
+    """
+    # Scroll down
+    driver.execute_script('window.scrollTo(0, 600)')
+
+    # Type Problem goal
+    problem_goal_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'goalNameInput')))
+
+    problem_goal_input.send_keys(goal)
+    
+    # Submit
+    add_goal_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/section/section[8]/div[2]/div/div/form/div/span/input')))
+
+    add_goal_button.click()
+    
+    # Submit
+    goal_li = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ng-app"]/div[2]/section/section[8]/div[2]/div/div/ul/li[2]')))
+    
+    
+    assert goal_li.text.endswith(goal)
+    
+    sleep(SHORT_WAIT_TIMEOUT)
+    
+    
+def view_problem_goal(driver, goal):
+    """
+    View problem's goal from problem page.
+
+    Args:
+        driver (webdriver): Current driver.
+        goal (str): Problem goal name.
+    """
+    # Scroll down
+    driver.execute_script('window.scrollTo(0, 850)')
+    
+    # Search goals
+    problems_goals = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/section/section[8]/div[2]/div/div/ul')))
+
+    goals = problems_goals.find_elements_by_tag_name('li')
+    
+    for goal_li in goals:
+        if goal_li.text.endswith(goal):
+            view_goal_button = goal_li.find_element_by_tag_name('a')
+            view_goal_button.click()
+            break
+
+    sleep(SHORT_WAIT_TIMEOUT)
+    
+    
+def add_goal_note(driver, note):
+    """
+    Add goal's note.
+
+    Args:
+        driver (webdriver): Current driver.
+        note (str): Note to be added.
+    """
+    # Type Goal note
+    note_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/textarea')))
+
+    note_input.send_keys(note)
+    
+    # Submit
+    add_note_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/button')))
+    
+    add_note_button.click()
+    
+    sleep(SHORT_WAIT_TIMEOUT)
+    
+
+def update_goal_status(driver, currently_succeding, is_accomplished):
+    """
+    Update goal's status.
+
+    Args:
+        driver (webdriver): Current driver.
+        currently_succeding (bool): Check currently_succeding option.
+        is_accomplished (bool): Check is_accomplished option.
+    """
+    # Is Controlled checkbox
+    is_controlled_checkbox = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'is_controlled_checkbox')))
+    
+    if is_controlled_checkbox.is_selected != currently_succeding:
+        is_controlled_checkbox.click()
+        
+    # Is accomplished checkbox
+    is_accomplished_checkbox = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'is_accomplished_checkbox')))
+    
+    if is_accomplished_checkbox.is_selected != is_accomplished:
+        is_accomplished_checkbox.click()
+    
+    sleep(SHORT_WAIT_TIMEOUT)
+    
