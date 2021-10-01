@@ -47,6 +47,8 @@ def add_problem(driver, problem_term):
 
     alert.accept()
 
+    problem_term_input.clear()
+    
     sleep(SHORT_WAIT_TIMEOUT)
 
 
@@ -220,6 +222,45 @@ def update_goal_status(driver, currently_succeding, is_accomplished):
     
     if is_accomplished_checkbox.is_selected != is_accomplished:
         is_accomplished_checkbox.click()
+    
+    sleep(SHORT_WAIT_TIMEOUT)
+
+
+def relate_problems(driver, problem_1, problem_2):
+    """
+    Create a relationship with two problem
+
+    Args:
+        driver (webdriver): Current driver.
+        problem_1 (str): Problem 1
+        problem_2 (str): Problem 2
+    """
+    # Scroll down
+    driver.execute_script('window.scrollTo(0, 800)')
+    
+    # Activate Edit mode relationships
+    edit_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ng-app"]/div[2]/section/section[6]/div[2]/div[3]/button')))
+    
+    edit_button.click()
+    
+    # Check effecting problem
+    problem_2_effecting_checkbox = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'eff3')))
+    
+    problem_2_effecting_checkbox.click()
+    
+    # Check effected problem
+    problem_2_effected_checkbox = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'effected_3')))
+    
+    problem_2_effected_checkbox.click()
+    
+    # Save relationships
+    save_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ng-app"]/div[2]/section/section[6]/div[2]/div[3]/button')))
+    
+    save_button.click()
     
     sleep(SHORT_WAIT_TIMEOUT)
     
