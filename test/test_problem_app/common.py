@@ -264,3 +264,117 @@ def relate_problems(driver, problem_1, problem_2):
     
     sleep(SHORT_WAIT_TIMEOUT)
     
+    
+def add_task(driver, task, physician_full_name=None):
+    """
+    Add problem's task.
+
+    Args:
+        driver (webdriver): Current driver.
+        task (str): Task related with the problem.
+    """
+    # Type problem's task
+    task_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'todoNameInput')))
+
+    task_input.send_keys(task)
+    
+    # Add task
+    add_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ng-app"]/div[2]/section/section[3]/div[1]/div/div[2]/form/div/span/input')))
+    
+    add_button.click()
+    
+    # Add without date
+    add_without_date_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ngdialog1"]/div[2]/div/div[2]/button[2]')
+                                       ))
+
+    add_without_date_button.click()
+
+    # Tag physician
+    if physician_full_name:
+        tag_dialog_div = WebDriverWait(driver, WAIT_TIMEOUT).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="ngdialog2"]/div[2]')))
+        physicians = tag_dialog_div.find_elements_by_tag_name('a')
+
+        for physician in physicians:
+            if physician.text == physician_full_name:
+                physician.click()
+                break
+
+    # Submit
+    submit_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ngdialog2"]/div[2]/form/button')))
+
+    submit_button.click()
+    
+    # Check task
+    task_item = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="todo-item-display"]/span[1]')))
+    
+    assert task_item and task_item.text == task
+    
+    sleep(SHORT_WAIT_TIMEOUT)
+    
+    
+def add_note(driver, note):
+    """
+    Add problem's note.
+
+    Args:
+        driver (webdriver): Current driver.
+        note (str): Note related with the problem.
+    """
+    # Scroll down
+    driver.execute_script('window.scrollTo(0, 800)')
+    
+     # Type problem's note
+    note_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ng-app"]/div[2]/section/section[3]/div[2]/problem-note/div/div[2]/form/div[1]/textarea')))
+
+    note_input.send_keys(note)
+    
+    # Add note
+    add_button = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="ng-app"]/div[2]/section/section[3]/div[2]/problem-note/div/div[2]/form/div[2]/button')))
+    
+    add_button.click()
+    
+    sleep(SHORT_WAIT_TIMEOUT)
+    
+
+def update_status(driver, is_controlled, is_authenticated, is_active):
+    """
+    Update problem status.    
+
+    Args:
+        driver (webdriver): Current driver.
+        is_controlled (bool): The problem is controlled?
+        is_authenticated (bool): The problem is authenticated?
+        is_active (bool): The problem is active?
+    """
+    # Is Controlled checkbox
+    is_controlled_checkbox = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'controller-switch')))
+    
+    if is_controlled_checkbox.is_selected != is_controlled:
+        is_controlled_checkbox.click()
+        
+    # Is Authenticated checkbox
+    is_authenticated_checkbox = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'authenticated-switch')))
+    
+    if is_authenticated_checkbox.is_selected != is_authenticated:
+        is_authenticated_checkbox.click()
+        
+        
+    # Is active checkbox
+    is_active_checkbox = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.ID, 'active-switch')))
+    
+    if is_active_checkbox.is_selected != is_active:
+        is_active_checkbox.click()
+        
+    
+    
