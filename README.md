@@ -25,10 +25,10 @@ Your password for that admin user is `abc12345`.
 ### Create a virtualenv to your project
 
 ```bash
-virtualenv .env
+virtualenv venv -p python2.7
 ```
 
-This command will create a new directory `.env/`
+This command will create a new directory `venv/`
 
 To enable the virtualenv run `source .env/bin/activate`
 
@@ -40,7 +40,10 @@ Install all the required requirements on our local virtualenv running:
 pip install -r requirements.txt
 ```
 
-**Note:** if it fails you\'ll probably need to install _pathlib_ running `pip install pathlib`
+### Configure environment variables
+Create a environment variables file `.env` in the root of the project and set the required variables.
+
+<small>See `Environment variables` section.</small>
 
 ### Run Migrations
 
@@ -61,6 +64,27 @@ npm install
 ```bash
 python manage.py runserver
 ```
+
+---
+
+## Environment variables
+
+Environment variables are located at the root of the project in the file `.env`
+
+<br>
+
+| VARIABLE | DESCRIPTION |
+| ------------- | ------------- |
+| DATABASE_NAME         | Name of database. |
+| DATABASE_TEST_NAME    | Name of database tests.  |
+| DATABASE_USER         | Username to access in database. |
+| DATABASE_PASSWORD     | Password to access in database. |
+| DATABASE_HOST         | Host of database server. |
+| DATABASE_PORT         | Port of database server. |
+| SECRET_KEY            | API `SECRET_KEY` |
+
+
+---
 
 ## Test Coverage
 
@@ -94,6 +118,7 @@ python manage.py runserver
 
 ## Patient Administration
 
+---
 
 ## Run tests
 
