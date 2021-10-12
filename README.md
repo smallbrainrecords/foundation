@@ -30,7 +30,7 @@ virtualenv venv -p python2.7
 
 This command will create a new directory `venv/`
 
-To enable the virtualenv run `source .env/bin/activate`
+To enable the virtualenv run `source venv/bin/activate`
 
 ### Install Requirements
 
