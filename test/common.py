@@ -807,11 +807,17 @@ def update_profile_information(driver, date_of_birth, phone, sex, summary):
     """
     # Change date of birth
     date_of_birth_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
-        EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[2]/div[2]/div[2]/section[2]/div[2]/form/div[1]/datepicker/div/input')))
+        EC.presence_of_element_located((By.XPATH, '//*[@id="profileInfo"]/div[2]/form/div[1]/datepicker/div/input')))
     
     date_of_birth_input.clear()
     date_of_birth_input.send_keys(date_of_birth)
     
+    # Click outsite date of bith
+    profile_header = WebDriverWait(driver, WAIT_TIMEOUT).until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="profileInfo"]/div[1]')))
+
+    profile_header.click()
+
     # Change phone
     phone_input = WebDriverWait(driver, WAIT_TIMEOUT).until(
         EC.presence_of_element_located((By.ID, 'phone-number')))
