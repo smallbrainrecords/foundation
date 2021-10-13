@@ -501,7 +501,7 @@ def get_encounter_audio_route_DB(physician_id, patient_id):
         patient_id (int): db id of patient
     """
     encounter = Encounter.objects.get(
-        physician=PHYSICIAN_ID, patient=PATIENT_ID)
+        physician=physician_id, patient=patient_id)
 
     return encounter.audio
 
