@@ -1,7 +1,6 @@
 """Test login as admin"""
 from test.common import build_driver, login, load_data, ADMIN_USER
 from django.test import LiveServerTestCase
-from emr.models import User, UserProfile
 
 
 class TestAdminLogin(LiveServerTestCase):
@@ -20,26 +19,6 @@ class TestAdminLogin(LiveServerTestCase):
         """
         super(TestAdminLogin, cls).tearDownClass()
 
-    def test_admin_login(self):
-        """
-        Test login as admin with correct credentials.
-        """
-        try:
-            # Prepare test
-            load_data()
-            driver = build_driver()
-
-            # Login as admin
-            login(driver,
-                  base_url=self.live_server_url,
-                  username=ADMIN_USER['username'],
-                  password=ADMIN_USER['password'])
-
-            # Check results
-            assert driver.current_url == '{}/project/{}/#/'.format(
-                self.live_server_url, ADMIN_USER['username']), 'Login failed: user -> {}, {}'.format(ADMIN_USER['username'], ADMIN_USER['password'])
-        finally:
-            driver.quit()
 
     def test_admin_login_with_incorrect_password(self):
         """
