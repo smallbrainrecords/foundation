@@ -130,7 +130,7 @@ Use `python manage.py test test` to run test.
 
 Run following commands to generate a coverage report.
 
-$ `coverage run --source='.' --omit 'venv./*' manage.py test test`
+$ `coverage run --source='.' --omit 'venv/*' manage.py test test`
 
 $ `coverage report > coverage_report`
 
