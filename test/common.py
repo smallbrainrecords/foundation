@@ -15,7 +15,7 @@ import filecmp
 from selenium.webdriver.remote.webelement import WebElement
 
 
-SHORT_WAIT_TIMEOUT = 1.5  # seconds
+SHORT_WAIT_TIMEOUT = 1  # seconds
 WAIT_TIMEOUT = 30  # seconds
 ENCOUNTER_WAIT_TIMEOUT = 10  # seconds
 PATIENT_ID = 2  # id of patient on DB
