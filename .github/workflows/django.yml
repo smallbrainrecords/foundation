@@ -49,6 +49,14 @@ jobs:
       run: |
         npm install static/
 
+    - name: Create Mysql Container
+      run: |
+        sudo docker run -d --name mysql -e MYSQL_ROOT_PASSWORD=root -p 3306:3306 -v /local/db/path:/var/lib/mysql mysql:5.7.22 --sql_mode=""
+        sudo docker exec -it mysql bash
+        mysql -u root -p
+        root
+        create database test;
+        
     - name: Run Tests
       run: |
         python manage.py test test
