@@ -24,11 +24,14 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Install Dependencies
+    - name: Install Python Dependencies
       run: |
-        npm install static/
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+
+    - name: Install Node Dependencies
+      run: |
+        npm install static/
 
     - name: Run Tests
       run: |
