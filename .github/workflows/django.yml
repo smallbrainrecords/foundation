@@ -18,6 +18,7 @@ jobs:
     - name: Install Mysql client 
       run: | 
         sudo apt-get install default-libmysqlclient-dev build-essential
+        sudo wget https://raw.githubusercontent.com/paulfitz/mysql-connector-c/master/include/my_config.h -P /usr/include/mysql/
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
