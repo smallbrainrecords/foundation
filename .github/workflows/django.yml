@@ -4,6 +4,12 @@ on: [push]
 
 env:
   SECRET_KEY: secret-key
+  DATABASE_NAME: development
+  DATABASE_TEST_NAME: test
+  DATABASE_USER: root
+  DATABASE_PASSWORD: root
+  DATABASE_HOST: 172.17.0.3
+  DATABASE_PORT: 3306
 
 jobs:
   build:
