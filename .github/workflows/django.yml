@@ -55,7 +55,7 @@ jobs:
         
     - name: Create database
       run: |
-        sudo docker exec -it mysql bash
+        sudo docker exec -t mysql bash
         mysql -u root -p
         root
         create database test;
