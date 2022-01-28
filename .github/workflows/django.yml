@@ -17,8 +17,7 @@ jobs:
 
     - name: Install Mysql client 
       run: | 
-        sudo apt-get install python2.7-dev default-libmysqlclient-dev build-essential
-        sudo pip install MySQL-python
+        sudo apt-get install default-libmysqlclient-dev build-essential
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
