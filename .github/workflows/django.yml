@@ -65,4 +65,4 @@ jobs:
 
     - name: Run Tests
       run: |
-        python manage.py test test --noinput -v
+        python manage.py test test --noinput -v 3
