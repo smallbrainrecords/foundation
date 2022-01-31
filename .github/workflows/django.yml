@@ -2,7 +2,6 @@ name: Django CI
 
 on: [push]
 
-permissions: read-all|write-all
 
 env:
   SECRET_KEY: secret-key
@@ -15,8 +14,10 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    
+    permissions: write-all
+    
     strategy:
       max-parallel: 4
       matrix:
