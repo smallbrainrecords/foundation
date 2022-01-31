@@ -8,7 +8,7 @@ env:
   DATABASE_TEST_NAME: test
   DATABASE_USER: root
   DATABASE_PASSWORD: root
-  DATABASE_HOST: 172.17.0.2
+  DATABASE_HOST: localhost
   DATABASE_PORT: 3306
 
 jobs:
@@ -20,6 +20,14 @@ jobs:
       matrix:
         python-version: [2.7]
         node-version: [12.22]
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: $DATABASE_PASSWORD
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - uses: actions/checkout@v2
@@ -48,10 +56,6 @@ jobs:
     - name: Install Node Dependencies
       run: |
         npm install static/
-
-    - name: Run Mysql Container
-      run: |
-        sudo docker run -d --name mysql -e MYSQL_ROOT_PASSWORD=root -p 3306:3306 mysql:5.7.22 --sql_mode=""
         
     - name: Run migrations
       run: |
