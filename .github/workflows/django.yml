@@ -2,6 +2,8 @@ name: Django CI
 
 on: [push]
 
+permissions: read-all|write-all
+
 env:
   SECRET_KEY: secret-key
   DATABASE_NAME: development
