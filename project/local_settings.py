@@ -29,7 +29,7 @@ DATABASES = {
         # Or path to database file if using sqlite3.
         'NAME': config('DATABASE_NAME'),
         'USER': config('DATABASE_USER'),                      # Not used with sqlite3.
-        'PASSWORD': config('DATABASE_PASSWORD'),                  # Not used with sqlite3.
+        'PASSWORD': config('DATABASE_PASSWORD', default=''),                  # Not used with sqlite3.
         # Set to empty string for localhost. Not used with sqlite3.
         'HOST': config('DATABASE_HOST'),
         # Set to empty string for default. Not used with sqlite3.
