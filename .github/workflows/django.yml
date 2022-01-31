@@ -8,6 +8,7 @@ env:
   DATABASE_TEST_NAME: test
   DATABASE_USER: root
   DATABASE_HOST: localhost
+  DATABASE_PASSWORD: root
   DATABASE_PORT: 3306
 
 jobs:
@@ -24,6 +25,7 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_ROOT_PASSWORD: root
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
