@@ -65,7 +65,12 @@ jobs:
     - name: Run migrations
       run: |
         python manage.py migrate
+    
+    - name:  Install Google Chrome 
+      run:   |
+        chmod +x ./scripts/InstallChrome.sh
+        ./scripts/InstallChrome.sh 
 
     - name: Run Tests
       run: |
-        python manage.py test test --noinput -v 3
+        python manage.py test test.test_users_app.test_login --noinput -v 3
