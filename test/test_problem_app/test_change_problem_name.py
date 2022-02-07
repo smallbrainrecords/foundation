@@ -1,16 +1,18 @@
 """Test change problem's name as admin"""
 import os
 import shutil
+import unittest
 
 from test.common import build_driver, login, load_data, manage_patient, ADMIN_USER, PATIENT_USER
 from test.test_problem_app.common import add_problem, edit_problem_term, show_problem
 from django.test import LiveServerTestCase
-from emr.models import User
 
 src_dir = os.getcwd() + '/test/test_problem_app/problems.controller.js'
 src_copy_dir = os.getcwd() + '/test/test_problem_app/problems.controller copy.js'
 dst_dir = os.getcwd() + '/static/apps/patient/problem-page/problems.controller.js'
 
+
+@unittest.skip("skip the test")
 class TestChangeProblemNameLogin(LiveServerTestCase):
 
     @classmethod
@@ -28,7 +30,6 @@ class TestChangeProblemNameLogin(LiveServerTestCase):
         """
         shutil.copyfile(src=src_copy_dir, dst=dst_dir)
         super(TestChangeProblemNameLogin, cls).tearDownClass()
-        
 
     def test_change_problem_name(self):
         """
@@ -41,9 +42,9 @@ class TestChangeProblemNameLogin(LiveServerTestCase):
 
             # Login as admin
             login(driver,
-                    base_url=self.live_server_url,
-                    username=ADMIN_USER['username'],
-                    password=ADMIN_USER['password'])
+                  base_url=self.live_server_url,
+                  username=ADMIN_USER['username'],
+                  password=ADMIN_USER['password'])
 
             # Check results
             assert driver.current_url == '{}/project/{}/#/'.format(
@@ -57,15 +58,14 @@ class TestChangeProblemNameLogin(LiveServerTestCase):
 
             # Add problem
             add_problem(driver, problem_term='Head Ache')
-            
+
             driver.refresh()
-            
+
             # Go to problem page
             show_problem(driver, problem_term='Head Ache')
-            
+
             # Edit problem
             edit_problem_term(driver, new_problem_term='Head Ache 2')
-            
+
         finally:
             driver.quit()
-    

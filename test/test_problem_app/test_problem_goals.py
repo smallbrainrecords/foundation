@@ -1,12 +1,15 @@
 """
 Test proble's goals as admin
 """
+import unittest
+
+
 from test.common import build_driver, login, load_data, manage_patient, ADMIN_USER, PATIENT_USER
 from test.test_problem_app.common import add_problem, edit_problem_term, show_problem, add_problem_goal, view_problem_goal, add_goal_note, update_goal_status
 from django.test import LiveServerTestCase
-from emr.models import User
 
 
+@unittest.skip("skip the test")
 class TestProblemGoals(LiveServerTestCase):
 
     @classmethod
