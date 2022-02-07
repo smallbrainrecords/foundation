@@ -2,18 +2,22 @@ name: Django CI
 
 on: [push]
 
+
 env:
   SECRET_KEY: secret-key
   DATABASE_NAME: development
   DATABASE_TEST_NAME: test
   DATABASE_USER: root
-  DATABASE_HOST: localhost
+  DATABASE_HOST: 127.0.0.1
+  DATABASE_PASSWORD: root
   DATABASE_PORT: 3306
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    
+    permissions: write-all
+    
     strategy:
       max-parallel: 4
       matrix:
@@ -24,6 +28,8 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: development
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -62,4 +68,4 @@ jobs:
 
     - name: Run Tests
       run: |
-        python manage.py test test
+        python manage.py test test --noinput -v 3
