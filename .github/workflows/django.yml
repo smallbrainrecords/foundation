@@ -78,4 +78,4 @@ jobs:
 
     - name: Run Tests
       run: |
-        python manage.py test test.test_users_app.test_login --noinput -v 3
+        python manage.py test test.test_users_app.test_login.test_admin_login --noinput -v 3test_admin_login
