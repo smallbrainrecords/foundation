@@ -33,15 +33,12 @@ ENV DATABASE_NAME=smallbrains_development
 ENV DATABASE_TEST_NAME=smallbrains_test
 ENV DATABASE_USER=root
 ENV DATABASE_PASSWORD=root
-ENV DATABASE_HOST=172.17.0.2
+ENV DATABASE_HOST=172.17.0.1
 ENV DATABASE_PORT=3306
 ENV SECRET_KEY=secret
 
 # Configure port
-EXPOSE 80
-
-# Run migrations
-CMD [ "python", "/usr/src/smallbrains-app/manage.py", "migrate" ]
+EXPOSE 8000
 
 # Run server
-CMD [ "python", "/usr/src/smallbrains-app/manage.py", "runserver", "0.0.0.0:80" ]
+CMD [ "python", "/usr/src/smallbrains-app/manage.py", "runserver", "0.0.0.0:8000" ]
