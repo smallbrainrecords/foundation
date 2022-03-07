@@ -9,10 +9,15 @@ where `/local/db/path` directory is where you want to persist the database local
 
 ### Admin user
 Connect to you local database `test` and insert these records:
+
 ```sql
 INSERT INTO auth_user (username, first_name, last_name, email, password, is_staff, is_active) 
 VALUES ('admin', 'admin@mail.com', 'FN', 'LN', 'pbkdf2_sha256$36000$6WP07jyMdViC$s4Q+E536lNSaS1pJIpu0oo/6MoyfqbHDB3zipaC+XaM=', 0, 1);
+```
+```sql
 SELECT * FROM auth_user WHERE username = 'admin';
+```
+```sql
 -- Change \#\# for the result id of the query above
 INSERT INTO emr_userprofile (role, user_id) VALUES ('admin', \#\#);
 ```
@@ -73,18 +78,20 @@ Environment variables are located at the root of the project in the file `.env`
 
 <br>
 
-| VARIABLE | DESCRIPTION |
-| ------------- | ------------- |
-| DATABASE_NAME         | Name of database. |
-| DATABASE_TEST_NAME    | Name of database tests.  |
-| DATABASE_USER         | Username to access in database. |
-| DATABASE_PASSWORD     | Password to access in database. |
-| DATABASE_HOST         | Host of database server. |
-| DATABASE_PORT         | Port of database server. |
-| SECRET_KEY            | API `SECRET_KEY` |
-
+- Rename `.env.example` to `.env` and setup your database connection and secret key. 
 
 ---
+
+
+## Docker
+
+Build docker image: 
+- `sudo docker build -t smallbrains .`
+
+Run docker container:
+- `sudo docker run -d -p 80:8000 --name smallbrains smallbrains`
+
+--- 
 
 ## Test Coverage
 
