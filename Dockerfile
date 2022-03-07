@@ -1,5 +1,14 @@
 FROM ubuntu:18.04
 
+# Set environment variables
+ENV DATABASE_NAME=smallbrains_development
+ENV DATABASE_TEST_NAME=smallbrains_test
+ENV DATABASE_USER=root
+ENV DATABASE_PASSWORD=root
+ENV DATABASE_HOST=172.17.0.1
+ENV DATABASE_PORT=3306
+ENV SECRET_KEY=secret
+
 WORKDIR /usr/src/smallbrains-app
 
 # Install python 2.7
@@ -26,16 +35,11 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Install node dependencies
-RUN cd ./static && npm install
+WORKDIR /usr/src/smallbrains-app/static
 
-# Set environment variables
-ENV DATABASE_NAME=smallbrains_development
-ENV DATABASE_TEST_NAME=smallbrains_test
-ENV DATABASE_USER=root
-ENV DATABASE_PASSWORD=root
-ENV DATABASE_HOST=172.17.0.1
-ENV DATABASE_PORT=3306
-ENV SECRET_KEY=secret
+RUN npm install
+
+WORKDIR /usr/src/smallbrains-app
 
 # Configure port
 EXPOSE 8000
