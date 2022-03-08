@@ -11,15 +11,17 @@ where `/local/db/path` directory is where you want to persist the database local
 Connect to you local database `test` and insert these records:
 
 ```sql
-INSERT INTO auth_user (username, first_name, last_name, email, password, is_staff, is_active) 
-VALUES ('admin', 'admin@mail.com', 'FN', 'LN', 'pbkdf2_sha256$36000$6WP07jyMdViC$s4Q+E536lNSaS1pJIpu0oo/6MoyfqbHDB3zipaC+XaM=', 0, 1);
+INSERT INTO auth_user (username, first_name, last_name, email, password, is_staff, is_active, is_superuser, date_joined) 
+VALUES ('admin', 'admin@mail.com', 'FN', 'LN', 'pbkdf2_sha256$36000$6WP07jyMdViC$s4Q+E536lNSaS1pJIpu0oo/6MoyfqbHDB3zipaC+XaM=', 0, 1, 1, now());
 ```
 ```sql
 SELECT * FROM auth_user WHERE username = 'admin';
 ```
 ```sql
 -- Change \#\# for the result id of the query above
-INSERT INTO emr_userprofile (role, user_id) VALUES ('admin', \#\#);
+INSERT INTO emr_userprofile (role, user_id, data,cover_image, portrait_image, summary, sex, phone_number,
+ inr_target, insurance_medicare, insurance_note, height_changed_first_time) 
+VALUES ('admin', \#\#, '', '', '', '', 'male', '', 0, 0, '', 0);
 ```
 Your password for that admin user is `abc12345`.
 
@@ -90,6 +92,12 @@ Build docker image:
 
 Run docker container:
 - `sudo docker run -d -p 80:8000 --name smallbrains smallbrains`
+
+Start docker compose:
+- `sudo docker-compose up`
+
+Run migrations:
+- `sudo docker-compose run --rm web python manage.py migrate`
 
 --- 
 
