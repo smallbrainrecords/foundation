@@ -3,9 +3,11 @@ services:
   web:
     build: .
     ports:
-      - "80:8000"
+      - 80:8000
     volumes:
-      - ".:/code"
+      - .:/usr/src/smallbrains-app/
+      - "exclude:/usr/src/smallbrains-app/static/node_modules/"
+
     environment:
       DATABASE_NAME: smallbrains_dev
       DATABASE_TEST_NAME: smallbrains_test
@@ -16,7 +18,7 @@ services:
       SECRET_KEY: secret
     networks:
       - smallbrain_net
-    links:
+    depends_on:
       - db
   db:
     image: mysql:5.7
@@ -27,12 +29,12 @@ services:
       MYSQL_ROOT_PASSWORD: root
     networks:
       - smallbrain_net
-    command: [--ignore-db-dir=lost+found]
     volumes:
       - smallbrains_data:/var/lib/mysql
 
 volumes:
   smallbrains_data:
+  exclude:
 
 networks:
   smallbrain_net:
