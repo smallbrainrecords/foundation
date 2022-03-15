@@ -5,34 +5,34 @@ services:
     ports:
       - "80:8000"
     volumes:
-      - .:/code
+      - ".:/code"
     environment:
-      DATABASE_NAME: 'smallbrains_dev'
-      DATABASE_TEST_NAME: 'smallbrains_test'
-      DATABASE_USER: 'root'
-      DATABASE_PASSWORD: 'root'
-      DATABASE_HOST: '127.0.0.1'
-      DATABASE_PORT: '3306'
-      SECRET_KEY: 'secret'
+      DATABASE_NAME: smallbrains_dev
+      DATABASE_TEST_NAME: smallbrains_test
+      DATABASE_USER: root
+      DATABASE_PASSWORD: root
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      SECRET_KEY: secret
     networks:
-      - smallbrain-net
+      - smallbrain_net
+    links:
+      - db
   db:
     image: mysql:5.7
     ports:
-      - 127.0.0.1:3306:3306
+      - 3306:3306
     environment:
-      MYSQL_DATABASE: 'smallbrains_development'
-      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_DATABASE: smallbrains_dev
+      MYSQL_ROOT_PASSWORD: root
     networks:
-      - smallbrain-net
+      - smallbrain_net
     command: [--ignore-db-dir=lost+found]
     volumes:
-      - db-data:/var/lib/mysql/data
-      - db-datadir:/var/lib/mysql
+      - smallbrains_data:/var/lib/mysql
 
 volumes:
-  db-datadir:
-  db-data:
+  smallbrains_data:
 
 networks:
-  smallbrain-net:
+  smallbrain_net:
