@@ -44,7 +44,7 @@
     "jquery-form": "~3.50.0",
     "jquery-ui": "^1.13.0",
     "jquery-ui-dist": "^1.12.1",
-    "jspdf": "^1.5.3",
+    "jspdf": "^2.3.1",
     "moment": "^2.26.0",
     "moment-timezone": "^0.5.31",
     "ng-dialog": "^1.4.0",
