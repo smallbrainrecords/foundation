@@ -56,7 +56,7 @@ jobs:
 
     - name: Install Python Dependencies
       run: |
-        pip install pathlib
+        pip install pathlib mysqlclient
         pip install --upgrade pip
         pip install -r requirements.txt
 
