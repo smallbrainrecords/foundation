@@ -63,10 +63,6 @@ jobs:
     - name: Install Node Dependencies
       run: |
         npm install static/
-        
-    - name: Run migrations
-      run: |
-        python manage.py migrate
 
     - name: Install chrome driver
       run: | 
