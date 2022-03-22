@@ -40,10 +40,36 @@ Setup instructions to run the project locally using docker compose.
     ```
     Your username is `admin` and password `abc12345`.
 
-
 ### Stop containers:
 
 - `$ sudo docker-compose down`
+
+---
+
+## Push docker images to GCP
+
+Settings to tag and push docker images to repository in Google Cloud Platform.
+### Requirements:
+
+- Install gcloud console sdk: https://cloud.google.com/sdk/docs/install
+- Configure cli with: `$ gcloud auth configure-docker`
+- Authentication required (service account with `key.json` file). [Follow this instructions](https://cloud.google.com/artifact-registry/docs/docker/pushing-and-pulling).
+
+### Tag images
+
+```bash
+$ docker tag foundation_web us-east4-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:{version}
+```
+
+### Push tagged images
+
+```bash
+$ docker push us-east4-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:{version}
+```
+
+Important: replace {version} with the new version.
+
+---
 
 ## Run tests
 
