@@ -2,19 +2,20 @@
 
 ## Project setup
 
-Setup instructions to run the project locally.
+Setup instructions to run the project locally using docker compose.
 
 ### Requirements:
 
 - Docker and Docker-compose.
 
-### Start docker compose:
-- `$ sudo docker-compose up`
+### Start containers:
+- `$ sudo docker-compose up -d`
 
 ### Run migrations:
 - `$ sudo docker-compose run --rm web python manage.py migrate`
 
 ### Create admin user:
+
 - Open an interactive bash session in db container with: 
     - `$ sudo docker exec -it foundation_db_1 bash`
 - Login into mysql with:
@@ -37,7 +38,12 @@ Setup instructions to run the project locally.
     inr_target, insurance_medicare, insurance_note, height_changed_first_time) 
     VALUES ('admin', {user_id}, '', '', '', '', 'male', '', 0, 0, '', 0);
     ```
-    Your password for that admin user is `abc12345`.
+    Your username is `admin` and password `abc12345`.
+
+
+### Stop containers:
+
+- `$ sudo docker-compose down`
 
 ## Run tests
 
