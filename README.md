@@ -1,119 +1,65 @@
 # Foundation: Getting Started
 
-### Database Setup
-To set up MySQL server using docker environment run:
-```sql
-docker run -d --name mysql -e MYSQL_ROOT_PASSWORD=root -p 3306:3306 -v /local/db/path:/var/lib/mysql mysql:5.7.22 --sql_mode=""
-```
-where `/local/db/path` directory is where you want to persist the database locally.
+## Project setup
 
-### Admin user
-Connect to you local database `test` and insert these records:
+Setup instructions to run the project locally using docker compose.
 
-```sql
-INSERT INTO auth_user (username, first_name, last_name, email, password, is_staff, is_active) 
-VALUES ('admin', 'admin@mail.com', 'FN', 'LN', 'pbkdf2_sha256$36000$6WP07jyMdViC$s4Q+E536lNSaS1pJIpu0oo/6MoyfqbHDB3zipaC+XaM=', 0, 1);
-```
-```sql
-SELECT * FROM auth_user WHERE username = 'admin';
-```
-```sql
--- Change \#\# for the result id of the query above
-INSERT INTO emr_userprofile (role, user_id) VALUES ('admin', \#\#);
-```
-Your password for that admin user is `abc12345`.
+### Requirements:
 
-**NOTE for updating to Django 1.11 and other dependencies(django-reversion):**
-1. Run `python manage.py migrate reversion --fake`
-2. Add column `db VARCHAR(191)` to table `reversion_version` 
+- Docker and Docker-compose.
 
-### Create a virtualenv to your project
+### Start containers:
+- `$ sudo docker-compose up -d`
 
-```bash
-virtualenv venv -p python2.7
-```
+### Run migrations:
+- `$ sudo docker-compose run --rm web python manage.py migrate`
 
-This command will create a new directory `venv/`
+### Create admin user:
 
-To enable the virtualenv run `source venv/bin/activate`
+- Open an interactive bash session in db container with: 
+    - `$ sudo docker exec -it foundation_db_1 bash`
+- Login into mysql with:
+    - `# mysql -u root -p` (password root)
+- Once your are logged in, select the 'smallbrains_dev' database:
+    -  `mysql> use smallbrains_dev;`
+- Finally run these SQL queries:
 
-### Install Requirements
+ 
+    ```sql
+    INSERT INTO auth_user (username, first_name, last_name, email, password, is_staff, is_active, is_superuser, date_joined) 
+    VALUES ('admin', 'admin@mail.com', 'FN', 'LN', 'pbkdf2_sha256$36000$6WP07jyMdViC$s4Q+E536lNSaS1pJIpu0oo/6MoyfqbHDB3zipaC+XaM=', 0, 1, 1, now());
+    ```
+    ```sql
+    SELECT * FROM auth_user WHERE username = 'admin';
+    ```
+    ```sql
+    -- Change {user_id} for the result id of the query above
+    INSERT INTO emr_userprofile (role, user_id, data,cover_image, portrait_image, summary, sex, phone_number,
+    inr_target, insurance_medicare, insurance_note, height_changed_first_time) 
+    VALUES ('admin', {user_id}, '', '', '', '', 'male', '', 0, 0, '', 0);
+    ```
+    Your username is `admin` and password `abc12345`.
 
-Install all the required requirements on our local virtualenv running:
 
-```bash
-pip install -r requirements.txt
-```
+### Stop containers:
 
-### Configure environment variables
-Create a environment variables file `.env` in the root of the project and set the required variables.
+- `$ sudo docker-compose down`
 
-<small>See `Environment variables` section.</small>
+## Run tests
 
-### Run Migrations
+The test are using `LiveServerTestCase` from django.test and `Selenium`.
 
-```bash
-python manage.py migrate
-```
+Use `$ python manage.py test test` to run test.
 
-### Install node packages
+# Test coverage
 
-On the `static/` directory run
+Run following commands to generate a coverage report.
 
-```bash
-npm install
-```
+- `$ coverage run --source='.' --omit 'venv./*' manage.py test test`
 
-### Start the local sever
-
-```bash
-python manage.py runserver
-```
+- `$ coverage report > coverage_report`
 
 ---
-
-## Environment variables
-
-Environment variables are located at the root of the project in the file `.env`
-
-<br>
-
-- Rename `.env.example` to `.env` and setup your database connection and secret key. 
-
----
-
-
-## Docker
-
-Build docker image: 
-- `sudo docker build -t smallbrains .`
-
-Run docker container:
-- `sudo docker run -d -p 80:8000 --name smallbrains smallbrains`
-
---- 
-
-## Test Coverage
-
-1. project
-2. users_app
-3. common
-4. emr
-5. generic
-6. problems_app
-7. todo_app
-8. data_app
-9. a1c_app
-10. colons_app
-11. goals_app
-12. document_app
-13. encounters_app
-14. inr_app
-15. medication_app
-16. pain
-17. my_story_app
-18. project_admin_app
-19. site_pages_app
 
 ## Admin functions
 
@@ -124,7 +70,6 @@ Run docker container:
 - Deactivate user
 
 ## Patient Administration
-
 ---
 
 ## Run tests
@@ -140,4 +85,3 @@ Run following commands to generate a coverage report.
 $ `coverage run --source='.' --omit 'venv/*' manage.py test test`
 
 $ `coverage report > coverage_report`
-
