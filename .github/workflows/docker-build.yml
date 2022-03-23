@@ -1,4 +1,4 @@
-name: ci
+name: Push docker image
 
 env:
   GITHUB_SHA: ${{ github.sha }} 
@@ -8,7 +8,7 @@ env:
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, feature-605-automate-container-build-publish-process]
 
 jobs:
   login:
