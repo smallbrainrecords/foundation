@@ -32,6 +32,6 @@ jobs:
     
       - name: Push image
         run: |
-          docker tag foundation_web ${{ secrets.LOCATION }}-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
+          docker tag "$IMAGE" ${{ secrets.LOCATION }}-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
 
           docker push ${{ secrets.LOCATION }}-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
