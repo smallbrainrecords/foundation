@@ -1,7 +1,4 @@
 name: Push docker image | Andromeda dev
-
-env:
-  IMAGE: smallbrains
   
 on:
   push:
@@ -28,10 +25,10 @@ jobs:
           password: ${{ secrets.GAR_JSON_KEY }}
 
       - name: Build image
-        run: docker build -t "$IMAGE" .
+        run: docker build -t smallbrains .
     
       - name: Push image
         run: |
-          docker tag "$IMAGE" ${{ secrets.LOCATION }}-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
+          docker tag smallbrains ${{ secrets.LOCATION }}-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
 
           docker push ${{ secrets.LOCATION }}-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
