@@ -27,6 +27,10 @@ jobs:
       - name: Build image
         run: docker build -t smallbrains .
     
+      - name: Google Cloud auth
+        run: |
+          gcloud auth configure-docker -q
+
       - name: Push image
         run: |
           docker tag smallbrains us-east4-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
