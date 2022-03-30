@@ -20,7 +20,7 @@ jobs:
       - name: Login to GAR
         uses: docker/login-action@v1
         with:
-          registry: ${{ secrets.LOCATION }}-docker.pkg.dev
+          registry: us-east4-docker.pkg.dev
           username: _json_key_base64
           password: ${{ secrets.GAR_JSON_KEY }}
 
@@ -29,6 +29,6 @@ jobs:
     
       - name: Push image
         run: |
-          docker tag smallbrains ${{ secrets.LOCATION }}-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
+          docker tag smallbrains us-east4-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
 
-          docker push ${{ secrets.LOCATION }}-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
+          docker push us-east4-docker.pkg.dev/smallbrain-dev/smallbrains/andromeda:${{ env.date }}
