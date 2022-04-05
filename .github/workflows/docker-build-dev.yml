@@ -2,7 +2,8 @@ name: Push docker image | Andromeda dev
   
 on:
   push:
-    branches: [develop, feature-605-automate-container-build-publish-process]
+    branches:
+      - "feature-605-automate-container-build-publish-process"
 
 jobs:
   login:
@@ -32,4 +33,3 @@ jobs:
           docker tag smallbrains ${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/andromeda:${{ env.date }}
 
           docker push ${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/andromeda:${{ env.date }}
-          
