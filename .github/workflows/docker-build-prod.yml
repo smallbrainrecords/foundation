@@ -32,6 +32,6 @@ jobs:
 
       - name: Push image
         run: |
-          docker tag smallbrains ${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/andromeda:${{ env.date }}
+          docker tag smallbrains ${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/production:${{ env.date }}
 
-          docker push ${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/andromeda:${{ env.date }}
+          docker push ${{ secrets.LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/production:${{ env.date }}
