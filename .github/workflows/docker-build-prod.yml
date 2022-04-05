@@ -1,7 +1,4 @@
 name: Push docker image | Production
-
-env:
-  IMAGE: smallbrains
   
 on:
   push:
