@@ -19,13 +19,14 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 
 from common.views import *
-from models import PainAvatar
+from .models import PainAvatar
 
 
 @timeit
 def create_pain_avatar(request, patient_id):
     if request.POST:
-        pain_avatar = PainAvatar.objects.create(patient_id=patient_id, json=request.POST['json'])
+        pain_avatar = PainAvatar.objects.create(
+            patient_id=patient_id, json=request.POST['json'])
     content = {'patient_id': patient_id}
     return render_to_response('pain/create_pain_avatar.html', content)
 
@@ -36,7 +37,8 @@ def create_pain_avatar(request, patient_id):
 def add_pain_avatar(request, patient_id):
     if request.method == 'POST':
         resp = {}
-        pain_avatar = PainAvatar.objects.create(patient_id=patient_id, json=request.POST['json'])
+        pain_avatar = PainAvatar.objects.create(
+            patient_id=patient_id, json=request.POST['json'])
         return ajax_response(resp)
 
     content = {'patient_id': patient_id}
@@ -53,7 +55,8 @@ def view_pain_avatars(request):
 @login_required
 @timeit
 def patient_pain_avatars(request, patient_id):
-    pain_avatars = PainAvatar.objects.filter(patient_id=patient_id).order_by('-datetime')
+    pain_avatars = PainAvatar.objects.filter(
+        patient_id=patient_id).order_by('-datetime')
     pain_avatars_dict = [avatar.generate_dict() for avatar in pain_avatars]
 
     resp = {}

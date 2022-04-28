@@ -14,7 +14,6 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from itertools import izip
 
 from django.db import connection
 
@@ -36,7 +35,8 @@ def get_observation_most_common_value(component, effective_datetime):
     if observation_component.exists():
         return float(observation_component.first().value_quantity)
     else:
-        most_recent_value = ObservationValue.objects.filter(component=component).order_by('-effective_datetime')
+        most_recent_value = ObservationValue.objects.filter(
+            component=component).order_by('-effective_datetime')
         if most_recent_value.exists():
             return float(most_recent_value.first().value_quantity)
         else:
@@ -56,7 +56,7 @@ def query_to_dicts(query_string, *query_args):
         row = cursor.fetchone()
         if row is None:
             break
-        row_dict = dict(izip(col_names, row))
+        row_dict = dict(zip(col_names, row))
         yield row_dict
     return
 

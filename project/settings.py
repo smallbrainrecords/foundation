@@ -215,11 +215,11 @@ LOGGING = {
 SNOMEDCT = {}
 
 # ###################################################################
-# LOCAL SETTINGS FILE IS USED TO IMPORT SENSITIVE CONFIGURATION INFO. 
+# LOCAL SETTINGS FILE IS USED TO IMPORT SENSITIVE CONFIGURATION INFO.
 # MODIFY THE INCLUDED TEMPLATE FOR YOUR OWN PARTICULAR ENVIRONMENT
 # ###################################################################
 
 try:
-    from local_settings import *
+    from .local_settings import *
 except ImportError as e:
     pass

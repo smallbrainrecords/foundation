@@ -28,7 +28,7 @@ from ranged_response import RangedFileResponse
 import project.settings as settings
 from common.views import *
 from emr.mysnomedct import VWProblemsSerializers
-from models import UserProfile, Problem, \
+from emr.models import UserProfile, Problem, \
     Goal, ToDo, Guideline, TextNote, PatientImage, \
     Sharing, Viewer, \
     ViewStatus, ProblemRelationship, VWProblems
@@ -107,7 +107,8 @@ def get_patient_data(request, patient_id):
     from pymedtermino import snomedct
 
     # Find out if user requesting the data is admin, physician, or patient
-    role_of_user_requesting_the_data = UserProfile.objects.get(user=request.user).role
+    role_of_user_requesting_the_data = UserProfile.objects.get(
+        user=request.user).role
     # Get patient object from patient id
     patient = User.objects.get(id=patient_id)
     # We provide the problems, goals, notes, todos
@@ -122,7 +123,8 @@ def get_patient_data(request, patient_id):
     # print 'viewers: ' + str(viewers)
     for viewer in viewers:
         # print 'viewer: ' + str(viewer)
-        raw_viewers.append({'user_id': viewer.id, 'full_name': viewer.get_full_name()})
+        raw_viewers.append(
+            {'user_id': viewer.id, 'full_name': viewer.get_full_name()})
     viewers = raw_viewers
     view_status = {}
     vs = ViewStatus.objects.filter(patient=patient)
@@ -139,7 +141,8 @@ def get_patient_data(request, patient_id):
         tracking_id = request.GET['tracking_id']
         patient = User.objects.get(id=patient_id)
 
-        p, created = Viewer.objects.get_or_create(patient=patient, viewer=request.user, tracking_id=tracking_id)
+        p, created = Viewer.objects.get_or_create(
+            patient=patient, viewer=request.user, tracking_id=tracking_id)
         p.save()
     if 'new_status' in request.GET:
         patient = User.objects.get(id=patient_id)
@@ -164,13 +167,14 @@ def get_patient_data(request, patient_id):
         # Now we have to detrimine what data can be provided to the requesting user
         # If the user requesting the patient data is the targeted patient or an admin or physician then we know it's OK to provide all the data
         # if ((request.user == patient) or (role_of_user_requesting_the_data in ['admin', 'physician'])):
-        # Get all problems for the patient 
+        # Get all problems for the patient
         # problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
         # Otherwise the requesting user is only allowed to see some of the patient's info
         # else:
         # Get just the problems shared to the user
     #    problems_query = [i.item for i in Sharing.objects.filter(content_type=ContentType.objects.get(app_label="emr", model="problem"), patient=patient, other_patient=request.user)]
-    problems_query = Problem.objects.filter(patient=patient).order_by('problem_name').order_by('-authenticated')
+    problems_query = Problem.objects.filter(patient=patient).order_by(
+        'problem_name').order_by('-authenticated')
 
     for problem in problems_query.filter(is_active=True):
         # We store the data for this problem in a dictionary called "d"
@@ -196,7 +200,8 @@ def get_patient_data(request, patient_id):
                 affects[int(i.id)] = False
         d['affects'] = affects
         d['problem_name'] = problem.problem_name
-        d['images'] = [g.image.url for g in PatientImage.objects.filter(problem=problem)]
+        d['images'] = [
+            g.image.url for g in PatientImage.objects.filter(problem=problem)]
         d['guidelines'] = [{'guideline': g.guideline, 'reference_url': g.reference_url, 'form': g.get_form()} for g in
                            Guideline.objects.filter(concept_id=problem.concept_id)]
         d['is_controlled'] = problem.is_controlled
@@ -231,9 +236,11 @@ def get_patient_data(request, patient_id):
         d['problem_id'] = problem.id
         d['start_date'] = problem.start_date.strftime('%m/%d/%Y')
         d['effected_by'] = problem.parent.id if problem.parent else None
-        d['affects'] = [{'problem_id': g.id, 'problem_name': g.problem_name} for g in problem.get_children()]
+        d['affects'] = [{'problem_id': g.id, 'problem_name': g.problem_name}
+                        for g in problem.get_children()]
         d['problem_name'] = problem.problem_name
-        d['images'] = [g.image.url for g in PatientImage.objects.filter(problem=problem)]
+        d['images'] = [
+            g.image.url for g in PatientImage.objects.filter(problem=problem)]
         d['guidelines'] = [{'guideline': g.guideline, 'reference_url': g.reference_url} for g in
                            Guideline.objects.filter(concept_id=problem.concept_id)]
         d['is_controlled'] = problem.is_controlled
@@ -270,7 +277,8 @@ def get_patient_data(request, patient_id):
         d['start_date'] = goal.start_date.strftime('%m/%d/%y')
         d['is_controlled'] = goal.is_controlled
         d['accomplished'] = goal.accomplished
-        d['notes'] = [{'note': n.note} for n in goal.notes.all().order_by('-datetime')]
+        d['notes'] = [{'note': n.note}
+                      for n in goal.notes.all().order_by('-datetime')]
         data['goals']['not_accomplished'].append(d)
     for todo in ToDo.objects.filter(patient=patient, accomplished=False).order_by('todo'):
         d = {}
@@ -365,12 +373,14 @@ def add_problem(request, patient_id):
                           concept_id=request.POST['concept_id'], authenticated=authenticated)
         problem.save()
     elif 'goal' in request.POST:
-        goal = Goal(patient=User.objects.get(id=patient_id), goal=request.POST['goal'])
+        goal = Goal(patient=User.objects.get(
+            id=patient_id), goal=request.POST['goal'])
         goal.save()
     elif 'todo' in request.POST:
         # print 'todo'
         # print request.POST
-        todo = ToDo(patient=User.objects.get(id=patient_id), todo=request.POST['todo'])
+        todo = ToDo(patient=User.objects.get(
+            id=patient_id), todo=request.POST['todo'])
         todo.save()
     return HttpResponse('added')
 
@@ -403,7 +413,8 @@ class LoginError(View):
 @login_required
 def list_snomed_terms(request):
     query = request.GET['query']
-    result = VWProblems.objects.using('snomedict').filter(term__contains="{0}".format(query)).all()
+    result = VWProblems.objects.using('snomedict').filter(
+        term__contains="{0}".format(query)).all()
     results_holder = VWProblemsSerializers(result, many=True).data
     return ajax_response(results_holder)
 
@@ -424,7 +435,8 @@ def serve_private_file(request, path):
     """
     if has_read_permission(request, path):
         fileRes = serve(request, path, settings.MEDIA_ROOT, False)
-        response = RangedFileResponse(request, fileRes.file_to_stream, fileRes._headers['content-type'][1])
+        response = RangedFileResponse(
+            request, fileRes.file_to_stream, fileRes._headers['content-type'][1])
         return response
     else:
         return HttpResponseForbidden()
