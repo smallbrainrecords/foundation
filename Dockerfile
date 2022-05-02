@@ -13,13 +13,14 @@ WORKDIR /usr/src/smallbrains-app
 
 # Install python 2.7
 RUN apk update && apk upgrade && apk add --update-cache \
-  python2 \
-  python2-dev \
+  python3 \
+  python3-dev \
   build-base \
   curl \
   git \
-  && curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py \
-  && python2 get-pip.py \
+  && ln -sf python3 /usr/bin/python \
+  && python3 -m ensurepip \
+  && pip3 install --no-cache --upgrade pip setuptools==45 \
   && pip install virtualenv \
   && rm -rf /var/cache/apk/*
 
@@ -34,7 +35,6 @@ RUN apk add --update-cache \
 
 # Install python requirements
 COPY requirements.txt .
-RUN pip install pathlib mysqlclient
 RUN pip install -r requirements.txt
 
 COPY . .

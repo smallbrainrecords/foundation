@@ -61,13 +61,14 @@ from views import home
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^$', home,name='project_home'),
+    url(r'^$', home, name='project_home'),
 
     url(r'^admin/', include(admin.site.urls)),
 
     url(r'^project/admin/', include(project_admin_app.urls)),
 
-    url(r'^pain/create_pain_avatar/(?P<patient_id>\d+)/$', pain.views.create_pain_avatar),
+    url(r'^pain/create_pain_avatar/(?P<patient_id>\d+)/$',
+        pain.views.create_pain_avatar),
     url(r'^pain/reset/$', pain.views.reset),
     url(r'^login-error/$', LoginError.as_view()),
 
@@ -82,7 +83,8 @@ urlpatterns = [
     url(r'^get_problems/(?P<patient_id>\d+)/$', emr.views.get_patient_data),
     url(r'^change_status/$', emr.views.change_status),
     url(r'^patient/(?P<patient_id>\d+)/add_problem/$', emr.views.add_problem),
-    url(r'^add_patient_summary/(?P<patient_id>\d+)/$', emr.views.save_patient_summary),
+    url(r'^add_patient_summary/(?P<patient_id>\d+)/$',
+        emr.views.save_patient_summary),
 
     url(r'^update/$', emr.views.update),
 
@@ -124,8 +126,10 @@ urlpatterns = [
     url(r'^docs/', include(document_app.urls)),
 
     # Pain Avatars
-    url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', pain.views.patient_pain_avatars),
-    url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', pain.views.add_pain_avatar),
+    url(r'^patient/(?P<patient_id>\d+)/pain_avatars$',
+        pain.views.patient_pain_avatars),
+    url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$',
+        pain.views.add_pain_avatar),
 
     url(r'session_security/', include(session_security.urls)),
 
