@@ -1,3 +1,4 @@
+from google.oauth2 import service_account
 import os
 
 from decouple import config
@@ -28,8 +29,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         # Or path to database file if using sqlite3.
         'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),                      # Not used with sqlite3.
-        'PASSWORD': config('DATABASE_PASSWORD'),                  # Not used with sqlite3.
+        # Not used with sqlite3.
+        'USER': config('DATABASE_USER'),
+        # Not used with sqlite3.
+        'PASSWORD': config('DATABASE_PASSWORD'),
         # Set to empty string for localhost. Not used with sqlite3.
         'HOST': config('DATABASE_HOST'),
         # Set to empty string for default. Not used with sqlite3.
@@ -41,3 +44,11 @@ DATABASES = {
 
     }
 }
+
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = config('GCP_BUCKET_NAME')
+
+
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+    config('GS_CREDENTIALS_PATH')
+)

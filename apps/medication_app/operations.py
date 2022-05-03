@@ -32,19 +32,22 @@ def op_medication_event(medication, actor, patient, summary):
     :param summary:
     :return:
     """
-    latest_encounter = Encounter.objects.filter(physician=actor, patient=patient).order_by('-id')
+    latest_encounter = Encounter.objects.filter(
+        physician=actor, patient=patient).order_by('-id')
 
     if latest_encounter.exists():
         latest_encounter = latest_encounter[0]
 
         if latest_encounter.is_active():
-            encounter_event = EncounterEvent(encounter=latest_encounter, summary=summary)
+            encounter_event = EncounterEvent(
+                encounter=latest_encounter, summary=summary)
             encounter_event.save()
 
     # Add log to pinned problem activity
     problems = medication.problem_set.all()
     for problem in problems:
-        activity = ProblemActivity(problem=problem, author=actor, activity=summary)
+        activity = ProblemActivity(
+            problem=problem, author=actor, activity=summary)
         activity.save()
 
     pass
@@ -80,15 +83,17 @@ def op_pin_medication_to_problem_for_all_controlled_patient(actor, pinned_instan
     :return:
     """
     controlled_patients = PatientController.objects.filter(physician=actor)
-    controlled_patient_id_set = [long(x.patient.id) for x in controlled_patients]
-    pinned_instance_id_set = [long(x.problem_id) for x in pinned_instance_set]
+    controlled_patient_id_set = [int(x.patient.id)
+                                 for x in controlled_patients]
+    pinned_instance_id_set = [int(x.problem_id) for x in pinned_instance_set]
 
     # Filtered out all problem already pinned to this medication
     problems = Problem.objects.filter(concept_id=problem.concept_id).filter(
         patient_id__in=controlled_patient_id_set).exclude(id__in=pinned_instance_id_set).all()
 
     for problem in problems:
-        pin = MedicationPinToProblem(author=actor, medication=medication, problem=problem)
+        pin = MedicationPinToProblem(
+            author=actor, medication=medication, problem=problem)
         pin.save()
 
     pass
@@ -102,12 +107,14 @@ def op_track_medication_during_encounter(patient_id, medication_id):
     :param medication_id:
     :return:
     """
-    encounters = Encounter.objects.filter(patient_id=patient_id).order_by('-id')
+    encounters = Encounter.objects.filter(
+        patient_id=patient_id).order_by('-id')
     if encounters.exists():
         encounter = encounters[0]
 
         if encounter.is_active() and not EncounterMedication.objects.filter(encounter=encounter,
                                                                             medication_id=medication_id).exists():
-            medication_encounter = EncounterMedication(encounter=encounter, medication_id=medication_id)
+            medication_encounter = EncounterMedication(
+                encounter=encounter, medication_id=medication_id)
             medication_encounter.save()
     pass

@@ -57,7 +57,7 @@ def list_registered_users(request):
 
     if actor_profile.role == 'physician':
         controlled_patients = PatientController.objects.filter(physician=actor)
-        patients_ids = [long(x.patient.id) for x in controlled_patients]
+        patients_ids = [int(x.patient.id) for x in controlled_patients]
         user_profiles = UserProfile.objects.filter(user__id__in=patients_ids)
 
     if actor_profile.role == 'admin':
@@ -107,7 +107,7 @@ def approve_user(request):
     role = request.POST.get('role')
 
     try:
-        user = User.objects.get(id=long(user_id))
+        user = User.objects.get(id=int(user_id))
     except User.DoesNotExist:
         user = None
 
@@ -137,7 +137,7 @@ def reject_user(request):
     user_id = request.POST.get('id')
 
     try:
-        user = User.objects.get(id=long(user_id))
+        user = User.objects.get(id=int(user_id))
     except User.DoesNotExist:
         user = None
 
@@ -355,10 +355,12 @@ def create_user(request):
                                 patient_controller.save()
 
                             if actor_profile.role == 'mid-level' or actor_profile.role == 'nurse' or actor_profile.role == 'secretary':
-                                teams = PhysicianTeam.objects.filter(member=actor)
+                                teams = PhysicianTeam.objects.filter(
+                                    member=actor)
                                 physician_ids = [x.physician.id for x in teams]
 
-                                physicians = User.objects.filter(id__in=physician_ids)
+                                physicians = User.objects.filter(
+                                    id__in=physician_ids)
                                 for physician in physicians:
                                     patient_controller = PatientController(
                                         patient=new_user,
@@ -397,7 +399,7 @@ def list_patient_physicians(request):
         patient = User.objects.get(id=patient_id)
         controllers = PatientController.objects.filter(patient=patient)
 
-        physician_ids = [long(x.physician.id) for x in controllers]
+        physician_ids = [int(x.physician.id) for x in controllers]
         physicians = UserProfile.objects.filter(user__id__in=physician_ids)
 
         physicians_list = UserProfileSerializer(physicians, many=True).data
@@ -419,7 +421,7 @@ def fetch_physician_data(request):
     physician = User.objects.get(id=physician_id)
 
     team_members = PhysicianTeam.objects.filter(physician=physician)
-    user_ids = [long(x.member.id) for x in team_members]
+    user_ids = [int(x.member.id) for x in team_members]
 
     user_profiles = UserProfile.objects.all().exclude(
         Q(role='physician') | Q(role='patient'))
@@ -449,9 +451,10 @@ def fetch_physician_data(request):
                 secretaries_list.append(profile_dict)
 
     patients = PatientController.objects.filter(physician=physician)
-    patient_ids = [long(x.patient.id) for x in patients]
+    patient_ids = [int(x.patient.id) for x in patients]
 
-    patient_profiles = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
+    patient_profiles = UserProfile.objects.filter(
+        user__id__in=patient_ids).filter(user__is_active=True)
     patient_profiles_dict = UserProfileSerializer(
         patient_profiles, many=True).data
 

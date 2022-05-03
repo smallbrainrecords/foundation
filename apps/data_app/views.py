@@ -44,8 +44,10 @@ def track_observation_click(request):
         patient = User.objects.get(id=request.POST.get("patient_id", None))
 
         if request.POST.get("observation_id", None):
-            observation = Observation.objects.get(id=request.POST.get("observation_id", None))
-            summary = "<b>%s</b> accessed %s" % (actor.username, observation.name)
+            observation = Observation.objects.get(
+                id=request.POST.get("observation_id", None))
+            summary = "<b>%s</b> accessed %s" % (
+                actor.username, observation.name)
         else:
             summary = "<b>%s</b> accessed data" % (actor.username)
         op_add_event(actor, patient, summary)
@@ -77,24 +79,27 @@ def get_datas(request, patient_id):
 
                 first_loop = True
                 for unit in data.get('unit', []):
-                    observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=unit)
+                    observation_unit = ObservationUnit.objects.create(
+                        observation=observation, value_unit=unit)
                     if first_loop:
                         observation_unit.is_used = True  # will be changed in future when having conversion
                         first_loop = False
                     observation_unit.save()
 
-                if data.has_key('components'):
+                if 'components' in data:
                     for component in data.get('components', []):
                         observation_component = ObservationComponent()
                         observation_component.observation = observation
-                        observation_component.component_code = component.get('loinc_code', '')
+                        observation_component.component_code = component.get(
+                            'loinc_code', '')
                         observation_component.name = component.get('name', '')
                         observation_component.save()
 
                 else:
                     observation_component = ObservationComponent()
                     observation_component.observation = observation
-                    observation_component.component_code = data.get('loinc_code', '')
+                    observation_component.component_code = data.get(
+                        'loinc_code', '')
                     observation_component.name = data.get('name', '')
                     observation_component.save()
         # endregion
@@ -111,17 +116,20 @@ def get_datas(request, patient_id):
             user = request.user
 
         try:
-            observation_order = ObservationOrder.objects.get(user=user, patient_id=patient_id)
+            observation_order = ObservationOrder.objects.get(
+                user=user, patient_id=patient_id)
         except ObservationOrder.DoesNotExist:
-            observation_order = ObservationOrder(user=user, patient_id=patient_id)
+            observation_order = ObservationOrder(
+                user=user, patient_id=patient_id)
             observation_order.save()
 
         observation_list = []
-        for key in observation_order.order:
-            if observations.filter(id=key):
-                observation = observations.get(id=key)
-                observation_dict = ObservationSerializer(observation).data
-                observation_list.append(observation_dict)
+        if observation_order.order is not None:
+            for key in observation_order.order:
+                if observations.filter(id=key):
+                    observation = observations.get(id=key)
+                    observation_dict = ObservationSerializer(observation).data
+                    observation_list.append(observation_dict)
 
         for observation in observations:
             if not observation.id in observation_order.order:
@@ -160,7 +168,8 @@ def add_new_data_type(request, patient_id):
         observation.save()
 
         if unit:
-            observation_unit = ObservationUnit.objects.create(observation=observation, value_unit=unit)
+            observation_unit = ObservationUnit.objects.create(
+                observation=observation, value_unit=unit)
             observation_unit.is_used = True  # will be changed in future when having conversion
             observation_unit.save()
 
@@ -183,11 +192,12 @@ def update_order(request):
     resp = {'success': False}
 
     datas = json.loads(request.body)
-    if datas.has_key('patient_id'):
+    if 'patient_id' in datas:
         id_datas = datas['datas']
         patient_id = datas['patient_id']
         try:
-            order = ObservationOrder.objects.get(user=request.user, patient_id=patient_id)
+            order = ObservationOrder.objects.get(
+                user=request.user, patient_id=patient_id)
         except ObservationOrder.DoesNotExist:
             order = ObservationOrder(user=request.user, patient_id=patient_id)
             order.save()
@@ -202,8 +212,10 @@ def update_order(request):
 @login_required
 @timeit
 def get_pins(request, observation_id):
-    pins = ObservationPinToProblem.objects.filter(observation_id=observation_id)
-    resp = {'success': True, 'pins': ObservationPinToProblemSerializer(pins, many=True).data}
+    pins = ObservationPinToProblem.objects.filter(
+        observation_id=observation_id)
+    resp = {'success': True, 'pins': ObservationPinToProblemSerializer(
+        pins, many=True).data}
     return ajax_response(resp)
 
 
@@ -218,21 +230,25 @@ def obseration_pin_to_problem(request, patient_id):
         observation = Observation.objects.get(id=observation_id)
 
         try:
-            pin = ObservationPinToProblem.objects.get(observation_id=observation_id, problem_id=problem_id)
+            pin = ObservationPinToProblem.objects.get(
+                observation_id=observation_id, problem_id=problem_id)
             up = UserProfile.objects.get(user_id=request.user.id)
             if up.role == 'patient' and pin.author_id != request.user.id:
                 resp['success'] = "notallow"
                 return ajax_response(resp)
             pin.delete()
             problems = Problem.objects.filter(patient_id=patient_id)
-            optp = ObservationPinToProblem.objects.values_list('observation_id', ).filter(problem__in=problems)
+            optp = ObservationPinToProblem.objects.values_list(
+                'observation_id', ).filter(problem__in=problems)
             optp1 = []
             for x in optp:
                 optp1.append(x[0])
-            component = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
+            component = ObservationComponent.objects.filter(
+                observation_id__in=optp1, component_code='6301-6')
             if ObservationComponent.objects.filter(observation=observation, component_code='6301-6').exists() and len(
                     component) < 1:
-                inr_objects_filter = Inr.objects.filter(observation_value__component__observation_id=observation_id)
+                inr_objects_filter = Inr.objects.filter(
+                    observation_value__component__observation_id=observation_id)
                 if inr_objects_filter.exists():
                     inr_objects_filter.delete()
                     resp['remove_inr'] = True
@@ -243,7 +259,8 @@ def obseration_pin_to_problem(request, patient_id):
             optp1 = []
             for x in optp:
                 optp1.append(x[0])
-            component = ObservationComponent.objects.filter(observation_id__in=optp1, component_code='6301-6')
+            component = ObservationComponent.objects.filter(
+                observation_id__in=optp1, component_code='6301-6')
             pin = ObservationPinToProblem(author_id=request.user.id, observation_id=observation_id,
                                           problem_id=problem_id)
             pin.save()
@@ -267,8 +284,10 @@ def obseration_pin_to_problem(request, patient_id):
 def add_new_data(request, patient_id, component_id):
     resp = {'success': False}
 
-    patient = User.objects.filter(id=int(patient_id)).get()  # Patient user instance
-    effective_datetime = request.POST.get("datetime", datetime.now().strftime('%m/%d/%Y %H:%M'))  # Get user submit data
+    patient = User.objects.filter(
+        id=int(patient_id)).get()  # Patient user instance
+    effective_datetime = request.POST.get(
+        "datetime", datetime.now().strftime('%m/%d/%Y %H:%M'))  # Get user submit data
 
     value_quantity = request.POST.get("value", 0)
     value_quantity = value_quantity if value_quantity != '' else 0  # Passed empty value
@@ -279,18 +298,20 @@ def add_new_data(request, patient_id, component_id):
                                                                                                 value_quantity):
 
         # DB stuff
-        effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
+        effective_datetime = datetime.strptime(
+            effective_datetime, '%m/%d/%Y %H:%M')
         userProfile = UserProfile.objects.get(id=patient_id)
         if (userProfile.weight_updated_date == None or userProfile.weight_updated_date.date() < datetime.now().date() or userProfile.height_updated_date == None or userProfile.height_updated_date.date() < datetime.now().date()):
             value = ObservationValue(author=request.user, component_id=component_id,
-                                    effective_datetime=effective_datetime, value_quantity=float(value_quantity))
-            
+                                     effective_datetime=effective_datetime, value_quantity=float(value_quantity))
+
             value.save()
 
             # Save log
             summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(value.value_quantity,
-                                                                            value.component.observation.name)
-            op_add_event(request.user, value.component.observation.subject, summary)
+                                                                              value.component.observation.name)
+            op_add_event(
+                request.user, value.component.observation.subject, summary)
 
             # Auto add bmi data if observation component is weight or height
             # TODO: Need to improve this block of code - https://trello.com/c/PaSdgs3k
@@ -300,18 +321,22 @@ def add_new_data(request, patient_id, component_id):
             if value.component.name == 'weight':
                 # Calculation
                 heightComponent = ObservationComponent.objects.filter(component_code='8302-2').filter(
-                observation__subject_id=int(patient_id)).get()
-                height = get_observation_most_common_value(heightComponent, effective_datetime)
+                    observation__subject_id=int(patient_id)).get()
+                height = get_observation_most_common_value(
+                    heightComponent, effective_datetime)
                 if (height > 1 and value.value_quantity > 1 and (userProfile.weight_updated_date == None or userProfile.weight_updated_date.date() < datetime.now().date())):
-                    bmiValue = round(float(value.value_quantity) * 703 / pow(height, 2), 2)
+                    bmiValue = round(float(value.value_quantity)
+                                     * 703 / pow(height, 2), 2)
                     # DB stuff transaction
                     ObservationValue(author=request.user, component=bmiComponent,
-                                effective_datetime=effective_datetime, value_quantity=bmiValue).save()
-                
+                                     effective_datetime=effective_datetime, value_quantity=bmiValue).save()
+
                     # Save log
-                    summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
-                    op_add_event(request.user, value.component.observation.subject, summary)
-                    
+                    summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(
+                        bmiValue, bmiComponent.observation.name)
+                    op_add_event(
+                        request.user, value.component.observation.subject, summary)
+
                 if userProfile.weight_updated_date == None or userProfile.weight_updated_date.date() < datetime.now().date():
                     userProfile.weight_updated_date = datetime.now()
                     userProfile.save()
@@ -320,15 +345,19 @@ def add_new_data(request, patient_id, component_id):
                 # Calculation
                 weightComponent = ObservationComponent.objects.filter(component_code='3141-9').filter(
                     observation__subject_id=int(patient_id)).get()
-                weight = get_observation_most_common_value(weightComponent, effective_datetime)
-                if (weight > 1 and value.value_quantity > 1 and userProfile.height_changed_first_time == False ):
-                    bmiValue = round(weight * 703 / pow(float(value.value_quantity), 2), 2)
+                weight = get_observation_most_common_value(
+                    weightComponent, effective_datetime)
+                if (weight > 1 and value.value_quantity > 1 and userProfile.height_changed_first_time == False):
+                    bmiValue = round(
+                        weight * 703 / pow(float(value.value_quantity), 2), 2)
                     # DB stuff transaction
                     ObservationValue(author=request.user, component=bmiComponent,
-                                effective_datetime=effective_datetime, value_quantity=bmiValue).save()
+                                     effective_datetime=effective_datetime, value_quantity=bmiValue).save()
                     # Save log
-                    summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(bmiValue, bmiComponent.observation.name)
-                    op_add_event(request.user, value.component.observation.subject, summary)
+                    summary = "A value of <b>{0}</b> was added for <b>{1}</b>".format(
+                        bmiValue, bmiComponent.observation.name)
+                    op_add_event(
+                        request.user, value.component.observation.subject, summary)
                 if userProfile.height_changed_first_time == False:
                     userProfile.height_changed_first_time = True
                     userProfile.height_updated_date = datetime.now()
@@ -336,7 +365,7 @@ def add_new_data(request, patient_id, component_id):
                 else:
                     if userProfile.height_updated_date.date() < datetime.now().date():
                         userProfile.height_updated_date = datetime.now()
-                        userProfile.save()   
+                        userProfile.save()
 
         resp['value'] = ObservationValueSerializer(value).data
         resp['success'] = True
@@ -377,7 +406,8 @@ def save_data(request, patient_id, value_id):
 
         effective_datetime = request.POST.get("datetime", None)
         if effective_datetime:
-            effective_datetime = datetime.strptime(effective_datetime, '%m/%d/%Y %H:%M')
+            effective_datetime = datetime.strptime(
+                effective_datetime, '%m/%d/%Y %H:%M')
         value_quantity = request.POST.get("value_quantity", None)
 
         value.effective_datetime = effective_datetime
@@ -431,7 +461,8 @@ def delete_data(request, patient_id, observation_id):
     if permissions_accessed(request.user, int(patient_id)):
         observation = Observation.objects.get(id=observation_id)
         if not observation.author is None:  # prevent default datas
-            pins = ObservationPinToProblem.objects.filter(observation_id=observation_id)
+            pins = ObservationPinToProblem.objects.filter(
+                observation_id=observation_id)
             for pin in pins:
                 pin.delete()
 
@@ -495,7 +526,8 @@ def get_observation_values(request, observation_id):
     observation_unit = None
     observation = Observation.objects.get(id=observation_id)
     # Incase observation's unit is not specific then we should not load it
-    observation_unit_query_set = ObservationUnit.objects.filter(is_used=True).filter(observation_id=observation_id)
+    observation_unit_query_set = ObservationUnit.objects.filter(
+        is_used=True).filter(observation_id=observation_id)
     if observation_unit_query_set.exists():
         observation_unit = observation_unit_query_set.get()
 
@@ -506,13 +538,15 @@ def get_observation_values(request, observation_id):
         observation_id=observation_id)
 
     # Normalize list before passing to query
-    observation_values = get_observation_value_pair(",".join(map(str, observation_component_ids)))
+    observation_values = get_observation_value_pair(
+        ",".join(map(str, observation_component_ids)))
 
     # Format blood pressure value before returning
     if '85354-9' == observation.code:
         for obs in observation_values:
             valuesPair = obs['value'].split("/")
-            obs['value'] = int(float(valuesPair[0])).__str__() + "/" + int(float(valuesPair[1])).__str__()
+            obs['value'] = int(float(valuesPair[0])).__str__(
+            ) + "/" + int(float(valuesPair[1])).__str__()
 
     resp['success'] = True
     resp['data'] = {
