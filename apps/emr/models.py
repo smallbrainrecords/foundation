@@ -1195,7 +1195,8 @@ class Document(models.Model):
         return extension
 
     def file_mime_type(self):
-        mime = mimetypes.guess_type(self.document.path)
+
+        mime = mimetypes.guess_type(self.document.name)
         return mime
 
 
