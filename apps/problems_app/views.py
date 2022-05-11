@@ -145,8 +145,10 @@ def get_colon_cancers(request, problem_id):
     """
     resp = {'success': False}
 
-    colon_cancers = ColonCancerScreening.objects.filter(problem__id=problem_id).get()
-    colon_cancers.colon_cancer_todos = colon_cancers.colon_cancer_todos.filter(accomplished=False)
+    colon_cancers = ColonCancerScreening.objects.filter(
+        problem__id=problem_id).get()
+    colon_cancers.colon_cancer_todos = colon_cancers.colon_cancer_todos.filter(
+        accomplished=False)
 
     resp['success'] = True
     resp['colon_cancers'] = ColonCancerScreeningSerializer(colon_cancers).data
@@ -159,7 +161,8 @@ def get_problem_activity(request, problem_id, last_id):
     resp = {'success': False}
 
     problem = get_object_or_404(Problem, pk=problem_id)
-    activities = ProblemActivity.objects.filter(problem=problem).filter(id__gt=last_id)
+    activities = ProblemActivity.objects.filter(
+        problem=problem).filter(id__gt=last_id)
     activity_holder = ProblemActivitySerializer(activities, many=True).data
 
     resp['activities'] = activity_holder
@@ -185,7 +188,8 @@ def add_patient_problem(request, patient_id):
         resp["msg"] = "Problem already being added"
         return ajax_response(resp)
 
-    new_problem = Problem.objects.create_new_problem(patient_id, term, concept_id, actor_profile)
+    new_problem = Problem.objects.create_new_problem(
+        patient_id, term, concept_id, actor_profile)
 
     # https://trello.com/c/0OlwGwCB
     # Only add if problem is diabetes and patient have not
@@ -197,7 +201,8 @@ def add_patient_problem(request, patient_id):
             observation.save()
 
             #  Add data unit
-            observation_unit = ObservationUnit.objects.create(observation=observation, value_unit="mg/dL")
+            observation_unit = ObservationUnit.objects.create(
+                observation=observation, value_unit="mg/dL")
             observation_unit.is_used = True  # will be changed in future when having conversion
             observation_unit.save()
 
@@ -208,9 +213,11 @@ def add_patient_problem(request, patient_id):
             observation_component.name = "Glucose"
             observation_component.save()
         else:
-            observation = ObservationComponent.objects.get(component_code="2345-7", observation__subject=patient)
+            observation = ObservationComponent.objects.get(
+                component_code="2345-7", observation__subject=patient)
         # Pin to problem
-        ObservationPinToProblem.objects.create(author_id=request.user.id, observation=observation, problem=new_problem)
+        ObservationPinToProblem.objects.create(
+            author_id=request.user.id, observation=observation, problem=new_problem)
 
     # Event
     summary = "Added <u>problem</u> <b>{}</b>".format(term)
@@ -275,7 +282,8 @@ def change_name(request, problem_id):
     old_problem_concept_id = problem.concept_id
     old_problem_name = problem.problem_name
     if datetime.now() > datetime.strptime(
-            problem.start_date.strftime('%d/%m/%Y') + ' ' + problem.start_time.strftime('%H:%M:%S'),
+            problem.start_date.strftime(
+                '%d/%m/%Y') + ' ' + problem.start_time.strftime('%H:%M:%S'),
             "%d/%m/%Y %H:%M:%S") + timedelta(hours=24):
         problem.old_problem_name = old_problem_name
 
@@ -295,7 +303,8 @@ def change_name(request, problem_id):
         summary = '<b>%s</b> was changed to <b>%s (%s)</b>' % (
             old_problem_name, problem.problem_name, problem.concept_id)
     else:
-        summary = '<b>%s</b> was changed to <b>%s</b>' % (old_problem_name, problem.problem_name)
+        summary = '<b>%s</b> was changed to <b>%s</b>' % (
+            old_problem_name, problem.problem_name)
 
     op_add_event(physician, problem.patient, summary, problem)
     add_problem_activity(problem, request.user, summary)
@@ -416,7 +425,8 @@ def add_history_note(request, problem_id):
 def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
     if 'patient' == actor_profile.role or 'nurse' == actor_profile.role or 'secretary' == actor_profile.role:
         # Create todo and Pin to problem
-        note_auto_generated_todo = ToDo(patient=patient, problem=problem, todo="A note was added")
+        note_auto_generated_todo = ToDo(
+            patient=patient, problem=problem, todo="A note was added")
         order = ToDo.objects.all().aggregate(Max('order'))
         if not order['order__max']:
             order = 1
@@ -427,15 +437,19 @@ def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
 
         summary = '''Added <u>todo</u> <a href="#/todo/{}"><b>{}</b></a> for <u>problem</u> <b>{}</b>'''.format(
             note_auto_generated_todo.id, "A note was added", problem.problem_name)
-        op_add_todo_event(request.user, patient, summary, note_auto_generated_todo)
+        op_add_todo_event(request.user, patient, summary,
+                          note_auto_generated_todo)
 
-        add_todo_activity(note_auto_generated_todo, request.user, "Added this todo.")
+        add_todo_activity(note_auto_generated_todo,
+                          request.user, "Added this todo.")
 
         # Tag associated physician
         # Find all associated physician(s) with this patient
-        patient_controller = PatientController.objects.filter(patient=patient).all()
+        patient_controller = PatientController.objects.filter(
+            patient=patient).all()
         for doctor in patient_controller:
-            TaggedToDoOrder.objects.create(todo=note_auto_generated_todo, user=doctor.physician)
+            TaggedToDoOrder.objects.create(
+                todo=note_auto_generated_todo, user=doctor.physician)
             log = "<b>{0} {1} - {2}</b> joined this todo.".format(doctor.physician.first_name,
                                                                   doctor.physician.last_name,
                                                                   doctor.physician.profile.role)
@@ -470,7 +484,8 @@ def add_wiki_note(request, problem_id):
     physician = request.user
     patient = problem.patient
 
-    new_note = ProblemNote.objects.create_wiki_note(request.user, problem, note)
+    new_note = ProblemNote.objects.create_wiki_note(
+        request.user, problem, note)
 
     activity = 'Added wiki note: <b>%s</b>' % note
     add_problem_activity(problem, request.user, activity, 'input')
@@ -484,6 +499,7 @@ def add_wiki_note(request, problem_id):
     resp['success'] = True
 
     return ajax_response(resp)
+
 
 @permissions_required(["add_goal"])
 @login_required
@@ -503,7 +519,8 @@ def add_problem_goal(request, problem_id):
 
     physician = request.user
 
-    summary = '''Added <u> goal </u> : <b>%s</b> to <u>problem</u> : <b>%s</b>''' % (goal, problem.problem_name)
+    summary = '''Added <u> goal </u> : <b>%s</b> to <u>problem</u> : <b>%s</b>''' % (
+        goal, problem.problem_name)
     op_add_event(physician, patient, summary, problem)
 
     activity = summary
@@ -534,7 +551,8 @@ def add_problem_todo(request, problem_id):
         due_date = parser.parse(due_date, dayfirst=False).date()
         # due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
-    new_todo = ToDo(patient=patient, problem=problem, todo=todo, due_date=due_date)
+    new_todo = ToDo(patient=patient, problem=problem,
+                    todo=todo, due_date=due_date)
 
     a1c_id = request.POST.get('a1c_id', None)
     if a1c_id:
@@ -553,10 +571,12 @@ def add_problem_todo(request, problem_id):
     if colon_cancer_id:
         colon = ColonCancerScreening.objects.get(id=int(colon_cancer_id))
         if not Label.objects.filter(name="screening", css_class="todo-label-yellow", is_all=True).exists():
-            label = Label(name="screening", css_class="todo-label-yellow", is_all=True)
+            label = Label(name="screening",
+                          css_class="todo-label-yellow", is_all=True)
             label.save()
         else:
-            label = Label.objects.get(name="screening", css_class="todo-label-yellow", is_all=True)
+            label = Label.objects.get(
+                name="screening", css_class="todo-label-yellow", is_all=True)
         new_todo.colon_cancer = colon
         new_todo.save()
         new_todo.labels.add(label)
@@ -601,7 +621,8 @@ def upload_problem_image(request, problem_id):
     image_holder = []
     for dict in images:
         image = request.FILES[dict]
-        patient_image = PatientImage(patient=patient, problem=problem, image=image)
+        patient_image = PatientImage(
+            patient=patient, problem=problem, image=image)
         patient_image.save()
 
         activity = summary = '''
@@ -660,9 +681,11 @@ def relate_problem(request):
 
     if relationship:
         try:
-            problem_relationship = ProblemRelationship.objects.get(source=source, target=target)
+            problem_relationship = ProblemRelationship.objects.get(
+                source=source, target=target)
         except ProblemRelationship.DoesNotExist:
-            problem_relationship = ProblemRelationship.objects.create(source=source, target=target)
+            problem_relationship = ProblemRelationship.objects.create(
+                source=source, target=target)
             activity = '''Created Problem Relationship: <b>%s</b> effects <b>%s</b>''' % (
                 source.problem_name, target.problem_name)
     else:
@@ -724,11 +747,12 @@ def update_order(request):
     resp = {'success': False}
 
     datas = json.loads(request.body)
-    if datas.has_key('patient_id'):
+    if 'patient_id' in datas:
         id_problems = datas['problems']
         patient_id = datas['patient_id']
         try:
-            problem = ProblemOrder.objects.get(user=request.user, patient_id=patient_id)
+            problem = ProblemOrder.objects.get(
+                user=request.user, patient_id=patient_id)
         except ProblemOrder.DoesNotExist:
             problem = ProblemOrder(user=request.user, patient_id=patient_id)
             problem.save()
@@ -737,7 +761,7 @@ def update_order(request):
         problem.save()
 
     # list todo
-    if datas.has_key('list_id'):
+    if 'list_id' in datas:
         list_id = datas['list_id']
         labeled_list = LabeledProblemList.objects.get(id=int(list_id))
         labeled_list.problem_list = datas['problems']
@@ -760,7 +784,8 @@ def new_problem_label(request, problem_id):
     label = ProblemLabel.objects.filter(name=name, css_class=css_class, author=request.user,
                                         patient=problem.patient).first()
     if not label:
-        label = ProblemLabel(name=name, css_class=css_class, author=request.user, patient=problem.patient)
+        label = ProblemLabel(name=name, css_class=css_class,
+                             author=request.user, patient=problem.patient)
         label.save()
         resp['new_status'] = True
         resp['new_label'] = ProblemLabelSerializer(label).data
@@ -777,7 +802,8 @@ def new_problem_label(request, problem_id):
 @login_required
 @timeit
 def get_problem_labels(request, patient_id, user_id):
-    labels = ProblemLabel.objects.filter(patient_id=patient_id, author_id=user_id)
+    labels = ProblemLabel.objects.filter(
+        patient_id=patient_id, author_id=user_id)
     resp = {
         'labels': ProblemLabelSerializer(labels, many=True).data
     }
@@ -856,13 +882,17 @@ def add_problem_list(request, patient_id, user_id):
     list_name = data['name']
     labels = data['labels']
 
-    problem_labels = ProblemLabel.objects.filter(id__in=[label["id"] for label in labels])
-    problems = Problem.objects.filter(labels__in=problem_labels).distinct().order_by('start_date')
+    problem_labels = ProblemLabel.objects.filter(
+        id__in=[label["id"] for label in labels])
+    problems = Problem.objects.filter(
+        labels__in=problem_labels).distinct().order_by('start_date')
     problems_holder = ProblemSerializer(problems, many=True).data
     ProblemService.populate_multiplicity(problems_holder)
-    problems_holder = sorted(problems_holder, key=operator.itemgetter('multiply'), reverse=True)
+    problems_holder = sorted(
+        problems_holder, key=operator.itemgetter('multiply'), reverse=True)
 
-    labeled_problems = LabeledProblemList.objects.create(user_id=user_id, name=list_name, patient_id=patient_id)
+    labeled_problems = LabeledProblemList.objects.create(
+        user_id=user_id, name=list_name, patient_id=patient_id)
     for label in problem_labels:
         labeled_problems.labels.add(label)
     new_list_dict = LabeledProblemListSerializer(labeled_problems).data
@@ -893,7 +923,8 @@ def get_label_problem_lists(request, patient_id, user_id):
     for label_list in lists:
         problem_list = label_list.problem_list
         if problem_list:
-            problems_qs = Problem.objects.filter(labels__in=label_list.labels.all()).filter(is_active=True).distinct()
+            problems_qs = Problem.objects.filter(
+                labels__in=label_list.labels.all()).filter(is_active=True).distinct()
             problems = []
             for problem in problems_qs:
                 if problem.id in problem_list:
@@ -907,7 +938,8 @@ def get_label_problem_lists(request, patient_id, user_id):
         problems_holder = ProblemSerializer(problems, many=True).data
         if not label_list.problem_list:
             ProblemService.populate_multiplicity(problems_holder)
-            problems_holder = sorted(problems_holder, key=operator.itemgetter('multiply'), reverse=True)
+            problems_holder = sorted(
+                problems_holder, key=operator.itemgetter('multiply'), reverse=True)
 
         list_dict = LabeledProblemListSerializer(label_list).data
         list_dict['problems'] = problems_holder
@@ -961,7 +993,8 @@ def get_problems(request, patient_id):
 def get_sharing_problems(request, patient_id, sharing_patient_id):
     resp = {'success': False}
 
-    sharing = SharingPatient.objects.get(shared_id=patient_id, sharing_id=sharing_patient_id)
+    sharing = SharingPatient.objects.get(
+        shared_id=patient_id, sharing_id=sharing_patient_id)
 
     resp = {
         'sharing_problems': ProblemSerializer(sharing.problems.all(), many=True).data,
@@ -975,7 +1008,8 @@ def get_sharing_problems(request, patient_id, sharing_patient_id):
 def remove_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
     resp = {'success': False}
 
-    sharing_patient = SharingPatient.objects.get(shared_id=patient_id, sharing_id=sharing_patient_id)
+    sharing_patient = SharingPatient.objects.get(
+        shared_id=patient_id, sharing_id=sharing_patient_id)
     problem = Problem.objects.get(id=problem_id)
     sharing_patient.problems.remove(problem)
 
@@ -992,7 +1026,8 @@ def remove_sharing_problems(request, patient_id, sharing_patient_id, problem_id)
 def add_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
     resp = {'success': False}
 
-    sharing_patient = SharingPatient.objects.get(shared_id=patient_id, sharing_id=sharing_patient_id)
+    sharing_patient = SharingPatient.objects.get(
+        shared_id=patient_id, sharing_id=sharing_patient_id)
     problem = Problem.objects.get(id=problem_id)
     sharing_patient.problems.add(problem)
 
@@ -1013,7 +1048,8 @@ def update_problem_list_note(request, list_id):
     problem_list.note = request.POST.get('note')
     problem_list.save()
 
-    activity = '"%s" was added to the folder "%s"' % (problem_list.note, problem_list.name)
+    activity = '"%s" was added to the folder "%s"' % (
+        problem_list.note, problem_list.name)
     physician = request.user
     patient = problem_list.patient
     op_add_event(physician, patient, activity)
@@ -1051,7 +1087,8 @@ def add_new_common_problem(request, staff_id):
 def get_common_problems(request, staff_id):
     resp = {'success': False}
 
-    problems = CommonProblem.objects.filter(author=request.user).order_by('problem_name')
+    problems = CommonProblem.objects.filter(
+        author=request.user).order_by('problem_name')
     common_problems = CommonProblemSerializer(problems, many=True).data
     resp['problems'] = common_problems
     resp['success'] = True
@@ -1081,7 +1118,8 @@ def get_data_pins(request, problem_id):
 
     resp['success'] = True
     resp['pins'] = ObservationSerializer(observations, many=True).data
-    resp['problem_pins'] = ObservationPinToProblemSerializer(pins, many=True).data
+    resp['problem_pins'] = ObservationPinToProblemSerializer(
+        pins, many=True).data
     return ajax_response(resp)
 
 
@@ -1124,9 +1162,11 @@ def get_related_encounters(request, problem_id):
     resp = {'success': False}
     problem = get_object_or_404(Problem, pk=problem_id)
     encounter_records = problem.problem_encounter_records
-    related_encounters = [record.encounter for record in encounter_records.all()]
+    related_encounters = [
+        record.encounter for record in encounter_records.all()]
 
-    resp['encounters'] = EncounterSerializer(related_encounters, many=True).data
+    resp['encounters'] = EncounterSerializer(
+        related_encounters, many=True).data
     resp['success'] = True
     return ajax_response(resp)
 
@@ -1156,7 +1196,8 @@ def get_related_documents(request, problem_id):
         if problem_todo.document_set.count() != 0:
             problem_todo_document_set += problem_todo.document_set.all()
 
-    document_result_set = set(list(problem_document_set) + list(problem_todo_document_set))
+    document_result_set = set(
+        list(problem_document_set) + list(problem_todo_document_set))
 
     # Need remove duplicated and sorted by creation date
     resp['documents'] = DocumentSerializer(document_result_set, many=True).data
@@ -1228,7 +1269,8 @@ def get_problem_wikis(request, problem_id):
     }
 
     resp['history_note'] = problem_notes['history']
-    resp['history_note_total'] = ProblemNote.objects.filter(note_type='history', problem_id=problem_id).count()
+    resp['history_note_total'] = ProblemNote.objects.filter(
+        note_type='history', problem_id=problem_id).count()
     resp['success'] = True
 
     return ajax_response(resp)
@@ -1264,17 +1306,23 @@ def get_problem_relationships(request, problem_id):
     resp = {'success': False}
     problem_info = Problem.objects.get(id=problem_id)
 
-    effecting_relations = ProblemRelationship.objects.filter(target_id=problem_id)
-    effecting_problems = [relationship.source.id for relationship in effecting_relations]
+    effecting_relations = ProblemRelationship.objects.filter(
+        target_id=problem_id)
+    effecting_problems = [
+        relationship.source.id for relationship in effecting_relations]
 
-    effected_relations = ProblemRelationship.objects.filter(source_id=problem_id)
-    effected_problems = [relationship.target.id for relationship in effected_relations]
+    effected_relations = ProblemRelationship.objects.filter(
+        source_id=problem_id)
+    effected_problems = [
+        relationship.target.id for relationship in effected_relations]
 
-    patient_problems = Problem.objects.filter(patient=problem_info.patient).exclude(id=problem_id)
+    patient_problems = Problem.objects.filter(
+        patient=problem_info.patient).exclude(id=problem_id)
 
     resp['effecting_problems'] = effecting_problems
     resp['effected_problems'] = effected_problems
-    resp['patient_problems'] = ProblemSerializer(patient_problems, many=True).data
+    resp['patient_problems'] = ProblemSerializer(
+        patient_problems, many=True).data
     resp['success'] = True
 
     return ajax_response(resp)
@@ -1296,8 +1344,10 @@ def problem_notes_function(request, problem_id):
 
         actor = request.user
         actor_profile = UserProfile.objects.get(user=actor)
-        note = responseBody.get('note')  # <- TODO: Sanitize to prevent SQL Injection Attack
-        note_type = responseBody.get('note_type')  # <- TODO: Validate note type
+        # <- TODO: Sanitize to prevent SQL Injection Attack
+        note = responseBody.get('note')
+        # <- TODO: Validate note type
+        note_type = responseBody.get('note_type')
         # physician = request.user
 
         #  Validation
@@ -1308,7 +1358,8 @@ def problem_notes_function(request, problem_id):
             return ajax_response(resp)
 
         #  Adding new note
-        new_note = ProblemNote.objects.create_problem_note(actor, problem, note, note_type)
+        new_note = ProblemNote.objects.create_problem_note(
+            actor, problem, note, note_type)
 
         # Save problem activity
         activity = 'Added wiki note: <b>%s</b>' % note
@@ -1318,7 +1369,8 @@ def problem_notes_function(request, problem_id):
         op_add_event(actor, problem.patient, activity, problem)
 
         # Auto generate to do correspond to note https://trello.com/c/hkdbHZjw
-        auto_generate_note_todo(actor_profile, problem.patient, problem, request, resp)
+        auto_generate_note_todo(
+            actor_profile, problem.patient, problem, request, resp)
 
         resp['note'] = ProblemNoteSerializer(new_note).data
         resp['success'] = True
@@ -1332,7 +1384,8 @@ def problem_notes_function(request, problem_id):
             '-created_on')[0:limit]
 
         resp['notes'] = ProblemNoteSerializer(notes.all(), many=True).data
-        resp['total'] = ProblemNote.objects.filter(problem_id=problem_id, note_type=note_type, id__lt=before).count()
+        resp['total'] = ProblemNote.objects.filter(
+            problem_id=problem_id, note_type=note_type, id__lt=before).count()
         resp['success'] = True
     if request.method == "DELETE":
         pass

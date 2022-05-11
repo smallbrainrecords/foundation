@@ -189,6 +189,11 @@ LOGGING = {
         }
     },
     'handlers': {
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'general.log',
+            'level': 'DEBUG',
+        },
         'null': {
             'level': 'DEBUG',
             'class': 'logging.NullHandler',
@@ -200,12 +205,18 @@ LOGGING = {
         }
     },
     'loggers': {
+        'loggers': {
+            '': {
+                'level': 'DEBUG',
+                'handlers': ['file'],
+            },
+        },
         'django.security.DisallowedHost': {
-            'handlers': ['null'],
+            'handlers': ['file', 'null'],
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['mail_admins'],
+            'handlers': ['file', 'mail_admins'],
             'level': 'ERROR',
             'propagate': True,
         },

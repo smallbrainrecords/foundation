@@ -37,8 +37,10 @@ from .serializers import ToDoCommentSerializer, TodoActivitySerializer, LabeledT
 @login_required
 @timeit
 def get_todo_activity(request, todo_id, last_id):
-    activities = TodoActivity.objects.filter(todo_id=todo_id).filter(id__gt=last_id)
-    resp = {'activities': TodoActivitySerializer(activities, many=True).data, 'success': True}
+    activities = TodoActivity.objects.filter(
+        todo_id=todo_id).filter(id__gt=last_id)
+    resp = {'activities': TodoActivitySerializer(
+        activities, many=True).data, 'success': True}
     return ajax_response(resp)
 
 
@@ -120,7 +122,8 @@ def update_todo_status(request, todo_id):
             op_add_event(physician, todo.patient, summary, todo.problem, True)
 
     # todo activity
-    activity = "Updated status of this todo to <b>{}</b>.".format(accomplished_label)
+    activity = "Updated status of this todo to <b>{}</b>.".format(
+        accomplished_label)
     add_todo_activity(todo, request.user, activity)
 
     # todos = ToDo.objects.filter(patient=patient)
@@ -150,7 +153,7 @@ def update_order(request):
     id_todos = datas['todos']
     actor_profile = UserProfile.objects.get(user=request.user)
     # patient's todo order
-    if datas.has_key('patient_id'):
+    if 'patient_id' in datas:
         patient_id = datas['patient_id']
         patient = User.objects.get(id=patient_id)
 
@@ -163,7 +166,8 @@ def update_order(request):
         for id in id_todos:
             todo = ToDo.objects.get(id=int(id))
             if not todos_order[key]:
-                order = ToDo.objects.filter(patient=patient).aggregate(Max('order'))
+                order = ToDo.objects.filter(
+                    patient=patient).aggregate(Max('order'))
                 if not order['order__max']:
                     order = 1
                 else:
@@ -183,11 +187,12 @@ def update_order(request):
         '''
         add_todo_activity(todo, request.user, activity)
     # tagged todo order
-    if datas.has_key('tagged_user_id'):
+    if 'tagged_user_id' in datas:
         tagged_user_id = datas['tagged_user_id']
         user = User.objects.get(id=tagged_user_id)
 
-        todos = TaggedToDoOrder.objects.filter(todo__id__in=id_todos).order_by('order')
+        todos = TaggedToDoOrder.objects.filter(
+            todo__id__in=id_todos).order_by('order')
         todos_order = []
         for todo in todos:
             todos_order.append(todo.order)
@@ -196,7 +201,8 @@ def update_order(request):
         for id in id_todos:
             todo = TaggedToDoOrder.objects.get(todo__id=int(id), user=user)
             if not todos_order[key]:
-                order = TaggedToDoOrder.objects.filter(user=user).aggregate(Max('order'))
+                order = TaggedToDoOrder.objects.filter(
+                    user=user).aggregate(Max('order'))
                 if not order['order__max']:
                     order = 1
                 else:
@@ -207,7 +213,7 @@ def update_order(request):
             todo.save()
             key = key + 1
     # staff todo
-    if datas.has_key('staff_id'):
+    if 'staff_id' in datas:
         staff_id = datas['staff_id']
         user = User.objects.get(id=staff_id)
 
@@ -238,7 +244,7 @@ def update_order(request):
         add_todo_activity(todo, request.user, activity)
 
     # list todo
-    if datas.has_key('list_id'):
+    if 'list_id' in datas:
         list_id = datas['list_id']
         labeled_list = LabeledToDoList.objects.get(id=int(list_id))
         labeled_list.todo_list = datas['todos']
@@ -277,9 +283,11 @@ def get_todo_info(request, todo_id):
     documents = DocumentTodo.objects.filter(todo=todo_info)
     document_todos_holder = []
     for document in documents:
-        document_todos_holder.append(DocumentSerializer(document.document).data)
+        document_todos_holder.append(
+            DocumentSerializer(document.document).data)
 
-    encounter_ids = EncounterTodoRecord.objects.filter(todo=todo_info).values_list("encounter__id", flat=True)
+    encounter_ids = EncounterTodoRecord.objects.filter(
+        todo=todo_info).values_list("encounter__id", flat=True)
     related_encounters = Encounter.objects.filter(id__in=encounter_ids)
 
     activities = TodoActivity.objects.filter(todo=todo_info)
@@ -293,7 +301,8 @@ def get_todo_info(request, todo_id):
         sharing_patients_list.append(user_dict)
 
     # Update tagged todo status to viewed
-    is_tagged = TaggedToDoOrder.objects.filter(user=request.user).filter(todo=todo_info)
+    is_tagged = TaggedToDoOrder.objects.filter(
+        user=request.user).filter(todo=todo_info)
     if is_tagged.exists():
         is_tagged.update(status=2)
 
@@ -311,7 +320,8 @@ def get_todo_info(request, todo_id):
 def add_todo_comment(request, todo_id):
     resp = {}
     comment = request.POST.get('comment')
-    todo_comment = ToDoComment.objects.create(todo_id=todo_id, user=request.user, comment=comment)
+    todo_comment = ToDoComment.objects.create(
+        todo_id=todo_id, user=request.user, comment=comment)
     resp['comment'] = ToDoCommentSerializer(todo_comment).data
     resp['success'] = True
     return ajax_response(resp)
@@ -350,7 +360,8 @@ def change_todo_text(request, todo_id):
     # Gather input and calculate info
     todo = ToDo.objects.get(id=todo_id)
     todo_text = request.POST.get('todo')
-    activity = 'Todo name changed from <b>{0}</b> to <b>{1}</b>'.format(todo.todo, todo_text)
+    activity = 'Todo name changed from <b>{0}</b> to <b>{1}</b>'.format(
+        todo.todo, todo_text)
 
     # Update todo itself
     todo.todo = todo_text
@@ -394,7 +405,8 @@ def change_todo_due_date(request, todo_id):
 
     # todo activity
     if due_date:
-        activity = "Changed due date of this todo to <b>%s</b>." % (request.POST.get('due_date'))
+        activity = "Changed due date of this todo to <b>%s</b>." % (
+            request.POST.get('due_date'))
     else:
         activity = "Removed due date of this todo."
     add_todo_activity(todo, request.user, activity)
@@ -513,7 +525,8 @@ def todo_access_encounter(request, todo_id):
         summary = '''<a href="#/todo/%s"><b>%s</b></a> for <b>%s</b> was visited.''' % (
             todo.id, todo.todo, todo.problem.problem_name)
     else:
-        summary = '''<a href="#/todo/%s"><b>%s</b></a> was visited.''' % (todo.id, todo.todo)
+        summary = '''<a href="#/todo/%s"><b>%s</b></a> was visited.''' % (
+            todo.id, todo.todo)
 
     op_add_todo_event(physician, patient, summary, todo)
     if todo.problem:
@@ -527,7 +540,8 @@ def todo_access_encounter(request, todo_id):
 @api_view(["POST"])
 @timeit
 def add_todo_attachment(request, todo_id):
-    attachment = ToDoAttachment.objects.create(todo_id=todo_id, user=request.user, attachment=request.FILES['0'])
+    attachment = ToDoAttachment.objects.create(
+        todo_id=todo_id, user=request.user, attachment=request.FILES['0'])
     actor_profile = UserProfile.objects.get(user=request.user)
     resp = {}
     resp['success'] = True
@@ -542,7 +556,8 @@ def add_todo_attachment(request, todo_id):
     resp['attachment'] = attachment_dict
     # todo activity
     activity = "Attached <b>%s</b> to this todo." % (attachment.filename())
-    add_todo_activity(attachment.todo, request.user, activity, comment=None, attachment=attachment)
+    add_todo_activity(attachment.todo, request.user, activity,
+                      comment=None, attachment=attachment)
     return ajax_response(resp)
 
 
@@ -553,10 +568,13 @@ def download_attachment(request, attachment_id):
     """
     attachment = ToDoAttachment.objects.get(id=attachment_id)
     wrapper = FileWrapper(attachment.attachment)
-    response = HttpResponse(wrapper, content_type='application/%s' % attachment.file_extension_lower())
+    response = HttpResponse(
+        wrapper, content_type='application/%s' % attachment.file_extension_lower())
 
-    filename = '{}.{}'.format(attachment.filename(), attachment.file_extension_lower())
-    response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+    filename = '{}.{}'.format(attachment.filename(),
+                              attachment.file_extension_lower())
+    response['Content-Disposition'] = 'attachment; filename={}'.format(
+        filename)
     return response
 
 
@@ -593,7 +611,8 @@ def add_todo_member(request, todo_id):
     todo = ToDo.objects.get(id=todo_id)
     member_id = request.POST.get('id')
     member = UserProfile.objects.get(id=int(member_id))
-    tagged_todo = TaggedToDoOrder.objects.filter(todo=todo, user=member.user).first()
+    tagged_todo = TaggedToDoOrder.objects.filter(
+        todo=todo, user=member.user).first()
     if tagged_todo is None:
         TaggedToDoOrder.objects.create(todo=todo, user=member.user)
 
@@ -624,7 +643,8 @@ def remove_todo_member(request, todo_id):
     member_id = request.POST.get('id')
     member = UserProfile.objects.get(id=int(member_id))
 
-    tagged_todo = TaggedToDoOrder.objects.filter(todo=todo, user=member.user).first()
+    tagged_todo = TaggedToDoOrder.objects.filter(
+        todo=todo, user=member.user).first()
     if tagged_todo:
         tagged_todo.delete()
 
@@ -632,7 +652,8 @@ def remove_todo_member(request, todo_id):
     set_problem_authentication_false(request, todo)
 
     # todo activity
-    log = "<b>{0} {1} - {2}</b> left this todo.".format(member.user.first_name, member.user.last_name, member.role)
+    log = "<b>{0} {1} - {2}</b> left this todo.".format(
+        member.user.first_name, member.user.last_name, member.role)
     add_todo_activity(todo, request.user, log)
 
     resp['success'] = True
@@ -642,7 +663,8 @@ def remove_todo_member(request, todo_id):
 @login_required
 @timeit
 def get_labels(request, user_id):
-    labels = Label.objects.filter(Q(is_all=True) | (Q(is_all=False) & Q(author_id=user_id)))
+    labels = Label.objects.filter(Q(is_all=True) | (
+        Q(is_all=False) & Q(author_id=user_id)))
     resp = {'labels': LabelSerializer(labels, many=True).data}
     return ajax_response(resp)
 
@@ -660,17 +682,21 @@ def get_user_todos(request, user_id):
     """
     resp = {}
     # Load tagged todo which have not yet viewed
-    new_tagged_todo_count = TaggedToDoOrder.objects.filter(user_id=user_id).filter(status=0).count()
+    new_tagged_todo_count = TaggedToDoOrder.objects.filter(
+        user_id=user_id).filter(status=0).count()
 
-    tagged_todo_order = TaggedToDoOrder.objects.filter(user_id=user_id).order_by('order', 'todo__due_date')
+    tagged_todo_order = TaggedToDoOrder.objects.filter(
+        user_id=user_id).order_by('order', 'todo__due_date')
     tagged_todos = [t.todo for t in tagged_todo_order]
     serialized_data = TodoSerializer(tagged_todos, many=True).data
     for item in serialized_data:
-        tagged_todo_instance = TaggedToDoOrder.objects.filter(todo_id=item['id']).filter(user_id=user_id).get()
+        tagged_todo_instance = TaggedToDoOrder.objects.filter(
+            todo_id=item['id']).filter(user_id=user_id).get()
         item['tagged_status'] = tagged_todo_instance.status
 
     # Load personal todo list
-    personal_todos = ToDo.objects.filter(user_id=user_id).filter(patient=None).order_by('order', 'due_date')
+    personal_todos = ToDo.objects.filter(user_id=user_id).filter(
+        patient=None).order_by('order', 'due_date')
 
     resp['tagged_todos'] = serialized_data
     resp['new_tagged_todo'] = new_tagged_todo_count
@@ -720,7 +746,8 @@ def add_staff_todo_list(request, user_id):
         return ajax_response(resp)
 
     # SAVING DATA
-    new_list = LabeledToDoList.objects.create(user_id=user_id, name=list_name, private=visibility)
+    new_list = LabeledToDoList.objects.create(
+        user_id=user_id, name=list_name, private=visibility)
 
     label_ids = []
     for label in labels:
@@ -728,7 +755,8 @@ def add_staff_todo_list(request, user_id):
         new_list.labels.add(l)
         label_ids.append(l.id)
 
-    todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
+    todos = ToDo.objects.filter(
+        labels__id__in=label_ids).distinct().order_by('due_date')
 
     new_list_dict = LabeledToDoListSerializer(new_list).data
     new_list_dict['todos'] = TodoSerializer(todos, many=True).data
@@ -747,14 +775,17 @@ def get_user_label_lists(request, user_id):
     lists = LabeledToDoList.objects.filter(user_id=user_id).all()
 
     # Loaded admin labeled to do list for all user
-    admin_labeled_todo_list = LabeledToDoList.objects.filter(user__profile__role='admin', private=0).all()
+    admin_labeled_todo_list = LabeledToDoList.objects.filter(
+        user__profile__role='admin', private=0).all()
 
     # Load physician labeled to do list for all user
     physicians = PhysicianTeam.objects.filter(member=request.user)
     physician_ids = [x.physician.id for x in physicians]
-    physician_labeled_todo_list = LabeledToDoList.objects.filter(user_id__in=physician_ids).filter(private=0).all()
+    physician_labeled_todo_list = LabeledToDoList.objects.filter(
+        user_id__in=physician_ids).filter(private=0).all()
 
-    merged_list = list(lists) + list(admin_labeled_todo_list) + list(physician_labeled_todo_list)
+    merged_list = list(lists) + list(admin_labeled_todo_list) + \
+        list(physician_labeled_todo_list)
     lists_holder = []
     for label_list in merged_list:
         list_dict = LabeledToDoListSerializer(label_list).data
@@ -772,7 +803,8 @@ def get_user_label_lists(request, user_id):
                     todos.append(todo)
 
         else:
-            todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
+            todos = ToDo.objects.filter(
+                labels__id__in=label_ids).distinct().order_by('due_date')
 
         list_dict['todos'] = TodoSerializer(todos, many=True).data
         list_dict['expanded'] = label_list.expanded
@@ -804,7 +836,8 @@ def staff_all_todos(request, user_id):
     staff = User.objects.get(id=user_id)
     team_members = PhysicianTeam.objects.filter(member_id=user_id)
     physician_ids = [x.physician.id for x in team_members]
-    patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+    patient_controllers = PatientController.objects.filter(
+        physician__id__in=physician_ids)
     patient_ids = [x.patient.id for x in patient_controllers]
     todos = ToDo.objects.filter(accomplished=False, patient__id__in=patient_ids,
                                 due_date__lte=datetime.now()).order_by('-due_date')
