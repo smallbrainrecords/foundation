@@ -13,7 +13,7 @@ WORKDIR /usr/src/smallbrains-app
 
 # Install python 2.7
 RUN apk update && apk upgrade && apk add --update-cache \
-  python3=~3.7.9 \
+  python3 \
   python3-dev \
   build-base \
   curl \
