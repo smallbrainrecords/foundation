@@ -13,7 +13,7 @@ WORKDIR /usr/src/smallbrains-app
 
 # Install python 2.7
 RUN apk update && apk upgrade && apk add --update-cache \
-  python3 \
+  python3=~3.7.9 \
   python3-dev \
   build-base \
   curl \
@@ -50,4 +50,4 @@ WORKDIR /usr/src/smallbrains-app
 EXPOSE 8000
 
 # Run server
-CMD [ "python", "/usr/src/smallbrains-app/manage.py", "runserver", "0.0.0.0:8000" ]
+CMD [ "python", "/usr/src/smallbrains-app/manage.py", "runserver", "0.0.0.0:8000", "--noreload" ]
