@@ -15,10 +15,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
+from local_settings import *
 import os
 import sys
-
-import raven
 
 # Django settings for emr project.
 
@@ -141,9 +140,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
     'mptt',
     'reversion',
@@ -224,13 +221,3 @@ LOGGING = {
 }
 
 SNOMEDCT = {}
-
-# ###################################################################
-# LOCAL SETTINGS FILE IS USED TO IMPORT SENSITIVE CONFIGURATION INFO.
-# MODIFY THE INCLUDED TEMPLATE FOR YOUR OWN PARTICULAR ENVIRONMENT
-# ###################################################################
-
-try:
-    from .local_settings import *
-except ImportError as e:
-    pass
