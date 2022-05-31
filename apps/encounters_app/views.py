@@ -33,12 +33,15 @@ from .serializers import EncounterSerializer, EncounterEventSerializer
 def get_encounter_info(request, encounter_id):
     resp = {}
     encounter = Encounter.objects.get(id=encounter_id)
-    encounter_events = EncounterEvent.objects.filter(encounter=encounter).order_by('datetime')
-    related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
+    encounter_events = EncounterEvent.objects.filter(
+        encounter=encounter).order_by('datetime')
+    related_problem_records = EncounterProblemRecord.objects.filter(
+        encounter=encounter)
     related_problems = [x.problem for x in related_problem_records]
 
     encounter_dict = EncounterSerializer(encounter).data
-    encounter_events_holder = EncounterEventSerializer(encounter_events, many=True).data
+    encounter_events_holder = EncounterEventSerializer(
+        encounter_events, many=True).data
 
     # Load all data value added before and during encounter from current day to encounter document
     encounter_documents = ObservationValue.objects.filter(created_on__range=(
@@ -48,12 +51,13 @@ def get_encounter_info(request, encounter_id):
     encounter_documents_holder = []
     for document in encounter_documents:
         encounter_documents_holder.append({
-            'name': document.component.__str__(),
+            'name': document.component.name,
             'value': '%g' % float(document.value_quantity),
             'effective': document.effective_datetime.isoformat()
         })
 
-    related_problem_holder = ProblemSerializer(related_problems, many=True).data
+    related_problem_holder = ProblemSerializer(
+        related_problems, many=True).data
 
     resp['encounter'] = encounter_dict
     resp['encounter_events'] = encounter_events_holder
@@ -102,8 +106,10 @@ def create_new_encounter(request, patient_id):
     resp = {'success': False}
 
     # Stop all encounter which currently applied to patient or physician or midlevel
-    patient_encounter = Encounter.objects.filter(patient_id=patient_id).filter(stoptime=None)
-    physician_encounter = Encounter.objects.filter(physician=request.user).filter(stoptime=None)
+    patient_encounter = Encounter.objects.filter(
+        patient_id=patient_id).filter(stoptime=None)
+    physician_encounter = Encounter.objects.filter(
+        physician=request.user).filter(stoptime=None)
 
     if patient_encounter.exists():
         encounter = patient_encounter.get()
@@ -117,7 +123,8 @@ def create_new_encounter(request, patient_id):
             encounter.patient.get_full_name())
         return ajax_response(resp)
 
-    encounter = Encounter.objects.create_new_encounter(patient_id, request.user)
+    encounter = Encounter.objects.create_new_encounter(
+        patient_id, request.user)
     resp['success'] = True
     resp['encounter'] = EncounterSerializer(encounter).data
     return ajax_response(resp)
@@ -206,7 +213,8 @@ def upload_encounter_video(request, patient_id, encounter_id):
 def add_timestamp(request, patient_id, encounter_id):
     resp = {}
     timestamp = request.POST.get('timestamp', 0)
-    encounter_event = Encounter.objects.add_timestamp(encounter_id, request.user, round(float(timestamp)))
+    encounter_event = Encounter.objects.add_timestamp(
+        encounter_id, request.user, round(float(timestamp)))
     resp['success'] = True
     resp['encounter_event'] = EncounterEventSerializer(encounter_event).data
     return ajax_response(resp)
@@ -219,8 +227,10 @@ def add_timestamp(request, patient_id, encounter_id):
 @timeit
 def mark_favorite(request, encounter_event_id):
     resp = {}
-    is_favorite = True if request.POST.get('is_favorite', False) == "true" else False
-    EncounterEvent.objects.filter(id=encounter_event_id).update(is_favorite=is_favorite)
+    is_favorite = True if request.POST.get(
+        'is_favorite', False) == "true" else False
+    EncounterEvent.objects.filter(
+        id=encounter_event_id).update(is_favorite=is_favorite)
     resp['success'] = True
     return ajax_response(resp)
 
@@ -232,7 +242,8 @@ def mark_favorite(request, encounter_event_id):
 def name_favorite(request, encounter_event_id):
     resp = {}
     name_favorite = request.POST.get("name_favorite", "")
-    EncounterEvent.objects.filter(id=encounter_event_id).update(name_favorite=name_favorite)
+    EncounterEvent.objects.filter(id=encounter_event_id).update(
+        name_favorite=name_favorite)
     resp['success'] = True
     return ajax_response(resp)
 
@@ -251,7 +262,8 @@ def delete_encounter(request, patient_id, encounter_id):
 @timeit
 def increase_audio_played_count(request, encounter_id):
     resp = {}
-    Encounter.objects.filter(id=encounter_id).update(audio_played_count=F('audio_played_count') + 1)
+    Encounter.objects.filter(id=encounter_id).update(
+        audio_played_count=F('audio_played_count') + 1)
     resp['success'] = True
     return ajax_response(resp)
 
