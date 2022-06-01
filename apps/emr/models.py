@@ -750,6 +750,7 @@ class ObservationComponent(models.Model):
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
+    changed_first_time = models.SmallIntegerField(null=False)
 
     observation = models.ForeignKey(
         Observation, related_name='observation_components')

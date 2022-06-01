@@ -70,11 +70,13 @@ def get_document_list(request):
     item_per_page = 10
 
     if 'false' == show_document_has_patient_pinned:
-        documents = Document.objects.filter(patient__isnull=True).order_by('-created_on')
+        documents = Document.objects.filter(
+            patient__isnull=True).order_by('-created_on')
     else:
         documents = Document.objects.order_by('-created_on')
 
-    result_set = documents.all()[page * item_per_page: page * item_per_page + item_per_page]
+    result_set = documents.all(
+    )[page * item_per_page: page * item_per_page + item_per_page]
 
     resp['documents'] = DocumentListSerializer(result_set, many=True).data
     resp['total'] = documents.count()
@@ -98,8 +100,10 @@ def document_info(request, document_id):
 
     labels = Label.objects.filter(is_all=True)
 
-    next = Document.objects.filter(id__gt=document_id, patient__isnull=True).order_by('id').first()
-    prev = Document.objects.filter(id__lt=document_id, patient__isnull=True).order_by('-id').first()
+    next = Document.objects.filter(
+        id__gt=document_id, patient__isnull=True).order_by('id').first()
+    prev = Document.objects.filter(
+        id__lt=document_id, patient__isnull=True).order_by('-id').first()
 
     resp['success'] = True
     resp['prev'] = prev if prev is None else prev.id
@@ -147,7 +151,8 @@ def pin_todo_2_document(request):
     document = Document.objects.filter(id=json_body.get('document')).get()
     todo = ToDo.objects.filter(id=json_body.get('todo')).get()
 
-    DocumentTodo.objects.create(document=document, todo=todo, author=request.user)
+    DocumentTodo.objects.create(
+        document=document, todo=todo, author=request.user)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -167,7 +172,8 @@ def pin_problem_2_document(request):
     document = Document.objects.filter(id=json_body.get('document')).get()
     problem = Problem.objects.filter(id=json_body.get('problem')).get()
 
-    DocumentProblem.objects.create(document=document, problem=problem, author=request.user)
+    DocumentProblem.objects.create(
+        document=document, problem=problem, author=request.user)
 
     resp['success'] = True
     return ajax_response(resp)
@@ -194,7 +200,7 @@ def search_patient(request):
     for profile in profiles:
         result.append({
             'uid': profile.user.id,
-            'full_name': unicode(profile)
+            'full_name': str(profile.user.first_name + ' ' + profile.user.last_name)
         })
 
     resp['results'] = result
@@ -245,13 +251,16 @@ def delete_document(request, document_id):
     user = request.user  # Current logged in user
     document_id = json_body.get('document')  # Document which will be deleted
     del_tag_id = json_body.get('del_tag_id')  # Tagging id
-    del_tag_type = json_body.get('del_tag_type')  # Tagging type will be a problem or a todo
-    del_in_sys = json_body.get('del_in_sys')  # Flag if document is remove from the system
+    # Tagging type will be a problem or a todo
+    del_tag_type = json_body.get('del_tag_type')
+    # Flag if document is remove from the system
+    del_in_sys = json_body.get('del_in_sys')
 
     document = Document.objects.filter(id=document_id).get()
     if del_tag_type == 'problem':
         problem = Problem.objects.filter(id=del_tag_id).get()
-        tag = DocumentProblem.objects.filter(document=document, problem=problem).get()
+        tag = DocumentProblem.objects.filter(
+            document=document, problem=problem).get()
     else:
         todo = ToDo.objects.filter(id=del_tag_id).get()
         tag = DocumentTodo.objects.filter(document=document, todo=todo).get()
@@ -260,7 +269,8 @@ def delete_document(request, document_id):
             user.profile == document.author or user.profile == tag.author):  # Other user not patient can delete the tag without hassle
         tag.delete()
 
-    if del_in_sys and ["physician", "admin"].__contains__(user.profile.role):  # delete document in system
+    # delete document in system
+    if del_in_sys and ["physician", "admin"].__contains__(user.profile.role):
         document.delete()
 
     resp['success'] = True
@@ -322,7 +332,8 @@ def unpin_document_todo(request):
     document_id = json_body.get('document')
     todo_id = json_body.get('todo')
 
-    DocumentTodo.objects.filter(document_id=document_id).filter(todo_id=todo_id).delete()
+    DocumentTodo.objects.filter(document_id=document_id).filter(
+        todo_id=todo_id).delete()
 
     resp['success'] = True
     return ajax_response(resp)
@@ -341,7 +352,8 @@ def unpin_document_problem(request):
     problem_id = json_body.get('problem')
     document_id = json_body.get('document')
 
-    DocumentProblem.objects.filter(document_id=document_id).filter(problem_id=problem_id).delete()
+    DocumentProblem.objects.filter(document_id=document_id).filter(
+        problem_id=problem_id).delete()
 
     resp['success'] = True
     return ajax_response(resp)
@@ -392,7 +404,8 @@ def update_name(request, document_id):
 
     document = Document.objects.get(id=document_id)
     if document:
-        document.document_name = "{0}.{1}".format(document_name, document.file_extension_lower())
+        document.document_name = "{0}.{1}".format(
+            document_name, document.file_extension_lower())
         document.save()
 
     resp['success'] = True

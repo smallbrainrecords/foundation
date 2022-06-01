@@ -90,7 +90,8 @@ def permissions_accessed(user, obj_user_id):
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=user)
         physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_controllers = PatientController.objects.filter(
+            physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
         patient_ids.append(user.id)
         if obj_user_id in patient_ids:
@@ -165,7 +166,8 @@ def register_user(request):
             return render(request, 'users/../../templates/login.html',
                           {"register_form": form, "register_errors": errors})
 
-        user_exists = User.objects.filter(Q(email=email) | Q(username=email)).exists()
+        user_exists = User.objects.filter(
+            Q(email=email) | Q(username=email)).exists()
         if user_exists:
             errors.append('User with same email or username already exists')
             return render(request, 'users/../../templates/login.html',
@@ -247,7 +249,8 @@ def manage_patient(request, user_id):
         problem.patient = user
         problem.save()
     else:
-        problem = Problem.objects.filter(patient=user, concept_id='102499006').first()
+        problem = Problem.objects.filter(
+            patient=user, concept_id='102499006').first()
 
     context['fit_and_well'] = problem.id
     context['patient'] = user
@@ -259,7 +262,8 @@ def manage_patient(request, user_id):
     user_profile_serialized['permissions'] = ROLE_PERMISSIONS[actor_profile.role]
     context['user'] = request.user
     context['active_user'] = json.dumps(user_profile_serialized)
-    context['patient_info'] = json.dumps(UserProfileSerializer(patient_profile).data)
+    context['patient_info'] = json.dumps(
+        UserProfileSerializer(patient_profile).data)
     context['bleeding_risk'] = json.dumps(Medication.objects.filter(current=True).filter(
         concept_id__in=MEDICATION_BLEEDING_RISK).filter(patient=user).exists())
 
@@ -287,7 +291,8 @@ def get_patient_info(request, patient_id):
     else:
         user = request.user
     try:
-        problem_order = ProblemOrder.objects.get(user=user, patient=patient_user)
+        problem_order = ProblemOrder.objects.get(
+            user=user, patient=patient_user)
     except ProblemOrder.DoesNotExist:
         problem_order = ProblemOrder(user=user, patient=patient_user)
         problem_order.save()
@@ -306,7 +311,8 @@ def get_patient_info(request, patient_id):
             problem_list.append(problem_dict)
 
         for problem in problem_list:
-            todo = ToDo.objects.filter(problem__id=problem['id'], accomplished=False).count()
+            todo = ToDo.objects.filter(
+                problem__id=problem['id'], accomplished=False).count()
             event = ProblemActivity.objects.filter(problem__id=problem['id'],
                                                    created_on__gte=datetime.datetime.now() - datetime.timedelta(
                                                        days=30)).count()
@@ -317,18 +323,23 @@ def get_patient_info(request, patient_id):
             else:
                 problem['multiply'] = todo * event
 
-        problem_list = sorted(problem_list, key=operator.itemgetter('multiply'), reverse=True)
+        problem_list = sorted(
+            problem_list, key=operator.itemgetter('multiply'), reverse=True)
     else:
         for problem in problems:
             if not problem.id in problem_order.order:
                 problem_dict = ProblemSerializer(problem).data
                 problem_list.append(problem_dict)
 
-    inactive_problems = Problem.objects.filter(patient=patient_user, is_active=False)
+    inactive_problems = Problem.objects.filter(
+        patient=patient_user, is_active=False)
     goals = Goal.objects.filter(patient=patient_user, accomplished=False)
-    completed_goals = Goal.objects.filter(patient=patient_user, accomplished=True)
-    encounters = Encounter.objects.filter(patient=patient_user).order_by('-starttime')
-    favorites = EncounterEvent.objects.filter(encounter__patient=patient_user, is_favorite=True).order_by('-datetime')
+    completed_goals = Goal.objects.filter(
+        patient=patient_user, accomplished=True)
+    encounters = Encounter.objects.filter(
+        patient=patient_user).order_by('-starttime')
+    favorites = EncounterEvent.objects.filter(
+        encounter__patient=patient_user, is_favorite=True).order_by('-datetime')
 
     # sharing system
     shared_patients = SharingPatient.objects.filter(sharing=patient_user).order_by('shared__first_name',
@@ -348,12 +359,15 @@ def get_patient_info(request, patient_id):
         sharing_patients_list.append(user_dict)
 
     # common problems
-    acutes = CommonProblem.objects.filter(author=request.user, problem_type="acute").order_by('problem_name')
-    chronics = CommonProblem.objects.filter(author=request.user, problem_type="chronic").order_by('problem_name')
+    acutes = CommonProblem.objects.filter(
+        author=request.user, problem_type="acute").order_by('problem_name')
+    chronics = CommonProblem.objects.filter(
+        author=request.user, problem_type="chronic").order_by('problem_name')
 
     resp['info'] = UserProfileSerializer(patient_profile).data
     resp['problems'] = problem_list
-    resp['inactive_problems'] = ProblemSerializer(inactive_problems, many=True).data
+    resp['inactive_problems'] = ProblemSerializer(
+        inactive_problems, many=True).data
 
     resp['goals'] = GoalSerializer(goals, many=True).data
     resp['completed_goals'] = GoalSerializer(completed_goals, many=True).data
@@ -377,7 +391,8 @@ def get_patient_info(request, patient_id):
 def get_timeline_info(request, patient_id):
     # Timeline Problems
     timeline_problems = Problem.objects.filter(patient_id=patient_id)
-    resp = {'timeline_problems': ProblemSerializer(timeline_problems, many=True).data}
+    resp = {'timeline_problems': ProblemSerializer(
+        timeline_problems, many=True).data}
     return ajax_response(resp)
 
 
@@ -390,7 +405,8 @@ def get_patient_todos_info(request, patient_id):
     accomplished_todos = [todo for todo in todos if todo.accomplished is True]
 
     resp['pending_todos'] = TodoSerializer(pending_todos, many=True).data
-    resp['accomplished_todos'] = TodoSerializer(accomplished_todos, many=True).data
+    resp['accomplished_todos'] = TodoSerializer(
+        accomplished_todos, many=True).data
     resp['problem_todos'] = TodoSerializer(todos, many=True).data
 
     return ajax_response(resp)
@@ -403,7 +419,8 @@ def get_patient_todos_info(request, patient_id):
 def update_patient_summary(request, patient_id):
     resp = {}
     new_summary = request.POST.get('summary')
-    patient_profile = UserProfile.objects.get(user_id=patient_id, role='patient')
+    patient_profile = UserProfile.objects.get(
+        user_id=patient_id, role='patient')
     patient_profile.summary = new_summary
     patient_profile.save()
     resp['success'] = True
@@ -416,7 +433,8 @@ def update_patient_summary(request, patient_id):
 def update_patient_note(request, patient_id):
     resp = {}
     new_note = request.POST.get('note')
-    patient_profile = UserProfile.objects.get(user_id=patient_id, role='patient')
+    patient_profile = UserProfile.objects.get(
+        user_id=patient_id, role='patient')
     patient_profile.note = new_note
     patient_profile.save()
     resp['success'] = True
@@ -553,7 +571,8 @@ def staff(request):
     physicians = PhysicianTeam.objects.filter(member=user)
 
     physician_ids = [x.physician.id for x in physicians]
-    patients = PatientController.objects.filter(physician__id__in=physician_ids)
+    patients = PatientController.objects.filter(
+        physician__id__in=physician_ids)
     patient_ids = [x.patient.id for x in patients]
     patients = User.objects.filter(id__in=patient_ids).filter(is_active=True)
 
@@ -580,7 +599,8 @@ def get_patient_members(request, user_id):
     controllers = PatientController.objects.filter(patient_id=user_id)
     physician_ids = [x.physician.id for x in controllers]
 
-    physician_teams = PhysicianTeam.objects.filter(physician__id__in=physician_ids)
+    physician_teams = PhysicianTeam.objects.filter(
+        physician__id__in=physician_ids)
     member_ids = [x.member.id for x in physician_teams]
     ids = physician_ids + member_ids
     users = UserProfile.objects.filter(user__id__in=ids)
@@ -600,29 +620,35 @@ def get_patients_list(request):
     user_profile = UserProfile.objects.get(user=request.user)
     sort_by = request.POST.get('sortBy', None)
     # Parsing javascript boolean value python boolean supported value
-    is_descending = True if (request.POST.get('isDescending', 'true') == 'true') else False
+    is_descending = True if (request.POST.get(
+        'isDescending', 'true') == 'true') else False
 
     if user_profile.role == 'admin':
-        patients = UserProfile.objects.filter(role='patient').filter(user__is_active=True)
+        patients = UserProfile.objects.filter(
+            role='patient').filter(user__is_active=True)
         patient_ids = [x.user_id for x in patients]
 
     elif user_profile.role == 'patient':
-        patients = UserProfile.objects.filter(role='patient').exclude(user=request.user).filter(user__is_active=True)
+        patients = UserProfile.objects.filter(role='patient').exclude(
+            user=request.user).filter(user__is_active=True)
         patient_ids = [x.user_id.id for x in patients]
 
     elif user_profile.role == 'physician':
-        patient_controllers = PatientController.objects.filter(physician=request.user)
+        patient_controllers = PatientController.objects.filter(
+            physician=request.user)
         patient_ids = [x.patient.id for x in patient_controllers]
         # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_controllers = PatientController.objects.filter(
+            physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
         # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
-    result = TopPatientSerializer(VWTopPatients.objects.filter(id__in=patient_ids), many=True).data
+    result = TopPatientSerializer(
+        VWTopPatients.objects.filter(id__in=patient_ids), many=True).data
 
     # patients_list = UserProfileSerializer(patients, many=True).data
     # six_weeks_earlier = datetime.datetime.now() - relativedelta(weeks=6)
@@ -647,7 +673,8 @@ def get_patients_list(request):
     # Will sort patient list by providing sort_by otherwise will sort by 'multiply' key
     resp = {
         'patients_list': sorted(result,
-                                key=operator.itemgetter(sort_by if sort_by is not None else 'multiply'),
+                                key=operator.itemgetter(
+                                    sort_by if sort_by is not None else 'multiply'),
                                 reverse=is_descending if sort_by is not None else True)
     }
     return ajax_response(resp)
@@ -661,18 +688,21 @@ def add_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {'success': False}
 
     to_sharing_patient_profile = User.objects.get(id=sharing_patient_id)
-    is_existed = SharingPatient.objects.filter(sharing_id=sharing_patient_id, shared_id=patient_id).exists()
+    is_existed = SharingPatient.objects.filter(
+        sharing_id=sharing_patient_id, shared_id=patient_id).exists()
     if is_existed:
         return ajax_response(resp)
 
-    sharing_patient = SharingPatient.objects.create(sharing_id=sharing_patient_id, shared_id=patient_id)
+    sharing_patient = SharingPatient.objects.create(
+        sharing_id=sharing_patient_id, shared_id=patient_id)
 
     problems = Problem.objects.filter(patient_id=patient_id)
     sharing_patient.problems.add(*problems)
     sharing_patient.save()
 
     resp['success'] = True
-    resp['sharing_patient'] = UserProfileSerializer(to_sharing_patient_profile.profile).data
+    resp['sharing_patient'] = UserProfileSerializer(
+        to_sharing_patient_profile.profile).data
     return ajax_response(resp)
 
 
@@ -683,7 +713,8 @@ def add_sharing_patient(request, patient_id, sharing_patient_id):
 def remove_sharing_patient(request, patient_id, sharing_patient_id):
     resp = {}
 
-    sharing_patient = SharingPatient.objects.get(sharing_id=sharing_patient_id, shared_id=patient_id)
+    sharing_patient = SharingPatient.objects.get(
+        sharing_id=sharing_patient_id, shared_id=patient_id)
     sharing_patient.delete()
 
     resp['success'] = True
@@ -695,7 +726,8 @@ def remove_sharing_patient(request, patient_id, sharing_patient_id):
 @api_view(["POST"])
 @timeit
 def change_sharing_my_story(request, patient_id, sharing_patient_id):
-    sharing_patient = SharingPatient.objects.get(sharing_id=sharing_patient_id, shared_id=patient_id)
+    sharing_patient = SharingPatient.objects.get(
+        sharing_id=sharing_patient_id, shared_id=patient_id)
     sharing_patient.is_my_story_shared = not sharing_patient.is_my_story_shared
     sharing_patient.save()
     resp = {}
@@ -723,7 +755,8 @@ def get_todos_physicians(request, user_id):
     resp = {}
     team_members = PhysicianTeam.objects.filter(member_id=user_id)
     physician_ids = [x.physician.id for x in team_members]
-    patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+    patient_controllers = PatientController.objects.filter(
+        physician__id__in=physician_ids)
     patient_ids = [x.patient.id for x in patient_controllers]
 
     todos = ToDo.objects.filter(accomplished=False, patient__id__in=patient_ids,
@@ -774,18 +807,21 @@ def search(request, user_id):
         patients = UserProfile.objects.filter(role='patient')
         patient_ids = [x.user.id for x in patients]
     elif actor_profile.role == 'physician':
-        patient_controllers = PatientController.objects.filter(physician=request.user)
+        patient_controllers = PatientController.objects.filter(
+            physician=request.user)
         patient_ids = [x.patient.id for x in patient_controllers]
     elif actor_profile.role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_controllers = PatientController.objects.filter(
+            physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
 
     context = {}
     query = request.POST.get("query", None)
     if query:
-        notes = ProblemNote.objects.filter(note__icontains=query, problem__patient=user)
+        notes = ProblemNote.objects.filter(
+            note__icontains=query, problem__patient=user)
         context['notes'] = notes
 
         goals = Goal.objects.filter(goal__icontains=query, patient=user)
@@ -794,16 +830,19 @@ def search(request, user_id):
         todos = ToDo.objects.filter(todo__icontains=query, patient=user)
         context['todos'] = todos
 
-        summaries = EncounterEvent.objects.filter(summary__icontains=query, encounter__patient=user)
+        summaries = EncounterEvent.objects.filter(
+            summary__icontains=query, encounter__patient=user)
         context['summaries'] = summaries
 
         tabs = MyStoryTab.objects.filter(name__icontains=query, patient=user)
         context['tabs'] = tabs
 
-        text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient=user)
+        text_components = MyStoryTextComponent.objects.filter(
+            Q(name__icontains=query), patient=user)
         context['text_components'] = text_components
 
-        documents = Document.objects.filter(Q(document__icontains=query), patient=user)
+        documents = Document.objects.filter(
+            Q(document__icontains=query), patient=user)
         context['documents'] = documents
         if request.user.profile.role is not 'patient':
             patients = UserProfile.objects.filter(role='patient').filter(
@@ -832,33 +871,41 @@ def staff_search(request):
         patients = UserProfile.objects.filter(role='patient')
         patient_ids = [x.user.id for x in patients]
     elif user_profile.role == 'physician':
-        patient_controllers = PatientController.objects.filter(physician=request.user)
+        patient_controllers = PatientController.objects.filter(
+            physician=request.user)
         patient_ids = [x.patient.id for x in patient_controllers]
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        patient_controllers = PatientController.objects.filter(
+            physician__id__in=physician_ids)
         patient_ids = [x.patient.id for x in patient_controllers]
 
     context = {}
     query = request.POST.get("query", None)
     if query:
-        notes = ProblemNote.objects.filter(note__icontains=query, problem__patient__id__in=patient_ids)
+        notes = ProblemNote.objects.filter(
+            note__icontains=query, problem__patient__id__in=patient_ids)
         context['notes'] = notes
 
-        goals = Goal.objects.filter(goal__icontains=query, patient__id__in=patient_ids)
+        goals = Goal.objects.filter(
+            goal__icontains=query, patient__id__in=patient_ids)
         context['goals'] = goals
 
-        todos = ToDo.objects.filter(todo__icontains=query, patient__id__in=patient_ids)
+        todos = ToDo.objects.filter(
+            todo__icontains=query, patient__id__in=patient_ids)
         context['todos'] = todos
 
-        summaries = EncounterEvent.objects.filter(summary__icontains=query, encounter__patient__id__in=patient_ids)
+        summaries = EncounterEvent.objects.filter(
+            summary__icontains=query, encounter__patient__id__in=patient_ids)
         context['summaries'] = summaries
 
-        tabs = MyStoryTab.objects.filter(name__icontains=query, patient__id__in=patient_ids)
+        tabs = MyStoryTab.objects.filter(
+            name__icontains=query, patient__id__in=patient_ids)
         context['tabs'] = tabs
 
-        text_components = MyStoryTextComponent.objects.filter(Q(name__icontains=query), patient__id__in=patient_ids)
+        text_components = MyStoryTextComponent.objects.filter(
+            Q(name__icontains=query), patient__id__in=patient_ids)
         context['text_components'] = text_components
 
         documents = Document.objects.filter(Q(document__icontains=query))
@@ -926,7 +973,8 @@ def update_general_setting(request):
     value = json_body.get('setting_value')
 
     if request.user.profile.role in ['admin', 'physician']:
-        GeneralSetting.objects.filter(setting_key=key).update(setting_value=value)
+        GeneralSetting.objects.filter(
+            setting_key=key).update(setting_value=value)
         resp['success'] = True
 
     return ajax_response(resp)
@@ -948,7 +996,8 @@ def get_user_todo(request, patient_id):
     per_page = 5  # Default
 
     # Filter todo type and pagination
-    todo = ToDo.objects.filter(patient_id=patient_id, accomplished=is_accomplished).order_by("order")
+    todo = ToDo.objects.filter(
+        patient_id=patient_id, accomplished=is_accomplished).order_by("order")
     if not load_all:
         todo = todo[per_page * (page - 1):per_page * page]
 
@@ -969,7 +1018,8 @@ def get_most_recent_encounter(request, patient_id):
     resp = {'success': False}
 
     # Retrieve most recent encounter information
-    encounter = Encounter.objects.filter(patient_id=patient_id).order_by("-starttime").first()
+    encounter = Encounter.objects.filter(
+        patient_id=patient_id).order_by("-starttime").first()
 
     most_recent_encounter_summaries = []
     most_recent_encounter_documents_holder = []
@@ -989,17 +1039,19 @@ def get_most_recent_encounter(request, patient_id):
             component__observation__subject=encounter.patient)
         for document in documents:
             most_recent_encounter_documents_holder.append({
-                'name': document.component.__str__(),
+                'name': document.component.name,
                 'value': '%g' % float(document.value_quantity),
                 'effective': document.effective_datetime.isoformat()
             })
 
         # Encounter's related problems
-        related_problem_records = EncounterProblemRecord.objects.filter(encounter=encounter)
+        related_problem_records = EncounterProblemRecord.objects.filter(
+            encounter=encounter)
         related_problem_ids = [x.problem.id for x in related_problem_records]
 
         related_problems = Problem.objects.filter(id__in=related_problem_ids)
-        related_problem_holder = ProblemSerializer(related_problems, many=True).data
+        related_problem_holder = ProblemSerializer(
+            related_problems, many=True).data
 
     #  Load all pending todo
     todo = ToDo.objects.filter(patient_id=patient_id, accomplished=False)
@@ -1069,11 +1121,13 @@ def get_user_vitals(request, patient_id):
             diastolic.append(0)
     diastolic.reverse()
 
-    temperatureQuerySet = get_vitals_table_component(patient_id, 'body temperature')
+    temperatureQuerySet = get_vitals_table_component(
+        patient_id, 'body temperature')
     temperature = []
     for idx in range(5):
         try:
-            temperature.append(temperatureQuerySet[idx].value_quantity.__str__())
+            temperature.append(
+                temperatureQuerySet[idx].value_quantity.__str__())
         except IndexError:
             temperature.append(0)
     temperature.reverse()
@@ -1087,11 +1141,13 @@ def get_user_vitals(request, patient_id):
             pulse.append(0)
     pulse.reverse()
 
-    respiratory_rateQuerySet = get_vitals_table_component(patient_id, 'respiratory rate')
+    respiratory_rateQuerySet = get_vitals_table_component(
+        patient_id, 'respiratory rate')
     respiratory_rate = []
     for idx in range(5):
         try:
-            respiratory_rate.append(respiratory_rateQuerySet[idx].value_quantity.__str__())
+            respiratory_rate.append(
+                respiratory_rateQuerySet[idx].value_quantity.__str__())
         except IndexError:
             respiratory_rate.append(0)
     respiratory_rate.reverse()
@@ -1154,7 +1210,8 @@ def get_user_narratives(request, patient_id):
     :return:
     """
     resp = {'success': False}
-    result_set = Narrative.objects.filter(patient_id=patient_id).order_by('-created_at')
+    result_set = Narrative.objects.filter(
+        patient_id=patient_id).order_by('-created_at')
 
     resp['success'] = True
     resp['data'] = {
@@ -1200,7 +1257,8 @@ def get_all_narratives(request, patient_id):
     :return:
     """
     resp = {'success': False}
-    result_set = Narrative.objects.filter(patient_id=patient_id).order_by('-created_at')
+    result_set = Narrative.objects.filter(
+        patient_id=patient_id).order_by('-created_at')
 
     resp['success'] = True
     resp['data'] = NarrativeSerializer(result_set, many=True).data

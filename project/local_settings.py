@@ -36,7 +36,14 @@ DATABASES = {
         'TEST': {
             'NAME': os.getenv('DATABASE_TEST_NAME'),
         },
-
+    },
+    'snomedict': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DATABASE_NAME_SNOMEDCT'),
+        'USER': os.getenv('DATABASE_USER'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+        'HOST': os.getenv('DATABASE_HOST'),
+        'PORT': os.getenv('DATABASE_PORT')
     }
 }
 
