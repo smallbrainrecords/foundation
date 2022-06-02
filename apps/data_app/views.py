@@ -177,7 +177,6 @@ def add_new_data_type(request, patient_id):
         observation_component.observation = observation
         observation_component.component_code = loinc_code
         observation_component.name = name
-        observation_component.changed_first_time = 0
         observation_component.save()
 
         resp['observation'] = ObservationSerializer(observation).data

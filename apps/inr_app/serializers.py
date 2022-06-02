@@ -126,7 +126,7 @@ class INRPatientSerializer(serializers.ModelSerializer):
             return obj.portrait_image.url
 
     def get_full_name(self, obj):
-        return unicode(obj)
+        return str(obj)
 
     def get_problem_id(self, obj):
         # Find patient's observation (INR data type)
