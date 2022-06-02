@@ -219,5 +219,3 @@ LOGGING = {
         },
     }
 }
-
-SNOMEDCT = {}

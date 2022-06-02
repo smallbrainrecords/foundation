@@ -34,7 +34,8 @@ from .serializers import MedicationTextNoteSerializer, MedicationSerializer, Med
 def list_terms(request):
     # We list snomed given a query
     query = request.GET['query']
-    result = VWMedications.objects.using('snomedict').filter(term__contains="{0}".format(query)).all()
+    result = VWMedications.objects.using('snomedict').filter(
+        term__contains="{0}".format(query)).all()
     results_holder = VWMedicationsSerializers(result, many=True).data
     return ajax_response(results_holder)
 
@@ -69,7 +70,8 @@ def get_medications(request, patient_id):
     current = request.GET.get("status")
 
     if permissions_accessed(request.user, int(patient_id)):
-        medications = Medication.objects.filter(patient__id=patient_id).order_by('name')
+        medications = Medication.objects.filter(
+            patient__id=patient_id).order_by('name')
         if current == "true":
             medications.filter(current=True)
         if current == "false":
@@ -95,14 +97,16 @@ def get_medication(request, patient_id, medication_id):
                     'date': item.revision.date_created.isoformat(),
                     'comment': item.revision.comment
                 })
-            notes = MedicationTextNote.objects.filter(medication_id=medication_id).order_by('-datetime')
+            notes = MedicationTextNote.objects.filter(
+                medication_id=medication_id).order_by('-datetime')
         except Medication.DoesNotExist:
             pass
 
         resp['success'] = True
         resp['info'] = MedicationSerializer(medication).data
         resp['history'] = history_list
-        resp['noteHistory'] = MedicationTextNoteSerializer(notes, many=True).data
+        resp['noteHistory'] = MedicationTextNoteSerializer(
+            notes, many=True).data
 
     return ajax_response(resp)
 
@@ -147,7 +151,8 @@ def add_medication_note(request, patient_id, medication_id):
         medication = Medication.objects.get(id=medication_id)
         latest_note = medication.medication_notes.last()
 
-        note = MedicationTextNote(author=request.user, note=note, medication=medication)
+        note = MedicationTextNote(
+            author=request.user, note=note, medication=medication)
         note.save()
 
         op_medication_event(medication, request.user, patient_user,
@@ -174,7 +179,8 @@ def edit_note(request, note_id):
         resp['note'] = MedicationTextNoteSerializer(note).data
         resp['success'] = True
     print("MEDICATION_NOTE_EDITED")
-    op_track_medication_during_encounter(note.medication.patient_id, note.medication.id)
+    op_track_medication_during_encounter(
+        note.medication.patient_id, note.medication.id)
     return ajax_response(resp)
 
 
@@ -188,7 +194,8 @@ def delete_note(request, note_id):
         resp['success'] = True
 
     print("MEDICATION_NOTE_DELETED")
-    op_track_medication_during_encounter(note.medication.patient_id, note.medication.id)
+    op_track_medication_during_encounter(
+        note.medication.patient_id, note.medication.id)
     return ajax_response(resp)
 
 
@@ -196,7 +203,8 @@ def delete_note(request, note_id):
 @timeit
 def get_pins(request, medication_id):
     pins = MedicationPinToProblem.objects.filter(medication_id=medication_id)
-    resp = {'success': True, 'pins': MedicationPinToProblemSerializer(pins, many=True).data}
+    resp = {'success': True, 'pins': MedicationPinToProblemSerializer(
+        pins, many=True).data}
     return ajax_response(resp)
 
 
@@ -210,10 +218,12 @@ def pin_to_problem(request, patient_id):
         problem_id = request.POST.get("problem_id", None)
 
         try:
-            pin = MedicationPinToProblem.objects.get(medication_id=medication_id, problem_id=problem_id)
+            pin = MedicationPinToProblem.objects.get(
+                medication_id=medication_id, problem_id=problem_id)
             pin.delete()
         except MedicationPinToProblem.DoesNotExist:
-            pin = MedicationPinToProblem(author=request.user, medication_id=medication_id, problem_id=problem_id)
+            pin = MedicationPinToProblem(
+                author=request.user, medication_id=medication_id, problem_id=problem_id)
             pin.save()
 
             pinned_instance_set, count = count_pinned_have_same_medication_concept_id_and_problem_concept_id(
@@ -278,7 +288,8 @@ def change_dosage(request, patient_id, medication_id):
     medication.search_str = search_string
     medication.concept_id = concept_id
 
-    comment = "{0} was changed to {1}".format(old_medication_name, medication.name)
+    comment = "{0} was changed to {1}".format(
+        old_medication_name, medication.name)
     with reversion.create_revision():
         medication.save()
         reversion.set_user(request.user)
@@ -296,7 +307,8 @@ def change_dosage(request, patient_id, medication_id):
     op_add_todo_event(request.user, patient_user,
                       "Added todo <a href='#/todo/{0}'><b>{1}</b></a>".format(todo.id, todo.todo))
 
-    TodoActivity(todo=todo, author=request.user, activity="Added this todo.").save()
+    TodoActivity(todo=todo, author=request.user,
+                 activity="Added this todo.").save()
 
     # Return data
     resp['medication'] = MedicationSerializer(medication).data
@@ -320,9 +332,11 @@ def get_medication_encounter(request, medication_id):
     :return:
     """
     resp = {'success': False}
-    medication_encounter = EncounterMedication.objects.filter(medication_id=medication_id)
+    medication_encounter = EncounterMedication.objects.filter(
+        medication_id=medication_id)
 
     resp['success'] = True
-    resp['encounters'] = [encounter.encounter_id for encounter in medication_encounter]
+    resp['encounters'] = [
+        encounter.encounter_id for encounter in medication_encounter]
     return ajax_response(resp)
     pass

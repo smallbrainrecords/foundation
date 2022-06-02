@@ -214,7 +214,7 @@ class ListField(models.TextField):
         if value is None:
             return value
 
-        return unicode(value)
+        return str(value)
 
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
@@ -327,7 +327,7 @@ class EncounterEvent(models.Model):
     timestamp = models.DateTimeField(null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(self.summary)
+        return str(self.summary)
 
     def video_seconds(self):
         if self.timestamp:
@@ -366,7 +366,7 @@ class ProblemLabel(models.Model):
         User, null=True, blank=True, related_name="problem_label_patient")
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return '%s' % (str(self.name))
 
 
 class Problem(MPTTModel):
@@ -410,7 +410,7 @@ class ProblemOrder(models.Model):
     order = ListField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.user.username))
+        return '%s' % (str(self.user.username))
 
 
 class ProblemSegment(models.Model):
@@ -465,7 +465,7 @@ class LabeledProblemList(models.Model):
     note = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return '%s' % (str(self.name))
 
 
 class Goal(models.Model):
@@ -478,7 +478,7 @@ class Goal(models.Model):
     start_date = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return '%s %s' % (unicode(self.patient), unicode(self.problem))
+        return '%s %s' % (str(self.patient), str(self.problem))
 
 
 class Label(models.Model):
@@ -489,7 +489,7 @@ class Label(models.Model):
     is_all = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return '%s' % (str(self.name))
 
 
 class ToDo(models.Model):
@@ -535,7 +535,7 @@ class ToDo(models.Model):
     objects = TodoManager()
 
     def __unicode__(self):
-        return '%s' % (unicode(self.todo))
+        return '%s' % (str(self.todo))
 
 
 class TaggedToDoOrder(models.Model):
@@ -546,7 +546,7 @@ class TaggedToDoOrder(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.todo.todo))
+        return '%s' % (str(self.todo.todo))
 
 
 class LabeledToDoList(models.Model):
@@ -559,7 +559,7 @@ class LabeledToDoList(models.Model):
     expanded = ListField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return '%s' % (str(self.name))
 
 
 class Guideline(models.Model):
@@ -592,7 +592,7 @@ class PatientImage(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.patient))
+        return '%s' % (str(self.patient))
 
 
 class Sharing(models.Model):
@@ -601,7 +601,7 @@ class Sharing(models.Model):
     all = models.BooleanField(default=True)
 
     def __unicode__(self):
-        return '%s %s' % (unicode(self.patient), unicode(self.other_patient))
+        return '%s %s' % (str(self.patient), str(self.other_patient))
 
 
 class Viewer(models.Model):
@@ -624,7 +624,7 @@ class ProblemRelationship(models.Model):
     target = models.ForeignKey(Problem, related_name="target")
 
     def __unicode__(self):
-        return "%s %s" % (unicode(self.source), unicode(self.target))
+        return "%s %s" % (str(self.source), str(self.target))
 
 
 class EncounterProblemRecord(models.Model):
@@ -634,7 +634,7 @@ class EncounterProblemRecord(models.Model):
         Problem, related_name='problem_encounter_records')
 
     def __unicode__(self):
-        return "%s %s" % (unicode(self.encounter), unicode(self.problem))
+        return "%s %s" % (str(self.encounter), str(self.problem))
 
 
 class ToDoComment(models.Model):
@@ -644,7 +644,7 @@ class ToDoComment(models.Model):
     datetime = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.todo.todo))
+        return '%s' % (str(self.todo.todo))
 
 
 class ToDoAttachment(models.Model):
@@ -654,7 +654,7 @@ class ToDoAttachment(models.Model):
     user = models.ForeignKey(User)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.attachment.path))
+        return '%s' % (str(self.attachment.path))
 
     def filename(self):
         return os.path.basename(self.attachment.name)
@@ -683,7 +683,7 @@ class EncounterTodoRecord(models.Model):
         ToDo, related_name='todo_encounter_records')
 
     def __unicode__(self):
-        return "%s %s" % (unicode(self.encounter), unicode(self.todo))
+        return "%s %s" % (str(self.encounter), str(self.todo))
 
 
 class TodoActivity(models.Model):
@@ -730,7 +730,7 @@ class Observation(models.Model):
         ordering = ['-created_on']
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return '%s' % (str(self.name))
 
 
 class ObservationComponent(models.Model):
@@ -762,7 +762,7 @@ class ObservationComponent(models.Model):
         ordering = ['effective_datetime', 'created_on']
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return '%s' % (str(self.name))
 
 
 class ObservationUnit(models.Model):
@@ -800,7 +800,7 @@ class ObservationOrder(models.Model):
     order = ListField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.user.username))
+        return '%s' % (str(self.user.username))
 
 
 class ObservationPinToProblem(models.Model):
@@ -1003,7 +1003,7 @@ class ColonCancerStudyImage(models.Model):
     datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.patient))
+        return '%s' % (str(self.patient))
 
     def filename(self):
         return os.path.basename(self.image.name)
@@ -1270,7 +1270,7 @@ class VWProblems(models.Model):
 
     class Meta:
         managed = False
-        db_table = "vw_problems"
+        db_table = "vw_problems_full"
 
 
 class VWTopPatients(models.Model):
