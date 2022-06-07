@@ -69,7 +69,11 @@
             <ul class='list-group'>
                 {% for todo in todos %}
                 <li>
-                    {{ todo.todo }}
+                    <span>
+                        <a href='/u/patient/manage/{{ todo.id }}'>
+                            {{ todo.todo }} 
+                        </a>
+                    </span>
                     <p>{{ todo.created_on | date:"d M Y" }} at {{ todo.created_on | date:"H:i" }}</p>
                 </li>
                 {% endfor %}
