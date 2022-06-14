@@ -2,16 +2,16 @@ name: Push docker image | Production
   
 on:
   push:
-    branches: [main]
+    branches: [prod]
 
 jobs:
   login:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout to main
+      - name: Checkout to prod
         uses: actions/checkout@v3
         with:
-          ref: main
+          ref: prod
 
       - name: Set time
         run: |
