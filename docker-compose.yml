@@ -11,6 +11,7 @@ services:
     environment:
       DATABASE_NAME: smallbrains_dev
       DATABASE_TEST_NAME: smallbrains_test
+      DATABASE_NAME_SNOMEDCT: snomedct
       DATABASE_USER: root
       DATABASE_PASSWORD: root
       DATABASE_HOST: db
@@ -25,16 +26,15 @@ services:
     ports:
       - 3306:3306
     environment:
-      MYSQL_DATABASE: smallbrains_dev
       MYSQL_ROOT_PASSWORD: root
     networks:
       - smallbrain_net
-    volumes:
-      - smallbrains_data:/var/lib/mysql
+    entrypoint: sh -c " echo 'CREATE DATABASE IF NOT EXISTS snomedct; CREATE DATABASE IF NOT EXISTS smallbrains_dev;' > /docker-entrypoint-initdb.d/init.sql; /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci "
 
 volumes:
   smallbrains_data:
   exclude:
+
 
 networks:
   smallbrain_net:
