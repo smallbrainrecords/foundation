@@ -21,8 +21,8 @@
 
     angular.module('StaffApp')
         .controller('HomeCtrl', function ($scope, $routeParams, $interval,
-                                          ngDialog, toaster, prompt,
-                                          staffService, physicianService, todoService, sharedService) {
+            ngDialog, toaster, prompt,
+            staffService, physicianService, todoService, sharedService) {
 
             // Properties
             // $scope.user_id = $('#user_id').val();
@@ -85,12 +85,9 @@
                         //     $scope.users = data;
                         // });
 
-                        var form = {'physician_id': $scope.active_user.user.id};
-                        physicianService.getPhysicianData(form).then(function (data) {
-
-                            // $scope.patients = data['patients'];
-                            $scope.team = data['team'];
-
+                        var form = { 'physician_id': $scope.active_user.user.id };
+                        physicianService.getPhysicianTeam(form).then(function (data) {
+                            $scope.team = data;
                         });
                     }
 

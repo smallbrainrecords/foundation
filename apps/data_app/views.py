@@ -130,11 +130,10 @@ def get_datas(request, patient_id):
                     observation = observations.get(id=key)
                     observation_dict = ObservationSerializer(observation).data
                     observation_list.append(observation_dict)
-
-        for observation in observations:
-            if not observation.id in observation_order.order:
-                observation_dict = ObservationSerializer(observation).data
-                observation_list.append(observation_dict)
+            for observation in observations:
+                if not observation.id in observation_order.order:
+                    observation_dict = ObservationSerializer(observation).data
+                    observation_list.append(observation_dict)
 
         resp['success'] = True
         resp['info'] = observation_list

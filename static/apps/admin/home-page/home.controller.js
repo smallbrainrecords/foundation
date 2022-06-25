@@ -18,36 +18,83 @@
     'use strict';
     angular.module('AdminApp')
         .controller('HomeCtrl', function ($scope, $routeParams, ngDialog, adminService, sharedService) {
-            $scope.refresh_pending_users = refresh_pending_users;
+            $scope.refresh_pending_users = refreshPendingUsers;
             $scope.updatePendingUser = updatePendingUser;
+            $scope.refreshUserList = refreshUserList;
+            $scope.nextPage = nextPage;
+            $scope.prevPage = prevPage;
+            $scope.nextPageDisabled = nextPageDisabled;
+            $scope.prevPageDisabled = prevPageDisabled;
             init();
 
             function init() {
                 $scope.users = [];
+                $scope.loadingUsers = false;
+                $scope.pageNumber = 1;
+                $scope.pageSize = 10;
+                $scope.totalPages = 1;
+                $scope.searchText = "";
                 adminService.fetchActiveUser().then(function (data) {
                     $scope.active_user = data['user_profile'];
-                    let role_form = {
-                        'actor_role': $scope.active_user.role,
-                        'actor_id': $scope.active_user.user.id
-                    };
-                    adminService.getUsersList(role_form).then(function (data) {
-                        $scope.users = data;
-                    });
-                    adminService.getPendingRegistrationUsersList(role_form).then(function (data) {
-                        $scope.pending_users = data;
-                    });
+                    refreshUserList();
+                    refreshPendingUsers();
                     if ($scope.active_user.role === 'physician') {
-                        var form = {'physician_id': $scope.active_user.user.id};
-                        adminService.getPhysicianData(form).then(function (data) {
-                            $scope.patients = data['patients'];
-                            $scope.team = data['team'];
+                        var form = { 'physician_id': $scope.active_user.user.id };
+                        adminService.getPhysicianTeam(form).then(function (data) {
+                            $scope.team = data;
+                        });
+                        adminService.getPhysicianPatients(form).then(function (data) {
+                            $scope.patients = data;
                         });
                     }
                 });
             }
 
-            function refresh_pending_users() {
-                adminService.getPendingRegistrationUsersList().then(function (data) {
+            function refreshUserList() {
+                let role_form = {
+                    'actor_role': $scope.active_user.role,
+                    'actor_id': $scope.active_user.user.id,
+                    'page_number': $scope.pageNumber,
+                    'page_size': $scope.pageSize,
+                    'search_text': $scope.searchText
+                };
+                $scope.users = [];
+                $scope.loadingUsers = true;
+                adminService.getUsersList(role_form).then(function (data) {
+                    $scope.pageNumber = data.page_number * 1;
+                    $scope.pageSize = data.page_size * 1;
+                    $scope.totalPages = data.total_pages * 1;
+                    $scope.users = data.users;
+                    $scope.loadingUsers = false;
+                });
+            }
+
+            function nextPageDisabled() {
+                return !($scope.pageNumber < $scope.totalPages && !$scope.loadingUsers);
+            }
+
+            function nextPage() {
+                $scope.pageNumber = $scope.pageNumber < $scope.totalPages ? $scope.pageNumber + 1 : $scope.totalPages;
+                refreshUserList();
+            }
+
+            function prevPageDisabled() {
+                return !($scope.pageNumber > 1 && !$scope.loadingUsers);
+            }
+
+            function prevPage() {
+                $scope.pageNumber = $scope.pageNumber > 1 ? $scope.pageNumber - 1 : $scope.totalPages;
+                refreshUserList();
+            }
+
+            function refreshPendingUsers() {
+                let role_form = {
+                    'actor_role': $scope.active_user.role,
+                    'actor_id': $scope.active_user.user.id,
+                    'page_number': $scope.pageNumber,
+                    'page_size': $scope.pageSize
+                };
+                adminService.getPendingRegistrationUsersList(role_form).then(function (data) {
                     $scope.pending_users = data;
                 });
             }

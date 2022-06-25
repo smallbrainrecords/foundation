@@ -23,7 +23,9 @@
             return {
                 csrf_token: csrf_token,
                 getUsersList: getUsersList,
-                getPhysicianData: getPhysicianData
+                getPhysicianData: getPhysicianData,
+                getPhysicianTeam: getPhysicianTeam,
+                getPhysicianPatients: getPhysicianPatients
             };
 
             function csrf_token() {
@@ -39,6 +41,18 @@
             function getPhysicianData(params) {
 
                 let url = `/project/admin/physician/data/`;
+                return httpService.get(params, url);
+            }
+
+            function getPhysicianTeam(params) {
+
+                let url = `/project/admin/physician/team/`;
+                return httpService.get(params, url);
+            }
+
+            function getPhysicianPatients(params) {
+
+                let url = `/project/admin/physician/patients/`;
                 return httpService.get(params, url);
             }
         });

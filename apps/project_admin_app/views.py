@@ -20,6 +20,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import render
+from django.core.paginator import Paginator
+from requests import RequestException
 
 from common.views import *
 from emr.models import PatientController, PhysicianTeam
@@ -54,6 +56,16 @@ def list_registered_users(request):
     user_profiles = None
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
+    search_text = ''
+    if request.GET.get('search_text'):
+        search_text = request.GET.get('search_text')
+    page_number = 1
+    if request.GET.get('page_number'):
+        page_number = request.GET.get('page_number')
+    page_size = 10
+    if request.GET.get('page_size'):
+        page_size = request.GET.get('page_size')
+    total_pages = 1
 
     if actor_profile.role == 'physician':
         controlled_patients = PatientController.objects.filter(physician=actor)
@@ -61,25 +73,39 @@ def list_registered_users(request):
         user_profiles = UserProfile.objects.filter(user__id__in=patients_ids)
 
     if actor_profile.role == 'admin':
-        user_profiles = UserProfile.objects.all()
+        pages = None
+        if search_text == '':
+            pages = Paginator(UserProfile.objects.all(), page_size)
+        else:
+            pages = Paginator(UserProfile.objects.filter(
+                Q(user__first_name__icontains=search_text) |
+                Q(user__last_name__icontains=search_text) |
+                Q(user__email__icontains=search_text)
+            ), page_size)
+        total_pages = pages.num_pages
+        user_profiles = pages.page(page_number)
 
     user_profiles_holder = UserProfileSerializer(user_profiles, many=True).data
 
-    return ajax_response(user_profiles_holder)
+    result = {
+        'page_number': page_number,
+        'page_size': page_size,
+        'total_pages': total_pages,
+        'users': user_profiles_holder,
+    }
+
+    return ajax_response(result)
 
 
 @login_required
 @timeit
 def list_unregistered_users(request):
     users = []
-    for user in User.objects.all():
-        try:
-            UserProfile.objects.get(user=user)
-        except UserProfile.DoesNotExist:
-            users.append({
-                'id': user.id,
-                'username': user.username,
-                'full_name': user.get_full_name()})
+    for user in User.objects.filter(profile__isnull=True):
+        users.append({
+            'id': user.id,
+            'username': user.username,
+            'full_name': user.get_full_name()})
     return ajax_response(users)
 
 
@@ -479,6 +505,57 @@ def fetch_physician_data(request):
     resp['unassigned_patients'] = unassigned_patients_dict
 
     return ajax_response(resp)
+
+
+@login_required
+@timeit
+def get_physician_team(request):
+
+    physician_id = request.GET.get('physician_id')
+    physician = User.objects.get(id=physician_id)
+
+    team_members = PhysicianTeam.objects.filter(physician=physician)
+    user_ids = [int(x.member.id) for x in team_members]
+
+    user_profiles = UserProfile.objects.filter(user__id__in=user_ids)
+
+    nurses = []
+    secretaries = []
+    mid_level_staffs = []
+
+    for user_profile in user_profiles:
+        profile_dict = UserProfileSerializer(user_profile).data
+        if user_profile.role == 'nurse':
+            nurses.append(profile_dict)
+        if user_profile.role == 'mid-level':
+            mid_level_staffs.append(profile_dict)
+        if user_profile.role == 'secretary':
+            secretaries.append(profile_dict)
+
+    team = {}
+    team['nurses'] = nurses
+    team['secretaries'] = secretaries
+    team['mid_level_staffs'] = mid_level_staffs
+
+    return ajax_response(team)
+
+
+@login_required
+@timeit
+def get_physician_patients(request):
+
+    physician_id = request.GET.get('physician_id')
+    physician = User.objects.get(id=physician_id)
+
+    patients = PatientController.objects.filter(physician=physician)
+    patient_ids = [int(x.patient.id) for x in patients]
+
+    patient_profiles = UserProfile.objects.filter(
+        user__id__in=patient_ids).filter(user__is_active=True)
+    patient_profiles_dict = UserProfileSerializer(
+        patient_profiles, many=True).data
+
+    return ajax_response(patient_profiles_dict)
 
 
 @login_required

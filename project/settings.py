@@ -186,6 +186,10 @@ LOGGING = {
         }
     },
     'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
         'file': {
             'class': 'logging.FileHandler',
             'filename': 'general.log',
@@ -205,17 +209,25 @@ LOGGING = {
         'loggers': {
             '': {
                 'level': 'DEBUG',
-                'handlers': ['file'],
+                'handlers': ['console'],
             },
         },
         'django.security.DisallowedHost': {
-            'handlers': ['file', 'null'],
+            'handlers': ['console', 'null'],
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['file', 'mail_admins'],
             'level': 'ERROR',
+            'handlers': ['console', 'mail_admins'],
             'propagate': True,
+        },
+        'django.db': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+        'django.db.backends.mysql': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
         },
     }
 }
