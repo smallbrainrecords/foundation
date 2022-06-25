@@ -146,5 +146,5 @@ class TopPatientSerializer(serializers.ModelSerializer):
     def get_multiply(self, obj):
         return ((float(obj.todo_count) if obj.todo_count != 0 else float(1)) * 2 / 3) * (
             float(obj.problem_count) if obj.problem_count != 0 else float(1)) * (
-                   float(obj.encounter_count) if obj.encounter_count != 0 else float(1)) * (
-                       (float(obj.document_count) if obj.document_count != 0 else float(1)) / 2)
+            float(obj.encounter_count) if obj.encounter_count != 0 else float(1)) * (
+            (float(obj.document_count) if obj.document_count != 0 else float(1)) / 2)

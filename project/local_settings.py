@@ -34,7 +34,7 @@ DATABASES = {
         'PORT': os.getenv('DATABASE_PORT'),
         'OPTIONS': {},
         'TEST': {
-            'NAME': os.getenv('DATABASE_TEST_NAME'),
+            'NAME': os.getenv('DATABASE_NAME') + "_test",
         },
     },
     'snomedict': {
@@ -43,9 +43,49 @@ DATABASES = {
         'USER': os.getenv('DATABASE_USER'),
         'PASSWORD': os.getenv('DATABASE_PASSWORD'),
         'HOST': os.getenv('DATABASE_HOST'),
-        'PORT': os.getenv('DATABASE_PORT')
+        'PORT': os.getenv('DATABASE_PORT'),
+        'TEST': {
+            'NAME': os.getenv('DATABASE_NAME_SNOMEDCT') + "_test",
+        },
     }
 }
+
+if os.getenv('DATABASE_USE_SSL').lower() == "true":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('DATABASE_NAME'),
+            'USER': os.getenv('DATABASE_USER'),
+            'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+            'HOST': os.getenv('DATABASE_HOST'),
+            'PORT': os.getenv('DATABASE_PORT'),
+            'OPTIONS': {
+                'ssl': {
+                    'ca': os.getenv('DATABASE_SSL_CA'),
+                    'cert': os.getenv('DATABASE_SSL_CERT'),
+                    'key': os.getenv('DATABASE_SSL_KEY'),
+                }
+            },
+            'TEST': {
+                'NAME': os.getenv('DATABASE_TEST_NAME'),
+            },
+        },
+        'snomedict': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('DATABASE_NAME_SNOMEDCT'),
+            'USER': os.getenv('DATABASE_USER'),
+            'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+            'HOST': os.getenv('DATABASE_HOST'),
+            'PORT': os.getenv('DATABASE_PORT'),
+            'OPTIONS': {
+                'ssl': {
+                    'ca': os.getenv('DATABASE_SSL_CA'),
+                    'cert': os.getenv('DATABASE_SSL_CERT'),
+                    'key': os.getenv('DATABASE_SSL_KEY'),
+                }
+            },
+        }
+    }
 
 DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
