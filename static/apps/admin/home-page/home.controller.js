@@ -40,9 +40,11 @@
                     refreshPendingUsers();
                     if ($scope.active_user.role === 'physician') {
                         var form = { 'physician_id': $scope.active_user.user.id };
-                        adminService.getPhysicianData(form).then(function (data) {
-                            $scope.patients = data['patients'];
-                            $scope.team = data['team'];
+                        adminService.getPhysicianTeam(form).then(function (data) {
+                            $scope.team = data;
+                        });
+                        adminService.getPhysicianPatients(form).then(function (data) {
+                            $scope.patients = data;
                         });
                     }
                 });

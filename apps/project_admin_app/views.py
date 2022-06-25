@@ -509,6 +509,57 @@ def fetch_physician_data(request):
 
 @login_required
 @timeit
+def get_physician_team(request):
+
+    physician_id = request.GET.get('physician_id')
+    physician = User.objects.get(id=physician_id)
+
+    team_members = PhysicianTeam.objects.filter(physician=physician)
+    user_ids = [int(x.member.id) for x in team_members]
+
+    user_profiles = UserProfile.objects.filter(user__id__in=user_ids)
+
+    nurses = []
+    secretaries = []
+    mid_level_staffs = []
+
+    for user_profile in user_profiles:
+        profile_dict = UserProfileSerializer(user_profile).data
+        if user_profile.role == 'nurse':
+            nurses.append(profile_dict)
+        if user_profile.role == 'mid-level':
+            mid_level_staffs.append(profile_dict)
+        if user_profile.role == 'secretary':
+            secretaries.append(profile_dict)
+
+    team = {}
+    team['nurses'] = nurses
+    team['secretaries'] = secretaries
+    team['mid_level_staffs'] = mid_level_staffs
+
+    return ajax_response(team)
+
+
+@login_required
+@timeit
+def get_physician_patients(request):
+
+    physician_id = request.GET.get('physician_id')
+    physician = User.objects.get(id=physician_id)
+
+    patients = PatientController.objects.filter(physician=physician)
+    patient_ids = [int(x.patient.id) for x in patients]
+
+    patient_profiles = UserProfile.objects.filter(
+        user__id__in=patient_ids).filter(user__is_active=True)
+    patient_profiles_dict = UserProfileSerializer(
+        patient_profiles, many=True).data
+
+    return ajax_response(patient_profiles_dict)
+
+
+@login_required
+@timeit
 def assign_physician_member(request):
     success = False
     errors = []
