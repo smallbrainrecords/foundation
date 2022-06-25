@@ -45,9 +45,9 @@ a {
 }
 
 .red-box {
-  background-color: $color2 !important;
-  border-color: $color24 !important;
-  color: $color25 !important;
+  background-color: $color2  !important;
+  border-color: $color24  !important;
+  color: $color25  !important;
 }
 
 #ngdialog1.large-modal .ngdialog-content {
@@ -99,15 +99,15 @@ a {
 }
 
 
-.nav-pills > a:hover, .nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+.nav-pills>a:hover,
+.nav-pills>li.active>a,
+.nav-pills>li.active>a:hover,
+.nav-pills>li.active>a:focus {
   background-color: grey;
-  color: $color3 !important;
+  color: $color3  !important;
 }
 
-.activity-item img {
-
-
-}
+.activity-item img {}
 
 .cover-image {
   margin: 0 auto;
@@ -157,14 +157,15 @@ a {
   }
 }
 
-#problem-header:hover .btn-custom, .todo:hover .btn-custom {
+#problem-header:hover .btn-custom,
+.todo:hover .btn-custom {
   display: block;
 }
 
 .problem-uncontrolled {
-  background-color: $color2 !important;
-  border-color: $color24 !important;
-  color: $color25 !important;
+  background-color: $color2  !important;
+  border-color: $color24  !important;
+  color: $color25  !important;
 }
 
 .btn-custom:hover {
@@ -187,31 +188,31 @@ a {
 }
 
 .todo-label-green {
-  background-color: $color27 !important;
+  background-color: $color27  !important;
 }
 
 .todo-label-yellow {
-  background-color: $color28 !important;
+  background-color: $color28  !important;
 }
 
 .todo-label-orange {
-  background-color: $color29 !important;
+  background-color: $color29  !important;
 }
 
 .todo-label-red {
-  background-color: $color30 !important;
+  background-color: $color30  !important;
 }
 
 .todo-label-purple {
-  background-color: $color31 !important;
+  background-color: $color31  !important;
 }
 
 .todo-label-blue {
-  background-color: $color32 !important;
+  background-color: $color32  !important;
 }
 
 .todo-label-sky {
-  background-color: $color33 !important;
+  background-color: $color33  !important;
 }
 
 
@@ -386,7 +387,8 @@ tbody button {
 #signature {
   position: relative;
   right: 0;
-  width: 250px !important;;
+  width: 250px !important;
+  ;
 }
 
 .inactive {
@@ -404,7 +406,8 @@ todo-laboratory {
     a.todo-label {
       float: left;
       text-align: center;
-      display: inline-block;;
+      display: inline-block;
+      ;
       margin: 0 2px;
       clear: none;
       color: $color4;
@@ -421,7 +424,8 @@ todo-laboratory {
     #signature {
       position: fixed;
       right: 0;
-      width: 250px !important;;
+      width: 250px !important;
+      ;
     }
 
     b {
@@ -430,11 +434,15 @@ todo-laboratory {
 
     display: block !important;
 
-    div, li, p, ul {
+    div,
+    li,
+    p,
+    ul {
       display: block !important;
     }
 
-    p, ul {
+    p,
+    ul {
       margin: 0 0 10px !important;
     }
 
@@ -458,7 +466,7 @@ todo-laboratory {
     border-top: none;
     margin-bottom: 40px;
 
-    & > li {
+    &>li {
       display: inline-block;
       float: none;
       margin: 0 !important;
@@ -475,9 +483,61 @@ todo-laboratory {
     }
 
     .nav-pills {
-      & > li {
+      &>li {
         margin: 0 !important;
       }
     }
+  }
+}
+
+/* ALL LOADERS */
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* LOADER 2 */
+
+#loader-2 span {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 100%;
+  background-color: #3498db;
+  margin: 17px 2px;
+}
+
+#loader-2 span:nth-child(1) {
+  animation: bounce 1s ease-in-out infinite;
+}
+
+#loader-2 span:nth-child(2) {
+  animation: bounce 1s ease-in-out 0.33s infinite;
+}
+
+#loader-2 span:nth-child(3) {
+  animation: bounce 1s ease-in-out 0.66s infinite;
+}
+
+@keyframes bounce {
+
+  0%,
+  75%,
+  100% {
+    -webkit-transform: translateY(0);
+    -ms-transform: translateY(0);
+    -o-transform: translateY(0);
+    transform: translateY(0);
+  }
+
+  25% {
+    -webkit-transform: translateY(-10px);
+    -ms-transform: translateY(-10px);
+    -o-transform: translateY(-10px);
+    transform: translateY(-10px);
   }
 }

@@ -45,8 +45,8 @@
                         <div class="input-group-btn">
                             <button class="btn btn-outline-secondary" type="submit">Search</button>
                         </div>
-                        <input type='text' class='form-control' ng-model='searchText' placeholder='Search...'
-                            title="Search...">
+                        <input type='text' class='form-control' ng-model='searchText'
+                            placeholder='Search by first name, last name or email...' title="Search...">
                         <div class="input-group-addon">
                             <label title="Ignored while searching">
                                 <input type="checkbox" ng-model="showInActive">
@@ -90,7 +90,12 @@
                         </tr>
                     </tbody>
                 </table>
-                <button class='btn btn-default' ng-click='previousPage()' ng-disabled='prevPageDisabled()'>
+                <div class="loader" id="loader-2" ng-show="loadingUsers">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <button class='btn btn-default' ng-click='prevPage()' ng-disabled='prevPageDisabled()'>
                     Prev
                 </button>
                 {{ pageNumber }} / {{ totalPages }}

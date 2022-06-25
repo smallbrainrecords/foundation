@@ -29,6 +29,7 @@
 
             function init() {
                 $scope.users = [];
+                $scope.loadingUsers = false;
                 $scope.pageNumber = 1;
                 $scope.pageSize = 10;
                 $scope.totalPages = 1;
@@ -55,6 +56,7 @@
                     'page_size': $scope.pageSize,
                     'search_text': $scope.searchText
                 };
+                $scope.users = [];
                 $scope.loadingUsers = true;
                 adminService.getUsersList(role_form).then(function (data) {
                     $scope.pageNumber = data.page_number * 1;
