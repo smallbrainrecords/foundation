@@ -34,7 +34,7 @@ DATABASES = {
         'PORT': os.getenv('DATABASE_PORT'),
         'OPTIONS': {},
         'TEST': {
-            'NAME': os.getenv('DATABASE_TEST_NAME'),
+            'NAME': os.getenv('DATABASE_NAME') + "_test",
         },
     },
     'snomedict': {
@@ -43,7 +43,10 @@ DATABASES = {
         'USER': os.getenv('DATABASE_USER'),
         'PASSWORD': os.getenv('DATABASE_PASSWORD'),
         'HOST': os.getenv('DATABASE_HOST'),
-        'PORT': os.getenv('DATABASE_PORT')
+        'PORT': os.getenv('DATABASE_PORT'),
+        'TEST': {
+            'NAME': os.getenv('DATABASE_NAME_SNOMEDCT') + "_test",
+        },
     }
 }
 

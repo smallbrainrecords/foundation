@@ -299,11 +299,12 @@ def get_patient_info(request, patient_id):
 
     problem_list = []
     problems = Problem.objects.filter(patient=patient_user)
-    for key in problem_order.order:
-        if problems.filter(id=key):
-            problem = problems.get(id=key)
-            problem_dict = ProblemSerializer(problem).data
-            problem_list.append(problem_dict)
+    if problem_order.order != None:
+        for key in problem_order.order:
+            if problems.filter(id=key):
+                problem = problems.get(id=key)
+                problem_dict = ProblemSerializer(problem).data
+                problem_list.append(problem_dict)
 
     if request.user.profile.role == 'admin':
         for problem in problems:
