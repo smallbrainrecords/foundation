@@ -299,7 +299,7 @@ def add_new_data(request, patient_id, component_id):
         # DB stuff
         effective_datetime = datetime.strptime(
             effective_datetime, '%m/%d/%Y %H:%M')
-        userProfile = UserProfile.objects.get(id=patient_id)
+        userProfile = UserProfile.objects.get(user__id=patient_id)
         if (userProfile.weight_updated_date == None or userProfile.weight_updated_date.date() < datetime.now().date() or userProfile.height_updated_date == None or userProfile.height_updated_date.date() < datetime.now().date()):
             value = ObservationValue(author=request.user, component_id=component_id,
                                      effective_datetime=effective_datetime, value_quantity=float(value_quantity))

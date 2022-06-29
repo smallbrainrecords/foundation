@@ -1376,12 +1376,12 @@ def problem_notes_function(request, problem_id):
         resp['success'] = True
     if request.method == "GET":
         note_type = request.GET.get('type')  # this is required
-        before = request.GET.get('before', 1000000000)  # this is optional
-        limit = request.GET.get('limit', 10)
+        before = int(request.GET.get('before', 1000000000))  # this is optional
+        limit = int(request.GET.get('limit', 10))
 
         # TODO: Getting list of notes with default reserve chronology (most recent on top)
-        notes = ProblemNote.objects.filter(problem_id=problem_id, note_type=note_type, id__lt=before).order_by(
-            '-created_on')[0:limit]
+        notes = ProblemNote.objects.filter(
+            problem_id=problem_id, note_type=note_type, id__lt=before).order_by('-created_on')[0:limit]
 
         resp['notes'] = ProblemNoteSerializer(notes.all(), many=True).data
         resp['total'] = ProblemNote.objects.filter(
