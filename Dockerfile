@@ -218,4 +218,4 @@ WORKDIR /usr/src/smallbrains-app
 EXPOSE 8000
 
 # Run server
-CMD [ "python", "/usr/src/smallbrains-app/manage.py", "runserver", "0.0.0.0:8000", "--noreload" ]
+CMD [ "python", "/usr/src/smallbrains-app/manage.py", "runserver", "0.0.0.0:8000" ]
