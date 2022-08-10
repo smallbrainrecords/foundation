@@ -8,7 +8,7 @@ BASE_DIR = os.getcwd()
 
 PROBLEMS_PATH = os.path.join(BASE_DIR, 'static/js/problems')
 
-COMPRESS_ENABLED = True
+COMPRESS_ENABLED = False
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
