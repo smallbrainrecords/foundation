@@ -142,6 +142,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
+    'rest_framework',
     'mptt',
     'reversion',
     'emr',
