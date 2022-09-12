@@ -35,12 +35,13 @@ def op_add_event(physician, patient, event_summary, problem=None, todo=False):
             if not todo:
                 encounter_event.save()
 
-            # Add Problem Record if any
+            # Add Problem Record unless it already exists
             if problem:
-                try:
-                    EncounterProblemRecord.objects.get(
-                        encounter=latest_encounter, problem=problem)
-                except EncounterProblemRecord.DoesNotExist:
+                problemCount = EncounterProblemRecord.objects.filter(
+                    encounter=latest_encounter, problem=problem
+                ).count()
+
+                if problemCount == 0:
                     EncounterProblemRecord.objects.create(
                         encounter=latest_encounter, problem=problem)
 
