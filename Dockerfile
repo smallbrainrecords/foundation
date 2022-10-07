@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.7-nodejs18-bullseye
+FROM nikolaik/python-nodejs:python3.7-nodejs18
 
 # Set environment variables
 ENV DATABASE_NAME=smallbrains_development
