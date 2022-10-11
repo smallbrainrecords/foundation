@@ -39,12 +39,12 @@
     "es6-promise": "^4.2.8",
     "font-awesome": "^4.7.0",
     "html2canvas": "^1.0.0-rc.5",
-    "html2pdf.js": "^0.9.2",
+    "html2pdf.js": "^0.10.1",
     "jquery": "^3.5.1",
     "jquery-form": "~3.50.0",
     "jquery-ui": "^1.12.1",
     "jquery-ui-dist": "^1.12.1",
-    "jspdf": "^1.5.3",
+    "jspdf": "^2.5.1",
     "moment": "^2.29.2",
     "moment-timezone": "^0.5.31",
     "ng-dialog": "^1.4.0",
@@ -58,7 +58,7 @@
     "videogular": "^2.2.1",
     "view-file-ng": "git+https://github.com/grtjn/view-file-ng.git",
     "webcam": "^3.2.1",
-    "x2js": "^3.4.0"
+    "x2js": "^3.4.3"
   },
   "devDependencies": {},
   "scripts": {
