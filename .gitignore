@@ -9,8 +9,9 @@ templates_bk/*
 media
 Icon
 static/CACHE
-static/node_modules
+static/node_modules/
 staticdev/CACHE
 venv
 .coverage
 /static/css/.sass-cache/
+.venv
