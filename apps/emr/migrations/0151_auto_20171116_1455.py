@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
-
+from django.db import migrations, models
 from emr.models import Inr, UserProfile
 
 
@@ -26,12 +25,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='inr',
             name='author',
-            field=models.ForeignKey(related_name='author_inr', blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='author_inr', blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='inr',
             name='patient',
-            field=models.ForeignKey(related_name='patient_inr', to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='patient_inr', to=settings.AUTH_USER_MODEL, null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='todo',
             name='medication',
-            field=models.ForeignKey(to='emr.Medication', null=True),
+            field=models.ForeignKey(to='emr.Medication', null=True, on_delete=models.DO_NOTHING),
         ),
     ]

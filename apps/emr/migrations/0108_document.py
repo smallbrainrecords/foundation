@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -17,9 +17,9 @@ class Migration(migrations.Migration):
                 ('name', models.TextField()),
                 ('path', models.TextField()),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(related_name='author_document', to='emr.UserProfile')),
+                ('author', models.ForeignKey(related_name='author_document', to='emr.UserProfile', on_delete=models.DO_NOTHING)),
                 ('patient',
-                 models.ForeignKey(related_name='patient_pinned', blank=True, to='emr.UserProfile', null=True)),
+                 models.ForeignKey(related_name='patient_pinned', blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING)),
             ],
             options={
                 'ordering': ['-created_on'],

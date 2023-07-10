@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             model_name='mystorytab',
             name='author',
             field=models.ForeignKey(related_name='author_story_tabs', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='mystorytab',
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             model_name='mystorytextcomponent',
             name='author',
             field=models.ForeignKey(related_name='author_story_texts', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='mystorytextcomponent',
@@ -46,17 +46,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='mystorytextcomponent',
             name='last_updated_user',
-            field=models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='mystorytextcomponent',
             name='tab',
-            field=models.ForeignKey(related_name='my_story_tab_components', blank=True, to='emr.MyStoryTab', null=True),
+            field=models.ForeignKey(related_name='my_story_tab_components', blank=True, to='emr.MyStoryTab', null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='mystorytextcomponententry',
             name='component',
             field=models.ForeignKey(related_name='text_component_entries', blank=True, to='emr.MyStoryTextComponent',
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
     ]

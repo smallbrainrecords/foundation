@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -32,21 +32,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='documenttodo',
             name='document',
-            field=models.ForeignKey(to='emr.Document'),
+            field=models.ForeignKey(to='emr.Document', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='documenttodo',
             name='todo',
-            field=models.ForeignKey(to='emr.ToDo'),
+            field=models.ForeignKey(to='emr.ToDo', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='documentproblem',
             name='document',
-            field=models.ForeignKey(to='emr.Document'),
+            field=models.ForeignKey(to='emr.Document', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='documentproblem',
             name='problem',
-            field=models.ForeignKey(to='emr.Problem'),
+            field=models.ForeignKey(to='emr.Problem', on_delete=models.DO_NOTHING),
         ),
     ]

@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
-
+from django.db import migrations, models
 from emr.models import Observation, UserProfile
 
 
@@ -31,25 +30,25 @@ class Migration(migrations.Migration):
             model_name='observation',
             name='author',
             field=models.ForeignKey(related_name='observation_authors', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='observation',
             name='encounter',
             field=models.ForeignKey(related_name='observation_encounters', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='observation',
             name='performer',
             field=models.ForeignKey(related_name='observation_performers', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='observation',
             name='subject',
             field=models.ForeignKey(related_name='observation_subjects', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

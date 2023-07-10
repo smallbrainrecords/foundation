@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             model_name='mystorytextcomponententry',
             name='patient',
             field=models.ForeignKey(related_name='patient_story_text_entries', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='mystorytextcomponententry',

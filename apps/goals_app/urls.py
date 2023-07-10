@@ -14,14 +14,20 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from django.conf.urls import url
-
+from django.urls import re_path
 from goals_app.views import *
 
 urlpatterns = [
-    url(r'^goal/(?P<goal_id>\d+)/info$', get_goal_info),
-    url(r'^patient/(?P<patient_id>\d+)/goals/add/new_goal$', add_patient_goal),
-    url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/add_note$', add_goal_note),
-    url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/update_status$', update_goal_status),
-    url(r'^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/change_name$', change_name),
+    re_path(r"^goal/(?P<goal_id>\d+)/info$", get_goal_info),
+    re_path(r"^patient/(?P<patient_id>\d+)/goals/add/new_goal$", add_patient_goal),
+    re_path(
+        r"^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/add_note$", add_goal_note
+    ),
+    re_path(
+        r"^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/update_status$",
+        update_goal_status,
+    ),
+    re_path(
+        r"^patient/(?P<patient_id>\d+)/goal/(?P<goal_id>\d+)/change_name$", change_name
+    ),
 ]

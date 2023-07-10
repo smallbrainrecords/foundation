@@ -21,10 +21,16 @@ import os
 import reversion
 from django.contrib.auth.models import User
 from django.db import models
+from emr.managers import (
+    AOneCManager,
+    ColonCancerScreeningManager,
+    ColonCancerStudyManager,
+    EncounterManager,
+    ProblemManager,
+    ProblemNoteManager,
+    TodoManager,
+)
 from mptt.models import MPTTModel, TreeForeignKey
-
-from emr.managers import AOneCManager, ProblemManager, ProblemNoteManager, EncounterManager, \
-    TodoManager, ColonCancerScreeningManager, ColonCancerStudyManager
 
 # DATA
 ROLE_CHOICES = (
@@ -211,7 +217,7 @@ class ListField(models.TextField):
         if value is None:
             return value
 
-        return unicode(value)
+        return value
 
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
@@ -227,7 +233,7 @@ class MaritalStatus(models.Model):
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, related_name="profile")
+    user = models.OneToOneField(User, related_name="profile", on_delete=models.DO_NOTHING)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='patient')
     data = models.TextField(blank=True)
     cover_image = models.ImageField(upload_to='cover_image/', default='/static/images/cover.png')
@@ -236,7 +242,7 @@ class UserProfile(models.Model):
     sex = models.CharField(max_length=6, choices=SEX_CHOICES, blank=True)
     date_of_birth = models.DateTimeField(null=True, blank=True)
     deceased_date = models.DateTimeField(null=True, blank=True)
-    marital_status = models.ForeignKey(MaritalStatus, null=True, blank=True)
+    marital_status = models.ForeignKey(MaritalStatus, null=True, blank=True, on_delete=models.DO_NOTHING)
     phone_number = models.CharField(max_length=20, blank=True)
     note = models.TextField(null=True, blank=True)
     active_reason = models.TextField(null=True, blank=True)
@@ -251,19 +257,19 @@ class UserProfile(models.Model):
 
 # Many To Many Relation
 class PatientController(models.Model):
-    patient = models.ForeignKey(User, related_name='patient_physicians')
-    physician = models.ForeignKey(User, related_name='physician_patients')
+    patient = models.ForeignKey(User, related_name='patient_physicians', on_delete=models.DO_NOTHING)
+    physician = models.ForeignKey(User, related_name='physician_patients', on_delete=models.DO_NOTHING)
     author = models.BooleanField(default=False)
 
 
 class PhysicianTeam(models.Model):
     # Need to add  save_admin to check if member is physician
-    physician = models.ForeignKey(User, related_name='physician_helpers')
-    member = models.ForeignKey(User, related_name='user_leaders')
+    physician = models.ForeignKey(User, related_name='physician_helpers', on_delete=models.DO_NOTHING)
+    member = models.ForeignKey(User, related_name='user_leaders', on_delete=models.DO_NOTHING)
 
 
 class AccessLog(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     datetime = models.DateTimeField(auto_now_add=True)
     summary = models.TextField()
 
@@ -272,8 +278,8 @@ class AccessLog(models.Model):
 
 
 class Encounter(models.Model):
-    physician = models.ForeignKey(User, related_name="physician_encounters")
-    patient = models.ForeignKey(User, related_name="patient_encounters")
+    physician = models.ForeignKey(User, related_name="physician_encounters", on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, related_name="patient_encounters", on_delete=models.DO_NOTHING)
     starttime = models.DateTimeField(auto_now_add=True)
     stoptime = models.DateTimeField(null=True, blank=True)
     audio = models.FileField(upload_to=get_path, blank=True)
@@ -305,7 +311,7 @@ class Encounter(models.Model):
 
 
 class EncounterEvent(models.Model):
-    encounter = models.ForeignKey(Encounter, related_name='encounter_events', null=True, blank=True)
+    encounter = models.ForeignKey(Encounter, related_name='encounter_events', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     datetime = models.DateTimeField(auto_now_add=True)
     summary = models.TextField(default='')
@@ -316,7 +322,7 @@ class EncounterEvent(models.Model):
     timestamp = models.DateTimeField(null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(self.summary)
+        return self.summary
 
     def video_seconds(self):
         if self.timestamp:
@@ -337,7 +343,7 @@ class EncounterEvent(models.Model):
 
 # @Deprecated
 class TextNote(models.Model):
-    author = models.ForeignKey(User, null=True, blank=True)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
     by = models.CharField(max_length=20, choices=BY_CHOICES)
     note = models.TextField()
     datetime = models.DateTimeField(auto_now_add=True)
@@ -349,16 +355,16 @@ class TextNote(models.Model):
 class ProblemLabel(models.Model):
     name = models.TextField(null=True, blank=True)
     css_class = models.TextField(null=True, blank=True)
-    author = models.ForeignKey(User, null=True, blank=True, related_name="problem_label_author")
-    patient = models.ForeignKey(User, null=True, blank=True, related_name="problem_label_patient")
+    author = models.ForeignKey(User, null=True, blank=True, related_name="problem_label_author", on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="problem_label_patient", on_delete=models.DO_NOTHING)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return self.name
 
 
 class Problem(MPTTModel):
-    patient = models.ForeignKey(User)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    patient = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.DO_NOTHING)
     problem_name = models.CharField(max_length=200)
     concept_id = models.CharField(max_length=20, blank=True, null=True)
     is_controlled = models.BooleanField(default=False)
@@ -379,23 +385,23 @@ class Problem(MPTTModel):
 
 
 class SharingPatient(models.Model):
-    sharing = models.ForeignKey(User, related_name='patient_sharing')
-    shared = models.ForeignKey(User, related_name='patient_shared')
+    sharing = models.ForeignKey(User, related_name='patient_sharing', on_delete=models.DO_NOTHING)
+    shared = models.ForeignKey(User, related_name='patient_shared', on_delete=models.DO_NOTHING)
     problems = models.ManyToManyField(Problem, blank=True, related_name="sharing_problems")
     is_my_story_shared = models.BooleanField(default=True)
 
 
 class ProblemOrder(models.Model):
-    patient = models.ForeignKey(User, null=True, blank=True, related_name="patient_problem_order")
-    user = models.ForeignKey(User, null=True, blank=True, related_name="user_problem_order")
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="patient_problem_order", on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, null=True, blank=True, related_name="user_problem_order", on_delete=models.DO_NOTHING)
     order = ListField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.user.username))
+        return self.user.username
 
 
 class ProblemSegment(models.Model):
-    problem = models.ForeignKey(Problem, related_name='problem_segment')
+    problem = models.ForeignKey(Problem, related_name='problem_segment', on_delete=models.DO_NOTHING)
     is_controlled = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     authenticated = models.BooleanField(default=False)
@@ -411,8 +417,8 @@ class ProblemSegment(models.Model):
 
 
 class ProblemActivity(models.Model):
-    problem = models.ForeignKey(Problem)
-    author = models.ForeignKey(User, null=True, blank=True)
+    problem = models.ForeignKey(Problem, on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
     activity = models.TextField()
     is_input_type = models.BooleanField(default=False)
     is_output_type = models.BooleanField(default=False)
@@ -423,8 +429,8 @@ class ProblemActivity(models.Model):
 
 
 class ProblemNote(models.Model):
-    author = models.ForeignKey(User, null=True, blank=True)
-    problem = models.ForeignKey(Problem, null=True, blank=True)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
+    problem = models.ForeignKey(Problem, null=True, blank=True, on_delete=models.DO_NOTHING)
     note = models.TextField()
     note_type = models.CharField(choices=NOTE_TYPE_CHOICES, max_length=50)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -436,20 +442,20 @@ class ProblemNote(models.Model):
 
 
 class LabeledProblemList(models.Model):
-    user = models.ForeignKey(User, null=True, blank=True, related_name="label_problem_list_user")
-    patient = models.ForeignKey(User, null=True, blank=True, related_name="label_problem_list_patient")
+    user = models.ForeignKey(User, null=True, blank=True, related_name="label_problem_list_user", on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="label_problem_list_patient", on_delete=models.DO_NOTHING)
     labels = models.ManyToManyField(ProblemLabel, blank=True)
     name = models.TextField()
     problem_list = ListField(null=True, blank=True)
     note = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return self.name
 
 
 class Goal(models.Model):
-    patient = models.ForeignKey(User)
-    problem = models.ForeignKey(Problem, null=True, blank=True)
+    patient = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    problem = models.ForeignKey(Problem, null=True, blank=True, on_delete=models.DO_NOTHING)
     goal = models.TextField()
     is_controlled = models.BooleanField(default=False)
     accomplished = models.BooleanField(default=False)
@@ -457,17 +463,17 @@ class Goal(models.Model):
     start_date = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return '%s %s' % (unicode(self.patient), unicode(self.problem))
+        return f'{self.patient} {self.problem}'
 
 
 class Label(models.Model):
     name = models.TextField(null=True, blank=True)
     css_class = models.TextField(null=True, blank=True)
-    author = models.ForeignKey(User, null=True, blank=True, related_name="label_author")
+    author = models.ForeignKey(User, null=True, blank=True, related_name="label_author", on_delete=models.DO_NOTHING)
     is_all = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return self.name
 
 
 class ToDo(models.Model):
@@ -490,15 +496,15 @@ class ToDo(models.Model):
     due_date = models.DateTimeField(blank=True, null=True)
     order = models.BigIntegerField(null=True, blank=True)  # Position in normal todo list
 
-    user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner")  # Author
-    patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient")
+    user = models.ForeignKey(User, null=True, blank=True, related_name="todo_owner", on_delete=models.DO_NOTHING)  # Author
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="todo_patient", on_delete=models.DO_NOTHING)
     labels = models.ManyToManyField(Label, blank=True)
-    a1c = models.ForeignKey("AOneC", null=True, blank=True, related_name="a1c_todos")
-    problem = models.ForeignKey(Problem, null=True, blank=True)
-    colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos")
+    a1c = models.ForeignKey("AOneC", null=True, blank=True, related_name="a1c_todos", on_delete=models.DO_NOTHING)
+    problem = models.ForeignKey(Problem, null=True, blank=True, on_delete=models.DO_NOTHING)
+    colon_cancer = models.ForeignKey("ColonCancerScreening", null=True, blank=True, related_name="colon_cancer_todos", on_delete=models.DO_NOTHING)
     notes = models.ManyToManyField(TextNote, blank=True)  # aka comment should 1-n relation
     members = models.ManyToManyField(User, through="TaggedToDoOrder")
-    medication = models.ForeignKey("Medication", null=True)
+    medication = models.ForeignKey("Medication", null=True, on_delete=models.DO_NOTHING)
 
     created_at = models.PositiveIntegerField(choices=BELONG_TO, default=0)  # Place where todo is generated -> removed
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -506,30 +512,30 @@ class ToDo(models.Model):
     objects = TodoManager()
 
     def __unicode__(self):
-        return '%s' % (unicode(self.todo))
+        return self.todo
 
 
 class TaggedToDoOrder(models.Model):
     order = models.BigIntegerField(null=True, blank=True)
     status = models.IntegerField(choices=VIEW_STATUS, default=0)
-    todo = models.ForeignKey(ToDo, null=True, blank=True)
-    user = models.ForeignKey(User, null=True, blank=True)
+    todo = models.ForeignKey(ToDo, null=True, blank=True, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.todo.todo))
+        return self.todo.todo
 
 
 class LabeledToDoList(models.Model):
     name = models.TextField()
-    user = models.ForeignKey(User)  # author
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)  # author
     labels = models.ManyToManyField(Label, blank=True)
     private = models.BooleanField(default=1)  # 1 is save just for me, 0: is save for all user
     todo_list = ListField(null=True, blank=True)
     expanded = ListField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return self.name
 
 
 class Guideline(models.Model):
@@ -548,7 +554,7 @@ class Guideline(models.Model):
 
 
 class GuidelineForm(models.Model):
-    guideline = models.OneToOneField(Guideline)
+    guideline = models.OneToOneField(Guideline, on_delete=models.DO_NOTHING)
     form = models.TextField()
 
     def __unicode__(self):
@@ -556,27 +562,27 @@ class GuidelineForm(models.Model):
 
 
 class PatientImage(models.Model):
-    patient = models.ForeignKey(User)
-    problem = models.ForeignKey(Problem, null=True, blank=True)
+    patient = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    problem = models.ForeignKey(Problem, null=True, blank=True, on_delete=models.DO_NOTHING)
     image = models.ImageField(upload_to=get_path)
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.patient))
+        return self.patient
 
 
 class Sharing(models.Model):
-    patient = models.ForeignKey(User, related_name='target_patient')
-    other_patient = models.ForeignKey(User, related_name='other_patient')
+    patient = models.ForeignKey(User, related_name='target_patient', on_delete=models.DO_NOTHING)
+    other_patient = models.ForeignKey(User, related_name='other_patient', on_delete=models.DO_NOTHING)
     all = models.BooleanField(default=True)
 
     def __unicode__(self):
-        return '%s %s' % (unicode(self.patient), unicode(self.other_patient))
+        return f'{self.patient} {self.other_patient}'
 
 
 class Viewer(models.Model):
-    patient = models.ForeignKey(User, related_name='viewed_patient')
-    viewer = models.ForeignKey(User, related_name='viewer')
+    patient = models.ForeignKey(User, related_name='viewed_patient', on_delete=models.DO_NOTHING)
+    viewer = models.ForeignKey(User, related_name='viewer', on_delete=models.DO_NOTHING)
     datetime = models.DateTimeField(auto_now=True)
     # for tracking open browser instances e.g. multiple tabs
     tracking_id = models.CharField(max_length=20, blank=True)
@@ -585,46 +591,46 @@ class Viewer(models.Model):
 
 
 class ViewStatus(models.Model):
-    patient = models.ForeignKey(User)
+    patient = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     status = models.TextField()
 
 
 class ProblemRelationship(models.Model):
-    source = models.ForeignKey(Problem, related_name="source")
-    target = models.ForeignKey(Problem, related_name="target")
+    source = models.ForeignKey(Problem, related_name="source", on_delete=models.DO_NOTHING)
+    target = models.ForeignKey(Problem, related_name="target", on_delete=models.DO_NOTHING)
 
     def __unicode__(self):
-        return "%s %s" % (unicode(self.source), unicode(self.target))
+        return f'{self.source} {self.target}'
 
 
 class EncounterProblemRecord(models.Model):
     encounter = models.ForeignKey(
-        Encounter, related_name='encounter_problem_records')
+        Encounter, related_name='encounter_problem_records', on_delete=models.DO_NOTHING)
     problem = models.ForeignKey(
-        Problem, related_name='problem_encounter_records')
+        Problem, related_name='problem_encounter_records', on_delete=models.DO_NOTHING)
 
     def __unicode__(self):
-        return "%s %s" % (unicode(self.encounter), unicode(self.problem))
+        return f'{self.encounter} {self.problem}'
 
 
 class ToDoComment(models.Model):
-    todo = models.ForeignKey(ToDo, related_name="comments")
-    user = models.ForeignKey(User)
+    todo = models.ForeignKey(ToDo, related_name="comments", on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     comment = models.TextField(null=True, blank=True)
     datetime = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.todo.todo))
+        return self.todo.todo
 
 
 class ToDoAttachment(models.Model):
-    todo = models.ForeignKey(ToDo, related_name="attachments")
+    todo = models.ForeignKey(ToDo, related_name="attachments", on_delete=models.DO_NOTHING)
     attachment = models.FileField(upload_to='attachments/', blank=True)
     datetime = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.attachment.path))
+        return self.attachment.path
 
     def filename(self):
         return os.path.basename(self.attachment.name)
@@ -648,19 +654,19 @@ class ToDoAttachment(models.Model):
 
 class EncounterTodoRecord(models.Model):
     encounter = models.ForeignKey(
-        Encounter, related_name='encounter_todo_records')
+        Encounter, related_name='encounter_todo_records', on_delete=models.DO_NOTHING)
     todo = models.ForeignKey(
-        ToDo, related_name='todo_encounter_records')
+        ToDo, related_name='todo_encounter_records', on_delete=models.DO_NOTHING)
 
     def __unicode__(self):
-        return "%s %s" % (unicode(self.encounter), unicode(self.todo))
+        return f'{self.encounter} {self.todo}'
 
 
 class TodoActivity(models.Model):
-    todo = models.ForeignKey(ToDo)
-    author = models.ForeignKey(User, null=True, blank=True)
-    comment = models.ForeignKey(ToDoComment, null=True, blank=True)
-    attachment = models.ForeignKey(ToDoAttachment, null=True, blank=True)
+    todo = models.ForeignKey(ToDo, on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
+    comment = models.ForeignKey(ToDoComment, null=True, blank=True, on_delete=models.DO_NOTHING)
+    attachment = models.ForeignKey(ToDoAttachment, null=True, blank=True, on_delete=models.DO_NOTHING)
     activity = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
 
@@ -684,19 +690,19 @@ class Observation(models.Model):
     comments = models.TextField(null=True, blank=True)
     color = models.CharField(max_length=7, null=True, blank=True)
     graph = models.TextField(default='Line')
-    subject = models.ForeignKey(User, null=True, blank=True, related_name='observation_subjects')
+    subject = models.ForeignKey(User, null=True, blank=True, related_name='observation_subjects', on_delete=models.DO_NOTHING)
     # TODO: Check for deprecation
-    encounter = models.ForeignKey(User, null=True, blank=True, related_name='observation_encounters')
+    encounter = models.ForeignKey(User, null=True, blank=True, related_name='observation_encounters', on_delete=models.DO_NOTHING)
     # TODO: Check for deprecation
-    performer = models.ForeignKey(User, null=True, blank=True, related_name='observation_performers')
-    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_authors')
+    performer = models.ForeignKey(User, null=True, blank=True, related_name='observation_performers', on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_authors', on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_on']
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return self.name
 
 
 class ObservationComponent(models.Model):
@@ -715,8 +721,8 @@ class ObservationComponent(models.Model):
     comments = models.TextField(null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
 
-    observation = models.ForeignKey(Observation, related_name='observation_components')
-    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_component_authors')
+    observation = models.ForeignKey(Observation, related_name='observation_components', on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_component_authors', on_delete=models.DO_NOTHING)
 
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
@@ -724,11 +730,11 @@ class ObservationComponent(models.Model):
         ordering = ['effective_datetime', 'created_on']
 
     def __unicode__(self):
-        return '%s' % (unicode(self.name))
+        return self.name
 
 
 class ObservationUnit(models.Model):
-    observation = models.ForeignKey(Observation, related_name='observation_units')
+    observation = models.ForeignKey(Observation, related_name='observation_units', on_delete=models.DO_NOTHING)
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     is_used = models.BooleanField(default=False)
 
@@ -741,8 +747,8 @@ class ObservationValue(models.Model):
     value_string = models.TextField(null=True, blank=True)
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     effective_datetime = models.DateTimeField(null=True, blank=True)
-    component = models.ForeignKey(ObservationComponent, related_name='observation_component_values')
-    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_value_authors')
+    component = models.ForeignKey(ObservationComponent, related_name='observation_component_values', on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, null=True, blank=True, related_name='observation_value_authors', on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
@@ -750,18 +756,18 @@ class ObservationValue(models.Model):
 
 
 class ObservationOrder(models.Model):
-    patient = models.ForeignKey(User, null=True, blank=True, related_name="patient_observation_order")
-    user = models.ForeignKey(User, null=True, blank=True, related_name="user_observation_order")
+    patient = models.ForeignKey(User, null=True, blank=True, related_name="patient_observation_order", on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, null=True, blank=True, related_name="user_observation_order", on_delete=models.DO_NOTHING)
     order = ListField(null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.user.username))
+        return self.user.username
 
 
 class ObservationPinToProblem(models.Model):
-    author = models.ForeignKey(User, null=True, blank=True, related_name='pin_authors')
-    observation = models.ForeignKey(Observation, null=True, blank=True, related_name='pin_observations')
-    problem = models.ForeignKey(Problem, null=True, blank=True, related_name='pin_problems')
+    author = models.ForeignKey(User, null=True, blank=True, related_name='pin_authors', on_delete=models.DO_NOTHING)
+    observation = models.ForeignKey(Observation, null=True, blank=True, related_name='pin_observations', on_delete=models.DO_NOTHING)
+    problem = models.ForeignKey(Problem, null=True, blank=True, related_name='pin_problems', on_delete=models.DO_NOTHING)
 
 
 class Country(models.Model):
@@ -774,7 +780,7 @@ class Country(models.Model):
 
 
 class State(models.Model):
-    country = models.ForeignKey(Country, related_name='country_states')
+    country = models.ForeignKey(Country, related_name='country_states', on_delete=models.DO_NOTHING)
     code = models.CharField(max_length=2)
     name = models.CharField(max_length=50)
 
@@ -783,7 +789,7 @@ class State(models.Model):
 
 
 class City(models.Model):
-    state = models.ForeignKey(State, related_name='state_cities')
+    state = models.ForeignKey(State, related_name='state_cities', on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=50)
 
     def __unicode__(self):
@@ -793,7 +799,7 @@ class City(models.Model):
 class Address(models.Model):
     line1 = models.CharField(max_length=50)
     line2 = models.CharField(max_length=50)
-    city = models.ForeignKey(City, related_name='city_addresses')
+    city = models.ForeignKey(City, related_name='city_addresses', on_delete=models.DO_NOTHING)
     zip = models.CharField(max_length=6)
     zip4 = models.CharField(max_length=4, null=True, blank=True)
     lat = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
@@ -837,8 +843,8 @@ class AddressUse(models.Model):
 
 
 class UserTelecom(models.Model):
-    user = models.ForeignKey(User, related_name='user_telecoms')
-    telecom = models.ForeignKey(Telecom, related_name='telecom_users')
+    user = models.ForeignKey(User, related_name='user_telecoms', on_delete=models.DO_NOTHING)
+    telecom = models.ForeignKey(Telecom, related_name='telecom_users', on_delete=models.DO_NOTHING)
     use_code = models.CharField(max_length=6)
     rank = models.PositiveIntegerField(null=True, blank=True)
     start = models.DateTimeField(null=True, blank=True)
@@ -846,27 +852,27 @@ class UserTelecom(models.Model):
 
 
 class UserAddress(models.Model):
-    user = models.ForeignKey(User, related_name='user_addresses')
-    address = models.ForeignKey(Address, related_name='address_users')
-    type_code = models.ForeignKey(AddressType, related_name='type_code_user_address')
-    use_code = models.ForeignKey(AddressUse, related_name='use_code_user_address')
+    user = models.ForeignKey(User, related_name='user_addresses', on_delete=models.DO_NOTHING)
+    address = models.ForeignKey(Address, related_name='address_users', on_delete=models.DO_NOTHING)
+    type_code = models.ForeignKey(AddressType, related_name='type_code_user_address', on_delete=models.DO_NOTHING)
+    use_code = models.ForeignKey(AddressUse, related_name='use_code_user_address', on_delete=models.DO_NOTHING)
     start = models.DateTimeField(null=True, blank=True)
     end = models.DateTimeField(null=True, blank=True)
 
 
 class AOneC(models.Model):
-    problem = models.OneToOneField(Problem, related_name='problem_aonecs')
+    problem = models.OneToOneField(Problem, related_name='problem_aonecs', on_delete=models.DO_NOTHING)
     todo_past_six_months = models.BooleanField(default=False)
     patient_refused_A1C = models.BooleanField(default=False)
-    observation = models.OneToOneField(Observation, related_name='observation_aonecs')
+    observation = models.OneToOneField(Observation, related_name='observation_aonecs', on_delete=models.DO_NOTHING)
 
     objects = AOneCManager()
 
 
 class AOneCTextNote(models.Model):
     note = models.TextField()
-    a1c = models.ForeignKey(AOneC, related_name='a1c_notes')
-    author = models.ForeignKey(User, null=True, blank=True)
+    a1c = models.ForeignKey(AOneC, related_name='a1c_notes', on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
     # TODO: Should be renamed to created_on
     datetime = models.DateTimeField(auto_now_add=True)
 
@@ -876,8 +882,8 @@ class AOneCTextNote(models.Model):
 
 class ObservationValueTextNote(models.Model):
     note = models.TextField()
-    observation_value = models.ForeignKey(ObservationValue, related_name='observation_value_notes')
-    author = models.ForeignKey(User, null=True, blank=True)
+    observation_value = models.ForeignKey(ObservationValue, related_name='observation_value_notes', on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
 
     # TODO: Should be renamed to created_on
     datetime = models.DateTimeField(auto_now_add=True)
@@ -893,7 +899,7 @@ class CommonProblem(models.Model):
     problem_name = models.CharField(max_length=200)
     concept_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     problem_type = models.CharField(max_length=10, choices=COMMON_PROBLEM_TYPE_CHOICES, default='acute')
-    author = models.ForeignKey(User, null=True, blank=True, related_name="common_problem_author")
+    author = models.ForeignKey(User, null=True, blank=True, related_name="common_problem_author", on_delete=models.DO_NOTHING)
 
 
 class ColonCancerScreening(models.Model):
@@ -904,10 +910,10 @@ class ColonCancerScreening(models.Model):
     todo_past_five_years = models.BooleanField(default=False)
     patient_refused_on = models.DateTimeField(null=True, blank=True)
     not_appropriate_on = models.DateTimeField(null=True, blank=True)
-    problem = models.ForeignKey(Problem, related_name='problem_colon_cancer')
-    patient = models.ForeignKey(User, related_name='patient_colon_cancer')
+    problem = models.ForeignKey(Problem, related_name='problem_colon_cancer', on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, related_name='patient_colon_cancer', on_delete=models.DO_NOTHING)
     last_risk_updated_user = models.ForeignKey(User, related_name='last_risk_updated_user_colons', null=True,
-                                               blank=True)
+                                               blank=True, on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(auto_now_add=True)
 
     objects = ColonCancerScreeningManager()
@@ -922,9 +928,9 @@ class ColonCancerStudy(models.Model):
     result = models.CharField(max_length=100, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
 
-    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_studies')
-    author = models.ForeignKey(User, related_name='author_studies')
-    last_updated_user = models.ForeignKey(User, related_name='last_updated_user_studies', null=True, blank=True)
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_studies', on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, related_name='author_studies', on_delete=models.DO_NOTHING)
+    last_updated_user = models.ForeignKey(User, related_name='last_updated_user_studies', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     last_updated_date = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -937,26 +943,26 @@ class ColonCancerStudy(models.Model):
 
 class ColonCancerStudyImage(models.Model):
     image = models.ImageField(upload_to='studies/', blank=True)
-    author = models.ForeignKey(User, null=True, blank=True)
-    study = models.ForeignKey(ColonCancerStudy, null=True, blank=True, related_name="study_images")
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
+    study = models.ForeignKey(ColonCancerStudy, null=True, blank=True, related_name="study_images", on_delete=models.DO_NOTHING)
     datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __unicode__(self):
-        return '%s' % (unicode(self.patient))
+        return self.patient
 
     def filename(self):
         return os.path.basename(self.image.name)
 
 
 class RiskFactor(models.Model):
-    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_risk_factors')
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_risk_factors', on_delete=models.DO_NOTHING)
     factor = models.CharField(max_length=100, null=True, blank=True)
 
 
 class ColonCancerTextNote(models.Model):
     note = models.TextField()
-    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_notes')
-    author = models.ForeignKey(User, null=True, blank=True)
+    colon = models.ForeignKey(ColonCancerScreening, related_name='colon_notes', on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.DO_NOTHING)
     # TODO: Should be renamed to created_at
     datetime = models.DateTimeField(auto_now_add=True)
 
@@ -970,9 +976,9 @@ class MyStoryTab(models.Model):
     private = models.BooleanField(default=True)  # Only applied if author is Patient
     is_all = models.BooleanField(default=False)  # Only applied if author is Staff
 
-    patient = models.ForeignKey(User, related_name="patient_story_tabs")
+    patient = models.ForeignKey(User, related_name="patient_story_tabs", on_delete=models.DO_NOTHING)
     author = models.ForeignKey(User, related_name="author_story_tabs", null=True,
-                               blank=True)  # Patient, Patient who has accessed to the patient, Physician, Admin
+                               blank=True, on_delete=models.DO_NOTHING)  # Patient, Patient who has accessed to the patient, Physician, Admin
 
     datetime = models.DateTimeField(auto_now_add=True)
 
@@ -986,9 +992,9 @@ class MyStoryTextComponent(models.Model):
     # TODO: Why need both private & is_all
     private = models.BooleanField(default=True)
     is_all = models.BooleanField(default=False)
-    tab = models.ForeignKey(MyStoryTab, null=True, blank=True, related_name="my_story_tab_components")
-    patient = models.ForeignKey(User, related_name="patient_story_texts")
-    author = models.ForeignKey(User, related_name="author_story_texts", null=True, blank=True)
+    tab = models.ForeignKey(MyStoryTab, null=True, blank=True, related_name="my_story_tab_components", on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, related_name="patient_story_texts", on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, related_name="author_story_texts", null=True, blank=True, on_delete=models.DO_NOTHING)
     # TODO: Should rename to created_at
     datetime = models.DateTimeField(auto_now_add=True)
 
@@ -998,9 +1004,9 @@ class MyStoryTextComponent(models.Model):
 
 class MyStoryTextComponentEntry(models.Model):
     text = models.TextField(null=True, blank=True)
-    component = models.ForeignKey(MyStoryTextComponent, null=True, blank=True, related_name="text_component_entries")
-    patient = models.ForeignKey(User, related_name="patient_story_text_entries", null=True, blank=True)
-    author = models.ForeignKey(User, related_name="author_story_text_entries", null=True, blank=True)
+    component = models.ForeignKey(MyStoryTextComponent, null=True, blank=True, related_name="text_component_entries", on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, related_name="patient_story_text_entries", null=True, blank=True, on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, related_name="author_story_text_entries", null=True, blank=True, on_delete=models.DO_NOTHING)
     datetime = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
@@ -1021,12 +1027,12 @@ class Inr(models.Model):
     next_inr = models.DateTimeField(null=True, blank=True)
 
     # Measured date & value is referred to observation data
-    observation_value = models.OneToOneField(ObservationValue, related_name="inr", null=True)
+    observation_value = models.OneToOneField(ObservationValue, related_name="inr", null=True, on_delete=models.DO_NOTHING)
 
     # Medication dosage author
-    author = models.ForeignKey(User, related_name='author_inr', blank=True, null=True)
+    author = models.ForeignKey(User, related_name='author_inr', blank=True, null=True, on_delete=models.DO_NOTHING)
     # Can be in duplication with patient in observation value becuz this in one-2-on relationship
-    patient = models.ForeignKey(User, related_name="patient_inr", null=True)
+    patient = models.ForeignKey(User, related_name="patient_inr", null=True, on_delete=models.DO_NOTHING)
 
     created_on = models.DateTimeField(auto_now_add=True)  # Medication dosage created
 
@@ -1039,8 +1045,8 @@ class Inr(models.Model):
 
 class InrTextNote(models.Model):
     note = models.TextField()
-    author = models.ForeignKey(User, related_name="author_note")
-    patient = models.ForeignKey(User, related_name="patient_note")
+    author = models.ForeignKey(User, related_name="author_note", on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, related_name="patient_note", on_delete=models.DO_NOTHING)
     # TODO: Should be rename to created_at / created_on
     datetime = models.DateTimeField(auto_now_add=True)
 
@@ -1055,8 +1061,8 @@ class Medication(models.Model):
     current = models.BooleanField(default=True)
     # Store original medication search string for change dosage function
     search_str = models.TextField(null=True, blank=True)
-    author = models.ForeignKey(User, related_name='author_medications')
-    patient = models.ForeignKey(User, related_name="patient_medications", blank=True, null=True)
+    author = models.ForeignKey(User, related_name='author_medications', on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, related_name="patient_medications", blank=True, null=True, on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1067,15 +1073,15 @@ class Medication(models.Model):
 
 
 class MedicationPinToProblem(models.Model):
-    author = models.ForeignKey(User, null=True, blank=True, related_name='author_pin_medications')
-    medication = models.ForeignKey(Medication, related_name='medication_pin_medications')
-    problem = models.ForeignKey(Problem, related_name='problem_pin_medications')
+    author = models.ForeignKey(User, null=True, blank=True, related_name='author_pin_medications', on_delete=models.DO_NOTHING)
+    medication = models.ForeignKey(Medication, related_name='medication_pin_medications', on_delete=models.DO_NOTHING)
+    problem = models.ForeignKey(Problem, related_name='problem_pin_medications', on_delete=models.DO_NOTHING)
 
 
 class MedicationTextNote(models.Model):
     note = models.TextField()
-    medication = models.ForeignKey(Medication, related_name='medication_notes')
-    author = models.ForeignKey(User)
+    medication = models.ForeignKey(Medication, related_name='medication_notes', on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     datetime = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
@@ -1092,8 +1098,8 @@ class Document(models.Model):
     # TODO: These should being migrated to using reverse relationship
     problems = models.ManyToManyField(Problem, blank=True, through="DocumentProblem")
     # This should be always be the user who sent the request by using request object instead of pass uid directly
-    author = models.ForeignKey(User, related_name='author_document')
-    patient = models.ForeignKey(User, related_name='patient_pinned', null=True, blank=True)
+    author = models.ForeignKey(User, related_name='author_document', on_delete=models.DO_NOTHING)
+    patient = models.ForeignKey(User, related_name='patient_pinned', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     created_on = models.DateTimeField(auto_now_add=True)
 
@@ -1122,16 +1128,16 @@ class Document(models.Model):
 
 
 class DocumentTodo(models.Model):
-    document = models.ForeignKey(Document)
-    todo = models.ForeignKey(ToDo)
-    author = models.ForeignKey(User)  # User who attach document to the todo
+    document = models.ForeignKey(Document, on_delete=models.DO_NOTHING)
+    todo = models.ForeignKey(ToDo, on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, on_delete=models.DO_NOTHING)  # User who attach document to the todo
     created_on = models.DateTimeField(auto_now_add=True)
 
 
 class DocumentProblem(models.Model):
-    document = models.ForeignKey(Document)
-    problem = models.ForeignKey(Problem)
-    author = models.ForeignKey(User)  # User who attach document to the problem
+    document = models.ForeignKey(Document, on_delete=models.DO_NOTHING)
+    problem = models.ForeignKey(Problem, on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, on_delete=models.DO_NOTHING)  # User who attach document to the problem
     created_on = models.DateTimeField(auto_now_add=True)
 
 
@@ -1148,8 +1154,8 @@ class GeneralSetting(models.Model):
 
 
 class EncounterObservationValue(models.Model):
-    encounter = models.ForeignKey(Encounter, null=False)
-    observation_value = models.ForeignKey(ObservationValue, null=False)
+    encounter = models.ForeignKey(Encounter, null=False, on_delete=models.DO_NOTHING)
+    observation_value = models.ForeignKey(ObservationValue, null=False, on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(auto_now_add=True)
 
 
@@ -1158,9 +1164,9 @@ class Narrative(models.Model):
 
     """
     description = models.TextField()
-    patient = models.ForeignKey(User, related_name="patient_narratives")
-    author = models.ForeignKey(User, related_name="owned_narratives")
-    parent = models.ForeignKey("Narrative", related_name="child", null=True)
+    patient = models.ForeignKey(User, related_name="patient_narratives", on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(User, related_name="owned_narratives", on_delete=models.DO_NOTHING)
+    parent = models.ForeignKey("Narrative", related_name="child", null=True, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -1210,8 +1216,8 @@ class VWTopPatients(models.Model):
 
 
 class EncounterMedication(models.Model):
-    encounter = models.ForeignKey(to=Encounter, related_name='medications')
-    medication = models.ForeignKey(to=Medication, related_name='encounters')
+    encounter = models.ForeignKey(to=Encounter, related_name='medications', on_delete=models.DO_NOTHING)
+    medication = models.ForeignKey(to=Medication, related_name='encounters', on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

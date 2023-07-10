@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
-
+from django.db import migrations, models
 from emr.models import ColonCancerScreening, UserProfile
 
 
@@ -28,12 +27,12 @@ class Migration(migrations.Migration):
             model_name='coloncancerscreening',
             name='last_risk_updated_user',
             field=models.ForeignKey(related_name='last_risk_updated_user_colons', blank=True,
-                                    to=settings.AUTH_USER_MODEL, null=True),
+                                    to=settings.AUTH_USER_MODEL, null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='coloncancerscreening',
             name='patient',
-            field=models.ForeignKey(related_name='patient_colon_cancer', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='patient_colon_cancer', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

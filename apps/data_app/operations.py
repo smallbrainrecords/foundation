@@ -14,11 +14,8 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from itertools import izip
-
-from django.db import connection
-
 from common.views import timeit
+from django.db import connection
 from emr.models import ObservationValue
 
 
@@ -56,7 +53,7 @@ def query_to_dicts(query_string, *query_args):
         row = cursor.fetchone()
         if row is None:
             break
-        row_dict = dict(izip(col_names, row))
+        row_dict = dict(zip(col_names, row))
         yield row_dict
     return
 

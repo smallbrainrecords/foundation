@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
-
+from django.db import migrations, models
 from emr.models import InrTextNote, UserProfile
 
 
@@ -30,11 +29,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='inrtextnote',
             name='author',
-            field=models.ForeignKey(related_name='author_note', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='author_note', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='inrtextnote',
             name='patient',
-            field=models.ForeignKey(related_name='patient_note', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='patient_note', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING),
         ),
     ]

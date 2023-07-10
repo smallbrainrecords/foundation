@@ -22,17 +22,19 @@ import raven
 
 # Django settings for emr project.
 
-DEBUG = False  # Never set 'DEBUG = True' in production environment
+DEBUG = True  # Never set 'DEBUG = True' in production environment
 COMPRESS_ENABLED = True
 
 # toggle experimental features
 VOICE_CONTROL = False
 SYNCING = False
 
-os.environ['LANG'] = 'en_US.UTF-8'
+SECRET_KEY = "{~9@e\1VKr|zlM&vl5ZJTOqBX#b!Aa1cv;pN!J\H=cL=<48<|7r4s1Z!U"
+
+os.environ["LANG"] = "en_US.UTF-8"
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-APP_PATH = os.path.join(BASE_DIR, 'apps')
+APP_PATH = os.path.join(BASE_DIR, "apps")
 sys.path.append(APP_PATH)
 
 AUTH_PROFILE_MODULE = "account.UserProfile"
@@ -41,11 +43,11 @@ AUTH_PROFILE_MODULE = "account.UserProfile"
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # In a Windows environment this must be set to your system time zone.
-TIME_ZONE = 'America/Detroit'
+TIME_ZONE = "America/Detroit"
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -60,22 +62,22 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = '/media/'
+MEDIA_URL = "/media/"
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -94,43 +96,49 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'session_security.middleware.SessionSecurityMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'reversion.middleware.RevisionMiddleware',
-    'emr.middleware.AccessLogMiddleware',
+MIDDLEWARE = (
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "session_security.middleware.SessionSecurityMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "reversion.middleware.RevisionMiddleware",
+    "emr.middleware.AccessLogMiddleware",
 )
 
-ROOT_URLCONF = 'project.urls'
+SILENCED_SYSTEM_CHECKS = [
+    "admin.E408",
+    "admin.E409",
+    "admin.E410"
+]
+
+ROOT_URLCONF = "project.urls"
 
 # Python dotted path to the WSGI application used by Django's runserver.
 # WSGI_APPLICATION = 'project.wsgi.application'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'OPTIONS': {
-            ''
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "OPTIONS": {
+            ""
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.media",
+                "django.template.context_processors.static",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
-            'loaders': [
-                'django.template.loaders.filesystem.Loader',
-                'django.template.loaders.app_directories.Loader',
+            "loaders": [
+                "django.template.loaders.filesystem.Loader",
+                "django.template.loaders.app_directories.Loader",
             ],
-            'debug': True
-        }
+            "debug": True,
+        },
     }
 ]
 
@@ -149,7 +157,7 @@ INSTALLED_APPS = (
     'reversion',
     'emr',
     'pain',
-    'genericadmin',
+    # 'genericadmin',
     'compressor',
     'cronjobs',
     'session_security',
@@ -166,14 +174,14 @@ SESSION_COOKIE_AGE = 1800
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_SECURITY_WARN_AFTER = 1740
 SESSION_SECURITY_EXPIRE_AFTER = 1800
-SESSION_SECURITY_PASSIVE_URLS = {}
+SESSION_SECURITY_PASSIVE_URLS: dict = {}
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
-LOGIN_URL = '/u/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGIN_ERROR_URL = '/login-error/'
+LOGIN_URL = "/u/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGIN_ERROR_URL = "/login-error/"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -181,41 +189,39 @@ LOGIN_ERROR_URL = '/login-error/'
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "handlers": {
+        "null": {
+            "level": "DEBUG",
+            "class": "logging.NullHandler",
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
+        },
     },
-    'handlers': {
-        'null': {
-            'level': 'DEBUG',
-            'class': 'logging.NullHandler',
+    "loggers": {
+        "django.security.DisallowedHost": {
+            "handlers": ["null"],
+            "propagate": False,
         },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
+        "django.request": {
+            "handlers": ["mail_admins"],
+            "level": "ERROR",
+            "propagate": True,
+        },
     },
-    'loggers': {
-        'django.security.DisallowedHost': {
-            'handlers': ['null'],
-            'propagate': False,
-        },
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    }
 }
 
-SNOMEDCT = {}
+SNOMEDCT: dict = {}
+
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 # ###################################################################
-# LOCAL SETTINGS FILE IS USED TO IMPORT SENSITIVE CONFIGURATION INFO. 
+# LOCAL SETTINGS FILE IS USED TO IMPORT SENSITIVE CONFIGURATION INFO.
 # MODIFY THE INCLUDED TEMPLATE FOR YOUR OWN PARTICULAR ENVIRONMENT
 # ###################################################################
 

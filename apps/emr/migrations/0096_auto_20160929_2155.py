@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('note', models.TextField(null=True, blank=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('patient', models.ForeignKey(related_name='patient_inr', to=settings.AUTH_USER_MODEL)),
+                ('patient', models.ForeignKey(related_name='patient_inr', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
             options={
                 'ordering': ['-created_on'],
@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
                 ('value', models.DecimalField(null=True, max_digits=10, decimal_places=4, blank=True)),
                 ('effective_datetime', models.DateTimeField(null=True, blank=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(related_name='author_inr_values', to='emr.UserProfile')),
-                ('inr', models.ForeignKey(related_name='inr_values', to='emr.Inr')),
+                ('author', models.ForeignKey(related_name='author_inr_values', to='emr.UserProfile', on_delete=models.DO_NOTHING)),
+                ('inr', models.ForeignKey(related_name='inr_values', to='emr.Inr', on_delete=models.DO_NOTHING)),
             ],
             options={
                 'ordering': ['-effective_datetime', '-created_on'],
@@ -46,8 +46,8 @@ class Migration(migrations.Migration):
                 ('concept_id', models.CharField(max_length=20, null=True, blank=True)),
                 ('current', models.BooleanField(default=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(related_name='author_medications', to='emr.UserProfile')),
-                ('inr', models.ForeignKey(related_name='inr_medications', to='emr.Inr')),
+                ('author', models.ForeignKey(related_name='author_medications', to='emr.UserProfile', on_delete=models.DO_NOTHING)),
+                ('inr', models.ForeignKey(related_name='inr_medications', to='emr.Inr', on_delete=models.DO_NOTHING)),
             ],
             options={
                 'ordering': ['-created_on'],
@@ -58,9 +58,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('author',
-                 models.ForeignKey(related_name='author_pin_medications', blank=True, to='emr.UserProfile', null=True)),
-                ('medication', models.ForeignKey(related_name='medication_pin_medications', to='emr.Medication')),
-                ('problem', models.ForeignKey(related_name='problem_pin_medications', to='emr.Problem')),
+                 models.ForeignKey(related_name='author_pin_medications', blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING)),
+                ('medication', models.ForeignKey(related_name='medication_pin_medications', to='emr.Medication', on_delete=models.DO_NOTHING)),
+                ('problem', models.ForeignKey(related_name='problem_pin_medications', to='emr.Problem', on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.CreateModel(
@@ -69,8 +69,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('note', models.TextField()),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(to='emr.UserProfile')),
-                ('medication', models.ForeignKey(related_name='medication_notes', to='emr.Medication')),
+                ('author', models.ForeignKey(to='emr.UserProfile', on_delete=models.DO_NOTHING)),
+                ('medication', models.ForeignKey(related_name='medication_notes', to='emr.Medication', on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.AlterModelOptions(
@@ -80,6 +80,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='todo',
             name='inr',
-            field=models.ForeignKey(related_name='inr_todos', blank=True, to='emr.Inr', null=True),
+            field=models.ForeignKey(related_name='inr_todos', blank=True, to='emr.Inr', null=True, on_delete=models.DO_NOTHING),
         ),
     ]

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('encounter', models.ForeignKey(to='emr.Encounter')),
-                ('observation_value', models.ForeignKey(to='emr.ObservationValue')),
+                ('encounter', models.ForeignKey(to='emr.Encounter', on_delete=models.DO_NOTHING)),
+                ('observation_value', models.ForeignKey(to='emr.ObservationValue', on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.AddField(

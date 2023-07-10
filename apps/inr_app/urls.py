@@ -14,22 +14,21 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from django.conf.urls import url
-
+from django.urls import re_path
 from inr_app.views import *
 
 urlpatterns = [
-    url(r'^(?P<patient_id>\d+)/target/get$', get_inr_target),
-    url(r'^(?P<patient_id>\d+)/target/set$', set_inr_target),
-    url(r'^(?P<patient_id>\d+)/inrs$', get_inr_table),
-    url(r'^(?P<patient_id>\d+)/inr/add$', add_inr),
-    url(r'^(?P<patient_id>\d+)/inr/update$', update_inr),
-    url(r'^(?P<patient_id>\d+)/inr/delete$', delete_inr),
-    url(r'^(?P<patient_id>\d+)/problems$', get_problems),
-    url(r'^(?P<patient_id>\d+)/medications$', get_medications),
-    url(r'^(?P<patient_id>\d+)/(?P<problem_id>\d+)/orders$', get_orders),
-    url(r'^(?P<patient_id>\d+)/order/add$', add_order),
-    url(r'^(?P<patient_id>\d+)/notes$', get_inr_note),
-    url(r'^(?P<patient_id>\d+)/note/add$', add_note),
-    url(r'^patients$', find_patient)
+    re_path(r"^(?P<patient_id>\d+)/target/get$", get_inr_target),
+    re_path(r"^(?P<patient_id>\d+)/target/set$", set_inr_target),
+    re_path(r"^(?P<patient_id>\d+)/inrs$", get_inr_table),
+    re_path(r"^(?P<patient_id>\d+)/inr/add$", add_inr),
+    re_path(r"^(?P<patient_id>\d+)/inr/update$", update_inr),
+    re_path(r"^(?P<patient_id>\d+)/inr/delete$", delete_inr),
+    re_path(r"^(?P<patient_id>\d+)/problems$", get_problems),
+    re_path(r"^(?P<patient_id>\d+)/medications$", get_medications),
+    re_path(r"^(?P<patient_id>\d+)/(?P<problem_id>\d+)/orders$", get_orders),
+    re_path(r"^(?P<patient_id>\d+)/order/add$", add_order),
+    re_path(r"^(?P<patient_id>\d+)/notes$", get_inr_note),
+    re_path(r"^(?P<patient_id>\d+)/note/add$", add_note),
+    re_path(r"^patients$", find_patient),
 ]

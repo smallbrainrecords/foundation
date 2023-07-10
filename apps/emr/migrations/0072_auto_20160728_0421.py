@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('note', models.TextField()),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(blank=True, to='emr.UserProfile', null=True)),
+                ('author', models.ForeignKey(blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.CreateModel(
@@ -35,16 +35,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='coloncancerstudyimage',
             name='study',
-            field=models.ForeignKey(related_name='study_images', blank=True, to='emr.ColonCancerStudy', null=True),
+            field=models.ForeignKey(related_name='study_images', blank=True, to='emr.ColonCancerStudy', null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='riskfactor',
             name='colon',
-            field=models.ForeignKey(related_name='colon_risk_factors', to='emr.ColonCancerScreening'),
+            field=models.ForeignKey(related_name='colon_risk_factors', to='emr.ColonCancerScreening', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='coloncancertextnote',
             name='colon',
-            field=models.ForeignKey(related_name='colon_notes', to='emr.ColonCancerScreening'),
+            field=models.ForeignKey(related_name='colon_notes', to='emr.ColonCancerScreening', on_delete=models.DO_NOTHING),
         ),
     ]

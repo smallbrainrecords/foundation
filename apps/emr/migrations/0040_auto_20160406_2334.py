@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -96,7 +96,7 @@ class Migration(migrations.Migration):
                 ('value_string', models.TextField(null=True, blank=True)),
                 ('value_unit', models.CharField(max_length=45, null=True, blank=True)),
                 ('comments', models.TextField(null=True, blank=True)),
-                ('observation', models.ForeignKey(related_name='observation_components', to='emr.Observation')),
+                ('observation', models.ForeignKey(related_name='observation_components', to='emr.Observation', on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.CreateModel(
@@ -105,7 +105,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('code', models.CharField(max_length=2)),
                 ('name', models.CharField(max_length=50)),
-                ('country', models.ForeignKey(related_name='country_states', to='emr.Country')),
+                ('country', models.ForeignKey(related_name='country_states', to='emr.Country', on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.CreateModel(
@@ -130,10 +130,10 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('start', models.DateField(null=True, blank=True)),
                 ('end', models.DateField(null=True, blank=True)),
-                ('address', models.ForeignKey(related_name='address_users', to='emr.Address')),
-                ('type_code', models.ForeignKey(related_name='type_code_user_address', to='emr.AddressType')),
-                ('use_code', models.ForeignKey(related_name='use_code_user_address', to='emr.AddressUse')),
-                ('user', models.ForeignKey(related_name='user_addresses', to=settings.AUTH_USER_MODEL)),
+                ('address', models.ForeignKey(related_name='address_users', to='emr.Address', on_delete=models.DO_NOTHING)),
+                ('type_code', models.ForeignKey(related_name='type_code_user_address', to='emr.AddressType', on_delete=models.DO_NOTHING)),
+                ('use_code', models.ForeignKey(related_name='use_code_user_address', to='emr.AddressUse', on_delete=models.DO_NOTHING)),
+                ('user', models.ForeignKey(related_name='user_addresses', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.CreateModel(
@@ -144,8 +144,8 @@ class Migration(migrations.Migration):
                 ('rank', models.PositiveIntegerField(null=True, blank=True)),
                 ('start', models.DateField(null=True, blank=True)),
                 ('end', models.DateField(null=True, blank=True)),
-                ('telecom', models.ForeignKey(related_name='telecom_users', to='emr.Telecom')),
-                ('user', models.ForeignKey(related_name='user_telecoms', to=settings.AUTH_USER_MODEL)),
+                ('telecom', models.ForeignKey(related_name='telecom_users', to='emr.Telecom', on_delete=models.DO_NOTHING)),
+                ('user', models.ForeignKey(related_name='user_telecoms', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.AddField(
@@ -156,36 +156,36 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='observation',
             name='author',
-            field=models.ForeignKey(related_name='observation_authors', blank=True, to='emr.UserProfile', null=True),
+            field=models.ForeignKey(related_name='observation_authors', blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='observation',
             name='encounter',
-            field=models.ForeignKey(related_name='observation_encounters', blank=True, to='emr.UserProfile', null=True),
+            field=models.ForeignKey(related_name='observation_encounters', blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='observation',
             name='performer',
-            field=models.ForeignKey(related_name='observation_performers', blank=True, to='emr.UserProfile', null=True),
+            field=models.ForeignKey(related_name='observation_performers', blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='observation',
             name='subject',
-            field=models.ForeignKey(related_name='observation_subjects', to='emr.UserProfile'),
+            field=models.ForeignKey(related_name='observation_subjects', to='emr.UserProfile', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='city',
             name='state',
-            field=models.ForeignKey(related_name='state_cities', to='emr.State'),
+            field=models.ForeignKey(related_name='state_cities', to='emr.State', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='address',
             name='city',
-            field=models.ForeignKey(related_name='city_addresses', to='emr.City'),
+            field=models.ForeignKey(related_name='city_addresses', to='emr.City', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='userprofile',
             name='marital_status',
-            field=models.ForeignKey(blank=True, to='emr.MaritalStatus', null=True),
+            field=models.ForeignKey(blank=True, to='emr.MaritalStatus', null=True, on_delete=models.DO_NOTHING),
         ),
     ]

@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -22,8 +22,8 @@ class Migration(migrations.Migration):
                                                   choices=[(b'acute', b'Acute'), (b'chronic', b'Chronic')])),
                 ('author',
                  models.ForeignKey(related_name='common_problem_author', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
-                ('patient', models.ForeignKey(related_name='common_problem_patient', to=settings.AUTH_USER_MODEL)),
+                                   null=True, on_delete=models.DO_NOTHING)),
+                ('patient', models.ForeignKey(related_name='common_problem_patient', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
         ),
     ]

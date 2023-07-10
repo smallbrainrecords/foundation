@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('note', models.TextField()),
                 ('note_type', models.CharField(max_length=50, choices=[(b'wiki', b'Wiki'), (b'history', b'History')])),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True)),
+                ('author', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.RemoveField(
@@ -29,6 +29,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='problemnote',
             name='problem',
-            field=models.ForeignKey(blank=True, to='emr.Problem', null=True),
+            field=models.ForeignKey(blank=True, to='emr.Problem', null=True, on_delete=models.DO_NOTHING),
         ),
     ]

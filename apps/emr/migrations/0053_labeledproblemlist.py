@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.conf import settings
-from django.db import models, migrations
-
 import emr.models
+from django.conf import settings
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -23,10 +22,10 @@ class Migration(migrations.Migration):
                 ('labels', models.ManyToManyField(to='emr.ProblemLabel', blank=True)),
                 ('patient',
                  models.ForeignKey(related_name='label_problem_list_patient', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
+                                   null=True, on_delete=models.DO_NOTHING)),
                 ('user',
                  models.ForeignKey(related_name='label_problem_list_user', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
+                                   null=True, on_delete=models.DO_NOTHING)),
             ],
         ),
     ]

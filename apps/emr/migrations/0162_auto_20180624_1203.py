@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='narrative',
             name='parent',
-            field=models.ForeignKey(related_name='child', to='emr.Narrative', null=True),
+            field=models.ForeignKey(related_name='child', to='emr.Narrative', null=True, on_delete=models.DO_NOTHING),
         ),
     ]

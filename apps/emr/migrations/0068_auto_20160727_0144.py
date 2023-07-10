@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -24,10 +24,10 @@ class Migration(migrations.Migration):
                 ('result', models.CharField(max_length=100, null=True, blank=True)),
                 ('note', models.TextField(null=True, blank=True)),
                 ('last_updated_date', models.DateField(auto_now=True)),
-                ('author', models.ForeignKey(related_name='author_studies', to='emr.UserProfile')),
-                ('colon', models.ForeignKey(related_name='colon_studies', to='emr.ColonCancerScreening')),
+                ('author', models.ForeignKey(related_name='author_studies', to='emr.UserProfile', on_delete=models.DO_NOTHING)),
+                ('colon', models.ForeignKey(related_name='colon_studies', to='emr.ColonCancerScreening', on_delete=models.DO_NOTHING)),
                 (
-                'last_updated_user', models.ForeignKey(related_name='last_updated_user_studies', to='emr.UserProfile')),
+                'last_updated_user', models.ForeignKey(related_name='last_updated_user_studies', to='emr.UserProfile', on_delete=models.DO_NOTHING)),
             ],
             options={
                 'ordering': ['-created_on'],

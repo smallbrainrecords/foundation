@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
-
+from django.db import migrations, models
 from emr.models import DocumentTodo, UserProfile
 
 
@@ -24,7 +23,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='documenttodo',
             name='author',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

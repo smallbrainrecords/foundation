@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.conf import settings
-from django.db import models, migrations
-
 import emr.models
+from django.conf import settings
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -21,9 +20,9 @@ class Migration(migrations.Migration):
                 ('order', emr.models.ListField(null=True, blank=True)),
                 ('patient',
                  models.ForeignKey(related_name='patient_problem_order', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
+                                   null=True, on_delete=models.DO_NOTHING)),
                 ('user', models.ForeignKey(related_name='user_problem_order', blank=True, to=settings.AUTH_USER_MODEL,
-                                           null=True)),
+                                           null=True, on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.AlterModelOptions(

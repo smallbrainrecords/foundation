@@ -18,9 +18,9 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('description', models.TextField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(related_name='owned_narratives', to=settings.AUTH_USER_MODEL)),
-                ('parent', models.ForeignKey(related_name='child', to='emr.Narrative')),
-                ('patient', models.ForeignKey(related_name='patient_narratives', to=settings.AUTH_USER_MODEL)),
+                ('author', models.ForeignKey(related_name='owned_narratives', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
+                ('parent', models.ForeignKey(related_name='child', to='emr.Narrative', on_delete=models.DO_NOTHING)),
+                ('patient', models.ForeignKey(related_name='patient_narratives', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
         ),
     ]

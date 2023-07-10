@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='problem',
             name='inr',
-            field=models.ForeignKey(related_name='inr_problem', blank=True, to='emr.Inr', null=True),
+            field=models.ForeignKey(related_name='inr_problem', blank=True, to='emr.Inr', null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='inr',

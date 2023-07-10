@@ -21,8 +21,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.shortcuts import render, render_to_response
-
+from django.shortcuts import render
 from users_app.operations import get_vitals_table_component
 
 try:
@@ -30,32 +29,55 @@ try:
 except ImportError:
     import Image
     import ImageOps
-import operator
-from rest_framework.decorators import api_view
-from common.views import *
-from emr.models import UserProfile, Problem, Medication, MEDICATION_BLEEDING_RISK, GeneralSetting, \
-    Document, ObservationValue, Narrative, VWTopPatients
-from emr.models import Goal, ToDo
-from emr.models import Encounter, EncounterEvent, EncounterProblemRecord
-
-from emr.models import PhysicianTeam, PatientController, ProblemOrder, ProblemActivity
-from emr.models import SharingPatient, CommonProblem
-from emr.models import ProblemNote
-from emr.models import MyStoryTab, MyStoryTextComponent
-
-from problems_app.serializers import ProblemSerializer, CommonProblemSerializer
-from goals_app.serializers import GoalSerializer
-from .serializers import UserProfileSerializer, NarrativeSerializer, TopPatientSerializer
-from todo_app.serializers import TodoSerializer
-from encounters_app.serializers import EncounterSerializer, EncounterEventSerializer
-
-from .forms import LoginForm, RegisterForm, UpdateBasicProfileForm, UpdateProfileForm, UpdateEmailForm
 
 import datetime
+import operator
 
-from emr.manage_patient_permissions import ROLE_PERMISSIONS
+from common.views import *
+from emr.manage_patient_permissions import ROLE_PERMISSIONS, check_access
+from emr.models import (
+    MEDICATION_BLEEDING_RISK,
+    CommonProblem,
+    Document,
+    Encounter,
+    EncounterEvent,
+    EncounterProblemRecord,
+    GeneralSetting,
+    Goal,
+    Medication,
+    MyStoryTab,
+    MyStoryTextComponent,
+    Narrative,
+    ObservationValue,
+    PatientController,
+    PhysicianTeam,
+    Problem,
+    ProblemActivity,
+    ProblemNote,
+    ProblemOrder,
+    SharingPatient,
+    ToDo,
+    UserProfile,
+    VWTopPatients,
+)
+from encounters_app.serializers import EncounterEventSerializer, EncounterSerializer
+from goals_app.serializers import GoalSerializer
+from problems_app.serializers import CommonProblemSerializer, ProblemSerializer
+from rest_framework.decorators import api_view
+from todo_app.serializers import TodoSerializer
 
-from emr.manage_patient_permissions import check_access
+from .forms import (
+    LoginForm,
+    RegisterForm,
+    UpdateBasicProfileForm,
+    UpdateEmailForm,
+    UpdateProfileForm,
+)
+from .serializers import (
+    NarrativeSerializer,
+    TopPatientSerializer,
+    UserProfileSerializer,
+)
 
 
 @timeit
@@ -817,7 +839,8 @@ def search(request, user_id):
     context['patient_profile'] = patient_profile
 
     # context = RequestContext(request, context)
-    return render_to_response("patient-search.html", context)
+    return render(request, "patient-search.html", context)
+    # return render_to_response("patient-search.html", context)
 
 
 @login_required
@@ -878,7 +901,8 @@ def staff_search(request):
     context['user_profile'] = user_profile
 
     # context = RequestContext(request, context)
-    return render_to_response("staff-search.html", context)
+    return render(request, "staff-search.html", context)
+    # return render_to_response("staff-search.html", context)
 
 
 @login_required

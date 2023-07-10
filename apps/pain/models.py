@@ -21,12 +21,12 @@ from django.db import models
 
 
 class PainAvatar(models.Model):
-    patient = models.ForeignKey(User)
+    patient = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     datetime = models.DateTimeField(auto_now_add=True)
     json = models.TextField()
 
     def __unicode__(self):
-        return '%s %s' % (self.patient.username, self.datetime)
+        return f'{self.patient.username} {self.datetime}'
 
     def generate_dict(self):
 
@@ -40,3 +40,6 @@ class PainAvatar(models.Model):
 
         obj_dict['json'] = json.loads(self.json)
         return obj_dict
+    
+    class Meta:
+        app_label = "foundation"

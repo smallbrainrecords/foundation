@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
             model_name='todo',
             name='colon_cancer',
             field=models.ForeignKey(related_name='colon_cancer_todos', blank=True, to='emr.ColonCancerScreening',
-                                    null=True),
+                                    null=True, on_delete=models.DO_NOTHING),
         ),
     ]

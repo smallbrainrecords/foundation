@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
-
+from django.db import migrations, models
 from emr.models import ObservationComponent, UserProfile
 
 
@@ -25,7 +24,7 @@ class Migration(migrations.Migration):
             model_name='observationcomponent',
             name='author',
             field=models.ForeignKey(related_name='observation_component_authors', blank=True,
-                                    to=settings.AUTH_USER_MODEL, null=True),
+                                    to=settings.AUTH_USER_MODEL, null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

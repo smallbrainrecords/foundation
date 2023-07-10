@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('datetime', models.DateTimeField(auto_now_add=True)),
                 ('private', models.BooleanField(default=True)),
                 ('shared', models.BooleanField(default=True)),
-                ('patient', models.ForeignKey(related_name='patient_story_tabs', to=settings.AUTH_USER_MODEL)),
+                ('patient', models.ForeignKey(related_name='patient_story_tabs', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.CreateModel(
@@ -32,9 +32,9 @@ class Migration(migrations.Migration):
                 ('datetime', models.DateTimeField(auto_now_add=True)),
                 ('last_updated_date', models.DateField(auto_now=True)),
                 ('concept_id', models.CharField(max_length=20, null=True, blank=True)),
-                ('last_updated_user', models.ForeignKey(blank=True, to='emr.UserProfile', null=True)),
-                ('patient', models.ForeignKey(related_name='patient_story_texts', to=settings.AUTH_USER_MODEL)),
-                ('tab', models.ForeignKey(blank=True, to='emr.MyStoryTab', null=True)),
+                ('last_updated_user', models.ForeignKey(blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING)),
+                ('patient', models.ForeignKey(related_name='patient_story_texts', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
+                ('tab', models.ForeignKey(blank=True, to='emr.MyStoryTab', null=True, on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.CreateModel(
@@ -43,8 +43,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('text', models.TextField(null=True, blank=True)),
                 ('datetime', models.DateTimeField(null=True, blank=True)),
-                ('author', models.ForeignKey(related_name='author_story_text_entries', to=settings.AUTH_USER_MODEL)),
-                ('component', models.ForeignKey(blank=True, to='emr.MyStoryTextComponent', null=True)),
+                ('author', models.ForeignKey(related_name='author_story_text_entries', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
+                ('component', models.ForeignKey(blank=True, to='emr.MyStoryTextComponent', null=True, on_delete=models.DO_NOTHING)),
             ],
         ),
     ]

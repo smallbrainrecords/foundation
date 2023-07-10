@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -23,12 +23,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='coloncancerstudyimage',
             name='author',
-            field=models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='coloncancerstudyimage',
             name='colon',
-            field=models.ForeignKey(blank=True, to='emr.ColonCancerScreening', null=True),
+            field=models.ForeignKey(blank=True, to='emr.ColonCancerScreening', null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='coloncancerstudyimage',

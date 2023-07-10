@@ -18,20 +18,30 @@ import datetime
 import os
 from audioop import reverse
 
-from django.contrib.auth.decorators import user_passes_test, login_required
+from common.views import *
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.checks import messages
 from django.views.generic import View
 from django.views.static import serve
+from emr.models import (
+    Goal,
+    Guideline,
+    PatientImage,
+    Problem,
+    ProblemRelationship,
+    Sharing,
+    TextNote,
+    ToDo,
+    UserProfile,
+    Viewer,
+    ViewStatus,
+    VWProblems,
+)
+from emr.mysnomedct import VWProblemsSerializers
 from ranged_response import RangedFileResponse
 
 import project.settings as settings
-from common.views import *
-from emr.mysnomedct import VWProblemsSerializers
-from models import UserProfile, Problem, \
-    Goal, ToDo, Guideline, TextNote, PatientImage, \
-    Sharing, Viewer, \
-    ViewStatus, ProblemRelationship, VWProblems
 
 
 @user_passes_test(lambda u: u.is_superuser)

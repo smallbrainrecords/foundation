@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -24,8 +24,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('note', models.TextField()),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
-                ('a1c', models.ForeignKey(related_name='a1c_notes', to='emr.AOneC')),
-                ('author', models.ForeignKey(blank=True, to='emr.UserProfile', null=True)),
+                ('a1c', models.ForeignKey(related_name='a1c_notes', to='emr.AOneC', on_delete=models.DO_NOTHING)),
+                ('author', models.ForeignKey(blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.RemoveField(
@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='observation',
             name='subject',
-            field=models.ForeignKey(related_name='observation_subjects', blank=True, to='emr.UserProfile', null=True),
+            field=models.ForeignKey(related_name='observation_subjects', blank=True, to='emr.UserProfile', null=True, on_delete=models.DO_NOTHING),
         ),
         migrations.AlterField(
             model_name='observationcomponent',
@@ -104,16 +104,16 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='aonec',
             name='observation',
-            field=models.OneToOneField(related_name='observation_aonecs', to='emr.Observation'),
+            field=models.OneToOneField(related_name='observation_aonecs', to='emr.Observation', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='aonec',
             name='problem',
-            field=models.OneToOneField(related_name='problem_aonecs', to='emr.Problem'),
+            field=models.OneToOneField(related_name='problem_aonecs', to='emr.Problem', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='todo',
             name='a1c',
-            field=models.ForeignKey(related_name='a1c_todos', blank=True, to='emr.AOneC', null=True),
+            field=models.ForeignKey(related_name='a1c_todos', blank=True, to='emr.AOneC', null=True, on_delete=models.DO_NOTHING),
         ),
     ]

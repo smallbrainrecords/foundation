@@ -15,122 +15,110 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 import django
-import session_security
-from django import contrib, views
 from django.conf.urls import include
-from django.contrib import auth
 from django.contrib.auth import views
-from django.views import static
-from genericadmin.admin import *
-from session_security import urls
+from django.urls import re_path
 
-import a1c_app
-import colons_app
-import data_app
-import document_app
-import emr
-import encounters_app
-import goals_app
-import inr_app
-import medication_app
-import my_story_app
-import pain
-import problems_app
-import project_admin_app
-import settings
-import todo_app
-import users_app
-from a1c_app import urls
-from colons_app import urls
-from data_app import urls
-from document_app import urls
-from emr import views
-from emr.views import LoginError
-from encounters_app import urls
-from goals_app import urls
-from inr_app import urls
-from medication_app import urls
-from my_story_app import urls
-from pain import views
-from problems_app import urls
-from project_admin_app import urls
-from todo_app import urls
-from users_app import urls
-from views import home
+from apps.a1c_app import urls as a1c_app_urls
+from apps.colons_app import urls as colons_app_urls
+from apps.data_app import urls as data_app_urls
+from apps.document_app import urls
+from apps.document_app import urls as document_app_urls
+from apps.emr import views as emr_views
+from apps.emr.views import LoginError
+from apps.encounters_app import urls as encounters_app_urls
+from apps.goals_app import urls as goals_app_urls
+from apps.inr_app import urls as inr_app_urls
+from apps.medication_app import urls as medication_app_urls
+from apps.my_story_app import urls as my_story_app_urls
+from apps.pain import views as pain_views
+from apps.problems_app import urls as problems_app_urls
+from apps.project_admin_app import urls as project_admin_app_urls
+from apps.todo_app import urls as todo_app_urls
+from apps.users_app import urls as users_app_urls
 
-admin.autodiscover()
+# import settings
+from project import settings
+from project.views import home
+
+# from genericadmin.admin import *
+
+
+
+
+# admin.autodiscover()
 
 urlpatterns = [
-    url(r'^$', home,name='project_home'),
+    re_path(r'^$', home,name='project_home'),
 
-    url(r'^admin/', include(admin.site.urls)),
+    # re_path(r'^admin/', include(admin.site.urls)),
 
-    url(r'^project/admin/', include(project_admin_app.urls)),
+    re_path(r'^project/admin/', include(project_admin_app_urls)),
 
-    url(r'^pain/create_pain_avatar/(?P<patient_id>\d+)/$', pain.views.create_pain_avatar),
-    url(r'^pain/reset/$', pain.views.reset),
-    url(r'^login-error/$', LoginError.as_view()),
+    re_path(r'^pain/create_pain_avatar/(?P<patient_id>\d+)/$', pain_views.create_pain_avatar),
+    re_path(r'^pain/reset/$', pain_views.reset),
+    re_path(r'^login-error/$', LoginError.as_view()),
 
     # Old user views
-    url(r'^logout/$', django.contrib.auth.views.logout, {'next_page': '/'}),
+    re_path(r'^logout/$', django.contrib.auth.views.LogoutView.as_view(), {'next_page': '/'}),
 
     # Old views
-    url(r'^list_of_unregistered_users/$', emr.views.list_of_unregistered_users),
-    url(r'^register_users/$', emr.views.register_users),
-    url(r'^list_of_users/$', emr.views.list_users),
+    re_path(r'^list_of_unregistered_users/$', emr_views.list_of_unregistered_users),
+    re_path(r'^register_users/$', emr_views.register_users),
+    re_path(r'^list_of_users/$', emr_views.list_users),
 
-    url(r'^get_problems/(?P<patient_id>\d+)/$', emr.views.get_patient_data),
-    url(r'^change_status/$', emr.views.change_status),
-    url(r'^patient/(?P<patient_id>\d+)/add_problem/$', emr.views.add_problem),
-    url(r'^add_patient_summary/(?P<patient_id>\d+)/$', emr.views.save_patient_summary),
+    re_path(r'^get_problems/(?P<patient_id>\d+)/$', emr_views.get_patient_data),
+    re_path(r'^change_status/$', emr_views.change_status),
+    re_path(r'^patient/(?P<patient_id>\d+)/add_problem/$', emr_views.add_problem),
+    re_path(r'^add_patient_summary/(?P<patient_id>\d+)/$', emr_views.save_patient_summary),
 
-    url(r'^update/$', emr.views.update),
+    re_path(r'^update/$', emr_views.update),
 
     # New URLS
-    url(r'^list_terms/$', emr.views.list_snomed_terms),
+    re_path(r'^list_terms/$', emr_views.list_snomed_terms),
 
     # Users
-    url(r'^u/', include(users_app.urls)),
+    re_path(r'^u/', include(users_app_urls)),
 
     # Problems
-    url(r'^p/', include(problems_app.urls)),
+    re_path(r'^p/', include(problems_app_urls)),
 
     # Goals
-    url(r'^g/', include(goals_app.urls)),
+    re_path(r'^g/', include(goals_app_urls)),
 
     # Encounters
-    url(r'^enc/', include(encounters_app.urls)),
+    re_path(r'^enc/', include(encounters_app_urls)),
 
     # Todos
-    url(r'^todo/', include(todo_app.urls)),
+    re_path(r'^todo/', include(todo_app_urls)),
 
     # Observations
-    url(r'^a1c/', include(a1c_app.urls)),
+    re_path(r'^a1c/', include(a1c_app_urls)),
 
     # colon cancer
-    url(r'^colon_cancer/', include(colons_app.urls)),
+    re_path(r'^colon_cancer/', include(colons_app_urls)),
 
     # my story
-    url(r'^my_story/', include(my_story_app.urls)),
+    re_path(r'^my_story/', include(my_story_app_urls)),
 
     # data
-    url(r'^data/', include(data_app.urls)),
+    re_path(r'^data/', include(data_app_urls)),
 
     # inr
-    url(r'^inr/', include(inr_app.urls)),
-    url(r'^medication/', include(medication_app.urls)),
+    re_path(r'^inr/', include(inr_app_urls)),
+    re_path(r'^medication/', include(medication_app_urls)),
 
     # document
-    url(r'^docs/', include(document_app.urls)),
+    re_path(r'^docs/', include(document_app_urls)),
 
     # Pain Avatars
-    url(r'^patient/(?P<patient_id>\d+)/pain_avatars$', pain.views.patient_pain_avatars),
-    url(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', pain.views.add_pain_avatar),
+    re_path(r'^patient/(?P<patient_id>\d+)/pain_avatars$', pain_views.patient_pain_avatars),
+    re_path(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', pain_views.add_pain_avatar),
 
-    url(r'session_security/', include(session_security.urls)),
+    re_path(r'session_security/', include('session_security.urls')),
 
     # MEDIA AND STATIC FILES
-    url(r'^media/(?P<path>.*)$', emr.views.serve_private_file),
-    url(r'^static/(?P<path>.*)$', django.views.static.serve,
+    re_path(r'^media/(?P<path>.*)$', emr_views.serve_private_file),
+    re_path(r'^static/(?P<path>.*)$', django.views.static.serve,
         {'document_root': settings.STATIC_ROOT, 'show_indexes': True})
 ]
