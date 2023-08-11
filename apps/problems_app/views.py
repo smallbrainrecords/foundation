@@ -19,7 +19,6 @@ from datetime import timedelta
 from dateutil import parser
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-
 from document_app.serializers import DocumentSerializer
 from encounters_app.serializers import EncounterSerializer
 
@@ -31,35 +30,67 @@ except ImportError:
 
 import operator
 
-from django.db.models import Max, Prefetch, Q
-from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view
-
 from a1c_app.serializers import AOneCSerializer
 from colons_app.serializers import ColonCancerScreeningSerializer
 from common.views import *
-from data_app.serializers import ObservationPinToProblemSerializer, ObservationSerializer
-from emr.models import ColonCancerScreening, Observation, ObservationUnit, ObservationComponent, TaggedToDoOrder, \
-    PatientController
-from emr.models import Encounter
-from emr.models import Goal, ToDo, PatientImage, Label
-from emr.models import MedicationPinToProblem
-from emr.models import ProblemNote, ProblemActivity, CommonProblem
-from emr.models import ProblemRelationship
-from emr.models import SharingPatient, PhysicianTeam, AOneC, ObservationPinToProblem
-from emr.models import UserProfile, Problem, ProblemOrder, ProblemLabel, LabeledProblemList
+from data_app.serializers import (
+    ObservationPinToProblemSerializer,
+    ObservationSerializer,
+)
+from django.db.models import Max, Prefetch, Q
+from django.shortcuts import get_object_or_404
+from emr.models import (
+    AOneC,
+    ColonCancerScreening,
+    CommonProblem,
+    Encounter,
+    Goal,
+    Label,
+    LabeledProblemList,
+    MedicationPinToProblem,
+    Observation,
+    ObservationComponent,
+    ObservationPinToProblem,
+    ObservationUnit,
+    PatientController,
+    PatientImage,
+    PhysicianTeam,
+    Problem,
+    ProblemActivity,
+    ProblemLabel,
+    ProblemNote,
+    ProblemOrder,
+    ProblemRelationship,
+    SharingPatient,
+    TaggedToDoOrder,
+    ToDo,
+    UserProfile,
+)
 from emr.operations import op_add_event, op_add_todo_event
 from goals_app.serializers import GoalSerializer
 from medication_app.serializers import MedicationPinToProblemSerializer
-from problems_app.operations import add_problem_activity, check_problem_access, get_available_widget
+from problems_app.operations import (
+    add_problem_activity,
+    check_problem_access,
+    get_available_widget,
+)
 from problems_app.services import ProblemService
+from rest_framework.decorators import api_view
 from todo_app.operations import add_todo_activity
 from todo_app.serializers import TodoSerializer
 from users_app.serializers import UserProfileSerializer
-from .serializers import ProblemNoteSerializer, ProblemActivitySerializer, CommonProblemSerializer, \
-    PatientImageSerializer, ProblemTodoSerializer
-from .serializers import ProblemSerializer, ProblemLabelSerializer, \
-    LabeledProblemListSerializer, ProblemInfoSerializer
+
+from .serializers import (
+    CommonProblemSerializer,
+    LabeledProblemListSerializer,
+    PatientImageSerializer,
+    ProblemActivitySerializer,
+    ProblemInfoSerializer,
+    ProblemLabelSerializer,
+    ProblemNoteSerializer,
+    ProblemSerializer,
+    ProblemTodoSerializer,
+)
 
 
 @login_required
@@ -876,7 +907,7 @@ def add_problem_list(request, patient_id, user_id):
 
 
 @login_required
-@timeit
+# @timeit
 def get_label_problem_lists(request, patient_id, user_id):
     resp = {'success': False}
 

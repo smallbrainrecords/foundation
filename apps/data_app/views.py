@@ -16,21 +16,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from math import pow
 
+from common.views import *
+from data_app.operations import (
+    get_observation_most_common_value,
+    get_observation_value_pair,
+)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import *
-from rest_framework.decorators import api_view
-
-from common.views import *
-from data_app.operations import get_observation_most_common_value, get_observation_value_pair
-from emr.models import OBSERVATION_TYPES
-from emr.models import Observation, ObservationComponent, ObservationOrder, \
-    PhysicianTeam, ObservationPinToProblem, Problem, ObservationUnit, ObservationValue, \
-    Inr, UserProfile
+from emr.models import (
+    OBSERVATION_TYPES,
+    Inr,
+    Observation,
+    ObservationComponent,
+    ObservationOrder,
+    ObservationPinToProblem,
+    ObservationUnit,
+    ObservationValue,
+    PhysicianTeam,
+    Problem,
+    UserProfile,
+)
 from emr.operations import op_add_event
 from inr_app.serializers import InrSerializer
+from rest_framework.decorators import api_view
 from users_app.views import permissions_accessed
-from .serializers import ObservationSerializer, ObservationPinToProblemSerializer, ObservationValueSerializer
+
+from .serializers import (
+    ObservationPinToProblemSerializer,
+    ObservationSerializer,
+    ObservationValueSerializer,
+)
 
 
 @login_required

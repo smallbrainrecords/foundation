@@ -11,7 +11,8 @@ middleware here, or combine a Django application with an application of another
 framework.
 """
 
-import os, sys
+import os
+import sys
 
 # We defer to a DJANGO_SETTINGS_MODULE already in the environment. This breaks
 # if running multiple sites in the same mod_wsgi process. To fix this, use
@@ -28,7 +29,9 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
 sys.path.append(os.path.join(BASE_DIR, 'templates')) 
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
+os.environ["DJANGO_SETTINGS_MODULE"] = ""
+os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
 
 
 # This application object is used by any WSGI server configured to use this
@@ -36,6 +39,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 # setting points here.
 
 from django.core.wsgi import get_wsgi_application
+
 application = get_wsgi_application()
 
 
