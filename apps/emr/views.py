@@ -422,7 +422,7 @@ def has_read_permission(request, path):
     """ Only show to authenticated users"""
     # Note this could allow access to paths including ../..
     # Don't use this simple check in production!
-    return request.user.is_authenticated()
+    return request.user.is_authenticated
 
 
 def serve_private_file(request, path):
