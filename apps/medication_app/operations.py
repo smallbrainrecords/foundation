@@ -15,8 +15,15 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from common.views import timeit
-from emr.models import Encounter, EncounterEvent, ProblemActivity, MedicationPinToProblem, PatientController, Problem, \
-    EncounterMedication
+from emr.models import (
+    Encounter,
+    EncounterEvent,
+    EncounterMedication,
+    MedicationPinToProblem,
+    PatientController,
+    Problem,
+    ProblemActivity,
+)
 
 
 @timeit
@@ -80,8 +87,8 @@ def op_pin_medication_to_problem_for_all_controlled_patient(actor, pinned_instan
     :return:
     """
     controlled_patients = PatientController.objects.filter(physician=actor)
-    controlled_patient_id_set = [long(x.patient.id) for x in controlled_patients]
-    pinned_instance_id_set = [long(x.problem_id) for x in pinned_instance_set]
+    controlled_patient_id_set = [int(x.patient.id) for x in controlled_patients]
+    pinned_instance_id_set = [int(x.problem_id) for x in pinned_instance_set]
 
     # Filtered out all problem already pinned to this medication
     problems = Problem.objects.filter(concept_id=problem.concept_id).filter(
