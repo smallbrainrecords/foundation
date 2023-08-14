@@ -434,7 +434,6 @@ def serve_private_file(request, path):
     """
     if has_read_permission(request, path):
         fileRes = serve(request, path, settings.MEDIA_ROOT, False)
-        response = RangedFileResponse(request, fileRes.file_to_stream, fileRes._headers['content-type'][1])
-        return response
+        return fileRes
     else:
         return HttpResponseForbidden()
