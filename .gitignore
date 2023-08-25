@@ -1,4 +1,5 @@
 project/local_settings.py
+project/settings.py
 media/*
 staticdev_bk/*
 templates_bk/*
@@ -15,7 +16,12 @@ venv
 .coverage
 /static/css/.sass-cache/
 .venv
+.vscode
 *.pem
 Dockerfile
 .dockerignore
 .venv/*
+client-cert.pem
+client-key.pem
+server-ca.pem
+
