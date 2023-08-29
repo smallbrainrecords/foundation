@@ -1,5 +1,5 @@
 project/local_settings.py
-project/settings.py
+
 media/*
 staticdev_bk/*
 templates_bk/*
@@ -24,4 +24,5 @@ Dockerfile
 client-cert.pem
 client-key.pem
 server-ca.pem
+project/settings.py
 
