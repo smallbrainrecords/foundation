@@ -19,27 +19,27 @@ def get_todo_problem(problem_id):
             )
             problem_dict = problem_serializer.serialize_todo_problem(row_data)            
             
-        problem_cursor.execute(
-            """
-            SELECT *
-            FROM emr_problemsegment ep 
-            WHERE problem_id = %s;
-            """, [problem_id])
+        # problem_cursor.execute(
+        #     """
+        #     SELECT *
+        #     FROM emr_problemsegment ep 
+        #     WHERE problem_id = %s;
+        #     """, [problem_id])
         
-        problem_segments = []
-        problem_seg_results = problem_cursor.fetchall()
+        # problem_segments = []
+        # problem_seg_results = problem_cursor.fetchall()
         
-        if problem_seg_results:
-            for row in problem_seg_results:
-                row_data = OrderedDict(
-                    zip([col[0] for col in problem_cursor.description], row)
-                )
+        # if problem_seg_results:
+        #     for row in problem_seg_results:
+        #         row_data = OrderedDict(
+        #             zip([col[0] for col in problem_cursor.description], row)
+        #         )
                 
-                problem_segments.append(problem_serializer.serialize_todo_problem_segment(
-                    row_data
-                ))
+        #         problem_segments.append(problem_serializer.serialize_todo_problem_segment(
+        #             row_data
+        #         ))
             
-            problem_dict["problem_segment"] = problem_segments
+        #     problem_dict["problem_segment"] = problem_segments
         
         problem_cursor.execute(
             """
@@ -84,39 +84,39 @@ def get_todo_problem(problem_id):
         problem_cursor.close()
     
     # need to understand what's being done here
-    with connection.cursor() as problem_effected_cursor:
-        problem_effected_cursor.execute(
-            """
-            SELECT epr.source_id
-            FROM emr_problemrelationship epr
-            WHERE target_id = %s;
-            """, [problem_id])
+    # with connection.cursor() as problem_effected_cursor:
+    #     problem_effected_cursor.execute(
+    #         """
+    #         SELECT epr.source_id
+    #         FROM emr_problemrelationship epr
+    #         WHERE target_id = %s;
+    #         """, [problem_id])
         
-        problem_effected_result = problem_effected_cursor.fetchall()
-        problem_effected_list = []
-        if problem_effected_result:
-            for row in problem_seg_results:
-                problem_effected_list.append(row[0])
-        # problem_dict["effected"] = problem_effected_list
+    #     problem_effected_result = problem_effected_cursor.fetchall()
+    #     problem_effected_list = []
+    #     if problem_effected_result:
+    #         for row in problem_seg_results:
+    #             problem_effected_list.append(row[0])
+    #     # problem_dict["effected"] = problem_effected_list
         
-        problem_effected_cursor.close()
+    #     problem_effected_cursor.close()
         
-    with connection.cursor() as problem_effecting_cursor:
-        problem_effecting_cursor.execute(
-            """
-            SELECT epr.target_id
-            FROM emr_problemrelationship epr
-            WHERE source_id = %s;
-            """, [problem_id])
+    # with connection.cursor() as problem_effecting_cursor:
+    #     problem_effecting_cursor.execute(
+    #         """
+    #         SELECT epr.target_id
+    #         FROM emr_problemrelationship epr
+    #         WHERE source_id = %s;
+    #         """, [problem_id])
         
-        problem_effecting_result = problem_effecting_cursor.fetchall()
-        problem_effecting_list = []
-        if problem_effecting_result:
-            for row in problem_seg_results:
-                problem_effecting_list.append(row[0])
-        # problem_dict["effecting"] = problem_effecting_list 
+    #     problem_effecting_result = problem_effecting_cursor.fetchall()
+    #     problem_effecting_list = []
+    #     if problem_effecting_result:
+    #         for row in problem_seg_results:
+    #             problem_effecting_list.append(row[0])
+    #     # problem_dict["effecting"] = problem_effecting_list 
                 
-        problem_effecting_cursor.close()
+    #     problem_effecting_cursor.close()
         
     return problem_dict
         
