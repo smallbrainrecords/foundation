@@ -15,13 +15,16 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
+from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 from dateutil import parser
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Max, Q
+from django.db import connection
 from rest_framework.decorators import api_view
+from apps.todo_app import todo_list
 
 from common.views import *
 from document_app.serializers import *
@@ -32,7 +35,7 @@ from problems_app.operations import add_problem_activity
 from todo_app.operations import *
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
 from .serializers import ToDoCommentSerializer, TodoActivitySerializer, LabeledToDoListSerializer
-
+import logging
 
 @login_required
 @timeit
@@ -745,7 +748,7 @@ def get_user_label_lists(request, user_id):
     resp = {}
 
     lists = LabeledToDoList.objects.filter(user_id=user_id).all()
-
+    
     # Loaded admin labeled to do list for all user
     admin_labeled_todo_list = LabeledToDoList.objects.filter(user__profile__role='admin', private=0).all()
 
@@ -754,9 +757,12 @@ def get_user_label_lists(request, user_id):
     physician_ids = [x.physician.id for x in physicians]
     physician_labeled_todo_list = LabeledToDoList.objects.filter(user_id__in=physician_ids).filter(private=0).all()
 
+
     merged_list = list(lists) + list(admin_labeled_todo_list) + list(physician_labeled_todo_list)
     lists_holder = []
+    
     for label_list in merged_list:
+        
         list_dict = LabeledToDoListSerializer(label_list).data
 
         # TODO: Have to simplify the below logic, after understand what is being done here.
@@ -772,13 +778,15 @@ def get_user_label_lists(request, user_id):
                     todos.append(todo)
 
         else:
-            todos = ToDo.objects.filter(labels__id__in=label_ids).distinct().order_by('due_date')
+            todo_results = todo_list.get_todo_list_from_label(label_ids)        
 
-        list_dict['todos'] = TodoSerializer(todos, many=True).data
+        list_dict['todos'] = todo_results
         list_dict['expanded'] = label_list.expanded
+        
         lists_holder.append(list_dict)
 
     resp['todo_lists'] = lists_holder
+
     return ajax_response(resp)
 
 

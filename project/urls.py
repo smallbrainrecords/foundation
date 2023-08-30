@@ -49,6 +49,8 @@ from project.views import home
 
 # admin.autodiscover()
 
+
+
 urlpatterns = [
     path('__debug__/', include(debug_toolbar.urls)),
     re_path(r'^$', home,name='project_home'),
@@ -124,3 +126,10 @@ urlpatterns = [
     re_path(r'^static/(?P<path>.*)$', django.views.static.serve,
         {'document_root': settings.STATIC_ROOT, 'show_indexes': True})
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns += [
+        re_path(r'^__debug__/', include(debug_toolbar.urls)),
+    ]
