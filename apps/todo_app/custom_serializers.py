@@ -25,9 +25,9 @@ def serialize_todo_patient(row_data, cursor_description):
 def serialize_todo(row_data, cursor_description):
     row_dict = OrderedDict(zip([col[0] for col in cursor_description], row_data))
     if row_dict.get("due_date"):
-        due_date = row_dict["due_date"].strftime("%m/%d/%Y, %H:%M:%S")
+        due_date = row_dict["due_date"].strftime("%m/%d/%Y")
     if row_dict.get("created_on"):
-        created_on = row_dict["created_on"].strftime("%m/%d/%Y, %H:%M:%S")
+        created_on = row_dict["created_on"].strftime('%Y-%m-%dT%H:%M:%S%z')
     
     todo_dict = {
         "id": row_dict["patient_id"],
@@ -91,7 +91,7 @@ def serialize_todo_attachment(row_data):
         "is_active": row_data["is_active"],
     }
     if row_data.get("datetime"):
-        datetime = row_data["datetime"].strftime("%m/%d/%Y, %H:%M:%S")
+        datetime = row_data["datetime"].strftime("%Y-%m-%dT%H:%M:%S%z")
         
     attachment_split = row_data["attachment"].split("/")
     filename = attachment_split[-1]
@@ -126,7 +126,7 @@ def serialize_todo_comments(row_data):
         "is_active": row_data["is_active"],
     }
     if row_data.get("datetime"):
-        datetime = row_data["datetime"].strftime("%m/%d/%Y, %H:%M:%S")
+        datetime = row_data["datetime"].strftime("%Y-%m-%dT%H:%M:%S%z")
         
     todo_attachment_dict = {
         "id": row_data["comment_id"],
