@@ -77,14 +77,20 @@ def list_registered_users(request):
 @timeit
 def list_unregistered_users(request):
     users = []
-    for user in User.objects.all():
-        try:
-            UserProfile.objects.get(user=user)
-        except UserProfile.DoesNotExist:
-            users.append({
-                'id': user.id,
-                'username': user.username,
-                'full_name': user.get_full_name()})
+    users_queryset = User.objects.raw("""
+                                SELECT
+                                	au.id,
+                                	au.username,
+                                	CONCAT(au.first_name, ' ', au.last_name) AS full_name
+                                FROM
+                                	auth_user au
+                                LEFT JOIN emr_userprofile eu ON
+                                	au.id = eu.user_id
+                                WHERE
+                                	eu.id IS NULL;                             
+                            """)
+    for user in users_queryset:
+        users.append({"id": user.id, "username": user.username, "full_name": user.full_name})
     return ajax_response(users)
 
 

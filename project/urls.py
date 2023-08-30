@@ -14,10 +14,11 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+import debug_toolbar
 import django
 from django.conf.urls import include
 from django.contrib.auth import views
-from django.urls import re_path
+from django.urls import path, re_path
 
 from apps.a1c_app import urls as a1c_app_urls
 from apps.colons_app import urls as colons_app_urls
@@ -51,6 +52,7 @@ from project.views import home
 
 
 urlpatterns = [
+    path('__debug__/', include(debug_toolbar.urls)),
     re_path(r'^$', home,name='project_home'),
 
     # re_path(r'^admin/', include(admin.site.urls)),
