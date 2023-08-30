@@ -19,3 +19,4 @@ venv
 Dockerfile
 .dockerignore
 .venv/*
+static/node_modules/*
