@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from django.db import connection
-import logging
 from apps.todo_app.todo_problems import serializers as problem_serializer
 
 def get_todo_problem(problem_id):

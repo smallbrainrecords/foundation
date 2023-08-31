@@ -39,7 +39,7 @@ def get_todo_list_from_label(label_ids):
             todo_dict["labels"] = get_todo_labels(todo_dict["id"])
             todo_dict["attachments"] = get_todo_attachments(todo_dict["id"])
             todo_dict["comments"] = get_todo_attachments(todo_dict["id"])
-            todo_dict["members"] = get_todo_members(todo_dict["id"])
+            # todo_dict["members"] = get_todo_members(todo_dict["id"])
 
             todo_results.append(todo_dict)
             

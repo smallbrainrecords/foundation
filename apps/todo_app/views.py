@@ -762,8 +762,10 @@ def get_user_label_lists(request, user_id):
     lists_holder = []
     
     for label_list in merged_list:
+        # list_dict = LabeledToDoListSerializer(label_list).data
+        list_dict = dict(label_list.__dict__)
+        del list_dict['_state']
         
-        list_dict = LabeledToDoListSerializer(label_list).data
 
         # TODO: Have to simplify the below logic, after understand what is being done here.
         label_ids = [l.id for l in label_list.labels.all()]
