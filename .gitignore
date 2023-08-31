@@ -21,8 +21,8 @@ venv
 Dockerfile
 .dockerignore
 .venv/*
+static/node_modules/*
 client-cert.pem
 client-key.pem
 server-ca.pem
 project/settings.py
-
