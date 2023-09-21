@@ -18,7 +18,7 @@ from common.views import timeit
 from emr.models import TodoActivity, UserProfile
 
 
-@timeit
+#@timeit
 def add_todo_activity(todo, user, activity, comment=None, attachment=None):
     new_activity = TodoActivity(todo=todo, author=user, activity=activity)
     if comment:
@@ -28,7 +28,7 @@ def add_todo_activity(todo, user, activity, comment=None, attachment=None):
     new_activity.save()
 
 
-@timeit
+#@timeit
 def is_patient(user):
     try:
         profile = UserProfile.objects.get(user=user)
@@ -38,7 +38,7 @@ def is_patient(user):
 
 
 # set problem authentication to false if not physician, admin
-@timeit
+#@timeit
 def set_problem_authentication_false(request, todo):
     if todo.problem:
         problem = todo.problem

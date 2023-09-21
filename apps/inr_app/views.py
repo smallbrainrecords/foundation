@@ -14,23 +14,35 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from common.views import *
 from dateutil import parser, relativedelta
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
-
-from common.views import *
-from emr.models import Inr, InrTextNote, UserProfile, Medication, ObservationComponent, \
-    ObservationPinToProblem, ToDo, ObservationValue
+from emr.models import (
+    Inr,
+    InrTextNote,
+    Medication,
+    ObservationComponent,
+    ObservationPinToProblem,
+    ObservationValue,
+    ToDo,
+    UserProfile,
+)
 from medication_app.serializers import MedicationSerializer
 from todo_app.serializers import TodoSerializer
-from .serializers import InrTextNoteSerializer, InrSerializer, INRPatientSerializer
-from .serializers import ProblemSerializer
+
+from .serializers import (
+    INRPatientSerializer,
+    InrSerializer,
+    InrTextNoteSerializer,
+    ProblemSerializer,
+)
 
 
 @login_required
-@timeit
+#@timeit
 def get_inr_target(request, patient_id):
     """
     Get patient INR target goal
@@ -47,7 +59,7 @@ def get_inr_target(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def set_inr_target(request, patient_id):
     """
     Set patient INR widget
@@ -63,7 +75,7 @@ def set_inr_target(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problems(request, patient_id):
     """
     Get all problems, whether this INR widget is pinned to
@@ -89,7 +101,7 @@ def get_problems(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_medications(request, patient_id):
     """
     Get all patient's medications in following set:  {375383004, 375379004, 375378007, 319735007, 375374009, 319734006, 375380001, 375375005, 319733000, 319736008}
@@ -110,7 +122,7 @@ def get_medications(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_inr_note(request, patient_id):
     """
 
@@ -135,7 +147,7 @@ def get_inr_note(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def add_note(request, patient_id):
     """
     Adding new note to INR widget
@@ -158,7 +170,7 @@ def add_note(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_orders(request, patient_id, problem_id):
     """
     Get all orders(aka todo) which is generated in this widget
@@ -177,7 +189,7 @@ def get_orders(request, patient_id, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def add_order(request, patient_id):
     """
 
@@ -207,7 +219,7 @@ def add_order(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_inr_table(request, patient_id):
     """
     Get the INR table(which stand for medication dosage of data point in INR data)
@@ -233,7 +245,7 @@ def get_inr_table(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def add_inr(request, patient_id):
     """
     :param patient_id:
@@ -284,7 +296,7 @@ def add_inr(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def update_inr(request, patient_id):
     """
     :param request:
@@ -328,7 +340,7 @@ def update_inr(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def delete_inr(request, patient_id):
     """
     :param patient_id:
@@ -351,7 +363,7 @@ def delete_inr(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def find_patient(request):
     """
 

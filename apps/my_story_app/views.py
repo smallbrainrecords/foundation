@@ -14,20 +14,29 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from common.views import *
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Q, Prefetch
-from rest_framework.decorators import api_view
-
-from common.views import *
-from emr.models import MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry, PatientController
+from django.db.models import Prefetch, Q
+from emr.models import (
+    MyStoryTab,
+    MyStoryTextComponent,
+    MyStoryTextComponentEntry,
+    PatientController,
+)
 from emr.operations import op_add_event
+from rest_framework.decorators import api_view
 from users_app.views import permissions_accessed
-from .serializers import MyStoryTextComponentEntrySerializer, MyStoryTextComponentSerializer, MyStoryTabSerializer
+
+from .serializers import (
+    MyStoryTabSerializer,
+    MyStoryTextComponentEntrySerializer,
+    MyStoryTextComponentSerializer,
+)
 
 
 @login_required
-@timeit
+#@timeit
 def track_tab_click(request):
     resp = {'success': False}
     if request.POST.get("tab_id", None):
@@ -44,7 +53,7 @@ def track_tab_click(request):
 
 
 @login_required
-@timeit
+#@timeit
 def get_my_story(request, patient_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -73,7 +82,7 @@ def get_my_story(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_tab_info(request, tab_id):
     resp = {'success': False}
     tab_info = MyStoryTab.objects.get(id=tab_id)
@@ -86,7 +95,7 @@ def get_tab_info(request, tab_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
-@timeit
+#@timeit
 def add_tab(request, patient_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -112,7 +121,7 @@ def add_tab(request, patient_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
-@timeit
+#@timeit
 def add_text(request, patient_id, tab_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -154,7 +163,7 @@ def add_text(request, patient_id, tab_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
-@timeit
+#@timeit
 def delete_tab(request, patient_id, tab_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -172,7 +181,7 @@ def delete_tab(request, patient_id, tab_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
-@timeit
+#@timeit
 def save_tab(request, patient_id, tab_id):
     resp = {}
     resp['success'] = False
@@ -191,7 +200,7 @@ def save_tab(request, patient_id, tab_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["add_my_story_tab"])
-@timeit
+#@timeit
 def delete_text_component(request, patient_id, component_id):
     resp = {}
     resp['success'] = False
@@ -209,7 +218,7 @@ def delete_text_component(request, patient_id, component_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["save_text_component"])
-@timeit
+#@timeit
 def save_text_component(request, patient_id, component_id):
     resp = {}
     resp['success'] = False
@@ -232,7 +241,7 @@ def save_text_component(request, patient_id, component_id):
 @login_required
 @api_view(["POST"])
 @permissions_required(["save_text_component"])
-@timeit
+#@timeit
 def save_text_component_entry(request, patient_id, component_id):
     resp = {}
     resp['success'] = False

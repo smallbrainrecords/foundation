@@ -37,7 +37,7 @@ from .forms import (
 
 
 @login_required
-@timeit
+#@timeit
 def home(request):
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
@@ -54,7 +54,7 @@ def home(request):
 
 
 @login_required
-@timeit
+#@timeit
 def list_registered_users(request):
     user_profiles = None
     actor = request.user
@@ -74,7 +74,7 @@ def list_registered_users(request):
 
 
 @login_required
-@timeit
+#@timeit
 def list_unregistered_users(request):
     users = []
     users_queryset = User.objects.raw("""
@@ -95,7 +95,7 @@ def list_unregistered_users(request):
 
 
 @login_required
-@timeit
+#@timeit
 def user_info(request, user_id):
     user = User.objects.get(id=user_id)
     user_profile = UserProfile.objects.get(user=user)
@@ -109,7 +109,7 @@ def user_info(request, user_id):
 
 
 @login_required
-@timeit
+#@timeit
 def approve_user(request):
     resp = {'success': False}
     success = False
@@ -140,7 +140,7 @@ def approve_user(request):
 
 
 @login_required
-@timeit
+#@timeit
 def reject_user(request):
     resp = {'success': False}
     success = False
@@ -164,7 +164,7 @@ def reject_user(request):
 
 
 @login_required
-@timeit
+#@timeit
 def update_profile(request):
     resp = {'success': False}
 
@@ -206,7 +206,7 @@ def update_profile(request):
 
 
 @login_required
-@timeit
+#@timeit
 def update_basic_profile(request):
     resp = {}
 
@@ -230,7 +230,7 @@ def update_basic_profile(request):
 
 
 @login_required
-@timeit
+#@timeit
 def update_email(request):
     resp = {}
     resp['success'] = False
@@ -251,7 +251,7 @@ def update_email(request):
 
 
 @login_required
-@timeit
+#@timeit
 def update_password(request):
     resp = {}
     resp['success'] = False
@@ -273,7 +273,7 @@ def update_password(request):
 
 
 @login_required
-@timeit
+#@timeit
 def create_user(request):
     errors = []
     actor = request.user
@@ -398,7 +398,7 @@ def create_user(request):
 
 
 @login_required
-@timeit
+#@timeit
 def list_patient_physicians(request):
     patient_id = request.GET.get('patient_id')
     resp = {}
@@ -422,7 +422,7 @@ def list_patient_physicians(request):
 
 
 @login_required
-@timeit
+#@timeit
 def fetch_physician_data(request):
     success = False
 
@@ -490,7 +490,7 @@ def fetch_physician_data(request):
 
 
 @login_required
-@timeit
+#@timeit
 def assign_physician_member(request):
     success = False
     errors = []
@@ -546,7 +546,7 @@ def assign_physician_member(request):
 
 
 @login_required
-@timeit
+#@timeit
 def unassign_physician_member(request):
     success = False
     errors = []
@@ -597,7 +597,7 @@ def unassign_physician_member(request):
 
 
 @login_required
-@timeit
+#@timeit
 def list_assigned_physicians(request):
     ''' Returns both assigned and unassigned_physicians '''
     success = False
@@ -644,7 +644,7 @@ def list_assigned_physicians(request):
 
 
 @login_required
-@timeit
+#@timeit
 def update_active(request):
     resp = {}
     resp['success'] = False
@@ -669,7 +669,7 @@ def update_active(request):
 
 
 @login_required
-@timeit
+#@timeit
 def update_deceased_date(request):
     resp = {}
     resp['success'] = False

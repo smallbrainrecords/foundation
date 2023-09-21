@@ -15,30 +15,47 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
+import logging
 from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
+from common.views import *
 from dateutil import parser
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Max, Q
 from django.db import connection
-from rest_framework.decorators import api_view
-from apps.todo_app import todo_list
-
-from common.views import *
+from django.db.models import Max, Q
 from document_app.serializers import *
-from emr.models import ToDo, ToDoComment, Label, ToDoAttachment, EncounterTodoRecord, \
-    Encounter, TaggedToDoOrder, LabeledToDoList, PhysicianTeam, PatientController, SharingPatient
+from emr.models import (
+    Encounter,
+    EncounterTodoRecord,
+    Label,
+    LabeledToDoList,
+    PatientController,
+    PhysicianTeam,
+    SharingPatient,
+    TaggedToDoOrder,
+    ToDo,
+    ToDoAttachment,
+    ToDoComment,
+)
 from emr.operations import op_add_event, op_add_todo_event
 from problems_app.operations import add_problem_activity
+from rest_framework.decorators import api_view
 from todo_app.operations import *
 from users_app.serializers import SafeUserSerializer, UserProfileSerializer
-from .serializers import ToDoCommentSerializer, TodoActivitySerializer, LabeledToDoListSerializer
-import logging
+
+from apps.todo_app import todo_list
+
+from .serializers import (
+    LabeledToDoListSerializer,
+    TodoActivitySerializer,
+    ToDoCommentSerializer,
+)
+
 
 @login_required
-@timeit
+#@timeit
 def get_todo_activity(request, todo_id, last_id):
     activities = TodoActivity.objects.filter(todo_id=todo_id).filter(id__gt=last_id)
     resp = {'activities': TodoActivitySerializer(activities, many=True).data, 'success': True}
@@ -47,7 +64,7 @@ def get_todo_activity(request, todo_id, last_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def add_patient_todo(request, patient_id):
     # Get post params
     todo_name = request.POST.get('name')
@@ -92,7 +109,7 @@ def add_patient_todo(request, patient_id):
 @permissions_required(["set_todo_status"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def update_todo_status(request, todo_id):
     resp = {'success': False}
 
@@ -139,7 +156,7 @@ def update_todo_status(request, todo_id):
 
 @permissions_required(["set_todo_order"])
 @login_required
-@timeit
+#@timeit
 def update_order(request):
     # TODO: Need to understand the logic behind this API -> Tagged todo table are not correct
     """
@@ -252,7 +269,7 @@ def update_order(request):
 
 
 @login_required
-@timeit
+#@timeit
 def get_todo_info(request, todo_id):
     """
     TODO:
@@ -310,7 +327,7 @@ def get_todo_info(request, todo_id):
 
 @permissions_required(["add_todo_comment"])
 @login_required
-@timeit
+#@timeit
 def add_todo_comment(request, todo_id):
     resp = {}
     comment = request.POST.get('comment')
@@ -322,7 +339,7 @@ def add_todo_comment(request, todo_id):
 
 @permissions_required(["add_todo_comment"])
 @login_required
-@timeit
+#@timeit
 def edit_todo_comment(request, comment_id):
     resp = {}
     comment = request.POST.get('comment')
@@ -336,7 +353,7 @@ def edit_todo_comment(request, comment_id):
 
 @permissions_required(["delete_todo_comment"])
 @login_required
-@timeit
+#@timeit
 def delete_todo_comment(request, comment_id):
     resp = {}
     ToDoComment.objects.get(id=comment_id).delete()
@@ -346,7 +363,7 @@ def delete_todo_comment(request, comment_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def change_todo_text(request, todo_id):
     resp = {'success': False}
 
@@ -371,7 +388,7 @@ def change_todo_text(request, todo_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def change_todo_due_date(request, todo_id):
     resp = {}
     due_date = request.POST.get('due_date')
@@ -408,7 +425,7 @@ def change_todo_due_date(request, todo_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def add_todo_label(request, label_id, todo_id):
     resp = {}
     todo = ToDo.objects.get(id=todo_id)
@@ -422,7 +439,7 @@ def add_todo_label(request, label_id, todo_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def remove_todo_label(request, label_id, todo_id):
     resp = {}
     label = Label.objects.get(id=label_id)
@@ -436,7 +453,7 @@ def remove_todo_label(request, label_id, todo_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def new_todo_label(request, todo_id):
     resp = {}
     resp['status'] = False
@@ -469,7 +486,7 @@ def new_todo_label(request, todo_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def save_edit_label(request, label_id):
     resp = {}
     resp['status'] = False
@@ -492,7 +509,7 @@ def save_edit_label(request, label_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def delete_label(request, label_id):
     resp = {}
     resp['status'] = False
@@ -505,7 +522,7 @@ def delete_label(request, label_id):
 
 
 @login_required
-@timeit
+#@timeit
 def todo_access_encounter(request, todo_id):
     resp = {}
     todo = ToDo.objects.get(id=todo_id)
@@ -528,7 +545,7 @@ def todo_access_encounter(request, todo_id):
 @permissions_required(["add_todo"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_todo_attachment(request, todo_id):
     attachment = ToDoAttachment.objects.create(todo_id=todo_id, user=request.user, attachment=request.FILES['0'])
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -549,7 +566,7 @@ def add_todo_attachment(request, todo_id):
     return ajax_response(resp)
 
 
-@timeit
+#@timeit
 def download_attachment(request, attachment_id):
     """
     Create a file to download.
@@ -565,7 +582,7 @@ def download_attachment(request, attachment_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def delete_attachment(request, attachment_id):
     attachment = ToDoAttachment.objects.get(id=attachment_id)
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -583,7 +600,7 @@ def delete_attachment(request, attachment_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def add_todo_member(request, todo_id):
     """
     TODO: Migrate members relationship to taggedtodoorder table
@@ -614,7 +631,7 @@ def add_todo_member(request, todo_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def remove_todo_member(request, todo_id):
     """
     TODO: Migrate members relationship to taggedtodoorder table
@@ -643,7 +660,7 @@ def remove_todo_member(request, todo_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_labels(request, user_id):
     labels = Label.objects.filter(Q(is_all=True) | (Q(is_all=False) & Q(author_id=user_id)))
     resp = {'labels': LabelSerializer(labels, many=True).data}
@@ -651,7 +668,7 @@ def get_labels(request, user_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_user_todos(request, user_id):
     """
     Get clinical staff todo list \n
@@ -683,12 +700,12 @@ def get_user_todos(request, user_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def add_staff_todo(request, user_id):
     todo_name = request.POST.get('name')
     due_date = request.POST.get('due_date', None)
     if due_date:
-        due_date = parser.parse(due_date, dayfirst=False).date()
+        due_date = parser.parse(due_date, dayfirst=False)
 
         # due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
@@ -706,7 +723,7 @@ def add_staff_todo(request, user_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def add_staff_todo_list(request, user_id):
     resp = {'success': False}
 
@@ -743,8 +760,9 @@ def add_staff_todo_list(request, user_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_user_label_lists(request, user_id):
+    
     resp = {}
 
     lists = LabeledToDoList.objects.filter(user_id=user_id).all()
@@ -794,7 +812,7 @@ def get_user_label_lists(request, user_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def delete_todo_list(request, list_id):
     resp = {'success': False}
     labeled_to_do_list = LabeledToDoList.objects.get(id=list_id)
@@ -808,7 +826,7 @@ def delete_todo_list(request, list_id):
 
 
 @login_required
-@timeit
+#@timeit
 def staff_all_todos(request, user_id):
     resp = {}
     staff = User.objects.get(id=user_id)
@@ -824,7 +842,7 @@ def staff_all_todos(request, user_id):
 
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def open_todo_list(request, list_id):
     resp = {}
     todo_list = LabeledToDoList.objects.get(id=list_id)
@@ -843,7 +861,7 @@ def open_todo_list(request, list_id):
 
 
 @login_required
-@timeit
+#@timeit
 def batch_save_activities(request):
     """
     TODO: Some how to link with other todo printed in the request

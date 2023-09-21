@@ -16,20 +16,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from datetime import timedelta
 
+from common.views import *
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
+from emr.models import (
+    Encounter,
+    EncounterEvent,
+    EncounterProblemRecord,
+    ObservationValue,
+)
+from problems_app.serializers import ProblemSerializer
 from rest_framework.decorators import api_view
 
-from common.views import *
-from emr.models import Encounter, EncounterEvent, ObservationValue
-from emr.models import EncounterProblemRecord
-from problems_app.serializers import ProblemSerializer
-from .serializers import EncounterSerializer, EncounterEventSerializer
+from .serializers import EncounterEventSerializer, EncounterSerializer
 
 
 # Encounter
 @login_required
-@timeit
+#@timeit
 def get_encounter_info(request, encounter_id):
     resp = {}
     encounter = Encounter.objects.get(id=encounter_id)
@@ -48,7 +52,7 @@ def get_encounter_info(request, encounter_id):
     encounter_documents_holder = []
     for document in encounter_documents:
         encounter_documents_holder.append({
-            'name': document.component.__str__(),
+            'name': document.component.name,
             'value': '%g' % float(document.value_quantity),
             'effective': document.effective_datetime.isoformat()
         })
@@ -66,7 +70,7 @@ def get_encounter_info(request, encounter_id):
 # Encounter
 @login_required
 @permissions_required(["add_encounter"])
-@timeit
+#@timeit
 def patient_encounter_status(request, patient_id):
     """
     Get patient latest encounter information
@@ -97,7 +101,7 @@ def patient_encounter_status(request, patient_id):
 @permissions_required(["add_encounter"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def create_new_encounter(request, patient_id):
     resp = {'success': False}
 
@@ -126,7 +130,7 @@ def create_new_encounter(request, patient_id):
 # Encounter
 @permissions_required(["add_encounter"])
 @login_required
-@timeit
+#@timeit
 def stop_patient_encounter(request, encounter_id):
     resp = {'success': False}
     if not Encounter.objects.filter(id=encounter_id, stoptime=None).exists():
@@ -144,7 +148,7 @@ def stop_patient_encounter(request, encounter_id):
 @permissions_required(["add_event_summary"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_event_summary(request):
     resp = {}
     physician = request.user
@@ -159,7 +163,7 @@ def add_event_summary(request):
 @permissions_required(["add_encounter"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def update_encounter_note(request, patient_id, encounter_id):
     resp = {}
     note = request.POST.get('note')
@@ -172,7 +176,7 @@ def update_encounter_note(request, patient_id, encounter_id):
 @permissions_required(["add_encounter"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def upload_encounter_audio(request, patient_id, encounter_id):
     resp = {}
     audio_file = request.FILES['file']
@@ -187,7 +191,7 @@ def upload_encounter_audio(request, patient_id, encounter_id):
 @permissions_required(["add_encounter"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def upload_encounter_video(request, patient_id, encounter_id):
     resp = {}
     video_file = request.FILES['file']
@@ -202,7 +206,7 @@ def upload_encounter_video(request, patient_id, encounter_id):
 @permissions_required(["add_encounter_timestamp"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_timestamp(request, patient_id, encounter_id):
     resp = {}
     timestamp = request.POST.get('timestamp', 0)
@@ -216,7 +220,7 @@ def add_timestamp(request, patient_id, encounter_id):
 @permissions_required(["add_encounter_timestamp"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def mark_favorite(request, encounter_event_id):
     resp = {}
     is_favorite = True if request.POST.get('is_favorite', False) == "true" else False
@@ -228,7 +232,7 @@ def mark_favorite(request, encounter_event_id):
 @permissions_required(["add_encounter_timestamp"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def name_favorite(request, encounter_event_id):
     resp = {}
     name_favorite = request.POST.get("name_favorite", "")
@@ -240,7 +244,7 @@ def name_favorite(request, encounter_event_id):
 @permissions_required(["delete_encounter"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def delete_encounter(request, patient_id, encounter_id):
     Encounter.objects.get(id=encounter_id).delete()
     resp = {'success': True}
@@ -248,7 +252,7 @@ def delete_encounter(request, patient_id, encounter_id):
 
 
 @login_required
-@timeit
+#@timeit
 def increase_audio_played_count(request, encounter_id):
     resp = {}
     Encounter.objects.filter(id=encounter_id).update(audio_played_count=F('audio_played_count') + 1)
@@ -259,7 +263,7 @@ def increase_audio_played_count(request, encounter_id):
 @login_required
 @permissions_required(["add_encounter_timestamp"])
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_encounter_event(request, encounter_id):
     """
     Add encounter event
@@ -275,7 +279,7 @@ def add_encounter_event(request, encounter_id):
 
 
 @login_required
-@timeit
+#@timeit
 def toggle_encounter_recorder(request, encounter_id):
     """
     Update encounter's recorder status and make a timestamp

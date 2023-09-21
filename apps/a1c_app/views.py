@@ -14,19 +14,28 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from django.contrib.auth.decorators import login_required
-
 from common.views import *
-from data_app.serializers import ObservationValueTextNoteSerializer, ObservationValueSerializer
-from emr.models import AOneCTextNote, ObservationComponent, UserProfile, ObservationValueTextNote, \
-    AOneC, ObservationValue
+from data_app.serializers import (
+    ObservationValueSerializer,
+    ObservationValueTextNoteSerializer,
+)
+from django.contrib.auth.decorators import login_required
+from emr.models import (
+    AOneC,
+    AOneCTextNote,
+    ObservationComponent,
+    ObservationValue,
+    ObservationValueTextNote,
+    UserProfile,
+)
 from emr.operations import op_add_event
 from problems_app.operations import add_problem_activity
-from .serializers import AOneCTextNoteSerializer, AOneCSerializer
+
+from .serializers import AOneCSerializer, AOneCTextNoteSerializer
 
 
 # set problem authentication to false if not physician, admin
-@timeit
+#@timeit
 def set_problem_authentication_false(actor_profile, problem):
     role = actor_profile.role
     authenticated = role in ["physician", "admin"]
@@ -35,7 +44,7 @@ def set_problem_authentication_false(actor_profile, problem):
 
 
 @login_required
-@timeit
+#@timeit
 def track_a1c_click(request, a1c_id):
     actor = request.user
     a1c_info = AOneC.objects.get(id=a1c_id)
@@ -49,7 +58,7 @@ def track_a1c_click(request, a1c_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_a1c_info(request, a1c_id):
     a1c_info = AOneC.objects.get(id=a1c_id)
     resp = {}
@@ -61,7 +70,7 @@ def get_a1c_info(request, a1c_id):
 # Note
 @permissions_required(["add_a1c_note"])
 @login_required
-@timeit
+#@timeit
 def add_note(request, a1c_id):
     resp = {}
     note = request.POST.get("note")
@@ -75,7 +84,7 @@ def add_note(request, a1c_id):
 
 @permissions_required(["edit_a1c_note"])
 @login_required
-@timeit
+#@timeit
 def edit_note(request, note_id):
     resp = {}
 
@@ -90,7 +99,7 @@ def edit_note(request, note_id):
 
 @permissions_required(["delete_a1c_note"])
 @login_required
-@timeit
+#@timeit
 def delete_note(request, note_id):
     resp = {}
 
@@ -102,7 +111,7 @@ def delete_note(request, note_id):
 
 @permissions_required(["add_a1c"])
 @login_required
-@timeit
+#@timeit
 def patient_refused(request, a1c_id):
     a1c = AOneC.objects.get(id=a1c_id)
     observation = a1c.observation
@@ -132,7 +141,7 @@ def patient_refused(request, a1c_id):
 # Value
 @permissions_required(["add_a1c"])
 @login_required
-@timeit
+#@timeit
 def add_value(request, component_id):
     resp = {}
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -169,7 +178,7 @@ def add_value(request, component_id):
 
 @permissions_required(["delete_observation_component"])
 @login_required
-@timeit
+#@timeit
 def delete_value(request, value_id):
     resp = {}
     ObservationValue.objects.get(id=value_id).delete()
@@ -178,7 +187,7 @@ def delete_value(request, value_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_observation_value_info(request, value_id):
     resp = {}
 
@@ -193,7 +202,7 @@ def get_observation_value_info(request, value_id):
 
 @permissions_required(["edit_observation_component"])
 @login_required
-@timeit
+#@timeit
 def edit_value(request, value_id):
     resp = {}
 
@@ -211,7 +220,7 @@ def edit_value(request, value_id):
 # Value Note
 @permissions_required(["add_a1c_note"])
 @login_required
-@timeit
+#@timeit
 def add_value_note(request, value_id):
     resp = {}
 
@@ -225,7 +234,7 @@ def add_value_note(request, value_id):
 
 @permissions_required(["edit_a1c_note"])
 @login_required
-@timeit
+#@timeit
 def edit_value_note(request, note_id):
     resp = {}
     note = request.POST.get('note')
@@ -241,7 +250,7 @@ def edit_value_note(request, note_id):
 
 @permissions_required(["delete_a1c_note"])
 @login_required
-@timeit
+#@timeit
 def delete_value_note(request, note_id):
     resp = {}
 

@@ -21,7 +21,7 @@ from django.shortcuts import render
 from pain.models import PainAvatar
 
 
-@timeit
+#@timeit
 def create_pain_avatar(request, patient_id):
     if request.POST:
         pain_avatar = PainAvatar.objects.create(patient_id=patient_id, json=request.POST['json'])
@@ -31,7 +31,7 @@ def create_pain_avatar(request, patient_id):
 
 @login_required
 @permissions_required(["update_pain"])
-@timeit
+#@timeit
 def add_pain_avatar(request, patient_id):
     if request.method == 'POST':
         resp = {}
@@ -43,14 +43,14 @@ def add_pain_avatar(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def view_pain_avatars(request):
     content = {'pain_avatars': PainAvatar.objects.all().order_by('-datetime')}
     return render(None, 'pain/view_pain_avatars.html', content)
 
 
 @login_required
-@timeit
+#@timeit
 def patient_pain_avatars(request, patient_id):
     pain_avatars = PainAvatar.objects.filter(patient_id=patient_id).order_by('-datetime')
     pain_avatars_dict = [avatar.generate_dict() for avatar in pain_avatars]
@@ -62,7 +62,7 @@ def patient_pain_avatars(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def reset(request):
     PainAvatar.objects.all().delete()
     return HttpResponse('done')

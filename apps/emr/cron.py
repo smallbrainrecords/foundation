@@ -17,13 +17,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 import datetime
 
 import cronjobs
-from django.contrib.auth.models import User
-from django.db.models import Max, Count
-
 from common.views import timeit
-from emr.models import ColonCancerScreening, Problem, ToDo, Label, \
-    PatientController, TaggedToDoOrder, AOneC, ObservationPinToProblem, Observation, MedicationPinToProblem, \
-    Medication, ProblemRelationship
+from django.contrib.auth.models import User
+from django.db.models import Count, Max
+from emr.models import (
+    AOneC,
+    ColonCancerScreening,
+    Label,
+    Medication,
+    MedicationPinToProblem,
+    Observation,
+    ObservationPinToProblem,
+    PatientController,
+    Problem,
+    ProblemRelationship,
+    TaggedToDoOrder,
+    ToDo,
+)
 from emr.operations import op_add_event
 from problems_app.operations import add_problem_activity
 
@@ -146,7 +156,7 @@ def a1c_order_was_automatically_generated():
     print('')
 
 
-@timeit
+#@timeit
 @cronjobs.register
 def physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times():
     """

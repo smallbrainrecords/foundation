@@ -50,7 +50,7 @@ from .serializers import (
 
 
 @login_required
-@timeit
+#@timeit
 def track_observation_click(request):
     resp = {'success': False}
 
@@ -70,7 +70,7 @@ def track_observation_click(request):
 
 
 @login_required
-@timeit
+#@timeit
 def get_datas(request, patient_id):
     resp = {'success': False}
 
@@ -149,7 +149,7 @@ def get_datas(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_observation_info(request, observation_id):
     observation = Observation.objects.get(id=observation_id)
     resp = {'success': True, 'info': ObservationSerializer(observation).data}
@@ -159,7 +159,7 @@ def get_observation_info(request, observation_id):
 @login_required
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_new_data_type(request, patient_id):
     resp = {'success': False}
     name = request.POST.get("name", None)
@@ -193,7 +193,7 @@ def add_new_data_type(request, patient_id):
 
 @permissions_required(["set_data_order"])
 @login_required
-@timeit
+#@timeit
 def update_order(request):
     resp = {'success': False}
 
@@ -215,7 +215,7 @@ def update_order(request):
 
 
 @login_required
-@timeit
+#@timeit
 def get_pins(request, observation_id):
     pins = ObservationPinToProblem.objects.filter(observation_id=observation_id)
     resp = {'success': True, 'pins': ObservationPinToProblemSerializer(pins, many=True).data}
@@ -224,7 +224,7 @@ def get_pins(request, observation_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def obseration_pin_to_problem(request, patient_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)) or True:
@@ -278,7 +278,7 @@ def obseration_pin_to_problem(request, patient_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_new_data(request, patient_id, component_id):
     resp = {'success': False}
 
@@ -344,7 +344,7 @@ def add_new_data(request, patient_id, component_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_individual_data_info(request, patient_id, value_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -357,7 +357,7 @@ def get_individual_data_info(request, patient_id, value_id):
 
 
 @login_required
-@timeit
+#@timeit
 def delete_individual_data(request, patient_id, value_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -368,7 +368,7 @@ def delete_individual_data(request, patient_id, value_id):
 
 
 @login_required
-@timeit
+#@timeit
 def save_data(request, patient_id, value_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -391,7 +391,7 @@ def save_data(request, patient_id, value_id):
 @login_required
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
-@timeit
+#@timeit
 def save_data_type(request, patient_id, observation_id):
     resp = {'success': False}
     name = request.POST.get("name", None)
@@ -424,7 +424,7 @@ def save_data_type(request, patient_id, observation_id):
 @login_required
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
-@timeit
+#@timeit
 def delete_data(request, patient_id, observation_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -449,7 +449,7 @@ def delete_data(request, patient_id, observation_id):
 @login_required
 @permissions_required(["add_data_type"])
 @api_view(["POST"])
-@timeit
+#@timeit
 def update_graph(request):
     resp = {'success': False}
     # If user have access to this data
@@ -463,7 +463,7 @@ def update_graph(request):
 
 
 @login_required
-@timeit
+#@timeit
 def delete_component_values(request, patient_id):
     """
     Delete observation component values    
@@ -482,7 +482,7 @@ def delete_component_values(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_observation_values(request, observation_id):
     """
 

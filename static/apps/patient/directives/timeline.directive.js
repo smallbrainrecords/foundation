@@ -27,14 +27,20 @@
         var timeline = {};
 
         timeline.reset = function () {
-            var element = document.getElementsByTagName("path");
-            for (index = element.length - 1; index >= 0; index--) {
-                element[index].parentNode.removeChild(element[index]);
-            }
-            var element = document.getElementsByTagName("text");
-            for (index = element.length - 1; index >= 0; index--) {
-                element[index].parentNode.removeChild(element[index]);
-            }
+            var pathElements = Array.from(document.getElementsByTagName("path"));
+            pathElements.forEach((element) => {
+                element.parentNode.removeChild(element);
+            });
+            // for (index = element.length - 1; index >= 0; index--) {
+            //     element[index].parentNode.removeChild(element[index]);
+            // }
+            var textElements = Array.from(document.getElementsByTagName("text"));
+            textElements.forEach((element) => {
+                element.parentNode.removeChild(element);
+            });
+            // for (index = element.length - 1; index >= 0; index--) {
+            //     element[index].parentNode.removeChild(element[index]);
+            // }
         };
 
         timeline.renderPath = function (c, d, path) {
@@ -46,7 +52,7 @@
         };
         timeline.renderText = function (c, x, y, txt, text) {
             !text && (text = timeline.wrapSvg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'text')));
-            for (var iii = 0; iii < text.childNodes.length; text.childNodes[iii] && text.removeChild(text.childNodes[iii]), iii++) ;
+            for (var iii = 0; iii < text.childNodes.length; text.childNodes[iii] && text.removeChild(text.childNodes[iii]), iii++);
             text.setAttribute('x', c.x || x);
             text.setAttribute('y', c.y || y);
             text.setAttribute('class', c.c || c);
@@ -57,7 +63,7 @@
         };
         timeline.renderTextProblem = function (id, c, x, y, txt, text) {
             !text && (text = timeline.wrapSvg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'text')));
-            for (var iii = 0; iii < text.childNodes.length; text.childNodes[iii] && text.removeChild(text.childNodes[iii]), iii++) ;
+            for (var iii = 0; iii < text.childNodes.length; text.childNodes[iii] && text.removeChild(text.childNodes[iii]), iii++);
             text.setAttribute('x', c.x || x);
             text.setAttribute('y', c.y || y);
             text.setAttribute('class', c.c || c);
@@ -83,12 +89,12 @@
                 return;
             }
             var sarr = JSON.parse(JSON.stringify(timeline.dat[timeline.unrd]));
-            for (var iii = 0, eee = 0; iii < sarr.problems.length; delete sarr.problems[iii].events[eee].hidden, eee++, (eee < sarr.problems[iii].events.length) || (!sarr.problems[iii].events[eee - 1].state && sarr.problems[iii].events.pop(), eee = 0, iii++)) ;
+            for (var iii = 0, eee = 0; iii < sarr.problems.length; delete sarr.problems[iii].events[eee].hidden, eee++, (eee < sarr.problems[iii].events.length) || (!sarr.problems[iii].events[eee - 1].state && sarr.problems[iii].events.pop(), eee = 0, iii++));
             s.timelineSave(sarr);
         };
 
         timeline.viewAll = function () {
-            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++) ;
+            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++);
             timeline.zoomArr[0].setAttribute('class', 'S1');
             timeline.hideAll(timeline.g01Arr);
             timeline.hideAll(timeline.g02Arr);
@@ -119,7 +125,7 @@
             timeline.init();
         };
         timeline.view10y = function () {
-            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++) ;
+            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++);
             timeline.zoomArr[1].setAttribute('class', 'S1');
             timeline.hideAll(timeline.g01Arr);
             timeline.hideAll(timeline.g02Arr);
@@ -148,7 +154,7 @@
         };
 
         timeline.view1y = function () {
-            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++) ;
+            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++);
             timeline.zoomArr[2].setAttribute('class', 'S1');
             timeline.hideAll(timeline.g01Arr);
             timeline.hideAll(timeline.g02Arr);
@@ -178,7 +184,7 @@
 
 
         timeline.view6m = function () {
-            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++) ;
+            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++);
             timeline.zoomArr[3].setAttribute('class', 'S1');
             timeline.szoom = {};
             timeline.szoom.viewMS = 183 * 24 * 60 * 60 * 1000;
@@ -208,7 +214,7 @@
         };
 
         timeline.view1m = function () {
-            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++) ;
+            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++);
             timeline.zoomArr[4].setAttribute('class', 'S1');
             timeline.szoom = {};
             timeline.szoom.viewMS = 30 * 24 * 60 * 60 * 1000;
@@ -236,7 +242,7 @@
             timeline.init();
         };
         timeline.view1w = function () {
-            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++) ;
+            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++);
             timeline.zoomArr[5].setAttribute('class', 'S1');
             timeline.szoom = {};
             timeline.szoom.viewMS = 7 * 24 * 60 * 60 * 1000;
@@ -264,7 +270,7 @@
             timeline.init();
         };
         timeline.view1d = function () {
-            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++) ;
+            for (var iii = 0; iii < timeline.zoomArr.length; timeline.zoomArr[iii].setAttribute('class', 'G1'), iii++);
             timeline.zoomArr[6].setAttribute('class', 'S1');
             timeline.szoom = {};
             timeline.szoom.viewMS = 1 * 24 * 60 * 60 * 1000;
@@ -299,14 +305,14 @@
                 if (!timeline.dat[timeline.unrd].problems[iii].events.length) {
                     continue;
                 }
-                timeline.dat[timeline.unrd].problems[iii].events[timeline.dat[timeline.unrd].problems[iii].events.length - 1].state && timeline.dat[timeline.unrd].problems[iii].events.push({startTime: new Date(new Date().setFullYear((new Date().getFullYear()) + 1)).strx()});
+                timeline.dat[timeline.unrd].problems[iii].events[timeline.dat[timeline.unrd].problems[iii].events.length - 1].state && timeline.dat[timeline.unrd].problems[iii].events.push({ startTime: new Date(new Date().setFullYear((new Date().getFullYear()) + 1)).strx() });
                 timeline.hideAll(timeline.parr[iii]);
                 timeline.larr[iii] = [];
-                for (var xxx = 0; xxx < timeline.dat[timeline.unrd].problems[iii].events.length; timeline.dat[timeline.unrd].problems[iii].events[xxx].hidden = timeline.drqq(timeline.dat[timeline.unrd].problems[iii].events[xxx].startTime), xxx++) ;
+                for (var xxx = 0; xxx < timeline.dat[timeline.unrd].problems[iii].events.length; timeline.dat[timeline.unrd].problems[iii].events[xxx].hidden = timeline.drqq(timeline.dat[timeline.unrd].problems[iii].events[xxx].startTime), xxx++);
 
-                for (xxx = 0; xxx < timeline.dat[timeline.unrd].problems[iii].events.length; timeline.drq(timeline.dat[timeline.unrd].problems[iii].events[xxx], iii, xxx), xxx++) ;
-                for (xxx = timeline.dat[timeline.unrd].problems[iii].events.length - 1; xxx >= 0; timeline.dat[timeline.unrd].problems[iii].events[xxx].hidden === 'G4' && (timeline.larr[iii].splice(0, 0, timeline.a(timeline.yarr[iii]), {'class': 'G3 ' + (timeline.dat[timeline.unrd].problems[iii].events[xxx].state || 'inactive')}), xxx = 0), xxx--) ;
-                for (xxx = 0; xxx < timeline.dat[timeline.unrd].problems[iii].events.length; timeline.dat[timeline.unrd].problems[iii].events[xxx].hidden === 'G5' && (timeline.larr[iii].push(timeline.e(timeline.yarr[iii])), xxx = timeline.dat[timeline.unrd].problems[iii].events.length), xxx++) ;
+                for (xxx = 0; xxx < timeline.dat[timeline.unrd].problems[iii].events.length; timeline.drq(timeline.dat[timeline.unrd].problems[iii].events[xxx], iii, xxx), xxx++);
+                for (xxx = timeline.dat[timeline.unrd].problems[iii].events.length - 1; xxx >= 0; timeline.dat[timeline.unrd].problems[iii].events[xxx].hidden === 'G4' && (timeline.larr[iii].splice(0, 0, timeline.a(timeline.yarr[iii]), { 'class': 'G3 ' + (timeline.dat[timeline.unrd].problems[iii].events[xxx].state || 'inactive') }), xxx = 0), xxx--);
+                for (xxx = 0; xxx < timeline.dat[timeline.unrd].problems[iii].events.length; timeline.dat[timeline.unrd].problems[iii].events[xxx].hidden === 'G5' && (timeline.larr[iii].push(timeline.e(timeline.yarr[iii])), xxx = timeline.dat[timeline.unrd].problems[iii].events.length), xxx++);
 
                 timeline.drno4(iii);
                 timeline.drno5(iii);
@@ -318,6 +324,7 @@
         };
 
         timeline.drno4 = function (ix) {
+            var xxx = 0;
             for (xxx = 0; xxx < timeline.dat[timeline.unrd].problems[ix].events.length; xxx++) {
                 if (timeline.dat[timeline.unrd].problems[ix].events[xxx].hidden === 'G4') {
                     continue;
@@ -327,6 +334,7 @@
             timeline.larr[ix] = [];
         };
         timeline.drno5 = function (ix) {
+            var xxx = 0;
             for (xxx = 0; xxx < timeline.dat[timeline.unrd].problems[ix].events.length; xxx++) {
                 if (timeline.dat[timeline.unrd].problems[ix].events[xxx].hidden === 'G5') {
                     continue;
@@ -363,7 +371,7 @@
             var d = ev.startTime, dd = d.split('/');
             d = dd[1] + '/' + dd[0] + '/' + dd[2];
             var x = ((new Date(d).getTime() - timeline.szoom.start) / (timeline.szoom.viewMS / timeline.renderXw)) + timeline.renderXst;
-            timeline.larr[ix].push(timeline.r(x, timeline.yarr[ix], ev)), timeline.larr[ix].push({'class': 'G3 ' + (ev.state || 'inactive')});
+            timeline.larr[ix].push(timeline.r(x, timeline.yarr[ix], ev)), timeline.larr[ix].push({ 'class': 'G3 ' + (ev.state || 'inactive') });
         };
 
         timeline.drqq = function (d) {
@@ -397,7 +405,7 @@
                             return;
                         }
                         timeline.mmove = e.clientX;
-                        timeline.clx = {tlwh: timeline.offsetTLWH(timeline.wrapSvg), ix: x, lx: i};
+                        timeline.clx = { tlwh: timeline.offsetTLWH(timeline.wrapSvg), ix: x, lx: i };
                         if (~timeline.parr[x][i].getAttribute('class').indexOf('G2')) {
                             return;
                         }
@@ -409,7 +417,7 @@
                         }));
                         timeline.larr[x][i + 1].new = 1;
 
-                        timeline.larr[x].splice(i + 2, 0, {'class': timeline.larr[x][i].class});
+                        timeline.larr[x].splice(i + 2, 0, { 'class': timeline.larr[x][i].class });
                         ////for (var ttt = 0, ist = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; timeline.larr[x][i].ev && (timeline.larr[x][i].ev.event_id === timeline.dat[timeline.unrd].problems[x].events[ttt].event_id) && (ist = timeline.dat[timeline.unrd].problems[x].events[ttt]), ttt++);
                         ////for (var ttt = 0, nol = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; ttt++) {
                         ////    if (!ist || !timeline.dat[timeline.unrd].problems[x].events[ttt].state) { continue };
@@ -430,7 +438,7 @@
                         }
                         //console.log(JSON.stringify(timeline.dat[timeline.unrd].problems[x]));
                         //timeline.larr[x][i].ev....
-                        for (var ttt = 0, ist = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; timeline.larr[x][i].ev && (timeline.larr[x][i].ev.event_id === timeline.dat[timeline.unrd].problems[x].events[ttt].event_id) && (ist = timeline.dat[timeline.unrd].problems[x].events[ttt]), ttt++) ;
+                        for (var ttt = 0, ist = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; timeline.larr[x][i].ev && (timeline.larr[x][i].ev.event_id === timeline.dat[timeline.unrd].problems[x].events[ttt].event_id) && (ist = timeline.dat[timeline.unrd].problems[x].events[ttt]), ttt++);
                         for (var ttt = 0, nol = 0; ttt < timeline.dat[timeline.unrd].problems[x].events.length; ttt++) {
                             if (!ist || !timeline.dat[timeline.unrd].problems[x].events[ttt].state) {
                                 continue
@@ -453,8 +461,8 @@
                         //if (!timeline.larr[x][i].ev || (+ timeline.larr[x][i].ev.event_id === +timeline.dat[timeline.unrd].problems[x].events[timeline.dat[timeline.unrd].problems[x].events.length - 2].event_id)) { return; }
                         if (!timeline.isNew && Math.abs(timeline.mmove - e.clientX) < 2 && ~timeline.parr[x][i].getAttribute('class').indexOf('G2') && timeline.parr[x][i + 1]) {
                             (timeline.parr[x][i + 1].getAttribute('class') === 'G3 uncontrolled') && (timeline.parr[x][i + 1].setAttribute('class', 'G3 inactive'), (timeline.larr[x][i + 1].class = 'G3 inactive')) ||
-                            (timeline.parr[x][i + 1].getAttribute('class') === 'G3 inactive') && (timeline.parr[x][i + 1].setAttribute('class', 'G3 controlled'), (timeline.larr[x][i + 1].class = 'G3 controlled')) ||
-                            (timeline.parr[x][i + 1].getAttribute('class') === 'G3 controlled') && (timeline.parr[x][i + 1].setAttribute('class', 'G3 uncontrolled'), (timeline.larr[x][i + 1].class = 'G3 uncontrolled'));
+                                (timeline.parr[x][i + 1].getAttribute('class') === 'G3 inactive') && (timeline.parr[x][i + 1].setAttribute('class', 'G3 controlled'), (timeline.larr[x][i + 1].class = 'G3 controlled')) ||
+                                (timeline.parr[x][i + 1].getAttribute('class') === 'G3 controlled') && (timeline.parr[x][i + 1].setAttribute('class', 'G3 uncontrolled'), (timeline.larr[x][i + 1].class = 'G3 uncontrolled'));
                             timeline.larr[x][i].stat = 1;
                         }
                         timeline.clx && timeline.updateR();
@@ -544,7 +552,7 @@
         };
 
         timeline.hideAll = function (arr) {
-            for (var iii = 0; iii < arr.length; arr[iii].setAttribute('display', 'none'), iii++) ;
+            for (var iii = 0; iii < arr.length; arr[iii].setAttribute('display', 'none'), iii++);
         };
 
         timeline.offsetTLWH = function (oP) {

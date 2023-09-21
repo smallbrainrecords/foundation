@@ -95,7 +95,7 @@
             }).success(function (data) {
                 deferred.resolve(data);
             }).error(function (error) {
-                console.error(`${url} --- ${JSON.stringify(data)} --- ${JSON.stringify(error)}`)
+                console.error(`${url} --- ${JSON.stringify(error)}`)
                 deferred.resolve(error);
             });
 

@@ -14,18 +14,25 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+from common.views import *
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
-
-from common.views import *
 from document_app.serializers import *
-from emr.models import Document, DocumentTodo, DocumentProblem, ToDo, Problem, UserProfile, Label
+from emr.models import (
+    Document,
+    DocumentProblem,
+    DocumentTodo,
+    Label,
+    Problem,
+    ToDo,
+    UserProfile,
+)
 from todo_app.serializers import LabelSerializer
 
 
 @login_required
-@timeit
+#@timeit
 def upload_document(request):
     """
     Handle single document file uploaded
@@ -54,7 +61,7 @@ def upload_document(request):
 
 
 @login_required
-@timeit
+#@timeit
 def get_document_list(request):
     """
     Return uploaded document
@@ -84,7 +91,7 @@ def get_document_list(request):
 
 
 @login_required
-@timeit
+#@timeit
 def document_info(request, document_id):
     """
 
@@ -111,7 +118,7 @@ def document_info(request, document_id):
 
 
 @login_required
-@timeit
+#@timeit
 def pin_patient_2_document(request):
     """
 
@@ -135,7 +142,7 @@ def pin_patient_2_document(request):
 
 
 @login_required
-@timeit
+#@timeit
 def pin_todo_2_document(request):
     """
 
@@ -154,7 +161,7 @@ def pin_todo_2_document(request):
 
 
 @login_required
-@timeit
+#@timeit
 def pin_problem_2_document(request):
     """
 
@@ -174,7 +181,7 @@ def pin_problem_2_document(request):
 
 
 @login_required
-@timeit
+#@timeit
 def search_patient(request):
     """
     Type ahead result to search patient
@@ -203,7 +210,7 @@ def search_patient(request):
 
 
 @login_required
-@timeit
+#@timeit
 def get_patient_document(request, patient_id):
     """
 
@@ -221,7 +228,7 @@ def get_patient_document(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def delete_document(request, document_id):
     """
     ONLY DELETE DOCUMENT FROM TODO'S PAGE
@@ -268,7 +275,7 @@ def delete_document(request, document_id):
 
 
 @login_required
-@timeit
+#@timeit
 def pin_label_2_document(request):
     """
     Pin a label to a document
@@ -289,7 +296,7 @@ def pin_label_2_document(request):
 
 
 @login_required
-@timeit
+#@timeit
 def remove_document_label(request):
     """
     Pin a label to a document
@@ -310,7 +317,7 @@ def remove_document_label(request):
 
 
 @login_required
-@timeit
+#@timeit
 def unpin_document_todo(request):
     """
 
@@ -329,7 +336,7 @@ def unpin_document_todo(request):
 
 
 @login_required
-@timeit
+#@timeit
 def unpin_document_problem(request):
     """
     Unpin a problem from document
@@ -348,7 +355,7 @@ def unpin_document_problem(request):
 
 
 @login_required
-@timeit
+#@timeit
 def remove_document(request, document_id):
     """
     Delete a document from system
@@ -373,7 +380,7 @@ def remove_document(request, document_id):
 
 
 @login_required
-@timeit
+#@timeit
 def update_name(request, document_id):
     """
     Rename document name. Allow duplicated file name(aka display name)

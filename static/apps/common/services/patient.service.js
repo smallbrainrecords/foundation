@@ -112,7 +112,7 @@
                 let url = `/u/users/${patientId}/cover`;
                 let fd = new FormData();
                 fd.append('cover_image', file);
-                $http.post(url, fd, {headers: {'Content-Type': undefined, 'X-CSRFToken': $cookies.get('csrftoken')}})
+                $http.post(url, fd, { headers: { 'Content-Type': undefined, 'X-CSRFToken': $cookies.get('csrftoken') } })
             }
 
             function removeCoverImage(patientId) {
@@ -200,7 +200,7 @@
 
 
                 let url = `/enc/patient/${patient_id}/encounter/start`;
-                let form = {'patient_id': patient_id};
+                let form = { 'patient_id': patient_id };
 
                 return httpService.post(form, url);
 
@@ -241,7 +241,7 @@
 
             function listTerms(query) {
 
-                let params = {'query': query};
+                let params = { 'query': query };
                 let url = "/list_terms/";
 
                 return httpService.get(params, url);
@@ -339,7 +339,7 @@
 
                 $http.post(uploadUrl, fd, {
                     transformRequest: angular.identity,
-                    headers: {'Content-Type': undefined, 'X-CSRFToken': $cookies.get('csrftoken')}
+                    headers: { 'Content-Type': undefined, 'X-CSRFToken': $cookies.get('csrftoken') }
                 })
                     .success(function (data) {
                         deferred.resolve(data);
@@ -493,7 +493,7 @@
             }
 
             function getMedications(patient_id, medicationStatus) {
-                let params = {status: medicationStatus};
+                let params = { status: medicationStatus };
                 let url = `/medication/${patient_id}/get_medications`;
                 return httpService.get(params, url);
             }
@@ -581,7 +581,7 @@
             }
 
             function updateTodoCallback(todo) {
-                angular.copy(todo, _.findWhere(this.pendingTodo, {id: parseInt(todo.id)}));
+                angular.copy(todo, _.findWhere(this.pendingTodo, { id: parseInt(todo.id) }));
             }
 
             function updateTodoLabel(label, isDeleted = false) {
@@ -591,7 +591,7 @@
                             return ele.id === parseInt(label.id)
                         });
                     } else {
-                        angular.copy(label, _.findWhere(todo.labels, {id: parseInt(label.id)}));
+                        angular.copy(label, _.findWhere(todo.labels, { id: parseInt(label.id) }));
                     }
                 });
 
@@ -601,13 +601,13 @@
                             return ele.id === parseInt(label.id)
                         });
                     } else {
-                        angular.copy(label, _.findWhere(todo.labels, {id: parseInt(label.id)}));
+                        angular.copy(label, _.findWhere(todo.labels, { id: parseInt(label.id) }));
                     }
                 });
             }
 
             function getProblemTodo(problemID) {
-                return $filter('filter')(this.pendingTodo, {problem: {id: parseInt(problemID)}}, true);
+                return $filter('filter')(this.pendingTodo, { problem: { id: parseInt(problemID) } }, true);
             }
 
             function getColonCancerToDo(problemID) {
@@ -625,7 +625,7 @@
             function getINRToDo(problemID) {
                 return $filter('filter')(this.pendingTodo, {
                     created_at: 1,
-                    problem: {id: parseInt(problemID)}
+                    problem: { id: parseInt(problemID) }
                 }, true);
             }
 

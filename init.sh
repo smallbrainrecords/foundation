@@ -1,4 +1,4 @@
 #!/bin/bash
 
-gunicorn --workers=3 --threads=2 project.wsgi:application -D
+gunicorn --workers=4 --threads=2 --bind=unix:/gunicorn.sock project.wsgi:application -D
 nginx -g "daemon off;"

@@ -16,21 +16,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
 import dateutil
-from django.contrib.auth.decorators import login_required
-from rest_framework.decorators import api_view
-
 from common.views import *
-from emr.models import ColonCancerScreening, UserProfile, ColonCancerStudy, ColonCancerStudyImage, RiskFactor, Problem, \
-    ColonCancerTextNote
+from django.contrib.auth.decorators import login_required
+from emr.models import (
+    ColonCancerScreening,
+    ColonCancerStudy,
+    ColonCancerStudyImage,
+    ColonCancerTextNote,
+    Problem,
+    RiskFactor,
+    UserProfile,
+)
 from emr.operations import op_add_event
+from rest_framework.decorators import api_view
 from users_app.serializers import SafeUserSerializer
 from users_app.views import permissions_accessed
-from .serializers import ColonCancerScreeningSerializer, ColonCancerStudySerializer, RiskFactorSerializer, \
-    ColonCancerTextNoteSerializer, StudyImageSerializer
+
+from .serializers import (
+    ColonCancerScreeningSerializer,
+    ColonCancerStudySerializer,
+    ColonCancerTextNoteSerializer,
+    RiskFactorSerializer,
+    StudyImageSerializer,
+)
 
 
 @login_required
-@timeit
+#@timeit
 def track_colon_click(request, colon_id):
     resp = {'success': False}
     colon_info = ColonCancerScreening.objects.get(id=colon_id)
@@ -46,7 +58,7 @@ def track_colon_click(request, colon_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_colon_info(request, colon_id):
     resp = {'success': False}
     colon_info = ColonCancerScreening.objects.get(id=colon_id)
@@ -70,7 +82,7 @@ def get_colon_info(request, colon_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_study(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -105,7 +117,7 @@ def add_study(request, colon_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def delete_study(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -118,7 +130,7 @@ def delete_study(request, study_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_study_info(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -129,7 +141,7 @@ def get_study_info(request, study_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def edit_study(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -148,7 +160,7 @@ def edit_study(request, study_id):
 
 
 @login_required
-@timeit
+#@timeit
 def upload_study_image(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -173,7 +185,7 @@ def upload_study_image(request, study_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def delete_study_image(request, study_id, image_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -190,7 +202,7 @@ def delete_study_image(request, study_id, image_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_study_image(request, study_id):
     resp = {'success': False}
     study = ColonCancerStudy.objects.get(id=study_id)
@@ -218,7 +230,7 @@ def add_study_image(request, study_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_factor(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -254,7 +266,7 @@ def add_factor(request, colon_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def delete_factor(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -281,7 +293,7 @@ def delete_factor(request, colon_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def refuse(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -301,7 +313,7 @@ def refuse(request, colon_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def not_appropriate(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -321,7 +333,7 @@ def not_appropriate(request, colon_id):
 
 # Note
 @login_required
-@timeit
+#@timeit
 def add_note(request, colon_id):
     resp = {'success': False}
     colon = ColonCancerScreening.objects.get(id=colon_id)
@@ -335,7 +347,7 @@ def add_note(request, colon_id):
 
 
 @login_required
-@timeit
+#@timeit
 def edit_note(request, note_id):
     resp = {'success': False}
     note = ColonCancerTextNote.objects.get(id=note_id)
@@ -348,7 +360,7 @@ def edit_note(request, note_id):
 
 
 @login_required
-@timeit
+#@timeit
 def delete_note(request, note_id):
     resp = {'success': False}
     note = ColonCancerTextNote.objects.get(id=note_id)
@@ -359,13 +371,13 @@ def delete_note(request, note_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_colon_cancer_studies(request, colon_id):
     pass
 
 
 @login_required
-@timeit
+#@timeit
 def colon_cancer_study(request, colon_id, study_id):
     resp = {'success': False}
     request_data = json.loads(request.body)
@@ -408,24 +420,24 @@ def colon_cancer_study(request, colon_id, study_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_risk_factors(request, colon_id):
     pass
 
 
 @login_required
-@timeit
+#@timeit
 def risk_factor(request, colon_id, risk_factor_id):
     pass
 
 
 @login_required
-@timeit
+#@timeit
 def get_notes(request, colon_id):
     pass
 
 
 @login_required
-@timeit
+#@timeit
 def note(request, colon_id, note_id):
     pass

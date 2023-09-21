@@ -15,22 +15,26 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 import reversion
+from common.views import *
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from rest_framework.decorators import api_view
-from reversion.models import Version
-
-from common.views import *
 from emr.models import Medication, MedicationTextNote, ToDo, TodoActivity, VWMedications
 from emr.mysnomedct import VWMedicationsSerializers
 from emr.operations import op_add_todo_event
 from medication_app.operations import *
+from rest_framework.decorators import api_view
+from reversion.models import Version
 from users_app.views import permissions_accessed
-from .serializers import MedicationTextNoteSerializer, MedicationSerializer, MedicationPinToProblemSerializer
+
+from .serializers import (
+    MedicationPinToProblemSerializer,
+    MedicationSerializer,
+    MedicationTextNoteSerializer,
+)
 
 
 @login_required
-@timeit
+#@timeit
 def list_terms(request):
     # We list snomed given a query
     query = request.GET['query']
@@ -40,7 +44,7 @@ def list_terms(request):
 
 
 @login_required
-@timeit
+#@timeit
 def on_medication_accessed(request, patient_id, medication_id):
     """
 
@@ -57,7 +61,7 @@ def on_medication_accessed(request, patient_id, medication_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_medications(request, patient_id):
     """
     Get current patient using medication. Default return active only medication.
@@ -81,7 +85,7 @@ def get_medications(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_medication(request, patient_id, medication_id):
     resp = {'success': False}
     history_list = []
@@ -109,7 +113,7 @@ def get_medication(request, patient_id, medication_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_medication(request, patient_id):
     resp = {'success': False}
 
@@ -136,7 +140,7 @@ def add_medication(request, patient_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_medication_note(request, patient_id, medication_id):
     resp = {'success': False}
     note = request.POST.get("note", None)
@@ -163,7 +167,7 @@ def add_medication_note(request, patient_id, medication_id):
 
 
 @login_required
-@timeit
+#@timeit
 def edit_note(request, note_id):
     resp = {'success': False}
 
@@ -179,7 +183,7 @@ def edit_note(request, note_id):
 
 
 @login_required
-@timeit
+#@timeit
 def delete_note(request, note_id):
     resp = {'success': False}
     note = MedicationTextNote.objects.get(id=note_id)
@@ -193,7 +197,7 @@ def delete_note(request, note_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_pins(request, medication_id):
     pins = MedicationPinToProblem.objects.filter(medication_id=medication_id)
     resp = {'success': True, 'pins': MedicationPinToProblemSerializer(pins, many=True).data}
@@ -202,7 +206,7 @@ def get_pins(request, medication_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def pin_to_problem(request, patient_id):
     resp = {'success': False}
     if permissions_accessed(request.user, int(patient_id)):
@@ -229,7 +233,7 @@ def pin_to_problem(request, patient_id):
 
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def change_active_medication(request, patient_id, medication_id):
     """
     :param request:
@@ -256,7 +260,7 @@ def change_active_medication(request, patient_id, medication_id):
 
 
 @login_required
-@timeit
+#@timeit
 def change_dosage(request, patient_id, medication_id):
     """
     Change dosage in medication detail page
@@ -309,7 +313,7 @@ def change_dosage(request, patient_id, medication_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_medication_encounter(request, medication_id):
     """
     Encounter's related event app

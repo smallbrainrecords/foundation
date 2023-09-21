@@ -19,7 +19,7 @@ from django.db import connection
 from emr.models import ObservationValue
 
 
-@timeit
+#@timeit
 def get_observation_most_common_value(component, effective_datetime):
     """
     Get most recent value of observation component
@@ -40,7 +40,7 @@ def get_observation_most_common_value(component, effective_datetime):
             return float(1)
 
 
-@timeit
+#@timeit
 def query_to_dicts(query_string, *query_args):
     """Run a simple query and produce a generator
     that returns the results as a bunch of dictionaries
@@ -58,7 +58,7 @@ def query_to_dicts(query_string, *query_args):
     return
 
 
-@timeit
+#@timeit
 def get_observation_value_pair(component_id):
     """
 

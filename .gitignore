@@ -26,3 +26,7 @@ client-cert.pem
 client-key.pem
 server-ca.pem
 project/settings.py
+
+*.key
+*.crt
+*.pem

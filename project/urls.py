@@ -52,7 +52,7 @@ from project.views import home
 
 
 urlpatterns = [
-    path('__debug__/', include(debug_toolbar.urls)),
+    # path('__debug__/', include(debug_toolbar.urls)),
     re_path(r'^$', home,name='project_home'),
 
     # re_path(r'^admin/', include(admin.site.urls)),

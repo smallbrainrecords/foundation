@@ -94,7 +94,7 @@ from .serializers import (
 
 
 @login_required
-@timeit
+#@timeit
 def track_problem_click(request, problem_id):
     actor = request.user
     actor_profile = UserProfile.objects.get(user=actor)
@@ -114,7 +114,7 @@ def track_problem_click(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problem_info(request, problem_id):
     """
     Loading problem details
@@ -148,7 +148,7 @@ def get_problem_info(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_a1c(request, problem_id):
     """
     A1C load todo is not accomplished only
@@ -166,7 +166,7 @@ def get_a1c(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_colon_cancers(request, problem_id):
     """
     Get problem colon cancer widget
@@ -177,7 +177,8 @@ def get_colon_cancers(request, problem_id):
     resp = {'success': False}
 
     colon_cancers = ColonCancerScreening.objects.filter(problem__id=problem_id).get()
-    colon_cancers.colon_cancer_todos = colon_cancers.colon_cancer_todos.filter(accomplished=False)
+    # colon_cancers.colon_cancer_todos = colon_cancers.colon_cancer_todos.filter(accomplished=False)
+    colon_cancers.colon_cancer_todos.set(colon_cancers.colon_cancer_todos.filter(accomplished=False))
 
     resp['success'] = True
     resp['colon_cancers'] = ColonCancerScreeningSerializer(colon_cancers).data
@@ -185,7 +186,7 @@ def get_colon_cancers(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problem_activity(request, problem_id, last_id):
     resp = {'success': False}
 
@@ -202,7 +203,7 @@ def get_problem_activity(request, problem_id, last_id):
 @permissions_required(["add_problem"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_patient_problem(request, patient_id):
     resp = {'success': False}
     actor = request.user
@@ -258,7 +259,7 @@ def add_patient_problem(request, patient_id):
 
 @permissions_required(["add_problem"])
 @login_required
-@timeit
+#@timeit
 def add_patient_common_problem(request, patient_id):
     resp = {'success': False}
 
@@ -290,7 +291,7 @@ def add_patient_common_problem(request, patient_id):
 @permissions_required(["change_problem_name"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def change_name(request, problem_id):
     resp = {'success': False}
 
@@ -340,7 +341,7 @@ def change_name(request, problem_id):
 # Problems
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def update_problem_status(request, problem_id):
     resp = {'success': False}
 
@@ -381,7 +382,7 @@ def update_problem_status(request, problem_id):
 @permissions_required(["modify_problem"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def update_start_date(request, problem_id):
     resp = {'success': False}
 
@@ -408,7 +409,7 @@ def update_start_date(request, problem_id):
 @permissions_required(["modify_problem"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def add_history_note(request, problem_id):
     resp = {'success': False}
     try:
@@ -443,7 +444,7 @@ def add_history_note(request, problem_id):
     return ajax_response(resp)
 
 
-@timeit
+#@timeit
 def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
     if 'patient' == actor_profile.role or 'nurse' == actor_profile.role or 'secretary' == actor_profile.role:
         # Create todo and Pin to problem
@@ -477,7 +478,7 @@ def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
 
 # Add Wiki Note
 @login_required
-@timeit
+#@timeit
 def add_wiki_note(request, problem_id):
     """
     @depre
@@ -518,7 +519,7 @@ def add_wiki_note(request, problem_id):
 
 @permissions_required(["add_goal"])
 @login_required
-@timeit
+#@timeit
 def add_problem_goal(request, problem_id):
     resp = {'success': False}
 
@@ -548,7 +549,7 @@ def add_problem_goal(request, problem_id):
 # Problems
 @permissions_required(["add_todo"])
 @login_required
-@timeit
+#@timeit
 def add_problem_todo(request, problem_id):
     resp = {'success': False}
 
@@ -619,7 +620,7 @@ def add_problem_todo(request, problem_id):
 @permissions_required(["add_problem_image"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def upload_problem_image(request, problem_id):
     resp = {'success': False}
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -654,7 +655,7 @@ def upload_problem_image(request, problem_id):
 @permissions_required(["relate_problem"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def delete_problem_image(request, problem_id, image_id):
     resp = {'success': False}
 
@@ -676,7 +677,7 @@ def delete_problem_image(request, problem_id, image_id):
 @permissions_required(["relate_problem"])
 @login_required
 @api_view(["POST"])
-@timeit
+#@timeit
 def relate_problem(request):
     resp = {'success': False}
 
@@ -712,7 +713,7 @@ def relate_problem(request):
 
 @permissions_required(["modify_problem"])
 @login_required
-@timeit
+#@timeit
 def update_by_ptw(request):
     resp = {'success': False}
     actor_profile = UserProfile.objects.get(user=request.user)
@@ -738,7 +739,7 @@ def update_by_ptw(request):
 
 @permissions_required(["modify_problem"])
 @login_required
-@timeit
+#@timeit
 def update_state_to_ptw(request):
     resp = {'success': False}
     timeline_data = json.loads(request.body)['timeline_data']
@@ -750,7 +751,7 @@ def update_state_to_ptw(request):
 
 @permissions_required(["set_problem_order"])
 @login_required
-@timeit
+#@timeit
 def update_order(request):
     resp = {'success': False}
 
@@ -780,7 +781,7 @@ def update_order(request):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def new_problem_label(request, problem_id):
     resp = {'success': False, 'status': False, 'new_status': False}
 
@@ -806,7 +807,7 @@ def new_problem_label(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problem_labels(request, patient_id, user_id):
     labels = ProblemLabel.objects.filter(patient_id=patient_id, author_id=user_id)
     resp = {
@@ -817,7 +818,7 @@ def get_problem_labels(request, patient_id, user_id):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def save_edit_problem_label(request, label_id, patient_id, user_id):
     resp = {'success': False, 'status': False}
 
@@ -839,7 +840,7 @@ def save_edit_problem_label(request, label_id, patient_id, user_id):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def add_problem_label(request, label_id, problem_id):
     resp = {'success': False}
 
@@ -853,7 +854,7 @@ def add_problem_label(request, label_id, problem_id):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def remove_problem_label(request, label_id, problem_id):
     resp = {'success': False}
 
@@ -867,7 +868,7 @@ def remove_problem_label(request, label_id, problem_id):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def delete_problem_label(request, label_id):
     resp = {'success': False}
 
@@ -879,7 +880,7 @@ def delete_problem_label(request, label_id):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def add_problem_list(request, patient_id, user_id):
     resp = {'success': False}
 
@@ -907,7 +908,7 @@ def add_problem_list(request, patient_id, user_id):
 
 
 @login_required
-# @timeit
+# #@timeit
 def get_label_problem_lists(request, patient_id, user_id):
     resp = {'success': False}
 
@@ -952,7 +953,7 @@ def get_label_problem_lists(request, patient_id, user_id):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def delete_problem_list(request, list_id):
     resp = {'success': False}
 
@@ -963,7 +964,7 @@ def delete_problem_list(request, list_id):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def rename_problem_list(request, list_id):
     resp = {'success': False}
 
@@ -975,7 +976,7 @@ def rename_problem_list(request, list_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problems(request, patient_id):
     resp = {'success': False}
 
@@ -988,7 +989,7 @@ def get_problems(request, patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_sharing_problems(request, patient_id, sharing_patient_id):
     resp = {'success': False}
 
@@ -1002,7 +1003,7 @@ def get_sharing_problems(request, patient_id, sharing_patient_id):
 
 
 @login_required
-@timeit
+#@timeit
 def remove_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
     resp = {'success': False}
 
@@ -1019,7 +1020,7 @@ def remove_sharing_problems(request, patient_id, sharing_patient_id, problem_id)
 
 
 @login_required
-@timeit
+#@timeit
 def add_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
     resp = {'success': False}
 
@@ -1037,7 +1038,7 @@ def add_sharing_problems(request, patient_id, sharing_patient_id, problem_id):
 
 @permissions_required(["add_problem_label"])
 @login_required
-@timeit
+#@timeit
 def update_problem_list_note(request, list_id):
     resp = {'success': False}
     problem_list = LabeledProblemList.objects.get(id=list_id)
@@ -1055,7 +1056,7 @@ def update_problem_list_note(request, list_id):
 
 @permissions_required(["add_common_problem_list"])
 @login_required
-@timeit
+#@timeit
 def add_new_common_problem(request, staff_id):
     resp = {'success': False}
     problem_name = request.POST.get('problem_name')
@@ -1078,7 +1079,7 @@ def add_new_common_problem(request, staff_id):
 
 @permissions_required(["add_common_problem_list"])
 @login_required
-@timeit
+#@timeit
 def get_common_problems(request, staff_id):
     resp = {'success': False}
 
@@ -1091,7 +1092,7 @@ def get_common_problems(request, staff_id):
 
 @permissions_required(["add_common_problem_list"])
 @login_required
-@timeit
+#@timeit
 def remove_common_problem(request, problem_id):
     resp = {'success': False}
     problem = CommonProblem.objects.get(id=problem_id)
@@ -1103,7 +1104,7 @@ def remove_common_problem(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_data_pins(request, problem_id):
     resp = {'success': False}
 
@@ -1117,7 +1118,7 @@ def get_data_pins(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_medication_pins(request, problem_id):
     resp = {}
     pins = MedicationPinToProblem.objects.filter(problem_id=problem_id)
@@ -1128,7 +1129,7 @@ def get_medication_pins(request, problem_id):
 
 @permissions_required(["delete_problem"])
 @login_required
-@timeit
+#@timeit
 def delete_problem(request, problem_id):
     resp = {'success': False}
 
@@ -1150,7 +1151,7 @@ def delete_problem(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_related_encounters(request, problem_id):
     resp = {'success': False}
     problem = get_object_or_404(Problem, pk=problem_id)
@@ -1163,7 +1164,7 @@ def get_related_encounters(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_related_documents(request, problem_id):
     """
     Get document pinned to problem direct or via todo 
@@ -1196,7 +1197,7 @@ def get_related_documents(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problem_todos(request, problem_id):
     """
     Loading all todo which have been pinned to the problem and
@@ -1222,7 +1223,7 @@ def get_problem_todos(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problem_goals(request, problem_id):
     """
     Loading all problem's goals
@@ -1241,7 +1242,7 @@ def get_problem_goals(request, problem_id):
 
 @login_required
 # @deprecated
-@timeit
+#@timeit
 def get_problem_wikis(request, problem_id):
     """
     Loading all problem's history notes
@@ -1266,7 +1267,7 @@ def get_problem_wikis(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problem_images(request, problem_id):
     """
     Loading all problem's images
@@ -1284,7 +1285,7 @@ def get_problem_images(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def get_problem_relationships(request, problem_id):
     """
     Loading problem's relationships
@@ -1312,7 +1313,7 @@ def get_problem_relationships(request, problem_id):
 
 
 @login_required
-@timeit
+#@timeit
 def problem_notes_function(request, problem_id):
     """
 
@@ -1356,7 +1357,7 @@ def problem_notes_function(request, problem_id):
     if request.method == "GET":
         note_type = request.GET.get('type')  # this is required
         before = request.GET.get('before', 1000000000)  # this is optional
-        limit = request.GET.get('limit', 10)
+        limit = int(request.GET.get('limit', 10))
 
         # TODO: Getting list of notes with default reserve chronology (most recent on top)
         notes = ProblemNote.objects.filter(problem_id=problem_id, note_type=note_type, id__lt=before).order_by(
