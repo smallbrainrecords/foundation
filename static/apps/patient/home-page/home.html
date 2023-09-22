@@ -1,5 +1,5 @@
 <section id="clinical-staff-note" ng-if="active_user.role!='patient'"
-         ng-show="['problems','mystory'].indexOf(collapse.show_homepage_tab) != -1">
+    ng-show="['problems','mystory'].indexOf(collapse.show_homepage_tab) != -1">
     <div class='panel panel-default'>
         <div class='panel-heading'>Note (office users only)</div>
         <div class='panel-body'>
@@ -18,36 +18,33 @@
 
 <section id="clinical-staff-todo">
     <div class='panel panel-default' ng-if="['secretary','nurse'].indexOf(active_user.role) != -1"
-         ng-show='permitted(["add_todo"])'>
+        ng-show='permitted(["add_todo"])'>
         <div class='panel-heading'>Todo</div>
         <div class='panel-body'>
             <form role='form' ng-submit='add_todo(new_todo)'>
                 <div class='input-group'>
                     <input title="Todo name" type='text' ng-model='new_todo.name' placeholder="Todo name"
-                           class="form-control" id='todoNameInput'>
+                        class="form-control" id='todoNameInput'>
                     <span class="input-group-btn">
-                                <button type='submit' class='btn btn-default'> Add Todo</button>
-                            </span>
+                        <button type='submit' class='btn btn-default'> Add Todo</button>
+                    </span>
                 </div>
             </form>
             <div class="todo-list-wrapper">
-                <div infinite-scroll="loadMoreTodo(false)" >
+                <div infinite-scroll="loadMoreTodo(false)">
                     <todo todo-list="pending_todos" accomplished="false" show-problem="true"
-                          on-status-changed-success="updateStatusCallback"
-                          labels="labels" members="members"
-                          patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
+                        on-status-changed-success="updateStatusCallback" labels="labels" members="members"
+                        patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
                     <wave-spinner ng-if="todoIsLoading"></wave-spinner>
                 </div>
 
                 <button class='btn btn-default btn-block' ng-click='toggle_accomplished_todos()'
-                        ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
+                    ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
                 </button>
 
                 <div ng-show='show_accomplished_todos'>
-                    <todo todo-list="accomplished_todos" accomplished="true" show-problem="true"
-                          labels="labels" members="members"
-                          patient-id="patient_id" user-id="patient_id"
-                          active-user="active_user"></todo>
+                    <todo todo-list="accomplished_todos" accomplished="true" show-problem="true" labels="labels"
+                        members="members" patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
                     <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
                 </div>
             </div>
@@ -89,10 +86,10 @@
 <section id="tab-content">
     <div class="tab-content">
         <div role="tabpanel" class="tab-pane tab-problems"
-             ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
+            ng-class="collapse.show_homepage_tab=='problems' ? 'active': ''">
             <div class="row">
                 <div class=""
-                     ng-class="['secretary','nurse'].indexOf(active_user.role ) == -1 ? 'col-md-6':'col-md-12'">
+                    ng-class="['secretary','nurse'].indexOf(active_user.role ) == -1 ? 'col-md-6':'col-md-12'">
                     <div class='panel panel-default'>
                         <div class='panel-heading'> Problems</div>
                         <div class='panel-body'>
@@ -107,16 +104,17 @@
                                                 ng-click='open_problem(problem)'
                                                 ng-if="checkSharedProblem(problem, sharing_patients)">
                                                 <div class='item-box'
-                                                     ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                                                    ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
                                                     {{ problem.problem_name }} <span
-                                                        ng-show="problem.authenticated==false">(not authenticated)</span>
+                                                        ng-show="problem.authenticated==false">(not
+                                                        authenticated)</span>
                                                     <a ng-repeat="label in problem.labels" class="todo-label"
-                                                       ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
+                                                        ng-class="label.css_class" ng-if="label.author.id==user_id"></a>
                                                     </span>
                                                     <span ng-repeat="p in sharing_patients"
-                                                          ng-if="isInArray(p.problems, problem.id)">
-                                                            <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
-                                                        </span>
+                                                        ng-if="isInArray(p.problems, problem.id)">
+                                                        <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
+                                                    </span>
                                                 </div>
                                             </li>
                                         </ul>
@@ -127,14 +125,15 @@
                                                 ng-click='open_problem(problem)'>
 
                                                 <div class='item-box'
-                                                     ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                                                    ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 
                                                     {{ problem.problem_name }} <span
-                                                        ng-show="problem.authenticated==false">(not authenticated)</span>
+                                                        ng-show="problem.authenticated==false">(not
+                                                        authenticated)</span>
                                                     <span ng-repeat="p in sharing_patients"
-                                                          ng-if="isInArray(p.problems, problem.id)">
-                                                            <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
-                                                        </span>
+                                                        ng-if="isInArray(p.problems, problem.id)">
+                                                        <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
+                                                    </span>
                                                 </div>
                                             </li>
                                         </ul>
@@ -150,13 +149,14 @@
                                                 ng-click='open_problem(problem)'
                                                 ng-if="checkSharedProblem(problem, sharing_patients)">
                                                 <div class='item-box'
-                                                     ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                                                    ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
                                                     {{ problem.problem_name }} <span
-                                                        ng-show="problem.authenticated==false">(not authenticated)</span>
+                                                        ng-show="problem.authenticated==false">(not
+                                                        authenticated)</span>
                                                     <span ng-repeat="p in sharing_patients"
-                                                          ng-if="isInArray(p.problems, problem.id)">
-                                                            <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
-                                                        </span>
+                                                        ng-if="isInArray(p.problems, problem.id)">
+                                                        <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
+                                                    </span>
                                                 </div>
                                             </li>
                                         </ul>
@@ -168,14 +168,15 @@
                                                 ng-click='open_problem(problem)'>
 
                                                 <div class='item-box'
-                                                     ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
+                                                    ng-class='problem.is_controlled==true ? "green-box" : "red-box" '>
 
                                                     {{ problem.problem_name }} <span
-                                                        ng-show="problem.authenticated==false">(not authenticated)</span>
+                                                        ng-show="problem.authenticated==false">(not
+                                                        authenticated)</span>
                                                     <span ng-repeat="p in sharing_patients"
-                                                          ng-if="isInArray(p.problems, problem.id)">
-                                                            <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
-                                                        </span>
+                                                        ng-if="isInArray(p.problems, problem.id)">
+                                                        <img ng-src="{{ p.portrait_image }}" class='tiny-img'>
+                                                    </span>
                                                 </div>
                                             </li>
                                         </ul>
@@ -187,14 +188,14 @@
                                             <div ng-if="['physician','mid-level'].indexOf(active_user.role) != -1">
                                                 <div class="input-group">
                                                     <select class='form-control' ng-model="acute_form"
-                                                            title="Acute Problem">
+                                                        title="Acute Problem">
                                                         <option ng-repeat="acute in acutes track by $index"
-                                                                value="{{ acute.id }}"> {{ acute.problem_name }}
+                                                            value="{{ acute.id }}"> {{ acute.problem_name }}
                                                         </option>
                                                     </select>
                                                     <span class="input-group-btn">
                                                         <button class='btn btn-default'
-                                                                ng-click='add_new_common_problem(acute_form, "acute")'>
+                                                            ng-click='add_new_common_problem(acute_form, "acute")'>
                                                             Add acute problem
                                                         </button>
                                                     </span>
@@ -202,15 +203,15 @@
                                                 <br>
                                                 <div class="input-group">
                                                     <select class='form-control' ng-model="chronic_form"
-                                                            title="Chronic Problem">
+                                                        title="Chronic Problem">
                                                         <option ng-repeat="chronic in chronics  track by $index"
-                                                                value="{{ chronic.id }}"> {{
+                                                            value="{{ chronic.id }}"> {{
                                                             chronic.problem_name }}
                                                         </option>
                                                     </select>
                                                     <span class="input-group-btn">
                                                         <button class='btn btn-default'
-                                                                ng-click='add_new_common_problem(chronic_form, "chronic")'>
+                                                            ng-click='add_new_common_problem(chronic_form, "chronic")'>
                                                             Add chronic problem
                                                         </button>
                                                     </span>
@@ -220,14 +221,13 @@
 
                                             <div class="input-group">
                                                 <input type='text' ng-model='problem_term' class='form-control'
-                                                       id='problemTermInput'
-                                                       auto-focus
-                                                       ng-change="problemTermChanged(problem_term)"
-                                                       placeholder='Search Problem....'>
+                                                    id='problemTermInput' auto-focus
+                                                    ng-change="problemTermChanged(problem_term)"
+                                                    placeholder='Search Problem....'>
                                                 <span class="input-group-btn">
                                                     <button class='btn btn-default'
-                                                            ng-click='add_new_problem(problem_term)'> Add Problem</button>
-                                                 </span>
+                                                        ng-click='add_new_problem(problem_term)'> Add Problem</button>
+                                                </span>
                                             </div>
 
                                             <div ng-show='new_problem.set==true'>
@@ -238,8 +238,7 @@
                                                 <button class='btn btn-sm btn-primary' ng-click='add_problem()'>
                                                     Add Problem
                                                 </button>
-                                                <button class='btn btn-sm btn-danger'
-                                                        ng-click='unset_new_problem()'>
+                                                <button class='btn btn-sm btn-danger' ng-click='unset_new_problem()'>
                                                     Cancel
                                                 </button>
 
@@ -247,10 +246,9 @@
                                         </div>
                                         <div class='col-md-12' style='max-height:375px; overflow-y:auto;'>
                                             <div ng-repeat='problem_term in problem_terms track by $index'
-                                                 style='margin-top:12px;'>
-                                                <button class='btn btn-sm btn-default'
-                                                        title='{{ problem_term.code }}'
-                                                        ng-click='set_new_problem(problem_term)'>
+                                                style='margin-top:12px;'>
+                                                <button class='btn btn-sm btn-default' title='{{ problem_term.code }}'
+                                                    ng-click='set_new_problem(problem_term)'>
                                                     {{ problem_term.term }}
                                                 </button>
                                             </div>
@@ -260,28 +258,28 @@
                             </uib-tabset>
 
                             <div class='panel panel-default' ng-repeat="list in problem_lists track by $index"
-                                 ng-init="list.collapse=false;list.rename=false;">
+                                ng-init="list.collapse=false;list.rename=false;">
 
                                 <div class='panel-heading' ng-click="set_collapse(list);"
-                                     ng-class="check_problem_list_controlled(list)? 'red-box' : ''">
-                                        <span ng-show="!list.rename">
-                                            {{ list.name }} <span>({{ list.problems.length }})</span>
-                                            <span ng-if="check_problem_list_authenticated(list)">(not-authenticated)</span>
-                                        </span>
+                                    ng-class="check_problem_list_controlled(list)? 'red-box' : ''">
+                                    <span ng-show="!list.rename">
+                                        {{ list.name }} <span>({{ list.problems.length }})</span>
+                                        <span ng-if="check_problem_list_authenticated(list)">(not-authenticated)</span>
+                                    </span>
                                     <span ng-show="list.rename">
-                                            <input type="text" ng-model="list.name">
-                                            <button class="btn btn-default"
-                                                    ng-click="rename_list(list); $event.stopPropagation();">Save</button>
-                                            <button class="btn btn-default"
-                                                    ng-click="list.rename=!list.rename; $event.stopPropagation();">Cancel</button>
-                                        </span>
+                                        <input type="text" ng-model="list.name">
+                                        <button class="btn btn-default"
+                                            ng-click="rename_list(list); $event.stopPropagation();">Save</button>
+                                        <button class="btn btn-default"
+                                            ng-click="list.rename=!list.rename; $event.stopPropagation();">Cancel</button>
+                                    </span>
                                     <span ng-show="list.collapse && !list.rename"
-                                          ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
-                                            <a href class="btn btn-danger"
-                                               ng-click="delete_list(list); $event.stopPropagation();">Delete</a>
-                                            <a href class="btn btn-primary"
-                                               ng-click="list.rename=!list.rename; $event.stopPropagation();">Rename</a>
-                                        </span>
+                                        ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='mid-level'">
+                                        <a href class="btn btn-danger"
+                                            ng-click="delete_list(list); $event.stopPropagation();">Delete</a>
+                                        <a href class="btn btn-primary"
+                                            ng-click="list.rename=!list.rename; $event.stopPropagation();">Rename</a>
+                                    </span>
                                 </div>
 
                                 <div class='panel-body' ng-show="list.collapse">
@@ -289,8 +287,7 @@
                                         <div class='col-md-12'>
                                             <textarea class='form-control' ng-model='list.note'></textarea>
                                             <br>
-                                            <button class='btn btn-default'
-                                                    ng-click='update_problem_list_note(list)'>
+                                            <button class='btn btn-default' ng-click='update_problem_list_note(list)'>
                                                 Update
                                             </button>
                                         </div>
@@ -309,30 +306,30 @@
                             <form ng-if='permitted(["add_todo"])' role='form' ng-submit='add_todo(new_todo)'>
                                 <div class='input-group'>
                                     <input type='text' ng-model='new_todo.name' placeholder="Todo name"
-                                           title="Todo name" class="form-control" id='todoNameInput'>
-                                    <span class="input-group-btn"><button type='submit' class='btn btn-default'> Add Todo</button>                                                    </span>
+                                        title="Todo name" class="form-control" id='todoNameInput'>
+                                    <span class="input-group-btn"><button type='submit' class='btn btn-default'> Add
+                                            Todo</button> </span>
                                 </div>
                             </form>
 
                             <div class="todo-list-wrapper">
-                                <div infinite-scroll="loadMoreTodo(false)" >
+                                <div infinite-scroll="loadMoreTodo(false)">
                                     <todo todo-list="pending_todos" show-problem="true"
-                                          on-status-changed-success="updateStatusCallback"
-                                          labels="labels" members="members"
-                                          patient-id="patient_id" user-id="patient_id" active-user="active_user"></todo>
+                                        on-status-changed-success="updateStatusCallback" labels="labels"
+                                        members="members" patient-id="patient_id" user-id="patient_id"
+                                        active-user="active_user"></todo>
                                     <wave-spinner ng-if="todoIsLoading"></wave-spinner>
                                 </div>
 
                                 <button class='btn btn-default btn-block' ng-click='toggle_accomplished_todos()'
-                                        ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
+                                    ng-bind='show_accomplished_todos?"Hide accomplished Todos ":"Show accomplished Todos "'>
                                 </button>
 
                                 <div ng-show='show_accomplished_todos'>
                                     <todo todo-list="accomplished_todos" show-problem="true"
-                                          on-status-changed-success="updateStatusCallback"
-                                          labels="labels" members="members"
-                                          patient-id="patient_id" user-id="patient_id"
-                                          active-user="active_user"></todo>
+                                        on-status-changed-success="updateStatusCallback" labels="labels"
+                                        members="members" patient-id="patient_id" user-id="patient_id"
+                                        active-user="active_user"></todo>
                                     <wave-spinner ng-if="!accomplishedTodoLoaded"></wave-spinner>
                                 </div>
                             </div>
@@ -349,17 +346,15 @@
                             <ul class="nav nav-pills no-padding" role="tablist">
                                 <li role="presentation" class="active">
                                     <a ng-href=".tab-incomplete-goals" aria-controls="goals" role="tab"
-                                       data-toggle="tab">
+                                        data-toggle="tab">
                                         Current/Incomplete Goals </a>
                                 </li>
                                 <li role="presentation">
-                                    <a ng-href=".tab-completed-goals" aria-controls="incomplete_goals"
-                                       role="tab"
-                                       data-toggle="tab">Completed Goals</a>
+                                    <a ng-href=".tab-completed-goals" aria-controls="incomplete_goals" role="tab"
+                                        data-toggle="tab">Completed Goals</a>
                                 </li>
                                 <li role="presentation" ng-show='permitted(["add_goal"])'>
-                                    <a ng-href=".tab-add-goal" aria-controls="add_goal" role="tab"
-                                       data-toggle="tab">Add
+                                    <a ng-href=".tab-add-goal" aria-controls="add_goal" role="tab" data-toggle="tab">Add
                                         Goal</a>
                                 </li>
                             </ul>
@@ -373,14 +368,14 @@
                                     <li ng-repeat='goal in goals'
                                         ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
                                         <div class='item-box'
-                                             ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
-                                            <a class='btn  btn-default btn-sm'
-                                               ng-href='#/goal/{{ goal.id }}'>
+                                            ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
+                                            <a class='btn  btn-default btn-sm' ng-href='#/goal/{{ goal.id }}'>
                                                 View
                                             </a>
 
                                             {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                                ng-href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                                    ng-href="#/problem/{{ goal.problem.id }}">{{
+                                                    goal.problem.problem_name }}</a></span>
                                         </div>
                                     </li>
                                 </ul>
@@ -392,28 +387,26 @@
                                     <li ng-repeat='goal in completed_goals'
                                         ng-show="(goal.problem && checkSharedProblem(goal.problem, sharing_patients) || !goal.problem)">
                                         <div class='item-box'
-                                             ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
-                                            <a class='btn  btn-default btn-sm'
-                                               ng-href='#/goal/{{ goal.id }}'>
+                                            ng-class='goal.is_controlled==true ? "green-box" : "red-box" '>
+                                            <a class='btn  btn-default btn-sm' ng-href='#/goal/{{ goal.id }}'>
                                                 View
                                             </a>
 
                                             {{ goal.goal }} <span ng-if="goal.problem">for problem <a
-                                                ng-href="#/problem/{{ goal.problem.id }}">{{ goal.problem.problem_name }}</a></span>
+                                                    ng-href="#/problem/{{ goal.problem.id }}">{{
+                                                    goal.problem.problem_name }}</a></span>
                                         </div>
                                     </li>
                                 </ul>
                             </div>
                         </div>
-                        <div role="tabpanel" class="tab-pane tab-add-goal"
-                             ng-show='permitted(["add_goal"])'>
+                        <div role="tabpanel" class="tab-pane tab-add-goal" ng-show='permitted(["add_goal"])'>
                             <div class='row'>
                                 <div class='col-md-10 col-md-offset-1'>
                                     <form role='form' ng-submit='add_goal(new_goal)'>
                                         <div class='form-group'>
                                             <label> Goal Name </label>
-                                            <input type='text' ng-model='new_goal.name'
-                                                   class='form-control'>
+                                            <input type='text' ng-model='new_goal.name' class='form-control'>
                                         </div>
                                         <button type='submit' class='btn btn-default'> Add Goal</button>
 
@@ -436,8 +429,7 @@
                             Encounters ({{ encounters.length }})
                         </div>
 
-                        <div class='panel-body' style='max-height:325px; overflow:auto'
-                             ng-show="encounter_collapse">
+                        <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="encounter_collapse">
 
                             <ul class='ul-clean no-padding'>
                                 <li ng-repeat='encounter in encounters'>
@@ -455,41 +447,39 @@
                     <div ng-if='favorites.length>0' class='panel panel-default'>
                         <div class='panel-heading' ng-click="favorites_collapse=!favorites_collapse;">
                             <i class="fa fa-caret-down" aria-hidden="true"
-                               ng-class="favorites_collapse?'fa-caret-down':'fa-caret-right'"></i> Favorites
+                                ng-class="favorites_collapse?'fa-caret-down':'fa-caret-right'"></i> Favorites
                         </div>
 
-                        <div class='panel-body' style='max-height:325px; overflow:auto'
-                             ng-show="favorites_collapse">
+                        <div class='panel-body' style='max-height:325px; overflow:auto' ng-show="favorites_collapse">
                             <table class='table'>
                                 <thead>
-                                <tr>
-                                    <th>Name</th>
-                                </tr>
+                                    <tr>
+                                        <th>Name</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                <tr ng-repeat='event in favorites track by $index'
-                                    ng-init="event.is_named=false;">
-                                    <td>
-                                                <span ng-if="event.is_favorite">
-                                                    <span ng-if="event.is_named">
-                                                        <input type="text" ng-model="event.name_favorite">
-                                                        <button class="btn btn-primary"
-                                                                ng-click="nameFavoriteEvent(event)">Save</button>
-                                                        <button class="btn btn-danger"
-                                                                ng-click="event.is_named=!event.is_named;">Cancel</button>
-                                                    </span>
-                                                    <span ng-if="!event.is_named">
-                                                        {{ event.name_favorite }}
-                                                        <a ng-href='#/encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
-                                                           class="btn btn-default" target="_blank">Listen</a>
-                                                        <button class="btn btn-default"
-                                                                ng-click="event.is_named=!event.is_named;">Name</button>
-                                                        <button class="btn btn-danger"
-                                                                ng-click="unmarkFavoriteEvent(event)">Remove</button>
-                                                    </span>
+                                    <tr ng-repeat='event in favorites track by $index' ng-init="event.is_named=false;">
+                                        <td>
+                                            <span ng-if="event.is_favorite">
+                                                <span ng-if="event.is_named">
+                                                    <input type="text" ng-model="event.name_favorite">
+                                                    <button class="btn btn-primary"
+                                                        ng-click="nameFavoriteEvent(event)">Save</button>
+                                                    <button class="btn btn-danger"
+                                                        ng-click="event.is_named=!event.is_named;">Cancel</button>
                                                 </span>
-                                    </td>
-                                </tr>
+                                                <span ng-if="!event.is_named">
+                                                    {{ event.name_favorite }}
+                                                    <a ng-href='#/encounter/{{ event.encounter }}/?startAt={{ event.video_seconds }}'
+                                                        class="btn btn-default" target="_blank">Listen</a>
+                                                    <button class="btn btn-default"
+                                                        ng-click="event.is_named=!event.is_named;">Name</button>
+                                                    <button class="btn btn-danger"
+                                                        ng-click="unmarkFavoriteEvent(event)">Remove</button>
+                                                </span>
+                                            </span>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -499,12 +489,12 @@
                     <div class='panel panel-default' ng-init="narrativeCollapsed = false;">
                         <div class='panel-heading' ng-click="narrativeCollapsed  = !narrativeCollapsed ">
                             <i class="fa" ng-class="narrativeCollapsed ? 'fa-caret-down' :'fa-caret-right'"
-                               aria-hidden="true"></i>
+                                aria-hidden="true"></i>
                             Narrative
                         </div>
                         <div class="panel-body" ng-show="narrativeCollapsed">
-                    <textarea msd-elastic class='form-control' title="Narrative" rows="3"
-                              ng-model="narratives.latest.description"></textarea>
+                            <textarea msd-elastic class='form-control' title="Narrative" rows="3"
+                                ng-model="narratives.latest.description"></textarea>
 
                             <br>
                             <p>
@@ -533,7 +523,7 @@
                 <div class="panel-body" ng-show="!graphicFrameIsCollapsed">
                     <section id="pain-history">
                         <a ng-href="/patient/{{ patient_id }}/pain/add_pain_avatar" class='btn btn-default pull-right'
-                           ng-show='permitted(["update_pain"])'> Update Pain </a>
+                            ng-show='permitted(["update_pain"])'> Update Pain </a>
                         <h4>Pain history</h4>
                         <div class="text-center" pain-avatar pain-data='pain_avatars'></div>
                     </section>
@@ -547,7 +537,7 @@
         </div>
 
         <div role="tabpanel" class="tab-pane tab-mystory"
-             ng-class="collapse.show_homepage_tab=='mystory' ? 'active': ''" ng-if="checkSharedMyStory();">
+            ng-class="collapse.show_homepage_tab=='mystory' ? 'active': ''" ng-if="checkSharedMyStory();">
             <h3>My Story</h3>
             <br>
             <div class="row my-story">
@@ -555,17 +545,15 @@
                     <ul class='ul-clean my-story-list no-padding'>
                         <li ng-repeat="tab in my_story_tabs" encounter-event data-tab-id="{{ tab.id }}"
                             ng-if="tab.private==false || active_user.role=='patient' || active_user.user.id==tab.author.id">
-                            <button class="btn-link"
-                                    ng-click="view_my_story_tab(tab);"
-                                    ng-class="{'active': tab==selected_tab}"
-                                    ng-hide="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
+                            <button class="btn-link" ng-click="view_my_story_tab(tab);"
+                                ng-class="{'active': tab==selected_tab}"
+                                ng-hide="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
                                 {{ tab.name }}
                             </button>
                             <div class="row"
-                                 ng-show="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
+                                ng-show="show_edit_my_story_tab && tab==selected_tab && active_user.user.id==tab.author.id">
                                 <input type="text" ng-model="selected_tab.name" title="{{ selected_tab.name }}">
-                                <button class="btn btn-default"
-                                        ng-click="save_my_story_tab(selected_tab);">Save
+                                <button class="btn btn-default" ng-click="save_my_story_tab(selected_tab);">Save
                                 </button>
                             </div>
                         </li>
@@ -573,28 +561,26 @@
 
                     <div class="row">
                         <div class="col-md-12 text-right">
-                            <button class="btn btn-primary"
-                                    ng-click="toggle_add_my_story_tab();"
-                                    ng-show="!show_add_my_story_tab"
-                                    ng-if="enableMyStoryEdit && (active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin')">
+                            <button class="btn btn-primary" ng-click="toggle_add_my_story_tab();"
+                                ng-show="!show_add_my_story_tab"
+                                ng-if="enableMyStoryEdit && (active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin')">
                                 Add Tab
                             </button>
                             <button ng-click="enableMyStoryEdit = !enableMyStoryEdit" class="btn"
-                                    ng-class="enableMyStoryEdit ?'btn-danger':'btn-default'"
-                                    ng-bind="enableMyStoryEdit ? 'Exit' :'Edit'">
+                                ng-class="enableMyStoryEdit ?'btn-danger':'btn-default'"
+                                ng-bind="enableMyStoryEdit ? 'Exit' :'Edit'">
                             </button>
                         </div>
 
                         <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12" ng-if="enableMyStoryEdit">
                             <form ng-show="show_add_my_story_tab" class="form">
                                 <div class="form-group">
-                                    <input type="text" name="new-tab" ng-model="new_tab.name"
-                                           class="form-control">
+                                    <input type="text" name="new-tab" ng-model="new_tab.name" class="form-control">
                                 </div>
                                 <div ng-if="['physician','admin'].indexOf(active_user.role)!=-1">
                                     <div class="radio">
                                         <input type="radio" ng-value="true" checked id="public"
-                                               ng-model="new_tab.all_patients">
+                                            ng-model="new_tab.all_patients">
                                         <label for="public">
                                             All patients
                                         </label>
@@ -609,7 +595,7 @@
                                 <div ng-if="active_user.role=='patient'">
                                     <div class="radio">
                                         <input id="patient-private" type="radio" ng-value="true" checked
-                                               ng-model="new_tab.private">
+                                            ng-model="new_tab.private">
                                         <label for="patient-private">
                                             Keep it private
                                         </label>
@@ -634,32 +620,31 @@
 
                 <div class="col-sm-9 my-story-right">
                     <div ng-repeat="(tabIdx,tab) in my_story_tabs" ng-show="selected_tab == tab">
-                        <div class="row"
-                             ng-repeat="(textComponentIdx,component) in tab.my_story_tab_components"
-                             ng-if="component.private==false || active_user.role=='patient' || active_user.user.id==component.author.id">
+                        <div class="row" ng-repeat="(textComponentIdx,component) in tab.my_story_tab_components"
+                            ng-if="component.private==false || active_user.role=='patient' || active_user.user.id==component.author.id">
                             <div class="col-sm-12">
                                 <div class="text-component-edit-form">
                                     <b ng-hide="show_edit_my_story_tab && active_user.user.id==component.author.id">
                                         {{ component.name }}
                                     </b>
                                     <span ng-show="show_edit_my_story_tab && active_user.user.id==component.author.id">
-                                            <b>Name: </b><input type="text" ng-model="component.name" title="Name">
-                                            <b>Concept ID: </b><input type="text" ng-model="component.concept_id"
-                                                                      title="Concept ID">
-                                            <button class="btn btn-primary" ng-click="save_my_story_text(component);">Save</button>
-                                            <button class="btn btn-danger"
-                                                    ng-click="delete_my_story_text(component);"
-                                                    ng-if="active_user.user.id==component.author.id">Delete</button>
+                                        <b>Name: </b><input type="text" ng-model="component.name" title="Name">
+                                        <b>Concept ID: </b><input type="text" ng-model="component.concept_id"
+                                            title="Concept ID">
+                                        <button class="btn btn-primary"
+                                            ng-click="save_my_story_text(component);">Save</button>
+                                        <button class="btn btn-danger" ng-click="delete_my_story_text(component);"
+                                            ng-if="active_user.user.id==component.author.id">Delete</button>
                                     </span>
                                 </div>
 
                                 <div ng-repeat="(entriesIdx,entry) in component.text_component_entries" ng-if="$first">
                                     <textarea class="tab-components form-control"
-                                              id="{{ myStoryTabTextComponentArray.indexOf(component) + 1}}"
-                                              ng-model="entry.text"
-                                              ng-change="change_component_text(component, entry, oldText)"
-                                              ng-click="oldText = entry.text"
-                                              ng-model-options="{updateOn: 'blur', debounce: 1000}" title=""></textarea>
+                                        id="{{ myStoryTabTextComponentArray.indexOf(component) + 1}}"
+                                        ng-model="entry.text"
+                                        ng-change="change_component_text(component, entry, oldText)"
+                                        ng-click="oldText = entry.text"
+                                        ng-model-options="{updateOn: 'blur', debounce: 1000}" title=""></textarea>
 
                                     <p>Last edited by: {{ entry.author.username }}
                                         on {{ entry.datetime|date:'M/d/yyyy' }}
@@ -669,11 +654,11 @@
                                     </p>
                                 </div>
                                 <div ng-if="component.text_component_entries.length == 0">
-                                        <textarea class="tab-components form-control" ng-model="entry.text"
-                                                  id="{{ myStoryTabTextComponentArray.indexOf(component) + 1}}"
-                                                  ng-change="change_component_text(component, entry, oldText)"
-                                                  ng-click="oldText = entry.text"
-                                                  ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
+                                    <textarea class="tab-components form-control" ng-model="entry.text"
+                                        id="{{ myStoryTabTextComponentArray.indexOf(component) + 1}}"
+                                        ng-change="change_component_text(component, entry, oldText)"
+                                        ng-click="oldText = entry.text"
+                                        ng-model-options="{updateOn: 'blur', debounce: 1000}"></textarea>
                                 </div>
                                 <div ng-show="show_previous_entries">
                                     <div ng-repeat="entry in component.text_component_entries" ng-if="!$first">
@@ -687,10 +672,9 @@
                         <br>
                         <div class="row" ng-if="enableMyStoryEdit">
                             <div class="col-sm-6">
-                                <button class="btn btn-default"
-                                        ng-click="toggle_add_my_story_text();"
-                                        ng-show="!show_add_my_story_text"
-                                        ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin'">
+                                <button class="btn btn-default" ng-click="toggle_add_my_story_text();"
+                                    ng-show="!show_add_my_story_text"
+                                    ng-if="active_user.role=='physician' || active_user.role=='patient' || active_user.role=='admin'">
                                     Add Text Component
                                 </button>
                                 <form class="form-horizontal" ng-show="show_add_my_story_text">
@@ -711,25 +695,25 @@
                                     <div class="form-group">
                                         <label class="col-sm-2 control-label">Snomed concept id</label>
                                         <div class="col-sm-10">
-                                            <input type="text" class="form-control"
-                                                   ng-model="new_text.concept_id" title="">
+                                            <input type="text" class="form-control" ng-model="new_text.concept_id"
+                                                title="">
                                         </div>
                                     </div>
 
                                     <div class="form-group"
-                                         ng-if="selected_tab.is_all && ['physician','admin'].indexOf(active_user.role)!= -1">
+                                        ng-if="selected_tab.is_all && ['physician','admin'].indexOf(active_user.role)!= -1">
                                         <div class="col-sm-2"></div>
                                         <div class="col-sm-10">
                                             <div class="radio">
                                                 <input id="component-public" type="radio" ng-value="true" checked
-                                                       ng-model="new_text.all_patients" title="">
+                                                    ng-model="new_text.all_patients" title="">
                                                 <label for="component-public">
                                                     All patients
                                                 </label>
                                             </div>
                                             <div class="radio">
                                                 <input id="component-private" type="radio" ng-value=""
-                                                       ng-model="new_text.all_patients">
+                                                    ng-model="new_text.all_patients">
                                                 <label for="component-private">
                                                     Only current patient
                                                 </label>
@@ -742,15 +726,14 @@
                                         <div class="col-sm-10">
                                             <div class="radio">
                                                 <input id="patient-component-private" type="radio" ng-value="true"
-                                                       checked
-                                                       ng-model="new_text.private">
+                                                    checked ng-model="new_text.private">
                                                 <label for="patient-component-private">
                                                     Keep it private
                                                 </label>
                                             </div>
                                             <div class="radio">
                                                 <input type="radio" ng-value="" ng-model="new_text.private" title=""
-                                                       id="patient-component-shared">
+                                                    id="patient-component-shared">
                                                 <label for="patient-component-shared">
                                                     Share with doctor
                                                 </label>
@@ -761,12 +744,11 @@
                                     <div class="form-group">
                                         <div class="col-sm-2"></div>
                                         <div class="col-sm-10">
-                                            <button class="btn btn-default"
-                                                    ng-click="toggle_add_my_story_text();">
+                                            <button class="btn btn-default" ng-click="toggle_add_my_story_text();">
                                                 Cancel
                                             </button>
                                             <button class="btn btn-default"
-                                                    ng-click="add_my_story_text(selected_tab, new_text);">Save
+                                                ng-click="add_my_story_text(selected_tab, new_text);">Save
                                             </button>
                                         </div>
                                     </div>
@@ -777,10 +759,9 @@
                                     <span ng-show="!show_edit_my_story_tab">Edit</span>
                                     <span ng-show="show_edit_my_story_tab">Cancel</span>
                                 </button>
-                                <button class="btn btn-default pull-right"
-                                        ng-show="show_edit_my_story_tab"
-                                        ng-click="delete_my_story_tab(selected_tab);"
-                                        ng-if="active_user.user.id==selected_tab.author.id">Delete
+                                <button class="btn btn-default pull-right" ng-show="show_edit_my_story_tab"
+                                    ng-click="delete_my_story_tab(selected_tab);"
+                                    ng-if="active_user.user.id==selected_tab.author.id">Delete
                                 </button>
                             </div>
                         </div>
@@ -789,8 +770,7 @@
             </div>
         </div>
 
-        <div role="tabpanel" class="tab-pane tab-data"
-             ng-class="collapse.show_homepage_tab=='data' ? 'active': ''">
+        <div role="tabpanel" class="tab-pane tab-data" ng-class="collapse.show_homepage_tab=='data' ? 'active': ''">
             <div class='panel panel-default'>
                 <div class='panel-body'>
                     <div class="row">
@@ -798,25 +778,21 @@
                             <a target="_blank" ng-href="#/data/view" class="btn btn-default btn-block">Table view of
                                 vitals</a>
                             <div class="btn-group btn-group-justified graph-view-mode"
-                                 id="homepage-data-time-range-header"
-                                 patient-homepage-time-range-selector>
+                                id="homepage-data-time-range-header" patient-homepage-time-range-selector>
                                 <label class="btn btn-default" ng-click="viewMode='Week'"
-                                       ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
+                                    ng-class="viewMode=='Week'?'mode-active':'mode-inactive'">Week</label>
                                 <label class="btn btn-default" ng-click="viewMode='Month'"
-                                       ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
+                                    ng-class="viewMode=='Month'?'mode-active':'mode-inactive'">Month</label>
                                 <label class="btn btn-default" ng-click="viewMode='Year'"
-                                       ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
+                                    ng-class="viewMode=='Year'?'mode-active':'mode-inactive'">Year</label>
                                 <label class="btn btn-default" ng-click="viewMode='All'"
-                                       ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
+                                    ng-class="viewMode=='All'?'mode-active':'mode-inactive'">All</label>
                             </div>
 
                             <ul class='graph-data-list ul-clean no-padding' ui-sortable="sortableOptionsData"
-                                ng-model="datas"
-                                ng-if="['physician','patient'].indexOf(active_user.role)!=-1">
-                                <li ng-repeat="data in datas"
-                                    ng-click='open_data(data)'>
-                                    <div class='item-box data-frame'
-                                         ng-style="{'background-color': data.color}">
+                                ng-model="datas" ng-if="['physician','patient'].indexOf(active_user.role)!=-1">
+                                <li ng-repeat="data in datas" ng-click='open_data(data)'>
+                                    <div class='item-box data-frame' ng-style="{'background-color': data.color}">
                                         <div class="row  graph-header">
                                             <div class="col-md-6 text-left">
                                                 <h3>{{ data.name }}</h3>
@@ -825,7 +801,7 @@
                                                 <h3>
                                                     <span ng-bind="data.mostRecentValue"></span>
                                                     <span ng-repeat='unit in data.observation_units'
-                                                          ng-if="unit.is_used"> {{ unit.value_unit }}</span>
+                                                        ng-if="unit.is_used"> {{ unit.value_unit }}</span>
 
                                                 </h3>
                                                 <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
@@ -834,13 +810,11 @@
                                         </div>
                                         <div ng-if="data.observation_components.length > 0">
                                             <canvas ng-if="data.graph=='Line'" class="chart chart-line"
-                                                    chart-data="data.chartData"
-                                                    chart-series="data.chartSeries"
-                                                    chart-labels="data.chartLabel"></canvas>
+                                                chart-data="data.chartData" chart-series="data.chartSeries"
+                                                chart-labels="data.chartLabel"></canvas>
                                             <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
-                                                    chart-data="data.chartData"
-                                                    chart-series="data.chartSeries"
-                                                    chart-labels="data.chartLabel"></canvas>
+                                                chart-data="data.chartData" chart-series="data.chartSeries"
+                                                chart-labels="data.chartLabel"></canvas>
                                         </div>
                                     </div>
                                 </li>
@@ -849,8 +823,7 @@
                             <ul class='graph-data-list ul-clean no-padding'
                                 ng-if="['admin','nurse','secretary','mid-level'].indexOf(active_user.role)!=-1">
                                 <li ng-repeat="data in datas" ng-click='open_data(data)'>
-                                    <div class='item-box data-frame'
-                                         ng-style="{'background-color': data.color}">
+                                    <div class='item-box data-frame' ng-style="{'background-color': data.color}">
                                         <div class="row  graph-header">
                                             <div class="col-md-6 text-left">
                                                 <h3>{{ data.name }}</h3>
@@ -859,51 +832,45 @@
                                                 <h3>
                                                     <span ng-bind="data.mostRecentValue"></span>
                                                     <span ng-repeat='unit in data.observation_units'
-                                                          ng-if="unit.is_used"> {{ unit.value_unit }}</span>
+                                                        ng-if="unit.is_used"> {{ unit.value_unit }}</span>
                                                 </h3>
                                                 <span>{{ data.chartLabel[data.chartLabel.length-1]}}</span>
                                             </div>
                                         </div>
                                         <div ng-if="data.observation_components.length > 0">
                                             <canvas ng-if="data.graph=='Line'" class="chart chart-line"
-                                                    chart-data="data.chartData"
-                                                    chart-series="data.chartSeries"
-                                                    chart-labels="data.chartLabel"></canvas>
+                                                chart-data="data.chartData" chart-series="data.chartSeries"
+                                                chart-labels="data.chartLabel"></canvas>
                                             <canvas ng-if="data.graph=='Bar'" class="chart chart-bar"
-                                                    chart-data="data.chartData"
-                                                    chart-series="data.chartSeries"
-                                                    chart-labels="data.chartLabel"></canvas>
+                                                chart-data="data.chartData" chart-series="data.chartSeries"
+                                                chart-labels="data.chartLabel"></canvas>
                                         </div>
                                     </div>
                                 </li>
                             </ul>
 
                             <button class="btn btn-default pull-right" ng-show="!show_add_new_data_type"
-                                    ng-click="toggle_add_new_data_type();"> Add new data type
+                                ng-click="toggle_add_new_data_type();"> Add new data type
                             </button>
-                            <form class="form-horizontal"
-                                  ng-show="show_add_new_data_type">
+                            <form class="form-horizontal" ng-show="show_add_new_data_type">
                                 <div class="form-group">
                                     <label class="col-sm-4 control-label">Name</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control"
-                                               ng-model="new_data_type.name" title="">
+                                        <input type="text" class="form-control" ng-model="new_data_type.name" title="">
                                     </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label class="col-sm-4 control-label">LOINC Code</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control"
-                                               ng-model="new_data_type.code" title="">
+                                        <input type="text" class="form-control" ng-model="new_data_type.code" title="">
                                     </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label class="col-sm-4 control-label">Unit</label>
                                     <div class="col-sm-8">
-                                        <input type="text" class="form-control"
-                                               ng-model="new_data_type.unit">
+                                        <input type="text" class="form-control" ng-model="new_data_type.unit">
                                     </div>
                                 </div>
 
@@ -911,7 +878,7 @@
                                     <label class="col-sm-4 control-label">Color</label>
                                     <div class="col-sm-8">
                                         <color-picker ng-model="new_data_type.color"
-                                                      options="{format: 'hex'}"></color-picker>
+                                            options="{format: 'hex'}"></color-picker>
                                     </div>
                                 </div>
 
@@ -927,8 +894,8 @@
                         </div>
 
                         <div class="col-md-6">
-                            <div class="drop-box" ngf-drop ngf-select ng-model="files"
-                                 ngf-drag-over-class="'dragover'" ngf-multiple="true">Drop/Click to choose
+                            <div class="drop-box" ngf-drop ngf-select ng-model="files" ngf-drag-over-class="'dragover'"
+                                ngf-multiple="true">Drop/Click to choose
                                 document
                                 files
                             </div>
@@ -940,13 +907,12 @@
                                 <li ng-repeat="document in documents track by $index">
                                     <div>
                                         <a ng-repeat="label in document.labels track by $index" class="todo-label-front"
-                                           ng-class="label.css_class"><span ng-bind="label.name"
-                                                                            class="todo-label-name"></span></a>
+                                            ng-class="label.css_class"><span ng-bind="label.name"
+                                                class="todo-label-name"></span></a>
                                         <a ng-href="#/document/{{ document.id }}" class="flex-item document_name"
-                                           target="_blank"
-                                           ng-bind="document.document_name"></a>
+                                            target="_blank" ng-bind="document.document_name"></a>
                                         <span class="flex-item document_uploaded_date pull-right"
-                                              ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
+                                            ng-bind="document.created_on | date:'MM/dd/yyyy'"></span>
                                     </div>
                                 </li>
                             </ul>
@@ -958,7 +924,7 @@
         </div>
 
         <div role="tabpanel" class="tab-pane tab-medication"
-             ng-class="collapse.show_homepage_tab=='medication' ? 'active': ''">
+            ng-class="collapse.show_homepage_tab=='medication' ? 'active': ''">
             <medication ng-if="medications" ng-model="medications"></medication>
         </div>
     </div>
@@ -970,10 +936,9 @@
             <form class="form-inline" ng-if="active_user.role=='nurse'" ng-submit="nurseSubmitBDFI()">
                 <div class="form-group" ng-repeat="data in mostCommonData">
                     <input type='text' class='form-control'
-                           placeholder='{{ data.name == component.name ? data.ph : data.ph + " " + component.name}}'
-                           ng-repeat="component in data.observation_components"
-                           ng-change="bdfiValueIsChanged(component)"
-                           ng-model="component.new_value">
+                        placeholder='{{ data.name == component.name ? data.ph : data.ph + " " + component.name}}'
+                        ng-repeat="component in data.observation_components" ng-change="bdfiValueIsChanged(component)"
+                        ng-model="component.new_value">
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary btn-block">Submit</button>
@@ -983,11 +948,9 @@
             <form class="form-inline" ng-if="active_user.role=='patient'">
                 <div class="form-group" ng-repeat="data in mostCommonData">
                     <input type='text' class='form-control'
-                           placeholder='{{ data.name == component.name ? data.name : data.name + " " + component.name}}'
-                           ng-repeat="component in data.observation_components"
-                           ng-model="component.new_value"
-                           ng-change="add_bfdi_value(component)"
-                           ng-model-options="{updateOn: 'blur', debounce: 1000}">
+                        placeholder='{{ data.name == component.name ? data.name : data.name + " " + component.name}}'
+                        ng-repeat="component in data.observation_components" ng-model="component.new_value"
+                        ng-change="add_bfdi_value(component)" ng-model-options="{updateOn: 'blur', debounce: 1000}">
                 </div>
             </form>
         </div>

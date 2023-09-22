@@ -967,14 +967,9 @@ def get_user_todo(request, patient_id):
     """
     resp = {'success': False}
     is_accomplished = request.GET.get('accomplished') == 'true'
-    page = int(request.GET.get('page', 1))
-    load_all = request.GET.get('all', 'false') == 'true'
-    per_page = 5  # Default
 
     # Filter todo type and pagination
     todo = ToDo.objects.filter(patient_id=patient_id, accomplished=is_accomplished).order_by("order")
-    if not load_all:
-        todo = todo[per_page * (page - 1):per_page * page]
 
     resp['success'] = True
     resp['data'] = TodoSerializer(todo, many=True).data

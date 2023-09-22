@@ -42,7 +42,7 @@
      * @constructor
      */
     function HomeCtrl($scope, patientService, problemService, encounterService, ngDialog, sharedService, dataService,
-                      toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
+        toaster, $location, todoService, prompt, $timeout, CollapseService, $filter, $window) {
         console.log("controller");
         $scope.patientService = patientService;
         $scope.btnBDFISubmitted = false;
@@ -56,7 +56,7 @@
         $scope.new_data_type = {};
         $scope.new_list = {};
         $scope.new_list.labels = [];
-        $scope.new_problem = {set: false};
+        $scope.new_problem = { set: false };
         $scope.new_tab = {};
         $scope.new_tab.all_patients = true;
         $scope.new_tab.private = true;
@@ -280,29 +280,29 @@
                             $scope.mostCommonData = [];
                             // Related to https://trello.com/c/0aJybixw
                             // Pick  most common data with sorted order weight data first
-                            let weight = _.findWhere($scope.datas, {'name': 'weight'});
+                            let weight = _.findWhere($scope.datas, { 'name': 'weight' });
                             weight.ph = 'W';
                             $scope.mostCommonData.push(weight);
 
-                            let height = _.findWhere($scope.datas, {'name': 'height'});
+                            let height = _.findWhere($scope.datas, { 'name': 'height' });
                             height.ph = 'H';
                             $scope.mostCommonData.push(height);
 
-                            let blood_pressure = _.findWhere($scope.datas, {'name': 'blood pressure'});
+                            let blood_pressure = _.findWhere($scope.datas, { 'name': 'blood pressure' });
                             blood_pressure.ph = 'BP';
                             $scope.mostCommonData.push(blood_pressure);
 
-                            let body_temperature = _.findWhere($scope.datas, {'name': 'body temperature'});
+                            let body_temperature = _.findWhere($scope.datas, { 'name': 'body temperature' });
                             body_temperature.ph = 'T';
                             $scope.mostCommonData.push(body_temperature);
 
 
-                            let heart_rate = _.findWhere($scope.datas, {'name': 'heart rate'});
+                            let heart_rate = _.findWhere($scope.datas, { 'name': 'heart rate' });
                             heart_rate.ph = 'Pulse';
                             $scope.mostCommonData.push(heart_rate);
 
 
-                            let respiratory_rate = _.findWhere($scope.datas, {'name': 'respiratory rate'});
+                            let respiratory_rate = _.findWhere($scope.datas, { 'name': 'respiratory rate' });
                             respiratory_rate.ph = 'RR';
                             $scope.mostCommonData.push(respiratory_rate);
                         }
@@ -458,7 +458,7 @@
                             problems: timeline_problems
                         };
                         $scope.timeline_ready = true;
-                        $scope.timeline_changed = [{changing: new Date().getTime()}];
+                        $scope.timeline_changed = [{ changing: new Date().getTime() }];
                     });
                 }
             });
@@ -518,7 +518,7 @@
                     problems: timeline_problems
                 };
                 $scope.timeline_ready = true;
-                $scope.timeline_changed = [{changing: new Date().getTime()}];
+                $scope.timeline_changed = [{ changing: new Date().getTime() }];
             });
         }
 

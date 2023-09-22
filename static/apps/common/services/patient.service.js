@@ -535,15 +535,12 @@
 
                 httpService.get({
                     accomplished: false,
-                    page: this.pendingTodoPage,
-                    all: false
                 }, `/u/users/${patientID}/todos`, true)
                     .then((resp) => {
                         if (resp.success) {
-                            this.pendingTodoPage++;
                             // Save data to global storage
                             this.pendingTodo = this.pendingTodo.concat(resp.data);
-                            this.pendingTodoLoaded = resp.data.length === 0;
+                            this.pendingTodoLoaded = true;
 
                             $rootScope.$broadcast('todoListUpdated');
                         }
@@ -662,15 +659,12 @@
                 do {
                     httpService.get({
                         accomplished: false,
-                        page: this.pendingTodoPage,
-                        all: false
                     }, `/u/users/${patientID}/todos`, true)
                         .then((resp) => {
                             if (resp.success) {
-                                this.pendingTodoPage++;
                                 // Save data to global storage
                                 this.pendingTodo = this.pendingTodo.concat(resp.data);
-                                this.pendingTodoLoaded = resp.data.length === 0;
+                                this.pendingTodoLoaded = true;
 
                                 $rootScope.$broadcast('todoListUpdated');
                             }
