@@ -563,7 +563,7 @@ def add_problem_todo(request, problem_id):
     todo = request.POST.get('name')
     due_date = request.POST.get('due_date', None)
     if due_date:
-        due_date = parser.parse(due_date, dayfirst=False).date()
+        due_date = parser.parse(due_date, dayfirst=False, ignoretz=True)
         # due_date = datetime.strptime(due_date, '%m/%d/%Y').date()
 
     new_todo = ToDo(patient=patient, problem=problem, todo=todo, due_date=due_date)

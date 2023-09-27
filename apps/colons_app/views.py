@@ -90,7 +90,7 @@ def add_study(request, colon_id):
     if permissions_accessed(request.user, colon.patient.id):
         finding = request_data.get("finding", None)
         result = request_data.get("result", None)
-        study_date = dateutil.parser.parse(request_data.get('date'))
+        study_date = dateutil.parser.parse(request_data.get('date'), ignoretz=True)
         note = request_data.get("note", None)
 
         study = ColonCancerStudy.objects.create(colon=colon, finding=finding, result=result, note=note,
@@ -392,7 +392,7 @@ def colon_cancer_study(request, colon_id, study_id):
             study = ColonCancerStudy.objects.get(id=study_id)
             finding = request_data.get("finding", None)
             result = request_data.get("result", None)
-            study_date = dateutil.parser.parse(request_data.get('date'))
+            study_date = dateutil.parser.parse(request_data.get('date'), ignoretz=True)
             note = request_data.get("note", None)
 
             study.finding = finding
