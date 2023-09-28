@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}  Manage Patient - {{ patient.get_full_name }} {{patient}}  {% endblock %}
+{% block title %} Manage Patient - {{ patient.get_full_name }} {{patient}} {% endblock %}
 {% load tz %}
 
 {% block search %}
@@ -9,8 +9,8 @@
     <div class="input-group">
         <input class="form-control" name="query" placeholder="Search" type="text">
         <span class="input-group-btn">
-                <button class="btn btn-default" type="submit">Submit</button>
-            </span>
+            <button class="btn btn-default" type="submit">Submit</button>
+        </span>
     </div>
 </form>
 {% endblock %}
@@ -26,7 +26,8 @@
         {% if patient_profile.portrait_image %}
         <img alt="" class="profileThumb" src="{{ patient_profile.portrait_image.url }}">
         {% endif %}
-        {{ patient.get_full_name }} {% localtime off %} {{ patient_profile.date_of_birth | date:"m/d/Y" }} {% endlocaltime %}
+        {{ patient.get_full_name }} {% localtime off %} {{ patient_profile.date_of_birth | date:"m/d/Y" }}
+        {% endlocaltime %}
     </a>
 </li>
 
@@ -36,12 +37,11 @@
 <li class="vitals" id="vitals_weight"></li>
 <li class="vitals" id="vitals_heart_rate"></li>
 <li class="dropdown">
-    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown" href="#"
-       role="button">
+    <a aria-expanded="false" aria-haspopup="true" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
         <span class="caret"></span></a>
     <ul class="dropdown-menu">
         <li><a href='#/edit/'>My account</a></li>
-        <li><a href='/logout'>Logout</a></li>
+        <li><a href='/u/logout'>Logout</a></li>
     </ul>
 </li>
 
@@ -59,37 +59,37 @@
 <script src="/static/apps/patient/edit-profile-page/user-edit.controller.js" type="text/javascript"></script>
 <script src="/static/apps/patient/manage-sharing/user-sharing.controller.js" type="text/javascript"></script>
 <script src="/static/apps/patient/manage-sharing-problem/manage-sharing-problem.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/patient/medication-page/medication.controller.js" type="text/javascript"></script>
 <script src="/static/apps/patient/controllers/user-portrait-update-dialog.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 
 
 <!--A1C module's components-->
 <script src="/static/apps/patient/a1c-new-order-page/a1c-new-order.controller.js" type="text/javascript"></script>
 <script src="/static/apps/patient/a1c-new-value-page/a1c-new-value.controller.js" type="text/javascript"></script>
 <script src="/static/apps/patient/a1c-edit-delete-value-page/a1c-edit-delete-value.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/patient/a1c-edit-value-page/a1c-edit-value.controller.js" type="text/javascript"></script>
 
 <!-- Colon cancer widget-->
 <script src="/static/apps/patient/colon-cancer-edit-page/colon-cancer-edit-study.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/patient/colon-cancer-create-page/colon-cancer-new-study.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 
 <!-- Observation | Data module-->
 <script src="/static/apps/patient/observation-page/observation.controller.js" type="text/javascript"></script>
 <script src="/static/apps/patient/observation-add-data-page/observation-add-data.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/patient/observation-list-data-page/observation-list-data.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/patient/observation-data-detail-page/observation-data-detail.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/patient/observation-setting-page/observation-setting.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/patient/observation-table-page/observation-table.controller.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 
 <!-- Todo module-->
 <script src="/static/apps/common/directives/todo/todo-item.component.js" type="text/javascript"></script>
@@ -100,9 +100,9 @@
 <script src="/static/apps/patient/directives/a1c-directive/a1c.directive.js" type="text/javascript"></script>
 <script src="/static/apps/patient/directives/problem-directive/problem.directive.js" type="text/javascript"></script>
 <script src="/static/apps/patient/directives/colon-cancer-directive/colon-cancer.directive.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/patient/directives/medication-directive/medication.directive.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 <script src="/static/apps/common/directives/encounter-event.directive.js" type="text/javascript"></script>
 
 <!-- Problem note component-->
@@ -110,7 +110,7 @@
 <!--Todo laboratory-->
 <script src="/static/apps/patient/todo-laboratory-print-page/print.controller.js" type="text/javascript"></script>
 <script src="/static/apps/common/directives/todo-laboratory/todo-laboratory.component.js"
-        type="text/javascript"></script>
+    type="text/javascript"></script>
 
 <script src="/static/libs/ngPrint/ngPrint.min.js"></script>
 
@@ -118,15 +118,15 @@
 <!-- TODO: Patient_Info is an UserProfile instant-->
 <!-- TODO: User_Id is an User_ID instant-->
 <!-- TODO: active_user is an UserProfile instant-->
-<input class="form-control" id="user_id" type="hidden" value="{{ user.id }}"/>
-<input class="form-control" id="active_user" type="hidden" value="{{ active_user }}"/>
-<input class="form-control" id="patient_id" type="hidden" value="{{ patient.id }}"/>
-<input class="form-control" id="patient_info" type="hidden" value="{{ patient_info }}"/>
-<input class="form-control" id="bleeding_risk" type="hidden" value="{{ bleeding_risk }}"/>
-<input class="form-control" id="fit_and_well" type="hidden" value="{{ fit_and_well }}"/>
+<input class="form-control" id="user_id" type="hidden" value="{{ user.id }}" />
+<input class="form-control" id="active_user" type="hidden" value="{{ active_user }}" />
+<input class="form-control" id="patient_id" type="hidden" value="{{ patient.id }}" />
+<input class="form-control" id="patient_info" type="hidden" value="{{ patient_info }}" />
+<input class="form-control" id="bleeding_risk" type="hidden" value="{{ bleeding_risk }}" />
+<input class="form-control" id="fit_and_well" type="hidden" value="{{ fit_and_well }}" />
 
 <div id='ng-app' ng-app='ManagerApp'
-     ng-init="user_id={{ user.id }};active_user={{ active_user }};patient_id={{ patient.id }};patient_info={{ patient_info }} ;bleeding_risk={{ bleeding_risk }}">
+    ng-init="user_id={{ user.id }};active_user={{ active_user }};patient_id={{ patient.id }};patient_info={{ patient_info }} ;bleeding_risk={{ bleeding_risk }}">
     <toaster-container toaster-options="{'time-out': 1000}"></toaster-container>
 
     <div autoscroll='true' ng-view>
@@ -134,7 +134,8 @@
     </div>
 
     {% verbatim %}
-    <div class='bottom-bar' id='encounter-bar' ng-controller='EncountersMainCtrl' ng-if="active_user.permissions.indexOf('add_encounter') != -1">
+    <div class='bottom-bar' id='encounter-bar' ng-controller='EncountersMainCtrl'
+        ng-if="active_user.permissions.indexOf('add_encounter') != -1">
 
         <!-- Client UI response for recording states-->
         <div class='row' id='encounter-box'>
@@ -155,21 +156,19 @@
 
                             <span ng-show="settings.browser_audio_recording">
                                 <!-- This is control used to record audio in client side-->
-                                <ng-audio-recorder audio-model='recordedInput' id='audioInput' on-conversion-complete="conversionComplete()"
-                                                   on-conversion-start="conversionStart()"
-                                                   on-record-complete="recordComplete()"
-                                                   on-record-start="recordStart()"
-                                                   show-player="false"
-                                                   style="display: none">
+                                <ng-audio-recorder audio-model='recordedInput' id='audioInput'
+                                    on-conversion-complete="conversionComplete()"
+                                    on-conversion-start="conversionStart()" on-record-complete="recordComplete()"
+                                    on-record-start="recordStart()" show-player="false" style="display: none">
                                     <div ng-if="!recorder.isAvailable"> Your browser is not support recording</div>
                                 </ng-audio-recorder>
 
                                 <!-- Pause/Resume recorder while encountering | Disable while converting -->
                                 <button class="btn btn-default" ng-click='toggle_recorder()' type="button">
                                     <span aria-hidden="true" class="glyphicon glyphicon-play"
-                                          ng-if="activeEncounter.recorder_status==1" title="Resume"></span>
+                                        ng-if="activeEncounter.recorder_status==1" title="Resume"></span>
                                     <span aria-hidden="true" class="glyphicon glyphicon-pause"
-                                          ng-if="activeEncounter.recorder_status==0" title="Pause"></span>
+                                        ng-if="activeEncounter.recorder_status==0" title="Pause"></span>
                                 </button>
                             </span>
 
@@ -187,8 +186,8 @@
 
                     <div class='col-md-6'>
                         <div class="input-group">
-                            <input title="" class='form-control' ng-model='event_summary' placeholder='What are you doing right now ?'
-                                   type='text'>
+                            <input title="" class='form-control' ng-model='event_summary'
+                                placeholder='What are you doing right now ?' type='text'>
                             <span class="input-group-btn">
                                 <button class='btn btn-default' ng-click='add_event_summary()'>
                                     Add Event Summary

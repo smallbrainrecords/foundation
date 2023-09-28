@@ -64,7 +64,7 @@ urlpatterns = [
     re_path(r'^login-error/$', LoginError.as_view()),
 
     # Old user views
-    re_path(r'^logout/$', django.contrib.auth.views.LogoutView.as_view(), {'next_page': '/'}),
+    # re_path(r'^logout/$', django.contrib.auth.views.LogoutView.as_view(), {'next_page': '/'}),
 
     # Old views
     re_path(r'^list_of_unregistered_users/$', emr_views.list_of_unregistered_users),

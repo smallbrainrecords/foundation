@@ -162,7 +162,7 @@ def login_user(request):
 
 #@timeit
 def logout_user(request):
-    logout(request.user)
+    logout(request)
     return HttpResponseRedirect('/')
 
 
