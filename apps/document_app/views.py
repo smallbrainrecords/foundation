@@ -201,7 +201,7 @@ def search_patient(request):
     for profile in profiles:
         result.append({
             'uid': profile.user.id,
-            'full_name': unicode(profile)
+            'full_name': f'{profile.user.first_name} {profile.user.last_name}'
         })
 
     resp['results'] = result
