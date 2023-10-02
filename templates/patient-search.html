@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}  Search Patient - {{ patient.get_full_name }}   {% endblock %}
+{% block title %} Search Patient - {{ patient.get_full_name }} {% endblock %}
 {% block search %}
 <form action="{% url 'search' patient.id %}" class="navbar-form navbar-left" method="post">
     {% csrf_token %}
@@ -7,7 +7,7 @@
     <div class="input-group">
         <input class="form-control" name="query" placeholder="Search" type="text">
         <span class="input-group-btn">
-    <button class="btn btn-default" type="submit">Submit</button>
+            <button class="btn btn-default" type="submit">Submit</button>
         </span>
     </div>
 </form>
@@ -25,18 +25,15 @@
                 <li>
                     <div class="row">
                         <div class="col-md-8">
-
-                            {{ patient }}
+                            {{ patient.user.first_name }} {{ patient.user.last_name }}
                         </div>
                         <div class="col-md-4 text-right">
 
-                            <a class='btn btn-sm btn-default'
-                               href='/project/admin/#/edit/{{ patient.user_id }}/'>
+                            <a class='btn btn-sm btn-default' href='/project/admin/#/edit/{{ patient.user_id }}/'>
                                 Edit
                             </a>
 
-                            <a class='btn btn-sm btn-default'
-                               href='/u/patient/manage/{{ patient.user_id }}/'>
+                            <a class='btn btn-sm btn-default' href='/u/patient/manage/{{ patient.user_id }}/'>
                                 Manage
                             </a>
                         </div>

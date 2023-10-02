@@ -43,10 +43,10 @@
                 $scope.user_id = $routeParams['userId'];
 
                 /* Needed for form initialization */
-                $scope.assign_patient_form = {'member_type': 'patient'};
-                $scope.assign_nurse_form = {'member_type': 'nurse'};
-                $scope.assign_mid_level_form = {'member_type': 'mid-level'};
-                $scope.assign_secretary_form = {'member_type': 'secretary'};
+                $scope.assign_patient_form = { 'member_type': 'patient' };
+                $scope.assign_nurse_form = { 'member_type': 'nurse' };
+                $scope.assign_mid_level_form = { 'member_type': 'mid-level' };
+                $scope.assign_secretary_form = { 'member_type': 'secretary' };
 
                 $scope.assign_physician_form = {};
 
@@ -62,7 +62,7 @@
                     if ($scope.user_profile.role == 'physician') {
 
                         // physicians
-                        var form = {'physician_id': $scope.user_id};
+                        var form = { 'physician_id': $scope.user_id };
 
                         adminService.getPhysicianData(form).then(function (data) {
 
@@ -77,7 +77,7 @@
 
                     } else {
                         // patients , nurses, mid-level, secretary
-                        var form = {'user_id': $scope.user_id};
+                        var form = { 'user_id': $scope.user_id };
                         form.member_type = $scope.user_profile.role;
 
                         adminService.getAssignedPhysicians(form).then(function (data) {
@@ -120,6 +120,8 @@
 
                 var form = {};
                 form.user_id = $scope.user_id;
+                form.first_name = $scope.user_profile.user.first_name;
+                form.last_name = $scope.user_profile.user.last_name;
                 form.phone_number = $scope.user_profile.phone_number;
                 form.sex = $scope.user_profile.sex;
                 form.role = $scope.user_profile.role;
@@ -204,7 +206,7 @@
             }
 
             function navigate(l) {
-                $("html, body").animate({scrollTop: $('#' + l).offset().top - 100}, 500);
+                $("html, body").animate({ scrollTop: $('#' + l).offset().top - 100 }, 500);
             }
 
             function showPhysicianAssigned(role) {
@@ -256,19 +258,19 @@
                     if (data['success'] == true) {
                         toaster.pop('success', 'Done', 'Added member');
                         switch (form.member_type) {
-                            case 'patient' :
+                            case 'patient':
                                 var new_member = $scope.removeItemById($scope.unassigned_patients, form.user_id);
                                 $scope.patients.push(new_member);
                                 break;
-                            case 'nurse' :
+                            case 'nurse':
                                 var new_member = $scope.removeItemById($scope.nurses_list, form.user_id);
                                 $scope.team.nurses.push(new_member);
                                 break;
-                            case 'secretary' :
+                            case 'secretary':
                                 var new_member = $scope.removeItemById($scope.secretaries_list, form.user_id);
                                 $scope.team.secretaries.push(new_member);
                                 break;
-                            case 'mid-level' :
+                            case 'mid-level':
                                 var new_member = $scope.removeItemById($scope.mid_level_staffs_list, form.user_id);
                                 $scope.team.mid_level_staffs.push(new_member);
                                 break;

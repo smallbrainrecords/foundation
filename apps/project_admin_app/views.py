@@ -180,9 +180,12 @@ def update_profile(request):
             summary = form.cleaned_data['summary']
             cover_image = form.cleaned_data['cover_image']
             portrait_image = form.cleaned_data['portrait_image']
-            date_of_birth = form.cleaned_data['date_of_birth']
+            date_of_birth = dateutil.parser.parse(request.POST.get('date_of_birth'), ignoretz=True)
 
             user_profile = UserProfile.objects.get(user_id=user_id)
+            user_profile.date_of_birth = date_of_birth
+            user_profile.user.first_name = request.POST.get('first_name')
+            user_profile.user.last_name = request.POST.get('last_name')
 
             if phone_number:
                 user_profile.phone_number = phone_number
@@ -201,6 +204,7 @@ def update_profile(request):
                 user_profile.portrait_image = portrait_image
 
             user_profile.save()
+            user_profile.user.save()
 
             resp['success'] = True
 
