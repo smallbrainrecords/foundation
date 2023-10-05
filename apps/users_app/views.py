@@ -1008,7 +1008,7 @@ def get_most_recent_encounter(request, patient_id):
             component__observation__subject=encounter.patient)
         for document in documents:
             most_recent_encounter_documents_holder.append({
-                'name': document.component.__str__(),
+                'name': document.component.name,
                 'value': '%g' % float(document.value_quantity),
                 'effective': document.effective_datetime.isoformat()
             })

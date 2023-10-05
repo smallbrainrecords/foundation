@@ -16,10 +16,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from datetime import datetime
 
+from emr.models import (
+    InrTextNote,
+    ObservationComponent,
+    ObservationPinToProblem,
+    ObservationValue,
+    Problem,
+    UserProfile,
+)
 from rest_framework import serializers
-
-from emr.models import InrTextNote, Problem, ObservationValue, UserProfile, ObservationComponent, \
-    ObservationPinToProblem
 from users_app.serializers import SafeUserSerializer
 
 
@@ -126,7 +131,7 @@ class INRPatientSerializer(serializers.ModelSerializer):
             return obj.portrait_image.url
 
     def get_full_name(self, obj):
-        return unicode(obj)
+        return str(obj)
 
     def get_problem_id(self, obj):
         # Find patient's observation (INR data type)
