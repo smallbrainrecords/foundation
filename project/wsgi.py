@@ -30,8 +30,8 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 sys.path.append(os.path.join(BASE_DIR, 'templates')) 
 
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
-os.environ["DJANGO_SETTINGS_MODULE"] = ""
-os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
+# os.environ["DJANGO_SETTINGS_MODULE"] = ""
+# os.environ["DJANGO_SETTINGS_MODULE"] = "project.settings"
 
 
 # This application object is used by any WSGI server configured to use this

@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import connection
 from django.db.models import Q
 from django.shortcuts import render
 from users_app.operations import get_vitals_table_component
@@ -625,23 +626,83 @@ def get_patients_list(request):
     is_descending = True if (request.POST.get('isDescending', 'true') == 'true') else False
 
     if user_profile.role == 'admin':
-        patients = UserProfile.objects.filter(role='patient').filter(user__is_active=True)
-        patient_ids = [x.user_id for x in patients]
+        # patients = UserProfile.objects.filter(role='patient').filter(user__is_active=True)
+        # patient_ids = [x.user_id for x in patients]
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                            SELECT
+                            	au.id
+                            FROM
+                            	emr_userprofile eu
+                            JOIN auth_user au ON
+                            	eu.user_id = au.id
+                            WHERE
+                            	eu.role = %s
+                            	AND au.is_active = 1;                           
+                            """, ["patient"])
+            
+            patient_ids = []
+            for row in cursor.fetchall():
+                patient_ids.append(row[0])
 
     elif user_profile.role == 'patient':
         patients = UserProfile.objects.filter(role='patient').exclude(user=request.user).filter(user__is_active=True)
         patient_ids = [x.user_id.id for x in patients]
 
     elif user_profile.role == 'physician':
-        patient_controllers = PatientController.objects.filter(physician=request.user)
-        patient_ids = [x.patient.id for x in patient_controllers]
+        # patient_controllers = PatientController.objects.filter(physician=request.user)
+        # patient_ids = [x.patient.id for x in patient_controllers]
         # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                            SELECT
+                            	au.id AS patient_id
+                            FROM
+                            	emr_patientcontroller ep
+                            JOIN auth_user au ON
+                            	ep.patient_id = au.id
+                            WHERE
+                            	ep.physician_id = %s
+                                AND au.is_active = 1;                       
+                            """, [request.user.id])
+          
+            patient_ids = []
+            for row in cursor.fetchall():
+                patient_ids.append(row[0])
+
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
-        team_members = PhysicianTeam.objects.filter(member=request.user)
-        physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
-        patient_ids = [x.patient.id for x in patient_controllers]
+        # team_members = PhysicianTeam.objects.filter(member=request.user)
+        # physician_ids = [x.physician.id for x in team_members]
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                            SELECT
+                            	ep.physician_id
+                            FROM
+                            	emr_physicianteam ep
+                            WHERE 
+                                ep.member_id = %s;
+                            """, [request.user.id])
+            physician_ids = []
+            for row in cursor.fetchall():
+                physician_ids.append(row[0])
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                            SELECT
+                            	au.id AS patient_id
+                            FROM
+                            	emr_patientcontroller ep
+                            JOIN auth_user au ON
+                            	ep.patient_id = au.id
+                            WHERE
+                            	au.is_active = 1
+                            	AND ep.physician_id IN (%s);                               
+                            """, [physician_ids])
+            for row in cursor.fetchall():
+                patient_ids.append(row[0])
+        # patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
+        # patient_ids = [x.patient.id for x in patient_controllers]
         # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
     result = TopPatientSerializer(VWTopPatients.objects.filter(id__in=patient_ids), many=True).data

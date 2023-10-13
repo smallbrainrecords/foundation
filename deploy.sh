@@ -4,9 +4,9 @@ version_number=$1;
 environment=$2
 
 if [ "prod" = $environment ]; then
-    django_settings_module="settings_prod.py"
+    django_settings_module="project.settings_prod"
 else
-    django_settings_module="settings.py"
+    django_settings_module="project.settings"
 fi
 
 tag_name="us-east5-docker.pkg.dev/hi-core/foundation/$environment:v"

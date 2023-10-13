@@ -182,7 +182,7 @@
                     <div class="row">
                         <div class="col-md-8">
                             <a href='/u/patient/manage/{{ patient.user_id }}/'>
-                                {{ patient }} - {{ patient.date_of_birth }}
+                                {{ patient.user.first_name }} {{ patient.user.last_name }} - {{ patient.date_of_birth }}
                             </a>
                         </div>
                         <div class="col-md-4 text-right">

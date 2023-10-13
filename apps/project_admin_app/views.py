@@ -20,6 +20,7 @@ import dateutil
 from common.views import *
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import connection
 from django.db.models import Q
 from django.shortcuts import render
 from django.utils import timezone
@@ -466,23 +467,39 @@ def fetch_physician_data(request):
             if user_profile.role == 'secretary':
                 secretaries_list.append(profile_dict)
 
-    patients = PatientController.objects.filter(physician=physician)
-    patient_ids = [int(x.patient.id) for x in patients]
+    # with connection.cursor() as cursor:
+    #     cursor.execute("""
+    #                     SELECT
+    #                     	au.id AS patient_id
+    #                     FROM
+    #                     	emr_patientcontroller ep
+    #                     JOIN auth_user au ON
+    #                     	ep.patient_id = au.id
+    #                     WHERE
+    #                     	ep.physician_id = %s;                       
+    #                     """, [physician_id])
+        
+    #     patient_ids = []
+    #     for row in cursor.fetchall():
+    #         patient_ids.append(row[0])
 
-    patient_profiles = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
-    patient_profiles_dict = UserProfileSerializer(
-        patient_profiles, many=True).data
+    # patients = PatientController.objects.filter(physician=physician).values("patient.id")
+    # patient_ids = [int(x.patient.id) for x in patients] #TODO: Optimize
 
-    unassigned_patient_profiles = UserProfile.objects.filter(
-        role='patient').exclude(user__id__in=patient_ids)
-    unassigned_patients_dict = UserProfileSerializer(
-        unassigned_patient_profiles, many=True).data
+    # patient_profiles = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True) #TODO: Optimize
+    # patient_profiles_dict = UserProfileSerializer(
+    #     patient_profiles, many=True).data
+
+    # unassigned_patient_profiles = UserProfile.objects.filter(
+    #     role='patient').exclude(user__id__in=patient_ids)
+    # unassigned_patients_dict = UserProfileSerializer(
+    #     unassigned_patient_profiles, many=True).data
 
     success = True
 
     resp = {}
     resp['success'] = success
-    resp['patients'] = patient_profiles_dict
+    # resp['patients'] = patient_profiles_dict
     team = {}
     team['nurses'] = nurses
     team['secretaries'] = secretaries
@@ -491,7 +508,7 @@ def fetch_physician_data(request):
     resp['nurses_list'] = nurses_list
     resp['secretaries_list'] = secretaries_list
     resp['mid_level_staffs_list'] = mid_level_staffs_list
-    resp['unassigned_patients'] = unassigned_patients_dict
+    # resp['unassigned_patients'] = unassigned_patients_dict
 
     return ajax_response(resp)
 
