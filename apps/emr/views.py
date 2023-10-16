@@ -22,6 +22,7 @@ from common.views import *
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.core.checks import messages
+from django.db import connections
 from django.views.generic import View
 from django.views.static import serve
 from emr.models import (
@@ -412,10 +413,27 @@ class LoginError(View):
 # ****************** New Code *********************
 @login_required
 def list_snomed_terms(request):
-    query = request.GET['query']
-    result = VWProblems.objects.using('snomedict').filter(term__contains="{0}".format(query)).all()
-    results_holder = VWProblemsSerializers(result, many=True).data
-    return ajax_response(results_holder)
+    query = f"%{request.GET['query']}%"
+    with connections["snomedict"].cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT
+            	vp.conceptid as code, vp.term
+            FROM
+            	vw_problems vp
+            WHERE
+            	vp.term LIKE %s;
+            """, [query]
+        )
+
+        problems_results = []
+        for row in cursor.fetchall():
+            problem_dict = {
+                "id": row[0],
+                "term": row[1]
+            }
+            problems_results.append(problem_dict)
+    return ajax_response(problems_results)
 
 
 def has_read_permission(request, path):

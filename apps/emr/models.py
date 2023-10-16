@@ -1201,7 +1201,7 @@ class VWProblems(models.Model):
 
     class Meta:
         managed = False
-        db_table = "vw_problems"
+        db_table = "vw_problems_full"
 
 
 class VWTopPatients(models.Model):

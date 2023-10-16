@@ -158,7 +158,7 @@ def get_a1c(request, problem_id):
     """
     resp = {'success': False}
     a1c = AOneC.objects.filter(problem__id=problem_id).get()
-    a1c.a1c_todos = a1c.a1c_todos.filter(accomplished=False)
+    a1c.a1c_todos.set(a1c.a1c_todos.filter(accomplished=False))
 
     resp['success'] = True
     resp['a1c'] = AOneCSerializer(a1c).data
