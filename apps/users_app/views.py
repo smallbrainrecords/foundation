@@ -622,12 +622,9 @@ def get_patients_list(request):
     """
     user_profile = UserProfile.objects.get(user=request.user)
     sort_by = request.POST.get('sortBy', None)
-    # Parsing javascript boolean value python boolean supported value
     is_descending = True if (request.POST.get('isDescending', 'true') == 'true') else False
 
     if user_profile.role == 'admin':
-        # patients = UserProfile.objects.filter(role='patient').filter(user__is_active=True)
-        # patient_ids = [x.user_id for x in patients]
         with connection.cursor() as cursor:
             cursor.execute("""
                             SELECT
@@ -650,10 +647,6 @@ def get_patients_list(request):
         patient_ids = [x.user_id.id for x in patients]
 
     elif user_profile.role == 'physician':
-        # patient_controllers = PatientController.objects.filter(physician=request.user)
-        # patient_ids = [x.patient.id for x in patient_controllers]
-        # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
-
         with connection.cursor() as cursor:
             cursor.execute("""
                             SELECT
@@ -672,8 +665,6 @@ def get_patients_list(request):
                 patient_ids.append(row[0])
 
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
-        # team_members = PhysicianTeam.objects.filter(member=request.user)
-        # physician_ids = [x.physician.id for x in team_members]
         with connection.cursor() as cursor:
             cursor.execute("""
                             SELECT
@@ -697,37 +688,15 @@ def get_patients_list(request):
                             	ep.patient_id = au.id
                             WHERE
                             	au.is_active = 1
-                            	AND ep.physician_id IN (%s);                               
+                            	AND ep.physician_id IN %s;                               
                             """, [physician_ids])
+            
+            patient_ids = []
             for row in cursor.fetchall():
                 patient_ids.append(row[0])
-        # patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
-        # patient_ids = [x.patient.id for x in patient_controllers]
-        # patients = UserProfile.objects.filter(user__id__in=patient_ids).filter(user__is_active=True)
 
     result = TopPatientSerializer(VWTopPatients.objects.filter(id__in=patient_ids), many=True).data
 
-    # patients_list = UserProfileSerializer(patients, many=True).data
-    # six_weeks_earlier = datetime.datetime.now() - relativedelta(weeks=6)
-    # for patient in patients_list:
-    #     todo_count = ToDo.objects.filter(patient__id=patient['user']['id'], accomplished=False).count()
-    #     problem_count = Problem.objects.filter(patient__id=patient['user']['id'], is_active=True,
-    #                                            is_controlled=False).count()
-    #     encounter_count = Encounter.objects.filter(patient__id=patient['user']['id'],
-    #                                                starttime__gte=six_weeks_earlier.date()).count()
-    #     document_count = Document.objects.filter(patient__id=patient['user']['id'],
-    #                                              created_on__gte=six_weeks_earlier.date()).count()
-    #
-    #     patient["todo"] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3)
-    #     patient["problem"] = (float(problem_count) if problem_count != 0 else float(1))
-    #     patient["encounter"] = float(encounter_count) if encounter_count != 0 else float(1)
-    #     patient["document"] = (float(document_count) if document_count != 0 else float(1)) / 2
-    #     patient['multiply'] = ((float(todo_count) if todo_count != 0 else float(1)) * 2 / 3) * (
-    #         float(problem_count) if problem_count != 0 else float(1)) * (
-    #                               float(encounter_count) if encounter_count != 0 else float(1)) * (
-    #                                   (float(document_count) if document_count != 0 else float(1)) / 2)
-
-    # Will sort patient list by providing sort_by otherwise will sort by 'multiply' key
     resp = {
         'patients_list': sorted(result,
                                 key=operator.itemgetter(sort_by if sort_by is not None else 'multiply'),

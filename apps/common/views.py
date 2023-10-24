@@ -20,7 +20,6 @@ import time
 from datetime import datetime
 
 from django.http import *
-
 from emr.manage_patient_permissions import check_permissions
 from emr.models import ObservationComponent
 

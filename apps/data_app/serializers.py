@@ -14,10 +14,17 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from rest_framework import serializers
+from datetime import datetime
 
-from emr.models import Observation, ObservationComponent, ObservationValueTextNote, ObservationPinToProblem, \
-    ObservationUnit, ObservationValue
+from emr.models import (
+    Observation,
+    ObservationComponent,
+    ObservationPinToProblem,
+    ObservationUnit,
+    ObservationValue,
+    ObservationValueTextNote,
+)
+from rest_framework import serializers
 from users_app.serializers import SafeUserSerializer
 
 
@@ -47,8 +54,6 @@ class ObservationUnitSerializer(serializers.ModelSerializer):
 
 class ObservationValueSerializer(serializers.ModelSerializer):
     author = SafeUserSerializer()
-    date = serializers.SerializerMethodField()
-    time = serializers.SerializerMethodField()
     observation = serializers.SerializerMethodField()
     value_quantity = serializers.SerializerMethodField()
     observation_value_notes = ObservationValueTextNoteSerializer(many=True, read_only=True)
@@ -62,21 +67,9 @@ class ObservationValueSerializer(serializers.ModelSerializer):
             'value_quantity',
             'effective_datetime',
             'created_on',
-            'date',
-            'time',
             'observation',
             'observation_value_notes',
         )
-
-    def get_date(self, obj):
-        if not obj.effective_datetime:
-            return ''
-        return obj.effective_datetime.strftime('%m/%d/%Y')
-
-    def get_time(self, obj):
-        if not obj.effective_datetime:
-            return ''
-        return obj.effective_datetime.strftime('%H:%M')
 
     def get_observation(self, obj):
         return obj.component.observation.id
