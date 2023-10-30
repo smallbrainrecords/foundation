@@ -16,9 +16,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
 from django.contrib.auth.models import User
+from django.utils import timezone
+from emr.models import Narrative, UserProfile, VWTopPatients
 from rest_framework import serializers
-
-from emr.models import UserProfile, Narrative, VWTopPatients
 
 
 class SafeUserProfileSerializer(serializers.ModelSerializer):
@@ -53,6 +53,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     user = SafeUserSerializer()
     deceased_date = serializers.DateTimeField(format='%m/%d/%Y')
     date_of_birth = serializers.DateTimeField(format='%m/%d/%Y')
+    localized_date_of_birth = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
@@ -67,6 +68,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'summary',
             'sex',
             'date_of_birth',
+            'localized_date_of_birth',
             'phone_number',
             'note',
             'active_reason',
@@ -76,6 +78,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'insurance_note'
         )
 
+    def get_localized_date_of_birth(self, obj):
+        utc_date_of_birth = obj.date_of_birth
+        local_date_of_birth = timezone.localtime(utc_date_of_birth).date()
+        formatted_date = local_date_of_birth.strftime("%m/%d/%Y")
+        return formatted_date
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(many=False)

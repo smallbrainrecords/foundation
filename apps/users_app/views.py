@@ -317,11 +317,13 @@ def get_patient_info(request, patient_id):
 
     problem_list = []
     problems = Problem.objects.filter(patient=patient_user)
-    for key in problem_order.order:
-        if problems.filter(id=key):
-            problem = problems.get(id=key)
-            problem_dict = ProblemSerializer(problem).data
-            problem_list.append(problem_dict)
+
+    if problem_order.order is not None:
+        for key in problem_order.order:
+            if problems.filter(id=key):
+                problem = problems.get(id=key)
+                problem_dict = ProblemSerializer(problem).data
+                problem_list.append(problem_dict)
 
     if request.user.profile.role == 'admin':
         for problem in problems:
@@ -343,9 +345,10 @@ def get_patient_info(request, patient_id):
         problem_list = sorted(problem_list, key=operator.itemgetter('multiply'), reverse=True)
     else:
         for problem in problems:
-            if not problem.id in problem_order.order:
-                problem_dict = ProblemSerializer(problem).data
-                problem_list.append(problem_dict)
+            if problem_order.order is not None:
+                if not problem.id in problem_order.order:
+                    problem_dict = ProblemSerializer(problem).data
+                    problem_list.append(problem_dict)
 
     inactive_problems = Problem.objects.filter(patient=patient_user, is_active=False)
     goals = Goal.objects.filter(patient=patient_user, accomplished=False)
@@ -857,7 +860,7 @@ def search(request, user_id):
 
         documents = Document.objects.filter(Q(document__icontains=query), patient=user)
         context['documents'] = documents
-        if request.user.profile.role is not 'patient':
+        if request.user.profile.role != 'patient':
             patients = UserProfile.objects.filter(role='patient').filter(
                 Q(user__first_name__icontains=query)
                 | Q(user__last_name__icontains=query)
@@ -917,7 +920,7 @@ def staff_search(request):
         documents = Document.objects.filter(Q(document__icontains=query))
         context['documents'] = documents
 
-        if request.user.profile.role is not 'patient':
+        if request.user.profile.role != 'patient':
             active_patients = UserProfile.objects.filter(role='patient').filter(
                 Q(user__first_name__icontains=query)
                 | Q(user__last_name__icontains=query)

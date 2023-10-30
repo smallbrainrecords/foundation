@@ -26,8 +26,7 @@
         {% if patient_profile.portrait_image %}
         <img alt="" class="profileThumb" src="{{ patient_profile.portrait_image.url }}">
         {% endif %}
-        {{ patient.get_full_name }} {% localtime off %} {{ patient_profile.date_of_birth | date:"m/d/Y" }}
-        {% endlocaltime %}
+        {{ patient.get_full_name }} {{ patient_profile.localized_date_of_birth }}
     </a>
 </li>
 

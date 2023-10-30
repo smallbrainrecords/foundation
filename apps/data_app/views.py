@@ -107,7 +107,7 @@ def get_datas(request, patient_id):
                         first_loop = False
                     observation_unit.save()
 
-                if data.has_key("components"):
+                if "components" in data:
                     for component in data.get("components", []):
                         observation_component = ObservationComponent()
                         observation_component.observation = observation
@@ -141,23 +141,23 @@ def get_datas(request, patient_id):
 
         try:
             observation_order = ObservationOrder.objects.get(
-                user=user, patient_id=patient_id
+                user_id=user.id, patient_id=patient_id
             )
         except ObservationOrder.DoesNotExist:
             observation_order = ObservationOrder(user=user, patient_id=patient_id)
             observation_order.save()
 
         observation_list = []
-        for key in observation_order.order:
-            if observations.filter(id=key):
-                observation = observations.get(id=key)
-                observation_dict = ObservationSerializer(observation).data
-                observation_list.append(observation_dict)
+        if observation_order.order is not None:
+            for key in observation_order.order:
+                if observations.filter(id=key):
+                    observation = observations.get(id=key)
+                    observation_dict = ObservationSerializer(observation).data
+                    observation_list.append(observation_dict)
 
         for observation in observations:
-            if not observation.id in observation_order.order:
-                observation_dict = ObservationSerializer(observation).data
-                observation_list.append(observation_dict)
+            observation_dict = ObservationSerializer(observation).data
+            observation_list.append(observation_dict)
 
         resp["success"] = True
         resp["info"] = observation_list
@@ -362,8 +362,8 @@ def add_new_data(request, patient_id, component_id):
         and validate_number(value_quantity)
         and validate_value_quantity(component_id, value_quantity)
     ):
-
-        userProfile = UserProfile.objects.get(id=patient_id)
+        userProfile = UserProfile.objects.get(user__id=patient_id)
+        # userProfile = UserProfile.objects.get(id=patient_id)
         value = ObservationValue(
             author=request.user,
             component_id=component_id,

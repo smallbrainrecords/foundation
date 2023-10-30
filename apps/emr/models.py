@@ -21,6 +21,7 @@ import os
 import reversion
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
 from emr.managers import (
     AOneCManager,
     ColonCancerScreeningManager,
@@ -254,6 +255,12 @@ class UserProfile(models.Model):
     height_updated_date = models.DateTimeField(null=True, blank=True)
     height_changed_first_time = models.BooleanField(default=False)
 
+    @property
+    def localized_date_of_birth(self):
+        utc_date_of_birth = self.date_of_birth
+        local_date_of_birth = timezone.localtime(utc_date_of_birth).date()
+        formatted_date = local_date_of_birth.strftime("%m/%d/%Y")
+        return formatted_date
 
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
