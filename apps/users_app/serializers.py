@@ -79,10 +79,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         )
 
     def get_localized_date_of_birth(self, obj):
-        utc_date_of_birth = obj.date_of_birth
-        local_date_of_birth = timezone.localtime(utc_date_of_birth).date()
-        formatted_date = local_date_of_birth.strftime("%m/%d/%Y")
-        return formatted_date
+        if obj.date_of_birth is not None:
+            utc_date_of_birth = obj.date_of_birth.date()
+            formatted_date = utc_date_of_birth.strftime("%m/%d/%Y")
+            return formatted_date
+        else:
+            return None
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(many=False)

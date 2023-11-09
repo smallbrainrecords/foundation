@@ -257,9 +257,8 @@ class UserProfile(models.Model):
 
     @property
     def localized_date_of_birth(self):
-        utc_date_of_birth = self.date_of_birth
-        local_date_of_birth = timezone.localtime(utc_date_of_birth).date()
-        formatted_date = local_date_of_birth.strftime("%m/%d/%Y")
+        utc_date_of_birth = self.date_of_birth.date()
+        formatted_date = utc_date_of_birth.strftime("%m/%d/%Y")
         return formatted_date
 
     def __unicode__(self):
@@ -322,7 +321,7 @@ class Encounter(models.Model):
 
 
 class EncounterEvent(models.Model):
-    encounter = models.ForeignKey(Encounter, related_name='encounter_events', null=True, blank=True, on_delete=models.DO_NOTHING)
+    encounter = models.ForeignKey(Encounter, related_name='encounter_events', null=True, blank=True, on_delete=models.SET_NULL)
 
     datetime = models.DateTimeField(auto_now_add=True)
     summary = models.TextField(default='')
@@ -616,9 +615,9 @@ class ProblemRelationship(models.Model):
 
 class EncounterProblemRecord(models.Model):
     encounter = models.ForeignKey(
-        Encounter, related_name='encounter_problem_records', on_delete=models.DO_NOTHING)
+        Encounter, related_name='encounter_problem_records', null=True, on_delete=models.SET_NULL)
     problem = models.ForeignKey(
-        Problem, related_name='problem_encounter_records', on_delete=models.DO_NOTHING)
+        Problem, related_name='problem_encounter_records', null=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return f'{self.encounter} {self.problem}'
@@ -665,9 +664,9 @@ class ToDoAttachment(models.Model):
 
 class EncounterTodoRecord(models.Model):
     encounter = models.ForeignKey(
-        Encounter, related_name='encounter_todo_records', on_delete=models.DO_NOTHING)
+        Encounter, related_name='encounter_todo_records', null=True, on_delete=models.SET_NULL)
     todo = models.ForeignKey(
-        ToDo, related_name='todo_encounter_records', on_delete=models.DO_NOTHING)
+        ToDo, related_name='todo_encounter_records', null=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return f'{self.encounter} {self.todo}'
@@ -1139,7 +1138,7 @@ class Document(models.Model):
 
 
 class DocumentTodo(models.Model):
-    document = models.ForeignKey(Document, on_delete=models.DO_NOTHING)
+    document = models.ForeignKey(Document, null=True, on_delete=models.SET_NULL)
     todo = models.ForeignKey(ToDo, on_delete=models.DO_NOTHING)
     author = models.ForeignKey(User, on_delete=models.DO_NOTHING)  # User who attach document to the todo
     created_on = models.DateTimeField(auto_now_add=True)
@@ -1165,8 +1164,8 @@ class GeneralSetting(models.Model):
 
 
 class EncounterObservationValue(models.Model):
-    encounter = models.ForeignKey(Encounter, null=False, on_delete=models.DO_NOTHING)
-    observation_value = models.ForeignKey(ObservationValue, null=False, on_delete=models.DO_NOTHING)
+    encounter = models.ForeignKey(Encounter, null=True, on_delete=models.SET_NULL)
+    observation_value = models.ForeignKey(ObservationValue, null=True, on_delete=models.SET_NULL)
     created_on = models.DateTimeField(auto_now_add=True)
 
 
