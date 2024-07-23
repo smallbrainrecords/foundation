@@ -30,3 +30,5 @@ project/settings.py
 *.key
 *.crt
 *.pem
+
+.DS_Store

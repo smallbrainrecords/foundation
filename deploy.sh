@@ -11,7 +11,7 @@ fi
 
 tag_name="us-east5-docker.pkg.dev/hi-core/foundation/$environment:v"
 tag_name+=$version_number
-docker build -t smallbrain-django --build-arg django_settings_module=$django_settings_module .
+docker buildx build --platform linux/amd64 -t smallbrain-django --build-arg django_settings_module=$django_settings_module .
 docker tag smallbrain-django:latest $tag_name
 docker push $tag_name
 gcloud compute instances update-container --container-image=$tag_name smallbrain-foundation-$environment

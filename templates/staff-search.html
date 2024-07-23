@@ -27,7 +27,11 @@
                         <div class="col-md-8">
                             <a href='/u/patient/manage/{{ patient.user_id }}/'>
                                 {{ patient.user.first_name }} {{ patient.user.last_name }} -
+                                {% if patient.localized_date_of_birth %}
                                 {{ patient.localized_date_of_birth }}
+                                {% else %}
+                                No DOB available
+                                {% endif %}
                             </a>
                         </div>
                         <div class="col-md-4 text-right">
