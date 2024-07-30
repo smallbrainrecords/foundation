@@ -949,7 +949,7 @@ class ObservationComponent(models.Model):
 
 class ObservationUnit(models.Model):
     observation = models.ForeignKey(
-        Observation, related_name="observation_units", on_delete=models.DO_NOTHING
+        Observation, related_name="observation_units", on_delete=models.CASCADE
     )
     value_unit = models.CharField(max_length=45, null=True, blank=True)
     is_used = models.BooleanField(default=False)
@@ -978,6 +978,7 @@ class ObservationValue(models.Model):
         on_delete=models.DO_NOTHING,
     )
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    note = models.TextField(null=True, blank=True, max_length=128)
 
     class Meta:
         ordering = ["effective_datetime", "created_on"]

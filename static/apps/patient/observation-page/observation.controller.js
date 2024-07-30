@@ -133,6 +133,7 @@
         function quickAddDataPoint(quickEntryDataObj) {
             angular.forEach($scope.data.observation_components, function (component, key) {
                 quickEntryDataObj.value = component.new_value;
+                quickEntryDataObj.note = component.note;
                 dataService.addData($scope.patient_id, component.id, quickEntryDataObj)
                     .then(function (data) {
                         if (data['success']) {

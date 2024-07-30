@@ -14,6 +14,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+
 from datetime import datetime
 from math import pow
 
@@ -340,15 +341,15 @@ def obseration_pin_to_problem(request, patient_id):
 @api_view(["POST"])
 # @timeit
 def add_new_data(request, patient_id, component_id):
-    effective_datetime = request.POST.get(
-        "datetime", None
-    )
+    effective_datetime = request.POST.get("datetime", None)
 
     if effective_datetime:
         input_datetime = datetime.strptime(effective_datetime, "%m/%d/%Y %H:%M")
         formatted_datetime = input_datetime.strftime("%Y-%m-%d %H:%M:%S%z")
     else:
-        effective_datetime = timezone.make_aware(datetime.now()).strftime('%m/%d/%Y %H:%M')
+        effective_datetime = timezone.make_aware(datetime.now()).strftime(
+            "%m/%d/%Y %H:%M"
+        )
         formatted_datetime = effective_datetime.strftime("%Y-%m-%d %H:%M:%S%z")
 
     resp = {"success": False}
@@ -369,6 +370,7 @@ def add_new_data(request, patient_id, component_id):
             component_id=component_id,
             effective_datetime=formatted_datetime,
             value_quantity=float(value_quantity),
+            note=request.POST.get("note", None),
         )
         value.save()
 
@@ -378,9 +380,11 @@ def add_new_data(request, patient_id, component_id):
         )
         op_add_event(request.user, value.component.observation.subject, summary)
 
-        if value.component.name in ["height", "weight"]:
+        if value.component.name in ["weight"]:
             patient = User.objects.filter(id=int(patient_id)).get()
-            handle_bmi_calculation(userProfile, request, value, patient, formatted_datetime)
+            handle_bmi_calculation(
+                userProfile, request, value, patient, formatted_datetime
+            )
 
         resp["value"] = ObservationValueSerializer(value).data
         resp["success"] = True

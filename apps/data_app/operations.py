@@ -14,6 +14,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
+
 from datetime import datetime
 
 from django.db import connection, transaction
@@ -65,7 +66,7 @@ def get_observation_value_pair(component_id):
     :param component_id:
     :return:
     """
-    raw_query = "SELECT DATE_FORMAT(ANY_VALUE(created_on), '%m/%d/%Y %H:%i') as entry_time, GROUP_CONCAT(ANY_VALUE(value_quantity) SEPARATOR '/') as value,  GROUP_CONCAT(ANY_VALUE(id) SEPARATOR '&') as edit_link FROM emr_observationvalue WHERE component_id IN ({0}) GROUP BY DATE_FORMAT(created_on, '%Y-%m-%d %H:%i:%s')".format(
+    raw_query = "SELECT note, DATE_FORMAT(ANY_VALUE(created_on), '%m/%d/%Y %H:%i') as entry_time, GROUP_CONCAT(ANY_VALUE(value_quantity) SEPARATOR '/') as value,  GROUP_CONCAT(ANY_VALUE(id) SEPARATOR '&') as edit_link FROM emr_observationvalue WHERE component_id IN ({0}) GROUP BY note, DATE_FORMAT(created_on, '%Y-%m-%d %H:%i:%s')".format(
         component_id
     )
     with connection.cursor() as cursor:
