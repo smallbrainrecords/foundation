@@ -95,7 +95,11 @@
                     <div class='form-group'>
                         <label for="username"> Username </label>
                         <input type='text' ng-model='user_profile.user.username' id="username" class='form-control'
-                               disabled>
+                            disabled>
+                    </div>
+                    <div class='form-group'>
+                        <label for="active"> Active </label>
+                        <input type='checkbox' ng-model='user_profile.user.is_active' id="is_active">
                     </div>
                     <div class='form-group'>
                         <input type='submit' value='Update' class='btn btn-default btn-lg'>
@@ -112,7 +116,7 @@
                         <datepicker date-format="dd/MM/yyyy" selector="form-control">
                             <div class="input-group">
                                 <input class="form-control" placeholder="Choose a date"
-                                       ng-model="user_profile.date_of_birth" title=""/>
+                                    ng-model="user_profile.date_of_birth" title="" />
                                 <span class="input-group-addon" style="cursor: pointer"><i
                                         class="fa fa-lg fa-calendar"></i></span>
                             </div>
@@ -121,7 +125,7 @@
                     <div class='form-group'>
                         <label for="phone-number"> Phone/Contact </label>
                         <input id="phone-number" type='text' ng-model='user_profile.phone_number' class='form-control'
-                               required>
+                            required>
                     </div>
                     <div class='form-group'>
                         <label for="sex"> Sex </label>
@@ -229,26 +233,26 @@
                     <hr>
                     <table class='table'>
                         <thead>
-                        <tr>
-                            <th> Name</th>
-                            <th> Username</th>
-                            <th> Actions</th>
-                        </tr>
+                            <tr>
+                                <th> Name</th>
+                                <th> Username</th>
+                                <th> Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat='physician in assigned_physicians'>
-                            <td>
-                                {{ physician.user.first_name }} {{ physician.user.last_name }}
-                            </td>
-                            <td>
-                                {{ physician.user.username }}
-                            </td>
-                            <td>
-                                <button class='btn btn-default' ng-click='unassignPhysician(physician.user.id)'>
-                                    Unassign
-                                </button>
-                            </td>
-                        </tr>
+                            <tr ng-repeat='physician in assigned_physicians'>
+                                <td>
+                                    {{ physician.user.first_name }} {{ physician.user.last_name }}
+                                </td>
+                                <td>
+                                    {{ physician.user.username }}
+                                </td>
+                                <td>
+                                    <button class='btn btn-default' ng-click='unassignPhysician(physician.user.id)'>
+                                        Unassign
+                                    </button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -276,24 +280,24 @@
                     <hr>
                     <table class='table'>
                         <thead>
-                        <tr>
-                            <th> Name</th>
-                            <th> Username</th>
-                            <th> Actions</th>
-                        </tr>
+                            <tr>
+                                <th> Name</th>
+                                <th> Username</th>
+                                <th> Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat='patient in patients'>
-                            <td> {{ patient.user.first_name }} {{ patient.user.last_name }}
-                            </td>
-                            <td> {{ patient.user.username }}
-                            </td>
-                            <td>
-                                <button class='btn btn-default' ng-click='unassignMember(patient,"patient")'>
-                                    Unassign
-                                </button>
-                            </td>
-                        </tr>
+                            <tr ng-repeat='patient in patients'>
+                                <td> {{ patient.user.first_name }} {{ patient.user.last_name }}
+                                </td>
+                                <td> {{ patient.user.username }}
+                                </td>
+                                <td>
+                                    <button class='btn btn-default' ng-click='unassignMember(patient,"patient")'>
+                                        Unassign
+                                    </button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -318,24 +322,24 @@
                     <hr>
                     <table class='table'>
                         <thead>
-                        <tr>
-                            <th> Name</th>
-                            <th> Username</th>
-                            <th> Actions</th>
-                        </tr>
+                            <tr>
+                                <th> Name</th>
+                                <th> Username</th>
+                                <th> Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat='staff in team.nurses'>
-                            <td> {{ staff.user.first_name }} {{ staff.user.last_name }}
-                            </td>
-                            <td> {{ staff.user.username }}
-                            </td>
-                            <td>
-                                <button class='btn btn-default' ng-click='unassignMember(staff,"nurse")'>
-                                    Unassign
-                                </button>
-                            </td>
-                        </tr>
+                            <tr ng-repeat='staff in team.nurses'>
+                                <td> {{ staff.user.first_name }} {{ staff.user.last_name }}
+                                </td>
+                                <td> {{ staff.user.username }}
+                                </td>
+                                <td>
+                                    <button class='btn btn-default' ng-click='unassignMember(staff,"nurse")'>
+                                        Unassign
+                                    </button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -360,24 +364,24 @@
                     <hr>
                     <table class='table'>
                         <thead>
-                        <tr>
-                            <th> Name</th>
-                            <th> Username</th>
-                            <th> Actions</th>
-                        </tr>
+                            <tr>
+                                <th> Name</th>
+                                <th> Username</th>
+                                <th> Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat='staff in team.mid_level_staffs'>
-                            <td> {{ staff.user.first_name }} {{ staff.user.last_name }}
-                            </td>
-                            <td> {{ staff.user.username }}
-                            </td>
-                            <td>
-                                <button class='btn btn-default' ng-click='unassignMember(staff,"mid-level")'>
-                                    Unassign
-                                </button>
-                            </td>
-                        </tr>
+                            <tr ng-repeat='staff in team.mid_level_staffs'>
+                                <td> {{ staff.user.first_name }} {{ staff.user.last_name }}
+                                </td>
+                                <td> {{ staff.user.username }}
+                                </td>
+                                <td>
+                                    <button class='btn btn-default' ng-click='unassignMember(staff,"mid-level")'>
+                                        Unassign
+                                    </button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -402,24 +406,24 @@
                     <hr>
                     <table class='table'>
                         <thead>
-                        <tr>
-                            <th> Name</th>
-                            <th> Username</th>
-                            <th> Actions</th>
-                        </tr>
+                            <tr>
+                                <th> Name</th>
+                                <th> Username</th>
+                                <th> Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat='staff in team.secretaries'>
-                            <td> {{ staff.user.first_name }} {{ staff.user.last_name }}
-                            </td>
-                            <td> {{ staff.user.username }}
-                            </td>
-                            <td>
-                                <button class='btn btn-default' ng-click='unassignMember(staff,"secretary")'>
-                                    Unassign
-                                </button>
-                            </td>
-                        </tr>
+                            <tr ng-repeat='staff in team.secretaries'>
+                                <td> {{ staff.user.first_name }} {{ staff.user.last_name }}
+                                </td>
+                                <td> {{ staff.user.username }}
+                                </td>
+                                <td>
+                                    <button class='btn btn-default' ng-click='unassignMember(staff,"secretary")'>
+                                        Unassign
+                                    </button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -436,42 +440,42 @@
                 <h4>People I can access:</h4>
                 <table class='table'>
                     <thead>
-                    <tr>
-                        <th> Name</th>
-                        <th> Actions</th>
-                    </tr>
+                        <tr>
+                            <th> Name</th>
+                            <th> Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr ng-repeat='p in shared_patients'>
-                        <td> {{ p.user.first_name }} {{ p.user.last_name }}
-                        </td>
-                        <td>
-                            <a ng-href="/u/patient/manage/{{ p.user.id }}" class='btn btn-sm btn-default'>
-                                Access chart
-                            </a>
-                        </td>
-                    </tr>
+                        <tr ng-repeat='p in shared_patients'>
+                            <td> {{ p.user.first_name }} {{ p.user.last_name }}
+                            </td>
+                            <td>
+                                <a ng-href="/u/patient/manage/{{ p.user.id }}" class='btn btn-sm btn-default'>
+                                    Access chart
+                                </a>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
                 <br>
                 <h4>People that can access me:</h4>
                 <table class='table'>
                     <thead>
-                    <tr>
-                        <th> Name</th>
-                        <th> Actions</th>
-                    </tr>
+                        <tr>
+                            <th> Name</th>
+                            <th> Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr ng-repeat='p in sharing_patients'>
-                        <td> {{ p.user.first_name }} {{ p.user.last_name }}
-                        </td>
-                        <td>
-                            <a ng-href="#/manage/sharing/" class='btn btn-sm btn-default'>
-                                Manage
-                            </a>
-                        </td>
-                    </tr>
+                        <tr ng-repeat='p in sharing_patients'>
+                            <td> {{ p.user.first_name }} {{ p.user.last_name }}
+                            </td>
+                            <td>
+                                <a ng-href="#/manage/sharing/" class='btn btn-sm btn-default'>
+                                    Manage
+                                </a>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -506,7 +510,7 @@
                         <datepicker date-format="MM/dd/yyyy" selector="form-control">
                             <div class="input-group">
                                 <input class="form-control" placeholder="Choose a date"
-                                       ng-model="user_profile.deceased_date" title=""/>
+                                    ng-model="user_profile.deceased_date" title="" />
                                 <span class="input-group-addon" style="cursor: pointer"><i
                                         class="fa fa-lg fa-calendar"></i></span>
                             </div>

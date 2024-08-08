@@ -127,6 +127,7 @@
                 form.role = $scope.user_profile.role;
                 form.summary = $scope.user_profile.summary;
                 form.date_of_birth = $scope.user_profile.date_of_birth;
+                form.is_active = $scope.user_profile.user.is_active;
 
                 var files = $scope.files;
 
