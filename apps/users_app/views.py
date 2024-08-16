@@ -647,7 +647,7 @@ def get_patient_members(request, user_id):
     physician_teams = PhysicianTeam.objects.filter(physician__id__in=physician_ids)
     member_ids = [x.member.id for x in physician_teams]
     ids = physician_ids + member_ids
-    users = UserProfile.objects.filter(user__id__in=ids)
+    users = UserProfile.objects.filter(user__id__in=ids, user__is_active=True)
 
     resp["members"] = UserProfileSerializer(users, many=True).data
     return ajax_response(resp)
