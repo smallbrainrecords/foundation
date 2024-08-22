@@ -14,7 +14,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-import debug_toolbar
+
 import django
 from django.conf.urls import include
 from django.contrib.auth import views
@@ -45,91 +45,71 @@ from project.views import home
 # from genericadmin.admin import *
 
 
-
-
 # admin.autodiscover()
-
 
 
 urlpatterns = [
     # path('__debug__/', include(debug_toolbar.urls)),
-    re_path(r'^$', home,name='project_home'),
-
+    re_path(r"^$", home, name="project_home"),
     # re_path(r'^admin/', include(admin.site.urls)),
-
-    re_path(r'^project/admin/', include(project_admin_app_urls)),
-
-    re_path(r'^pain/create_pain_avatar/(?P<patient_id>\d+)/$', pain_views.create_pain_avatar),
-    re_path(r'^pain/reset/$', pain_views.reset),
-    re_path(r'^login-error/$', LoginError.as_view()),
-
+    re_path(r"^project/admin/", include(project_admin_app_urls)),
+    re_path(
+        r"^pain/create_pain_avatar/(?P<patient_id>\d+)/$", pain_views.create_pain_avatar
+    ),
+    re_path(r"^pain/reset/$", pain_views.reset),
+    re_path(r"^login-error/$", LoginError.as_view()),
     # Old user views
     # re_path(r'^logout/$', django.contrib.auth.views.LogoutView.as_view(), {'next_page': '/'}),
-
     # Old views
-    re_path(r'^list_of_unregistered_users/$', emr_views.list_of_unregistered_users),
-    re_path(r'^register_users/$', emr_views.register_users),
-    re_path(r'^list_of_users/$', emr_views.list_users),
-
-    re_path(r'^get_problems/(?P<patient_id>\d+)/$', emr_views.get_patient_data),
-    re_path(r'^change_status/$', emr_views.change_status),
-    re_path(r'^patient/(?P<patient_id>\d+)/add_problem/$', emr_views.add_problem),
-    re_path(r'^add_patient_summary/(?P<patient_id>\d+)/$', emr_views.save_patient_summary),
-
-    re_path(r'^update/$', emr_views.update),
-
+    re_path(r"^list_of_unregistered_users/$", emr_views.list_of_unregistered_users),
+    re_path(r"^register_users/$", emr_views.register_users),
+    re_path(r"^list_of_users/$", emr_views.list_users),
+    re_path(r"^get_problems/(?P<patient_id>\d+)/$", emr_views.get_patient_data),
+    re_path(r"^change_status/$", emr_views.change_status),
+    re_path(r"^patient/(?P<patient_id>\d+)/add_problem/$", emr_views.add_problem),
+    re_path(
+        r"^add_patient_summary/(?P<patient_id>\d+)/$", emr_views.save_patient_summary
+    ),
+    re_path(r"^update/$", emr_views.update),
     # New URLS
-    re_path(r'^list_terms/$', emr_views.list_snomed_terms),
-
+    re_path(r"^list_terms/$", emr_views.list_snomed_terms),
     # Users
-    re_path(r'^u/', include(users_app_urls)),
-
+    re_path(r"^u/", include(users_app_urls)),
     # Problems
-    re_path(r'^p/', include(problems_app_urls)),
-
+    re_path(r"^p/", include(problems_app_urls)),
     # Goals
-    re_path(r'^g/', include(goals_app_urls)),
-
+    re_path(r"^g/", include(goals_app_urls)),
     # Encounters
-    re_path(r'^enc/', include(encounters_app_urls)),
-
+    re_path(r"^enc/", include(encounters_app_urls)),
     # Todos
-    re_path(r'^todo/', include(todo_app_urls)),
-
+    re_path(r"^todo/", include(todo_app_urls)),
     # Observations
-    re_path(r'^a1c/', include(a1c_app_urls)),
-
+    re_path(r"^a1c/", include(a1c_app_urls)),
     # colon cancer
-    re_path(r'^colon_cancer/', include(colons_app_urls)),
-
+    re_path(r"^colon_cancer/", include(colons_app_urls)),
     # my story
-    re_path(r'^my_story/', include(my_story_app_urls)),
-
+    re_path(r"^my_story/", include(my_story_app_urls)),
     # data
-    re_path(r'^data/', include(data_app_urls)),
-
+    re_path(r"^data/", include(data_app_urls)),
     # inr
-    re_path(r'^inr/', include(inr_app_urls)),
-    re_path(r'^medication/', include(medication_app_urls)),
-
+    re_path(r"^inr/", include(inr_app_urls)),
+    re_path(r"^medication/", include(medication_app_urls)),
     # document
-    re_path(r'^docs/', include(document_app_urls)),
-
+    re_path(r"^docs/", include(document_app_urls)),
     # Pain Avatars
-    re_path(r'^patient/(?P<patient_id>\d+)/pain_avatars$', pain_views.patient_pain_avatars),
-    re_path(r'^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$', pain_views.add_pain_avatar),
-
-    re_path(r'session_security/', include('session_security.urls')),
-
+    re_path(
+        r"^patient/(?P<patient_id>\d+)/pain_avatars$", pain_views.patient_pain_avatars
+    ),
+    re_path(
+        r"^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$",
+        pain_views.add_pain_avatar,
+    ),
+    re_path(r"session_security/", include("session_security.urls")),
     # MEDIA AND STATIC FILES
-    re_path(r'^media/(?P<path>.*)$', emr_views.serve_private_file),
-    re_path(r'^static/(?P<path>.*)$', django.views.static.serve,
-        {'document_root': settings.STATIC_ROOT, 'show_indexes': True})
+    re_path(r"^media/(?P<path>.*)$", emr_views.serve_private_file),
+    re_path(
+        r"^static/(?P<path>.*)$",
+        django.views.static.serve,
+        {"document_root": settings.STATIC_ROOT, "show_indexes": True},
+    ),
 ]
-
-if settings.DEBUG:
-    import debug_toolbar
-
-    urlpatterns += [
-        re_path(r'^__debug__/', include(debug_toolbar.urls)),
-    ]
