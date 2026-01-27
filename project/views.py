@@ -19,7 +19,7 @@ from django.shortcuts import render
 
 
 def home(request):
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return render(request, 'index.html', {})
-    elif request.user.is_authenticated():
+    elif request.user.is_authenticated:
         return HttpResponseRedirect('/u/home/')

@@ -18,18 +18,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 import os
 import sys
 
-import MySQLdb
-
-# Django settings for emr project.
-
-DEBUG = True  # Never set 'DEBUG = True' in production environment
+DEBUG = False  # Never set 'DEBUG = True' in production environment
 COMPRESS_ENABLED = True
 
 # toggle experimental features
 VOICE_CONTROL = False
 SYNCING = False
 
-SECRET_KEY = "{~9@e\1VKr|zlM&vl5ZJTOqBX#b!Aa1cv;pN!J\H=cL=<48<|7r4s1Z!U"
+import os
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-change-me")
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 os.environ["LANG"] = "en_US.UTF-8"
@@ -40,10 +37,6 @@ sys.path.append(APP_PATH)
 
 AUTH_PROFILE_MODULE = "account.UserProfile"
 
-# Local time zone for this installation. Choices can be found here:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# although not all choices may be available on all operating systems.
-# In a Windows environment this must be set to your system time zone.
 TIME_ZONE = "America/Detroit"
 
 # Language code for this installation. All choices can be found here:
@@ -80,14 +73,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = "/static/"
 
-# Additional locations of static files
-STATICFILES_DIRS = (
-    # os.path.join(BASE_DIR, 'staticdev'),
-    # Put strings here, like "/home/html/static" or "C:/www/django/static".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
-
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
@@ -108,9 +93,6 @@ MIDDLEWARE = (
 
 ROOT_URLCONF = "project.urls"
 
-# Python dotted path to the WSGI application used by Django's runserver.
-# WSGI_APPLICATION = 'project.wsgi.application'
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -127,7 +109,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
-            "debug": True,
+            "debug": False,
         },
     }
 ]
@@ -146,7 +128,6 @@ INSTALLED_APPS = (
     "pain",
     "compressor",
     "session_security",
-    "raven.contrib.django.raven_compat",
     "django_crontab",
 )
 
@@ -170,9 +151,7 @@ SESSION_COOKIE_AGE = 1800
 SESSION_SAVE_EVERY_REQUEST = False
 SESSION_SECURITY_WARN_AFTER = 1740
 SESSION_SECURITY_EXPIRE_AFTER = 1800
-# SESSION_SECURITY_PASSIVE_URLS: dict = {}
 
-# CSRF_COOKIE_SECURE = False
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://10.0.1.8:8000",
@@ -236,31 +215,31 @@ ALLOWED_HOSTS = ["*"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        "NAME": "andromeda_redacted",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
+        "NAME": "smallbrain2",  # Or path to database file if using sqlite3.
+        "USER": os.environ.get("DB_USER", ""),  # Not used with sqlite3.
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),  # Not used with sqlite3.
+        "HOST": os.environ.get("DB_HOST", ""),  # Set to empty string for localhost. Not used with sqlite3.
         "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
         "OPTIONS": {
             "ssl": {
-                "ca": "certs/db_certs/dev/server-ca.pem",
-                "cert": "certs/db_certs/dev/client-cert.pem",
-                "key": "certs/db_certs/dev/client-key.pem",
+                "ca": "certs/db_certs/prod/server-ca.pem",
+                "cert": "certs/db_certs/prod/client-cert.pem",
+                "key": "certs/db_certs/prod/client-key.pem",
             }
         },
     },
     "default_read_uncommitted": {
         "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        "NAME": "andromeda_redacted",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
+        "NAME": "smallbrain2",  # Or path to database file if using sqlite3.
+        "USER": os.environ.get("DB_USER", ""),  # Not used with sqlite3.
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),  # Not used with sqlite3.
+        "HOST": os.environ.get("DB_HOST", ""),  # Set to empty string for localhost. Not used with sqlite3.
         "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
         "OPTIONS": {
             "ssl": {
-                "ca": "certs/db_certs/dev/server-ca.pem",
-                "cert": "certs/db_certs/dev/client-cert.pem",
-                "key": "certs/db_certs/dev/client-key.pem",
+                "ca": "certs/db_certs/prod/server-ca.pem",
+                "cert": "certs/db_certs/prod/client-cert.pem",
+                "key": "certs/db_certs/prod/client-key.pem",
             },
             "isolation_level": "read uncommitted",
         },
@@ -268,15 +247,15 @@ DATABASES = {
     "snomedict": {
         "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         "NAME": "snomedct",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
+        "USER": os.environ.get("DB_USER", ""),  # Not used with sqlite3.
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),  # Not used with sqlite3.
+        "HOST": os.environ.get("DB_HOST", ""),  # Set to empty string for localhost. Not used with sqlite3.
         "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
         "OPTIONS": {
             "ssl": {
-                "ca": "certs/db_certs/dev/server-ca.pem",
-                "cert": "certs/db_certs/dev/client-cert.pem",
-                "key": "certs/db_certs/dev/client-key.pem",
+                "ca": "certs/db_certs/prod/server-ca.pem",
+                "cert": "certs/db_certs/prod/client-cert.pem",
+                "key": "certs/db_certs/prod/client-key.pem",
             }
         },
     },

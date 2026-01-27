@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 import os
 import sys
 
-import MySQLdb
 
 # Django settings for emr project.
 
@@ -29,7 +28,8 @@ COMPRESS_ENABLED = True
 VOICE_CONTROL = False
 SYNCING = False
 
-SECRET_KEY = "{~9@e\1VKr|zlM&vl5ZJTOqBX#b!Aa1cv;pN!J\H=cL=<48<|7r4s1Z!U"
+import os
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-change-me")
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 os.environ["LANG"] = "en_US.UTF-8"
@@ -146,7 +146,6 @@ INSTALLED_APPS = (
     "pain",
     "compressor",
     "session_security",
-    "raven.contrib.django.raven_compat",
     "django_crontab",
 )
 
@@ -236,41 +235,26 @@ ALLOWED_HOSTS = ["*"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        "NAME": "andromeda_redacted",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
+        "NAME": "smallbrain2",  # Or path to database file if using sqlite3.
+        "USER": os.environ.get("DB_USER", ""),  # Not used with sqlite3.
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),  # Not used with sqlite3.
+        "HOST": os.environ.get("DB_HOST", ""),  # Set to empty string for localhost. Not used with sqlite3.
         "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
-        "OPTIONS": {
-            "ssl": {
-                "ca": "certs/db_certs/dev/server-ca.pem",
-                "cert": "certs/db_certs/dev/client-cert.pem",
-                "key": "certs/db_certs/dev/client-key.pem",
-            }
-        },
     },
     "default_read_uncommitted": {
         "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        "NAME": "andromeda_redacted",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
+        "NAME": "smallbrain2",  # Or path to database file if using sqlite3.
+        "USER": os.environ.get("DB_USER", ""),  # Not used with sqlite3.
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),  # Not used with sqlite3.
+        "HOST": os.environ.get("DB_HOST", ""),  # Set to empty string for localhost. Not used with sqlite3.
         "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
-        "OPTIONS": {
-            "ssl": {
-                "ca": "certs/db_certs/dev/server-ca.pem",
-                "cert": "certs/db_certs/dev/client-cert.pem",
-                "key": "certs/db_certs/dev/client-key.pem",
-            },
-            "isolation_level": "read uncommitted",
-        },
     },
     "snomedict": {
         "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         "NAME": "snomedct",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
+        "USER": os.environ.get("DB_USER", ""),  # Not used with sqlite3.
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),  # Not used with sqlite3.
+        "HOST": os.environ.get("DB_HOST", ""),  # Set to empty string for localhost. Not used with sqlite3.
         "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
         "OPTIONS": {
             "ssl": {

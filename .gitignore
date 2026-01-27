@@ -13,4 +13,4 @@ static/node_modules
 staticdev/CACHE
 venv
 .coverage
-/static/css/.sass-cache/
+/static/css/.sass-cache/project/settings_local.py
