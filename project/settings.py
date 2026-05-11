@@ -17,19 +17,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import os
 import sys
+import environ
 
 import MySQLdb
 
+# Initialize environment variables
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+# Read from .env file if it exists
+environ.Env.read_env(env_file=os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env_local'))
+
 # Django settings for emr project.
 
-DEBUG = True  # Never set 'DEBUG = True' in production environment
+DEBUG = env('DEBUG', default=True)  # Never set 'DEBUG = True' in production environment
 COMPRESS_ENABLED = True
 
 # toggle experimental features
 VOICE_CONTROL = False
 SYNCING = False
 
-SECRET_KEY = "{~9@e\1VKr|zlM&vl5ZJTOqBX#b!Aa1cv;pN!J\H=cL=<48<|7r4s1Z!U"
+SECRET_KEY = env('SECRET_KEY', default="{~9@e\1VKr|zlM&vl5ZJTOqBX#b!Aa1cv;pN!J\H=cL=<48<|7r4s1Z!U")
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 os.environ["LANG"] = "en_US.UTF-8"
@@ -97,6 +105,8 @@ STATICFILES_FINDERS = (
 )
 
 MIDDLEWARE = (
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -142,12 +152,12 @@ INSTALLED_APPS = (
     "django.contrib.admin",
     "django.contrib.admindocs",
     "mptt",
-    "emr",
-    "pain",
     "compressor",
     "session_security",
     "raven.contrib.django.raven_compat",
     "django_crontab",
+    'emr',
+    'apps.analytics_app',
 )
 
 CRONJOBS = [
@@ -166,11 +176,11 @@ CRONJOBS = [
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 1800
-SESSION_SAVE_EVERY_REQUEST = False
-SESSION_SECURITY_WARN_AFTER = 1740
-SESSION_SECURITY_EXPIRE_AFTER = 1800
-# SESSION_SECURITY_PASSIVE_URLS: dict = {}
+SESSION_COOKIE_AGE = 28800  # 8 hours (full shift)
+SESSION_SAVE_EVERY_REQUEST = True  # Reset timeout on every request
+SESSION_SECURITY_WARN_AFTER = 28740
+SESSION_SECURITY_EXPIRE_AFTER = 28800
+SESSION_SECURITY_PASSIVE_URLS = ['/api/']
 
 # CSRF_COOKIE_SECURE = False
 CSRF_TRUSTED_ORIGINS = [
@@ -181,10 +191,13 @@ CSRF_TRUSTED_ORIGINS = [
     "https://dev.smallbrainrecords.org",
     "https://qa.smallbrainrecords.org",
     "https://smallbrainrecords.org",
+    "https://sbr-backend-698480968754.us-central1.run.app",
+    "https://smallbrain-api-439817011164.us-east5.run.app",
 ]
 INTERNAL_IPS = ("127.0.0.1",)
 
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=False)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 LOGIN_URL = "/u/login/"
 LOGIN_REDIRECT_URL = "/"
@@ -232,57 +245,54 @@ ALLOWED_HOSTS = ["*"]
 # MODIFY THE INCLUDED TEMPLATE FOR YOUR OWN PARTICULAR ENVIRONMENT
 # ###################################################################
 
-
+# Database configuration via django-environ
+# GCP Cloud SQL Connection String using the explicit GCP project 'projects/sbr1'
+# Format: mysql://user:password@//cloudsql/projects/sbr1:region:instance/dbname
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        "NAME": "andromeda_redacted",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
-        "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
-        "OPTIONS": {
-            "ssl": {
-                "ca": "certs/db_certs/dev/server-ca.pem",
-                "cert": "certs/db_certs/dev/client-cert.pem",
-                "key": "certs/db_certs/dev/client-key.pem",
-            }
-        },
-    },
-    "default_read_uncommitted": {
-        "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        "NAME": "andromeda_redacted",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
-        "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
-        "OPTIONS": {
-            "ssl": {
-                "ca": "certs/db_certs/dev/server-ca.pem",
-                "cert": "certs/db_certs/dev/client-cert.pem",
-                "key": "certs/db_certs/dev/client-key.pem",
-            },
-            "isolation_level": "read uncommitted",
-        },
-    },
-    "snomedict": {
-        "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        "NAME": "snomedct",  # Or path to database file if using sqlite3.
-        "USER": "root",  # Not used with sqlite3.
-        "PASSWORD": "/$O88+rfz8CD-+Hz",  # Not used with sqlite3.
-        "HOST": "34.162.246.49",  # Set to empty string for localhost. Not used with sqlite3.
-        "PORT": "3306",  # Set to empty string for default. Not used with sqlite3.
-        "OPTIONS": {
-            "ssl": {
-                "ca": "certs/db_certs/dev/server-ca.pem",
-                "cert": "certs/db_certs/dev/client-cert.pem",
-                "key": "certs/db_certs/dev/client-key.pem",
-            }
-        },
-    },
+    'default': env.db(
+        'DATABASE_URL', 
+        default='mysql://root:@127.0.0.1:3306/andromeda_redacted'
+    ),
+    'default_read_uncommitted': env.db(
+        'DATABASE_URL', 
+        default='mysql://root:@127.0.0.1:3306/andromeda_redacted'
+    ),
+    'snomedict': env.db(
+        'SNOMEDCT_DATABASE_URL',
+        default='mysql://root:@127.0.0.1:3306/snomedct'
+    )
 }
+
+# Apply read uncommitted mapping if the engine is mysql
+if DATABASES['default_read_uncommitted']['ENGINE'] == 'django.db.backends.mysql':
+    DATABASES['default_read_uncommitted']['OPTIONS'] = {'isolation_level': 'read uncommitted'}
+
+# Static files / Media files for Google Cloud Storage
+if env.bool('USE_CLOUD_STORAGE', default=False):
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    GS_BUCKET_NAME = env('GS_BUCKET_NAME')
+    GS_PROJECT_ID = env('GS_PROJECT_ID', default='openemr-493416')
+    GS_QUERYSTRING_AUTH = True
+
 
 try:
     from project.local_settings import *
 except ImportError as e:
     pass
+
+
+# --- Local dev: disable django-compressor (missing node_modules assets) ---
+try:
+    DEBUG
+except NameError:
+    DEBUG = False
+
+if DEBUG:
+    COMPRESS_ENABLED = False
