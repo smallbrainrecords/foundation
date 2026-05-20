@@ -14,3 +14,17 @@ staticdev/CACHE
 venv
 .coverage
 /static/css/.sass-cache/project/settings_local.py
+.env.local
+
+# Python virtualenvs
+.venv312/
+
+# Frontend deps (explicit; already covered by `static/node_modules` above)
+static/node_modules/
+
+# Backup files
+*.bak
+*.bak_*
+
+# Log files
+*.log
