@@ -17,8 +17,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('author', models.BooleanField()),
-                ('patient', models.ForeignKey(related_name='patient_physicians', to=settings.AUTH_USER_MODEL)),
-                ('physician', models.ForeignKey(related_name='physician_patients', to=settings.AUTH_USER_MODEL)),
+                ('patient', models.ForeignKey(related_name='patient_physicians', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('physician', models.ForeignKey(related_name='physician_patients', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
     ]

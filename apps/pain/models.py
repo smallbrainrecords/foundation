@@ -21,7 +21,7 @@ from django.db import models
 
 
 class PainAvatar(models.Model):
-    patient = models.ForeignKey(User)
+    patient = models.ForeignKey(User, on_delete=models.CASCADE)
     datetime = models.DateTimeField(auto_now_add=True)
     json = models.TextField()
 

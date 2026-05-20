@@ -16,13 +16,13 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('note', models.TextField()),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(blank=True, to='emr.UserProfile', null=True)),
-                ('observation', models.ForeignKey(related_name='observation_notes', to='emr.Observation')),
+                ('author', models.ForeignKey(blank=True, to='emr.UserProfile', null=True, on_delete=models.SET_NULL)),
+                ('observation', models.ForeignKey(related_name='observation_notes', to='emr.Observation', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AddField(
             model_name='todo',
             name='observation',
-            field=models.ForeignKey(related_name='observation_todos', blank=True, to='emr.Observation', null=True),
+            field=models.ForeignKey(related_name='observation_todos', blank=True, to='emr.Observation', null=True, on_delete=models.SET_NULL),
         ),
     ]

@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='inr',
             name='patient',
-            field=models.ForeignKey(related_name='patient_inr', to='emr.UserProfile', null=True),
+            field=models.ForeignKey(related_name='patient_inr', to='emr.UserProfile', null=True, on_delete=models.SET_NULL),
         ),
     ]

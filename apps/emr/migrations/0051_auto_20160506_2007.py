@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('css_class', models.TextField(null=True, blank=True)),
                 ('author',
                  models.ForeignKey(related_name='problem_label_author', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
+                                   null=True, on_delete=models.SET_NULL)),
             ],
         ),
         migrations.AddField(

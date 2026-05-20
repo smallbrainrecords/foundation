@@ -15,10 +15,12 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 import datetime
+import json
 import os
 from audioop import reverse
 
 from django.contrib.auth.decorators import user_passes_test, login_required
+from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.core.checks import messages
 from django.views.generic import View
@@ -28,10 +30,10 @@ from ranged_response import RangedFileResponse
 import project.settings as settings
 from common.views import *
 from emr.mysnomedct import VWProblemsSerializers
-from models import UserProfile, Problem, \
+from .models import UserProfile, Problem, \
     Goal, ToDo, Guideline, TextNote, PatientImage, \
     Sharing, Viewer, \
-    ViewStatus, ProblemRelationship, VWProblems
+    ViewStatus, ProblemRelationship, VWProblems, SnomedConcept, SnomedRelationship
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -428,3 +430,49 @@ def serve_private_file(request, path):
         return response
     else:
         return HttpResponseForbidden()
+
+@login_required
+@require_POST
+def validate_snomed_problem(request):
+    try:
+        data = json.loads(request.body)
+        proposed_id = data.get('proposed_concept_id')
+        existing_ids = data.get('existing_concept_ids', [])
+
+        # If there are no existing problems, it's inherently valid
+        if not proposed_id or not existing_ids:
+            return JsonResponse({"valid": True})
+
+        # 1. Check if proposed is a direct CHILD (more specific) of an existing problem
+        is_child = SnomedRelationship.objects.filter(
+            source_id=proposed_id,
+            destination_id__in=existing_ids
+        ).exists()
+
+        if is_child:
+            return JsonResponse({
+                "valid": False, 
+                "reason": "redundant_child", 
+                "message": "A broader concept already exists on the problem list."
+            })
+
+        # 2. Check if proposed is a direct PARENT (more general) of an existing problem
+        is_parent = SnomedRelationship.objects.filter(
+            source_id__in=existing_ids,
+            destination_id=proposed_id
+        ).exists()
+
+        if is_parent:
+            return JsonResponse({
+                "valid": False, 
+                "reason": "redundant_parent", 
+                "message": "A more specific concept already exists on the problem list."
+            })
+
+        # Passes both subsumption checks
+        return JsonResponse({"valid": True})
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

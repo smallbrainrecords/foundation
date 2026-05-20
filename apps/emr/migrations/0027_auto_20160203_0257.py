@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.TextField(null=True, blank=True)),
                 ('css_class', models.TextField(null=True, blank=True)),
-                ('todo', models.ForeignKey(related_name='todo_label', to='emr.ToDo')),
+                ('todo', models.ForeignKey(related_name='todo_label', to='emr.ToDo', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AlterField(

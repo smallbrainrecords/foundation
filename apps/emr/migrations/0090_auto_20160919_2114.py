@@ -27,6 +27,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='todo',
             name='group_id',
-            field=models.ForeignKey(blank=True, to='emr.ToDoGroup', null=True),
+            field=models.ForeignKey(blank=True, to='emr.ToDoGroup', null=True, on_delete=models.SET_NULL),
         ),
     ]

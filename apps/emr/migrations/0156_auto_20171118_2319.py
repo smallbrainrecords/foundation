@@ -26,12 +26,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='document',
             name='author',
-            field=models.ForeignKey(related_name='author_document', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='author_document', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='document',
             name='patient',
-            field=models.ForeignKey(related_name='patient_pinned', blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='patient_pinned', blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

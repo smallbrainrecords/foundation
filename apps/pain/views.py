@@ -16,10 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 
 from common.views import *
-from models import PainAvatar
+from .models import PainAvatar
 
 
 @timeit
@@ -27,7 +27,7 @@ def create_pain_avatar(request, patient_id):
     if request.POST:
         pain_avatar = PainAvatar.objects.create(patient_id=patient_id, json=request.POST['json'])
     content = {'patient_id': patient_id}
-    return render_to_response('pain/create_pain_avatar.html', content)
+    return render(request, 'pain/create_pain_avatar.html', content)
 
 
 @login_required
@@ -40,14 +40,14 @@ def add_pain_avatar(request, patient_id):
         return ajax_response(resp)
 
     content = {'patient_id': patient_id}
-    return render_to_response('pain/add_pain_avatar.html', content)
+    return render(request, 'pain/add_pain_avatar.html', content)
 
 
 @login_required
 @timeit
 def view_pain_avatars(request):
     content = {'pain_avatars': PainAvatar.objects.all().order_by('-datetime')}
-    return render_to_response('pain/view_pain_avatars.html', content)
+    return render(request, 'pain/view_pain_avatars.html', content)
 
 
 @login_required

@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 from django.contrib import admin
 from reversion.admin import VersionAdmin
 
-from models import PainAvatar
+from .models import PainAvatar
 
 
 class PainAvatarAdmin(VersionAdmin):

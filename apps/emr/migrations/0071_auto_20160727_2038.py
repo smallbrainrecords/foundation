@@ -17,11 +17,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='coloncancerstudyimage',
             name='study',
-            field=models.ForeignKey(blank=True, to='emr.ColonCancerStudy', null=True),
+            field=models.ForeignKey(blank=True, to='emr.ColonCancerStudy', null=True, on_delete=models.SET_NULL),
         ),
         migrations.AlterField(
             model_name='coloncancerstudyimage',
             name='author',
-            field=models.ForeignKey(blank=True, to='emr.UserProfile', null=True),
+            field=models.ForeignKey(blank=True, to='emr.UserProfile', null=True, on_delete=models.SET_NULL),
         ),
     ]

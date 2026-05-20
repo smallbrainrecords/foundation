@@ -27,13 +27,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='coloncancerstudy',
             name='author',
-            field=models.ForeignKey(related_name='author_studies', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='author_studies', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='coloncancerstudy',
             name='last_updated_user',
             field=models.ForeignKey(related_name='last_updated_user_studies', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

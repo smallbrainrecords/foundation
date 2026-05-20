@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='todo',
             name='medication',
-            field=models.ForeignKey(to='emr.Medication', null=True),
+            field=models.ForeignKey(to='emr.Medication', null=True, on_delete=models.SET_NULL),
         ),
     ]

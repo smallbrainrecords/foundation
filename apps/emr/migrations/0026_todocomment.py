@@ -18,8 +18,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('comment', models.TextField()),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
-                ('todo', models.ForeignKey(to='emr.ToDo')),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('todo', models.ForeignKey(to='emr.ToDo', on_delete=models.CASCADE)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
     ]

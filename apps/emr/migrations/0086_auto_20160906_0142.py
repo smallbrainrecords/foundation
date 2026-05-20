@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('effective_datetime', models.DateTimeField(null=True, blank=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True, null=True)),
                 ('author', models.ForeignKey(related_name='observation_value_authors', blank=True, to='emr.UserProfile',
-                                             null=True)),
+                                             null=True, on_delete=models.SET_NULL)),
             ],
         ),
         migrations.RemoveField(
@@ -44,6 +44,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='observationvalue',
             name='component',
-            field=models.ForeignKey(related_name='observation_component_values', to='emr.ObservationComponent'),
+            field=models.ForeignKey(related_name='observation_component_values', to='emr.ObservationComponent', on_delete=models.CASCADE),
         ),
     ]

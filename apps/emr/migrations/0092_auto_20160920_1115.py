@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='todo',
             name='group',
-            field=models.ForeignKey(related_name='items', blank=True, to='emr.ToDoGroup', null=True),
+            field=models.ForeignKey(related_name='items', blank=True, to='emr.ToDoGroup', null=True, on_delete=models.SET_NULL),
         ),
     ]

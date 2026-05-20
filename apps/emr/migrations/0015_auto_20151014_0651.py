@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 import datetime
 
 from django.db import models, migrations
-from django.utils.timezone import utc
+from datetime import timezone as _timezone
+utc = _timezone.utc
 
 
 class Migration(migrations.Migration):

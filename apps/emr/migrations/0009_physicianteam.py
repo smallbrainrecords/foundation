@@ -16,8 +16,8 @@ class Migration(migrations.Migration):
             name='PhysicianTeam',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('member', models.ForeignKey(related_name='user_leaders', to=settings.AUTH_USER_MODEL)),
-                ('physician', models.ForeignKey(related_name='physician_helpers', to=settings.AUTH_USER_MODEL)),
+                ('member', models.ForeignKey(related_name='user_leaders', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('physician', models.ForeignKey(related_name='physician_helpers', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
     ]

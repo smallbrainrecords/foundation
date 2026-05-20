@@ -30,11 +30,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='inrtextnote',
             name='author',
-            field=models.ForeignKey(related_name='author_note', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='author_note', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='inrtextnote',
             name='patient',
-            field=models.ForeignKey(related_name='patient_note', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='patient_note', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
     ]

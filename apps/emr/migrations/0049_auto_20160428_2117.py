@@ -21,9 +21,9 @@ class Migration(migrations.Migration):
                 ('order', emr.models.ListField(null=True, blank=True)),
                 ('patient',
                  models.ForeignKey(related_name='patient_problem_order', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
+                                   null=True, on_delete=models.SET_NULL)),
                 ('user', models.ForeignKey(related_name='user_problem_order', blank=True, to=settings.AUTH_USER_MODEL,
-                                           null=True)),
+                                           null=True, on_delete=models.SET_NULL)),
             ],
         ),
         migrations.AlterModelOptions(

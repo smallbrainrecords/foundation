@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True)),
                 ('authenticated', models.BooleanField(default=False)),
                 ('start_date', models.DateField(auto_now_add=True)),
-                ('problem', models.ForeignKey(to='emr.Problem')),
+                ('problem', models.ForeignKey(to='emr.Problem', on_delete=models.CASCADE)),
             ],
         ),
     ]

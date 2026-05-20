@@ -17,11 +17,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='inrtextnote',
             name='patient',
-            field=models.ForeignKey(related_name='patient_note', to='emr.UserProfile'),
+            field=models.ForeignKey(related_name='patient_note', to='emr.UserProfile', on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='inrtextnote',
             name='author',
-            field=models.ForeignKey(related_name='author_note', to='emr.UserProfile'),
+            field=models.ForeignKey(related_name='author_note', to='emr.UserProfile', on_delete=models.CASCADE),
         ),
     ]

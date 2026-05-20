@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='inr',
             name='observation_value',
-            field=models.OneToOneField(related_name='inr', null=True, to='emr.ObservationValue'),
+            field=models.OneToOneField(related_name='inr', null=True, to='emr.ObservationValue', on_delete=models.SET_NULL),
         ),
     ]

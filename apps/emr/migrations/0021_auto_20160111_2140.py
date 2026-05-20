@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='problemsegment',
             name='problem',
-            field=models.ForeignKey(related_name='problem_segment', to='emr.Problem'),
+            field=models.ForeignKey(related_name='problem_segment', to='emr.Problem', on_delete=models.CASCADE),
         ),
     ]

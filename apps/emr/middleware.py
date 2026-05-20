@@ -20,6 +20,14 @@ from .models import AccessLog
 
 class AccessLogMiddleware(object):
 
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # If you have old-style methods like process_request/process_response,
+        # they can still be called from here if needed.
+        return self.get_response(request)
+
     def process_request(self, request):
         if request.user.is_authenticated() and not request.path.startswith('/list_of') and not request.path.endswith(
                 '/encounter/status'):

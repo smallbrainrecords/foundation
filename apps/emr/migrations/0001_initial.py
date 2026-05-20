@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
                 ('summary', models.TextField()),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
                 ('object_id', models.PositiveIntegerField()),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
+                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
                 ('summary', models.TextField()),
-                ('patient', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('patient', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('form', models.TextField()),
-                ('guideline', models.OneToOneField(to='emr.Guideline')),
+                ('guideline', models.OneToOneField(to='emr.Guideline', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('image', models.ImageField(upload_to=emr.models.get_path)),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
-                ('patient', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('patient', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -112,8 +112,8 @@ class Migration(migrations.Migration):
             name='ProblemRelationship',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('source', models.ForeignKey(related_name='source', to='emr.Problem')),
-                ('target', models.ForeignKey(related_name='target', to='emr.Problem')),
+                ('source', models.ForeignKey(related_name='source', to='emr.Problem', on_delete=models.CASCADE)),
+                ('target', models.ForeignKey(related_name='target', to='emr.Problem', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -121,8 +121,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('all', models.BooleanField(default=True)),
-                ('other_patient', models.ForeignKey(related_name='other_patient', to=settings.AUTH_USER_MODEL)),
-                ('patient', models.ForeignKey(related_name='target_patient', to=settings.AUTH_USER_MODEL)),
+                ('other_patient', models.ForeignKey(related_name='other_patient', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('patient', models.ForeignKey(related_name='target_patient', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -142,8 +142,8 @@ class Migration(migrations.Migration):
                 ('todo', models.TextField()),
                 ('accomplished', models.BooleanField(default=False)),
                 ('notes', models.ManyToManyField(to='emr.TextNote', blank=True)),
-                ('patient', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('problem', models.ForeignKey(blank=True, to='emr.Problem', null=True)),
+                ('patient', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('problem', models.ForeignKey(blank=True, to='emr.Problem', null=True, on_delete=models.SET_NULL)),
             ],
         ),
         migrations.CreateModel(
@@ -161,7 +161,7 @@ class Migration(migrations.Migration):
                  models.CharField(blank=True, max_length=6, choices=[(b'male', b'male'), (b'female', b'female')])),
                 ('date_of_birth', models.DateField(null=True, blank=True)),
                 ('phone_number', models.CharField(max_length=20, blank=True)),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, unique=True)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, unique=True, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -171,8 +171,8 @@ class Migration(migrations.Migration):
                 ('datetime', models.DateTimeField(auto_now=True)),
                 ('tracking_id', models.CharField(max_length=20, blank=True)),
                 ('user_agent', models.CharField(max_length=200, blank=True)),
-                ('patient', models.ForeignKey(related_name='viewed_patient', to=settings.AUTH_USER_MODEL)),
-                ('viewer', models.ForeignKey(related_name='viewer', to=settings.AUTH_USER_MODEL)),
+                ('patient', models.ForeignKey(related_name='viewed_patient', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('viewer', models.ForeignKey(related_name='viewer', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -180,7 +180,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('status', models.TextField()),
-                ('patient', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('patient', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
         migrations.AddField(
@@ -191,17 +191,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='problem',
             name='parent',
-            field=mptt.fields.TreeForeignKey(related_name='children', blank=True, to='emr.Problem', null=True),
+            field=mptt.fields.TreeForeignKey(related_name='children', blank=True, to='emr.Problem', null=True, on_delete=models.SET_NULL),
         ),
         migrations.AddField(
             model_name='problem',
             name='patient',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='patientimage',
             name='problem',
-            field=models.ForeignKey(blank=True, to='emr.Problem', null=True),
+            field=models.ForeignKey(blank=True, to='emr.Problem', null=True, on_delete=models.SET_NULL),
         ),
         migrations.AddField(
             model_name='goal',
@@ -211,12 +211,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='goal',
             name='patient',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='goal',
             name='problem',
-            field=models.ForeignKey(blank=True, to='emr.Problem', null=True),
+            field=models.ForeignKey(blank=True, to='emr.Problem', null=True, on_delete=models.SET_NULL),
         ),
         migrations.AddField(
             model_name='encounter',
@@ -226,11 +226,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='encounter',
             name='patient',
-            field=models.ForeignKey(related_name='patient', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='patient', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='encounter',
             name='physician',
-            field=models.ForeignKey(related_name='physician', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='physician', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
     ]

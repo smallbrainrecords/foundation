@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='problem',
             name='inr',
-            field=models.ForeignKey(related_name='inr_problem', blank=True, to='emr.Inr', null=True),
+            field=models.ForeignKey(related_name='inr_problem', blank=True, to='emr.Inr', null=True, on_delete=models.SET_NULL),
         ),
         migrations.AlterField(
             model_name='inr',

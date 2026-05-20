@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             model_name='observationvalue',
             name='author',
             field=models.ForeignKey(related_name='observation_value_authors', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

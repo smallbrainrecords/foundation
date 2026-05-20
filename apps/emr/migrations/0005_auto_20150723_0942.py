@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='textnote',
             name='author',
-            field=models.ForeignKey(blank=True, to='emr.UserProfile', null=True),
+            field=models.ForeignKey(blank=True, to='emr.UserProfile', null=True, on_delete=models.SET_NULL),
         ),
         migrations.AlterField(
             model_name='userprofile',

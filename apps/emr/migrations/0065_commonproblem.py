@@ -22,8 +22,8 @@ class Migration(migrations.Migration):
                                                   choices=[(b'acute', b'Acute'), (b'chronic', b'Chronic')])),
                 ('author',
                  models.ForeignKey(related_name='common_problem_author', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
-                ('patient', models.ForeignKey(related_name='common_problem_patient', to=settings.AUTH_USER_MODEL)),
+                                   null=True, on_delete=models.SET_NULL)),
+                ('patient', models.ForeignKey(related_name='common_problem_patient', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
         ),
     ]

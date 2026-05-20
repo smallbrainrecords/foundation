@@ -24,6 +24,6 @@ class Migration(migrations.Migration):
             model_name='mystorytextcomponententry',
             name='author',
             field=models.ForeignKey(related_name='author_story_text_entries', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
     ]

@@ -17,9 +17,9 @@ class Migration(migrations.Migration):
                 ('name', models.TextField()),
                 ('path', models.TextField()),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(related_name='author_document', to='emr.UserProfile')),
+                ('author', models.ForeignKey(related_name='author_document', to='emr.UserProfile', on_delete=models.CASCADE)),
                 ('patient',
-                 models.ForeignKey(related_name='patient_pinned', blank=True, to='emr.UserProfile', null=True)),
+                 models.ForeignKey(related_name='patient_pinned', blank=True, to='emr.UserProfile', null=True, on_delete=models.SET_NULL)),
             ],
             options={
                 'ordering': ['-created_on'],

@@ -23,13 +23,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='documentproblem',
             name='author',
-            field=models.ForeignKey(default=None, to='emr.UserProfile'),
+            field=models.ForeignKey(default=None, to='emr.UserProfile', on_delete=models.CASCADE),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='documenttodo',
             name='author',
-            field=models.ForeignKey(default=None, to='emr.UserProfile'),
+            field=models.ForeignKey(default=None, to='emr.UserProfile', on_delete=models.CASCADE),
             preserve_default=False,
         ),
         migrations.AlterField(

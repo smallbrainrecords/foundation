@@ -17,13 +17,13 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('order', models.BigIntegerField(null=True, blank=True)),
-                ('todo', models.ForeignKey(blank=True, to='emr.ToDo', null=True)),
-                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True)),
+                ('todo', models.ForeignKey(blank=True, to='emr.ToDo', null=True, on_delete=models.SET_NULL)),
+                ('user', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)),
             ],
         ),
         migrations.AlterField(
             model_name='userprofile',
             name='user',
-            field=models.OneToOneField(related_name='profile', to=settings.AUTH_USER_MODEL),
+            field=models.OneToOneField(related_name='profile', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
     ]

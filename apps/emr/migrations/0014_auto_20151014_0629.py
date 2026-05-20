@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='problemactivity',
             name='author',
-            field=models.ForeignKey(blank=True, to='emr.UserProfile', null=True),
+            field=models.ForeignKey(blank=True, to='emr.UserProfile', null=True, on_delete=models.SET_NULL),
         ),
     ]

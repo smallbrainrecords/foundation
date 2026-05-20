@@ -23,10 +23,10 @@ class Migration(migrations.Migration):
                 ('labels', models.ManyToManyField(to='emr.ProblemLabel', blank=True)),
                 ('patient',
                  models.ForeignKey(related_name='label_problem_list_patient', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
+                                   null=True, on_delete=models.SET_NULL)),
                 ('user',
                  models.ForeignKey(related_name='label_problem_list_user', blank=True, to=settings.AUTH_USER_MODEL,
-                                   null=True)),
+                                   null=True, on_delete=models.SET_NULL)),
             ],
         ),
     ]

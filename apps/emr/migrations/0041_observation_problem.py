@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='observation',
             name='problem',
-            field=models.ForeignKey(related_name='problem_observations', default=1, to='emr.Problem'),
+            field=models.ForeignKey(related_name='problem_observations', default=1, to='emr.Problem', on_delete=models.CASCADE),
             preserve_default=False,
         ),
     ]

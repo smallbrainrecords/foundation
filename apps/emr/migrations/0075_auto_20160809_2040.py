@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
             model_name='todo',
             name='colon_cancer',
             field=models.ForeignKey(related_name='colon_cancer_todos', blank=True, to='emr.ColonCancerScreening',
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
     ]

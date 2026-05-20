@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
             model_name='coloncancerstudy',
             name='last_updated_user',
             field=models.ForeignKey(related_name='last_updated_user_studies', blank=True, to='emr.UserProfile',
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
     ]

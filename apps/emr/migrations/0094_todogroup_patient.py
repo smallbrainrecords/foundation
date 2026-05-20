@@ -16,6 +16,6 @@ class Migration(migrations.Migration):
             model_name='todogroup',
             name='patient',
             field=models.ForeignKey(related_name='todo_group_patient', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
     ]

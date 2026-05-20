@@ -14,8 +14,8 @@ class Migration(migrations.Migration):
             name='EncounterProblemRecord',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('encounter', models.ForeignKey(related_name='encounter_problem_records', to='emr.Encounter')),
-                ('problem', models.ForeignKey(related_name='problem_encounter_records', to='emr.Problem')),
+                ('encounter', models.ForeignKey(related_name='encounter_problem_records', to='emr.Encounter', on_delete=models.CASCADE)),
+                ('problem', models.ForeignKey(related_name='problem_encounter_records', to='emr.Problem', on_delete=models.CASCADE)),
             ],
         ),
     ]

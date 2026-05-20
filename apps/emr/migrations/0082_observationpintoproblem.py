@@ -14,10 +14,10 @@ class Migration(migrations.Migration):
             name='ObservationPinToProblem',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('author', models.ForeignKey(related_name='pin_authors', blank=True, to='emr.UserProfile', null=True)),
+                ('author', models.ForeignKey(related_name='pin_authors', blank=True, to='emr.UserProfile', null=True, on_delete=models.SET_NULL)),
                 ('observation',
-                 models.ForeignKey(related_name='pin_observations', blank=True, to='emr.Observation', null=True)),
-                ('problem', models.ForeignKey(related_name='pin_problems', blank=True, to='emr.Problem', null=True)),
+                 models.ForeignKey(related_name='pin_observations', blank=True, to='emr.Observation', null=True, on_delete=models.SET_NULL)),
+                ('problem', models.ForeignKey(related_name='pin_problems', blank=True, to='emr.Problem', null=True, on_delete=models.SET_NULL)),
             ],
         ),
     ]

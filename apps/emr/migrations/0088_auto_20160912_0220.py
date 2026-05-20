@@ -16,9 +16,9 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('note', models.TextField()),
                 ('datetime', models.DateTimeField(auto_now_add=True)),
-                ('author', models.ForeignKey(blank=True, to='emr.UserProfile', null=True)),
+                ('author', models.ForeignKey(blank=True, to='emr.UserProfile', null=True, on_delete=models.SET_NULL)),
                 ('observation_value',
-                 models.ForeignKey(related_name='observation_value_notes', to='emr.ObservationValue')),
+                 models.ForeignKey(related_name='observation_value_notes', to='emr.ObservationValue', on_delete=models.CASCADE)),
             ],
         ),
         migrations.RemoveField(

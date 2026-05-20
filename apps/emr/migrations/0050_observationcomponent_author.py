@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
             model_name='observationcomponent',
             name='author',
             field=models.ForeignKey(related_name='observation_component_authors', blank=True, to='emr.UserProfile',
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
     ]

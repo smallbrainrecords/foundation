@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             model_name='medicationpintoproblem',
             name='author',
             field=models.ForeignKey(related_name='author_pin_medications', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
         migrations.RunPython(changer_user_profile_id_to_user_id)
     ]

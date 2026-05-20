@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             model_name='mystorytextcomponententry',
             name='patient',
             field=models.ForeignKey(related_name='patient_story_text_entries', blank=True, to=settings.AUTH_USER_MODEL,
-                                    null=True),
+                                    null=True, on_delete=models.SET_NULL),
         ),
         migrations.AlterField(
             model_name='mystorytextcomponententry',

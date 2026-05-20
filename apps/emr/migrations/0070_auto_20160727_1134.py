@@ -23,12 +23,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='coloncancerstudyimage',
             name='author',
-            field=models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL),
         ),
         migrations.AddField(
             model_name='coloncancerstudyimage',
             name='colon',
-            field=models.ForeignKey(blank=True, to='emr.ColonCancerScreening', null=True),
+            field=models.ForeignKey(blank=True, to='emr.ColonCancerScreening', null=True, on_delete=models.SET_NULL),
         ),
         migrations.AddField(
             model_name='coloncancerstudyimage',
