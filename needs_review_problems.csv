@@ -1,0 +1,397 @@
+rank,concept_id,problem_name,count,Available_Options
+1,102499006,Fit and well (finding),1887,0
+2,38341003,"Hypertensive disorder, systemic arterial (disorder)",601,3
+4,279039007,Low back pain (finding),343,3
+5,13644009,Hypercholesterolemia (disorder),320,2
+6,61582004,Allergic rhinitis (disorder),230,2
+9,390076006,Knee pain (finding),176,0
+12,203132003,Shoulder pain (disorder),157,0
+13,81680005,Neck pain (finding),153,2
+14,201344004,Skin lesion (disorder),151,0
+15,49727002,Cough (finding),129,2
+16,54856001,Gastroesophageal reflux disease (disorder),129,0
+17,235595009,Gastroesophageal reflux disease (disorder),123,6
+19,139313005,Abdominal pain (finding),116,0
+20,266569009,Benign prostatic hyperplasia (disorder),107,4
+21,193462001,Insomnia (disorder),106,3
+22,195967001,Asthma (disorder),103,2
+23,237572004,Hypothyroidism (disorder),100,0
+24,53741008,Coronary arteriosclerosis (disorder),99,2
+25,154963001,Depression NOS (disorder),99,0
+27,270478005,Insomnia (disorder),93,0
+28,30989003,Knee pain (finding),90,2
+31,14760008,Constipation (disorder),86,2
+33,78275009,Obstructive sleep apnea syndrome (disorder),83,33
+34,49218002,Hip pain (finding),81,16
+35,95324001,Skin lesion (disorder),79,3
+36,431309003,Acute urinary tract infection (disorder),72,3
+37,40930008,Hypothyroidism (disorder),69,3
+39,45326000,Shoulder pain (finding),68,9
+40,47933007,Foot pain (finding),63,2
+41,80313002,Palpitations (finding),61,4
+42,139228007,Chest pain (finding),61,0
+43,49650001,Dysuria (finding),60,3
+44,312975006,Microalbuminuria (finding),59,17
+46,49436004,Atrial fibrillation (disorder),57,4
+47,64859006,Osteoporosis (disorder),53,2
+48,166643006,Liver enzymes abnormal (finding),52,5
+49,422587007,Nausea (finding),52,2
+51,15167005,Alcohol abuse (disorder),49,3
+52,84229001,Fatigue (finding),48,3
+53,267036007,Dyspnea (finding),48,2
+54,139490008,Headache (finding),48,0
+55,139126000,Fatigue (finding),48,0
+56,128045006,Cellulitis (disorder),46,2
+57,34713006,Vitamin D deficiency (disorder),46,4
+58,406506008,Attention deficit hyperactivity disorder (disorder),42,7
+60,267038008,Edema (finding),41,3
+61,237495005,Thyroid nodule (disorder),41,3
+62,433144002,Chronic kidney disease stage 3 (disorder),39,22
+63,90560007,Gout (disorder),39,2
+64,279038004,Thoracic back pain (finding),38,26
+65,62315008,Diarrhea (finding),37,15
+68,40739000,Dysphagia (disorder),35,7
+69,4473006,Migraine with aura (disorder),32,3
+71,11049006,Cervical radiculitis (disorder),31,3
+72,22722001,Idiopathic peripheral neuropathy (disorder),30,13
+73,21522001,Abdominal pain (finding),30,2
+74,25064002,Headache (finding),30,2
+76,10601006,Pain in lower limb (finding),29,3
+77,69494008,Eustachian tube disorder (disorder),29,2
+80,166717003,Serum creatinine raised (finding),28,2
+81,29857009,Chest pain (finding),28,2
+83,18070006,Impacted cerumen (disorder),28,5
+84,10743008,Irritable bowel syndrome (disorder),27,4
+87,202882003,Plantar fasciitis (disorder),27,6
+88,64586002,Carotid artery stenosis (disorder),26,5
+89,300980002,Normocytic anemia (disorder),26,14
+90,60862001,Tinnitus (finding),26,2
+93,15188001,Hearing loss (disorder),25,2
+94,1101000119103,Obstructive sleep apnea of adult (disorder),25,2
+95,312894000,Osteopenia (disorder),23,4
+96,254837009,Malignant tumor of breast (disorder),23,3
+97,70153002,Hemorrhoids (disorder),23,2
+98,32914008,Restless legs (disorder),22,10
+99,309080005,Raised thyroid stimulating hormone level (finding),22,5
+100,57406009,Carpal tunnel syndrome (disorder),22,10
+101,445249002,Multiple nodules of lung (finding),22,4
+102,6020002,Tinea pedis (disorder),22,3
+105,35489007,Depressive disorder (disorder),21,2
+107,66590003,Alcohol dependence (disorder),21,18
+108,300955002,Pain in thumb (finding),21,12
+109,398909004,Rosacea (disorder),21,14
+110,60845006,Dyspnea on exertion (finding),21,3
+111,3723001,Arthritis (disorder),20,3
+112,427359005,Solitary nodule of lung (finding),20,5
+113,297217002,Rib pain (finding),20,2
+114,285365001,Pain in toe (finding),20,15
+115,302914006,Barrett's esophagus (disorder),20,10
+116,267718000,Age-related macular degeneration (disorder),20,4
+117,128477000,Abscess (disorder),20,2
+118,95898004,Tick bite (disorder),20,12
+119,202480001,Elbow joint pain (finding),19,16
+120,55300003,Cramp (finding),19,3
+121,23986001,Glaucoma (disorder),19,3
+125,422504002,Ischemic stroke (disorder),19,17
+126,53057004,Hand pain (finding),18,2
+127,47505003,Posttraumatic stress disorder (disorder),18,10
+128,4009004,Lower urinary tract infectious disease (disorder),18,3
+130,310496002,Moderate depression (disorder),18,14
+131,166922008,Blood glucose abnormal (finding),18,8
+132,394616008,Unsteady gait (finding),17,2
+133,56097005,Migraine without aura (disorder),16,11
+136,59282003,Pulmonary embolism (disorder),16,2
+137,1539003,Acquired trigger finger (disorder),16,10
+138,23056005,Sciatica (disorder),16,6
+139,247373008,Ankle pain (finding),16,17
+140,48867003,Bradycardia (finding),16,7
+141,111541001,Benign paroxysmal positional vertigo (disorder),16,2
+142,419642000,Carotid bruit (finding),16,2
+143,129839007,At risk for falls (finding),16,3
+144,64593003,Anemia (disorder),16,0
+146,473021009,Secondary erectile dysfunction (disorder),15,2
+147,9826008,Conjunctivitis (disorder),15,3
+148,202482009,Wrist joint pain (finding),15,9
+150,445098000,Acute abscess of skin and/or subcutaneous tissue (disorder),15,2
+151,131078003,Decreased testosterone level (finding),14,3
+153,56713002,Dysfunction of eustachian tube (disorder),14,10
+154,12063002,Rectal hemorrhage (disorder),14,8
+155,4556007,Gastritis (disorder),14,2
+156,84828003,Leukopenia (disorder),14,12
+157,134407002,Chronic back pain (finding),13,3
+158,230690007,Cerebrovascular accident (disorder),13,2
+159,89765005,Tobacco dependence syndrome (disorder),13,2
+161,68235000,Nasal congestion (finding),13,2
+163,449918009,Cramp in lower leg (finding),13,5
+164,307496006,Diverticulitis (disorder),13,2
+166,282825002,Paroxysmal atrial fibrillation (disorder),13,5
+167,74576004,Acquired thrombocytopenia (disorder),13,8
+168,14783006,Hyperbilirubinemia (disorder),13,3
+169,409966000,Acute diarrhea (disorder),13,3
+170,240539000,Plane wart (disorder),13,2
+171,271809000,Peripheral edema (disorder),12,2
+172,111583006,Leukocytosis (disorder),12,2
+173,6456007,Supraventricular tachycardia (disorder),12,9
+174,82423001,Chronic pain (finding),12,2
+175,42343007,Congestive heart failure (disorder),12,3
+176,26929004,Alzheimer's disease (disorder),12,2
+177,56608008,Pain in wrist (finding),12,17
+180,399957001,Peripheral arterial occlusive disease (disorder),12,29
+181,30250000,Acute otitis externa (disorder),12,2
+182,312124009,Bacterial urinary infection (disorder),12,4
+183,156598006,Hip pain (finding),12,0
+184,444613000,Adult attention deficit hyperactivity disorder (disorder),12,2
+185,128613002,Seizure disorder (disorder),11,3
+186,84089009,Hiatal hernia (disorder),11,10
+188,33839006,Genital herpes simplex (disorder),11,2
+190,34000006,Crohn's disease (disorder),11,2
+192,427461000,Near syncope (disorder),11,2
+193,425963007,Aneurysm of ascending aorta (disorder),11,2
+194,424736006,Diabetic peripheral neuropathy (disorder),11,3
+195,73430006,Sleep apnea (disorder),11,29
+196,53726008,Acute conjunctivitis (disorder),11,17
+197,197941005,Frank hematuria (disorder),11,7
+198,271791002,Light-headedness (finding),11,0
+199,287048003,Pain in right leg (finding),10,3
+201,66931009,Hypercalcemia (disorder),10,2
+202,41888000,Temporomandibular joint disorder (disorder),10,2
+203,287046004,Pain in right arm (finding),10,6
+204,396232000,Inguinal hernia (disorder),10,2
+205,404223003,Deep venous thrombosis of lower extremity (disorder),10,2
+206,89164003,Breast lump (finding),10,2
+207,68566005,Urinary tract infectious disease (disorder),10,3
+208,302215000,Thrombocytopenic disorder (disorder),10,3
+209,299709002,Dental abscess (disorder),10,8
+210,279079003,Dysesthesia (finding),10,5
+211,202490009,Ankle joint pain (finding),10,17
+212,2733002,Heel pain (finding),10,9
+213,197940006,Microscopic hematuria (disorder),10,12
+214,276433004,Insect bite - wound (disorder),10,4
+215,63305008,Stricture of esophagus (disorder),10,20
+216,49233005,Dyspnea (finding),10,0
+217,72605008,Candidal vulvovaginitis (disorder),10,13
+218,59265000,Paroxysmal dyspnea (finding),10,6
+219,1201005,Benign essential hypertension (disorder),9,11
+220,24693007,Fibromyositis (disorder),9,9
+221,385006,Secondary peripheral neuropathy (disorder),9,2
+223,160822004,Relationship problems (finding),9,3
+224,190855004,Hypomagnesemia (disorder),9,8
+225,72866009,Varicose veins of lower extremity (disorder),9,2
+226,26165005,Increased bilirubin level (finding),9,8
+227,247355005,Flank pain (finding),9,4
+228,11679003,Radicular pain (finding),9,7
+229,6077001,Foot-drop (finding),9,9
+230,72934000,Candidiasis of vagina (disorder),9,21
+231,443502000,Atherosclerosis of coronary artery (disorder),9,12
+232,18876004,Pain in finger (finding),9,17
+233,8957000,Coronary artery disease (disorder),9,0
+234,236021006,Right inguinal hernia (disorder),9,2
+237,139423000,Dysuria (finding),9,0
+238,254838004,Carcinoma of breast (disorder),9,3
+239,236022004,Left inguinal hernia (disorder),9,2
+240,105485001,Family tension (finding),8,3
+242,95655001,Ophthalmic migraine (disorder),8,3
+243,267981009,Pain in thoracic spine (finding),8,6
+244,69896004,Rheumatoid arthritis (disorder),8,3
+247,44465007,Sprain of ankle (disorder),8,2
+248,38936003,Abnormal blood pressure (finding),8,0
+252,399490008,Adenocarcinoma of prostate (disorder),8,4
+255,3135009,Otitis externa (disorder),8,2
+257,282776008,Injury of toe (disorder),8,2
+258,386661006,Fever (finding),8,3
+259,309521004,Numbness of hand (finding),8,2
+260,16932000,Nausea and vomiting (disorder),8,38
+261,431737008,Acute lower urinary tract infection (disorder),8,18
+262,707724006,Elevated liver enzymes level (finding),8,4
+263,370143000,Major depressive disorder (disorder),7,2
+264,236069009,Chronic constipation (disorder),7,8
+265,191736004,Obsessive-compulsive disorder (disorder),7,28
+267,49710005,Sinus bradycardia (disorder),7,11
+268,162116003,Increased frequency of urination (finding),7,8
+269,86765009,Mild mental retardation (Intelligence Quotient 50-70) (disorder),7,9
+270,5291005,Hypocalcemia (disorder),7,3
+271,34436003,Blood in urine (finding),7,2
+272,74474003,Gastrointestinal hemorrhage (disorder),7,3
+273,408856003,Autistic disorder (disorder),7,9
+274,248539004,Family problems (finding),7,2
+276,64226004,Colitis (disorder),7,3
+277,65323003,Polymyalgia rheumatica (disorder),7,3
+278,37796009,Migraine (disorder),7,2
+279,225563000,Pressure ulcer of buttock (disorder),7,10
+280,24700007,Multiple sclerosis (disorder),7,2
+281,11381005,Acne (disorder),7,3
+282,64766004,Ulcerative colitis (disorder),7,2
+283,609558009,Essential tremor (disorder),7,18
+285,34486009,Hyperthyroidism (disorder),7,3
+287,407560009,At risk of sexually transmitted infection (finding),7,2
+288,300331000,Lesion of liver (finding),7,3
+289,95820000,Bilateral hearing loss (disorder),7,27
+290,155574008,Asthma (disorder),7,0
+291,46578006,Lumbosacral radiculitis (disorder),7,4
+292,387603000,Impairment of balance (finding),7,2
+294,23502006,Lyme disease (disorder),6,2
+297,1121000119107,Chronic neck pain (finding),6,7
+298,165509000,White blood cell count abnormal (finding),6,2
+299,161891005,Backache (finding),6,2
+300,309088003,Renal mass (finding),6,2
+301,58214004,Schizophrenia (disorder),6,3
+302,233985008,Abdominal aortic aneurysm (disorder),6,2
+303,400097005,Ingrowing nail (disorder),6,6
+304,92814006,"Chronic lymphoid leukemia, disease (disorder)",6,2
+305,119247004,Hypoalbuminemia (disorder),6,7
+306,386692008,Menorrhagia (finding),6,20
+307,42984000,Night sweats (finding),6,2
+309,7200002,Alcoholism (disorder),6,9
+310,129891007,Caregiver role strain (finding),6,2
+311,451000119106,Closed injury of head (disorder),6,7
+312,15805002,Acute sinusitis (disorder),6,2
+313,72042002,Incontinence of feces (finding),6,4
+314,399029005,Tinea cruris (disorder),6,3
+315,83132003,Upper abdominal pain (finding),6,2
+317,426965005,Aphthous ulcer of mouth (disorder),6,14
+318,102570003,Inguinal pain (finding),6,10
+319,154531004,Carcinoma of prostate (disorder),6,0
+320,287047008,Pain in left leg (finding),6,3
+322,6631009,Thrombocytosis (disorder),6,15
+324,449707004,Edema of lower leg (finding),6,8
+325,202855006,Lateral epicondylitis (disorder),6,10
+326,105593004,Electrolyte imbalance (disorder),6,28
+328,442347009,Emotional stress (finding),6,2
+329,390077002,Foot pain (finding),6,0
+330,156763006,Pain in left arm (finding),6,0
+331,1912002,Fall (event),6,2
+333,200737004,Cutaneous cellulitis (disorder),6,0
+334,191887008,"Tobacco dependence, continuous (disorder)",5,4
+335,267024001,Abnormal weight loss (finding),5,11
+336,19597002,Intermittent dysphagia (disorder),5,2
+338,128302006,Chronic hepatitis C (disorder),5,10
+339,444026000,Multiple environmental allergies (disorder),5,2
+340,402519009,Basal cell carcinoma of face (disorder),5,2
+341,427589004,Complicated grieving (finding),5,2
+342,422400008,Vomiting (disorder),5,3
+344,70545002,Narcotic drug user (finding),5,2
+345,254900004,Carcinoma of prostate (disorder),5,6
+347,197456007,Acute pancreatitis (disorder),5,2
+348,78667006,Dysthymia (disorder),5,3
+349,160932005,Financial problem (finding),5,23
+351,197927001,Recurrent urinary tract infection (disorder),5,8
+353,302820008,Intracranial meningioma (disorder),5,8
+356,279066007,Foot joint pain (finding),5,2
+357,24982008,Diplopia (disorder),5,3
+358,50219008,Hoarse (finding),5,2
+359,274667000,Jaw pain (finding),5,2
+360,418290006,Itching (finding),5,8
+361,128053003,Deep venous thrombosis (disorder),5,2
+362,252005008,Cystocele (disorder),5,6
+363,116289008,Abdominal bloating (finding),5,2
+364,102588006,Chest wall pain (finding),5,2
+365,58759008,Intertrigo (disorder),5,12
+366,12441001,Epistaxis (disorder),5,3
+371,449711005,Cellulitis of lower leg (disorder),5,11
+372,139394000,Nocturia (finding),5,6
+373,70637004,Cellulitis of toe (disorder),5,18
+374,202472008,Hand joint pain (finding),5,12
+377,428007007,Erectile dysfunction associated with type 2 diabetes mellitus (disorder),5,6
+378,28332004,Family disruption (finding),5,12
+379,262520005,Thumb injury (disorder),5,2
+380,445008009,Ganglion cyst (disorder),5,2
+382,279043006,Pain in buttock (finding),5,3
+383,50563003,Seborrheic dermatitis (disorder),5,3
+384,43116000,Eczema (disorder),5,3
+385,87486003,Aphasia (finding),5,2
+387,309083007,Abscess of back (disorder),5,2
+388,48277006,Impetigo (disorder),5,2
+390,23913003,External hemorrhoids (disorder),5,16
+391,40890009,Esophageal dysphagia (disorder),5,2
+392,268645007,Nondependent alcohol abuse (disorder),5,3
+393,316921000119102,Pain in right hip joint (finding),5,16
+394,316751000119107,Pain in left foot (finding),5,19
+395,156765004,Pain in left leg (finding),5,0
+396,300954003,Pain in calf (finding),4,14
+397,238136002,Morbid obesity (disorder),4,13
+398,310495003,Mild depression (disorder),4,17
+399,127034005,Pancytopenia (disorder),4,16
+400,10725009,Benign hypertension (disorder),4,17
+401,275285009,On examination - systolic murmur (finding),4,3
+403,373621006,Chronic pain syndrome (disorder),4,2
+404,18040001,Senile osteoporosis (disorder),4,7
+405,49049000,Parkinson's disease (disorder),4,17
+407,102556003,Pain in upper limb (finding),4,3
+408,60046008,Pleural effusion (disorder),4,3
+409,431857002,Chronic kidney disease stage 4 (disorder),4,51
+410,443395009,Compression fracture (disorder),4,2
+411,278860009,Chronic low back pain (finding),4,10
+412,299042006,Weakness of hand (finding),4,6
+413,166603001,Liver function tests abnormal (finding),4,3
+415,35498005,Stasis dermatitis (disorder),4,52
+416,3424008,Tachycardia (finding),4,11
+418,24976005,Uterine prolapse (disorder),4,12
+419,419284004,Altered mental status (finding),4,2
+420,398117008,Falling injury (disorder),4,15
+421,389087006,Hypoxemia (disorder),4,3
+422,274769005,Albuminuria (finding),4,2
+424,426232007,Environmental allergy (disorder),4,2
+425,25458004,Acute gastritis (disorder),4,18
+426,195295006,Raynaud's disease (disorder),4,2
+427,2314005,Unprotected sexual intercourse (finding),4,2
+428,52448006,Dementia (disorder),4,3
+429,74323005,Pain in elbow (finding),4,20
+430,197834003,Chronic interstitial cystitis (disorder),4,3
+431,389086002,Hypoxia (disorder),4,3
+432,87860000,Mass of testicle (finding),4,2
+434,72863001,Snoring (finding),4,2
+435,253645007,Ascending aorta dilatation (disorder),4,8
+436,991000119106,Reactive airway disease (disorder),4,2
+437,197928006,Chronic urinary tract infection (disorder),4,36
+438,282302006,Difficulty balancing (finding),4,4
+439,166892002,Random blood sugar raised (finding),4,2
+443,122481008,Hammer toe (disorder),4,34
+444,193570009,Cataract (disorder),4,3
+445,41291007,Angioedema (disorder),4,2
+446,30800001,Vaginitis (disorder),4,3
+447,63901009,Pain in testicle (finding),4,32
+448,87557004,Urge incontinence of urine (finding),4,8
+449,79922009,Epigastric pain (finding),4,6
+450,79890006,Loss of appetite (finding),4,3
+451,441457006,Cyst (disorder),4,0
+452,386806002,Impaired cognition (finding),4,2
+454,128276007,Cellulitis of foot (disorder),4,18
+456,11654001,Achilles tendinitis (disorder),4,20
+457,249945007,Monoparesis - leg (disorder),4,2
+458,301822002,Abnormal vaginal bleeding (finding),4,18
+459,55929007,Feeling irritable (finding),4,13
+460,16386004,Dry skin (finding),4,2
+461,425940002,Inflammation of bursa of olecranon (disorder),4,25
+462,193093009,Bell's palsy (disorder),4,5
+464,405729008,Hematochezia (finding),4,8
+465,271860004,Abdominal mass (finding),4,2
+466,393579008,Restless legs (disorder),4,0
+468,703938007,Inflammatory dermatosis (disorder),4,2
+469,140080004,Body mass index 30+ - obesity (finding),4,0
+470,194631001,Glaucoma (disorder),4,0
+471,139224009,Palpitations (finding),4,0
+472,276444007,Generalized pruritus (finding),4,6
+473,254701007,Basal cell carcinoma of skin (disorder),4,2
+474,398175007,Male erectile disorder (disorder),4,0
+475,202479004,Acromioclavicular joint pain (finding),4,10
+476,69825009,Mucocele of salivary gland (disorder),4,4
+477,64576003,Abscess of buttock (disorder),4,7
+478,274165007,Laceration of skin (disorder),4,2
+479,301202006,Nasal sinus problem (finding),4,4
+480,25416002,Peripheral neuralgia (disorder),4,2
+481,11060002,Disease related peripheral neuropathy (disorder),4,2
+482,397513003,Hordeolum (disorder),4,2
+483,129588001,Adult failure to thrive syndrome (disorder),4,2
+484,84494001,Open-angle glaucoma (disorder),4,2
+486,11092001,Sinus tachycardia (finding),4,3
+488,111843007,Viral gastroenteritis (disorder),4,14
+489,3502005,Cervical lymphadenitis (disorder),4,24
+491,127295002,Traumatic brain injury (disorder),4,2
+492,12265501000119101,Bilateral carpal tunnel syndrome (disorder),4,4
+493,156647009,Pain in thoracic spine (disorder),4,0
+494,316781000119100,Pain of left hip joint (finding),4,17
+495,268639004,Chronic alcoholism (disorder),4,0
+496,284591009,Persistent alcohol abuse (disorder),4,2
+497,240481008,Chronic herpes simplex (disorder),3,3
+499,191891003,Nondependent cannabis abuse (disorder),3,2
+500,230572002,Diabetic neuropathy (disorder),3,3
