@@ -9,6 +9,7 @@ import re
 
 from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.http import FileResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -59,6 +60,7 @@ def _user_dict(user, profile=None):
         'last_name': user.last_name,
         'email': user.email,
         'role': profile.role if profile else 'patient',
+        'is_active': user.is_active,
         'sex': profile.sex if profile else '',
         'date_of_birth': profile.date_of_birth.isoformat() if profile and profile.date_of_birth else None,
         'phone_number': profile.phone_number if profile else '',
@@ -143,6 +145,66 @@ def mobile_change_password(request):
 
 @csrf_exempt
 @login_required
+def mobile_staff_set_password(request):
+    """POST {user_id, new_password} -> set a user's password (staff only, no old password)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    profile = request.user.profile
+    if profile.role not in ('physician', 'admin', 'nurse', 'secretary', 'mid-level'):
+        return JsonResponse({'error': 'Staff only'}, status=403)
+
+    body = _parse_body(request)
+    user_id = body.get('user_id')
+    new_password = body.get('new_password', '')
+
+    if not user_id:
+        return JsonResponse({'error': 'user_id is required'}, status=400)
+    if len(new_password) < 8:
+        return JsonResponse({'error': 'New password must be at least 8 characters'}, status=400)
+
+    from django.contrib.auth.models import User
+    try:
+        target_user = User.objects.get(id=int(user_id))
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    target_user.set_password(new_password)
+    target_user.save()
+    return JsonResponse({'success': True, 'message': 'Password updated'})
+
+
+@csrf_exempt
+@login_required
+def mobile_toggle_patient_active(request):
+    """POST {user_id, is_active} -> set user.is_active (staff only)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    profile = request.user.profile
+    if profile.role not in ('physician', 'admin', 'nurse', 'secretary', 'mid-level'):
+        return JsonResponse({'error': 'Staff only'}, status=403)
+
+    body = _parse_body(request)
+    user_id = body.get('user_id')
+    is_active = body.get('is_active')
+
+    if user_id is None or is_active is None:
+        return JsonResponse({'error': 'user_id and is_active are required'}, status=400)
+
+    from django.contrib.auth.models import User
+    try:
+        target_user = User.objects.get(id=int(user_id))
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    target_user.is_active = bool(is_active)
+    target_user.save()
+    return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
 def mobile_patients(request):
     """GET -> list of patients for the logged-in physician/staff."""
     user_profile = request.user.profile
@@ -151,16 +213,16 @@ def mobile_patients(request):
     pc_qs = PatientController.objects.none()
 
     if role == 'admin':
-        patients = UserProfile.objects.filter(role='patient', user__is_active=True)
+        patients = UserProfile.objects.filter(role='patient')
         patient_user_ids = [p.user_id for p in patients]
         pc_qs = PatientController.objects.filter(patient_id__in=patient_user_ids)
     elif role == 'physician':
-        pc_qs = PatientController.objects.filter(physician=request.user, patient__is_active=True)
+        pc_qs = PatientController.objects.filter(physician=request.user)
         patient_user_ids = [pc.patient_id for pc in pc_qs]
     elif role in ('secretary', 'mid-level', 'nurse'):
         team_members = PhysicianTeam.objects.filter(member=request.user)
         physician_ids = [tm.physician_id for tm in team_members]
-        pc_qs = PatientController.objects.filter(physician_id__in=physician_ids, patient__is_active=True)
+        pc_qs = PatientController.objects.filter(physician_id__in=physician_ids)
         patient_user_ids = [pc.patient_id for pc in pc_qs]
     elif role == 'patient':
         patient_user_ids = [request.user.id]
@@ -227,7 +289,20 @@ def mobile_team(request):
         for tm in relevant_links
     ]
 
-    return JsonResponse({'success': True, 'team': result, 'team_links': links})
+    labels_qs = Label.objects.filter(
+        Q(is_all=True) | (Q(is_all=False) & Q(author=request.user))
+    ).select_related('author')
+    label_list = []
+    for lbl in labels_qs:
+        label_list.append({
+            'id': lbl.id,
+            'name': lbl.name or '',
+            'css_class': lbl.css_class or '',
+            'is_all': lbl.is_all,
+            'author_id': lbl.author_id,
+        })
+
+    return JsonResponse({'success': True, 'team': result, 'team_links': links, 'labels': label_list})
 
 
 @csrf_exempt
@@ -603,7 +678,7 @@ def _mobile_patient_full_inner(request, patient_id):
     # Documents — included if no sections filter or 'documents' requested
     documents = []
     if not requested_sections or 'documents' in requested_sections:
-        for doc in Document.objects.filter(patient=patient_user).select_related('author'):
+        for doc in Document.objects.filter(patient=patient_user).select_related('author').prefetch_related('labels'):
             doc_size = 0
             if doc.document:
                 try:
@@ -622,6 +697,8 @@ def _mobile_patient_full_inner(request, patient_id):
                 DocumentTodo.objects.filter(document=doc).values_list('todo_id', flat=True)
             )
 
+            doc_labels = [{'id': l.id, 'name': l.name or '', 'css_class': l.css_class or ''} for l in doc.labels.all()]
+
             documents.append({
                 'id': doc.id,
                 'document_name': doc.document_name or '',
@@ -634,6 +711,7 @@ def _mobile_patient_full_inner(request, patient_id):
                 'created_on': doc.created_on.isoformat() if doc.created_on else None,
                 'problem_ids': doc_problem_ids,
                 'todo_ids': doc_todo_ids,
+                'labels': doc_labels,
             })
 
     # Activity logs
@@ -1187,54 +1265,150 @@ def mobile_create_observation_value(request, patient_id, component_id):
 @login_required
 def mobile_my_tagged_todos(request):
     """GET -> all non-accomplished todos where the current user is tagged."""
+    import sys
+    import traceback as tb
     if request.method != 'GET':
         return JsonResponse({'error': 'GET required'}, status=405)
 
-    tagged_orders = (
-        TaggedToDoOrder.objects
-        .filter(user=request.user, todo__accomplished=False, todo__isnull=False)
-        .select_related('todo', 'todo__patient', 'todo__patient__profile', 'todo__problem')
-        .prefetch_related('todo__labels', 'todo__comments', 'todo__comments__user',
-                          'todo__members', 'todo__members__user', 'todo__members__profile')
-    )
+    last_todo_id = None
+    try:
+        tagged_orders = (
+            TaggedToDoOrder.objects
+            .filter(user=request.user, todo__accomplished=False, todo__isnull=False)
+            .select_related('todo', 'todo__patient', 'todo__patient__profile', 'todo__problem')
+            .prefetch_related('todo__labels', 'todo__comments', 'todo__comments__user')
+        )
 
-    todos = []
-    for tto in tagged_orders:
-        t = tto.todo
-        members = []
-        for m in TaggedToDoOrder.objects.filter(todo=t).select_related('user', 'user__profile'):
-            members.append({
-                'id': m.id,
-                'user_id': m.user_id,
-                'username': m.user.username if m.user else '',
-                'user_name': m.user.get_full_name() if m.user else '',
-                'role': m.user.profile.role if m.user else '',
-                'status': m.status,
-                'created_on': m.created_on.isoformat() if m.created_on else None,
+        todos = []
+        for tto in tagged_orders:
+            t = tto.todo
+            last_todo_id = t.id if t else None
+            members = []
+            for m in TaggedToDoOrder.objects.filter(todo=t).select_related('user', 'user__profile'):
+                member_role = ''
+                if m.user:
+                    try:
+                        member_role = m.user.profile.role
+                    except UserProfile.DoesNotExist:
+                        member_role = ''
+                members.append({
+                    'id': m.id,
+                    'user_id': m.user_id,
+                    'username': m.user.username if m.user else '',
+                    'user_name': m.user.get_full_name() if m.user else '',
+                    'role': member_role,
+                    'status': m.status,
+                    'created_on': m.created_on.isoformat() if m.created_on else None,
+                })
+            patient_name = ''
+            if t.patient:
+                try:
+                    patient_name = t.patient.get_full_name()
+                except Exception:
+                    patient_name = ''
+            problem_name = None
+            if t.problem:
+                try:
+                    problem_name = t.problem.problem_name
+                except Exception:
+                    problem_name = None
+            todos.append({
+                'id': t.id,
+                'todo': t.todo or '',
+                'accomplished': t.accomplished,
+                'due_date': t.due_date.isoformat() if t.due_date else None,
+                'problem_id': t.problem_id if t.problem_id else None,
+                'problem_name': problem_name,
+                'patient_id': t.patient_id,
+                'patient_name': patient_name,
+                'order': t.order,
+                'created_on': t.created_on.isoformat() if t.created_on else None,
+                'labels': [{'id': l.id, 'name': l.name or '', 'css_class': l.css_class or ''} for l in t.labels.all()],
+                'comments': [{
+                    'id': c.id,
+                    'comment': c.comment or '',
+                    'user_id': c.user_id,
+                    'user_name': c.user.get_full_name() if c.user else '',
+                    'datetime': c.datetime.isoformat() if c.datetime else None,
+                } for c in t.comments.order_by('-datetime')],
+                'members': members,
             })
-        todos.append({
-            'id': t.id,
-            'todo': t.todo or '',
-            'accomplished': t.accomplished,
-            'due_date': t.due_date.isoformat() if t.due_date else None,
-            'problem_id': t.problem_id if t.problem_id else None,
-            'problem_name': t.problem.problem_name if t.problem else None,
-            'patient_id': t.patient_id,
-            'patient_name': t.patient.get_full_name() if t.patient else '',
-            'order': t.order,
-            'created_on': t.created_on.isoformat() if t.created_on else None,
-            'labels': [{'id': l.id, 'name': l.name or '', 'css_class': l.css_class or ''} for l in t.labels.all()],
-            'comments': [{
-                'id': c.id,
-                'comment': c.comment or '',
-                'user_id': c.user_id,
-                'user_name': c.user.get_full_name() if c.user else '',
-                'datetime': c.datetime.isoformat() if c.datetime else None,
-            } for c in t.comments.order_by('-datetime')],
-            'members': members,
-        })
 
-    return JsonResponse({'success': True, 'todos': todos})
+        return JsonResponse({'success': True, 'todos': todos})
+    except Exception as exc:
+        trace = tb.format_exc()
+        # Make sure the traceback hits stderr so Cloud Run captures it.
+        print(f"mobile_my_tagged_todos failed (last todo id={last_todo_id}): {exc}\n{trace}", file=sys.stderr, flush=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(exc),
+            'last_todo_id': last_todo_id,
+            'trace': trace,
+        }, status=500)
+
+
+# ---------- Label Catalog endpoints ----------
+
+@csrf_exempt
+@login_required
+def mobile_create_label(request):
+    """POST {name, css_class?, is_all?} -> create a catalog Label."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    body = _parse_body(request)
+    name = body.get('name', '').strip()
+    if not name:
+        return JsonResponse({'error': 'name is required'}, status=400)
+
+    label = Label(
+        name=name,
+        css_class=body.get('css_class', ''),
+        author=request.user,
+        is_all=bool(body.get('is_all', False)),
+    )
+    label.save()
+    return JsonResponse({
+        'success': True,
+        'id': label.id,
+        'name': label.name,
+        'css_class': label.css_class,
+        'is_all': label.is_all,
+        'author_id': label.author_id,
+    })
+
+
+@csrf_exempt
+@login_required
+def mobile_update_label(request, label_id):
+    """PATCH {name?, css_class?, is_all?} -> update a catalog Label."""
+    if request.method not in ('PATCH', 'POST'):
+        return JsonResponse({'error': 'PATCH or POST required'}, status=405)
+
+    try:
+        label = Label.objects.get(id=label_id)
+    except Label.DoesNotExist:
+        return JsonResponse({'error': 'Label not found'}, status=404)
+
+    if not label.is_all and label.author_id != request.user.id:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    body = _parse_body(request)
+    if 'name' in body:
+        label.name = body['name'].strip()
+    if 'css_class' in body:
+        label.css_class = body['css_class']
+    if 'is_all' in body:
+        label.is_all = bool(body['is_all'])
+    label.save()
+    return JsonResponse({
+        'success': True,
+        'id': label.id,
+        'name': label.name,
+        'css_class': label.css_class,
+        'is_all': label.is_all,
+        'author_id': label.author_id,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -1281,3 +1455,94 @@ def mobile_batch_events(request):
     UserEvent.objects.bulk_create(objects)
 
     return JsonResponse({'success': True, 'count': len(objects)})
+
+
+# ---------------------------------------------------------------------------
+# Terminology mapping
+# ---------------------------------------------------------------------------
+
+_ADVICE_NOISE = {
+    'DESCENDANTS NOT EXHAUSTIVELY MAPPED',
+    'MAP OF SOURCE CONCEPT IS CONTEXT DEPENDENT',
+    'CONSIDER ADDITIONAL CODE TO IDENTIFY SPECIFIC CONDITION OR DISEASE',
+    'POSSIBLE REQUIREMENT FOR AN EXTERNAL CAUSE CODE',
+    'POSSIBLE REQUIREMENT FOR PLACE OF OCCURRENCE',
+}
+
+
+def _humanize_map_advice(advice):
+    """Convert raw NLM map_advice strings into a short, clinician-friendly hint.
+    Returns None when there's nothing useful to surface (e.g. plain 'ALWAYS X' defaults)."""
+    if not advice:
+        return None
+
+    import re
+    upper = advice.upper()
+
+    # Age-based conditional rules
+    m = re.search(r'AGE AT ONSET[^|]*BEFORE\s+(\d+(?:\.\d+)?)\s+DAYS', upper)
+    if m:
+        days = int(float(m.group(1)))
+        return f'Neonatal (< {days} days)' if days <= 29 else f'Onset before {days} days'
+    m = re.search(r'AGE AT ONSET[^|]*BEFORE\s+(\d+(?:\.\d+)?)\s+YEARS', upper)
+    if m:
+        return f'Onset before {int(float(m.group(1)))} years'
+    m = re.search(r'AGE AT ONSET[^|]*OVER\s+(\d+(?:\.\d+)?)\s+YEARS', upper)
+    if m:
+        return f'Onset after {int(float(m.group(1)))} years'
+
+    # Sex-based conditional rules
+    if 'FEMALE' in upper and 'MALE' not in re.sub(r'FEMALE', '', upper):
+        return 'Female only'
+    if re.search(r'\bMALE\b', upper) and 'FEMALE' not in upper:
+        return 'Male only'
+
+    # Trimester / pregnancy rules
+    if 'TRIMESTER' in upper:
+        if 'FIRST' in upper:
+            return 'First trimester'
+        if 'SECOND' in upper:
+            return 'Second trimester'
+        if 'THIRD' in upper:
+            return 'Third trimester'
+
+    # Plain "ALWAYS X" defaults → drop standard noise modifiers
+    if upper.startswith('ALWAYS'):
+        return None
+
+    return None
+
+
+@login_required
+def get_snomed_to_icd10(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    concept_id = request.GET.get('concept_id', '').strip()
+    if not concept_id:
+        return JsonResponse({'error': 'concept_id query parameter is required'}, status=400)
+
+    from emr.models import SnomedIcd10Map
+
+    rows = SnomedIcd10Map.objects.filter(
+        snomed_concept_id=concept_id
+    ).exclude(
+        map_advice__icontains='NON-BILLABLE'
+    ).exclude(
+        map_advice__icontains='ADDITIONAL DIGITS REQUIRED'
+    ).order_by('map_group', 'map_priority')
+
+    # Dedupe by icd10_code: keep the first (lowest map_group/map_priority) per unique target.
+    seen = set()
+    result = []
+    for row in rows:
+        if row.icd10_code in seen:
+            continue
+        seen.add(row.icd10_code)
+        result.append({
+            'code': row.icd10_code,
+            'name': row.icd10_code,
+            'advice': _humanize_map_advice(row.map_advice),
+        })
+
+    return JsonResponse(result, safe=False)

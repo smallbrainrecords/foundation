@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     url(r'^login/$', views.mobile_login),
     url(r'^change-password/$', views.mobile_change_password),
+    url(r'^staff-set-password/$', views.mobile_staff_set_password),
+    url(r'^toggle-patient-active/$', views.mobile_toggle_patient_active),
     url(r'^patients/$', views.mobile_patients),
     url(r'^team/$', views.mobile_team),
     url(r'^team/assignments/$', views.mobile_team_assignments),
@@ -29,8 +31,13 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/member$', views.mobile_add_todo_member),
     # Observation values
     url(r'^patient/(?P<patient_id>\d+)/observation/component/(?P<component_id>\d+)/value$', views.mobile_create_observation_value),
+    # Label catalog
+    url(r'^labels/$', views.mobile_create_label),
+    url(r'^labels/(?P<label_id>\d+)$', views.mobile_update_label),
     # Tagged todos (cross-patient)
     url(r'^my-tagged-todos/$', views.mobile_my_tagged_todos),
     # Analytics
     url(r'^events/batch/$', views.mobile_batch_events),
+    # Terminology mapping
+    url(r'^mapping/snomed-to-icd/$', views.get_snomed_to_icd10),
 ]
