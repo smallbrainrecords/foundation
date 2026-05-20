@@ -1,0 +1,23 @@
+#!/bin/bash
+CONTAINER_ID=$(docker ps -q --filter "ancestor=us-east5-docker.pkg.dev/hi-core/foundation/prod:v3.1.4")
+
+if [ -z "$CONTAINER_ID" ]; then
+  echo "Container not found!"
+  exit 1
+fi
+
+echo "Starting Daily Cron Jobs..."
+
+# Task 1: A1C Orders
+echo "Running: A1C Order Generator..."
+docker exec $CONTAINER_ID /bin/bash -c "echo \"from apps.emr.cron import a1c_order_was_automatically_generated; a1c_order_was_automatically_generated()\" | python manage.py shell"
+
+# Task 2: Physician Data Pinning
+echo "Running: Physician Data Pinning..."
+docker exec $CONTAINER_ID /bin/bash -c "echo \"from apps.emr.cron import physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times; physician_adds_the_same_data_to_the_same_problem_concept_id_more_than_3_times()\" | python manage.py shell"
+
+# Task 3: Problem Relationship Pinning
+echo "Running: Problem Relationship Pinning..."
+docker exec $CONTAINER_ID /bin/bash -c "echo \"from apps.emr.cron import problem_relationship_auto_pinning_for_3_times_matched; problem_relationship_auto_pinning_for_3_times_matched()\" | python manage.py shell"
+
+echo "All tasks complete."

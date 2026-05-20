@@ -69,3 +69,9 @@ zope-event==6.1
     # via gevent
 zope-interface==8.2
     # via gevent
+
+django-environ==0.11.2
+django-storages[google]==1.14.4
+google-cloud-secret-manager==2.20.2
+fhirclient==4.1.0
+whitenoise==6.8.2

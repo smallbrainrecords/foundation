@@ -1,0 +1,9 @@
+.git
+__pycache__/
+*.pyc
+.venv*/
+.DS_Store
+.env*
+project/local_settings.py
+project/local_settings.py
+.env*

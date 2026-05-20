@@ -1,0 +1,24 @@
+--- SERVICE UNIT ---
+# /etc/systemd/system/daily-cron.service
+[Unit]
+Description=Run Daily EMR Cron Job
+Wants=daily-cron.timer
+
+[Service]
+Type=oneshot
+User=smallbrainproject
+ExecStart=/bin/bash /home/smallbrainproject/run-daily-cron.sh
+
+--- TIMER UNIT ---
+# /etc/systemd/system/daily-cron.timer
+[Unit]
+Description=Run Daily EMR Cron Job at 6am UTC
+Requires=daily-cron.service
+
+[Timer]
+Unit=daily-cron.service
+OnCalendar=*-*-* 06:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
