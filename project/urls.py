@@ -20,22 +20,22 @@ from django.conf.urls import include
 from django.contrib.auth import views
 from django.urls import path, re_path
 
-from apps.a1c_app import urls as a1c_app_urls
+from a1c_app import urls as a1c_app_urls
 from apps.colons_app import urls as colons_app_urls
 from apps.data_app import urls as data_app_urls
 from apps.document_app import urls
 from apps.document_app import urls as document_app_urls
-from apps.emr import views as emr_views
-from apps.emr.views import LoginError
+from emr import views as emr_views
+from emr.views import LoginError
 from apps.encounters_app import urls as encounters_app_urls
 from apps.goals_app import urls as goals_app_urls
 from apps.inr_app import urls as inr_app_urls
 from apps.medication_app import urls as medication_app_urls
 from apps.my_story_app import urls as my_story_app_urls
-from apps.pain import views as pain_views
 from apps.problems_app import urls as problems_app_urls
 from apps.project_admin_app import urls as project_admin_app_urls
 from apps.todo_app import urls as todo_app_urls
+from apps.mobile_api import urls as mobile_api_urls
 from apps.users_app import urls as users_app_urls
 
 # import settings
@@ -53,10 +53,6 @@ urlpatterns = [
     re_path(r"^$", home, name="project_home"),
     # re_path(r'^admin/', include(admin.site.urls)),
     re_path(r"^project/admin/", include(project_admin_app_urls)),
-    re_path(
-        r"^pain/create_pain_avatar/(?P<patient_id>\d+)/$", pain_views.create_pain_avatar
-    ),
-    re_path(r"^pain/reset/$", pain_views.reset),
     re_path(r"^login-error/$", LoginError.as_view()),
     # Old user views
     # re_path(r'^logout/$', django.contrib.auth.views.LogoutView.as_view(), {'next_page': '/'}),
@@ -73,6 +69,8 @@ urlpatterns = [
     re_path(r"^update/$", emr_views.update),
     # New URLS
     re_path(r"^list_terms/$", emr_views.list_snomed_terms),
+    # Mobile API (CSRF-exempt for iOS app)
+    re_path(r"^api/", include(mobile_api_urls)),
     # Users
     re_path(r"^u/", include(users_app_urls)),
     # Problems
@@ -97,13 +95,6 @@ urlpatterns = [
     # document
     re_path(r"^docs/", include(document_app_urls)),
     # Pain Avatars
-    re_path(
-        r"^patient/(?P<patient_id>\d+)/pain_avatars$", pain_views.patient_pain_avatars
-    ),
-    re_path(
-        r"^patient/(?P<patient_id>\d+)/pain/add_pain_avatar$",
-        pain_views.add_pain_avatar,
-    ),
     re_path(r"session_security/", include("session_security.urls")),
     # MEDIA AND STATIC FILES
     re_path(r"^media/(?P<path>.*)$", emr_views.serve_private_file),

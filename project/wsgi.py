@@ -1,3 +1,9 @@
+
+import os
+import sys
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+
 """
 WSGI config for emr project.
 This module contains the WSGI application used by Django's development server

@@ -52,14 +52,16 @@ def get_my_story(request, patient_id):
         staffIDList = PatientController.objects.filter(patient_id=int(patient_id)).values_list('physician_id',
                                                                                                flat=True)
 
-        myStoryTabComponentQuerySet = MyStoryTextComponent.objects.filter(
+        myStoryTabComponentQuerySet = MyStoryTextComponent.objects.select_related('patient', 'author').filter(
             Q(patient_id=int(patient_id)) | (Q(author_id__in=staffIDList) & Q(is_all=True)))
         if request.user.profile.role != 'patient':
             myStoryTabComponentQuerySet = myStoryTabComponentQuerySet.filter(private=False)
 
         # text_component_entries should be filtered by patient only not sharing across any patient
-        myStoryTabComponentEntriesQuerySet = MyStoryTextComponentEntry.objects.filter(patient_id=int(patient_id))
-        myStoryTabQuerySet = MyStoryTab.objects.prefetch_related(
+        myStoryTabComponentEntriesQuerySet = MyStoryTextComponentEntry.objects.select_related(
+            'patient', 'author'
+        ).filter(patient_id=int(patient_id))
+        myStoryTabQuerySet = MyStoryTab.objects.select_related('patient', 'author').prefetch_related(
             Prefetch('my_story_tab_components', queryset=myStoryTabComponentQuerySet),
             Prefetch('my_story_tab_components__text_component_entries',
                      queryset=myStoryTabComponentEntriesQuerySet)).filter(

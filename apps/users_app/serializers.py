@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from twisted.trial._synctest import Todo
 
 from emr.models import UserProfile, Narrative, VWTopPatients, ToDo, Problem, ProblemNote, Goal, EncounterEvent, \
     Document, MyStoryTextComponent, MyStoryTab

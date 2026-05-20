@@ -42,26 +42,22 @@ def permissions_accessed(user, obj_user_id):
     elif user_profile.role == 'patient':
         if user.id == obj_user_id:
             permitted = True
-        sharing_patients = SharingPatient.objects.filter(shared_id=obj_user_id)
-        patient_ids = [x.sharing.id for x in sharing_patients]
-        if user.id in patient_ids:
+        elif SharingPatient.objects.filter(shared_id=obj_user_id, sharing_id=user.id).exists():
             permitted = True
 
     elif user_profile.role == 'physician':
-        patient_controllers = PatientController.objects.filter(physician=user)
-        patient_ids = [x.patient.id for x in patient_controllers]
-        patient_ids.append(user.id)
-        if obj_user_id in patient_ids:
+        if user.id == obj_user_id:
+            permitted = True
+        elif PatientController.objects.filter(physician=user, patient_id=obj_user_id).exists():
             permitted = True
 
     elif user_profile.role in ('secretary', 'mid-level', 'nurse'):
-        team_members = PhysicianTeam.objects.filter(member=user)
-        physician_ids = [x.physician.id for x in team_members]
-        patient_controllers = PatientController.objects.filter(physician__id__in=physician_ids)
-        patient_ids = [x.patient.id for x in patient_controllers]
-        patient_ids.append(user.id)
-        if obj_user_id in patient_ids:
+        if user.id == obj_user_id:
             permitted = True
+        else:
+            physician_ids = PhysicianTeam.objects.filter(member=user).values_list('physician_id', flat=True)
+            if PatientController.objects.filter(physician_id__in=physician_ids, patient_id=obj_user_id).exists():
+                permitted = True
 
     return permitted
 
