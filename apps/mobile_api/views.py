@@ -1226,6 +1226,21 @@ def mobile_add_todo_member(request, patient_id, todo_id):
     return JsonResponse({'success': True, 'id': tto.id})
 
 
+@csrf_exempt
+@login_required
+def mobile_remove_todo_member(request, patient_id, todo_id, user_id):
+    """DELETE -> untag a staff member from a todo."""
+    if request.method != 'DELETE':
+        return JsonResponse({'error': 'DELETE required'}, status=405)
+    try:
+        todo = ToDo.objects.get(id=todo_id, patient_id=patient_id)
+    except ToDo.DoesNotExist:
+        return JsonResponse({'error': 'Todo not found'}, status=404)
+
+    deleted, _ = TaggedToDoOrder.objects.filter(todo=todo, user_id=user_id).delete()
+    return JsonResponse({'success': True, 'deleted': deleted})
+
+
 # ---------- Observation Value endpoints ----------
 
 @csrf_exempt

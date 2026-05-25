@@ -29,6 +29,7 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/comment$', views.mobile_create_todo_comment),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/label$', views.mobile_create_todo_label),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/member$', views.mobile_add_todo_member),
+    url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/member/(?P<user_id>\d+)$', views.mobile_remove_todo_member),
     # Observation values
     url(r'^patient/(?P<patient_id>\d+)/observation/component/(?P<component_id>\d+)/value$', views.mobile_create_observation_value),
     # Label catalog
