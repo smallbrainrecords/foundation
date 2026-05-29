@@ -33,6 +33,7 @@ import operator
 
 from django.db.models import Max, Prefetch, Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework.decorators import api_view
 
 from a1c_app.serializers import AOneCSerializer
@@ -415,6 +416,21 @@ def add_history_note(request, problem_id):
 @timeit
 def auto_generate_note_todo(actor_profile, patient, problem, request, resp):
     if 'patient' == actor_profile.role or 'nurse' == actor_profile.role or 'secretary' == actor_profile.role:
+        # Idempotency guard: if a "A note was added" Todo for this
+        # (patient, problem) was created within the last 5 seconds, bail.
+        # Stops the back-to-back double-fire pollution from the legacy
+        # AngularJS web client's unprotected save button. The 5s window is
+        # tight enough to allow a legitimate "added two notes in a row"
+        # workflow while catching double-click / network-retry duplicates.
+        recent_cutoff = timezone.now() - timedelta(seconds=5)
+        if ToDo.objects.filter(
+            patient=patient,
+            problem=problem,
+            todo="A note was added",
+            created_on__gte=recent_cutoff,
+        ).exists():
+            return
+
         # Create todo and Pin to problem
         note_auto_generated_todo = ToDo(patient=patient, problem=problem, todo="A note was added")
         order = ToDo.objects.all().aggregate(Max('order'))
