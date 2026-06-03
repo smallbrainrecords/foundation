@@ -286,6 +286,7 @@ class Encounter(models.Model):
     recorder_status = models.IntegerField(choices=RECORDER_STATUS, default=0)
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
+    transcript = models.TextField(blank=True, default='')
     # deprecated should be loaded dynamically instead of storing in specific table
     encounter_document = models.ManyToManyField('ObservationValue', through='EncounterObservationValue')
 

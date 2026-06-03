@@ -670,6 +670,7 @@ def _mobile_patient_full_inner(request, patient_id):
                 'stop_time': enc.stoptime.isoformat() if enc.stoptime else None,
                 'audio_path': str(enc.audio) if enc.audio else '',
                 'note': enc.note or '',
+                'transcript': enc.transcript or '',
                 'recorder_status': enc.recorder_status,
                 'events': events,
                 'problem_ids': enc_problem_ids,
@@ -850,6 +851,39 @@ def mobile_upload_encounter_audio(request, patient_id):
             Encounter.objects.filter(id=enc.id).update(starttime=parsed)
 
     return JsonResponse({'success': True, 'id': enc.id})
+
+
+@csrf_exempt
+@login_required
+def mobile_update_encounter(request, patient_id, encounter_id):
+    """PATCH {note?, transcript?, recorder_status?, stop_time?} — partial update.
+
+    Mirrors mobile_update_todo / mobile_update_problem: only the keys present in
+    the body are applied, so iOS can keep sending the full snapshot without
+    nulling fields it didn't intend to change. Patient ownership is enforced by
+    matching encounter_id + patient_id together (404 on mismatch).
+    """
+    if request.method not in ('PATCH', 'POST'):
+        return JsonResponse({'error': 'PATCH required'}, status=405)
+
+    try:
+        enc = Encounter.objects.get(id=encounter_id, patient_id=patient_id)
+    except Encounter.DoesNotExist:
+        return JsonResponse({'error': 'Encounter not found'}, status=404)
+
+    from django.utils.dateparse import parse_datetime
+
+    body = _parse_body(request)
+    if 'note' in body:
+        enc.note = body['note'] or ''
+    if 'transcript' in body:
+        enc.transcript = body['transcript'] or ''
+    if 'recorder_status' in body and body['recorder_status'] is not None:
+        enc.recorder_status = int(body['recorder_status'])
+    if 'stop_time' in body:
+        enc.stoptime = parse_datetime(body['stop_time']) if body['stop_time'] else None
+    enc.save()
+    return JsonResponse({'success': True})
 
 
 @csrf_exempt

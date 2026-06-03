@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^media/encounter/(?P<encounter_id>\d+)/audio$', views.mobile_encounter_audio),
     url(r'^media/document/(?P<document_id>\d+)/file$', views.mobile_document_file),
     url(r'^patient/(?P<patient_id>\d+)/encounter/upload-audio$', views.mobile_upload_encounter_audio),
+    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)$', views.mobile_update_encounter),
     url(r'^patient/(?P<patient_id>\d+)/document/upload$', views.mobile_upload_document),
     url(r'^patient/(?P<patient_id>\d+)/my-story/(?P<component_id>\d+)/entry$', views.mobile_save_my_story_entry),
     # Problem CRUD
