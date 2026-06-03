@@ -212,6 +212,15 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "formatters": {
+        # Pass-through: mobile_batch_errors already encodes its payload as
+        # a single JSON document via json.dumps, and Cloud Run's logging
+        # agent auto-parses any stdout line that is valid JSON. Emitting
+        # just `%(message)s` keeps that line intact end-to-end.
+        "smallbrain_passthrough_json": {
+            "format": "%(message)s",
+        },
+    },
     "handlers": {
         "null": {
             "level": "DEBUG",
@@ -221,6 +230,11 @@ LOGGING = {
             "level": "ERROR",
             "filters": ["require_debug_false"],
             "class": "django.utils.log.AdminEmailHandler",
+        },
+        "smallbrain_error_reporter_stdout": {
+            "level": "ERROR",
+            "class": "logging.StreamHandler",
+            "formatter": "smallbrain_passthrough_json",
         },
     },
     "loggers": {
@@ -232,6 +246,14 @@ LOGGING = {
             "handlers": ["mail_admins"],
             "level": "ERROR",
             "propagate": True,
+        },
+        # Dedicated logger for iOS-relayed errors. `propagate: False` keeps
+        # these out of the global mail_admins handler — they're already in
+        # Cloud Logging and Cloud Error Reporting groups them automatically.
+        "smallbrain.error_reporter": {
+            "handlers": ["smallbrain_error_reporter_stdout"],
+            "level": "ERROR",
+            "propagate": False,
         },
     },
 }

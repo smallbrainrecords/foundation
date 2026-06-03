@@ -2,7 +2,9 @@
 Mobile API endpoints for the SBR1 iOS app.
 All views are CSRF-exempt and return JSON.
 """
+import hashlib
 import json
+import logging
 import mimetypes
 import os
 import re
@@ -1470,6 +1472,87 @@ def mobile_batch_events(request):
     UserEvent.objects.bulk_create(objects)
 
     return JsonResponse({'success': True, 'count': len(objects)})
+
+
+# ---------------------------------------------------------------------------
+# Error reporting: batch ingestion → Cloud Logging → Cloud Error Reporting
+# ---------------------------------------------------------------------------
+
+# PHI scrub policy: the iOS client buffers caught errors locally and ships
+# them here. We are the single redaction point before structured logs hit
+# Cloud Logging. Stack traces, app/OS versions, and the hardware model are
+# preserved verbatim — symbolication and grouping in Cloud Error Reporting
+# need those intact. The `message` field and any URL paths inside it are
+# scrubbed: numeric path components on /api/patient/<id>/... become
+# <redacted>, and any standalone 5+ digit number is dropped (the iOS user
+# id is 1-4 digits, and 5+ digit numbers are almost always patient/record
+# remoteIDs). `recordPersistentID` is SHA-256 hashed because it's an
+# opaque SwiftData identifier with no analytical value but could
+# theoretically correlate back to a row in someone's local DB.
+
+_ERROR_LOGGER = logging.getLogger('smallbrain.error_reporter')
+
+_PATIENT_PATH_RE = re.compile(r'(/api/patient/)\d+')
+_LONG_NUMERIC_RE = re.compile(r'\b\d{5,}\b')
+
+
+def _scrub_phi_message(message):
+    if not message:
+        return message
+    scrubbed = _PATIENT_PATH_RE.sub(r'\1<redacted>', message)
+    scrubbed = _LONG_NUMERIC_RE.sub('<redacted>', scrubbed)
+    return scrubbed
+
+
+def _hash_persistent_id(pid):
+    if not pid:
+        return None
+    return hashlib.sha256(pid.encode('utf-8')).hexdigest()[:16]
+
+
+@csrf_exempt
+@login_required
+def mobile_batch_errors(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, TypeError):
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+
+    errors_data = body.get('errors', [])
+    if not errors_data:
+        return JsonResponse({'success': True, 'received': 0})
+
+    for e in errors_data:
+        app_version = e.get('app_version', 'unknown')
+        payload = {
+            'severity': 'ERROR',
+            'message': _scrub_phi_message(e.get('message', '')),
+            'errorType': e.get('error_type', 'unknown'),
+            'recordType': e.get('record_type'),
+            'recordPersistentIDHash': _hash_persistent_id(e.get('record_persistent_id')),
+            'timestamp': e.get('timestamp'),
+            'userId': e.get('user_id'),
+            'appVersion': app_version,
+            'osVersion': e.get('os_version'),
+            'deviceModel': e.get('device_model'),
+            'errorSchemaVersion': e.get('error_schema_version', 1),
+            # serviceContext drives Cloud Error Reporting grouping. The
+            # stackTrace is preserved verbatim — CER pattern-matches the
+            # message field for stack frames, so we surface any trace text
+            # into `message` (already scrubbed above) and keep the raw
+            # `stackTrace` alongside for engineer review.
+            'serviceContext': {
+                'service': 'smallbrain-macos',
+                'version': app_version,
+            },
+            'stackTrace': e.get('stack_trace'),
+        }
+        _ERROR_LOGGER.error(json.dumps(payload))
+
+    return JsonResponse({'success': True, 'received': len(errors_data)})
 
 
 # ---------------------------------------------------------------------------

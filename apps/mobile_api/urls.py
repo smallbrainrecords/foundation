@@ -39,6 +39,8 @@ urlpatterns = [
     url(r'^my-tagged-todos/$', views.mobile_my_tagged_todos),
     # Analytics
     url(r'^events/batch/$', views.mobile_batch_events),
+    # Error reporting
+    url(r'^errors/batch/$', views.mobile_batch_errors),
     # Terminology mapping
     url(r'^mapping/snomed-to-icd/$', views.get_snomed_to_icd10),
 ]
