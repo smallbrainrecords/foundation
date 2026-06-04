@@ -287,6 +287,10 @@ class Encounter(models.Model):
     video = models.FileField(upload_to=get_path, blank=True)
     note = models.TextField(blank=True)
     transcript = models.TextField(blank=True, default='')
+    # Client-stamped UUID for idempotent retry. iOS sends the local SwiftData
+    # syncID here; server does update_or_create(client_uuid=...) so a retried
+    # POST after a network blip can't create a duplicate row.
+    client_uuid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
     # deprecated should be loaded dynamically instead of storing in specific table
     encounter_document = models.ManyToManyField('ObservationValue', through='EncounterObservationValue')
 
@@ -320,6 +324,8 @@ class EncounterEvent(models.Model):
     name_favorite = models.TextField(null=True, blank=True)
 
     timestamp = models.DateTimeField(null=True, blank=True)
+    # Client-stamped UUID for idempotent retry — see Encounter.client_uuid.
+    client_uuid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
 
     def __unicode__(self):
         return unicode(self.summary)

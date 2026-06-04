@@ -11,6 +11,7 @@ import re
 
 from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.db.models import Q
 from django.http import FileResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -641,6 +642,7 @@ def _mobile_patient_full_inner(request, patient_id):
 
                 events.append({
                     'id': ev.id,
+                    'client_uuid': str(ev.client_uuid) if ev.client_uuid else None,
                     'datetime': ev.datetime.isoformat(),
                     'summary': _strip_html(ev.summary),
                     'offset_string': f"{offset_minutes:02d}:{offset_secs:02d}",
@@ -664,6 +666,7 @@ def _mobile_patient_full_inner(request, patient_id):
 
             encounters.append({
                 'id': enc.id,
+                'client_uuid': str(enc.client_uuid) if enc.client_uuid else None,
                 'physician_id': enc.physician_id,
                 'physician_name': physician_name,
                 'start_time': enc.starttime.isoformat(),
@@ -810,10 +813,89 @@ def mobile_document_file(request, document_id):
     return response
 
 
+def _apply_encounter_relationships_and_events(encounter, body):
+    """Apply problem_ids, todo_ids, observation_value_ids, events from body to encounter.
+
+    Defensive partial semantics: only acts on keys PRESENT in body. Absent keys
+    preserve existing state — protects against future clients that send a partial
+    payload from accidentally wiping the encounter's relationships.
+
+    Relationships use replace-by-snapshot: present key clears existing rows for
+    THIS encounter and recreates from the list. iOS always sends the full set.
+
+    Events use update_or_create keyed on client_uuid for idempotent retry. Returns
+    a list of {sync_id, id} dicts for every event the body touched (new or
+    updated), so iOS can map server IDs back to its local EncounterEvent rows.
+    """
+    from django.utils.dateparse import parse_datetime
+
+    event_mappings = []
+
+    if 'problem_ids' in body:
+        problem_ids = [int(pid) for pid in body['problem_ids'] or []]
+        EncounterProblemRecord.objects.filter(encounter=encounter).delete()
+        if problem_ids:
+            EncounterProblemRecord.objects.bulk_create([
+                EncounterProblemRecord(encounter=encounter, problem_id=pid)
+                for pid in problem_ids
+            ])
+
+    if 'todo_ids' in body:
+        todo_ids = [int(tid) for tid in body['todo_ids'] or []]
+        EncounterTodoRecord.objects.filter(encounter=encounter).delete()
+        if todo_ids:
+            EncounterTodoRecord.objects.bulk_create([
+                EncounterTodoRecord(encounter=encounter, todo_id=tid)
+                for tid in todo_ids
+            ])
+
+    if 'observation_value_ids' in body:
+        ov_ids = [int(vid) for vid in body['observation_value_ids'] or []]
+        EncounterObservationValue.objects.filter(encounter=encounter).delete()
+        if ov_ids:
+            EncounterObservationValue.objects.bulk_create([
+                EncounterObservationValue(encounter=encounter, observation_value_id=vid)
+                for vid in ov_ids
+            ])
+
+    if 'events' in body:
+        for event_data in body['events'] or []:
+            client_uuid = event_data.get('client_uuid')
+            if not client_uuid:
+                # Events without a client_uuid can't be safely deduped on retry,
+                # so we skip them. iOS always sets syncID at init.
+                continue
+            defaults = {
+                'encounter': encounter,
+                'summary': event_data.get('summary', '') or '',
+                'is_favorite': bool(event_data.get('is_favorite', False)),
+                'name_favorite': event_data.get('favorite_name'),
+            }
+            dt_str = event_data.get('datetime')
+            if dt_str:
+                parsed_dt = parse_datetime(dt_str)
+                if parsed_dt:
+                    defaults['timestamp'] = parsed_dt
+            ev, _ = EncounterEvent.objects.update_or_create(
+                client_uuid=client_uuid,
+                defaults=defaults,
+            )
+            event_mappings.append({'sync_id': str(client_uuid), 'id': ev.id})
+
+    return event_mappings
+
+
 @csrf_exempt
 @login_required
+@transaction.atomic
 def mobile_upload_encounter_audio(request, patient_id):
-    """POST multipart: create encounter record + upload audio file."""
+    """POST multipart: create-or-find Encounter by client_uuid, upload audio file.
+
+    Idempotent: a retry with the same client_uuid updates the existing row
+    rather than creating a duplicate. Also accepts relationship + events fields
+    via form-data for clients that bundle everything in the upload (iOS
+    currently sends them via the follow-up PATCH; this is here for future use).
+    """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
@@ -829,20 +911,29 @@ def mobile_upload_encounter_audio(request, patient_id):
     if not audio_file:
         return JsonResponse({'error': 'No audio file provided'}, status=400)
 
+    client_uuid = request.POST.get('client_uuid') or None
     note = request.POST.get('note', '')
     recorder_status = int(request.POST.get('recorder_status', 2))
 
-    enc = Encounter(
-        physician=request.user,
-        patient=patient_user,
-        audio=audio_file,
-        note=note,
-        recorder_status=recorder_status,
-    )
+    defaults = {
+        'physician': request.user,
+        'patient': patient_user,
+        'audio': audio_file,
+        'note': note,
+        'recorder_status': recorder_status,
+    }
     stop_time = request.POST.get('stop_time')
     if stop_time:
-        enc.stoptime = parse_datetime(stop_time)
-    enc.save()
+        defaults['stoptime'] = parse_datetime(stop_time)
+
+    if client_uuid:
+        enc, _ = Encounter.objects.update_or_create(
+            client_uuid=client_uuid,
+            defaults=defaults,
+        )
+    else:
+        # Legacy clients without client_uuid still get a fresh row.
+        enc = Encounter.objects.create(**defaults)
 
     start_time = request.POST.get('start_time')
     if start_time:
@@ -855,15 +946,17 @@ def mobile_upload_encounter_audio(request, patient_id):
 
 @csrf_exempt
 @login_required
+@transaction.atomic
 def mobile_create_encounter(request, patient_id):
-    """POST {start_time?, stop_time?, note?, transcript?, recorder_status?}
-    -> create text-only (events-only) Encounter.
+    """POST {client_uuid?, start_time?, stop_time?, note?, transcript?,
+    recorder_status?, problem_ids?, todo_ids?, observation_value_ids?, events?}
+    -> create-or-find text-only Encounter.
 
-    Audio-bearing encounters still use mobile_upload_encounter_audio for the
-    multipart upload. This is the path the iOS app takes when audio recording
-    was disabled at start — the encounter still needs to reach the server so
-    subsequent note / recorder_status / stop_time updates flow through
-    mobile_update_encounter.
+    Audio-bearing encounters use mobile_upload_encounter_audio. This is the
+    text-only / events-only path for when iOS has audio recording disabled.
+    Idempotent via client_uuid. Events are matched + deduped by their own
+    client_uuid; response includes the sync_id → server_id mapping so iOS can
+    set EncounterEvent.remoteID locally.
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
@@ -877,38 +970,49 @@ def mobile_create_encounter(request, patient_id):
         return JsonResponse({'error': 'Patient not found'}, status=404)
 
     body = _parse_body(request)
+    client_uuid = body.get('client_uuid') or None
 
-    enc = Encounter(
-        physician=request.user,
-        patient=patient_user,
-        note=body.get('note', '') or '',
-        transcript=body.get('transcript', '') or '',
-        recorder_status=int(body.get('recorder_status', 2)),
-    )
+    defaults = {
+        'physician': request.user,
+        'patient': patient_user,
+        'note': body.get('note', '') or '',
+        'transcript': body.get('transcript', '') or '',
+        'recorder_status': int(body.get('recorder_status', 2)),
+    }
     stop_time = body.get('stop_time')
     if stop_time:
-        enc.stoptime = parse_datetime(stop_time)
-    enc.save()
+        defaults['stoptime'] = parse_datetime(stop_time)
 
-    # starttime is auto_now_add on the model — overwrite if the client sent one.
+    if client_uuid:
+        enc, _ = Encounter.objects.update_or_create(
+            client_uuid=client_uuid,
+            defaults=defaults,
+        )
+    else:
+        enc = Encounter.objects.create(**defaults)
+
     start_time = body.get('start_time')
     if start_time:
         parsed = parse_datetime(start_time)
         if parsed:
             Encounter.objects.filter(id=enc.id).update(starttime=parsed)
 
-    return JsonResponse({'success': True, 'id': enc.id})
+    event_mappings = _apply_encounter_relationships_and_events(enc, body)
+
+    return JsonResponse({'success': True, 'id': enc.id, 'events': event_mappings})
 
 
 @csrf_exempt
 @login_required
+@transaction.atomic
 def mobile_update_encounter(request, patient_id, encounter_id):
-    """PATCH {note?, transcript?, recorder_status?, stop_time?} — partial update.
+    """PATCH {note?, transcript?, recorder_status?, stop_time?, problem_ids?,
+    todo_ids?, observation_value_ids?, events?} — partial update.
 
-    Mirrors mobile_update_todo / mobile_update_problem: only the keys present in
-    the body are applied, so iOS can keep sending the full snapshot without
-    nulling fields it didn't intend to change. Patient ownership is enforced by
-    matching encounter_id + patient_id together (404 on mismatch).
+    Defensive partial semantics: only keys PRESENT in the body are applied.
+    Absent relationship keys preserve existing rows (so omitting problem_ids
+    does NOT wipe linked problems). Events: each is upserted by client_uuid;
+    response carries the sync_id → server_id mapping for new events.
     """
     if request.method not in ('PATCH', 'POST'):
         return JsonResponse({'error': 'PATCH required'}, status=405)
@@ -930,7 +1034,10 @@ def mobile_update_encounter(request, patient_id, encounter_id):
     if 'stop_time' in body:
         enc.stoptime = parse_datetime(body['stop_time']) if body['stop_time'] else None
     enc.save()
-    return JsonResponse({'success': True})
+
+    event_mappings = _apply_encounter_relationships_and_events(enc, body)
+
+    return JsonResponse({'success': True, 'events': event_mappings})
 
 
 @csrf_exempt
