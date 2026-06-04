@@ -368,6 +368,38 @@ class MobileEncounterRelationshipsAndEventsTests(TestCase):
         self.assertEqual(ev.summary, 'Started')
         self.assertEqual(ev.encounter_id, self.enc.id)
 
+    def test_event_datetime_honors_client_time_not_server_auto_now(self):
+        """The EncounterEvent.datetime model field has auto_now_add=True, which
+        would stamp server-time on insert and collapse every event in a single
+        PATCH batch to near-identical timestamps. The serializer derives
+        offset_string from (event.datetime - encounter.starttime), so without
+        the explicit override every event in a batch displays the same offset
+        on Mac B. This regression test pins down the override."""
+        body = {
+            'events': [
+                {'client_uuid': 'aaaa1111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                 'summary': 'Started', 'offset_string': '00:00', 'is_favorite': False,
+                 'datetime': '2026-06-04T20:00:00Z'},
+                {'client_uuid': 'aaaa2222-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                 'summary': 'Reviewed', 'offset_string': '00:03', 'is_favorite': False,
+                 'datetime': '2026-06-04T20:00:03Z'},
+                {'client_uuid': 'aaaa3333-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                 'summary': 'Stopped', 'offset_string': '00:18', 'is_favorite': False,
+                 'datetime': '2026-06-04T20:00:18Z'},
+            ],
+        }
+        resp = self.client.patch(self.url, data=json.dumps(body),
+                                 content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+
+        # Each event's stored datetime must match what the client sent — NOT
+        # the moment the row was inserted server-side.
+        events = EncounterEvent.objects.filter(encounter=self.enc).order_by('datetime')
+        self.assertEqual(events.count(), 3)
+        self.assertEqual(events[0].datetime.isoformat()[:19], '2026-06-04T20:00:00')
+        self.assertEqual(events[1].datetime.isoformat()[:19], '2026-06-04T20:00:03')
+        self.assertEqual(events[2].datetime.isoformat()[:19], '2026-06-04T20:00:18')
+
     def test_event_without_client_uuid_is_skipped(self):
         body = {
             'events': [

@@ -872,14 +872,21 @@ def _apply_encounter_relationships_and_events(encounter, body):
                 'name_favorite': event_data.get('favorite_name'),
             }
             dt_str = event_data.get('datetime')
-            if dt_str:
-                parsed_dt = parse_datetime(dt_str)
-                if parsed_dt:
-                    defaults['timestamp'] = parsed_dt
+            parsed_dt = parse_datetime(dt_str) if dt_str else None
+            if parsed_dt:
+                defaults['timestamp'] = parsed_dt
             ev, _ = EncounterEvent.objects.update_or_create(
                 client_uuid=client_uuid,
                 defaults=defaults,
             )
+            # Override the model's auto_now_add `datetime` field with the
+            # client's actual event-creation time. Without this, every event
+            # in a single PATCH batch gets stamped with near-identical server
+            # times, and the serializer's offset_string computation
+            # (datetime - encounter.starttime) collapses to the same value
+            # for every event in the batch.
+            if parsed_dt:
+                EncounterEvent.objects.filter(id=ev.id).update(datetime=parsed_dt)
             event_mappings.append({'sync_id': str(client_uuid), 'id': ev.id})
 
     return event_mappings
