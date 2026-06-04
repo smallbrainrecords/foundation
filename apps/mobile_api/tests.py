@@ -117,3 +117,73 @@ class MobileUpdateEncounterTests(TestCase):
         url = f'/api/patient/{self.patient.id}/encounter/{self.encounter.id}'
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 405)
+
+
+class MobileCreateEncounterTests(TestCase):
+    """Tests for the text-only encounter create endpoint. Used when iOS has
+    recording disabled (events-only mode) so the encounter still reaches the
+    server and joins the standard update pipeline."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='doc_a', password='top_secret',
+            email='doc_a@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_a', password='unused',
+            email='pt_a@example.com',
+        )
+        self.client = Client()
+        self.client.login(username='doc_a', password='top_secret')
+
+    def test_creates_encounter_with_all_fields(self):
+        url = f'/api/patient/{self.patient.id}/encounter'
+        body = {
+            'start_time': '2026-06-04T12:00:00Z',
+            'stop_time': '2026-06-04T12:15:00Z',
+            'note': 'events only',
+            'recorder_status': 2,
+        }
+        resp = self.client.post(url, data=json.dumps(body), content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertIn('id', data)
+
+        enc = Encounter.objects.get(id=data['id'])
+        self.assertEqual(enc.patient_id, self.patient.id)
+        self.assertEqual(enc.physician_id, self.physician.id)
+        self.assertEqual(enc.note, 'events only')
+        self.assertEqual(enc.recorder_status, 2)
+        self.assertIsNotNone(enc.stoptime)
+        # start_time honored even though the model uses auto_now_add.
+        self.assertEqual(enc.starttime.year, 2026)
+        self.assertEqual(enc.starttime.hour, 12)
+
+    def test_creates_encounter_with_minimum_payload(self):
+        url = f'/api/patient/{self.patient.id}/encounter'
+        resp = self.client.post(url, data=json.dumps({}), content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+
+        enc = Encounter.objects.get(id=data['id'])
+        self.assertEqual(enc.note, '')
+        self.assertEqual(enc.recorder_status, 2)
+        self.assertIsNone(enc.stoptime)
+
+    def test_returns_404_for_unknown_patient(self):
+        url = '/api/patient/99999/encounter'
+        resp = self.client.post(url, data=json.dumps({'note': 'x'}), content_type='application/json')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_unauthenticated_request_redirects_to_login(self):
+        self.client.logout()
+        url = f'/api/patient/{self.patient.id}/encounter'
+        resp = self.client.post(url, data=json.dumps({'note': 'x'}), content_type='application/json')
+        self.assertIn(resp.status_code, (302, 401, 403))
+
+    def test_get_returns_405(self):
+        url = f'/api/patient/{self.patient.id}/encounter'
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 405)

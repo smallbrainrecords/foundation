@@ -855,6 +855,53 @@ def mobile_upload_encounter_audio(request, patient_id):
 
 @csrf_exempt
 @login_required
+def mobile_create_encounter(request, patient_id):
+    """POST {start_time?, stop_time?, note?, transcript?, recorder_status?}
+    -> create text-only (events-only) Encounter.
+
+    Audio-bearing encounters still use mobile_upload_encounter_audio for the
+    multipart upload. This is the path the iOS app takes when audio recording
+    was disabled at start — the encounter still needs to reach the server so
+    subsequent note / recorder_status / stop_time updates flow through
+    mobile_update_encounter.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    from django.contrib.auth.models import User
+    from django.utils.dateparse import parse_datetime
+
+    try:
+        patient_user = User.objects.get(id=patient_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    body = _parse_body(request)
+
+    enc = Encounter(
+        physician=request.user,
+        patient=patient_user,
+        note=body.get('note', '') or '',
+        transcript=body.get('transcript', '') or '',
+        recorder_status=int(body.get('recorder_status', 2)),
+    )
+    stop_time = body.get('stop_time')
+    if stop_time:
+        enc.stoptime = parse_datetime(stop_time)
+    enc.save()
+
+    # starttime is auto_now_add on the model — overwrite if the client sent one.
+    start_time = body.get('start_time')
+    if start_time:
+        parsed = parse_datetime(start_time)
+        if parsed:
+            Encounter.objects.filter(id=enc.id).update(starttime=parsed)
+
+    return JsonResponse({'success': True, 'id': enc.id})
+
+
+@csrf_exempt
+@login_required
 def mobile_update_encounter(request, patient_id, encounter_id):
     """PATCH {note?, transcript?, recorder_status?, stop_time?} — partial update.
 
