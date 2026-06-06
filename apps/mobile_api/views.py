@@ -28,6 +28,8 @@ from emr.models import (
     MyStoryTextComponent, MyStoryTextComponentEntry,
     TaggedToDoOrder,
 )
+from problems_app.operations import add_problem_activity
+from todo_app.operations import add_todo_activity
 
 
 def _strip_html(text):
@@ -1131,6 +1133,13 @@ def _get_patient(patient_id):
 
 # ---------- Problem endpoints ----------
 
+def _yesno_status(value, on_label, off_label):
+    """Format a boolean as a human-readable status string for activity rows.
+    Centralized so wording stays consistent across the mobile-API mutation
+    endpoints; matches what the iOS app used to write locally pre-Bug-B."""
+    return on_label if value else off_label
+
+
 @csrf_exempt
 @login_required
 def mobile_create_problem(request, patient_id):
@@ -1155,6 +1164,7 @@ def mobile_create_problem(request, patient_id):
         is_controlled=body.get('is_controlled', False),
     )
     problem.save()
+    add_problem_activity(problem, request.user, f"Added problem: {problem_name}")
     return JsonResponse({'success': True, 'id': problem.id})
 
 
@@ -1170,6 +1180,15 @@ def mobile_update_problem(request, patient_id, problem_id):
         return JsonResponse({'error': 'Problem not found'}, status=404)
 
     body = _parse_body(request)
+
+    # Snapshot pre-change values so we can emit accurate activity rows
+    # comparing requested change against the prior state. Required because
+    # `setattr` below overwrites the instance attributes before save.
+    old_problem_name = problem.problem_name
+    old_is_active = problem.is_active
+    old_is_controlled = problem.is_controlled
+    old_authenticated = problem.authenticated
+
     for field in ('problem_name', 'concept_id', 'old_problem_name'):
         if field in body:
             setattr(problem, field, body[field])
@@ -1177,6 +1196,29 @@ def mobile_update_problem(request, patient_id, problem_id):
         if field in body:
             setattr(problem, field, body[field])
     problem.save()
+
+    # Activity rows — one per changed field. Mirrors what the iOS app used
+    # to write locally before Bug B made the server authoritative.
+    if 'problem_name' in body and problem.problem_name != old_problem_name:
+        add_problem_activity(
+            problem, request.user,
+            f'Problem renamed from "{old_problem_name}" to "{problem.problem_name}"'
+        )
+    if 'is_active' in body and problem.is_active != old_is_active:
+        add_problem_activity(
+            problem, request.user,
+            f"Changed status to {_yesno_status(problem.is_active, 'Active', 'Inactive')}"
+        )
+    if 'is_controlled' in body and problem.is_controlled != old_is_controlled:
+        add_problem_activity(
+            problem, request.user,
+            f"Changed control status to {_yesno_status(problem.is_controlled, 'Controlled', 'Not Controlled')}"
+        )
+    if 'authenticated' in body and problem.authenticated != old_authenticated:
+        add_problem_activity(
+            problem, request.user,
+            f"Changed authentication to {_yesno_status(problem.authenticated, 'Authenticated', 'Not Authenticated')}"
+        )
     return JsonResponse({'success': True})
 
 
@@ -1205,6 +1247,10 @@ def mobile_create_problem_note(request, patient_id, problem_id):
         author=request.user,
     )
     note.save()
+    add_problem_activity(
+        problem, request.user,
+        f"Added {note.note_type} note: {note_text}"
+    )
     return JsonResponse({'success': True, 'id': note.id})
 
 
@@ -1303,6 +1349,15 @@ def mobile_create_todo(request, patient_id):
     if 'order' in body:
         todo.order = body['order']
     todo.save()
+
+    # Todo-side activity row + mirrored row on the linked problem if any.
+    # Matches iOS pre-Bug-B behavior that wrote both rows locally.
+    add_todo_activity(todo, request.user, f"Added todo: {todo_text}")
+    if todo.problem is not None:
+        add_problem_activity(
+            todo.problem, request.user,
+            f"Added todo: {todo_text}"
+        )
     return JsonResponse({'success': True, 'id': todo.id})
 
 
@@ -1320,6 +1375,13 @@ def mobile_update_todo(request, patient_id, todo_id):
     from django.utils.dateparse import parse_datetime
 
     body = _parse_body(request)
+
+    # Snapshot fields that produce activity rows on change. Required so the
+    # "renamed from X to Y" + accomplished-toggle rows reference the prior
+    # state, not the post-save value.
+    old_todo_title = todo.todo
+    old_accomplished = todo.accomplished
+
     if 'todo' in body:
         todo.todo = body['todo']
     if 'accomplished' in body:
@@ -1337,6 +1399,28 @@ def mobile_update_todo(request, patient_id, todo_id):
         else:
             todo.problem = None
     todo.save()
+
+    # Title change -> todo-side rename row. No problem-side mirror, matching
+    # iOS pre-Bug-B asymmetry (only the toggle mirrored onto the problem).
+    if 'todo' in body and todo.todo != old_todo_title:
+        add_todo_activity(
+            todo, request.user,
+            f'Todo name changed from "{old_todo_title}" to "{todo.todo}"'
+        )
+
+    # Accomplished toggle -> todo-side row + mirrored row on the linked
+    # problem. Matches iOS pre-Bug-B behavior.
+    if 'accomplished' in body and todo.accomplished != old_accomplished:
+        status_word = 'accomplished' if todo.accomplished else 'not accomplished'
+        add_todo_activity(
+            todo, request.user,
+            f"Updated status to {status_word}"
+        )
+        if todo.problem is not None:
+            add_problem_activity(
+                todo.problem, request.user,
+                f'Todo "{todo.todo}" marked {status_word}'
+            )
     return JsonResponse({'success': True})
 
 
@@ -1364,6 +1448,10 @@ def mobile_create_todo_comment(request, patient_id, todo_id):
         comment=comment_text,
     )
     comment.save()
+    # Link the activity row to the comment FK so legacy web-app activity
+    # feeds can render the comment body inline. iOS ignores the FK
+    # (RemoteTodoActivity has no `comment` field) — harmless either way.
+    add_todo_activity(todo, request.user, "Added comment", comment=comment)
     return JsonResponse({'success': True, 'id': comment.id})
 
 
@@ -1420,6 +1508,20 @@ def mobile_add_todo_member(request, patient_id, todo_id):
         return JsonResponse({'error': 'User not found'}, status=404)
 
     tto, created = TaggedToDoOrder.objects.get_or_create(todo=todo, user=member)
+    # Only write the activity row on a fresh tag — get_or_create returning
+    # an existing row means the member was already tagged, and emitting a
+    # row in that case would be a phantom audit event.
+    if created:
+        member_name = member.get_full_name() or member.username
+        try:
+            role = member.profile.role
+        except UserProfile.DoesNotExist:
+            role = ''
+        suffix = f" - {role}" if role else ""
+        add_todo_activity(
+            todo, request.user,
+            f"{member_name}{suffix} joined this todo"
+        )
     return JsonResponse({'success': True, 'id': tto.id})
 
 
@@ -1434,8 +1536,21 @@ def mobile_remove_todo_member(request, patient_id, todo_id, user_id):
     except ToDo.DoesNotExist:
         return JsonResponse({'error': 'Todo not found'}, status=404)
 
-    deleted, _ = TaggedToDoOrder.objects.filter(todo=todo, user_id=user_id).delete()
-    return JsonResponse({'success': True, 'deleted': deleted})
+    # Fetch the row first so we can capture the member's display name for
+    # the activity row. The previous bulk-filter-delete didn't load the
+    # User, leaving us no way to write a meaningful audit string.
+    try:
+        tto = TaggedToDoOrder.objects.get(todo=todo, user_id=user_id)
+    except TaggedToDoOrder.DoesNotExist:
+        # Idempotent: same observable response as the old bulk-delete path
+        # when the row doesn't exist — success, deleted=0, no activity row.
+        return JsonResponse({'success': True, 'deleted': 0})
+
+    member = tto.user
+    member_name = member.get_full_name() or member.username
+    tto.delete()
+    add_todo_activity(todo, request.user, f"Unpinned {member_name}")
+    return JsonResponse({'success': True, 'deleted': 1})
 
 
 # ---------- Observation Value endpoints ----------
