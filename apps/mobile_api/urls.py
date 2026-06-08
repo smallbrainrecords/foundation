@@ -14,10 +14,14 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/full$', views.mobile_patient_full),
     url(r'^media/encounter/(?P<encounter_id>\d+)/audio$', views.mobile_encounter_audio),
     url(r'^media/document/(?P<document_id>\d+)/file$', views.mobile_document_file),
+    url(r'^media/image/(?P<image_id>\d+)$', views.mobile_image_file),
     url(r'^patient/(?P<patient_id>\d+)/encounter/upload-audio$', views.mobile_upload_encounter_audio),
     url(r'^patient/(?P<patient_id>\d+)/encounter$', views.mobile_create_encounter),
     url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)$', views.mobile_update_encounter),
     url(r'^patient/(?P<patient_id>\d+)/document/upload$', views.mobile_upload_document),
+    # Problem images (PR-2)
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/image$', views.mobile_upload_problem_image),
+    url(r'^patient/(?P<patient_id>\d+)/image/(?P<image_id>\d+)$', views.mobile_delete_problem_image),
     url(r'^patient/(?P<patient_id>\d+)/my-story/(?P<component_id>\d+)/entry$', views.mobile_save_my_story_entry),
     # Problem CRUD
     url(r'^patient/(?P<patient_id>\d+)/problem$', views.mobile_create_problem),

@@ -176,6 +176,18 @@ def get_path(instance, filename):
         return '%s/%s' % (instance.patient.id, filename)
 
 
+def set_problem_image_path(instance, filename):
+    """PHI-safe upload path generator for PatientImage rows uploaded via the
+    mobile API (PR-2, 2026-06-08). Replaces the legacy `get_path` which
+    encoded patient and problem IDs into the GCS object key — those IDs
+    appear in raw Cloud Storage audit logs and constitute a PHI leak.
+    New uploads land at `images/<uuid>.jpg`; pre-PR-2 rows keep their old
+    patient-keyed paths in-place since `upload_to` only runs at write time.
+    """
+    import uuid as _uuid
+    return 'images/{0}.jpg'.format(_uuid.uuid4())
+
+
 def set_document_path(instance, filename):
     if instance.patient is not None:
         return "{0}/documents/{1}".format(instance.patient.id, filename)
@@ -576,8 +588,26 @@ class GuidelineForm(models.Model):
 class PatientImage(models.Model):
     patient = models.ForeignKey(User, on_delete=models.CASCADE)
     problem = models.ForeignKey(Problem, null=True, blank=True, on_delete=models.SET_NULL)
-    image = models.ImageField(upload_to=get_path)
+    # `upload_to=set_problem_image_path` for PR-2 mobile uploads — keys the GCS
+    # object by UUID so patient/problem IDs don't appear in raw infra logs.
+    # Legacy AngularJS-uploaded rows retain their patient-keyed paths (Django
+    # only invokes upload_to on write).
+    image = models.ImageField(upload_to=set_problem_image_path)
     datetime = models.DateTimeField(auto_now_add=True)
+    # PR-2 columns. All nullable so SwiftData-style 134110 migration risk
+    # doesn't bite on existing rows. `client_uuid` indexed because the upload
+    # endpoint does `get_or_create(client_uuid=...)` on every POST for
+    # idempotent retry — without an index this scans the table per upload.
+    caption = models.TextField(null=True, blank=True)
+    file_name = models.CharField(max_length=255, null=True, blank=True)
+    image_width = models.IntegerField(null=True, blank=True)
+    image_height = models.IntegerField(null=True, blank=True)
+    client_uuid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
+    author = models.ForeignKey(
+        User, null=True, blank=True,
+        related_name='authored_patient_images',
+        on_delete=models.SET_NULL,
+    )
 
     def __unicode__(self):
         return '%s' % (unicode(self.patient))

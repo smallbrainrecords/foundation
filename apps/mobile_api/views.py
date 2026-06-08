@@ -519,6 +519,26 @@ def _mobile_patient_full_inner(request, patient_id):
             })
         problem_dict['labels'] = labels
 
+        # Images for this problem (PR-2). Binary fetched lazily by the
+        # client via `mobile_image_file` — only metadata + the proxy URL
+        # ride inline so a 30-image problem doesn't balloon the JSON.
+        images = []
+        for pi in PatientImage.objects.filter(problem=p).order_by('-datetime'):
+            images.append({
+                'id': pi.id,
+                'file_name': pi.file_name or (
+                    os.path.basename(pi.image.name) if pi.image else ''
+                ),
+                'caption': pi.caption or '',
+                'image_width': pi.image_width,
+                'image_height': pi.image_height,
+                'created_on': pi.datetime.isoformat() if pi.datetime else None,
+                'author_id': pi.author_id,
+                'author_name': pi.author.get_full_name() if pi.author else '',
+                'image_url': '/api/media/image/{0}'.format(pi.id),
+            })
+        problem_dict['images'] = images
+
         problems.append(problem_dict)
 
     # Problem relationships — always included
@@ -841,6 +861,43 @@ def mobile_document_file(request, document_id):
     return response
 
 
+@csrf_exempt
+@login_required
+def mobile_image_file(request, image_id):
+    """GET -> stream the binary for a PatientImage.
+
+    New in PR-2 (2026-06-08). Gated by `_assert_patient_access` from the
+    start — clinical photos are PHI and the previous audio/document proxies
+    leaking by missing RBAC is exactly the trap we're not repeating here.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    try:
+        img = PatientImage.objects.get(id=image_id)
+    except PatientImage.DoesNotExist:
+        return JsonResponse({'error': 'Image not found'}, status=404)
+
+    if not _assert_patient_access(request.user, img.patient_id):
+        # Uniform 404 with the not-found path so callers can't enumerate
+        # other clinics' image IDs.
+        return JsonResponse({'error': 'Image not found'}, status=404)
+
+    if not img.image:
+        return JsonResponse({'error': 'No image file'}, status=404)
+
+    mime_type, _ = mimetypes.guess_type(img.image.name)
+    response = FileResponse(
+        img.image.open('rb'),
+        content_type=mime_type or 'image/jpeg',
+    )
+    response['Content-Length'] = img.image.size
+    response['Content-Disposition'] = (
+        'inline; filename="%s"' % os.path.basename(img.image.name)
+    )
+    return response
+
+
 def _apply_encounter_relationships_and_events(encounter, body):
     """Apply problem_ids, todo_ids, observation_value_ids, events from body to encounter.
 
@@ -1104,6 +1161,129 @@ def mobile_upload_document(request, patient_id):
     doc.save()
 
     return JsonResponse({'success': True, 'id': doc.id})
+
+
+# ---------- Problem Image endpoints (PR-2, 2026-06-08) ----------
+
+@csrf_exempt
+@login_required
+def mobile_upload_problem_image(request, patient_id, problem_id):
+    """POST multipart -> upload a PatientImage attached to a Problem.
+
+    Body (form-data):
+      file         (required)  the JPEG binary (client must convert HEIC/PNG)
+      client_uuid  (required)  iOS-side `ProblemImage.syncID` for idempotent
+                               retry. get_or_create keyed on this; a retry
+                               returns the same row id without re-saving
+                               the file or emitting a duplicate audit row.
+      file_name    (optional)  original filename for display
+      caption      (optional)  freeform clinical context
+      image_width  (optional)  pixels
+      image_height (optional)  pixels
+
+    PHI: gated by `_assert_patient_access`. GCS path is UUID-keyed via
+    `set_problem_image_path` — no patient/problem IDs in the object key.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    from django.contrib.auth.models import User
+    try:
+        patient_user = User.objects.get(id=patient_id)
+        problem = Problem.objects.get(id=problem_id, patient_id=patient_id)
+    except (User.DoesNotExist, Problem.DoesNotExist):
+        return JsonResponse({'error': 'Patient or problem not found'}, status=404)
+
+    image_file = request.FILES.get('file')
+    if not image_file:
+        return JsonResponse({'error': 'No image file provided'}, status=400)
+
+    client_uuid = request.POST.get('client_uuid')
+    if not client_uuid:
+        # Required so retries can no-op rather than create duplicate rows.
+        # Matches the encounter-audio upload contract from earlier work.
+        return JsonResponse({'error': 'client_uuid is required'}, status=400)
+
+    caption = request.POST.get('caption') or None
+    file_name = request.POST.get('file_name') or image_file.name
+
+    def _parse_int(key):
+        try:
+            val = int(request.POST.get(key, ''))
+            return val if val > 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    image_width = _parse_int('image_width')
+    image_height = _parse_int('image_height')
+
+    img, created = PatientImage.objects.get_or_create(
+        client_uuid=client_uuid,
+        defaults={
+            'patient': patient_user,
+            'problem': problem,
+            'image': image_file,
+            'caption': caption,
+            'file_name': file_name,
+            'image_width': image_width,
+            'image_height': image_height,
+            'author': request.user,
+        },
+    )
+
+    if created:
+        add_problem_activity(
+            problem, request.user,
+            f"Added image: {file_name}"
+        )
+
+    return JsonResponse({'success': True, 'id': img.id, 'created': created})
+
+
+@csrf_exempt
+@login_required
+def mobile_delete_problem_image(request, patient_id, image_id):
+    """DELETE -> remove a PatientImage row + its GCS object.
+
+    Idempotent: a retried DELETE after a lost response returns 200 success
+    even if the row is already gone, so the iOS soft-delete queue clears
+    cleanly. Matches the ProblemNote / ObservationValue DELETE contract
+    from PR-1 / PR-3.
+    """
+    if request.method != 'DELETE':
+        return JsonResponse({'error': 'DELETE required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Image not found'}, status=404)
+
+    try:
+        img = PatientImage.objects.get(id=image_id, patient_id=patient_id)
+    except PatientImage.DoesNotExist:
+        # Genuinely gone — retry-safe success.
+        return JsonResponse({'success': True})
+
+    file_name = img.file_name or (
+        os.path.basename(img.image.name) if img.image else 'image'
+    )
+    problem = img.problem
+
+    if img.image:
+        # Triggers the django-storages GCS backend delete, removing the
+        # object. Set save=False since we follow with img.delete() right
+        # after — no point persisting the cleared FileField.
+        img.image.delete(save=False)
+    img.delete()
+
+    if problem is not None:
+        add_problem_activity(
+            problem, request.user,
+            f"Removed image: {file_name}"
+        )
+
+    return JsonResponse({'success': True})
 
 
 @csrf_exempt

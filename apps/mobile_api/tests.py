@@ -19,7 +19,7 @@ from emr.models import (
     ToDo, Observation, ObservationComponent, ObservationValue,
     ObservationPinToProblem,
     UserProfile, PatientController, PhysicianTeam,
-    Document,
+    PatientImage, Document,
 )
 
 
@@ -913,15 +913,17 @@ class MobileObservationPinTests(_ObservationTestBase):
 
 
 # ============================================================================
-# PR-2: PHI-safe media proxies — IDOR regression coverage
+# PR-2: PHI-safe media proxies + ProblemImage upload/delete
 # ============================================================================
 #
-# Before PR-2 (2026-06-08) `mobile_encounter_audio` and `mobile_document_file`
-# would happily serve any encounter's audio / any document's binary to any
-# authenticated user who could guess the ID. These tests pin the new
-# `_assert_patient_access` gate into place across every branch of the helper.
-# Adding a new role or relationship type to the helper MUST land alongside
-# new test coverage here — the proxies have no other gate.
+# These tests cover three things in one go:
+# 1. The new `_assert_patient_access` helper, exercised through every proxy.
+# 2. RBAC regression on the previously-IDOR-vulnerable audio + document
+#    proxies (`mobile_encounter_audio`, `mobile_document_file`).
+# 3. The new image upload/delete endpoints + UUID-keyed GCS path.
+#
+# The patient/staff/team graph is the same across all classes — extracted to
+# `_RBACTestBase` so each scenario set isn't reseeding it from scratch.
 
 
 class _RBACTestBase(TestCase):
@@ -1088,3 +1090,206 @@ class MobileDocumentFileProxyRBACTests(_RBACTestBase):
         self.assertTrue(self._login(self.attending))
         resp = self.client.get(f'/api/media/document/{orphan.id}/file')
         self.assertEqual(resp.status_code, 404)
+
+
+class MobileImageFileProxyRBACTests(_RBACTestBase):
+    """New image proxy. Gated by `_assert_patient_access` from day one."""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='Lesion')
+        self.image = PatientImage.objects.create(
+            patient=self.patient,
+            problem=self.problem,
+            image=SimpleUploadedFile('photo.jpg', b'fake-jpeg', content_type='image/jpeg'),
+            file_name='photo.jpg',
+            author=self.attending,
+        )
+        self.url = f'/api/media/image/{self.image.id}'
+
+    def test_attending_can_fetch_image(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_stranger_physician_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_other_patient_404(self):
+        self.assertTrue(self._login(self.other_patient))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_nonexistent_image_404(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get('/api/media/image/999999')
+        self.assertEqual(resp.status_code, 404)
+
+
+class MobileUploadProblemImageTests(_RBACTestBase):
+    """POST multipart -> PatientImage row + GCS object. Idempotent via
+    `client_uuid`. PHI-gated by `_assert_patient_access`."""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='Lesion')
+        self.url = f'/api/patient/{self.patient.id}/problem/{self.problem.id}/image'
+        self.client_uuid = '11111111-1111-1111-1111-111111111111'
+
+    def _multipart_body(self, **overrides):
+        body = {
+            'file': SimpleUploadedFile('shot.jpg', b'fake-jpeg', content_type='image/jpeg'),
+            'client_uuid': self.client_uuid,
+            'file_name': 'shot.jpg',
+            'caption': 'left arm bruise',
+            'image_width': '1024',
+            'image_height': '768',
+        }
+        body.update(overrides)
+        return body
+
+    def test_post_creates_image_and_emits_audit(self):
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem=self.problem).count()
+
+        resp = self.client.post(self.url, data=self._multipart_body())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['created'])
+
+        img = PatientImage.objects.get(id=data['id'])
+        self.assertEqual(img.caption, 'left arm bruise')
+        self.assertEqual(img.file_name, 'shot.jpg')
+        self.assertEqual(img.image_width, 1024)
+        self.assertEqual(img.image_height, 768)
+        self.assertEqual(img.author_id, self.attending.id)
+        self.assertEqual(img.problem_id, self.problem.id)
+        # Audit emitted on the problem.
+        self.assertEqual(
+            ProblemActivity.objects.filter(problem=self.problem).count(),
+            before + 1,
+        )
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Added image', latest.activity)
+
+    def test_post_uses_uuid_keyed_gcs_path(self):
+        # PR-2 acceptance gate: GCS object path must NOT include patient or
+        # problem IDs — those are PHI and would leak to raw infra logs.
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.post(self.url, data=self._multipart_body())
+        self.assertEqual(resp.status_code, 200)
+        img = PatientImage.objects.get(id=json.loads(resp.content)['id'])
+        # set_problem_image_path returns "images/<uuid>.jpg" — verify both halves.
+        self.assertTrue(img.image.name.startswith('images/'))
+        self.assertNotIn(str(self.patient.id), img.image.name)
+        self.assertNotIn(str(self.problem.id), img.image.name)
+
+    def test_post_idempotent_same_client_uuid(self):
+        # Second POST with the same client_uuid returns the existing row id
+        # and `created=False` — no duplicate PatientImage, no duplicate audit.
+        self.assertTrue(self._login(self.attending))
+        resp1 = self.client.post(self.url, data=self._multipart_body())
+        first_id = json.loads(resp1.content)['id']
+
+        audit_after_first = ProblemActivity.objects.filter(problem=self.problem).count()
+
+        resp2 = self.client.post(self.url, data=self._multipart_body())
+        self.assertEqual(resp2.status_code, 200)
+        data2 = json.loads(resp2.content)
+        self.assertEqual(data2['id'], first_id)
+        self.assertFalse(data2['created'])
+        self.assertEqual(
+            PatientImage.objects.filter(problem=self.problem).count(), 1
+        )
+        self.assertEqual(
+            ProblemActivity.objects.filter(problem=self.problem).count(),
+            audit_after_first,
+        )
+
+    def test_post_missing_file_400(self):
+        self.assertTrue(self._login(self.attending))
+        body = self._multipart_body()
+        body.pop('file')
+        resp = self.client.post(self.url, data=body)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_missing_client_uuid_400(self):
+        self.assertTrue(self._login(self.attending))
+        body = self._multipart_body()
+        body.pop('client_uuid')
+        resp = self.client.post(self.url, data=body)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_post_stranger_physician_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.post(self.url, data=self._multipart_body())
+        self.assertEqual(resp.status_code, 404)
+        # No row leaked across the access gate.
+        self.assertFalse(PatientImage.objects.filter(client_uuid=self.client_uuid).exists())
+
+    def test_post_team_nurse_can_upload(self):
+        self.assertTrue(self._login(self.team_nurse))
+        resp = self.client.post(self.url, data=self._multipart_body())
+        self.assertEqual(resp.status_code, 200)
+
+
+class MobileDeleteProblemImageTests(_RBACTestBase):
+    """DELETE -> removes the row + GCS object + emits audit. Idempotent."""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='Lesion')
+        self.image = PatientImage.objects.create(
+            patient=self.patient,
+            problem=self.problem,
+            image=SimpleUploadedFile('shot.jpg', b'fake-jpeg', content_type='image/jpeg'),
+            file_name='shot.jpg',
+            author=self.attending,
+        )
+        self.url = f'/api/patient/{self.patient.id}/image/{self.image.id}'
+
+    def test_delete_removes_row_and_emits_audit(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(PatientImage.objects.filter(id=self.image.id).exists())
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Removed image', latest.activity)
+        self.assertIn('shot.jpg', latest.activity)
+
+    def test_delete_already_gone_idempotent_success(self):
+        self.assertTrue(self._login(self.attending))
+        # First delete actually removes.
+        self.client.delete(self.url)
+        # Second delete -> 200 success because the soft-delete queue retry
+        # contract requires it.
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_delete_stranger_physician_404_image_preserved(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 404)
+        # Critical: image row MUST NOT be deleted by an unauthorized DELETE.
+        self.assertTrue(PatientImage.objects.filter(id=self.image.id).exists())
+
+    def test_delete_wrong_patient_in_url_404(self):
+        self.assertTrue(self._login(self.attending))
+        # Attending has access to self.patient but the URL points the image
+        # at the other patient — the (image_id, patient_id) join fails.
+        # Idempotent-success path returns 200 because DoesNotExist on the
+        # joined query collapses into "already gone" — matches the
+        # contract used elsewhere. The image must NOT actually be deleted.
+        # Set up the other-patient PatientController so the access gate
+        # passes; the join itself is what saves us.
+        PatientController.objects.create(
+            patient=self.other_patient, physician=self.attending,
+        )
+        url = f'/api/patient/{self.other_patient.id}/image/{self.image.id}'
+        resp = self.client.delete(url)
+        self.assertEqual(resp.status_code, 200)
+        # Image still exists under the correct patient.
+        self.assertTrue(PatientImage.objects.filter(id=self.image.id).exists())
