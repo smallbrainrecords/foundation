@@ -1131,6 +1131,51 @@ def _get_patient(patient_id):
     return User.objects.get(id=patient_id)
 
 
+def _assert_patient_access(user, patient_id):
+    """Returns True if `user` has clinical access to `patient_id`'s data.
+
+    PHI gate for the media proxy endpoints (audio, document, image) per the
+    PR-2 RBAC requirement. Mirrors the role-by-role logic in `mobile_patients`
+    (kept in lockstep — any change to one MUST flow to the other or the proxy
+    will leak relative to the patient-list endpoint).
+
+    Roles:
+      admin                            -> any User row whose profile.role == 'patient'
+      physician                        -> own PatientController patients
+      secretary / mid-level / nurse    -> team physicians' PatientController patients
+      patient                          -> themselves only
+      other (no profile, no role, etc) -> deny
+
+    Returns a plain bool. Callers translate False into a 404 (uniform with
+    "not found", to avoid leaking the existence of an ID the user can't see).
+    Currently used by `mobile_encounter_audio`, `mobile_document_file`,
+    `mobile_image_file`, and the new `mobile_upload_problem_image` /
+    `mobile_delete_problem_image` endpoints. Until PR-2 these proxy paths had
+    NO patient-relationship verification — a classic IDOR. Do NOT remove the
+    `_assert_patient_access` call from any of those endpoints.
+    """
+    try:
+        patient_id = int(patient_id)
+    except (TypeError, ValueError):
+        return False
+
+    try:
+        role = user.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        return False
+
+    if role == 'admin':
+        return UserProfile.objects.filter(user_id=patient_id, role='patient').exists()
+    elif role == 'physician':
+        return PatientController.objects.filter(physician=user, patient_id=patient_id).exists()
+    elif role in ('secretary', 'mid-level', 'nurse'):
+        physician_ids = PhysicianTeam.objects.filter(member=user).values_list('physician_id', flat=True)
+        return PatientController.objects.filter(physician_id__in=physician_ids, patient_id=patient_id).exists()
+    elif role == 'patient':
+        return user.id == patient_id
+    return False
+
+
 # ---------- Problem endpoints ----------
 
 def _yesno_status(value, on_label, off_label):
