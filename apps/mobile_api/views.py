@@ -764,13 +764,25 @@ def _mobile_patient_full_inner(request, patient_id):
 @csrf_exempt
 @login_required
 def mobile_encounter_audio(request, encounter_id):
-    """GET -> stream the audio file for an encounter."""
+    """GET -> stream the audio file for an encounter.
+
+    PR-2 (2026-06-08) added the `_assert_patient_access` gate. Before this
+    patch, any authenticated user could fetch any encounter's audio by
+    guessing the ID (classic IDOR — PHI leak). The gate matches the
+    role-by-role visibility in `mobile_patients`. Do NOT remove without
+    coordinating with the PHI policy in CLAUDE.md.
+    """
     if request.method != 'GET':
         return JsonResponse({'error': 'GET required'}, status=405)
 
     try:
         enc = Encounter.objects.get(id=encounter_id)
     except Encounter.DoesNotExist:
+        return JsonResponse({'error': 'Encounter not found'}, status=404)
+
+    if not _assert_patient_access(request.user, enc.patient_id):
+        # Uniform 404 — don't leak the encounter's existence to an
+        # unauthorized caller.
         return JsonResponse({'error': 'Encounter not found'}, status=404)
 
     if not enc.audio:
@@ -791,13 +803,27 @@ def mobile_encounter_audio(request, encounter_id):
 @csrf_exempt
 @login_required
 def mobile_document_file(request, document_id):
-    """GET -> stream the file for a document."""
+    """GET -> stream the file for a document.
+
+    PR-2 (2026-06-08) added the `_assert_patient_access` gate AND an
+    explicit deny for orphaned documents (patient=None). Before this
+    patch, any authenticated user could fetch any document's binary by
+    guessing the ID. Orphan policy is "fail closed" per the PHI policy
+    in CLAUDE.md — if the document has no patient context, no provider
+    can prove a clinical right to view it.
+    """
     if request.method != 'GET':
         return JsonResponse({'error': 'GET required'}, status=405)
 
     try:
         doc = Document.objects.get(id=document_id)
     except Document.DoesNotExist:
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    # Orphans (patient=None from SET_NULL on patient deletion, or never set)
+    # are denied unconditionally. Uniform 404 with the access-denied path so
+    # callers can't probe orphan-vs-access-denied.
+    if doc.patient_id is None or not _assert_patient_access(request.user, doc.patient_id):
         return JsonResponse({'error': 'Document not found'}, status=404)
 
     if not doc.document:

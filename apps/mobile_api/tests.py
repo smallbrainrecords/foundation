@@ -10,12 +10,16 @@ import json
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from emr.models import (
     Encounter, EncounterEvent,
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
     Problem, ProblemNote, ProblemActivity,
     ToDo, Observation, ObservationComponent, ObservationValue,
     ObservationPinToProblem,
+    UserProfile, PatientController, PhysicianTeam,
+    Document,
 )
 
 
@@ -905,4 +909,182 @@ class MobileObservationPinTests(_ObservationTestBase):
         other_problem = Problem.objects.create(patient=other_pt, problem_name='Other')
         url = f'/api/patient/{self.patient.id}/observation/{self.observation.id}/pin/{other_problem.id}'
         resp = self.client.post(url)
+        self.assertEqual(resp.status_code, 404)
+
+
+# ============================================================================
+# PR-2: PHI-safe media proxies — IDOR regression coverage
+# ============================================================================
+#
+# Before PR-2 (2026-06-08) `mobile_encounter_audio` and `mobile_document_file`
+# would happily serve any encounter's audio / any document's binary to any
+# authenticated user who could guess the ID. These tests pin the new
+# `_assert_patient_access` gate into place across every branch of the helper.
+# Adding a new role or relationship type to the helper MUST land alongside
+# new test coverage here — the proxies have no other gate.
+
+
+class _RBACTestBase(TestCase):
+    """Seeds a role-typed user graph covering every branch of
+    `_assert_patient_access`. Subclasses pick which requester to log in as."""
+
+    def setUp(self):
+        # The patient that test resources will belong to.
+        self.patient = User.objects.create_user(
+            username='pt_a', password='x', email='a@x.com',
+        )
+        UserProfile.objects.create(user=self.patient, role='patient')
+
+        # Physician with a PatientController on `patient` -> has access.
+        self.attending = User.objects.create_user(
+            username='doc_a', password='top_secret', email='doc_a@x.com',
+        )
+        UserProfile.objects.create(user=self.attending, role='physician')
+        PatientController.objects.create(
+            patient=self.patient, physician=self.attending,
+        )
+
+        # Physician with no PatientController -> denied.
+        self.stranger_doc = User.objects.create_user(
+            username='doc_b', password='top_secret', email='doc_b@x.com',
+        )
+        UserProfile.objects.create(user=self.stranger_doc, role='physician')
+
+        # Nurse on the attending's PhysicianTeam -> access via team traversal.
+        self.team_nurse = User.objects.create_user(
+            username='nurse_a', password='top_secret', email='n@x.com',
+        )
+        UserProfile.objects.create(user=self.team_nurse, role='nurse')
+        PhysicianTeam.objects.create(
+            physician=self.attending, member=self.team_nurse,
+        )
+
+        # Nurse on a different physician's team -> denied.
+        self.stranger_nurse = User.objects.create_user(
+            username='nurse_b', password='top_secret', email='n2@x.com',
+        )
+        UserProfile.objects.create(user=self.stranger_nurse, role='nurse')
+        PhysicianTeam.objects.create(
+            physician=self.stranger_doc, member=self.stranger_nurse,
+        )
+
+        # Other patient -> denied access to our test patient's resources.
+        self.other_patient = User.objects.create_user(
+            username='pt_b', password='top_secret', email='b@x.com',
+        )
+        UserProfile.objects.create(user=self.other_patient, role='patient')
+
+        # Admin -> access.
+        self.admin_user = User.objects.create_user(
+            username='admin_a', password='top_secret', email='adm@x.com',
+        )
+        UserProfile.objects.create(user=self.admin_user, role='admin')
+
+        # User with no UserProfile row -> denied (helper's AttributeError /
+        # DoesNotExist branch).
+        self.no_profile = User.objects.create_user(
+            username='no_profile', password='top_secret', email='np@x.com',
+        )
+
+        self.client = Client()
+
+    def _login(self, user, password='top_secret'):
+        # Patient seed used `password='x'`; other roles use 'top_secret'.
+        return self.client.login(
+            username=user.username,
+            password='x' if user == self.patient or user == self.other_patient else password,
+        )
+
+
+class MobileEncounterAudioProxyRBACTests(_RBACTestBase):
+    """Regression coverage on the previously-IDOR `mobile_encounter_audio`.
+    Before PR-2 (2026-06-08) any authenticated user could fetch any
+    encounter's audio. Now `_assert_patient_access` gates every fetch."""
+
+    def setUp(self):
+        super().setUp()
+        self.encounter = Encounter.objects.create(
+            physician=self.attending,
+            patient=self.patient,
+            audio=SimpleUploadedFile('clip.m4a', b'fake-audio', content_type='audio/mp4'),
+        )
+        self.url = f'/api/media/encounter/{self.encounter.id}/audio'
+
+    def test_attending_physician_can_fetch_audio(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_team_nurse_can_fetch_audio(self):
+        self.assertTrue(self._login(self.team_nurse))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_patient_self_can_fetch_audio(self):
+        self.assertTrue(self._login(self.patient))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_admin_can_fetch_audio(self):
+        self.assertTrue(self._login(self.admin_user))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_stranger_physician_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_stranger_team_nurse_404(self):
+        self.assertTrue(self._login(self.stranger_nurse))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_other_patient_404(self):
+        self.assertTrue(self._login(self.other_patient))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_no_profile_user_404(self):
+        self.assertTrue(self._login(self.no_profile))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 404)
+
+
+class MobileDocumentFileProxyRBACTests(_RBACTestBase):
+    """Regression coverage on `mobile_document_file` — same RBAC trap as
+    audio, plus the orphan-deny policy (patient=None -> 404, no exceptions
+    even for the document author)."""
+
+    def setUp(self):
+        super().setUp()
+        self.doc = Document.objects.create(
+            document=SimpleUploadedFile('chart.pdf', b'fake-pdf', content_type='application/pdf'),
+            document_name='chart.pdf',
+            author=self.attending,
+            patient=self.patient,
+        )
+        self.url = f'/api/media/document/{self.doc.id}/file'
+
+    def test_attending_can_fetch_document(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_stranger_physician_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_orphaned_document_404_even_for_author(self):
+        # Orphan policy: if patient is None, NO ONE can fetch the binary —
+        # not even the original uploading author. Fail-closed PHI hygiene.
+        orphan = Document.objects.create(
+            document=SimpleUploadedFile('orphan.pdf', b'fake', content_type='application/pdf'),
+            document_name='orphan.pdf',
+            author=self.attending,
+            patient=None,
+        )
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(f'/api/media/document/{orphan.id}/file')
         self.assertEqual(resp.status_code, 404)
