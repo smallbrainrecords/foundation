@@ -1254,6 +1254,71 @@ def mobile_create_problem_note(request, patient_id, problem_id):
     return JsonResponse({'success': True, 'id': note.id})
 
 
+@csrf_exempt
+@login_required
+def mobile_update_problem_note(request, patient_id, problem_id, note_id):
+    """PATCH {note?, note_type?} -> update; DELETE -> remove ProblemNote.
+
+    Activity audit row is emitted on every successful mutation (mirrors what
+    the macOS app used to write locally pre-Bug-B). Excerpt truncated to 200
+    chars to keep the ProblemActivity row from ballooning on paste-heavy notes.
+    """
+    if request.method not in ('PATCH', 'POST', 'DELETE'):
+        return JsonResponse({'error': 'PATCH or DELETE required'}, status=405)
+
+    try:
+        note = ProblemNote.objects.get(
+            id=note_id,
+            problem_id=problem_id,
+            problem__patient_id=patient_id,
+        )
+    except ProblemNote.DoesNotExist:
+        # DELETE on an already-gone row is success — lets the client retry safely
+        # if its first DELETE response was lost mid-network.
+        if request.method == 'DELETE':
+            return JsonResponse({'success': True})
+        return JsonResponse({'error': 'Note not found'}, status=404)
+
+    problem = note.problem
+
+    if request.method == 'DELETE':
+        old_text = note.note or ''
+        old_type = note.note_type or 'wiki'
+        note.delete()
+        excerpt = old_text[:200]
+        suffix = '...' if len(old_text) > 200 else ''
+        add_problem_activity(
+            problem, request.user,
+            f"Deleted {old_type} note: {excerpt}{suffix}"
+        )
+        return JsonResponse({'success': True})
+
+    # PATCH path
+    body = _parse_body(request)
+    has_note = 'note' in body
+    has_type = 'note_type' in body
+    if not has_note and not has_type:
+        return JsonResponse({'error': 'At least one of note or note_type required'}, status=400)
+
+    if has_note:
+        new_text = (body.get('note') or '').strip()
+        if not new_text:
+            return JsonResponse({'error': 'note must be non-empty'}, status=400)
+        note.note = new_text
+    if has_type:
+        # wiki↔history transitions are accepted; the audit row records the new type
+        note.note_type = body.get('note_type') or 'wiki'
+    note.save()
+
+    excerpt = note.note[:200]
+    suffix = '...' if len(note.note) > 200 else ''
+    add_problem_activity(
+        problem, request.user,
+        f"Edited {note.note_type} note: {excerpt}{suffix}"
+    )
+    return JsonResponse({'success': True})
+
+
 # ---------- Problem Label endpoints ----------
 
 @csrf_exempt

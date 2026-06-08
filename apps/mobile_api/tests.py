@@ -13,7 +13,8 @@ from django.contrib.auth.models import User
 from emr.models import (
     Encounter, EncounterEvent,
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
-    Problem, ToDo, Observation, ObservationComponent, ObservationValue,
+    Problem, ProblemNote, ProblemActivity,
+    ToDo, Observation, ObservationComponent, ObservationValue,
 )
 
 
@@ -412,3 +413,175 @@ class MobileEncounterRelationshipsAndEventsTests(TestCase):
         # Skipped, not errored.
         self.assertEqual(json.loads(resp.content)['events'], [])
         self.assertEqual(EncounterEvent.objects.filter(encounter=self.enc).count(), 0)
+
+
+class MobileUpdateProblemNoteTests(TestCase):
+    """PATCH/DELETE for ProblemNote — covers the Bug-B-style server-authoritative
+    audit emit and the client-treats-404-as-success delete contract that the
+    macOS soft-delete sync depends on for idempotent retry."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='doc_a', password='top_secret',
+            email='doc_a@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_a', password='unused',
+            email='pt_a@example.com',
+        )
+        self.problem = Problem.objects.create(
+            patient=self.patient,
+            problem_name='Test problem',
+            is_active=True,
+            is_controlled=False,
+        )
+        self.note = ProblemNote.objects.create(
+            problem=self.problem,
+            author=self.physician,
+            note='Initial note',
+            note_type='wiki',
+        )
+        self.client = Client()
+        self.client.login(username='doc_a', password='top_secret')
+
+    def _url(self, note_id=None):
+        nid = note_id if note_id is not None else self.note.id
+        return f'/api/patient/{self.patient.id}/problem/{self.problem.id}/note/{nid}'
+
+    # ---- PATCH ----
+
+    def test_patch_updates_content_and_type(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'note': 'Updated content', 'note_type': 'history'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.note, 'Updated content')
+        self.assertEqual(self.note.note_type, 'history')
+
+    def test_patch_partial_payload_preserves_omitted_field(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'note': 'Only content changed'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.note, 'Only content changed')
+        self.assertEqual(self.note.note_type, 'wiki')  # unchanged
+
+    def test_patch_emits_note_edited_activity(self):
+        before = ProblemActivity.objects.filter(problem=self.problem).count()
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'note': 'Updated content'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        after = ProblemActivity.objects.filter(problem=self.problem).count()
+        self.assertEqual(after, before + 1)
+        activity = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Edited wiki note', activity.activity)
+        self.assertIn('Updated content', activity.activity)
+        self.assertEqual(activity.author_id, self.physician.id)
+
+    def test_patch_rejects_empty_content(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'note': '   '}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.note, 'Initial note')
+
+    def test_patch_requires_at_least_one_field(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_patch_unauthorized_patient_id_404(self):
+        # Wrong patient_id in the URL chain — auth join must reject.
+        other = User.objects.create_user(
+            username='pt_b', password='unused', email='pt_b@example.com',
+        )
+        url = f'/api/patient/{other.id}/problem/{self.problem.id}/note/{self.note.id}'
+        resp = self.client.patch(
+            url,
+            data=json.dumps({'note': 'should fail'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.note, 'Initial note')
+
+    def test_patch_truncates_long_content_in_audit(self):
+        long_content = 'A' * 500
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'note': long_content}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        activity = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        # Truncated to 200 chars + ellipsis. 201 A's in a row would mean we
+        # exceeded the cap, so assert that's NOT present.
+        self.assertIn('A' * 200 + '...', activity.activity)
+        self.assertNotIn('A' * 201, activity.activity)
+
+    def test_patch_accepts_note_type_only_change(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'note_type': 'history'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.note_type, 'history')
+        self.assertEqual(self.note.note, 'Initial note')
+
+    # ---- DELETE ----
+
+    def test_delete_removes_note_and_emits_activity(self):
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+        self.assertFalse(ProblemNote.objects.filter(id=self.note.id).exists())
+        activity = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Deleted wiki note', activity.activity)
+        self.assertIn('Initial note', activity.activity)
+        self.assertEqual(activity.author_id, self.physician.id)
+
+    def test_delete_already_gone_is_success_for_retry_idempotency(self):
+        # First delete — succeeds normally.
+        self.client.delete(self._url())
+        # Second delete — note already gone. Must return 200 success so the
+        # macOS client's retry-on-lost-response path doesn't strand a soft-
+        # deleted row in the queue forever.
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+
+    def test_delete_wrong_patient_chain_is_idempotent_noop(self):
+        other = User.objects.create_user(
+            username='pt_b', password='unused', email='pt_b@example.com',
+        )
+        url = f'/api/patient/{other.id}/problem/{self.problem.id}/note/{self.note.id}'
+        # DELETE on a wrong patient URL collapses into the same "DoesNotExist
+        # under this join" code path as a genuinely-gone note. We return 200
+        # success (info-hiding from probe attempts) and the note must NOT be
+        # deleted. A legitimate client never constructs this URL — the remoteID
+        # was nested under the correct patient/problem in the pull response.
+        resp = self.client.delete(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(ProblemNote.objects.filter(id=self.note.id).exists())
+
+    def test_method_not_allowed_returns_405(self):
+        resp = self.client.get(self._url())
+        self.assertEqual(resp.status_code, 405)
