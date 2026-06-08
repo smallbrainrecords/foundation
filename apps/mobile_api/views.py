@@ -1651,6 +1651,190 @@ def mobile_create_observation_value(request, patient_id, component_id):
     return JsonResponse({'success': True, 'id': val.id})
 
 
+def _emit_observation_audit(observation, user, activity):
+    """Fan out a ProblemActivity row per pinned problem for the given
+    observation. If the observation has no pins, write a single
+    `problem=None` row to maintain the patient-scope legal trail.
+
+    Per the PR-3 audit-routing decision (2026-06-08). Migration
+    `0173_allow_null_problem_on_problem_activity` made the FK nullable
+    specifically to support the unpinned case.
+    """
+    pins = list(ObservationPinToProblem.objects.filter(observation=observation))
+    if pins:
+        for pin in pins:
+            add_problem_activity(pin.problem, user, activity)
+    else:
+        add_problem_activity(None, user, activity)
+
+
+@csrf_exempt
+@login_required
+def mobile_update_observation(request, patient_id, observation_id):
+    """PATCH {comments?} -> update parent Observation fields.
+
+    Today this only carries the `comments` field — the macOS UI surfaces it
+    as "Note" for clinical context (e.g. "Left arm, sitting"). Empty string
+    or null clears the note. Fans out audit rows per pinned problem (or
+    problem=None if unpinned).
+    """
+    if request.method not in ('PATCH', 'POST'):
+        return JsonResponse({'error': 'PATCH required'}, status=405)
+
+    try:
+        observation = Observation.objects.get(id=observation_id, subject_id=patient_id)
+    except Observation.DoesNotExist:
+        return JsonResponse({'error': 'Observation not found'}, status=404)
+
+    body = _parse_body(request)
+    if 'comments' not in body:
+        return JsonResponse({'error': 'comments field required'}, status=400)
+
+    # Accept "" and null as the "clear" signal — both store as null in the DB
+    # so a re-pull doesn't carry a phantom empty-string value back to the
+    # client (which would defeat the preserveLocal guard on the iOS side).
+    new_comments = body.get('comments')
+    if new_comments == '':
+        new_comments = None
+    observation.comments = new_comments
+    observation.save()
+
+    if new_comments is None:
+        msg = f"Cleared note on {observation.name or 'observation'}"
+    else:
+        excerpt = new_comments[:200]
+        suffix = '...' if len(new_comments) > 200 else ''
+        msg = f"Edited note on {observation.name or 'observation'}: {excerpt}{suffix}"
+    _emit_observation_audit(observation, request.user, msg)
+
+    return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+def mobile_update_observation_value(request, patient_id, value_id):
+    """PATCH {value_quantity?, value_unit?, effective_datetime?} -> update;
+    DELETE -> hard-remove ObservationValue.
+
+    Auth chain: value -> component -> observation, with the observation's
+    subject_id matching patient_id. Audit fans out per pinned problem.
+    """
+    if request.method not in ('PATCH', 'POST', 'DELETE'):
+        return JsonResponse({'error': 'PATCH or DELETE required'}, status=405)
+
+    try:
+        value = ObservationValue.objects.select_related(
+            'component__observation'
+        ).get(
+            id=value_id,
+            component__observation__subject_id=patient_id,
+        )
+    except ObservationValue.DoesNotExist:
+        # DELETE on already-gone row is idempotent success — matches the
+        # ProblemNote contract from PR-1.
+        if request.method == 'DELETE':
+            return JsonResponse({'success': True})
+        return JsonResponse({'error': 'Value not found'}, status=404)
+
+    observation = value.component.observation
+
+    if request.method == 'DELETE':
+        # Snapshot for audit before destroy.
+        old_quantity = value.value_quantity
+        old_unit = value.value_unit or ''
+        value.delete()
+        msg = f"Deleted {observation.name or 'observation'} reading: {old_quantity}{old_unit}"
+        _emit_observation_audit(observation, request.user, msg)
+        return JsonResponse({'success': True})
+
+    # PATCH path
+    from django.utils.dateparse import parse_datetime
+
+    body = _parse_body(request)
+    touched = False
+
+    if 'value_quantity' in body:
+        new_q = body.get('value_quantity')
+        if new_q is None:
+            return JsonResponse({'error': 'value_quantity cannot be null'}, status=400)
+        value.value_quantity = new_q
+        touched = True
+    if 'value_unit' in body:
+        value.value_unit = body.get('value_unit') or ''
+        touched = True
+    if 'effective_datetime' in body:
+        effective = body.get('effective_datetime')
+        if effective:
+            value.effective_datetime = parse_datetime(effective)
+            touched = True
+
+    if not touched:
+        return JsonResponse({'error': 'At least one field required'}, status=400)
+
+    value.save()
+
+    quantity_label = f"{value.value_quantity}{value.value_unit or ''}".strip()
+    msg = f"Edited {observation.name or 'observation'} reading: {quantity_label}"
+    _emit_observation_audit(observation, request.user, msg)
+
+    return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+def mobile_observation_pin(request, patient_id, observation_id, problem_id):
+    """POST -> create (or no-op if already pinned) ObservationPinToProblem;
+    DELETE -> remove the pin.
+
+    URL-coordinate identity: a pin is fully described by
+    (observation_id, problem_id), so POST is naturally idempotent — repeat
+    calls return the same row id with success=True. Audit is written
+    directly to the target problem (NOT via the helper) because the action
+    is intrinsically a problem-level annotation, not a value mutation.
+    """
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'error': 'POST or DELETE required'}, status=405)
+
+    try:
+        observation = Observation.objects.get(id=observation_id, subject_id=patient_id)
+    except Observation.DoesNotExist:
+        return JsonResponse({'error': 'Observation not found'}, status=404)
+
+    try:
+        problem = Problem.objects.get(id=problem_id, patient_id=patient_id)
+    except Problem.DoesNotExist:
+        return JsonResponse({'error': 'Problem not found'}, status=404)
+
+    if request.method == 'DELETE':
+        # Idempotent delete: 200 success whether the row exists or not. The
+        # macOS soft-delete queue depends on this so a retried DELETE after
+        # a lost response doesn't strand the tombstone.
+        deleted, _ = ObservationPinToProblem.objects.filter(
+            observation=observation, problem=problem,
+        ).delete()
+        if deleted:
+            add_problem_activity(
+                problem, request.user,
+                f"Unpinned {observation.name or 'observation'}"
+            )
+        return JsonResponse({'success': True})
+
+    # POST path — get_or_create makes this idempotent. If the pin already
+    # exists, no new ProblemActivity row is emitted (avoids audit noise from
+    # client retries).
+    pin, created = ObservationPinToProblem.objects.get_or_create(
+        observation=observation,
+        problem=problem,
+        defaults={'author': request.user},
+    )
+    if created:
+        add_problem_activity(
+            problem, request.user,
+            f"Pinned {observation.name or 'observation'} to this problem"
+        )
+    return JsonResponse({'success': True, 'id': pin.id, 'created': created})
+
+
 # ---------- My Tagged Todos endpoint ----------
 
 @csrf_exempt

@@ -424,7 +424,12 @@ class ProblemSegment(models.Model):
 
 
 class ProblemActivity(models.Model):
-    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
+    # Nullable as of PR-3 (2026-06-08): observation-value / observation-note
+    # mutations emit one ProblemActivity row per pinned problem, OR a single
+    # row with problem=None if the observation has no pins (the patient-scope
+    # legal trail). All historical and problem-CRUD rows keep a non-null FK;
+    # the null case is exclusive to the unpinned-observation audit path.
+    problem = models.ForeignKey(Problem, null=True, blank=True, on_delete=models.CASCADE)
     author = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     activity = models.TextField()
     is_input_type = models.BooleanField(default=False)

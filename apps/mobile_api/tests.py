@@ -15,6 +15,7 @@ from emr.models import (
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
     Problem, ProblemNote, ProblemActivity,
     ToDo, Observation, ObservationComponent, ObservationValue,
+    ObservationPinToProblem,
 )
 
 
@@ -585,3 +586,323 @@ class MobileUpdateProblemNoteTests(TestCase):
     def test_method_not_allowed_returns_405(self):
         resp = self.client.get(self._url())
         self.assertEqual(resp.status_code, 405)
+
+
+# ============================================================================
+# PR-3: Observation parent (note), ObservationValue, ObservationPin
+# ============================================================================
+
+
+class _ObservationTestBase(TestCase):
+    """Shared seed: one physician, one patient, one observation with a
+    single component + initial value, no pins. Subclasses can attach pins
+    via `pin_to(problem)` to exercise the fan-out audit path."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='doc_a', password='top_secret', email='doc_a@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_a', password='unused', email='pt_a@example.com',
+        )
+        self.observation = Observation.objects.create(
+            name='Heart Rate', subject=self.patient,
+        )
+        self.component = ObservationComponent.objects.create(
+            name='HR', observation=self.observation,
+        )
+        self.value = ObservationValue.objects.create(
+            component=self.component, value_quantity=72, value_unit='bpm',
+            author=self.physician,
+        )
+        self.client = Client()
+        self.client.login(username='doc_a', password='top_secret')
+
+    def pin_to(self, problem):
+        return ObservationPinToProblem.objects.create(
+            observation=self.observation, problem=problem, author=self.physician,
+        )
+
+
+class MobileUpdateObservationTests(_ObservationTestBase):
+    """PATCH parent observation comments ("note") field — repurposes the
+    dormant `comments` column rather than adding a new field."""
+
+    def _url(self, obs_id=None):
+        oid = obs_id if obs_id is not None else self.observation.id
+        return f'/api/patient/{self.patient.id}/observation/{oid}'
+
+    def test_patch_sets_comments_field(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'comments': 'Left arm, sitting'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.observation.refresh_from_db()
+        self.assertEqual(self.observation.comments, 'Left arm, sitting')
+
+    def test_patch_empty_string_clears_to_null(self):
+        # Setting "" stores as null so a re-pull doesn't echo back a phantom
+        # empty-string the preserveLocal guard would treat as a server edit.
+        self.observation.comments = 'old note'
+        self.observation.save()
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'comments': ''}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.observation.refresh_from_db()
+        self.assertIsNone(self.observation.comments)
+
+    def test_patch_explicit_null_clears(self):
+        self.observation.comments = 'old note'
+        self.observation.save()
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'comments': None}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.observation.refresh_from_db()
+        self.assertIsNone(self.observation.comments)
+
+    def test_patch_missing_field_400(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_patch_wrong_patient_404(self):
+        other = User.objects.create_user(
+            username='pt_b', password='unused', email='pt_b@example.com',
+        )
+        url = f'/api/patient/{other.id}/observation/{self.observation.id}'
+        resp = self.client.patch(
+            url, data=json.dumps({'comments': 'x'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    def test_patch_audit_fans_out_to_every_pinned_problem(self):
+        problem_a = Problem.objects.create(patient=self.patient, problem_name='Hypertension')
+        problem_b = Problem.objects.create(patient=self.patient, problem_name='Atrial fibrillation')
+        self.pin_to(problem_a)
+        self.pin_to(problem_b)
+
+        before_a = ProblemActivity.objects.filter(problem=problem_a).count()
+        before_b = ProblemActivity.objects.filter(problem=problem_b).count()
+
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'comments': 'Pulse check sitting'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # One audit row on each pinned problem.
+        self.assertEqual(
+            ProblemActivity.objects.filter(problem=problem_a).count(), before_a + 1
+        )
+        self.assertEqual(
+            ProblemActivity.objects.filter(problem=problem_b).count(), before_b + 1
+        )
+        latest_a = ProblemActivity.objects.filter(problem=problem_a).order_by('-id').first()
+        self.assertIn('Edited note', latest_a.activity)
+        self.assertIn('Pulse check sitting', latest_a.activity)
+
+    def test_patch_audit_unpinned_observation_uses_null_problem(self):
+        # No pins. The legal trail goes to ProblemActivity(problem=None).
+        before = ProblemActivity.objects.filter(problem__isnull=True).count()
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'comments': 'No-pin note'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        after = ProblemActivity.objects.filter(problem__isnull=True).count()
+        self.assertEqual(after, before + 1)
+        latest = (
+            ProblemActivity.objects.filter(problem__isnull=True)
+            .order_by('-id').first()
+        )
+        self.assertIn('No-pin note', latest.activity)
+
+    def test_patch_audit_truncated_to_200_chars(self):
+        problem = Problem.objects.create(patient=self.patient, problem_name='P1')
+        self.pin_to(problem)
+        long = 'X' * 500
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'comments': long}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        latest = ProblemActivity.objects.filter(problem=problem).order_by('-id').first()
+        self.assertIn('X' * 200 + '...', latest.activity)
+        self.assertNotIn('X' * 201, latest.activity)
+
+
+class MobileUpdateObservationValueTests(_ObservationTestBase):
+    """PATCH + DELETE for an individual ObservationValue row."""
+
+    def _url(self, vid=None):
+        vid = vid if vid is not None else self.value.id
+        return f'/api/patient/{self.patient.id}/observation/value/{vid}'
+
+    def test_patch_updates_quantity(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'value_quantity': 88}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.value.refresh_from_db()
+        self.assertEqual(float(self.value.value_quantity), 88.0)
+
+    def test_patch_missing_field_400(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_patch_quantity_null_400(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'value_quantity': None}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_patch_audit_fans_out_to_pins(self):
+        p1 = Problem.objects.create(patient=self.patient, problem_name='P1')
+        p2 = Problem.objects.create(patient=self.patient, problem_name='P2')
+        self.pin_to(p1)
+        self.pin_to(p2)
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'value_quantity': 99}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        latest_p1 = ProblemActivity.objects.filter(problem=p1).order_by('-id').first()
+        latest_p2 = ProblemActivity.objects.filter(problem=p2).order_by('-id').first()
+        self.assertIn('Edited Heart Rate reading', latest_p1.activity)
+        self.assertIn('Edited Heart Rate reading', latest_p2.activity)
+
+    def test_delete_removes_row_and_emits_audit(self):
+        problem = Problem.objects.create(patient=self.patient, problem_name='P1')
+        self.pin_to(problem)
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(ObservationValue.objects.filter(id=self.value.id).exists())
+        latest = ProblemActivity.objects.filter(problem=problem).order_by('-id').first()
+        self.assertIn('Deleted Heart Rate reading', latest.activity)
+
+    def test_delete_already_gone_idempotent_success(self):
+        # First delete actually removes the row.
+        self.client.delete(self._url())
+        # Second delete returns 200 success — matches the ProblemNote contract
+        # from PR-1 so the macOS soft-delete queue can retry safely.
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+
+    def test_patch_wrong_patient_404(self):
+        other = User.objects.create_user(
+            username='pt_b', password='unused', email='pt_b@example.com',
+        )
+        url = f'/api/patient/{other.id}/observation/value/{self.value.id}'
+        resp = self.client.patch(
+            url, data=json.dumps({'value_quantity': 10}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 404)
+
+
+class MobileObservationPinTests(_ObservationTestBase):
+    """POST/DELETE on the URL-coordinate pin endpoint:
+    /api/patient/<pid>/observation/<obs_id>/pin/<problem_id>"""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(
+            patient=self.patient, problem_name='Hypertension',
+        )
+
+    def _url(self, obs_id=None, prob_id=None):
+        oid = obs_id if obs_id is not None else self.observation.id
+        pid = prob_id if prob_id is not None else self.problem.id
+        return f'/api/patient/{self.patient.id}/observation/{oid}/pin/{pid}'
+
+    def test_post_creates_pin_and_emits_audit(self):
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['created'])
+        self.assertTrue(
+            ObservationPinToProblem.objects.filter(
+                observation=self.observation, problem=self.problem,
+            ).exists()
+        )
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Pinned Heart Rate', latest.activity)
+
+    def test_post_idempotent_does_not_double_pin_or_double_audit(self):
+        # First POST creates.
+        self.client.post(self._url())
+        audit_count_after_first = ProblemActivity.objects.filter(problem=self.problem).count()
+        # Second POST is a no-op — no duplicate pin row, no duplicate audit row.
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertFalse(data['created'])
+        self.assertEqual(
+            ObservationPinToProblem.objects.filter(
+                observation=self.observation, problem=self.problem,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            ProblemActivity.objects.filter(problem=self.problem).count(),
+            audit_count_after_first,
+        )
+
+    def test_delete_removes_pin_and_emits_audit(self):
+        pin = self.pin_to(self.problem)
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(ObservationPinToProblem.objects.filter(id=pin.id).exists())
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Unpinned Heart Rate', latest.activity)
+
+    def test_delete_already_gone_idempotent_success_no_audit(self):
+        # No pin exists. DELETE should still 200 success but not emit a
+        # phantom "Unpinned" audit row.
+        before = ProblemActivity.objects.filter(problem=self.problem).count()
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        after = ProblemActivity.objects.filter(problem=self.problem).count()
+        self.assertEqual(after, before)
+
+    def test_post_wrong_patient_observation_404(self):
+        other = User.objects.create_user(
+            username='pt_b', password='unused', email='pt_b@example.com',
+        )
+        url = f'/api/patient/{other.id}/observation/{self.observation.id}/pin/{self.problem.id}'
+        resp = self.client.post(url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_post_wrong_patient_problem_404(self):
+        other_pt = User.objects.create_user(
+            username='pt_b', password='unused', email='pt_b@example.com',
+        )
+        other_problem = Problem.objects.create(patient=other_pt, problem_name='Other')
+        url = f'/api/patient/{self.patient.id}/observation/{self.observation.id}/pin/{other_problem.id}'
+        resp = self.client.post(url)
+        self.assertEqual(resp.status_code, 404)

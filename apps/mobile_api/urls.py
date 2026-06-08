@@ -35,6 +35,10 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/member/(?P<user_id>\d+)$', views.mobile_remove_todo_member),
     # Observation values
     url(r'^patient/(?P<patient_id>\d+)/observation/component/(?P<component_id>\d+)/value$', views.mobile_create_observation_value),
+    url(r'^patient/(?P<patient_id>\d+)/observation/value/(?P<value_id>\d+)$', views.mobile_update_observation_value),
+    # Observation parent (comments / "note") + pins
+    url(r'^patient/(?P<patient_id>\d+)/observation/(?P<observation_id>\d+)$', views.mobile_update_observation),
+    url(r'^patient/(?P<patient_id>\d+)/observation/(?P<observation_id>\d+)/pin/(?P<problem_id>\d+)$', views.mobile_observation_pin),
     # Label catalog
     url(r'^labels/$', views.mobile_create_label),
     url(r'^labels/(?P<label_id>\d+)$', views.mobile_update_label),
