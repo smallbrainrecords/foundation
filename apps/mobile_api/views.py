@@ -1183,7 +1183,196 @@ def mobile_upload_document(request, patient_id):
         },
     )
 
+    if created:
+        # At upload time the document has no DocumentProblem links yet
+        # (link POSTs come from iOS afterwards). The audit fan-out helper
+        # falls back to problem=None per the PR-3 / PR-4 routing decision,
+        # landing the row on the patient-scope legal trail. Subsequent
+        # link / unlink POSTs emit their own per-problem audit rows.
+        _emit_document_audit(
+            doc, request.user,
+            f"Added document: {document_name}"
+        )
+
     return JsonResponse({'success': True, 'id': doc.id, 'created': created})
+
+
+def _emit_document_audit(document, user, activity):
+    """Fan out a ProblemActivity row per problem the document is currently
+    linked to. If the document has no problem links (orphaned or freshly
+    uploaded), write a single `problem=None` row to maintain the patient-
+    scope legal trail.
+
+    Mirrors `_emit_observation_audit` from PR-3 (2026-06-08). The
+    nullable-`problem` FK on ProblemActivity (migration `0173`) enables
+    the unlinked case. Do NOT add new audit emission paths that bypass
+    this helper — they will drift from the global timeline rule.
+    """
+    links = list(DocumentProblem.objects.filter(document=document).select_related('problem'))
+    if links:
+        for link in links:
+            if link.problem is not None:
+                add_problem_activity(link.problem, user, activity)
+    else:
+        add_problem_activity(None, user, activity)
+
+
+@csrf_exempt
+@login_required
+def mobile_delete_document(request, patient_id, document_id):
+    """DELETE -> remove a Document + its GCS object + its link rows.
+
+    Idempotent: a retried DELETE after a lost response returns 200 even
+    when the row is already gone. Matches the PR-1 / PR-2 / PR-3 contract.
+    Audit fan-out reflects the link state at deletion time — clinicians
+    who reviewed the document via a specific problem will see the
+    `Removed document: <name>` row on that problem's timeline. Orphaned
+    documents (no links) land the row on the patient-scope timeline
+    (`problem=None`).
+    """
+    if request.method != 'DELETE':
+        return JsonResponse({'error': 'DELETE required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    try:
+        doc = Document.objects.get(id=document_id, patient_id=patient_id)
+    except Document.DoesNotExist:
+        # Genuinely gone — retry-safe success.
+        return JsonResponse({'success': True})
+
+    document_name = doc.document_name or 'document'
+
+    # Snapshot the linked-problem set BEFORE we wipe the rows; the audit
+    # fan-out below needs to land on each problem the doc was linked to.
+    linked_problems = list(
+        DocumentProblem.objects.filter(document=doc).select_related('problem')
+    )
+
+    if doc.document:
+        # Triggers the django-storages GCS backend delete, removing the
+        # binary. Set save=False since we follow with doc.delete() right
+        # after.
+        doc.document.delete(save=False)
+    doc.delete()  # CASCADE wipes DocumentProblem + DocumentTodo rows.
+
+    audit_msg = f"Removed document: {document_name}"
+    if linked_problems:
+        for link in linked_problems:
+            if link.problem is not None:
+                add_problem_activity(link.problem, request.user, audit_msg)
+    else:
+        add_problem_activity(None, request.user, audit_msg)
+
+    return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+def mobile_document_problem_link(request, patient_id, document_id, problem_id):
+    """POST -> link a document to a problem; DELETE -> unlink.
+
+    URL-coordinate identity: a link is fully described by (document_id,
+    problem_id), so POST is naturally idempotent via `get_or_create`.
+    Repeat calls return the same row id with `created=False`. Audit is
+    written directly to the target problem (not via the fan-out helper)
+    because the action is intrinsically a problem-level annotation.
+    """
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'error': 'POST or DELETE required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    try:
+        doc = Document.objects.get(id=document_id, patient_id=patient_id)
+    except Document.DoesNotExist:
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    try:
+        problem = Problem.objects.get(id=problem_id, patient_id=patient_id)
+    except Problem.DoesNotExist:
+        return JsonResponse({'error': 'Problem not found'}, status=404)
+
+    document_name = doc.document_name or 'document'
+
+    if request.method == 'DELETE':
+        deleted, _ = DocumentProblem.objects.filter(
+            document=doc, problem=problem,
+        ).delete()
+        if deleted:
+            add_problem_activity(
+                problem, request.user,
+                f"Unlinked document: {document_name}"
+            )
+        return JsonResponse({'success': True})
+
+    # POST -> get_or_create
+    link, created = DocumentProblem.objects.get_or_create(
+        document=doc, problem=problem,
+        defaults={'author': request.user},
+    )
+    if created:
+        add_problem_activity(
+            problem, request.user,
+            f"Linked document: {document_name}"
+        )
+    return JsonResponse({'success': True, 'id': link.id, 'created': created})
+
+
+@csrf_exempt
+@login_required
+def mobile_document_todo_link(request, patient_id, document_id, todo_id):
+    """POST -> link a document to a todo; DELETE -> unlink.
+
+    URL-coordinate identity, idempotent via `get_or_create` on POST. Audit
+    is written to the todo's parent problem when one exists, falling back
+    to `problem=None` for problemless todos — same patient-scope-legal-
+    trail policy as the unpinned-observation case in PR-3.
+    """
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'error': 'POST or DELETE required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    try:
+        doc = Document.objects.get(id=document_id, patient_id=patient_id)
+    except Document.DoesNotExist:
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    try:
+        todo = ToDo.objects.get(id=todo_id, patient_id=patient_id)
+    except ToDo.DoesNotExist:
+        return JsonResponse({'error': 'Todo not found'}, status=404)
+
+    document_name = doc.document_name or 'document'
+    # Todo audit lands on the todo's parent problem (if any), else null.
+    audit_problem = todo.problem if todo.problem_id else None
+
+    if request.method == 'DELETE':
+        deleted, _ = DocumentTodo.objects.filter(
+            document=doc, todo=todo,
+        ).delete()
+        if deleted:
+            add_problem_activity(
+                audit_problem, request.user,
+                f"Unlinked document from todo: {document_name}"
+            )
+        return JsonResponse({'success': True})
+
+    # POST -> get_or_create
+    link, created = DocumentTodo.objects.get_or_create(
+        document=doc, todo=todo,
+        defaults={'author': request.user},
+    )
+    if created:
+        add_problem_activity(
+            audit_problem, request.user,
+            f"Linked document to todo: {document_name}"
+        )
+    return JsonResponse({'success': True, 'id': link.id, 'created': created})
 
 
 # ---------- Problem Image endpoints (PR-2, 2026-06-08) ----------

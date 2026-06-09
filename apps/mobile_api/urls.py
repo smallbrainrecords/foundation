@@ -19,6 +19,10 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/encounter$', views.mobile_create_encounter),
     url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)$', views.mobile_update_encounter),
     url(r'^patient/(?P<patient_id>\d+)/document/upload$', views.mobile_upload_document),
+    # PR-4 Document delete + link CRUD (URL-coordinate identity)
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)$', views.mobile_delete_document),
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/problem/(?P<problem_id>\d+)$', views.mobile_document_problem_link),
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/todo/(?P<todo_id>\d+)$', views.mobile_document_todo_link),
     # Problem images (PR-2)
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/image$', views.mobile_upload_problem_image),
     url(r'^patient/(?P<patient_id>\d+)/image/(?P<image_id>\d+)$', views.mobile_delete_problem_image),

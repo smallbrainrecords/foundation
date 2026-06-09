@@ -19,7 +19,7 @@ from emr.models import (
     ToDo, Observation, ObservationComponent, ObservationValue,
     ObservationPinToProblem,
     UserProfile, PatientController, PhysicianTeam,
-    PatientImage, Document,
+    PatientImage, Document, DocumentProblem, DocumentTodo,
 )
 
 
@@ -1293,3 +1293,268 @@ class MobileDeleteProblemImageTests(_RBACTestBase):
         self.assertEqual(resp.status_code, 200)
         # Image still exists under the correct patient.
         self.assertTrue(PatientImage.objects.filter(id=self.image.id).exists())
+
+
+# ============================================================================
+# PR-4: Document upload idempotency + delete + link CRUD
+# ============================================================================
+
+
+class MobileUploadDocumentPR4Tests(_RBACTestBase):
+    """`mobile_upload_document` PR-4 upgrades: client_uuid required,
+    get_or_create idempotency, UUID-keyed GCS path, audit emit, RBAC."""
+
+    def setUp(self):
+        super().setUp()
+        self.url = f'/api/patient/{self.patient.id}/document/upload'
+        self.client_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+
+    def _body(self, **overrides):
+        body = {
+            'file': SimpleUploadedFile('chart.pdf', b'fake-pdf', content_type='application/pdf'),
+            'client_uuid': self.client_uuid,
+            'document_name': 'chart.pdf',
+        }
+        body.update(overrides)
+        return body
+
+    def test_upload_creates_document_and_emits_audit(self):
+        self.assertTrue(self._login(self.attending))
+        # At upload time, doc has no links → audit lands on problem=None.
+        before = ProblemActivity.objects.filter(problem__isnull=True).count()
+        resp = self.client.post(self.url, data=self._body())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['created'])
+        doc = Document.objects.get(id=data['id'])
+        self.assertEqual(doc.document_name, 'chart.pdf')
+        self.assertEqual(doc.patient_id, self.patient.id)
+        after = ProblemActivity.objects.filter(problem__isnull=True).count()
+        self.assertEqual(after, before + 1)
+        latest = (
+            ProblemActivity.objects.filter(problem__isnull=True)
+            .order_by('-id').first()
+        )
+        self.assertIn('Added document', latest.activity)
+        self.assertIn('chart.pdf', latest.activity)
+
+    def test_upload_uses_uuid_keyed_gcs_path(self):
+        # PR-4 acceptance gate: GCS object path must NOT include the patient
+        # id or the user-supplied filename.
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.post(self.url, data=self._body())
+        self.assertEqual(resp.status_code, 200)
+        doc = Document.objects.get(id=json.loads(resp.content)['id'])
+        self.assertTrue(doc.document.name.startswith('documents/'))
+        self.assertTrue(doc.document.name.endswith('.pdf'))
+        self.assertNotIn(str(self.patient.id), doc.document.name)
+        self.assertNotIn('chart', doc.document.name)
+
+    def test_upload_idempotent_same_client_uuid(self):
+        self.assertTrue(self._login(self.attending))
+        resp1 = self.client.post(self.url, data=self._body())
+        first_id = json.loads(resp1.content)['id']
+        audit_after_first = ProblemActivity.objects.filter(problem__isnull=True).count()
+        resp2 = self.client.post(self.url, data=self._body())
+        self.assertEqual(resp2.status_code, 200)
+        data2 = json.loads(resp2.content)
+        self.assertEqual(data2['id'], first_id)
+        self.assertFalse(data2['created'])
+        self.assertEqual(Document.objects.filter(client_uuid=self.client_uuid).count(), 1)
+        # No duplicate audit row on retry.
+        self.assertEqual(
+            ProblemActivity.objects.filter(problem__isnull=True).count(),
+            audit_after_first,
+        )
+
+    def test_upload_missing_client_uuid_400(self):
+        self.assertTrue(self._login(self.attending))
+        body = self._body()
+        body.pop('client_uuid')
+        resp = self.client.post(self.url, data=body)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_upload_missing_file_400(self):
+        self.assertTrue(self._login(self.attending))
+        body = self._body()
+        body.pop('file')
+        resp = self.client.post(self.url, data=body)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_upload_stranger_physician_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.post(self.url, data=self._body())
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(Document.objects.filter(client_uuid=self.client_uuid).exists())
+
+
+class MobileDeleteDocumentTests(_RBACTestBase):
+    """DELETE -> removes Document + GCS object + cascades to link tables.
+    Audit fans out across whatever problems the doc was linked to at
+    delete-time; orphans land on problem=None."""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='P1')
+        self.doc = Document.objects.create(
+            document=SimpleUploadedFile('chart.pdf', b'fake-pdf', content_type='application/pdf'),
+            document_name='chart.pdf',
+            author=self.attending,
+            patient=self.patient,
+        )
+        self.url = f'/api/patient/{self.patient.id}/document/{self.doc.id}'
+
+    def test_delete_removes_doc_and_fans_out_audit_to_linked_problem(self):
+        DocumentProblem.objects.create(document=self.doc, problem=self.problem, author=self.attending)
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem=self.problem).count()
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(Document.objects.filter(id=self.doc.id).exists())
+        # CASCADE wiped the link too.
+        self.assertFalse(DocumentProblem.objects.filter(document_id=self.doc.id).exists())
+        after = ProblemActivity.objects.filter(problem=self.problem).count()
+        self.assertEqual(after, before + 1)
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Removed document', latest.activity)
+        self.assertIn('chart.pdf', latest.activity)
+
+    def test_delete_orphan_document_audits_to_problem_None(self):
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem__isnull=True).count()
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+        after = ProblemActivity.objects.filter(problem__isnull=True).count()
+        self.assertEqual(after, before + 1)
+
+    def test_delete_already_gone_idempotent_success(self):
+        self.assertTrue(self._login(self.attending))
+        self.client.delete(self.url)
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+
+    def test_delete_stranger_physician_404_doc_preserved(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 404)
+        self.assertTrue(Document.objects.filter(id=self.doc.id).exists())
+
+
+class MobileDocumentProblemLinkTests(_RBACTestBase):
+    """POST/DELETE on `/api/patient/<pid>/document/<doc_id>/link/problem/<problem_id>`.
+    URL-coordinate identity → POST is idempotent via get_or_create."""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='P1')
+        self.doc = Document.objects.create(
+            document=SimpleUploadedFile('chart.pdf', b'fake', content_type='application/pdf'),
+            document_name='chart.pdf',
+            author=self.attending,
+            patient=self.patient,
+        )
+        self.url = f'/api/patient/{self.patient.id}/document/{self.doc.id}/link/problem/{self.problem.id}'
+
+    def test_post_creates_link_and_emits_problem_scoped_audit(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.post(self.url)
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['created'])
+        self.assertTrue(DocumentProblem.objects.filter(document=self.doc, problem=self.problem).exists())
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Linked document', latest.activity)
+
+    def test_post_idempotent_no_double_link_no_double_audit(self):
+        self.assertTrue(self._login(self.attending))
+        self.client.post(self.url)
+        audit_after_first = ProblemActivity.objects.filter(problem=self.problem).count()
+        resp = self.client.post(self.url)
+        data = json.loads(resp.content)
+        self.assertFalse(data['created'])
+        self.assertEqual(
+            DocumentProblem.objects.filter(document=self.doc, problem=self.problem).count(),
+            1,
+        )
+        self.assertEqual(
+            ProblemActivity.objects.filter(problem=self.problem).count(),
+            audit_after_first,
+        )
+
+    def test_delete_removes_link_and_emits_audit(self):
+        DocumentProblem.objects.create(document=self.doc, problem=self.problem, author=self.attending)
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(DocumentProblem.objects.filter(document=self.doc, problem=self.problem).exists())
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Unlinked document', latest.activity)
+
+    def test_delete_no_existing_link_no_audit_still_success(self):
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem=self.problem).count()
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+        after = ProblemActivity.objects.filter(problem=self.problem).count()
+        self.assertEqual(after, before)
+
+    def test_post_stranger_physician_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.post(self.url)
+        self.assertEqual(resp.status_code, 404)
+
+
+class MobileDocumentTodoLinkTests(_RBACTestBase):
+    """Sibling of MobileDocumentProblemLinkTests for the todo link table.
+    Audit goes to the todo's parent problem when present, else
+    problem=None."""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='P1')
+        self.todo_with_problem = ToDo.objects.create(
+            todo='lab follow-up', patient=self.patient, problem=self.problem,
+        )
+        self.problemless_todo = ToDo.objects.create(
+            todo='free-floating todo', patient=self.patient,
+        )
+        self.doc = Document.objects.create(
+            document=SimpleUploadedFile('chart.pdf', b'fake', content_type='application/pdf'),
+            document_name='chart.pdf',
+            author=self.attending,
+            patient=self.patient,
+        )
+
+    def _url(self, todo):
+        return f'/api/patient/{self.patient.id}/document/{self.doc.id}/link/todo/{todo.id}'
+
+    def test_post_creates_link_audit_on_todos_parent_problem(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.post(self._url(self.todo_with_problem))
+        self.assertEqual(resp.status_code, 200)
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Linked document to todo', latest.activity)
+
+    def test_post_link_to_problemless_todo_audits_to_problem_None(self):
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem__isnull=True).count()
+        resp = self.client.post(self._url(self.problemless_todo))
+        self.assertEqual(resp.status_code, 200)
+        after = ProblemActivity.objects.filter(problem__isnull=True).count()
+        self.assertEqual(after, before + 1)
+
+    def test_delete_removes_link_and_emits_audit(self):
+        DocumentTodo.objects.create(document=self.doc, todo=self.todo_with_problem, author=self.attending)
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.delete(self._url(self.todo_with_problem))
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(DocumentTodo.objects.filter(document=self.doc, todo=self.todo_with_problem).exists())
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Unlinked document from todo', latest.activity)
+
+    def test_post_stranger_physician_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.post(self._url(self.todo_with_problem))
+        self.assertEqual(resp.status_code, 404)
