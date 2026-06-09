@@ -1162,17 +1162,28 @@ def mobile_upload_document(request, patient_id):
     if not doc_file:
         return JsonResponse({'error': 'No file provided'}, status=400)
 
+    client_uuid = request.POST.get('client_uuid')
+    if not client_uuid:
+        # Required so retries can no-op rather than create duplicate rows.
+        # Matches the contract from mobile_upload_encounter_audio and
+        # mobile_upload_problem_image (PR-2). Pre-PR-4 clients that don't
+        # send this will start failing — coordinated with the iOS rollout
+        # of the matching `Document.syncID.uuidString` body field.
+        return JsonResponse({'error': 'client_uuid is required'}, status=400)
+
     document_name = request.POST.get('document_name', doc_file.name)
 
-    doc = Document(
-        document=doc_file,
-        document_name=document_name,
-        author=request.user,
-        patient=patient_user,
+    doc, created = Document.objects.get_or_create(
+        client_uuid=client_uuid,
+        defaults={
+            'document': doc_file,
+            'document_name': document_name,
+            'author': request.user,
+            'patient': patient_user,
+        },
     )
-    doc.save()
 
-    return JsonResponse({'success': True, 'id': doc.id})
+    return JsonResponse({'success': True, 'id': doc.id, 'created': created})
 
 
 # ---------- Problem Image endpoints (PR-2, 2026-06-08) ----------

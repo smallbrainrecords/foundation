@@ -195,6 +195,21 @@ def set_document_path(instance, filename):
         return "documents/{0}".format(filename)
 
 
+def set_document_path_uuid(instance, filename):
+    """PHI-safe upload path for Document.document used by the PR-4 mobile
+    upload endpoint (2026-06-08). Replaces the original "documents/<filename>"
+    pattern (which embeds the user-supplied filename in the GCS object key —
+    that name often carries patient identifiers from the source camera /
+    scanner). The extension is preserved so downstream renderers (PDF.js,
+    image viewers, Office tools) get the right MIME and handle the file
+    correctly. Pre-PR-4 rows retain their original paths in-place.
+    """
+    import os as _os
+    import uuid as _uuid
+    ext = _os.path.splitext(filename)[1].lower() or '.bin'
+    return 'documents/{0}{1}'.format(_uuid.uuid4(), ext)
+
+
 class ListField(models.TextField):
     description = "Stores a python list"
 
@@ -1144,7 +1159,11 @@ class MedicationTextNote(models.Model):
 
 # Merge class Document and ToDoAttachment
 class Document(models.Model):
-    document = models.FileField(upload_to='documents/', null=True)
+    # `upload_to=set_document_path_uuid` for PR-4 mobile uploads (2026-06-08)
+    # — UUID-keyed GCS object so patient ids and user-supplied filenames
+    # don't appear in raw Cloud Storage audit logs. Pre-PR-4 rows retain
+    # their original paths (Django only invokes upload_to on write).
+    document = models.FileField(upload_to=set_document_path_uuid, null=True)
     document_name = models.TextField(blank=True)
     labels = models.ManyToManyField(Label, blank=True)
     # TODO: These should being migrated to using reverse relationship
@@ -1156,6 +1175,11 @@ class Document(models.Model):
     patient = models.ForeignKey(User, related_name='patient_pinned', null=True, blank=True, on_delete=models.SET_NULL)
 
     created_on = models.DateTimeField(auto_now_add=True)
+    # PR-4 idempotent-retry column (mirrors PatientImage.client_uuid from PR-2,
+    # Encounter.client_uuid from earlier work). iOS sends `Document.syncID`
+    # here; `get_or_create(client_uuid=...)` collapses retried POSTs onto the
+    # same row without re-saving the GCS object.
+    client_uuid = models.UUIDField(null=True, blank=True, db_index=True, unique=True)
 
     class Meta:
         ordering = ['-created_on']
