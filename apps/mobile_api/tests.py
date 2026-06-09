@@ -1558,3 +1558,47 @@ class MobileDocumentTodoLinkTests(_RBACTestBase):
         self.assertTrue(self._login(self.stranger_doc))
         resp = self.client.post(self._url(self.todo_with_problem))
         self.assertEqual(resp.status_code, 404)
+
+
+# ============================================================================
+# Healthz liveness probe
+# ============================================================================
+
+
+class MobileHealthzTests(TestCase):
+    """`/api/healthz` is the no-auth uptime probe. Verifies it returns a
+    stable JSON shape AND doesn't accidentally require a session — a
+    `@login_required` decorator slip would render it useless for ops."""
+
+    def test_get_returns_200_with_status_ok(self):
+        client = Client()
+        resp = client.get('/api/healthz/')
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertEqual(data['status'], 'ok')
+        self.assertEqual(data['service'], 'smallbrain-api')
+
+    def test_healthz_does_not_require_auth(self):
+        # Anonymous client (no `client.login(...)`) must get 200 — the
+        # whole point of healthz is "no session needed".
+        client = Client()
+        resp = client.get('/api/healthz/')
+        self.assertEqual(resp.status_code, 200)
+        # And we don't redirect to login (302 would mean @login_required
+        # snuck onto the view).
+        self.assertNotIn(resp.status_code, (301, 302, 401, 403))
+
+    def test_post_returns_405(self):
+        client = Client()
+        resp = client.post('/api/healthz/')
+        self.assertEqual(resp.status_code, 405)
+
+    def test_trailing_slash_optional(self):
+        # Pattern accepts both `/api/healthz` and `/api/healthz/`. UptimeRobot
+        # and friends default to no trailing slash; Django's APPEND_SLASH
+        # would 301-redirect non-slash → with-slash, which an uptime monitor
+        # would record as "redirected" not "200". The `^healthz/?$` URL
+        # pattern serves both directly to avoid the redirect.
+        client = Client()
+        resp = client.get('/api/healthz')
+        self.assertEqual(resp.status_code, 200)

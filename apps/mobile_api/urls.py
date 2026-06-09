@@ -2,6 +2,7 @@ from django.urls import re_path as url
 from . import views
 
 urlpatterns = [
+    url(r'^healthz/?$', views.mobile_healthz),
     url(r'^login/$', views.mobile_login),
     url(r'^change-password/$', views.mobile_change_password),
     url(r'^staff-set-password/$', views.mobile_staff_set_password),

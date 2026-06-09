@@ -76,6 +76,29 @@ def _user_dict(user, profile=None):
 
 
 @csrf_exempt
+def mobile_healthz(request):
+    """GET -> 200 with a stable JSON shape. Liveness probe only — no auth,
+    no DB check.
+
+    Purpose: lets ops + uptime monitors (UptimeRobot, Better Stack, etc.)
+    confirm "Cloud Run is alive and Django is routing" without holding a
+    session cookie. A 5xx here = real outage (container crashed, Django
+    not booted, networking dropped). A 200 here does NOT guarantee the
+    DB is reachable — it confirms the API process is alive.
+
+    Intentionally does NOT touch Cloud SQL: a brief DB hiccup shouldn't
+    flap uptime monitoring (cause false-positive pager). Database health
+    is monitored separately at the Cloud SQL layer.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+    return JsonResponse({
+        'status': 'ok',
+        'service': 'smallbrain-api',
+    })
+
+
+@csrf_exempt
 def mobile_login(request):
     """POST {username, password} -> user info + session cookie."""
     if request.method != 'POST':
