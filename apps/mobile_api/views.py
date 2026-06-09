@@ -1135,9 +1135,21 @@ def mobile_update_encounter(request, patient_id, encounter_id):
 @csrf_exempt
 @login_required
 def mobile_upload_document(request, patient_id):
-    """POST multipart: create document record + upload file."""
+    """POST multipart: create document record + upload file.
+
+    PR-4 (2026-06-08) added the `_assert_patient_access` gate. Before this
+    patch, any authenticated user could upload to any patient by guessing the
+    id (same IDOR family as the audio/document/image read proxies — closed
+    in PR-2 SEC-FIX `f0be8d93`). Do NOT remove without coordinating with the
+    PHI policy in CLAUDE.md.
+    """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        # Uniform 404 — don't leak the patient's existence to an unauthorized
+        # caller (same shape as the read proxies).
+        return JsonResponse({'error': 'Patient not found'}, status=404)
 
     from django.contrib.auth.models import User
 
