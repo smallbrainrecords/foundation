@@ -24,6 +24,14 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)$', views.mobile_delete_document),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/problem/(?P<problem_id>\d+)$', views.mobile_document_problem_link),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/todo/(?P<todo_id>\d+)$', views.mobile_document_todo_link),
+    # PR-5 (2026-06-11) Shared unassigned documents pool (per-team).
+    url(r'^team/(?P<team_id>\d+)/unassigned-document/upload$', views.mobile_upload_unassigned_document),
+    url(r'^team/unassigned-documents/list$', views.mobile_unassigned_documents_list),
+    url(r'^team/unassigned-document/(?P<document_id>\d+)/claim$', views.mobile_unassigned_document_claim),
+    url(r'^team/unassigned-document/(?P<document_id>\d+)/claim-heartbeat$', views.mobile_unassigned_document_claim_heartbeat),
+    url(r'^team/unassigned-document/(?P<document_id>\d+)/release$', views.mobile_unassigned_document_release),
+    url(r'^team/unassigned-document/(?P<document_id>\d+)/assign$', views.mobile_unassigned_document_assign),
+    url(r'^team/unassigned-document/(?P<document_id>\d+)$', views.mobile_unassigned_document_delete),
     # Problem images (PR-2)
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/image$', views.mobile_upload_problem_image),
     url(r'^patient/(?P<patient_id>\d+)/image/(?P<image_id>\d+)$', views.mobile_delete_problem_image),

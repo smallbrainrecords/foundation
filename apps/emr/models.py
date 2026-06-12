@@ -1181,6 +1181,24 @@ class Document(models.Model):
     # same row without re-saving the GCS object.
     client_uuid = models.UUIDField(null=True, blank=True, db_index=True, unique=True)
 
+    # PR-5 (2026-06-11) shared unassigned pool. When `patient` is NULL and
+    # `team` is set, the row is in the per-team unassigned pool — visible to
+    # any staff user who is a member of the team via `PhysicianTeam`. On
+    # assign, `patient` is set, `team` is cleared back to NULL, and the
+    # claim columns are wiped in the same UPDATE. The `team` FK references
+    # a physician User (the PhysicianTeam's "physician_id" identifier).
+    # `claimed_by` + `claimed_at` implement soft-claim concurrency with a
+    # server-side expiry of 5 minutes — see `mobile_unassigned_documents_list`.
+    team = models.ForeignKey(
+        User, related_name='team_unassigned_documents',
+        null=True, blank=True, on_delete=models.SET_NULL,
+    )
+    claimed_by = models.ForeignKey(
+        User, related_name='claimed_documents',
+        null=True, blank=True, on_delete=models.SET_NULL,
+    )
+    claimed_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ['-created_on']
 

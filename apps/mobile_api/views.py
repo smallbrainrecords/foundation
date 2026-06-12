@@ -1291,6 +1291,428 @@ def mobile_delete_document(request, patient_id, document_id):
     return JsonResponse({'success': True})
 
 
+# ---------------------------------------------------------------------------
+# PR-5 (2026-06-11) — Shared unassigned documents pool.
+#
+# Per-team pool of PDFs awaiting assignment to a patient. Visible to all
+# staff users who are members of the team via `PhysicianTeam`. Soft-claim
+# concurrency: when a user opens a doc, server stamps `claimed_by` +
+# `claimed_at`; auto-expires after `_UNASSIGNED_CLAIM_TTL_SECONDS` of no
+# heartbeat (5 min). Heartbeat fires every 60s from the iOS detail view.
+#
+# On `assign`, the row UPDATEs in place: `patient` ← target, `team` ← NULL,
+# `claimed_*` ← NULL. The GCS object stays at `documents/<uuid>.<ext>` (same
+# path the standard upload uses) — access control is checked via the DB row,
+# not the path.
+# ---------------------------------------------------------------------------
+
+_UNASSIGNED_CLAIM_TTL_SECONDS = 300  # 5 minutes
+_UNASSIGNED_DOCS_LOGGER = logging.getLogger('smallbrain.unassigned_docs')
+
+
+def _user_team_ids(user):
+    """Returns the set of physician/team ids this user can access for the
+    unassigned pool. Mirrors the role table in `_assert_patient_access`."""
+    try:
+        role = user.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        return set()
+
+    if role == 'admin':
+        # Admins see every team's pool. The list endpoint converts this
+        # marker into a no-filter query.
+        return None
+    elif role == 'physician':
+        # A physician IS their own team.
+        return {user.id}
+    elif role in ('secretary', 'mid-level', 'nurse'):
+        return set(
+            PhysicianTeam.objects.filter(member=user).values_list('physician_id', flat=True)
+        )
+    return set()
+
+
+def _assert_team_access(user, team_id):
+    """True if `user` may upload to / claim / assign / delete from team
+    `team_id`'s unassigned pool. Same role table as `_assert_patient_access`,
+    re-used for the unassigned-pool endpoints."""
+    try:
+        team_id = int(team_id)
+    except (TypeError, ValueError):
+        return False
+
+    allowed = _user_team_ids(user)
+    if allowed is None:  # admin
+        return True
+    return team_id in allowed
+
+
+def _sweep_expired_claims():
+    """Clear claims older than the TTL. Run inline on every list query —
+    cheap UPDATE with a partial index on `claimed_at IS NOT NULL` would be
+    ideal but the table is small enough today that a plain WHERE is fine."""
+    from django.utils import timezone
+    from datetime import timedelta
+    cutoff = timezone.now() - timedelta(seconds=_UNASSIGNED_CLAIM_TTL_SECONDS)
+    Document.objects.filter(
+        patient__isnull=True,
+        team__isnull=False,
+        claimed_at__lt=cutoff,
+    ).update(claimed_by=None, claimed_at=None)
+
+
+def _unassigned_doc_dict(doc):
+    """Serialize one unassigned-pool row for the list response. Mirrors the
+    snake_case raw-dict pattern from `mobile_patients` etc."""
+    return {
+        'id': doc.id,
+        'client_uuid': str(doc.client_uuid) if doc.client_uuid else None,
+        'team_id': doc.team_id,
+        'document_name': doc.document_name or '',
+        'file_name': os.path.basename(doc.document.name) if doc.document else '',
+        'mime_type': doc.file_mime_type(),
+        'file_size': doc.document.size if doc.document else 0,
+        'author_id': doc.author_id,
+        'author_name': (
+            f"{doc.author.first_name} {doc.author.last_name}".strip() or doc.author.username
+        ) if doc.author_id else '',
+        'created_at': doc.created_on.isoformat() if doc.created_on else None,
+        'claimed_by_id': doc.claimed_by_id,
+        'claimed_by_name': (
+            f"{doc.claimed_by.first_name} {doc.claimed_by.last_name}".strip() or doc.claimed_by.username
+        ) if doc.claimed_by_id else None,
+        'claimed_at': doc.claimed_at.isoformat() if doc.claimed_at else None,
+    }
+
+
+@csrf_exempt
+@login_required
+def mobile_upload_unassigned_document(request, team_id):
+    """POST multipart -> create an unassigned-pool Document scoped to a team.
+
+    Path mirrors `mobile_upload_document` shape: same `client_uuid`
+    idempotency, same GCS path scheme (`documents/<uuid>.<ext>` via
+    `set_document_path_uuid`). The only difference is `patient` stays NULL
+    and `team` is set. Audit emission is deferred to the `assign` endpoint
+    — there is no patient timeline to hang a row on while the doc is in
+    the pool. Operational log on success for trail visibility.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    if not _assert_team_access(request.user, team_id):
+        return JsonResponse({'error': 'Team not found'}, status=404)
+
+    from django.contrib.auth.models import User
+
+    try:
+        team_user = User.objects.get(id=team_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Team not found'}, status=404)
+
+    doc_file = request.FILES.get('file')
+    if not doc_file:
+        return JsonResponse({'error': 'No file provided'}, status=400)
+
+    client_uuid = request.POST.get('client_uuid')
+    if not client_uuid:
+        return JsonResponse({'error': 'client_uuid is required'}, status=400)
+
+    document_name = request.POST.get('document_name', doc_file.name)
+
+    doc, created = Document.objects.get_or_create(
+        client_uuid=client_uuid,
+        defaults={
+            'document': doc_file,
+            'document_name': document_name,
+            'author': request.user,
+            'patient': None,
+            'team': team_user,
+        },
+    )
+
+    return JsonResponse({'success': True, 'id': doc.id, 'created': created})
+
+
+@csrf_exempt
+@login_required
+def mobile_unassigned_documents_list(request):
+    """GET -> merged unassigned-pool list across every team the caller is a
+    member of. Admins see every team's pool. Sweeps expired claims first
+    so the response reflects current claim state without requiring a
+    background job."""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    _sweep_expired_claims()
+
+    allowed = _user_team_ids(request.user)
+    qs = Document.objects.filter(patient__isnull=True, team__isnull=False)
+    if allowed is None:
+        pass  # admin: no further filter
+    elif not allowed:
+        return JsonResponse({'success': True, 'documents': []})
+    else:
+        qs = qs.filter(team_id__in=allowed)
+
+    qs = qs.select_related('author', 'claimed_by').order_by('-created_on')
+
+    return JsonResponse({
+        'success': True,
+        'documents': [_unassigned_doc_dict(d) for d in qs],
+    })
+
+
+@csrf_exempt
+@login_required
+def mobile_unassigned_document_claim(request, document_id):
+    """POST -> try to claim an unassigned doc. Returns 409 with the existing
+    claimant if held by someone else. Idempotent: re-claiming a doc you
+    already hold refreshes `claimed_at` (functionally the same as the
+    heartbeat endpoint)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    from django.utils import timezone
+    from datetime import timedelta
+
+    with transaction.atomic():
+        try:
+            # FOR UPDATE serializes concurrent claims on the same row.
+            doc = Document.objects.select_for_update().get(
+                id=document_id, patient__isnull=True, team__isnull=False,
+            )
+        except Document.DoesNotExist:
+            return JsonResponse({'error': 'Document not found'}, status=404)
+
+        if not _assert_team_access(request.user, doc.team_id):
+            return JsonResponse({'error': 'Document not found'}, status=404)
+
+        cutoff = timezone.now() - timedelta(seconds=_UNASSIGNED_CLAIM_TTL_SECONDS)
+        held_by_other = (
+            doc.claimed_by_id is not None
+            and doc.claimed_by_id != request.user.id
+            and doc.claimed_at is not None
+            and doc.claimed_at >= cutoff
+        )
+        if held_by_other:
+            return JsonResponse({
+                'success': False,
+                'reason': 'already_claimed',
+                'claimed_by_id': doc.claimed_by_id,
+                'claimed_by_name': (
+                    f"{doc.claimed_by.first_name} {doc.claimed_by.last_name}".strip()
+                    or doc.claimed_by.username
+                ),
+                'claimed_at': doc.claimed_at.isoformat() if doc.claimed_at else None,
+            }, status=409)
+
+        doc.claimed_by = request.user
+        doc.claimed_at = timezone.now()
+        doc.save(update_fields=['claimed_by', 'claimed_at'])
+
+    return JsonResponse({'success': True, 'document': _unassigned_doc_dict(doc)})
+
+
+@csrf_exempt
+@login_required
+def mobile_unassigned_document_claim_heartbeat(request, document_id):
+    """POST -> refresh `claimed_at` if the caller is the current claimant.
+    No-op (returns 409) if someone else holds the claim — the iOS detail
+    view will see the 409 and dismiss itself."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    from django.utils import timezone
+
+    with transaction.atomic():
+        try:
+            doc = Document.objects.select_for_update().get(
+                id=document_id, patient__isnull=True, team__isnull=False,
+            )
+        except Document.DoesNotExist:
+            return JsonResponse({'error': 'Document not found'}, status=404)
+
+        if not _assert_team_access(request.user, doc.team_id):
+            return JsonResponse({'error': 'Document not found'}, status=404)
+
+        if doc.claimed_by_id != request.user.id:
+            return JsonResponse({
+                'success': False,
+                'reason': 'not_holder',
+            }, status=409)
+
+        doc.claimed_at = timezone.now()
+        doc.save(update_fields=['claimed_at'])
+
+    return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+def mobile_unassigned_document_release(request, document_id):
+    """POST -> clear the claim if held by the caller. Idempotent: returns
+    success even if the claim has already lapsed or someone else holds it
+    (releasing-what-you-don't-hold is a no-op from your perspective)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    with transaction.atomic():
+        try:
+            doc = Document.objects.select_for_update().get(
+                id=document_id, patient__isnull=True, team__isnull=False,
+            )
+        except Document.DoesNotExist:
+            return JsonResponse({'success': True})
+
+        if doc.claimed_by_id == request.user.id:
+            doc.claimed_by = None
+            doc.claimed_at = None
+            doc.save(update_fields=['claimed_by', 'claimed_at'])
+
+    return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+def mobile_unassigned_document_assign(request, document_id):
+    """POST -> assign an unassigned doc to a patient. Body: `{patient_id,
+    document_name?}`. Validates the caller currently holds the claim (or
+    that the claim is unheld); validates the caller has access to the
+    target patient; UPDATEs the row in place; emits the standard
+    `Added document: <name>` audit on the patient timeline."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        body = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    target_patient_id = body.get('patient_id')
+    if not target_patient_id:
+        return JsonResponse({'error': 'patient_id required'}, status=400)
+
+    if not _assert_patient_access(request.user, target_patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    from django.contrib.auth.models import User
+    from django.utils import timezone
+    from datetime import timedelta
+
+    try:
+        target_patient = User.objects.get(id=target_patient_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    with transaction.atomic():
+        try:
+            doc = Document.objects.select_for_update().get(
+                id=document_id, patient__isnull=True, team__isnull=False,
+            )
+        except Document.DoesNotExist:
+            return JsonResponse({'error': 'Document not found'}, status=404)
+
+        if not _assert_team_access(request.user, doc.team_id):
+            return JsonResponse({'error': 'Document not found'}, status=404)
+
+        cutoff = timezone.now() - timedelta(seconds=_UNASSIGNED_CLAIM_TTL_SECONDS)
+        held_by_other = (
+            doc.claimed_by_id is not None
+            and doc.claimed_by_id != request.user.id
+            and doc.claimed_at is not None
+            and doc.claimed_at >= cutoff
+        )
+        if held_by_other:
+            return JsonResponse({
+                'success': False,
+                'reason': 'already_claimed',
+                'claimed_by_id': doc.claimed_by_id,
+            }, status=409)
+
+        new_name = body.get('document_name')
+        if new_name:
+            doc.document_name = new_name
+
+        doc.patient = target_patient
+        doc.team = None
+        doc.claimed_by = None
+        doc.claimed_at = None
+        doc.save(update_fields=[
+            'patient', 'team', 'claimed_by', 'claimed_at', 'document_name',
+        ])
+
+        _emit_document_audit(
+            doc, request.user,
+            f"Added document: {doc.document_name or 'document'}",
+        )
+
+    _UNASSIGNED_DOCS_LOGGER.info(json.dumps({
+        'severity': 'INFO',
+        'message': 'unassigned_document_assigned',
+        'document_id': doc.id,
+        'patient_id': int(target_patient_id),
+        'actor_id': request.user.id,
+        'serviceContext': {'service': 'smallbrain-api'},
+    }))
+
+    return JsonResponse({'success': True, 'id': doc.id})
+
+
+@csrf_exempt
+@login_required
+def mobile_unassigned_document_delete(request, document_id):
+    """DELETE -> hard-delete an unassigned-pool row + its GCS object.
+    Allowed only when the doc is unclaimed or claimed by the caller. No
+    patient timeline to audit to — operational log only."""
+    if request.method != 'DELETE':
+        return JsonResponse({'error': 'DELETE required'}, status=405)
+
+    from django.utils import timezone
+    from datetime import timedelta
+
+    with transaction.atomic():
+        try:
+            doc = Document.objects.select_for_update().get(
+                id=document_id, patient__isnull=True, team__isnull=False,
+            )
+        except Document.DoesNotExist:
+            return JsonResponse({'success': True})
+
+        if not _assert_team_access(request.user, doc.team_id):
+            return JsonResponse({'error': 'Document not found'}, status=404)
+
+        cutoff = timezone.now() - timedelta(seconds=_UNASSIGNED_CLAIM_TTL_SECONDS)
+        held_by_other = (
+            doc.claimed_by_id is not None
+            and doc.claimed_by_id != request.user.id
+            and doc.claimed_at is not None
+            and doc.claimed_at >= cutoff
+        )
+        if held_by_other:
+            return JsonResponse({
+                'success': False,
+                'reason': 'already_claimed',
+            }, status=409)
+
+        snapshot_id = doc.id
+        snapshot_team_id = doc.team_id
+        if doc.document:
+            doc.document.delete(save=False)
+        doc.delete()
+
+    _UNASSIGNED_DOCS_LOGGER.info(json.dumps({
+        'severity': 'INFO',
+        'message': 'unassigned_document_deleted',
+        'document_id': snapshot_id,
+        'team_id': snapshot_team_id,
+        'actor_id': request.user.id,
+        'serviceContext': {'service': 'smallbrain-api'},
+    }))
+
+    return JsonResponse({'success': True})
+
+
 @csrf_exempt
 @login_required
 def mobile_document_problem_link(request, patient_id, document_id, problem_id):
