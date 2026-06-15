@@ -21,6 +21,7 @@ import os
 import reversion
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey
 
 from emr.managers import AOneCManager, ProblemManager, ProblemNoteManager, EncounterManager, \
@@ -532,6 +533,14 @@ class ToDo(models.Model):
     """
     todo = models.TextField()
     accomplished = models.BooleanField(default=False)
+    # Timestamp of the most recent transition from accomplished=False -> True.
+    # Cleared when accomplished flips back to False. Source of truth for
+    # mobile's "Accomplished (most recent first)" UI on the patient overview.
+    # Managed by ToDo.save() so any code path (mobile API, web frontend,
+    # admin) stays consistent without per-call wiring. Bulk .update() bypasses
+    # save() — backfilled once via migration 0177; new bulk writers must set
+    # the field explicitly.
+    accomplished_at = models.DateTimeField(blank=True, null=True, db_index=True)
     due_date = models.DateTimeField(blank=True, null=True)
     order = models.BigIntegerField(null=True, blank=True)  # Position in normal todo list
 
@@ -549,6 +558,25 @@ class ToDo(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     objects = TodoManager()
+
+    def save(self, *args, **kwargs):
+        # Stamp/clear accomplished_at on every save where the accomplished
+        # flag transitions. Centralized here so mobile_update_todo,
+        # web frontend toggles, and any future writer all behave the same.
+        if self.pk:
+            try:
+                prior = ToDo.objects.only('accomplished').get(pk=self.pk)
+            except ToDo.DoesNotExist:
+                prior = None
+            if prior is not None:
+                if self.accomplished and not prior.accomplished:
+                    self.accomplished_at = timezone.now()
+                elif not self.accomplished and prior.accomplished:
+                    self.accomplished_at = None
+        elif self.accomplished and self.accomplished_at is None:
+            # Brand-new todo created in the accomplished state.
+            self.accomplished_at = timezone.now()
+        super().save(*args, **kwargs)
 
     def __unicode__(self):
         return '%s' % (unicode(self.todo))
