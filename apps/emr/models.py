@@ -278,6 +278,29 @@ class UserProfile(models.Model):
     insurance_medicare = models.BooleanField(default=False)
     insurance_note = models.TextField(blank=True)
 
+    # Provider (physician) identity fields. Used by the mobile print pipeline
+    # so any team member can produce documents signed by their physician.
+    credentials = models.CharField(max_length=20, blank=True)
+    npi_number = models.CharField(max_length=20, blank=True)
+    signature_image = models.ImageField(upload_to='signatures/', blank=True, null=True)
+
+    # Practice info — flat denormalized fields on the physician's profile.
+    # Team members printing on behalf of a physician resolve these via the
+    # PatientController/PhysicianTeam chain in the iOS OrderRequisitionView.
+    practice_name = models.CharField(max_length=200, blank=True)
+    practice_street_address = models.CharField(max_length=200, blank=True)
+    practice_city = models.CharField(max_length=100, blank=True)
+    practice_state = models.CharField(max_length=50, blank=True)
+    practice_zip = models.CharField(max_length=20, blank=True)
+    practice_phone = models.CharField(max_length=20, blank=True)
+    practice_fax = models.CharField(max_length=20, blank=True)
+
+    # auto_now bumps on any save — used as the cache-bust version param
+    # appended to signature_url so iOS image caches invalidate when the
+    # physician redraws their signature (or changes any profile field —
+    # cheap to over-bust: signature PNGs are ~5–30 KB).
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
 

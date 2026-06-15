@@ -16,6 +16,11 @@ urlpatterns = [
     url(r'^media/encounter/(?P<encounter_id>\d+)/audio$', views.mobile_encounter_audio),
     url(r'^media/document/(?P<document_id>\d+)/file$', views.mobile_document_file),
     url(r'^media/image/(?P<image_id>\d+)$', views.mobile_image_file),
+    url(r'^media/signature/(?P<user_id>\d+)$', views.mobile_signature_file),
+    # User profile self-update (mirrors iOS AuthService.updateUserProfile)
+    # + signature upload (multipart, self-only).
+    url(r'^user/(?P<user_id>\d+)/update/$', views.mobile_update_user),
+    url(r'^user/(?P<user_id>\d+)/signature/upload$', views.mobile_upload_signature),
     url(r'^patient/(?P<patient_id>\d+)/encounter/upload-audio$', views.mobile_upload_encounter_audio),
     url(r'^patient/(?P<patient_id>\d+)/encounter$', views.mobile_create_encounter),
     url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)$', views.mobile_update_encounter),
@@ -46,6 +51,7 @@ urlpatterns = [
     # Todo CRUD
     url(r'^patient/(?P<patient_id>\d+)/todo$', views.mobile_create_todo),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)$', views.mobile_update_todo),
+    url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/log-print$', views.mobile_log_todo_print),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/comment$', views.mobile_create_todo_comment),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/label$', views.mobile_create_todo_label),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/member$', views.mobile_add_todo_member),

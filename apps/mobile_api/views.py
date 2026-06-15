@@ -46,6 +46,7 @@ def _user_dict(user, profile=None):
             profile = None
     portrait_url = None
     cover_url = None
+    signature_url = None
     if profile:
         try:
             if profile.portrait_image and profile.portrait_image.name and not profile.portrait_image.name.startswith('/static/'):
@@ -55,6 +56,18 @@ def _user_dict(user, profile=None):
         try:
             if profile.cover_image and profile.cover_image.name and not profile.cover_image.name.startswith('/static/'):
                 cover_url = profile.cover_image.url
+        except Exception:
+            pass
+        try:
+            if profile.signature_image and profile.signature_image.name:
+                # Route through the RBAC-gated proxy rather than handing out
+                # the raw GCS URL. Append updated_at as a cache-bust version
+                # param so iOS image caches invalidate when the physician
+                # redraws their signature.
+                version = ''
+                if profile.updated_at:
+                    version = '?v=%d' % int(profile.updated_at.timestamp())
+                signature_url = '/api/media/signature/%d%s' % (user.id, version)
         except Exception:
             pass
 
@@ -72,6 +85,20 @@ def _user_dict(user, profile=None):
         'summary': profile.summary if profile else '',
         'portrait_image_url': portrait_url,
         'cover_image_url': cover_url,
+        # Provider identity — populated only for physicians; empty strings
+        # for everyone else. iOS reads these off the resolved physician in
+        # OrderRequisitionView.
+        'credentials': profile.credentials if profile else '',
+        'npi_number': profile.npi_number if profile else '',
+        'signature_url': signature_url,
+        # Practice block — physician's office info; flat denormalized fields.
+        'practice_name': profile.practice_name if profile else '',
+        'practice_street_address': profile.practice_street_address if profile else '',
+        'practice_city': profile.practice_city if profile else '',
+        'practice_state': profile.practice_state if profile else '',
+        'practice_zip': profile.practice_zip if profile else '',
+        'practice_phone': profile.practice_phone if profile else '',
+        'practice_fax': profile.practice_fax if profile else '',
     }
 
 
@@ -200,6 +227,188 @@ def mobile_staff_set_password(request):
     target_user.set_password(new_password)
     target_user.save()
     return JsonResponse({'success': True, 'message': 'Password updated'})
+
+
+@csrf_exempt
+@login_required
+def mobile_update_user(request, user_id):
+    """PATCH/POST {first_name?, last_name?, email?, phone?, sex?, summary?,
+    date_of_birth?, credentials?, npi_number?, practice_*?} for a user.
+
+    Self-only unless caller is admin. Mirrors fields used by the iOS
+    SettingsView Profile + Practice tabs. iOS has been calling this URL
+    (`/api/user/<id>/update/`) for a while via AuthService.updateUserProfile,
+    but the endpoint never actually existed server-side — error was silently
+    swallowed (see AuthService.swift:291). Creating it here fixes that latent
+    bug AND delivers the new provider/practice fields in one stroke.
+    """
+    if request.method not in ('PATCH', 'POST'):
+        return JsonResponse({'error': 'PATCH required'}, status=405)
+
+    try:
+        target_user_id = int(user_id)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Invalid user_id'}, status=400)
+
+    # Self-only OR admin.
+    is_self = (request.user.id == target_user_id)
+    is_admin = False
+    try:
+        is_admin = request.user.profile.role == 'admin'
+    except (UserProfile.DoesNotExist, AttributeError):
+        pass
+    if not (is_self or is_admin):
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    from django.contrib.auth.models import User
+    try:
+        target_user = User.objects.get(id=target_user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    profile, _ = UserProfile.objects.get_or_create(user=target_user)
+
+    body = _parse_body(request)
+
+    # User table fields.
+    if 'first_name' in body:
+        target_user.first_name = body['first_name'] or ''
+    if 'last_name' in body:
+        target_user.last_name = body['last_name'] or ''
+    if 'email' in body:
+        target_user.email = body['email'] or ''
+    target_user.save()
+
+    # UserProfile fields.
+    if 'phone' in body:
+        profile.phone_number = body['phone'] or ''
+    if 'phone_number' in body:
+        profile.phone_number = body['phone_number'] or ''
+    if 'sex' in body:
+        profile.sex = body['sex'] or ''
+    if 'summary' in body:
+        profile.summary = body['summary'] or ''
+    if 'date_of_birth' in body:
+        from django.utils.dateparse import parse_datetime, parse_date
+        raw = body['date_of_birth']
+        if raw:
+            parsed = parse_datetime(raw) or parse_date(raw)
+            profile.date_of_birth = parsed
+        else:
+            profile.date_of_birth = None
+
+    # Provider identity (physicians populate; others typically blank).
+    if 'credentials' in body:
+        profile.credentials = body['credentials'] or ''
+    if 'npi_number' in body:
+        profile.npi_number = body['npi_number'] or ''
+
+    # Practice block.
+    for key in (
+        'practice_name', 'practice_street_address', 'practice_city',
+        'practice_state', 'practice_zip', 'practice_phone', 'practice_fax',
+    ):
+        if key in body:
+            setattr(profile, key, body[key] or '')
+
+    profile.save()
+
+    return JsonResponse({'success': True, 'user': _user_dict(target_user, profile)})
+
+
+@csrf_exempt
+@login_required
+def mobile_upload_signature(request, user_id):
+    """POST multipart {file} -> stores the signature PNG on the user's
+    profile. Self-only (no admin override — signatures are personal).
+
+    Overwrites any prior signature. No client_uuid required because the
+    field is single-slot (not append-only like documents).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        target_user_id = int(user_id)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Invalid user_id'}, status=400)
+
+    # Hard self-only — medico-legal. A staff member must not be able to
+    # upload another user's signature via path-parameter manipulation.
+    if request.user.id != target_user_id:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    sig_file = request.FILES.get('file')
+    if not sig_file:
+        return JsonResponse({'error': 'No file provided'}, status=400)
+
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile.signature_image = sig_file
+    profile.save()
+
+    return JsonResponse({'success': True, 'user': _user_dict(request.user, profile)})
+
+
+def _assert_signature_accessible(viewer, target_user_id):
+    """Returns True if `viewer` is allowed to fetch `target_user_id`'s
+    signature image. Self, admin, or a member of a PhysicianTeam where
+    target is the physician. Covers: nurses/secretaries/mid-levels printing
+    on behalf of their supervising physician.
+    """
+    try:
+        target_user_id = int(target_user_id)
+    except (TypeError, ValueError):
+        return False
+
+    if viewer.id == target_user_id:
+        return True
+
+    try:
+        role = viewer.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        return False
+
+    if role == 'admin':
+        return True
+
+    return PhysicianTeam.objects.filter(
+        physician_id=target_user_id,
+        member=viewer,
+    ).exists()
+
+
+@csrf_exempt
+@login_required
+def mobile_signature_file(request, user_id):
+    """GET -> stream the user's signature_image. Gated by
+    `_assert_signature_accessible`. Uniform 404 on deny so callers can't
+    probe team membership.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    if not _assert_signature_accessible(request.user, user_id):
+        return JsonResponse({'error': 'Signature not found'}, status=404)
+
+    from django.contrib.auth.models import User
+    try:
+        target_user = User.objects.get(id=int(user_id))
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Signature not found'}, status=404)
+
+    try:
+        profile = target_user.profile
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'error': 'Signature not found'}, status=404)
+
+    if not profile.signature_image or not profile.signature_image.name:
+        return JsonResponse({'error': 'Signature not found'}, status=404)
+
+    from django.http import FileResponse
+    try:
+        return FileResponse(profile.signature_image.open('rb'), content_type='image/png')
+    except Exception:
+        return JsonResponse({'error': 'Signature not found'}, status=404)
 
 
 @csrf_exempt
@@ -2395,6 +2604,46 @@ def mobile_update_todo(request, patient_id, todo_id):
                 todo.problem, request.user,
                 f'Todo "{todo.todo}" marked {status_word}'
             )
+    return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+def mobile_log_todo_print(request, patient_id, todo_id):
+    """POST {provider_id?: int} -> emits a 'printed requisition' TodoActivity
+    row. iOS fire-and-forgets this after a successful Order Requisition
+    print so the audit trail mirrors the server-authoritative pattern
+    documented in CLAUDE.md (vs. an iOS-local ActivityLogEntry write).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    try:
+        todo = ToDo.objects.get(id=todo_id, patient_id=patient_id)
+    except ToDo.DoesNotExist:
+        return JsonResponse({'error': 'Todo not found'}, status=404)
+
+    body = _parse_body(request)
+    provider_id = body.get('provider_id')
+
+    provider_name = ''
+    if provider_id:
+        from django.contrib.auth.models import User
+        try:
+            provider = User.objects.get(id=int(provider_id))
+            provider_name = provider.get_full_name() or provider.username
+        except (User.DoesNotExist, TypeError, ValueError):
+            pass
+
+    if provider_name:
+        activity = f"Printed requisition signed by {provider_name}"
+    else:
+        activity = "Printed requisition"
+
+    add_todo_activity(todo, request.user, activity)
     return JsonResponse({'success': True})
 
 
