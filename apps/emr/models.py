@@ -1378,6 +1378,8 @@ def sync_encounter_to_openemr(sender, instance, created, **kwargs):
     """
     Hook to push Encounter data to OpenEMR via FHIR when it concludes.
     """
+    return # Disabled for now to prevent connection refused errors
+    
     # Sync if the encounter is finished (stoptime is set)
     if not instance.is_active() and instance.stoptime:
         try:

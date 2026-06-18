@@ -467,13 +467,27 @@ def mobile_patients(request):
         patient_user_ids = []
 
     from django.contrib.auth.models import User
+    from django.db.models import Count
+    from apps.emr.models import Problem, Todo
+
+    problems_counts = dict(
+        Problem.objects.filter(
+            patient_id__in=patient_user_ids, is_active=True
+        ).values('patient_id').annotate(c=Count('id')).values_list('patient_id', 'c')
+    )
+    todos_counts = dict(
+        Todo.objects.filter(
+            patient_id__in=patient_user_ids, accomplished=False
+        ).values('patient_id').annotate(c=Count('id')).values_list('patient_id', 'c')
+    )
+
     patients = User.objects.filter(id__in=patient_user_ids).select_related('profile')
 
     result = []
     for u in patients:
         d = _user_dict(u)
-        d['problem_count'] = Problem.objects.filter(patient=u, is_active=True).count()
-        d['todo_count'] = ToDo.objects.filter(patient=u, accomplished=False).count()
+        d['problem_count'] = problems_counts.get(u.id, 0)
+        d['todo_count'] = todos_counts.get(u.id, 0)
         result.append(d)
 
     pc_list = [
@@ -823,11 +837,7 @@ def _mobile_patient_full_inner(request, patient_id):
         for obs in Observation.objects.filter(subject=patient_user):
             components = []
             for comp in ObservationComponent.objects.filter(observation=obs):
-                values_qs = ObservationValue.objects.filter(component=comp).order_by('-effective_datetime')
-                if since:
-                    values_qs = values_qs.filter(effective_datetime__gte=since)
-                else:
-                    values_qs = values_qs[:max_obs_values]
+                values_qs = ObservationValue.objects.filter(component=comp).order_by('-effective_datetime')[:max_obs_values]
                 values = []
                 for val in values_qs:
                     values.append({
@@ -1073,10 +1083,16 @@ def mobile_document_file(request, document_id):
     except Document.DoesNotExist:
         return JsonResponse({'error': 'Document not found'}, status=404)
 
-    # Orphans (patient=None from SET_NULL on patient deletion, or never set)
-    # are denied unconditionally. Uniform 404 with the access-denied path so
-    # callers can't probe orphan-vs-access-denied.
-    if doc.patient_id is None or not _assert_patient_access(request.user, doc.patient_id):
+    # If it's assigned to a patient, assert patient access.
+    # If it's an unassigned document (patient=None, team!=None), assert team access.
+    # Otherwise (true orphan), deny.
+    if doc.patient_id is not None:
+        if not _assert_patient_access(request.user, doc.patient_id):
+            return JsonResponse({'error': 'Document not found'}, status=404)
+    elif doc.team_id is not None:
+        if not request.user.teams.filter(id=doc.team_id).exists():
+            return JsonResponse({'error': 'Document not found'}, status=404)
+    else:
         return JsonResponse({'error': 'Document not found'}, status=404)
 
     if not doc.document:
