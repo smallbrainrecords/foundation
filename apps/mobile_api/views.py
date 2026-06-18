@@ -1090,7 +1090,7 @@ def mobile_document_file(request, document_id):
         if not _assert_patient_access(request.user, doc.patient_id):
             return JsonResponse({'error': 'Document not found'}, status=404)
     elif doc.team_id is not None:
-        if not request.user.teams.filter(id=doc.team_id).exists():
+        if not _assert_team_access(request.user, doc.team_id):
             return JsonResponse({'error': 'Document not found'}, status=404)
     else:
         return JsonResponse({'error': 'Document not found'}, status=404)
