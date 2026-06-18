@@ -468,7 +468,7 @@ def mobile_patients(request):
 
     from django.contrib.auth.models import User
     from django.db.models import Count
-    from apps.emr.models import Problem, Todo
+    from apps.emr.models import Problem, ToDo
 
     problems_counts = dict(
         Problem.objects.filter(
@@ -476,7 +476,7 @@ def mobile_patients(request):
         ).values('patient_id').annotate(c=Count('id')).values_list('patient_id', 'c')
     )
     todos_counts = dict(
-        Todo.objects.filter(
+        ToDo.objects.filter(
             patient_id__in=patient_user_ids, accomplished=False
         ).values('patient_id').annotate(c=Count('id')).values_list('patient_id', 'c')
     )
