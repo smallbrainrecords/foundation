@@ -735,6 +735,7 @@ def _mobile_patient_full_inner(request, patient_id):
             'id': p.id,
             'problem_name': p.problem_name or '',
             'concept_id': p.concept_id or '',
+            'icd10_code': p.icd10_code or '',
             'is_controlled': p.is_controlled,
             'is_active': p.is_active,
             'authenticated': p.authenticated,
@@ -744,13 +745,19 @@ def _mobile_patient_full_inner(request, patient_id):
 
         # Notes for this problem
         notes = []
-        for n in ProblemNote.objects.filter(problem=p).order_by('-created_on'):
+        for n in ProblemNote.objects.filter(problem=p).select_related('author').order_by('-created_on'):
+            author_name = ''
+            if n.author:
+                try:
+                    author_name = n.author.get_full_name()
+                except Exception:
+                    pass
             notes.append({
                 'id': n.id,
                 'note': n.note or '',
                 'note_type': n.note_type or 'wiki',
                 'author_id': n.author_id if n.author_id else None,
-                'author_name': n.author.get_full_name() if n.author else '',
+                'author_name': author_name,
                 'created_on': n.created_on.isoformat() if n.created_on else None,
             })
         problem_dict['notes'] = notes
@@ -769,7 +776,13 @@ def _mobile_patient_full_inner(request, patient_id):
         # client via `mobile_image_file` — only metadata + the proxy URL
         # ride inline so a 30-image problem doesn't balloon the JSON.
         images = []
-        for pi in PatientImage.objects.filter(problem=p).order_by('-datetime'):
+        for pi in PatientImage.objects.filter(problem=p).select_related('author').order_by('-datetime'):
+            author_name = ''
+            if pi.author:
+                try:
+                    author_name = pi.author.get_full_name()
+                except Exception:
+                    pass
             images.append({
                 'id': pi.id,
                 'file_name': pi.file_name or (
@@ -780,7 +793,7 @@ def _mobile_patient_full_inner(request, patient_id):
                 'image_height': pi.image_height,
                 'created_on': pi.datetime.isoformat() if pi.datetime else None,
                 'author_id': pi.author_id,
-                'author_name': pi.author.get_full_name() if pi.author else '',
+                'author_name': author_name,
                 'image_url': '/api/media/image/{0}'.format(pi.id),
             })
         problem_dict['images'] = images
@@ -802,12 +815,24 @@ def _mobile_patient_full_inner(request, patient_id):
     for t in ToDo.objects.filter(patient=patient_user).order_by('order'):
         members = []
         for tto in TaggedToDoOrder.objects.filter(todo=t).select_related('user', 'user__profile'):
+            user_name = ''
+            role = ''
+            if tto.user:
+                try:
+                    user_name = tto.user.get_full_name()
+                except Exception:
+                    pass
+                if hasattr(tto.user, 'profile'):
+                    try:
+                        role = tto.user.profile.role
+                    except Exception:
+                        pass
             members.append({
                 'id': tto.id,
                 'user_id': tto.user_id,
                 'username': tto.user.username if tto.user else '',
-                'user_name': tto.user.get_full_name() if tto.user else '',
-                'role': tto.user.profile.role if tto.user else '',
+                'user_name': user_name,
+                'role': role,
                 'status': tto.status,
                 'created_on': tto.created_on.isoformat() if tto.created_on else None,
             })
@@ -821,15 +846,23 @@ def _mobile_patient_full_inner(request, patient_id):
             'order': t.order,
             'created_on': t.created_on.isoformat() if t.created_on else None,
             'labels': [{'id': l.id, 'name': l.name or '', 'css_class': l.css_class or ''} for l in t.labels.all()],
-            'comments': [{
+            'comments': [],
+        })
+        for c in t.comments.select_related('user').order_by('-datetime'):
+            c_user_name = ''
+            if c.user:
+                try:
+                    c_user_name = c.user.get_full_name()
+                except Exception:
+                    pass
+            todos[-1]['comments'].append({
                 'id': c.id,
                 'comment': c.comment or '',
                 'user_id': c.user_id,
-                'user_name': c.user.get_full_name() if c.user else '',
+                'user_name': c_user_name,
                 'datetime': c.datetime.isoformat() if c.datetime else None,
-            } for c in t.comments.order_by('-datetime')],
-            'members': members,
-        })
+            })
+        todos[-1]['members'] = members
 
     # Observations — included if no sections filter or 'observations' requested
     observations = []
@@ -837,14 +870,23 @@ def _mobile_patient_full_inner(request, patient_id):
         for obs in Observation.objects.filter(subject=patient_user):
             components = []
             for comp in ObservationComponent.objects.filter(observation=obs):
-                values_qs = ObservationValue.objects.filter(component=comp).order_by('-effective_datetime')[:max_obs_values]
+                from django.db.models.functions import Coalesce
+                values_qs = ObservationValue.objects.filter(component=comp).select_related('author').annotate(
+                    sort_date=Coalesce('effective_datetime', 'created_on')
+                ).order_by('-sort_date')[:max_obs_values]
                 values = []
                 for val in values_qs:
+                    author_name = ''
+                    if val.author:
+                        try:
+                            author_name = val.author.get_full_name()
+                        except Exception:
+                            pass
                     values.append({
                         'id': val.id,
                         'value_quantity': str(val.value_quantity) if val.value_quantity is not None else None,
                         'effective_datetime': val.effective_datetime.isoformat() if val.effective_datetime else None,
-                        'author_name': val.author.get_full_name() if val.author else '',
+                        'author_name': author_name,
                     })
                 components.append({
                     'id': comp.id,
@@ -988,10 +1030,16 @@ def _mobile_patient_full_inner(request, patient_id):
     # Activity logs
     problem_activities = []
     for pa in ProblemActivity.objects.filter(problem_id__in=problem_ids).select_related('author').order_by('-created_on'):
+        pa_author_name = ''
+        if pa.author_id:
+            try:
+                pa_author_name = pa.author.get_full_name() if pa.author else ''
+            except Exception:
+                pass
         problem_activities.append({
             'id': pa.id,
             'problem_id': pa.problem_id,
-            'author_name': pa.author.get_full_name() if pa.author else '',
+            'author_name': pa_author_name,
             'activity': pa.activity or '',
             'is_input_type': pa.is_input_type,
             'is_output_type': pa.is_output_type,
@@ -1001,10 +1049,16 @@ def _mobile_patient_full_inner(request, patient_id):
     todo_ids_list = [t['id'] for t in todos]
     todo_activities = []
     for ta in TodoActivity.objects.filter(todo_id__in=todo_ids_list).select_related('author').order_by('-created_on'):
+        ta_author_name = ''
+        if ta.author_id:
+            try:
+                ta_author_name = ta.author.get_full_name() if ta.author else ''
+            except Exception:
+                pass
         todo_activities.append({
             'id': ta.id,
             'todo_id': ta.todo_id,
-            'author_name': ta.author.get_full_name() if ta.author else '',
+            'author_name': ta_author_name,
             'activity': ta.activity or '',
             'created_on': ta.created_on.isoformat() if ta.created_on else None,
         })
@@ -1590,6 +1644,20 @@ def _sweep_expired_claims():
 def _unassigned_doc_dict(doc):
     """Serialize one unassigned-pool row for the list response. Mirrors the
     snake_case raw-dict pattern from `mobile_patients` etc."""
+    author_name = ''
+    if doc.author_id:
+        try:
+            author_name = f"{doc.author.first_name} {doc.author.last_name}".strip() or doc.author.username
+        except Exception:
+            pass
+
+    claimed_by_name = ''
+    if doc.claimed_by_id:
+        try:
+            claimed_by_name = f"{doc.claimed_by.first_name} {doc.claimed_by.last_name}".strip() or doc.claimed_by.username
+        except Exception:
+            pass
+
     return {
         'id': doc.id,
         'client_uuid': str(doc.client_uuid) if doc.client_uuid else None,
@@ -1599,14 +1667,10 @@ def _unassigned_doc_dict(doc):
         'mime_type': doc.file_mime_type(),
         'file_size': doc.document.size if doc.document else 0,
         'author_id': doc.author_id,
-        'author_name': (
-            f"{doc.author.first_name} {doc.author.last_name}".strip() or doc.author.username
-        ) if doc.author_id else '',
+        'author_name': author_name,
         'created_at': doc.created_on.isoformat() if doc.created_on else None,
         'claimed_by_id': doc.claimed_by_id,
-        'claimed_by_name': (
-            f"{doc.claimed_by.first_name} {doc.claimed_by.last_name}".strip() or doc.claimed_by.username
-        ) if doc.claimed_by_id else None,
+        'claimed_by_name': claimed_by_name,
         'claimed_at': doc.claimed_at.isoformat() if doc.claimed_at else None,
     }
 
@@ -2277,7 +2341,7 @@ def _yesno_status(value, on_label, off_label):
 @csrf_exempt
 @login_required
 def mobile_create_problem(request, patient_id):
-    """POST {problem_name, concept_id?, is_active?, is_controlled?} -> create Problem."""
+    """POST {problem_name, concept_id?, icd10_code?, is_active?, is_controlled?} -> create Problem."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
     try:
@@ -2290,10 +2354,19 @@ def mobile_create_problem(request, patient_id):
     if not problem_name:
         return JsonResponse({'error': 'problem_name is required'}, status=400)
 
+    concept_id = body.get('concept_id', '') or ''
+    icd10_code = body.get('icd10_code', '') or ''
+    if not icd10_code and concept_id:
+        from emr.models import SnomedIcd10Map
+        mapping = SnomedIcd10Map.objects.filter(snomed_concept_id=concept_id).first()
+        if mapping:
+            icd10_code = mapping.icd10_code
+
     problem = Problem(
         patient=patient_user,
         problem_name=problem_name,
-        concept_id=body.get('concept_id', '') or '',
+        concept_id=concept_id,
+        icd10_code=icd10_code,
         is_active=body.get('is_active', True),
         is_controlled=body.get('is_controlled', False),
     )
@@ -2305,7 +2378,7 @@ def mobile_create_problem(request, patient_id):
 @csrf_exempt
 @login_required
 def mobile_update_problem(request, patient_id, problem_id):
-    """PATCH {problem_name?, is_active?, is_controlled?, authenticated?, old_problem_name?}."""
+    """PATCH {problem_name?, concept_id?, icd10_code?, is_active?, is_controlled?, authenticated?, old_problem_name?}."""
     if request.method not in ('PATCH', 'POST'):
         return JsonResponse({'error': 'PATCH required'}, status=405)
     try:
@@ -2323,9 +2396,19 @@ def mobile_update_problem(request, patient_id, problem_id):
     old_is_controlled = problem.is_controlled
     old_authenticated = problem.authenticated
 
-    for field in ('problem_name', 'concept_id', 'old_problem_name'):
+    for field in ('problem_name', 'concept_id', 'icd10_code', 'old_problem_name'):
         if field in body:
             setattr(problem, field, body[field])
+            
+    # Auto-assign icd10_code if concept_id is provided but icd10_code is missing
+    if 'concept_id' in body and not body.get('icd10_code') and not problem.icd10_code:
+        concept_id = body['concept_id']
+        if concept_id:
+            from emr.models import SnomedIcd10Map
+            mapping = SnomedIcd10Map.objects.filter(snomed_concept_id=concept_id).first()
+            if mapping:
+                problem.icd10_code = mapping.icd10_code
+
     for field in ('is_active', 'is_controlled', 'authenticated'):
         if field in body:
             setattr(problem, field, body[field])
@@ -3036,16 +3119,22 @@ def mobile_my_tagged_todos(request):
             members = []
             for m in TaggedToDoOrder.objects.filter(todo=t).select_related('user', 'user__profile'):
                 member_role = ''
-                if m.user:
+                member_username = ''
+                member_full_name = ''
+                if m.user_id:
                     try:
-                        member_role = m.user.profile.role
-                    except UserProfile.DoesNotExist:
-                        member_role = ''
+                        if m.user:
+                            member_username = m.user.username
+                            member_full_name = m.user.get_full_name()
+                            if hasattr(m.user, 'profile'):
+                                member_role = m.user.profile.role
+                    except Exception:
+                        pass
                 members.append({
                     'id': m.id,
                     'user_id': m.user_id,
-                    'username': m.user.username if m.user else '',
-                    'user_name': m.user.get_full_name() if m.user else '',
+                    'username': member_username,
+                    'user_name': member_full_name,
                     'role': member_role,
                     'status': m.status,
                     'created_on': m.created_on.isoformat() if m.created_on else None,
@@ -3075,15 +3164,23 @@ def mobile_my_tagged_todos(request):
                 'order': t.order,
                 'created_on': t.created_on.isoformat() if t.created_on else None,
                 'labels': [{'id': l.id, 'name': l.name or '', 'css_class': l.css_class or ''} for l in t.labels.all()],
-                'comments': [{
+                'comments': [],
+            })
+            for c in t.comments.order_by('-datetime'):
+                c_user_name = ''
+                if c.user_id:
+                    try:
+                        c_user_name = c.user.get_full_name() if c.user else ''
+                    except Exception:
+                        pass
+                todos[-1]['comments'].append({
                     'id': c.id,
                     'comment': c.comment or '',
                     'user_id': c.user_id,
-                    'user_name': c.user.get_full_name() if c.user else '',
+                    'user_name': c_user_name,
                     'datetime': c.datetime.isoformat() if c.datetime else None,
-                } for c in t.comments.order_by('-datetime')],
-                'members': members,
-            })
+                })
+            todos[-1]['members'] = members
 
         return JsonResponse({'success': True, 'todos': todos})
     except Exception as exc:
