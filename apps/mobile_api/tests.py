@@ -1602,3 +1602,96 @@ class MobileHealthzTests(TestCase):
         client = Client()
         resp = client.get('/api/healthz')
         self.assertEqual(resp.status_code, 200)
+
+
+class MobileCreateProblemNoteTests(TestCase):
+    def setUp(self):
+        # Create Patient
+        self.patient = User.objects.create_user(username='pt1')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        
+        # Create Physician
+        self.physician = User.objects.create_user(username='doc1')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        
+        # Link physician to patient via PatientController
+        PatientController.objects.create(
+            patient=self.patient,
+            physician=self.physician,
+            is_active=True
+        )
+        
+        # Create Medical Assistant (MA)
+        self.ma_user = User.objects.create_user(username='ma1')
+        UserProfile.objects.create(user=self.ma_user, role='ma')
+        
+        # Create Problem
+        self.problem = Problem.objects.create(
+            patient=self.patient,
+            problem_name="Test Problem"
+        )
+        
+        self.url = f"/api/patient/{self.patient.id}/problem/{self.problem.id}/note"
+
+    def test_physician_creates_note(self):
+        self.client.force_login(self.physician)
+        client_uuid = "11111111-1111-1111-1111-111111111111"
+        payload = {
+            "note": "Physician notes looking good.",
+            "note_type": "history",
+            "client_uuid": client_uuid
+        }
+        res = self.client.post(self.url, data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        
+        note = ProblemNote.objects.get(client_uuid=client_uuid)
+        self.assertEqual(note.note, "Physician notes looking good.")
+        
+        # Ensure no Todo was generated for physician
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_ma_creates_note_generates_todo(self):
+        self.client.force_login(self.ma_user)
+        client_uuid = "22222222-2222-2222-2222-222222222222"
+        payload = {
+            "note": "Patient called, feeling worse.",
+            "note_type": "wiki",
+            "client_uuid": client_uuid
+        }
+        res = self.client.post(self.url, data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        
+        # Verify Note
+        self.assertEqual(ProblemNote.objects.count(), 1)
+        
+        # Verify Todo generated
+        todos = ToDo.objects.filter(patient=self.patient, problem=self.problem)
+        self.assertEqual(todos.count(), 1)
+        todo = todos.first()
+        self.assertEqual(todo.todo, "Note added")
+        
+        # Verify TaggedToDoOrder
+        tags = TaggedToDoOrder.objects.filter(todo=todo, user=self.physician)
+        self.assertEqual(tags.count(), 1)
+
+    def test_idempotency_duplicate_uuid(self):
+        self.client.force_login(self.ma_user)
+        client_uuid = "33333333-3333-3333-3333-333333333333"
+        payload = {
+            "note": "First try",
+            "note_type": "wiki",
+            "client_uuid": client_uuid
+        }
+        # First request
+        res1 = self.client.post(self.url, data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res1.status_code, 200)
+        note_id = json.loads(res1.content)["id"]
+        
+        # Second request (duplicate client_uuid)
+        res2 = self.client.post(self.url, data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(json.loads(res2.content)["id"], note_id)
+        
+        # Verify no duplicates created
+        self.assertEqual(ProblemNote.objects.count(), 1)
+        self.assertEqual(ToDo.objects.count(), 1)  # Only 1 Todo should exist!

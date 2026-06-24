@@ -496,6 +496,7 @@ class ProblemNote(models.Model):
     problem = models.ForeignKey(Problem, null=True, blank=True, on_delete=models.SET_NULL)
     note = models.TextField()
     note_type = models.CharField(choices=NOTE_TYPE_CHOICES, max_length=50)
+    client_uuid = models.UUIDField(null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     objects = ProblemNoteManager()

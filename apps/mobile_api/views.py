@@ -231,6 +231,7 @@ def mobile_staff_set_password(request):
 
 @csrf_exempt
 @login_required
+@transaction.atomic
 def mobile_update_user(request, user_id):
     """PATCH/POST {first_name?, last_name?, email?, phone?, sex?, summary?,
     date_of_birth?, credentials?, npi_number?, practice_*?} for a user.
@@ -343,6 +344,11 @@ def mobile_upload_signature(request, user_id):
         return JsonResponse({'error': 'No file provided'}, status=400)
 
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if profile.signature_image and getattr(profile.signature_image, 'name', None):
+        try:
+            profile.signature_image.delete(save=False)
+        except Exception:
+            pass
     profile.signature_image = sig_file
     profile.save()
 
@@ -468,7 +474,7 @@ def mobile_patients(request):
 
     from django.contrib.auth.models import User
     from django.db.models import Count
-    from apps.emr.models import Problem, ToDo
+    from emr.models import Problem, ToDo
 
     problems_counts = dict(
         Problem.objects.filter(
@@ -728,8 +734,13 @@ def _mobile_patient_full_inner(request, patient_id):
     patient = _user_dict(patient_user)
 
     # Problems — always included (core data)
+    from django.db.models import Prefetch
     problems = []
-    problem_qs = Problem.objects.filter(patient=patient_user).order_by('id')
+    problem_qs = Problem.objects.filter(patient=patient_user).prefetch_related(
+        Prefetch('problemnote_set', queryset=ProblemNote.objects.select_related('author').order_by('-created_on'), to_attr='prefetched_notes'),
+        'labels',
+        Prefetch('patientimage_set', queryset=PatientImage.objects.select_related('author').order_by('-datetime'), to_attr='prefetched_images')
+    ).order_by('id')
     for p in problem_qs:
         problem_dict = {
             'id': p.id,
@@ -745,7 +756,7 @@ def _mobile_patient_full_inner(request, patient_id):
 
         # Notes for this problem
         notes = []
-        for n in ProblemNote.objects.filter(problem=p).select_related('author').order_by('-created_on'):
+        for n in p.prefetched_notes:
             author_name = ''
             if n.author:
                 try:
@@ -776,7 +787,7 @@ def _mobile_patient_full_inner(request, patient_id):
         # client via `mobile_image_file` — only metadata + the proxy URL
         # ride inline so a 30-image problem doesn't balloon the JSON.
         images = []
-        for pi in PatientImage.objects.filter(problem=p).select_related('author').order_by('-datetime'):
+        for pi in p.prefetched_images:
             author_name = ''
             if pi.author:
                 try:
@@ -2443,8 +2454,9 @@ def mobile_update_problem(request, patient_id, problem_id):
 
 @csrf_exempt
 @login_required
+@transaction.atomic
 def mobile_create_problem_note(request, patient_id, problem_id):
-    """POST {note, note_type} -> create ProblemNote."""
+    """POST {note, note_type, client_uuid?} -> create ProblemNote."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
     try:
@@ -2453,6 +2465,12 @@ def mobile_create_problem_note(request, patient_id, problem_id):
         return JsonResponse({'error': 'Problem not found'}, status=404)
 
     body = _parse_body(request)
+    client_uuid = body.get('client_uuid')
+    if client_uuid:
+        existing = ProblemNote.objects.filter(client_uuid=client_uuid).first()
+        if existing:
+            return JsonResponse({'success': True, 'id': existing.id})
+
     note_text = body.get('note', '').strip()
     if not note_text:
         return JsonResponse({'error': 'note is required'}, status=400)
@@ -2461,6 +2479,7 @@ def mobile_create_problem_note(request, patient_id, problem_id):
         problem=problem,
         note=note_text,
         note_type=body.get('note_type', 'wiki'),
+        client_uuid=client_uuid,
         author=request.user,
     )
     note.save()
@@ -2468,6 +2487,23 @@ def mobile_create_problem_note(request, patient_id, problem_id):
         problem, request.user,
         f"Added {note.note_type} note: {note_text}"
     )
+
+    if request.user.profile.role != 'physician':
+        physician_controller = problem.patient.patient_physicians.first()
+        physician = physician_controller.physician if physician_controller else None
+
+        todo = ToDo(
+            todo="Note added",
+            patient=problem.patient,
+            problem=problem,
+            user=request.user,
+        )
+        todo.save()
+
+        if physician:
+            from apps.emr.models import TaggedToDoOrder
+            TaggedToDoOrder.objects.create(todo=todo, user=physician)
+
     return JsonResponse({'success': True, 'id': note.id})
 
 
