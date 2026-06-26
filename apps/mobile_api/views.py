@@ -13,6 +13,7 @@ from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.functions import Coalesce
 from django.http import FileResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -881,7 +882,6 @@ def _mobile_patient_full_inner(request, patient_id):
         for obs in Observation.objects.filter(subject=patient_user):
             components = []
             for comp in ObservationComponent.objects.filter(observation=obs):
-                from django.db.models.functions import Coalesce
                 values_qs = ObservationValue.objects.filter(component=comp).select_related('author').annotate(
                     sort_date=Coalesce('effective_datetime', 'created_on')
                 ).order_by('-sort_date')[:max_obs_values]
@@ -2501,7 +2501,6 @@ def mobile_create_problem_note(request, patient_id, problem_id):
         todo.save()
 
         if physician:
-            from apps.emr.models import TaggedToDoOrder
             TaggedToDoOrder.objects.create(todo=todo, user=physician)
 
     return JsonResponse({'success': True, 'id': note.id})

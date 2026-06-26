@@ -4,26 +4,30 @@ from __future__ import unicode_literals
 from django.db import connection
 from django.db import migrations
 
-from emr.models import ObservationValue, ObservationComponent
 
 
 def fix_blood_glitch(apps, schema_editor):
-    """
-    Do adding missing blood pressure value
-    :return:
-    """
-    blood_pressure_components = get_blood_pressure_obs_component_ids()
+    if connection.vendor != 'mysql':
+        return
+        
+    ObservationValue = apps.get_model('emr', 'ObservationValue')
+    ObservationComponent = apps.get_model('emr', 'ObservationComponent')
 
-    # For each component pairing
+    blood_pressure_components = get_blood_pressure_obs_component_ids()
     for pair in blood_pressure_components:
         results = get_observation_value_pair(pair['component_ids'])
         for result in results:
             if result['no_of_component'] == 1:
-                value = ObservationValue.objects.filter(id=result['existed_value_ids']).get()
+                value = ObservationValue.objects.filter(id=result['existed_value_ids']).first()
+                if not value:
+                    continue
                 missing_component = pair['component_ids'].replace(result['existed_component_ids'], '').replace(",", "")
+                comp = ObservationComponent.objects.filter(id=int(missing_component)).first()
+                if not comp:
+                    continue
 
                 obs = ObservationValue.objects.create(
-                    component=ObservationComponent.objects.filter(id=int(missing_component)).get(),
+                    component=comp,
                     value_quantity=0,
                     author=value.author,
                     effective_datetime=value.effective_datetime

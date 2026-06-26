@@ -1,6 +1,7 @@
 import csv
 import os
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from emr.models import SnomedIcd10Map, Problem
 
 class Command(BaseCommand):
@@ -35,18 +36,19 @@ class Command(BaseCommand):
                     mappings = SnomedIcd10Map.objects.filter(snomed_concept_id=concept_id)
                     mapping_count = mappings.count()
                     
-                    if mapping_count == 1:
-                        # Extract the icd10_code
+                    if mapping_count >= 1:
+                        # Extract the icd10_code (first mapping is highest priority due to model ordering)
                         icd10_code = mappings.first().icd10_code
                         
                         # Perform a bulk update on the legacy data
-                        # Note: Using field names concept_id for Problem model
-                        Problem.objects.filter(
+                        # Only backfill where icd10_code is missing or empty
+                        updated = Problem.objects.filter(
+                            Q(icd10_code__isnull=True) | Q(icd10_code=''),
                             concept_id=concept_id
                         ).update(icd10_code=icd10_code)
                         
                         # Print success log to stdout
-                        self.stdout.write(f"Mapped {problem_name} to {icd10_code}")
+                        self.stdout.write(f"Mapped {problem_name} to {icd10_code} (Updated {updated} records)")
                         mapped_count += 1
                     else:
                         # Append the row to the manual review list

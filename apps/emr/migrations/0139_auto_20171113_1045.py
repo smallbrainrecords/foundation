@@ -4,14 +4,16 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models, migrations
 
-from emr.models import ProblemNote, UserProfile
 
 
 def changer_user_profile_id_to_user_id(apps, schema_editor):
+    ProblemNote = apps.get_model('emr', 'ProblemNote')
+    UserProfile = apps.get_model('emr', 'UserProfile')
     activities = ProblemNote.objects.all()
     for act in activities:
-        if UserProfile.objects.filter(id=act.author_id).first() is not None:
-            act.author_id = UserProfile.objects.filter(id=act.author_id).first().user_id
+        profile = UserProfile.objects.filter(id=act.author_id).first()
+        if profile is not None:
+            act.author_id = profile.user_id
         act.save()
 
 
