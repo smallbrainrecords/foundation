@@ -310,12 +310,18 @@ def mobile_update_user(request, user_id):
     """PATCH/POST {first_name?, last_name?, email?, phone?, sex?, summary?,
     date_of_birth?, credentials?, npi_number?, practice_*?} for a user.
 
-    Self-only unless caller is admin. Mirrors fields used by the macOS
-    SettingsView Profile + Practice tabs. macOS has been calling this URL
-    (`/api/user/<id>/update/`) for a while via AuthService.updateUserProfile,
-    but the endpoint never actually existed server-side — error was silently
-    swallowed (see AuthService.swift:291). Creating it here fixes that latent
-    bug AND delivers the new provider/practice fields in one stroke.
+    Self or admin: full field set. Staff (physician / mid-level / nurse /
+    secretary) with clinical access to a patient (2026-07-03): the
+    patient's first_name / last_name ONLY — any other key in the body is
+    rejected, so this path can't silently widen into full profile edit.
+    Access uses the same _assert_patient_access gate as the PHI proxies.
+
+    Mirrors fields used by the macOS SettingsView Profile + Practice tabs.
+    macOS has been calling this URL (`/api/user/<id>/update/`) for a while
+    via AuthService.updateUserProfile, but the endpoint never actually
+    existed server-side — error was silently swallowed (see
+    AuthService.swift:291). Creating it here fixed that latent bug AND
+    delivered the new provider/practice fields in one stroke.
     """
     if request.method not in ('PATCH', 'POST'):
         return JsonResponse({'error': 'PATCH required'}, status=405)
@@ -325,15 +331,31 @@ def mobile_update_user(request, user_id):
     except (TypeError, ValueError):
         return JsonResponse({'error': 'Invalid user_id'}, status=400)
 
-    # Self-only OR admin.
     is_self = (request.user.id == target_user_id)
-    is_admin = False
+    caller_role = None
     try:
-        is_admin = request.user.profile.role == 'admin'
+        caller_role = request.user.profile.role
     except (UserProfile.DoesNotExist, AttributeError):
         pass
+    is_admin = caller_role == 'admin'
+
+    body = _parse_body(request)
+
     if not (is_self or is_admin):
-        return JsonResponse({'error': 'Forbidden'}, status=403)
+        # Staff patient-name correction path. Target must be a patient
+        # under the caller's clinical scope, and the body must contain
+        # nothing beyond the name fields.
+        is_staff = caller_role in ('physician', 'mid-level', 'nurse', 'secretary')
+        target_is_patient = UserProfile.objects.filter(
+            user_id=target_user_id, role='patient',
+        ).exists()
+        if not (is_staff and target_is_patient and _assert_patient_access(request.user, target_user_id)):
+            return JsonResponse({'error': 'Forbidden'}, status=403)
+        disallowed = set(body.keys()) - {'first_name', 'last_name'}
+        if disallowed:
+            return JsonResponse(
+                {'error': 'Staff may only edit patient name fields'}, status=403,
+            )
 
     from django.contrib.auth.models import User
     try:
@@ -343,7 +365,7 @@ def mobile_update_user(request, user_id):
 
     profile, _ = UserProfile.objects.get_or_create(user=target_user)
 
-    body = _parse_body(request)
+    old_name = f"{target_user.first_name} {target_user.last_name}".strip()
 
     # User table fields.
     if 'first_name' in body:
@@ -353,6 +375,20 @@ def mobile_update_user(request, user_id):
     if 'email' in body:
         target_user.email = body['email'] or ''
     target_user.save()
+
+    # Identity edits by someone other than the account owner leave a
+    # structured Cloud Logging trail (same operational-visibility pattern
+    # as smallbrain.unassigned_docs).
+    new_name = f"{target_user.first_name} {target_user.last_name}".strip()
+    if not is_self and new_name != old_name:
+        logging.getLogger('smallbrain.profile_edits').info(json.dumps({
+            'event': 'name_edited',
+            'editor_id': request.user.id,
+            'editor_role': caller_role,
+            'target_user_id': target_user_id,
+            'old_name': old_name,
+            'new_name': new_name,
+        }))
 
     # UserProfile fields.
     if 'phone' in body:

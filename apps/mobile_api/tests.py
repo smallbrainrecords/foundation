@@ -1601,6 +1601,82 @@ class MobileRegisterTests(_RBACTestBase):
         self.assertFalse(User.objects.filter(username='new_pt').exists())
 
 
+class MobileUpdateUserStaffNameTests(_RBACTestBase):
+    """PATCH /api/user/<id>/update/ — staff patient-name correction path
+    (2026-07-03). Staff with clinical access to a patient may edit the
+    patient's first_name/last_name and NOTHING else; self/admin keep the
+    full field set."""
+
+    def _patch(self, target, payload):
+        return self.client.patch(
+            f'/api/user/{target.id}/update/',
+            json.dumps(payload),
+            content_type='application/json',
+        )
+
+    def test_attending_edits_patient_name(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch(self.patient, {'first_name': 'Corrected', 'last_name': 'Name'})
+        self.assertEqual(resp.status_code, 200)
+        self.patient.refresh_from_db()
+        self.assertEqual(self.patient.first_name, 'Corrected')
+        self.assertEqual(self.patient.last_name, 'Name')
+
+    def test_team_nurse_edits_patient_name(self):
+        self.assertTrue(self._login(self.team_nurse))
+        resp = self._patch(self.patient, {'first_name': 'ViaTeam'})
+        self.assertEqual(resp.status_code, 200)
+        self.patient.refresh_from_db()
+        self.assertEqual(self.patient.first_name, 'ViaTeam')
+
+    def test_stranger_doc_403(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self._patch(self.patient, {'first_name': 'Hijack'})
+        self.assertEqual(resp.status_code, 403)
+        self.patient.refresh_from_db()
+        self.assertNotEqual(self.patient.first_name, 'Hijack')
+
+    def test_stranger_nurse_403(self):
+        self.assertTrue(self._login(self.stranger_nurse))
+        resp = self._patch(self.patient, {'first_name': 'Hijack'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_staff_cannot_edit_other_fields_403(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch(self.patient, {'first_name': 'X', 'email': 'evil@x.com'})
+        self.assertEqual(resp.status_code, 403)
+        self.patient.refresh_from_db()
+        self.assertNotEqual(self.patient.email, 'evil@x.com')
+        self.assertNotEqual(self.patient.first_name, 'X')
+
+    def test_staff_cannot_edit_staff_target_403(self):
+        # Target is a nurse, not a patient — the staff path must refuse
+        # even though the caller is a physician.
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch(self.team_nurse, {'first_name': 'Renamed'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_patient_cannot_edit_other_patient_403(self):
+        self.assertTrue(self._login(self.patient))
+        resp = self._patch(self.other_patient, {'first_name': 'Hijack'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_self_edit_full_fields_still_works(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch(self.attending, {'first_name': 'Me', 'email': 'me@x.com', 'phone': '555'})
+        self.assertEqual(resp.status_code, 200)
+        self.attending.refresh_from_db()
+        self.assertEqual(self.attending.email, 'me@x.com')
+
+    def test_admin_edit_full_fields_still_works(self):
+        self.assertTrue(self._login(self.admin_user))
+        resp = self._patch(self.patient, {'first_name': 'AdminSet', 'email': 'adminset@x.com'})
+        self.assertEqual(resp.status_code, 200)
+        self.patient.refresh_from_db()
+        self.assertEqual(self.patient.first_name, 'AdminSet')
+        self.assertEqual(self.patient.email, 'adminset@x.com')
+
+
 class MobileDocumentProblemLinkTests(_RBACTestBase):
     """POST/DELETE on `/api/patient/<pid>/document/<doc_id>/link/problem/<problem_id>`.
     URL-coordinate identity → POST is idempotent via get_or_create."""
