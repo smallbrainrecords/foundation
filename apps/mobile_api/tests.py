@@ -1,5 +1,5 @@
 """
-Tests for the mobile_api PATCH endpoints that flow through the iOS
+Tests for the mobile_api PATCH endpoints that flow through the macOS
 bidirectional sync pipeline. Currently covers mobile_update_encounter:
 this endpoint is the source-of-truth gate for Encounter updates that
 post-date the initial audio-upload POST (notably transcript and
@@ -134,7 +134,7 @@ class MobileUpdateEncounterTests(TestCase):
 
 
 class MobileCreateEncounterTests(TestCase):
-    """Tests for the text-only encounter create endpoint. Used when iOS has
+    """Tests for the text-only encounter create endpoint. Used when macOS has
     recording disabled (events-only mode) so the encounter still reaches the
     server and joins the standard update pipeline."""
 
@@ -1440,6 +1440,241 @@ class MobileDeleteDocumentTests(_RBACTestBase):
         resp = self.client.delete(self.url)
         self.assertEqual(resp.status_code, 404)
         self.assertTrue(Document.objects.filter(id=self.doc.id).exists())
+
+
+class MobileRenameDocumentTests(_RBACTestBase):
+    """PATCH {document_name} on the same URL as DELETE (2026-07-02).
+    Closes the iOS local-only rename gap. Same-name PATCH is a no-op
+    success with no audit row — stale dirty flags re-pushing an
+    unchanged name must not spam the timeline."""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='P1')
+        self.doc = Document.objects.create(
+            document=SimpleUploadedFile('chart.pdf', b'fake-pdf', content_type='application/pdf'),
+            document_name='chart.pdf',
+            author=self.attending,
+            patient=self.patient,
+        )
+        self.url = f'/api/patient/{self.patient.id}/document/{self.doc.id}'
+
+    def _patch(self, payload):
+        return self.client.patch(self.url, json.dumps(payload), content_type='application/json')
+
+    def test_rename_updates_name_and_fans_out_audit_to_linked_problem(self):
+        DocumentProblem.objects.create(document=self.doc, problem=self.problem, author=self.attending)
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem=self.problem).count()
+        resp = self._patch({'document_name': 'Cardiology Consult'})
+        self.assertEqual(resp.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'Cardiology Consult')
+        after = ProblemActivity.objects.filter(problem=self.problem).count()
+        self.assertEqual(after, before + 1)
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Renamed document', latest.activity)
+        self.assertIn('chart.pdf', latest.activity)
+        self.assertIn('Cardiology Consult', latest.activity)
+
+    def test_rename_orphan_document_audits_to_problem_None(self):
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem__isnull=True).count()
+        resp = self._patch({'document_name': 'Renamed Orphan'})
+        self.assertEqual(resp.status_code, 200)
+        after = ProblemActivity.objects.filter(problem__isnull=True).count()
+        self.assertEqual(after, before + 1)
+
+    def test_same_name_noop_success_no_audit(self):
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.count()
+        resp = self._patch({'document_name': 'chart.pdf'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+        self.assertEqual(ProblemActivity.objects.count(), before)
+
+    def test_empty_name_400(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch({'document_name': '   '})
+        self.assertEqual(resp.status_code, 400)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'chart.pdf')
+
+    def test_rename_missing_document_404(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.patch(
+            f'/api/patient/{self.patient.id}/document/999999',
+            json.dumps({'document_name': 'X'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    def test_rename_stranger_physician_404_name_preserved(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self._patch({'document_name': 'Hijacked'})
+        self.assertEqual(resp.status_code, 404)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'chart.pdf')
+
+
+class MobileRegisterTests(_RBACTestBase):
+    """POST /api/register/ — staff-session-only user creation (2026-07-02).
+    No unauthenticated self-registration; staff create non-admin roles;
+    admin creates admin. Wire fields are snake_case (macOS APIClient
+    .convertToSnakeCase)."""
+
+    URL = '/api/register/'
+
+    def _register(self, payload):
+        return self.client.post(self.URL, json.dumps(payload), content_type='application/json')
+
+    def test_unauthenticated_401(self):
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'role': 'patient'})
+        self.assertEqual(resp.status_code, 401)
+        self.assertFalse(User.objects.filter(username='new_pt').exists())
+
+    def test_patient_caller_403(self):
+        self.assertTrue(self._login(self.patient))
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'role': 'patient'})
+        self.assertEqual(resp.status_code, 403)
+        self.assertFalse(User.objects.filter(username='new_pt').exists())
+
+    def test_no_profile_caller_403(self):
+        self.assertTrue(self._login(self.no_profile))
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'role': 'patient'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_physician_creates_patient_with_snake_case_names(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({
+            'username': 'new_pt', 'password': 'pw123', 'email': 'np@y.com',
+            'first_name': 'Nora', 'last_name': 'Price', 'role': 'patient',
+        })
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.content)
+        self.assertTrue(body['success'])
+        user = User.objects.get(username='new_pt')
+        self.assertEqual(body['id'], user.id)
+        self.assertEqual(user.first_name, 'Nora')
+        self.assertEqual(user.last_name, 'Price')
+        self.assertEqual(user.profile.role, 'patient')
+        # Password was hashed via set_password, not stored raw.
+        self.assertTrue(user.check_password('pw123'))
+
+    def test_physician_creates_nurse_success(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_rn', 'password': 'pw', 'role': 'nurse'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(User.objects.get(username='new_rn').profile.role, 'nurse')
+
+    def test_physician_cannot_create_admin_403(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_adm', 'password': 'pw', 'role': 'admin'})
+        self.assertEqual(resp.status_code, 403)
+        self.assertFalse(User.objects.filter(username='new_adm').exists())
+
+    def test_admin_creates_admin_success(self):
+        self.assertTrue(self._login(self.admin_user))
+        resp = self._register({'username': 'new_adm', 'password': 'pw', 'role': 'admin'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(User.objects.get(username='new_adm').profile.role, 'admin')
+
+    def test_duplicate_username_409(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': self.patient.username, 'password': 'pw'})
+        self.assertEqual(resp.status_code, 409)
+
+    def test_duplicate_email_409(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'email': self.patient.email})
+        self.assertEqual(resp.status_code, 409)
+
+    def test_missing_password_400(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_pt'})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_invalid_role_400(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'role': 'superuser'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(User.objects.filter(username='new_pt').exists())
+
+
+class MobileUpdateUserStaffNameTests(_RBACTestBase):
+    """PATCH /api/user/<id>/update/ — staff patient-name correction path
+    (2026-07-03). Staff with clinical access to a patient may edit the
+    patient's first_name/last_name and NOTHING else; self/admin keep the
+    full field set."""
+
+    def _patch(self, target, payload):
+        return self.client.patch(
+            f'/api/user/{target.id}/update/',
+            json.dumps(payload),
+            content_type='application/json',
+        )
+
+    def test_attending_edits_patient_name(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch(self.patient, {'first_name': 'Corrected', 'last_name': 'Name'})
+        self.assertEqual(resp.status_code, 200)
+        self.patient.refresh_from_db()
+        self.assertEqual(self.patient.first_name, 'Corrected')
+        self.assertEqual(self.patient.last_name, 'Name')
+
+    def test_team_nurse_edits_patient_name(self):
+        self.assertTrue(self._login(self.team_nurse))
+        resp = self._patch(self.patient, {'first_name': 'ViaTeam'})
+        self.assertEqual(resp.status_code, 200)
+        self.patient.refresh_from_db()
+        self.assertEqual(self.patient.first_name, 'ViaTeam')
+
+    def test_stranger_doc_403(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self._patch(self.patient, {'first_name': 'Hijack'})
+        self.assertEqual(resp.status_code, 403)
+        self.patient.refresh_from_db()
+        self.assertNotEqual(self.patient.first_name, 'Hijack')
+
+    def test_stranger_nurse_403(self):
+        self.assertTrue(self._login(self.stranger_nurse))
+        resp = self._patch(self.patient, {'first_name': 'Hijack'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_staff_cannot_edit_other_fields_403(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch(self.patient, {'first_name': 'X', 'email': 'evil@x.com'})
+        self.assertEqual(resp.status_code, 403)
+        self.patient.refresh_from_db()
+        self.assertNotEqual(self.patient.email, 'evil@x.com')
+        self.assertNotEqual(self.patient.first_name, 'X')
+
+    def test_staff_cannot_edit_staff_target_403(self):
+        # Target is a nurse, not a patient — the staff path must refuse
+        # even though the caller is a physician.
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch(self.team_nurse, {'first_name': 'Renamed'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_patient_cannot_edit_other_patient_403(self):
+        self.assertTrue(self._login(self.patient))
+        resp = self._patch(self.other_patient, {'first_name': 'Hijack'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_self_edit_full_fields_still_works(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch(self.attending, {'first_name': 'Me', 'email': 'me@x.com', 'phone': '555'})
+        self.assertEqual(resp.status_code, 200)
+        self.attending.refresh_from_db()
+        self.assertEqual(self.attending.email, 'me@x.com')
+
+    def test_admin_edit_full_fields_still_works(self):
+        self.assertTrue(self._login(self.admin_user))
+        resp = self._patch(self.patient, {'first_name': 'AdminSet', 'email': 'adminset@x.com'})
+        self.assertEqual(resp.status_code, 200)
+        self.patient.refresh_from_db()
+        self.assertEqual(self.patient.first_name, 'AdminSet')
+        self.assertEqual(self.patient.email, 'adminset@x.com')
 
 
 class MobileDocumentProblemLinkTests(_RBACTestBase):

@@ -3,6 +3,9 @@ from . import views
 
 urlpatterns = [
     url(r'^healthz/?$', views.mobile_healthz),
+    # Staff-session-only user creation (macOS Add User flow). See the
+    # role-gating policy in mobile_register before touching.
+    url(r'^register/$', views.mobile_register),
     url(r'^login/$', views.mobile_login),
     url(r'^change-password/$', views.mobile_change_password),
     url(r'^staff-set-password/$', views.mobile_staff_set_password),
@@ -17,7 +20,7 @@ urlpatterns = [
     url(r'^media/document/(?P<document_id>\d+)/file$', views.mobile_document_file),
     url(r'^media/image/(?P<image_id>\d+)$', views.mobile_image_file),
     url(r'^media/signature/(?P<user_id>\d+)$', views.mobile_signature_file),
-    # User profile self-update (mirrors iOS AuthService.updateUserProfile)
+    # User profile self-update (mirrors macOS AuthService.updateUserProfile)
     # + signature upload (multipart, self-only).
     url(r'^user/(?P<user_id>\d+)/update/$', views.mobile_update_user),
     url(r'^user/(?P<user_id>\d+)/signature/upload$', views.mobile_upload_signature),

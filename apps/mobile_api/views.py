@@ -1,5 +1,5 @@
 """
-Mobile API endpoints for the SBR1 iOS app.
+Mobile API endpoints for the SBR1 macOS app.
 All views are CSRF-exempt and return JSON.
 """
 import hashlib
@@ -38,6 +38,79 @@ def _strip_html(text):
     return re.sub(r'<[^>]+>', '', text)
 
 
+@csrf_exempt
+def mobile_register(request):
+    """POST {username, password, email?, first_name?, last_name?, role?}
+    -> create User + UserProfile. Returns {success, id}.
+
+    Staff-session-only (2026-07-02 policy decision): there is NO
+    unauthenticated self-registration — accounts are created by staff via
+    the macOS Add User flow (AuthService.createUser), which sends the
+    session cookie. The pre-login RegistrationView gets a 401 and shows
+    the error. Role gating: staff callers can create any non-admin role;
+    only admins can create admin accounts. Do not relax this — an open
+    endpoint honoring client-supplied roles would let anyone on the
+    internet mint a physician/admin account with patient-data access.
+
+    Field names are snake_case on the wire (macOS APIClient encodes
+    .convertToSnakeCase). Non-2xx statuses are used for all failures so
+    APIClient throws and the UI surfaces the message.
+    """
+    from django.contrib.auth.models import User
+    from django.db import IntegrityError
+    from emr.models import ROLE_CHOICES
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'POST required'}, status=405)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'message': 'Authentication required'}, status=401)
+
+    try:
+        caller_role = request.user.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        caller_role = None
+    if caller_role not in ('physician', 'mid-level', 'nurse', 'secretary', 'admin'):
+        return JsonResponse({'success': False, 'message': 'Staff access required'}, status=403)
+
+    body = _parse_body(request)
+    username = (body.get('username') or '').strip()
+    password = body.get('password') or ''
+    email = (body.get('email') or '').strip()
+    first_name = (body.get('first_name') or '').strip()
+    last_name = (body.get('last_name') or '').strip()
+    role = body.get('role') or 'patient'
+
+    if not username or not password:
+        return JsonResponse({'success': False, 'message': 'username and password are required'}, status=400)
+    if role not in {choice[0] for choice in ROLE_CHOICES}:
+        return JsonResponse({'success': False, 'message': 'Invalid role'}, status=400)
+    if role == 'admin' and caller_role != 'admin':
+        return JsonResponse({'success': False, 'message': 'Only admins can create admin accounts'}, status=403)
+
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({'success': False, 'message': 'Username already exists'}, status=409)
+    if email and User.objects.filter(email=email).exists():
+        return JsonResponse({'success': False, 'message': 'Email already exists'}, status=409)
+
+    try:
+        with transaction.atomic():
+            user = User(
+                username=username,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+            )
+            user.set_password(password)
+            user.save()
+            UserProfile.objects.create(user=user, role=role)
+    except IntegrityError:
+        # Lost the race with a concurrent create on the unique username.
+        return JsonResponse({'success': False, 'message': 'Username already exists'}, status=409)
+
+    return JsonResponse({'success': True, 'id': user.id})
+
+
 def _user_dict(user, profile=None):
     """Serialize a Django User + UserProfile to a flat dict."""
     if profile is None:
@@ -63,7 +136,7 @@ def _user_dict(user, profile=None):
             if profile.signature_image and profile.signature_image.name:
                 # Route through the RBAC-gated proxy rather than handing out
                 # the raw GCS URL. Append updated_at as a cache-bust version
-                # param so iOS image caches invalidate when the physician
+                # param so macOS image caches invalidate when the physician
                 # redraws their signature.
                 version = ''
                 if profile.updated_at:
@@ -87,7 +160,7 @@ def _user_dict(user, profile=None):
         'portrait_image_url': portrait_url,
         'cover_image_url': cover_url,
         # Provider identity — populated only for physicians; empty strings
-        # for everyone else. iOS reads these off the resolved physician in
+        # for everyone else. macOS reads these off the resolved physician in
         # OrderRequisitionView.
         'credentials': profile.credentials if profile else '',
         'npi_number': profile.npi_number if profile else '',
@@ -237,12 +310,18 @@ def mobile_update_user(request, user_id):
     """PATCH/POST {first_name?, last_name?, email?, phone?, sex?, summary?,
     date_of_birth?, credentials?, npi_number?, practice_*?} for a user.
 
-    Self-only unless caller is admin. Mirrors fields used by the iOS
-    SettingsView Profile + Practice tabs. iOS has been calling this URL
-    (`/api/user/<id>/update/`) for a while via AuthService.updateUserProfile,
-    but the endpoint never actually existed server-side — error was silently
-    swallowed (see AuthService.swift:291). Creating it here fixes that latent
-    bug AND delivers the new provider/practice fields in one stroke.
+    Self or admin: full field set. Staff (physician / mid-level / nurse /
+    secretary) with clinical access to a patient (2026-07-03): the
+    patient's first_name / last_name ONLY — any other key in the body is
+    rejected, so this path can't silently widen into full profile edit.
+    Access uses the same _assert_patient_access gate as the PHI proxies.
+
+    Mirrors fields used by the macOS SettingsView Profile + Practice tabs.
+    macOS has been calling this URL (`/api/user/<id>/update/`) for a while
+    via AuthService.updateUserProfile, but the endpoint never actually
+    existed server-side — error was silently swallowed (see
+    AuthService.swift:291). Creating it here fixed that latent bug AND
+    delivered the new provider/practice fields in one stroke.
     """
     if request.method not in ('PATCH', 'POST'):
         return JsonResponse({'error': 'PATCH required'}, status=405)
@@ -252,15 +331,31 @@ def mobile_update_user(request, user_id):
     except (TypeError, ValueError):
         return JsonResponse({'error': 'Invalid user_id'}, status=400)
 
-    # Self-only OR admin.
     is_self = (request.user.id == target_user_id)
-    is_admin = False
+    caller_role = None
     try:
-        is_admin = request.user.profile.role == 'admin'
+        caller_role = request.user.profile.role
     except (UserProfile.DoesNotExist, AttributeError):
         pass
+    is_admin = caller_role == 'admin'
+
+    body = _parse_body(request)
+
     if not (is_self or is_admin):
-        return JsonResponse({'error': 'Forbidden'}, status=403)
+        # Staff patient-name correction path. Target must be a patient
+        # under the caller's clinical scope, and the body must contain
+        # nothing beyond the name fields.
+        is_staff = caller_role in ('physician', 'mid-level', 'nurse', 'secretary')
+        target_is_patient = UserProfile.objects.filter(
+            user_id=target_user_id, role='patient',
+        ).exists()
+        if not (is_staff and target_is_patient and _assert_patient_access(request.user, target_user_id)):
+            return JsonResponse({'error': 'Forbidden'}, status=403)
+        disallowed = set(body.keys()) - {'first_name', 'last_name'}
+        if disallowed:
+            return JsonResponse(
+                {'error': 'Staff may only edit patient name fields'}, status=403,
+            )
 
     from django.contrib.auth.models import User
     try:
@@ -270,7 +365,7 @@ def mobile_update_user(request, user_id):
 
     profile, _ = UserProfile.objects.get_or_create(user=target_user)
 
-    body = _parse_body(request)
+    old_name = f"{target_user.first_name} {target_user.last_name}".strip()
 
     # User table fields.
     if 'first_name' in body:
@@ -280,6 +375,20 @@ def mobile_update_user(request, user_id):
     if 'email' in body:
         target_user.email = body['email'] or ''
     target_user.save()
+
+    # Identity edits by someone other than the account owner leave a
+    # structured Cloud Logging trail (same operational-visibility pattern
+    # as smallbrain.unassigned_docs).
+    new_name = f"{target_user.first_name} {target_user.last_name}".strip()
+    if not is_self and new_name != old_name:
+        logging.getLogger('smallbrain.profile_edits').info(json.dumps({
+            'event': 'name_edited',
+            'editor_id': request.user.id,
+            'editor_role': caller_role,
+            'target_user_id': target_user_id,
+            'old_name': old_name,
+            'new_name': new_name,
+        }))
 
     # UserProfile fields.
     if 'phone' in body:
@@ -1220,11 +1329,11 @@ def _apply_encounter_relationships_and_events(encounter, body):
     payload from accidentally wiping the encounter's relationships.
 
     Relationships use replace-by-snapshot: present key clears existing rows for
-    THIS encounter and recreates from the list. iOS always sends the full set.
+    THIS encounter and recreates from the list. macOS always sends the full set.
 
     Events use update_or_create keyed on client_uuid for idempotent retry. Returns
     a list of {sync_id, id} dicts for every event the body touched (new or
-    updated), so iOS can map server IDs back to its local EncounterEvent rows.
+    updated), so macOS can map server IDs back to its local EncounterEvent rows.
     """
     from django.utils.dateparse import parse_datetime
 
@@ -1262,7 +1371,7 @@ def _apply_encounter_relationships_and_events(encounter, body):
             client_uuid = event_data.get('client_uuid')
             if not client_uuid:
                 # Events without a client_uuid can't be safely deduped on retry,
-                # so we skip them. iOS always sets syncID at init.
+                # so we skip them. macOS always sets syncID at init.
                 continue
             defaults = {
                 'encounter': encounter,
@@ -1299,7 +1408,7 @@ def mobile_upload_encounter_audio(request, patient_id):
 
     Idempotent: a retry with the same client_uuid updates the existing row
     rather than creating a duplicate. Also accepts relationship + events fields
-    via form-data for clients that bundle everything in the upload (iOS
+    via form-data for clients that bundle everything in the upload (macOS
     currently sends them via the follow-up PATCH; this is here for future use).
     """
     if request.method != 'POST':
@@ -1359,9 +1468,9 @@ def mobile_create_encounter(request, patient_id):
     -> create-or-find text-only Encounter.
 
     Audio-bearing encounters use mobile_upload_encounter_audio. This is the
-    text-only / events-only path for when iOS has audio recording disabled.
+    text-only / events-only path for when macOS has audio recording disabled.
     Idempotent via client_uuid. Events are matched + deduped by their own
-    client_uuid; response includes the sync_id → server_id mapping so iOS can
+    client_uuid; response includes the sync_id → server_id mapping so macOS can
     set EncounterEvent.remoteID locally.
     """
     if request.method != 'POST':
@@ -1481,7 +1590,7 @@ def mobile_upload_document(request, patient_id):
         # Required so retries can no-op rather than create duplicate rows.
         # Matches the contract from mobile_upload_encounter_audio and
         # mobile_upload_problem_image (PR-2). Pre-PR-4 clients that don't
-        # send this will start failing — coordinated with the iOS rollout
+        # send this will start failing — coordinated with the macOS rollout
         # of the matching `Document.syncID.uuidString` body field.
         return JsonResponse({'error': 'client_uuid is required'}, status=400)
 
@@ -1499,7 +1608,7 @@ def mobile_upload_document(request, patient_id):
 
     if created:
         # At upload time the document has no DocumentProblem links yet
-        # (link POSTs come from iOS afterwards). The audit fan-out helper
+        # (link POSTs come from macOS afterwards). The audit fan-out helper
         # falls back to problem=None per the PR-3 / PR-4 routing decision,
         # landing the row on the patient-scope legal trail. Subsequent
         # link / unlink POSTs emit their own per-problem audit rows.
@@ -1534,18 +1643,26 @@ def _emit_document_audit(document, user, activity):
 @csrf_exempt
 @login_required
 def mobile_delete_document(request, patient_id, document_id):
-    """DELETE -> remove a Document + its GCS object + its link rows.
+    """PATCH {document_name} -> rename; DELETE -> remove a Document + its
+    GCS object + its link rows.
 
-    Idempotent: a retried DELETE after a lost response returns 200 even
-    when the row is already gone. Matches the PR-1 / PR-2 / PR-3 contract.
-    Audit fan-out reflects the link state at deletion time — clinicians
-    who reviewed the document via a specific problem will see the
-    `Removed document: <name>` row on that problem's timeline. Orphaned
-    documents (no links) land the row on the patient-scope timeline
-    (`problem=None`).
+    DELETE is idempotent: a retried DELETE after a lost response returns
+    200 even when the row is already gone. Matches the PR-1 / PR-2 / PR-3
+    contract. Audit fan-out reflects the link state at deletion time —
+    clinicians who reviewed the document via a specific problem will see
+    the `Removed document: <name>` row on that problem's timeline.
+    Orphaned documents (no links) land the row on the patient-scope
+    timeline (`problem=None`).
+
+    PATCH (2026-07-02) closes the rename gap: iOS renames used to be
+    local-only mutations with no push path, so they never reached the
+    server and left the row permanently dirty (the leaked-dirty Document
+    class). Same-name PATCHes are treated as no-ops — success without an
+    audit row — so a stale dirty flag re-pushing an unchanged name can't
+    spam the timeline.
     """
-    if request.method != 'DELETE':
-        return JsonResponse({'error': 'DELETE required'}, status=405)
+    if request.method not in ('PATCH', 'POST', 'DELETE'):
+        return JsonResponse({'error': 'PATCH or DELETE required'}, status=405)
 
     if not _assert_patient_access(request.user, patient_id):
         return JsonResponse({'error': 'Document not found'}, status=404)
@@ -1553,7 +1670,25 @@ def mobile_delete_document(request, patient_id, document_id):
     try:
         doc = Document.objects.get(id=document_id, patient_id=patient_id)
     except Document.DoesNotExist:
-        # Genuinely gone — retry-safe success.
+        # Genuinely gone — retry-safe success for DELETE.
+        if request.method == 'DELETE':
+            return JsonResponse({'success': True})
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    if request.method in ('PATCH', 'POST'):
+        body = _parse_body(request)
+        new_name = (body.get('document_name') or '').strip()
+        if not new_name:
+            return JsonResponse({'error': 'document_name is required'}, status=400)
+        old_name = doc.document_name or ''
+        if new_name == old_name:
+            return JsonResponse({'success': True})
+        doc.document_name = new_name
+        doc.save(update_fields=['document_name'])
+        _emit_document_audit(
+            doc, request.user,
+            f"Renamed document: {old_name or 'document'} -> {new_name}"
+        )
         return JsonResponse({'success': True})
 
     document_name = doc.document_name or 'document'
@@ -1589,7 +1724,7 @@ def mobile_delete_document(request, patient_id, document_id):
 # staff users who are members of the team via `PhysicianTeam`. Soft-claim
 # concurrency: when a user opens a doc, server stamps `claimed_by` +
 # `claimed_at`; auto-expires after `_UNASSIGNED_CLAIM_TTL_SECONDS` of no
-# heartbeat (5 min). Heartbeat fires every 60s from the iOS detail view.
+# heartbeat (5 min). Heartbeat fires every 60s from the macOS detail view.
 #
 # On `assign`, the row UPDATEs in place: `patient` ← target, `team` ← NULL,
 # `claimed_*` ← NULL. The GCS object stays at `documents/<uuid>.<ext>` (same
@@ -1819,7 +1954,7 @@ def mobile_unassigned_document_claim(request, document_id):
 @login_required
 def mobile_unassigned_document_claim_heartbeat(request, document_id):
     """POST -> refresh `claimed_at` if the caller is the current claimant.
-    No-op (returns 409) if someone else holds the claim — the iOS detail
+    No-op (returns 409) if someone else holds the claim — the macOS detail
     view will see the 409 and dismiss itself."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
@@ -2130,7 +2265,7 @@ def mobile_upload_problem_image(request, patient_id, problem_id):
 
     Body (form-data):
       file         (required)  the JPEG binary (client must convert HEIC/PNG)
-      client_uuid  (required)  iOS-side `ProblemImage.syncID` for idempotent
+      client_uuid  (required)  macOS-side `ProblemImage.syncID` for idempotent
                                retry. get_or_create keyed on this; a retry
                                returns the same row id without re-saving
                                the file or emitting a duplicate audit row.
@@ -2207,7 +2342,7 @@ def mobile_delete_problem_image(request, patient_id, image_id):
     """DELETE -> remove a PatientImage row + its GCS object.
 
     Idempotent: a retried DELETE after a lost response returns 200 success
-    even if the row is already gone, so the iOS soft-delete queue clears
+    even if the row is already gone, so the macOS soft-delete queue clears
     cleanly. Matches the ProblemNote / ObservationValue DELETE contract
     from PR-1 / PR-3.
     """
@@ -2345,7 +2480,7 @@ def _assert_patient_access(user, patient_id):
 def _yesno_status(value, on_label, off_label):
     """Format a boolean as a human-readable status string for activity rows.
     Centralized so wording stays consistent across the mobile-API mutation
-    endpoints; matches what the iOS app used to write locally pre-Bug-B."""
+    endpoints; matches what the macOS app used to write locally pre-Bug-B."""
     return on_label if value else off_label
 
 
@@ -2425,7 +2560,7 @@ def mobile_update_problem(request, patient_id, problem_id):
             setattr(problem, field, body[field])
     problem.save()
 
-    # Activity rows — one per changed field. Mirrors what the iOS app used
+    # Activity rows — one per changed field. Mirrors what the macOS app used
     # to write locally before Bug B made the server authoritative.
     if 'problem_name' in body and problem.problem_name != old_problem_name:
         add_problem_activity(
@@ -2668,7 +2803,7 @@ def mobile_create_todo(request, patient_id):
     todo.save()
 
     # Todo-side activity row + mirrored row on the linked problem if any.
-    # Matches iOS pre-Bug-B behavior that wrote both rows locally.
+    # Matches macOS pre-Bug-B behavior that wrote both rows locally.
     add_todo_activity(todo, request.user, f"Added todo: {todo_text}")
     if todo.problem is not None:
         add_problem_activity(
@@ -2718,7 +2853,7 @@ def mobile_update_todo(request, patient_id, todo_id):
     todo.save()
 
     # Title change -> todo-side rename row. No problem-side mirror, matching
-    # iOS pre-Bug-B asymmetry (only the toggle mirrored onto the problem).
+    # macOS pre-Bug-B asymmetry (only the toggle mirrored onto the problem).
     if 'todo' in body and todo.todo != old_todo_title:
         add_todo_activity(
             todo, request.user,
@@ -2726,7 +2861,7 @@ def mobile_update_todo(request, patient_id, todo_id):
         )
 
     # Accomplished toggle -> todo-side row + mirrored row on the linked
-    # problem. Matches iOS pre-Bug-B behavior.
+    # problem. Matches macOS pre-Bug-B behavior.
     if 'accomplished' in body and todo.accomplished != old_accomplished:
         status_word = 'accomplished' if todo.accomplished else 'not accomplished'
         add_todo_activity(
@@ -2745,9 +2880,9 @@ def mobile_update_todo(request, patient_id, todo_id):
 @login_required
 def mobile_log_todo_print(request, patient_id, todo_id):
     """POST {provider_id?: int} -> emits a 'printed requisition' TodoActivity
-    row. iOS fire-and-forgets this after a successful Order Requisition
+    row. macOS fire-and-forgets this after a successful Order Requisition
     print so the audit trail mirrors the server-authoritative pattern
-    documented in CLAUDE.md (vs. an iOS-local ActivityLogEntry write).
+    documented in CLAUDE.md (vs. an macOS-local ActivityLogEntry write).
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
@@ -2806,7 +2941,7 @@ def mobile_create_todo_comment(request, patient_id, todo_id):
     )
     comment.save()
     # Link the activity row to the comment FK so legacy web-app activity
-    # feeds can render the comment body inline. iOS ignores the FK
+    # feeds can render the comment body inline. macOS ignores the FK
     # (RemoteTodoActivity has no `comment` field) — harmless either way.
     add_todo_activity(todo, request.user, "Added comment", comment=comment)
     return JsonResponse({'success': True, 'id': comment.id})
@@ -2984,7 +3119,7 @@ def mobile_update_observation(request, patient_id, observation_id):
 
     # Accept "" and null as the "clear" signal — both store as null in the DB
     # so a re-pull doesn't carry a phantom empty-string value back to the
-    # client (which would defeat the preserveLocal guard on the iOS side).
+    # client (which would defeat the preserveLocal guard on the macOS side).
     new_comments = body.get('comments')
     if new_comments == '':
         new_comments = None
@@ -3344,13 +3479,13 @@ def mobile_batch_events(request):
 # Error reporting: batch ingestion → Cloud Logging → Cloud Error Reporting
 # ---------------------------------------------------------------------------
 
-# PHI scrub policy: the iOS client buffers caught errors locally and ships
+# PHI scrub policy: the macOS client buffers caught errors locally and ships
 # them here. We are the single redaction point before structured logs hit
 # Cloud Logging. Stack traces, app/OS versions, and the hardware model are
 # preserved verbatim — symbolication and grouping in Cloud Error Reporting
 # need those intact. The `message` field and any URL paths inside it are
 # scrubbed: numeric path components on /api/patient/<id>/... become
-# <redacted>, and any standalone 5+ digit number is dropped (the iOS user
+# <redacted>, and any standalone 5+ digit number is dropped (the macOS user
 # id is 1-4 digits, and 5+ digit numbers are almost always patient/record
 # remoteIDs). `recordPersistentID` is SHA-256 hashed because it's an
 # opaque SwiftData identifier with no analytical value but could
