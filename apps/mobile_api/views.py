@@ -1534,18 +1534,26 @@ def _emit_document_audit(document, user, activity):
 @csrf_exempt
 @login_required
 def mobile_delete_document(request, patient_id, document_id):
-    """DELETE -> remove a Document + its GCS object + its link rows.
+    """PATCH {document_name} -> rename; DELETE -> remove a Document + its
+    GCS object + its link rows.
 
-    Idempotent: a retried DELETE after a lost response returns 200 even
-    when the row is already gone. Matches the PR-1 / PR-2 / PR-3 contract.
-    Audit fan-out reflects the link state at deletion time — clinicians
-    who reviewed the document via a specific problem will see the
-    `Removed document: <name>` row on that problem's timeline. Orphaned
-    documents (no links) land the row on the patient-scope timeline
-    (`problem=None`).
+    DELETE is idempotent: a retried DELETE after a lost response returns
+    200 even when the row is already gone. Matches the PR-1 / PR-2 / PR-3
+    contract. Audit fan-out reflects the link state at deletion time —
+    clinicians who reviewed the document via a specific problem will see
+    the `Removed document: <name>` row on that problem's timeline.
+    Orphaned documents (no links) land the row on the patient-scope
+    timeline (`problem=None`).
+
+    PATCH (2026-07-02) closes the rename gap: iOS renames used to be
+    local-only mutations with no push path, so they never reached the
+    server and left the row permanently dirty (the leaked-dirty Document
+    class). Same-name PATCHes are treated as no-ops — success without an
+    audit row — so a stale dirty flag re-pushing an unchanged name can't
+    spam the timeline.
     """
-    if request.method != 'DELETE':
-        return JsonResponse({'error': 'DELETE required'}, status=405)
+    if request.method not in ('PATCH', 'POST', 'DELETE'):
+        return JsonResponse({'error': 'PATCH or DELETE required'}, status=405)
 
     if not _assert_patient_access(request.user, patient_id):
         return JsonResponse({'error': 'Document not found'}, status=404)
@@ -1553,7 +1561,25 @@ def mobile_delete_document(request, patient_id, document_id):
     try:
         doc = Document.objects.get(id=document_id, patient_id=patient_id)
     except Document.DoesNotExist:
-        # Genuinely gone — retry-safe success.
+        # Genuinely gone — retry-safe success for DELETE.
+        if request.method == 'DELETE':
+            return JsonResponse({'success': True})
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    if request.method in ('PATCH', 'POST'):
+        body = _parse_body(request)
+        new_name = (body.get('document_name') or '').strip()
+        if not new_name:
+            return JsonResponse({'error': 'document_name is required'}, status=400)
+        old_name = doc.document_name or ''
+        if new_name == old_name:
+            return JsonResponse({'success': True})
+        doc.document_name = new_name
+        doc.save(update_fields=['document_name'])
+        _emit_document_audit(
+            doc, request.user,
+            f"Renamed document: {old_name or 'document'} -> {new_name}"
+        )
         return JsonResponse({'success': True})
 
     document_name = doc.document_name or 'document'

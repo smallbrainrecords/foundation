@@ -1442,6 +1442,81 @@ class MobileDeleteDocumentTests(_RBACTestBase):
         self.assertTrue(Document.objects.filter(id=self.doc.id).exists())
 
 
+class MobileRenameDocumentTests(_RBACTestBase):
+    """PATCH {document_name} on the same URL as DELETE (2026-07-02).
+    Closes the iOS local-only rename gap. Same-name PATCH is a no-op
+    success with no audit row — stale dirty flags re-pushing an
+    unchanged name must not spam the timeline."""
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='P1')
+        self.doc = Document.objects.create(
+            document=SimpleUploadedFile('chart.pdf', b'fake-pdf', content_type='application/pdf'),
+            document_name='chart.pdf',
+            author=self.attending,
+            patient=self.patient,
+        )
+        self.url = f'/api/patient/{self.patient.id}/document/{self.doc.id}'
+
+    def _patch(self, payload):
+        return self.client.patch(self.url, json.dumps(payload), content_type='application/json')
+
+    def test_rename_updates_name_and_fans_out_audit_to_linked_problem(self):
+        DocumentProblem.objects.create(document=self.doc, problem=self.problem, author=self.attending)
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem=self.problem).count()
+        resp = self._patch({'document_name': 'Cardiology Consult'})
+        self.assertEqual(resp.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'Cardiology Consult')
+        after = ProblemActivity.objects.filter(problem=self.problem).count()
+        self.assertEqual(after, before + 1)
+        latest = ProblemActivity.objects.filter(problem=self.problem).order_by('-id').first()
+        self.assertIn('Renamed document', latest.activity)
+        self.assertIn('chart.pdf', latest.activity)
+        self.assertIn('Cardiology Consult', latest.activity)
+
+    def test_rename_orphan_document_audits_to_problem_None(self):
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.filter(problem__isnull=True).count()
+        resp = self._patch({'document_name': 'Renamed Orphan'})
+        self.assertEqual(resp.status_code, 200)
+        after = ProblemActivity.objects.filter(problem__isnull=True).count()
+        self.assertEqual(after, before + 1)
+
+    def test_same_name_noop_success_no_audit(self):
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.count()
+        resp = self._patch({'document_name': 'chart.pdf'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+        self.assertEqual(ProblemActivity.objects.count(), before)
+
+    def test_empty_name_400(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._patch({'document_name': '   '})
+        self.assertEqual(resp.status_code, 400)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'chart.pdf')
+
+    def test_rename_missing_document_404(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.patch(
+            f'/api/patient/{self.patient.id}/document/999999',
+            json.dumps({'document_name': 'X'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    def test_rename_stranger_physician_404_name_preserved(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self._patch({'document_name': 'Hijacked'})
+        self.assertEqual(resp.status_code, 404)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'chart.pdf')
+
+
 class MobileDocumentProblemLinkTests(_RBACTestBase):
     """POST/DELETE on `/api/patient/<pid>/document/<doc_id>/link/problem/<problem_id>`.
     URL-coordinate identity → POST is idempotent via get_or_create."""
