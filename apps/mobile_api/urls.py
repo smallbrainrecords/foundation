@@ -3,6 +3,9 @@ from . import views
 
 urlpatterns = [
     url(r'^healthz/?$', views.mobile_healthz),
+    # Staff-session-only user creation (macOS Add User flow). See the
+    # role-gating policy in mobile_register before touching.
+    url(r'^register/$', views.mobile_register),
     url(r'^login/$', views.mobile_login),
     url(r'^change-password/$', views.mobile_change_password),
     url(r'^staff-set-password/$', views.mobile_staff_set_password),

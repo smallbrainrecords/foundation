@@ -38,6 +38,79 @@ def _strip_html(text):
     return re.sub(r'<[^>]+>', '', text)
 
 
+@csrf_exempt
+def mobile_register(request):
+    """POST {username, password, email?, first_name?, last_name?, role?}
+    -> create User + UserProfile. Returns {success, id}.
+
+    Staff-session-only (2026-07-02 policy decision): there is NO
+    unauthenticated self-registration — accounts are created by staff via
+    the macOS Add User flow (AuthService.createUser), which sends the
+    session cookie. The pre-login RegistrationView gets a 401 and shows
+    the error. Role gating: staff callers can create any non-admin role;
+    only admins can create admin accounts. Do not relax this — an open
+    endpoint honoring client-supplied roles would let anyone on the
+    internet mint a physician/admin account with patient-data access.
+
+    Field names are snake_case on the wire (macOS APIClient encodes
+    .convertToSnakeCase). Non-2xx statuses are used for all failures so
+    APIClient throws and the UI surfaces the message.
+    """
+    from django.contrib.auth.models import User
+    from django.db import IntegrityError
+    from emr.models import ROLE_CHOICES
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'POST required'}, status=405)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'message': 'Authentication required'}, status=401)
+
+    try:
+        caller_role = request.user.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        caller_role = None
+    if caller_role not in ('physician', 'mid-level', 'nurse', 'secretary', 'admin'):
+        return JsonResponse({'success': False, 'message': 'Staff access required'}, status=403)
+
+    body = _parse_body(request)
+    username = (body.get('username') or '').strip()
+    password = body.get('password') or ''
+    email = (body.get('email') or '').strip()
+    first_name = (body.get('first_name') or '').strip()
+    last_name = (body.get('last_name') or '').strip()
+    role = body.get('role') or 'patient'
+
+    if not username or not password:
+        return JsonResponse({'success': False, 'message': 'username and password are required'}, status=400)
+    if role not in {choice[0] for choice in ROLE_CHOICES}:
+        return JsonResponse({'success': False, 'message': 'Invalid role'}, status=400)
+    if role == 'admin' and caller_role != 'admin':
+        return JsonResponse({'success': False, 'message': 'Only admins can create admin accounts'}, status=403)
+
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({'success': False, 'message': 'Username already exists'}, status=409)
+    if email and User.objects.filter(email=email).exists():
+        return JsonResponse({'success': False, 'message': 'Email already exists'}, status=409)
+
+    try:
+        with transaction.atomic():
+            user = User(
+                username=username,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+            )
+            user.set_password(password)
+            user.save()
+            UserProfile.objects.create(user=user, role=role)
+    except IntegrityError:
+        # Lost the race with a concurrent create on the unique username.
+        return JsonResponse({'success': False, 'message': 'Username already exists'}, status=409)
+
+    return JsonResponse({'success': True, 'id': user.id})
+
+
 def _user_dict(user, profile=None):
     """Serialize a Django User + UserProfile to a flat dict."""
     if profile is None:

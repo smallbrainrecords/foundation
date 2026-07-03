@@ -1517,6 +1517,90 @@ class MobileRenameDocumentTests(_RBACTestBase):
         self.assertEqual(self.doc.document_name, 'chart.pdf')
 
 
+class MobileRegisterTests(_RBACTestBase):
+    """POST /api/register/ — staff-session-only user creation (2026-07-02).
+    No unauthenticated self-registration; staff create non-admin roles;
+    admin creates admin. Wire fields are snake_case (macOS APIClient
+    .convertToSnakeCase)."""
+
+    URL = '/api/register/'
+
+    def _register(self, payload):
+        return self.client.post(self.URL, json.dumps(payload), content_type='application/json')
+
+    def test_unauthenticated_401(self):
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'role': 'patient'})
+        self.assertEqual(resp.status_code, 401)
+        self.assertFalse(User.objects.filter(username='new_pt').exists())
+
+    def test_patient_caller_403(self):
+        self.assertTrue(self._login(self.patient))
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'role': 'patient'})
+        self.assertEqual(resp.status_code, 403)
+        self.assertFalse(User.objects.filter(username='new_pt').exists())
+
+    def test_no_profile_caller_403(self):
+        self.assertTrue(self._login(self.no_profile))
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'role': 'patient'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_physician_creates_patient_with_snake_case_names(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({
+            'username': 'new_pt', 'password': 'pw123', 'email': 'np@y.com',
+            'first_name': 'Nora', 'last_name': 'Price', 'role': 'patient',
+        })
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.content)
+        self.assertTrue(body['success'])
+        user = User.objects.get(username='new_pt')
+        self.assertEqual(body['id'], user.id)
+        self.assertEqual(user.first_name, 'Nora')
+        self.assertEqual(user.last_name, 'Price')
+        self.assertEqual(user.profile.role, 'patient')
+        # Password was hashed via set_password, not stored raw.
+        self.assertTrue(user.check_password('pw123'))
+
+    def test_physician_creates_nurse_success(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_rn', 'password': 'pw', 'role': 'nurse'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(User.objects.get(username='new_rn').profile.role, 'nurse')
+
+    def test_physician_cannot_create_admin_403(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_adm', 'password': 'pw', 'role': 'admin'})
+        self.assertEqual(resp.status_code, 403)
+        self.assertFalse(User.objects.filter(username='new_adm').exists())
+
+    def test_admin_creates_admin_success(self):
+        self.assertTrue(self._login(self.admin_user))
+        resp = self._register({'username': 'new_adm', 'password': 'pw', 'role': 'admin'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(User.objects.get(username='new_adm').profile.role, 'admin')
+
+    def test_duplicate_username_409(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': self.patient.username, 'password': 'pw'})
+        self.assertEqual(resp.status_code, 409)
+
+    def test_duplicate_email_409(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'email': self.patient.email})
+        self.assertEqual(resp.status_code, 409)
+
+    def test_missing_password_400(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_pt'})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_invalid_role_400(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._register({'username': 'new_pt', 'password': 'pw', 'role': 'superuser'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(User.objects.filter(username='new_pt').exists())
+
+
 class MobileDocumentProblemLinkTests(_RBACTestBase):
     """POST/DELETE on `/api/patient/<pid>/document/<doc_id>/link/problem/<problem_id>`.
     URL-coordinate identity → POST is idempotent via get_or_create."""
