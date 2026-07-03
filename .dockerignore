@@ -5,5 +5,38 @@ __pycache__/
 .DS_Store
 .env*
 project/local_settings.py
-project/local_settings.py
-.env*
+
+# Dev scratch / local artifacts (2026-07-02). COPY . /app was baking all of
+# this into prod images — including local data extracts. Root-anchored
+# patterns; requirements.txt is NOT matched (no bare *.txt here).
+*.log
+htmlcov/
+media/
+db.sqlite3
+test_db.sqlite3
+dbs.txt
+daily_cron_units.txt
+error.txt
+sandra*.txt
+transcript_extract.txt
+needs_review_problems.csv
+top_500_snomed_concepts.csv
+guidelines.json
+debug_notes.py
+find_*.py
+notes_added_report.py
+orphaned_todos_report.py
+old_views.py
+parse_transcript.py
+patch.py
+patch_*.py
+query_*.py
+shell_script.py
+test_*.py
+test_*.swift
+job.yaml
+deploy.sh.from_prod
+run-daily-cron.sh.from_prod
+Dockerfile.local_backup
+project/_testbed_settings.py
+project/settings_proxy.py

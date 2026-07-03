@@ -1,0 +1,7 @@
+# Controls what `gcloud builds submit` uploads as the build context.
+# Without this file gcloud auto-derives one from .gitignore only — the
+# dev-scratch exclusions live in .dockerignore, so include both.
+.gcloudignore
+.git
+#!include:.gitignore
+#!include:.dockerignore
