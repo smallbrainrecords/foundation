@@ -1,5 +1,5 @@
 """
-Tests for the mobile_api PATCH endpoints that flow through the iOS
+Tests for the mobile_api PATCH endpoints that flow through the macOS
 bidirectional sync pipeline. Currently covers mobile_update_encounter:
 this endpoint is the source-of-truth gate for Encounter updates that
 post-date the initial audio-upload POST (notably transcript and
@@ -134,7 +134,7 @@ class MobileUpdateEncounterTests(TestCase):
 
 
 class MobileCreateEncounterTests(TestCase):
-    """Tests for the text-only encounter create endpoint. Used when iOS has
+    """Tests for the text-only encounter create endpoint. Used when macOS has
     recording disabled (events-only mode) so the encounter still reaches the
     server and joins the standard update pipeline."""
 

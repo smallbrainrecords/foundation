@@ -1,5 +1,5 @@
 """
-Mobile API endpoints for the SBR1 iOS app.
+Mobile API endpoints for the SBR1 macOS app.
 All views are CSRF-exempt and return JSON.
 """
 import hashlib
@@ -63,7 +63,7 @@ def _user_dict(user, profile=None):
             if profile.signature_image and profile.signature_image.name:
                 # Route through the RBAC-gated proxy rather than handing out
                 # the raw GCS URL. Append updated_at as a cache-bust version
-                # param so iOS image caches invalidate when the physician
+                # param so macOS image caches invalidate when the physician
                 # redraws their signature.
                 version = ''
                 if profile.updated_at:
@@ -87,7 +87,7 @@ def _user_dict(user, profile=None):
         'portrait_image_url': portrait_url,
         'cover_image_url': cover_url,
         # Provider identity — populated only for physicians; empty strings
-        # for everyone else. iOS reads these off the resolved physician in
+        # for everyone else. macOS reads these off the resolved physician in
         # OrderRequisitionView.
         'credentials': profile.credentials if profile else '',
         'npi_number': profile.npi_number if profile else '',
@@ -237,8 +237,8 @@ def mobile_update_user(request, user_id):
     """PATCH/POST {first_name?, last_name?, email?, phone?, sex?, summary?,
     date_of_birth?, credentials?, npi_number?, practice_*?} for a user.
 
-    Self-only unless caller is admin. Mirrors fields used by the iOS
-    SettingsView Profile + Practice tabs. iOS has been calling this URL
+    Self-only unless caller is admin. Mirrors fields used by the macOS
+    SettingsView Profile + Practice tabs. macOS has been calling this URL
     (`/api/user/<id>/update/`) for a while via AuthService.updateUserProfile,
     but the endpoint never actually existed server-side — error was silently
     swallowed (see AuthService.swift:291). Creating it here fixes that latent
@@ -1220,11 +1220,11 @@ def _apply_encounter_relationships_and_events(encounter, body):
     payload from accidentally wiping the encounter's relationships.
 
     Relationships use replace-by-snapshot: present key clears existing rows for
-    THIS encounter and recreates from the list. iOS always sends the full set.
+    THIS encounter and recreates from the list. macOS always sends the full set.
 
     Events use update_or_create keyed on client_uuid for idempotent retry. Returns
     a list of {sync_id, id} dicts for every event the body touched (new or
-    updated), so iOS can map server IDs back to its local EncounterEvent rows.
+    updated), so macOS can map server IDs back to its local EncounterEvent rows.
     """
     from django.utils.dateparse import parse_datetime
 
@@ -1262,7 +1262,7 @@ def _apply_encounter_relationships_and_events(encounter, body):
             client_uuid = event_data.get('client_uuid')
             if not client_uuid:
                 # Events without a client_uuid can't be safely deduped on retry,
-                # so we skip them. iOS always sets syncID at init.
+                # so we skip them. macOS always sets syncID at init.
                 continue
             defaults = {
                 'encounter': encounter,
@@ -1299,7 +1299,7 @@ def mobile_upload_encounter_audio(request, patient_id):
 
     Idempotent: a retry with the same client_uuid updates the existing row
     rather than creating a duplicate. Also accepts relationship + events fields
-    via form-data for clients that bundle everything in the upload (iOS
+    via form-data for clients that bundle everything in the upload (macOS
     currently sends them via the follow-up PATCH; this is here for future use).
     """
     if request.method != 'POST':
@@ -1359,9 +1359,9 @@ def mobile_create_encounter(request, patient_id):
     -> create-or-find text-only Encounter.
 
     Audio-bearing encounters use mobile_upload_encounter_audio. This is the
-    text-only / events-only path for when iOS has audio recording disabled.
+    text-only / events-only path for when macOS has audio recording disabled.
     Idempotent via client_uuid. Events are matched + deduped by their own
-    client_uuid; response includes the sync_id → server_id mapping so iOS can
+    client_uuid; response includes the sync_id → server_id mapping so macOS can
     set EncounterEvent.remoteID locally.
     """
     if request.method != 'POST':
@@ -1481,7 +1481,7 @@ def mobile_upload_document(request, patient_id):
         # Required so retries can no-op rather than create duplicate rows.
         # Matches the contract from mobile_upload_encounter_audio and
         # mobile_upload_problem_image (PR-2). Pre-PR-4 clients that don't
-        # send this will start failing — coordinated with the iOS rollout
+        # send this will start failing — coordinated with the macOS rollout
         # of the matching `Document.syncID.uuidString` body field.
         return JsonResponse({'error': 'client_uuid is required'}, status=400)
 
@@ -1499,7 +1499,7 @@ def mobile_upload_document(request, patient_id):
 
     if created:
         # At upload time the document has no DocumentProblem links yet
-        # (link POSTs come from iOS afterwards). The audit fan-out helper
+        # (link POSTs come from macOS afterwards). The audit fan-out helper
         # falls back to problem=None per the PR-3 / PR-4 routing decision,
         # landing the row on the patient-scope legal trail. Subsequent
         # link / unlink POSTs emit their own per-problem audit rows.
@@ -1589,7 +1589,7 @@ def mobile_delete_document(request, patient_id, document_id):
 # staff users who are members of the team via `PhysicianTeam`. Soft-claim
 # concurrency: when a user opens a doc, server stamps `claimed_by` +
 # `claimed_at`; auto-expires after `_UNASSIGNED_CLAIM_TTL_SECONDS` of no
-# heartbeat (5 min). Heartbeat fires every 60s from the iOS detail view.
+# heartbeat (5 min). Heartbeat fires every 60s from the macOS detail view.
 #
 # On `assign`, the row UPDATEs in place: `patient` ← target, `team` ← NULL,
 # `claimed_*` ← NULL. The GCS object stays at `documents/<uuid>.<ext>` (same
@@ -1819,7 +1819,7 @@ def mobile_unassigned_document_claim(request, document_id):
 @login_required
 def mobile_unassigned_document_claim_heartbeat(request, document_id):
     """POST -> refresh `claimed_at` if the caller is the current claimant.
-    No-op (returns 409) if someone else holds the claim — the iOS detail
+    No-op (returns 409) if someone else holds the claim — the macOS detail
     view will see the 409 and dismiss itself."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
@@ -2130,7 +2130,7 @@ def mobile_upload_problem_image(request, patient_id, problem_id):
 
     Body (form-data):
       file         (required)  the JPEG binary (client must convert HEIC/PNG)
-      client_uuid  (required)  iOS-side `ProblemImage.syncID` for idempotent
+      client_uuid  (required)  macOS-side `ProblemImage.syncID` for idempotent
                                retry. get_or_create keyed on this; a retry
                                returns the same row id without re-saving
                                the file or emitting a duplicate audit row.
@@ -2207,7 +2207,7 @@ def mobile_delete_problem_image(request, patient_id, image_id):
     """DELETE -> remove a PatientImage row + its GCS object.
 
     Idempotent: a retried DELETE after a lost response returns 200 success
-    even if the row is already gone, so the iOS soft-delete queue clears
+    even if the row is already gone, so the macOS soft-delete queue clears
     cleanly. Matches the ProblemNote / ObservationValue DELETE contract
     from PR-1 / PR-3.
     """
@@ -2345,7 +2345,7 @@ def _assert_patient_access(user, patient_id):
 def _yesno_status(value, on_label, off_label):
     """Format a boolean as a human-readable status string for activity rows.
     Centralized so wording stays consistent across the mobile-API mutation
-    endpoints; matches what the iOS app used to write locally pre-Bug-B."""
+    endpoints; matches what the macOS app used to write locally pre-Bug-B."""
     return on_label if value else off_label
 
 
@@ -2425,7 +2425,7 @@ def mobile_update_problem(request, patient_id, problem_id):
             setattr(problem, field, body[field])
     problem.save()
 
-    # Activity rows — one per changed field. Mirrors what the iOS app used
+    # Activity rows — one per changed field. Mirrors what the macOS app used
     # to write locally before Bug B made the server authoritative.
     if 'problem_name' in body and problem.problem_name != old_problem_name:
         add_problem_activity(
@@ -2668,7 +2668,7 @@ def mobile_create_todo(request, patient_id):
     todo.save()
 
     # Todo-side activity row + mirrored row on the linked problem if any.
-    # Matches iOS pre-Bug-B behavior that wrote both rows locally.
+    # Matches macOS pre-Bug-B behavior that wrote both rows locally.
     add_todo_activity(todo, request.user, f"Added todo: {todo_text}")
     if todo.problem is not None:
         add_problem_activity(
@@ -2718,7 +2718,7 @@ def mobile_update_todo(request, patient_id, todo_id):
     todo.save()
 
     # Title change -> todo-side rename row. No problem-side mirror, matching
-    # iOS pre-Bug-B asymmetry (only the toggle mirrored onto the problem).
+    # macOS pre-Bug-B asymmetry (only the toggle mirrored onto the problem).
     if 'todo' in body and todo.todo != old_todo_title:
         add_todo_activity(
             todo, request.user,
@@ -2726,7 +2726,7 @@ def mobile_update_todo(request, patient_id, todo_id):
         )
 
     # Accomplished toggle -> todo-side row + mirrored row on the linked
-    # problem. Matches iOS pre-Bug-B behavior.
+    # problem. Matches macOS pre-Bug-B behavior.
     if 'accomplished' in body and todo.accomplished != old_accomplished:
         status_word = 'accomplished' if todo.accomplished else 'not accomplished'
         add_todo_activity(
@@ -2745,9 +2745,9 @@ def mobile_update_todo(request, patient_id, todo_id):
 @login_required
 def mobile_log_todo_print(request, patient_id, todo_id):
     """POST {provider_id?: int} -> emits a 'printed requisition' TodoActivity
-    row. iOS fire-and-forgets this after a successful Order Requisition
+    row. macOS fire-and-forgets this after a successful Order Requisition
     print so the audit trail mirrors the server-authoritative pattern
-    documented in CLAUDE.md (vs. an iOS-local ActivityLogEntry write).
+    documented in CLAUDE.md (vs. an macOS-local ActivityLogEntry write).
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
@@ -2806,7 +2806,7 @@ def mobile_create_todo_comment(request, patient_id, todo_id):
     )
     comment.save()
     # Link the activity row to the comment FK so legacy web-app activity
-    # feeds can render the comment body inline. iOS ignores the FK
+    # feeds can render the comment body inline. macOS ignores the FK
     # (RemoteTodoActivity has no `comment` field) — harmless either way.
     add_todo_activity(todo, request.user, "Added comment", comment=comment)
     return JsonResponse({'success': True, 'id': comment.id})
@@ -2984,7 +2984,7 @@ def mobile_update_observation(request, patient_id, observation_id):
 
     # Accept "" and null as the "clear" signal — both store as null in the DB
     # so a re-pull doesn't carry a phantom empty-string value back to the
-    # client (which would defeat the preserveLocal guard on the iOS side).
+    # client (which would defeat the preserveLocal guard on the macOS side).
     new_comments = body.get('comments')
     if new_comments == '':
         new_comments = None
@@ -3344,13 +3344,13 @@ def mobile_batch_events(request):
 # Error reporting: batch ingestion → Cloud Logging → Cloud Error Reporting
 # ---------------------------------------------------------------------------
 
-# PHI scrub policy: the iOS client buffers caught errors locally and ships
+# PHI scrub policy: the macOS client buffers caught errors locally and ships
 # them here. We are the single redaction point before structured logs hit
 # Cloud Logging. Stack traces, app/OS versions, and the hardware model are
 # preserved verbatim — symbolication and grouping in Cloud Error Reporting
 # need those intact. The `message` field and any URL paths inside it are
 # scrubbed: numeric path components on /api/patient/<id>/... become
-# <redacted>, and any standalone 5+ digit number is dropped (the iOS user
+# <redacted>, and any standalone 5+ digit number is dropped (the macOS user
 # id is 1-4 digits, and 5+ digit numbers are almost always patient/record
 # remoteIDs). `recordPersistentID` is SHA-256 hashed because it's an
 # opaque SwiftData identifier with no analytical value but could

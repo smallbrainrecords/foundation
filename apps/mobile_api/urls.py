@@ -17,7 +17,7 @@ urlpatterns = [
     url(r'^media/document/(?P<document_id>\d+)/file$', views.mobile_document_file),
     url(r'^media/image/(?P<image_id>\d+)$', views.mobile_image_file),
     url(r'^media/signature/(?P<user_id>\d+)$', views.mobile_signature_file),
-    # User profile self-update (mirrors iOS AuthService.updateUserProfile)
+    # User profile self-update (mirrors macOS AuthService.updateUserProfile)
     # + signature upload (multipart, self-only).
     url(r'^user/(?P<user_id>\d+)/update/$', views.mobile_update_user),
     url(r'^user/(?P<user_id>\d+)/signature/upload$', views.mobile_upload_signature),
