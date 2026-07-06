@@ -20,6 +20,7 @@ from emr.models import (
     ObservationPinToProblem,
     UserProfile, PatientController, PhysicianTeam,
     PatientImage, Document, DocumentProblem, DocumentTodo,
+    PatientMutationStamp,
 )
 
 
@@ -1930,3 +1931,141 @@ class MobileCreateProblemNoteTests(TestCase):
         # Verify no duplicates created
         self.assertEqual(ProblemNote.objects.count(), 1)
         self.assertEqual(ToDo.objects.count(), 1)  # Only 1 Todo should exist!
+
+
+class PatientMutationStampTests(TestCase):
+    """Stamp + check-mode poll (`/api/patient/<pid>/changed`) contract.
+
+    The stamp is the change signal for the active-patient live-sync poll:
+    every patient-scoped write endpoint bumps it (via touches_patient_stamp)
+    and the shared activity helpers bump it for web-originated writes. These
+    tests lock in the contract the iOS poll relies on: 2xx writes bump,
+    failed writes don't, deletes bump (the case activity-table schemes
+    couldn't see), and the endpoint is access-gated.
+    """
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='stamp_doc', password='top_secret')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='stamp_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+
+        self.stranger_doc = User.objects.create_user(
+            username='stamp_stranger', password='top_secret')
+        UserProfile.objects.create(user=self.stranger_doc, role='physician')
+
+        self.problem = Problem.objects.create(
+            patient=self.patient, problem_name='Hypertension')
+
+        self.client = Client()
+        self.client.login(username='stamp_doc', password='top_secret')
+
+    def _poll(self, cursor=None):
+        url = f'/api/patient/{self.patient.id}/changed'
+        if cursor:
+            url += f'?cursor={cursor}'
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        return resp.json()
+
+    # ---- check endpoint contract ----
+
+    def test_missing_cursor_reports_changed(self):
+        body = self._poll()
+        self.assertTrue(body['changed'])
+        self.assertIn('server_time', body)
+
+    def test_no_stamp_row_reports_unchanged(self):
+        cursor = self._poll()['server_time']
+        self.assertFalse(self._poll(cursor)['changed'])
+
+    def test_invalid_cursor_returns_400(self):
+        resp = self.client.get(
+            f'/api/patient/{self.patient.id}/changed?cursor=garbage')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_unrelated_physician_gets_404(self):
+        self.client.login(username='stamp_stranger', password='top_secret')
+        resp = self.client.get(f'/api/patient/{self.patient.id}/changed')
+        self.assertEqual(resp.status_code, 404)
+
+    # ---- write endpoints bump the stamp ----
+
+    def test_successful_create_bumps_and_poll_reports_changed(self):
+        cursor = self._poll()['server_time']
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/todo',
+            data=json.dumps({'todo': 'check BP at home'}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+        body = self._poll(cursor)
+        self.assertTrue(body['changed'])
+        # Advancing the cursor past the write quiesces the poll again.
+        self.assertFalse(self._poll(body['server_time'])['changed'])
+
+    def test_failed_write_does_not_bump(self):
+        cursor = self._poll()['server_time']
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/todo',
+            data=json.dumps({'todo': '   '}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+        self.assertFalse(self._poll(cursor)['changed'])
+
+    def test_delete_bumps_stamp(self):
+        # The case MAX(activity.created_on) schemes structurally miss:
+        # a deletion must still trip the poll.
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/problem/{self.problem.id}/note',
+            data=json.dumps({'note': 'temp note', 'note_type': 'wiki'}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        note_id = resp.json()['id']
+
+        cursor = self._poll()['server_time']
+        resp = self.client.delete(
+            f'/api/patient/{self.patient.id}/problem/{self.problem.id}/note/{note_id}')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(self._poll(cursor)['changed'])
+
+    def test_get_full_does_not_bump(self):
+        resp = self.client.get(f'/api/patient/{self.patient.id}/full')
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('server_time', resp.json())
+        self.assertFalse(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    # ---- web-parity path (shared activity helpers) ----
+
+    def test_add_problem_activity_bumps_stamp(self):
+        from problems_app.operations import add_problem_activity
+        add_problem_activity(self.problem, self.physician, 'web-side edit')
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    # ---- helper semantics ----
+
+    def test_touch_updates_single_row_and_advances(self):
+        from emr.mutation_stamp import touch_patient_stamp
+        touch_patient_stamp(self.patient.id)
+        first = PatientMutationStamp.objects.get(patient=self.patient)
+        touch_patient_stamp(self.patient)  # accepts a User instance too
+        self.assertEqual(
+            PatientMutationStamp.objects.filter(patient=self.patient).count(), 1)
+        second = PatientMutationStamp.objects.get(patient=self.patient)
+        self.assertGreaterEqual(second.last_mutation_at, first.last_mutation_at)
+
+    def test_touch_with_bogus_id_is_silent_noop(self):
+        from emr.mutation_stamp import touch_patient_stamp
+        touch_patient_stamp(999999)  # FK violation -> swallowed
+        touch_patient_stamp(None)
+        self.assertEqual(PatientMutationStamp.objects.count(), 0)

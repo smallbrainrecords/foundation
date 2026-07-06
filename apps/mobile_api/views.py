@@ -2,6 +2,7 @@
 Mobile API endpoints for the SBR1 macOS app.
 All views are CSRF-exempt and return JSON.
 """
+import functools
 import hashlib
 import json
 import logging
@@ -28,7 +29,9 @@ from emr.models import (
     Document, DocumentProblem, DocumentTodo,
     MyStoryTextComponent, MyStoryTextComponentEntry,
     TaggedToDoOrder,
+    PatientMutationStamp,
 )
+from emr.mutation_stamp import touch_patient_stamp
 from problems_app.operations import add_problem_activity
 from todo_app.operations import add_todo_activity
 
@@ -36,6 +39,47 @@ from todo_app.operations import add_todo_activity
 def _strip_html(text):
     """Remove HTML tags from text."""
     return re.sub(r'<[^>]+>', '', text)
+
+
+_stamp_logger = logging.getLogger(__name__)
+_STAMP_MUTATING_METHODS = ('POST', 'PATCH', 'PUT', 'DELETE')
+
+
+def _iso_z(dt):
+    """ISO8601 with a Z suffix instead of +00:00. A '+' inside a query
+    string decodes to a space unless percent-encoded; emitting Z keeps the
+    server_time -> cursor round trip safe for careless clients."""
+    return dt.isoformat().replace('+00:00', 'Z')
+
+
+def touches_patient_stamp(view):
+    """Bump the patient's PatientMutationStamp after a successful write.
+
+    Applied as the INNERMOST decorator on every patient-scoped mutation
+    endpoint so the check-mode poll (`mobile_patient_changed`) sees the
+    change; on @transaction.atomic views this makes the stamp commit
+    atomically with the data. Fires only for mutating methods that returned
+    2xx — a 4xx/5xx means the chart didn't change. Best-effort: the helper
+    is savepoint-wrapped, so a stamp failure can neither fail nor poison the
+    clinical write.
+
+    Deliberately NOT applied to mobile_save_my_story_entry: the poll's pull
+    excludes My Story, so a bump there would only buy a wasted pull.
+    New patient-scoped write endpoints MUST add this decorator (or call
+    touch_patient_stamp manually if patient_id isn't a URL kwarg — see
+    mobile_unassigned_document_assign).
+    """
+    @functools.wraps(view)
+    def wrapped(request, *args, **kwargs):
+        response = view(request, *args, **kwargs)
+        if request.method in _STAMP_MUTATING_METHODS \
+                and 200 <= getattr(response, 'status_code', 0) < 300:
+            try:
+                touch_patient_stamp(kwargs.get('patient_id'))
+            except Exception:
+                _stamp_logger.exception('patient mutation stamp failed (non-fatal)')
+        return response
+    return wrapped
 
 
 @csrf_exempt
@@ -819,7 +863,12 @@ def mobile_patient_full(request, patient_id):
 
 def _mobile_patient_full_inner(request, patient_id):
     from django.contrib.auth.models import User
+    from django.utils import timezone
     from django.utils.dateparse import parse_datetime
+
+    # Captured BEFORE any query runs so a client using it as its poll cursor
+    # can only over-pull (see mobile_patient_changed), never miss a write.
+    server_time = timezone.now()
 
     try:
         patient_user = User.objects.select_related('profile').get(id=patient_id)
@@ -1185,6 +1234,7 @@ def _mobile_patient_full_inner(request, patient_id):
 
     return JsonResponse({
         'success': True,
+        'server_time': _iso_z(server_time),
         'patient': patient,
         'problems': problems,
         'relationships': relationships,
@@ -1403,6 +1453,7 @@ def _apply_encounter_relationships_and_events(encounter, body):
 @csrf_exempt
 @login_required
 @transaction.atomic
+@touches_patient_stamp
 def mobile_upload_encounter_audio(request, patient_id):
     """POST multipart: create-or-find Encounter by client_uuid, upload audio file.
 
@@ -1462,6 +1513,7 @@ def mobile_upload_encounter_audio(request, patient_id):
 @csrf_exempt
 @login_required
 @transaction.atomic
+@touches_patient_stamp
 def mobile_create_encounter(request, patient_id):
     """POST {client_uuid?, start_time?, stop_time?, note?, transcript?,
     recorder_status?, problem_ids?, todo_ids?, observation_value_ids?, events?}
@@ -1520,6 +1572,7 @@ def mobile_create_encounter(request, patient_id):
 @csrf_exempt
 @login_required
 @transaction.atomic
+@touches_patient_stamp
 def mobile_update_encounter(request, patient_id, encounter_id):
     """PATCH {note?, transcript?, recorder_status?, stop_time?, problem_ids?,
     todo_ids?, observation_value_ids?, events?} — partial update.
@@ -1557,6 +1610,7 @@ def mobile_update_encounter(request, patient_id, encounter_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_upload_document(request, patient_id):
     """POST multipart: create document record + upload file.
 
@@ -1642,6 +1696,7 @@ def _emit_document_audit(document, user, activity):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_delete_document(request, patient_id, document_id):
     """PATCH {document_name} -> rename; DELETE -> remove a Document + its
     GCS object + its link rows.
@@ -2082,6 +2137,9 @@ def mobile_unassigned_document_assign(request, document_id):
             doc, request.user,
             f"Added document: {doc.document_name or 'document'}",
         )
+        # Manual stamp: patient_id is in the body, not the URL, so the
+        # touches_patient_stamp decorator can't cover this endpoint.
+        touch_patient_stamp(int(target_patient_id))
 
     _UNASSIGNED_DOCS_LOGGER.info(json.dumps({
         'severity': 'INFO',
@@ -2151,6 +2209,7 @@ def mobile_unassigned_document_delete(request, document_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_document_problem_link(request, patient_id, document_id, problem_id):
     """POST -> link a document to a problem; DELETE -> unlink.
 
@@ -2204,6 +2263,7 @@ def mobile_document_problem_link(request, patient_id, document_id, problem_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_document_todo_link(request, patient_id, document_id, todo_id):
     """POST -> link a document to a todo; DELETE -> unlink.
 
@@ -2260,6 +2320,7 @@ def mobile_document_todo_link(request, patient_id, document_id, todo_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_upload_problem_image(request, patient_id, problem_id):
     """POST multipart -> upload a PatientImage attached to a Problem.
 
@@ -2338,6 +2399,7 @@ def mobile_upload_problem_image(request, patient_id, problem_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_delete_problem_image(request, patient_id, image_id):
     """DELETE -> remove a PatientImage row + its GCS object.
 
@@ -2486,6 +2548,7 @@ def _yesno_status(value, on_label, off_label):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_create_problem(request, patient_id):
     """POST {problem_name, concept_id?, icd10_code?, is_active?, is_controlled?} -> create Problem."""
     if request.method != 'POST':
@@ -2523,6 +2586,7 @@ def mobile_create_problem(request, patient_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_update_problem(request, patient_id, problem_id):
     """PATCH {problem_name?, concept_id?, icd10_code?, is_active?, is_controlled?, authenticated?, old_problem_name?}."""
     if request.method not in ('PATCH', 'POST'):
@@ -2590,6 +2654,7 @@ def mobile_update_problem(request, patient_id, problem_id):
 @csrf_exempt
 @login_required
 @transaction.atomic
+@touches_patient_stamp
 def mobile_create_problem_note(request, patient_id, problem_id):
     """POST {note, note_type, client_uuid?} -> create ProblemNote."""
     if request.method != 'POST':
@@ -2643,6 +2708,7 @@ def mobile_create_problem_note(request, patient_id, problem_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_update_problem_note(request, patient_id, problem_id, note_id):
     """PATCH {note?, note_type?} -> update; DELETE -> remove ProblemNote.
 
@@ -2710,6 +2776,7 @@ def mobile_update_problem_note(request, patient_id, problem_id, note_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_create_problem_label(request, patient_id, problem_id):
     """POST {name, css_class?} -> create ProblemLabel and add to problem."""
     if request.method != 'POST':
@@ -2742,6 +2809,7 @@ def mobile_create_problem_label(request, patient_id, problem_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_create_problem_relationship(request, patient_id):
     """POST {source_id, target_id} -> create ProblemRelationship."""
     if request.method != 'POST':
@@ -2768,6 +2836,7 @@ def mobile_create_problem_relationship(request, patient_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_create_todo(request, patient_id):
     """POST {todo, problem_id?, due_date?, order?} -> create ToDo."""
     if request.method != 'POST':
@@ -2815,6 +2884,7 @@ def mobile_create_todo(request, patient_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_update_todo(request, patient_id, todo_id):
     """PATCH {todo?, accomplished?, due_date?, order?, problem_id?}."""
     if request.method not in ('PATCH', 'POST'):
@@ -2878,6 +2948,7 @@ def mobile_update_todo(request, patient_id, todo_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_log_todo_print(request, patient_id, todo_id):
     """POST {provider_id?: int} -> emits a 'printed requisition' TodoActivity
     row. macOS fire-and-forgets this after a successful Order Requisition
@@ -2920,6 +2991,7 @@ def mobile_log_todo_print(request, patient_id, todo_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_create_todo_comment(request, patient_id, todo_id):
     """POST {comment} -> create ToDoComment."""
     if request.method != 'POST':
@@ -2951,6 +3023,7 @@ def mobile_create_todo_comment(request, patient_id, todo_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_create_todo_label(request, patient_id, todo_id):
     """POST {name, css_class?} -> create Label and add to todo."""
     if request.method != 'POST':
@@ -2979,6 +3052,7 @@ def mobile_create_todo_label(request, patient_id, todo_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_add_todo_member(request, patient_id, todo_id):
     """POST {user_id} -> tag a staff member on a todo."""
     if request.method != 'POST':
@@ -3019,6 +3093,7 @@ def mobile_add_todo_member(request, patient_id, todo_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_remove_todo_member(request, patient_id, todo_id, user_id):
     """DELETE -> untag a staff member from a todo."""
     if request.method != 'DELETE':
@@ -3049,6 +3124,7 @@ def mobile_remove_todo_member(request, patient_id, todo_id, user_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_create_observation_value(request, patient_id, component_id):
     """POST {value_quantity, effective_datetime?} -> create ObservationValue."""
     if request.method != 'POST':
@@ -3097,6 +3173,7 @@ def _emit_observation_audit(observation, user, activity):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_update_observation(request, patient_id, observation_id):
     """PATCH {comments?} -> update parent Observation fields.
 
@@ -3139,6 +3216,7 @@ def mobile_update_observation(request, patient_id, observation_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_update_observation_value(request, patient_id, value_id):
     """PATCH {value_quantity?, value_unit?, effective_datetime?} -> update;
     DELETE -> hard-remove ObservationValue.
@@ -3209,6 +3287,7 @@ def mobile_update_observation_value(request, patient_id, value_id):
 
 @csrf_exempt
 @login_required
+@touches_patient_stamp
 def mobile_observation_pin(request, patient_id, observation_id, problem_id):
     """POST -> create (or no-op if already pinned) ObservationPinToProblem;
     DELETE -> remove the pin.
@@ -3645,3 +3724,55 @@ def get_snomed_to_icd10(request):
         })
 
     return JsonResponse(result, safe=False)
+
+
+@csrf_exempt
+@login_required
+def mobile_patient_changed(request, patient_id):
+    """GET ?cursor=<ISO8601> -> {changed, server_time}.
+
+    Check-mode poll for the active-patient live sync. `changed` is True when
+    the patient's PatientMutationStamp postdates `cursor` (see the stamp
+    model docstring for why this is a stamp read, not a MAX() over activity
+    tables). One indexed point read per poll.
+
+    Contract details the client relies on:
+    - Missing cursor -> changed=True (pull and establish one).
+    - Missing stamp row -> changed=False (nothing recorded since the stamp
+      system shipped; the client's initial full pull covers history).
+    - `server_time` is captured before the stamp read; the client feeds it
+      back as the next cursor, so it can only over-pull, never miss. Emitted
+      Z-suffixed (not +00:00) so it survives a query string un-encoded.
+    - No access -> 404 (uniform with the media proxies: don't leak IDs).
+    """
+    from django.utils import timezone
+    from django.utils.dateparse import parse_datetime
+    from datetime import timezone as dt_timezone
+
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    server_time = timezone.now()
+
+    cursor_raw = request.GET.get('cursor')
+    if not cursor_raw:
+        return JsonResponse({'changed': True, 'server_time': _iso_z(server_time)})
+
+    cursor = parse_datetime(cursor_raw)
+    if cursor is None and ' ' in cursor_raw and 'T' in cursor_raw:
+        # A '+' in an un-percent-encoded query string decodes to a space; a
+        # T-separated ISO8601 string can't legitimately contain one.
+        cursor = parse_datetime(cursor_raw.replace(' ', '+'))
+    if cursor is None:
+        return JsonResponse({'error': 'invalid cursor'}, status=400)
+    if timezone.is_naive(cursor):
+        cursor = timezone.make_aware(cursor, dt_timezone.utc)
+
+    stamp_at = PatientMutationStamp.objects.filter(
+        patient_id=patient_id,
+    ).values_list('last_mutation_at', flat=True).first()
+
+    changed = bool(stamp_at is not None and stamp_at > cursor)
+    return JsonResponse({'changed': changed, 'server_time': _iso_z(server_time)})

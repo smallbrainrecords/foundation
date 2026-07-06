@@ -16,6 +16,8 @@ urlpatterns = [
     url(r'^team/assign/$', views.mobile_team_assign),
     url(r'^team/unassign/$', views.mobile_team_unassign),
     url(r'^patient/(?P<patient_id>\d+)/full$', views.mobile_patient_full),
+    # Check-mode poll: cheap "did anything change since <cursor>" stamp read.
+    url(r'^patient/(?P<patient_id>\d+)/changed$', views.mobile_patient_changed),
     url(r'^media/encounter/(?P<encounter_id>\d+)/audio$', views.mobile_encounter_audio),
     url(r'^media/document/(?P<document_id>\d+)/file$', views.mobile_document_file),
     url(r'^media/image/(?P<image_id>\d+)$', views.mobile_image_file),

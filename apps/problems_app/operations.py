@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from common.views import timeit
 from emr.models import ProblemActivity, SharingPatient, AOneC, ColonCancerScreening
+from emr.mutation_stamp import touch_patient_stamp
 
 
 @timeit
@@ -26,6 +27,11 @@ def add_problem_activity(problem, user, activity, put_type=None):
     if put_type == 'output':
         new_activity.is_output_type = True
     new_activity.save()
+    # Web-parity change signal for the mobile check-mode poll. problem=None
+    # audit rows (unpinned-observation fan-out) carry no patient and are
+    # stamped by the mobile view decorator instead.
+    if problem is not None:
+        touch_patient_stamp(problem.patient_id)
 
 
 @timeit
