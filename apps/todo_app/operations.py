@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from common.views import timeit
 from emr.models import TodoActivity, UserProfile
+from emr.mutation_stamp import touch_patient_stamp
 
 
 @timeit
@@ -26,6 +27,8 @@ def add_todo_activity(todo, user, activity, comment=None, attachment=None):
     if attachment:
         new_activity.attachment = attachment
     new_activity.save()
+    # Web-parity change signal for the mobile check-mode poll.
+    touch_patient_stamp(todo.patient_id)
 
 
 @timeit

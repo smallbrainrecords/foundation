@@ -1419,3 +1419,22 @@ class SnomedIcd10Map(models.Model):
     class Meta:
         ordering = ['map_group', 'map_priority']
         unique_together = ('snomed_concept_id', 'icd10_code', 'map_group', 'map_priority')
+
+
+class PatientMutationStamp(models.Model):
+    """One row per patient: wall-clock time of the most recent chart mutation.
+
+    Written by `emr.mutation_stamp.touch_patient_stamp` — via the mobile_api
+    `touches_patient_stamp` view decorator on every patient-scoped write
+    endpoint, and via the shared add_problem_activity / add_todo_activity
+    helpers for web-originated writes. Read by the mobile check-mode poll
+    (`GET /api/patient/<pid>/changed`) to answer "did anything change since
+    <cursor>" with a single indexed point read.
+
+    Deliberately NOT inferred from the activity tables: ProblemActivity has a
+    nullable problem FK (problem=None audit rows are patient-unattributable)
+    and both activity tables CASCADE away with their parent, so deletions
+    would be invisible to any MAX(created_on) scheme.
+    """
+    patient = models.OneToOneField(User, on_delete=models.CASCADE, related_name='mutation_stamp')
+    last_mutation_at = models.DateTimeField(db_index=True)
