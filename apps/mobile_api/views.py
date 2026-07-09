@@ -355,10 +355,13 @@ def mobile_update_user(request, user_id):
     date_of_birth?, credentials?, npi_number?, practice_*?} for a user.
 
     Self or admin: full field set. Staff (physician / mid-level / nurse /
-    secretary) with clinical access to a patient (2026-07-03): the
-    patient's first_name / last_name ONLY — any other key in the body is
-    rejected, so this path can't silently widen into full profile edit.
-    Access uses the same _assert_patient_access gate as the PHI proxies.
+    secretary) with clinical access to a patient (demographics policy,
+    2026-07-09): the patient's DEMOGRAPHICS fields only — first_name,
+    last_name, date_of_birth, sex, phone/phone_number, email. Any other
+    key in the body is rejected, so this path can't silently widen into
+    full profile edit. Access uses the same _assert_patient_access gate as
+    the PHI proxies. Third-party edits emit a smallbrain.profile_edits row
+    naming the changed fields.
 
     Mirrors fields used by the macOS SettingsView Profile + Practice tabs.
     macOS has been calling this URL (`/api/user/<id>/update/`) for a while
@@ -395,11 +398,37 @@ def mobile_update_user(request, user_id):
         ).exists()
         if not (is_staff and target_is_patient and _assert_patient_access(request.user, target_user_id)):
             return JsonResponse({'error': 'Forbidden'}, status=403)
-        disallowed = set(body.keys()) - {'first_name', 'last_name'}
+        disallowed = set(body.keys()) - {
+            'first_name', 'last_name', 'date_of_birth', 'sex',
+            'phone', 'phone_number', 'email',
+        }
         if disallowed:
             return JsonResponse(
-                {'error': 'Staff may only edit patient name fields'}, status=403,
+                {'error': 'Staff may only edit patient demographics fields'}, status=403,
             )
+
+    # DOB arrives in assorted shapes (date-only from the civil-date client,
+    # full timestamps from older builds). Validate + canonize BEFORE any
+    # writes: @transaction.atomic commits on a non-exception response, so a
+    # mid-function 400 must not leave earlier fields half-applied. Canonical
+    # storage is Detroit-local midnight (BUGFIX_DOB_AND_ROOMING_VITALS,
+    # 2026-07-09): extract the civil date whatever the input shape, so a
+    # Z-suffixed timestamp can't mint another UTC-midnight row. Previously
+    # an unparseable string silently nulled the field; now it 400s.
+    dob_provided = 'date_of_birth' in body
+    dob_value = None
+    if dob_provided and body['date_of_birth']:
+        from datetime import datetime as _dt, time as _time
+        from django.utils import timezone as _dj_tz
+        from django.utils.dateparse import parse_datetime, parse_date
+        _raw = body['date_of_birth']
+        _parsed = parse_datetime(_raw) or parse_date(_raw)
+        if _parsed is None:
+            return JsonResponse({'error': 'Invalid date_of_birth'}, status=400)
+        _civil = _parsed.date() if isinstance(_parsed, _dt) else _parsed
+        dob_value = _dj_tz.make_aware(
+            _dt.combine(_civil, _time.min), _dj_tz.get_default_timezone()
+        )
 
     from django.contrib.auth.models import User
     try:
@@ -410,6 +439,17 @@ def mobile_update_user(request, user_id):
     profile, _ = UserProfile.objects.get_or_create(user=target_user)
 
     old_name = f"{target_user.first_name} {target_user.last_name}".strip()
+    # Snapshot of audit-tracked fields, compared after save to name exactly
+    # what a third-party edit changed (compensating control for the widened
+    # staff demographics surface).
+    tracked_old = {
+        'first_name': target_user.first_name,
+        'last_name': target_user.last_name,
+        'email': target_user.email,
+        'phone': profile.phone_number,
+        'sex': profile.sex,
+        'date_of_birth': profile.date_of_birth,
+    }
 
     # User table fields.
     if 'first_name' in body:
@@ -420,20 +460,6 @@ def mobile_update_user(request, user_id):
         target_user.email = body['email'] or ''
     target_user.save()
 
-    # Identity edits by someone other than the account owner leave a
-    # structured Cloud Logging trail (same operational-visibility pattern
-    # as smallbrain.unassigned_docs).
-    new_name = f"{target_user.first_name} {target_user.last_name}".strip()
-    if not is_self and new_name != old_name:
-        logging.getLogger('smallbrain.profile_edits').info(json.dumps({
-            'event': 'name_edited',
-            'editor_id': request.user.id,
-            'editor_role': caller_role,
-            'target_user_id': target_user_id,
-            'old_name': old_name,
-            'new_name': new_name,
-        }))
-
     # UserProfile fields.
     if 'phone' in body:
         profile.phone_number = body['phone'] or ''
@@ -443,14 +469,9 @@ def mobile_update_user(request, user_id):
         profile.sex = body['sex'] or ''
     if 'summary' in body:
         profile.summary = body['summary'] or ''
-    if 'date_of_birth' in body:
-        from django.utils.dateparse import parse_datetime, parse_date
-        raw = body['date_of_birth']
-        if raw:
-            parsed = parse_datetime(raw) or parse_date(raw)
-            profile.date_of_birth = parsed
-        else:
-            profile.date_of_birth = None
+    if dob_provided:
+        # Pre-validated + canonized above; None here means "clear".
+        profile.date_of_birth = dob_value
 
     # Provider identity (physicians populate; others typically blank).
     if 'credentials' in body:
@@ -467,6 +488,30 @@ def mobile_update_user(request, user_id):
             setattr(profile, key, body[key] or '')
 
     profile.save()
+
+    # Identity/demographics edits by someone other than the account owner
+    # leave a structured Cloud Logging trail naming the changed fields
+    # (same operational-visibility pattern as smallbrain.unassigned_docs).
+    if not is_self:
+        tracked_new = {
+            'first_name': target_user.first_name,
+            'last_name': target_user.last_name,
+            'email': target_user.email,
+            'phone': profile.phone_number,
+            'sex': profile.sex,
+            'date_of_birth': profile.date_of_birth,
+        }
+        changed = sorted(k for k, v in tracked_old.items() if tracked_new[k] != v)
+        if changed:
+            logging.getLogger('smallbrain.profile_edits').info(json.dumps({
+                'event': 'profile_edited',
+                'fields': changed,
+                'editor_id': request.user.id,
+                'editor_role': caller_role,
+                'target_user_id': target_user_id,
+                'old_name': old_name,
+                'new_name': f"{target_user.first_name} {target_user.last_name}".strip(),
+            }, default=str))
 
     return JsonResponse({'success': True, 'user': _user_dict(target_user, profile)})
 
