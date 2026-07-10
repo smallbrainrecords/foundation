@@ -1643,11 +1643,14 @@ class MobileUpdateUserStaffNameTests(_RBACTestBase):
         self.assertEqual(resp.status_code, 403)
 
     def test_staff_cannot_edit_other_fields_403(self):
+        # Demographics policy 2026-07-09: email/DOB/sex/phone are now staff-
+        # editable, so the boundary field is `summary`. The load-bearing
+        # property this test keeps: ONE disallowed key rejects the WHOLE
+        # body — the allowed fields in the same request must not apply.
         self.assertTrue(self._login(self.attending))
-        resp = self._patch(self.patient, {'first_name': 'X', 'email': 'evil@x.com'})
+        resp = self._patch(self.patient, {'first_name': 'X', 'summary': 'evil'})
         self.assertEqual(resp.status_code, 403)
         self.patient.refresh_from_db()
-        self.assertNotEqual(self.patient.email, 'evil@x.com')
         self.assertNotEqual(self.patient.first_name, 'X')
 
     def test_staff_cannot_edit_staff_target_403(self):
@@ -2069,3 +2072,188 @@ class PatientMutationStampTests(TestCase):
         touch_patient_stamp(999999)  # FK violation -> swallowed
         touch_patient_stamp(None)
         self.assertEqual(PatientMutationStamp.objects.count(), 0)
+
+
+class DemographicsGateTests(TestCase):
+    """Wave-1 demographics policy (2026-07-09): staff with clinical access
+    edit patient demographics (name/DOB/sex/phone/email); everything else
+    stays self-or-admin. Plus the Detroit-midnight DOB canonization: no
+    input shape may produce a UTC-midnight or wall-clock-contaminated row,
+    and unparseable input 400s instead of silently nulling the field.
+    """
+
+    DEMOGRAPHICS_URL = '/api/user/{}/update/'
+
+    def setUp(self):
+        self.physician = User.objects.create_user(username='demo_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.nurse = User.objects.create_user(username='demo_nurse', password='pw12345678')
+        UserProfile.objects.create(user=self.nurse, role='nurse')
+        self.secretary = User.objects.create_user(username='demo_sec', password='pw12345678')
+        UserProfile.objects.create(user=self.secretary, role='secretary')
+        self.admin = User.objects.create_user(username='demo_admin', password='pw12345678')
+        UserProfile.objects.create(user=self.admin, role='admin')
+
+        self.patient = User.objects.create_user(username='demo_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        self.other_patient = User.objects.create_user(username='demo_pt2', password='unused')
+        UserProfile.objects.create(user=self.other_patient, role='patient')
+
+        # physician controls self.patient only; nurse + secretary reach the
+        # same patient through the physician's team.
+        PatientController.objects.create(physician=self.physician, patient=self.patient)
+        PhysicianTeam.objects.create(physician=self.physician, member=self.nurse)
+        PhysicianTeam.objects.create(physician=self.physician, member=self.secretary)
+
+        self.client = Client()
+
+    def _patch(self, target, body):
+        return self.client.patch(
+            self.DEMOGRAPHICS_URL.format(target.id),
+            data=json.dumps(body), content_type='application/json')
+
+    def _raw_dob(self, user):
+        from django.db import connection
+        with connection.cursor() as cur:
+            cur.execute(
+                "SELECT DATE(date_of_birth), TIME(date_of_birth) "
+                "FROM emr_userprofile WHERE user_id = %s", [user.id])
+            return cur.fetchone()
+
+    # ---- role matrix ----
+
+    def test_each_staff_role_edits_accessible_patient_demographics(self):
+        for username in ('demo_doc', 'demo_nurse', 'demo_sec'):
+            self.client.login(username=username, password='pw12345678')
+            resp = self._patch(self.patient, {
+                'date_of_birth': '1978-11-21', 'sex': 'M',
+                'phone': '231-555-0000', 'email': 'pt@example.com',
+            })
+            self.assertEqual(resp.status_code, 200, f'{username} should edit demographics')
+
+    def test_staff_cannot_edit_inaccessible_patient(self):
+        self.client.login(username='demo_doc', password='pw12345678')
+        resp = self._patch(self.other_patient, {'date_of_birth': '1978-11-21'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_staff_cannot_edit_non_demographic_field(self):
+        self.client.login(username='demo_nurse', password='pw12345678')
+        resp = self._patch(self.patient, {'summary': 'sneaky'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_admin_full_field_set_unchanged(self):
+        self.client.login(username='demo_admin', password='pw12345678')
+        resp = self._patch(self.patient, {'summary': 'admin note'})
+        self.assertEqual(resp.status_code, 200)
+
+    # ---- DOB canonization ----
+
+    def test_date_only_input_stores_detroit_midnight(self):
+        self.client.login(username='demo_doc', password='pw12345678')
+        resp = self._patch(self.patient, {'date_of_birth': '1978-11-21'})
+        self.assertEqual(resp.status_code, 200)
+        d, t = self._raw_dob(self.patient)
+        self.assertEqual(str(d), '1978-11-21')  # date component preserved
+        self.assertEqual(str(t), '05:00:00')    # Nov = EST = UTC-5
+
+    def test_utc_timestamp_input_cannot_mint_utc_midnight_row(self):
+        self.client.login(username='demo_doc', password='pw12345678')
+        resp = self._patch(self.patient, {'date_of_birth': '1978-06-15T00:00:00Z'})
+        self.assertEqual(resp.status_code, 200)
+        d, t = self._raw_dob(self.patient)
+        self.assertEqual(str(d), '1978-06-15')  # civil date extracted, not shifted
+        self.assertEqual(str(t), '04:00:00')    # Jun = EDT = UTC-4, NOT 00:00:00
+
+    def test_unparseable_dob_returns_400_and_changes_nothing(self):
+        self.client.login(username='demo_doc', password='pw12345678')
+        self._patch(self.patient, {'date_of_birth': '1978-11-21'})
+        resp = self._patch(self.patient, {'date_of_birth': 'garbage'})
+        self.assertEqual(resp.status_code, 400)
+        d, _ = self._raw_dob(self.patient)
+        self.assertEqual(str(d), '1978-11-21')  # previous value intact
+
+    def test_empty_dob_clears(self):
+        self.client.login(username='demo_doc', password='pw12345678')
+        self._patch(self.patient, {'date_of_birth': '1978-11-21'})
+        resp = self._patch(self.patient, {'date_of_birth': ''})
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsNone(self._raw_dob(self.patient)[0])
+
+    # ---- field-level audit ----
+
+    def test_third_party_edit_logs_changed_fields(self):
+        self.client.login(username='demo_nurse', password='pw12345678')
+        with self.assertLogs('smallbrain.profile_edits', level='INFO') as cm:
+            resp = self._patch(self.patient, {
+                'date_of_birth': '1980-01-02', 'phone': '231-555-9999',
+            })
+        self.assertEqual(resp.status_code, 200)
+        payload = json.loads(cm.output[0].split(':', 2)[2])
+        self.assertEqual(payload['event'], 'profile_edited')
+        self.assertEqual(sorted(payload['fields']), ['date_of_birth', 'phone'])
+        self.assertEqual(payload['editor_role'], 'nurse')
+
+    def test_self_edit_does_not_log(self):
+        self.client.login(username='demo_pt', password='unused')
+        # patient can't log in with 'unused'? set a usable password
+        self.patient.set_password('pw12345678')
+        self.patient.save()
+        self.client.login(username='demo_pt', password='pw12345678')
+        with self.assertNoLogs('smallbrain.profile_edits', level='INFO'):
+            resp = self._patch(self.patient, {'phone': '231-555-1111'})
+        self.assertEqual(resp.status_code, 200)
+
+
+class StaffSetPasswordScopeTests(TestCase):
+    """2026-07-09 scoping of mobile_staff_set_password (owner policy: all
+    staff change passwords; admin accounts admin-only; audited)."""
+
+    URL = '/api/staff-set-password/'
+
+    def setUp(self):
+        self.physician = User.objects.create_user(username='pw_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.secretary = User.objects.create_user(username='pw_sec', password='pw12345678')
+        UserProfile.objects.create(user=self.secretary, role='secretary')
+        self.nurse = User.objects.create_user(username='pw_nurse', password='pw12345678')
+        UserProfile.objects.create(user=self.nurse, role='nurse')
+        self.admin = User.objects.create_user(username='pw_admin', password='pw12345678')
+        UserProfile.objects.create(user=self.admin, role='admin')
+        self.patient = User.objects.create_user(username='pw_pt', password='unused12')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        self.far_patient = User.objects.create_user(username='pw_pt2', password='unused12')
+        UserProfile.objects.create(user=self.far_patient, role='patient')
+        PatientController.objects.create(physician=self.physician, patient=self.patient)
+        PhysicianTeam.objects.create(physician=self.physician, member=self.secretary)
+        self.client = Client()
+
+    def _reset(self, target):
+        return self.client.post(self.URL, data=json.dumps(
+            {'user_id': target.id, 'new_password': 'newpass123'}),
+            content_type='application/json')
+
+    def test_staff_resets_accessible_patient_with_audit(self):
+        self.client.login(username='pw_sec', password='pw12345678')
+        with self.assertLogs('smallbrain.profile_edits', level='INFO') as cm:
+            resp = self._reset(self.patient)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('password_reset', cm.output[0])
+
+    def test_staff_cannot_reset_inaccessible_patient(self):
+        self.client.login(username='pw_sec', password='pw12345678')
+        self.assertEqual(self._reset(self.far_patient).status_code, 404)
+
+    def test_staff_resets_nonadmin_colleague(self):
+        self.client.login(username='pw_sec', password='pw12345678')
+        self.assertEqual(self._reset(self.nurse).status_code, 200)
+
+    def test_staff_cannot_reset_admin(self):
+        self.client.login(username='pw_sec', password='pw12345678')
+        self.assertEqual(self._reset(self.admin).status_code, 403)
+        # the admin's password is untouched
+        self.assertTrue(self.client.login(username='pw_admin', password='pw12345678'))
+
+    def test_admin_resets_anyone(self):
+        self.client.login(username='pw_admin', password='pw12345678')
+        self.assertEqual(self._reset(self.far_patient).status_code, 200)
+        self.assertEqual(self._reset(self.physician).status_code, 200)
