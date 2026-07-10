@@ -2202,3 +2202,58 @@ class DemographicsGateTests(TestCase):
         with self.assertNoLogs('smallbrain.profile_edits', level='INFO'):
             resp = self._patch(self.patient, {'phone': '231-555-1111'})
         self.assertEqual(resp.status_code, 200)
+
+
+class StaffSetPasswordScopeTests(TestCase):
+    """2026-07-09 scoping of mobile_staff_set_password (owner policy: all
+    staff change passwords; admin accounts admin-only; audited)."""
+
+    URL = '/api/staff-set-password/'
+
+    def setUp(self):
+        self.physician = User.objects.create_user(username='pw_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.secretary = User.objects.create_user(username='pw_sec', password='pw12345678')
+        UserProfile.objects.create(user=self.secretary, role='secretary')
+        self.nurse = User.objects.create_user(username='pw_nurse', password='pw12345678')
+        UserProfile.objects.create(user=self.nurse, role='nurse')
+        self.admin = User.objects.create_user(username='pw_admin', password='pw12345678')
+        UserProfile.objects.create(user=self.admin, role='admin')
+        self.patient = User.objects.create_user(username='pw_pt', password='unused12')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        self.far_patient = User.objects.create_user(username='pw_pt2', password='unused12')
+        UserProfile.objects.create(user=self.far_patient, role='patient')
+        PatientController.objects.create(physician=self.physician, patient=self.patient)
+        PhysicianTeam.objects.create(physician=self.physician, member=self.secretary)
+        self.client = Client()
+
+    def _reset(self, target):
+        return self.client.post(self.URL, data=json.dumps(
+            {'user_id': target.id, 'new_password': 'newpass123'}),
+            content_type='application/json')
+
+    def test_staff_resets_accessible_patient_with_audit(self):
+        self.client.login(username='pw_sec', password='pw12345678')
+        with self.assertLogs('smallbrain.profile_edits', level='INFO') as cm:
+            resp = self._reset(self.patient)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('password_reset', cm.output[0])
+
+    def test_staff_cannot_reset_inaccessible_patient(self):
+        self.client.login(username='pw_sec', password='pw12345678')
+        self.assertEqual(self._reset(self.far_patient).status_code, 404)
+
+    def test_staff_resets_nonadmin_colleague(self):
+        self.client.login(username='pw_sec', password='pw12345678')
+        self.assertEqual(self._reset(self.nurse).status_code, 200)
+
+    def test_staff_cannot_reset_admin(self):
+        self.client.login(username='pw_sec', password='pw12345678')
+        self.assertEqual(self._reset(self.admin).status_code, 403)
+        # the admin's password is untouched
+        self.assertTrue(self.client.login(username='pw_admin', password='pw12345678'))
+
+    def test_admin_resets_anyone(self):
+        self.client.login(username='pw_admin', password='pw12345678')
+        self.assertEqual(self._reset(self.far_patient).status_code, 200)
+        self.assertEqual(self._reset(self.physician).status_code, 200)

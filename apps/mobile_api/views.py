@@ -319,7 +319,17 @@ def mobile_change_password(request):
 @csrf_exempt
 @login_required
 def mobile_staff_set_password(request):
-    """POST {user_id, new_password} -> set a user's password (staff only, no old password)."""
+    """POST {user_id, new_password} -> set a user's password (staff only, no old password).
+
+    Target scoping (2026-07-09, owner policy "all staff can change passwords";
+    closes the pre-existing privilege-escalation hole where ANY staff caller
+    could reset ANY account, including admin, unaudited):
+      - patient target: caller needs clinical access (_assert_patient_access;
+        404-uniform on denial, matching the PHI proxies) — admin bypasses
+      - non-admin staff target: any staff caller (small-practice mutual reset)
+      - admin target (or target with no resolvable role): admin callers only
+    Every reset emits a smallbrain.profile_edits row (event: password_reset).
+    """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
@@ -342,8 +352,32 @@ def mobile_staff_set_password(request):
     except User.DoesNotExist:
         return JsonResponse({'error': 'User not found'}, status=404)
 
+    caller_is_admin = profile.role == 'admin'
+    try:
+        target_role = target_user.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        target_role = None
+
+    if target_role == 'patient':
+        if not (caller_is_admin or _assert_patient_access(request.user, target_user.id)):
+            return JsonResponse({'error': 'User not found'}, status=404)
+    elif target_role in ('physician', 'mid-level', 'nurse', 'secretary'):
+        pass  # any staff caller may reset a non-admin colleague
+    else:
+        # admin target, or no resolvable role: admin only.
+        if not caller_is_admin:
+            return JsonResponse({'error': 'Forbidden'}, status=403)
+
     target_user.set_password(new_password)
     target_user.save()
+
+    logging.getLogger('smallbrain.profile_edits').info(json.dumps({
+        'event': 'password_reset',
+        'editor_id': request.user.id,
+        'editor_role': profile.role,
+        'target_user_id': target_user.id,
+        'target_role': target_role,
+    }))
     return JsonResponse({'success': True, 'message': 'Password updated'})
 
 
