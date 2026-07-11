@@ -7,6 +7,7 @@ post-stop note/recorder_status changes).
 """
 import inspect
 import json
+import logging
 import re
 import sys
 
@@ -2369,6 +2370,79 @@ class MobileUnassignedDocumentAssignStampTests(TestCase):
             content_type='application/json')
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(PatientMutationStamp.objects.count(), 0)
+
+
+class AuditLoggerWiringTests(TestCase):
+    """The smallbrain.* operational audit loggers must actually reach an
+    INFO-capable handler. Found 2026-07-10: profile_edits and
+    unassigned_docs had no LOGGING entry, inherited the root logger's
+    WARNING threshold, and every audit row (the compensating control for
+    the staff-demographics policy) was silently dropped before Cloud
+    Logging. These tests lock the wiring so a LOGGING refactor can't
+    silently re-darken the audit trail."""
+
+    @staticmethod
+    def _reachable_handlers(logger):
+        """Handlers a record emitted on `logger` would actually reach,
+        honoring propagate flags up the ancestor chain."""
+        handlers, current = [], logger
+        while current:
+            handlers.extend(current.handlers)
+            if not getattr(current, 'propagate', False):
+                break
+            current = current.parent
+        return handlers
+
+    def _assert_info_reaches_stdout(self, logger_name):
+        logger = logging.getLogger(logger_name)
+        self.assertLessEqual(
+            logger.getEffectiveLevel(), logging.INFO,
+            '%s effective level blocks INFO records' % logger_name)
+        handlers = self._reachable_handlers(logger)
+        self.assertTrue(
+            any(isinstance(h, logging.StreamHandler)
+                and h.level <= logging.INFO for h in handlers),
+            '%s has no INFO-capable StreamHandler — audit rows are being '
+            'dropped before Cloud Logging' % logger_name)
+
+    def test_profile_edits_logger_reaches_info_handler(self):
+        self._assert_info_reaches_stdout('smallbrain.profile_edits')
+
+    def test_unassigned_docs_logger_reaches_info_handler(self):
+        self._assert_info_reaches_stdout('smallbrain.unassigned_docs')
+
+    def test_error_reporter_logger_unchanged(self):
+        # error_reporter keeps its dedicated ERROR handler and does not
+        # propagate into the smallbrain namespace handler (no double-emit).
+        logger = logging.getLogger('smallbrain.error_reporter')
+        self.assertFalse(logger.propagate)
+        self.assertEqual(logger.level, logging.ERROR)
+        self.assertEqual(len(logger.handlers), 1)
+
+    def test_staff_demographics_edit_emits_profile_edited_record(self):
+        physician = User.objects.create_user(
+            username='audit_doc', password='pw12345678')
+        UserProfile.objects.create(user=physician, role='physician')
+        patient = User.objects.create_user(
+            username='audit_pt', password='unused')
+        UserProfile.objects.create(user=patient, role='patient')
+        PatientController.objects.create(
+            physician=physician, patient=patient)
+
+        client = Client()
+        client.login(username='audit_doc', password='pw12345678')
+        with self.assertLogs('smallbrain.profile_edits', level='INFO') as cm:
+            resp = client.patch(
+                f'/api/user/{patient.id}/update/',
+                data=json.dumps({'first_name': 'Audited'}),
+                content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(cm.output), 1)
+        # cm.output lines look like "INFO:smallbrain.profile_edits:{...json...}"
+        payload = json.loads(cm.output[0].split(':', 2)[2])
+        self.assertEqual(payload['event'], 'profile_edited')
+        self.assertEqual(payload['fields'], ['first_name'])
+        self.assertEqual(payload['target_user_id'], patient.id)
 
 
 class StampCoverageSweepTests(TestCase):

@@ -236,6 +236,15 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "smallbrain_passthrough_json",
         },
+        # INFO-level twin of the handler above for operational audit
+        # loggers (profile_edits, unassigned_docs, future smallbrain.*).
+        # Same pass-through formatter: the emit sites already json.dumps
+        # a single-line payload that Cloud Run's agent auto-parses.
+        "smallbrain_ops_stdout": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "smallbrain_passthrough_json",
+        },
     },
     "loggers": {
         "django.security.DisallowedHost": {
@@ -253,6 +262,21 @@ LOGGING = {
         "smallbrain.error_reporter": {
             "handlers": ["smallbrain_error_reporter_stdout"],
             "level": "ERROR",
+            "propagate": False,
+        },
+        # Namespace catch-all for the operational audit loggers
+        # (smallbrain.profile_edits, smallbrain.unassigned_docs, and any
+        # future smallbrain.* logger). Without this entry their INFO
+        # records inherited the root logger's WARNING threshold and were
+        # silently dropped — the demographics/password audit trail never
+        # reached Cloud Logging (found 2026-07-10 while verifying the
+        # mutation-stamp fix). error_reporter above is a child of this
+        # namespace but keeps its own handler and propagate: False, so
+        # its records never double-emit through this one. Wiring is
+        # locked by AuditLoggerWiringTests in apps.mobile_api.tests.
+        "smallbrain": {
+            "handlers": ["smallbrain_ops_stdout"],
+            "level": "INFO",
             "propagate": False,
         },
     },
