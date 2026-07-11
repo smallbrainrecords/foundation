@@ -4,10 +4,15 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models, migrations
 
-from emr.models import Observation, UserProfile
-
 
 def changer_user_profile_id_to_user_id(apps, schema_editor):
+    # Historical models, NOT live imports (fixed 2026-07-11): the live
+    # Observation model gained columns after this migration was written
+    # (client_uuid, 0181), so a live-model query here selects columns the
+    # table doesn't have yet and breaks every fresh-DB build at this step.
+    # Prod is unaffected (long past this migration); behavior is identical.
+    Observation = apps.get_model('emr', 'Observation')
+    UserProfile = apps.get_model('emr', 'UserProfile')
     activities = Observation.objects.all()
     for act in activities:
         if UserProfile.objects.filter(id=act.subject_id).first() is not None:

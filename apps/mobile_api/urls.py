@@ -64,7 +64,9 @@ urlpatterns = [
     # Observation values
     url(r'^patient/(?P<patient_id>\d+)/observation/component/(?P<component_id>\d+)/value$', views.mobile_create_observation_value),
     url(r'^patient/(?P<patient_id>\d+)/observation/value/(?P<value_id>\d+)$', views.mobile_update_observation_value),
-    # Observation parent (comments / "note") + pins
+    # Observation parent: get-or-create (Wave 2 stranded-vitals fix),
+    # comments/"note" update, pins
+    url(r'^patient/(?P<patient_id>\d+)/observation$', views.mobile_create_observation),
     url(r'^patient/(?P<patient_id>\d+)/observation/(?P<observation_id>\d+)$', views.mobile_update_observation),
     url(r'^patient/(?P<patient_id>\d+)/observation/(?P<observation_id>\d+)/pin/(?P<problem_id>\d+)$', views.mobile_observation_pin),
     # Label catalog
