@@ -813,6 +813,11 @@ class Observation(models.Model):
     # TODO: Check for deprecation
     performer = models.ForeignKey(User, null=True, blank=True, related_name='observation_performers', on_delete=models.SET_NULL)
     author = models.ForeignKey(User, null=True, blank=True, related_name='observation_authors', on_delete=models.SET_NULL)
+    # Wave-2 idempotent-retry column (mirrors Encounter/Document/ProblemNote
+    # client_uuid). iOS sends ClinicalObservation.syncID; the get-or-create
+    # endpoint collapses retried creates onto the same row — load-bearing for
+    # CUSTOM observations, which have no LOINC code to resolve by.
+    client_uuid = models.UUIDField(null=True, blank=True, db_index=True, unique=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:

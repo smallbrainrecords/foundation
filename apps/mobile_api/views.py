@@ -3230,7 +3230,12 @@ def mobile_create_observation_value(request, patient_id, component_id):
         return JsonResponse({'error': 'POST required'}, status=405)
 
     try:
-        component = ObservationComponent.objects.get(id=component_id)
+        # Scoped to the URL's patient (Wave 2 hardening): previously an
+        # unscoped global component lookup, so a value could land on a
+        # different patient's chart while the stamp decorator bumped the
+        # URL patient — cross-patient write + wrong change signal.
+        component = ObservationComponent.objects.get(
+            id=component_id, observation__subject_id=patient_id)
     except ObservationComponent.DoesNotExist:
         return JsonResponse({'error': 'Component not found'}, status=404)
 
@@ -3268,6 +3273,153 @@ def _emit_observation_audit(observation, user, activity):
             add_problem_activity(pin.problem, user, activity)
     else:
         add_problem_activity(None, user, activity)
+
+
+@csrf_exempt
+@login_required
+@transaction.atomic
+@touches_patient_stamp
+def mobile_create_observation(request, patient_id):
+    """POST {name, code?, client_uuid?, components?: [{name, code?}],
+    color?, graph?} -> get-or-create the patient's Observation (Wave 2,
+    stranded-vitals fix).
+
+    The server never had a create-observation endpoint — only create-VALUE,
+    which needs the parent component's server id — so vitals entered against
+    a locally-seeded parent could never acquire a server identity and were
+    silently stranded on the entering machine (2026-07-09 incident). This
+    endpoint is the parent-push target for the iOS pre-pass.
+
+    Resolution order (never duplicates): client_uuid hit -> (patient, code)
+    lowest-id -> case-insensitive name match (healing the code onto a
+    legacy code-less row) -> create. The prod copy holds 19 duplicate
+    (patient, code) groups from the legacy web era; lowest-id is the
+    deterministic read rule for all of them.
+
+    Safely callable as ENSURE-COMPONENTS: posting for an observation the
+    client already knows resolves it and returns the full component map
+    even when no row needed work — compound types recovered from legacy
+    component-less records need exactly this.
+
+    Concurrency: the whole body runs inside @transaction.atomic with a
+    select_for_update() on the PATIENT row as the resolve-or-create mutex.
+    Observation-row locks can't serialize the brand-new-create race (no row
+    to lock; InnoDB gap-lock behavior is deadlock-prone), and a DB
+    UniqueConstraint on (patient, code) is unimplementable here (MySQL has
+    no partial indexes; custom observations legitimately share empty codes;
+    the existing duplicate rows would block the migration).
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    body = _parse_body(request)
+    name = (body.get('name') or '').strip()
+    if not name:
+        return JsonResponse({'error': 'name is required'}, status=400)
+    code = (body.get('code') or '').strip() or None
+    client_uuid = (body.get('client_uuid') or '').strip() or None
+
+    from django.contrib.auth.models import User
+
+    # Patient-row lock: the mutex around resolve-or-create. Held to the end
+    # of the atomic block, so two concurrent POSTs for the same patient
+    # serialize and the second resolves what the first created.
+    try:
+        patient_user = User.objects.select_for_update().get(id=patient_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    observation = None
+    if client_uuid:
+        observation = Observation.objects.filter(client_uuid=client_uuid).first()
+        if observation is not None and observation.subject_id != int(patient_id):
+            # A retried uuid must never resolve across patients.
+            return JsonResponse({'error': 'Observation not found'}, status=404)
+    if observation is None and code:
+        observation = (Observation.objects
+                       .filter(subject_id=patient_id, code=code)
+                       .order_by('id').first())
+    if observation is None:
+        observation = (Observation.objects
+                       .filter(subject_id=patient_id, name__iexact=name)
+                       .order_by('id').first())
+        if observation is not None and code and not (observation.code or '').strip():
+            # Heal the LOINC code onto a legacy code-less row so the next
+            # resolve takes the fast path (mirrors the iOS-side stamping in
+            # upsertObservation).
+            observation.code = code
+            observation.save(update_fields=['code'])
+
+    created = observation is None
+    if created:
+        observation = Observation(
+            subject=patient_user,
+            name=name,
+            code=code,
+            author=request.user,
+            color=(body.get('color') or None),
+            graph=(body.get('graph') or 'Line'),
+            client_uuid=client_uuid,
+        )
+        observation.save()
+    elif client_uuid and not observation.client_uuid:
+        # Stamp the uuid onto the resolved row so a retried create resolves
+        # by uuid even if the code/name later changes client-side.
+        observation.client_uuid = client_uuid
+        observation.save(update_fields=['client_uuid'])
+
+    # Ensure-components: match requested components by code, then by
+    # case-insensitive name containment (the iOS matching rules in
+    # upsertObservationComponent); create the misses. With no components
+    # requested and none existing, create one default mirroring the parent
+    # so the response always carries a pushable component id.
+    requested = body.get('components') or []
+    if not isinstance(requested, list):
+        return JsonResponse({'error': 'components must be a list'}, status=400)
+    if not requested and not observation.observation_components.exists():
+        requested = [{'name': name, 'code': code}]
+
+    existing_components = list(observation.observation_components.all())
+    for req in requested:
+        req_name = (req.get('name') or '').strip()
+        req_code = (req.get('code') or '').strip() or None
+        match = None
+        if req_code:
+            match = next(
+                (c for c in existing_components
+                 if (c.component_code or '').strip() == req_code), None)
+        if match is None and req_name:
+            lower = req_name.lower()
+            match = next(
+                (c for c in existing_components
+                 if c.name and (c.name.lower() == lower
+                                or lower in c.name.lower()
+                                or c.name.lower() in lower)), None)
+        if match is None:
+            match = ObservationComponent(
+                observation=observation,
+                name=req_name or name,
+                component_code=req_code,
+                author=request.user,
+            )
+            match.save()
+            existing_components.append(match)
+        elif req_code and not (match.component_code or '').strip():
+            match.component_code = req_code
+            match.save(update_fields=['component_code'])
+
+    return JsonResponse({
+        'success': True,
+        'id': observation.id,
+        'created': created,
+        'components': [
+            {'id': c.id, 'name': c.name or '', 'code': c.component_code or ''}
+            for c in observation.observation_components.all().order_by('id')
+        ],
+    })
 
 
 @csrf_exempt

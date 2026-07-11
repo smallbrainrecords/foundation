@@ -11,7 +11,7 @@ import logging
 import re
 import sys
 
-from django.test import TestCase, Client
+from django.test import TestCase, TransactionTestCase, Client
 from django.contrib.auth.models import User
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -2633,3 +2633,294 @@ class StampCoverageSweepTests(TestCase):
             return None
 
         self.assertTrue(getattr(marker_probe, '_touches_patient_stamp', False))
+
+
+class MobileCreateObservationTests(TestCase):
+    """Wave 2 (stranded rooming vitals): get-or-create observation endpoint.
+
+    The server never had a create-observation endpoint — only create-VALUE —
+    so vitals entered against a locally-seeded parent could never acquire a
+    server identity and stranded silently on the entering machine
+    (2026-07-09 incident). These tests are the Django half of the Wave-2
+    spec matrix in BUGFIX_DOB_AND_ROOMING_VITALS_2026-07.md.
+    """
+
+    URL = '/api/patient/{}/observation'
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='obs_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='obs_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+
+        self.stranger = User.objects.create_user(
+            username='obs_stranger', password='pw12345678')
+        UserProfile.objects.create(user=self.stranger, role='physician')
+
+        self.client = Client()
+        self.client.login(username='obs_doc', password='pw12345678')
+
+    def _post(self, body, patient_id=None):
+        return self.client.post(
+            self.URL.format(patient_id or self.patient.id),
+            data=json.dumps(body),
+            content_type='application/json')
+
+    # ---- resolution ----
+
+    def test_resolves_existing_canonical_row_without_creating(self):
+        existing = Observation.objects.create(
+            subject=self.patient, name='Weight', code='29463-7')
+        ObservationComponent.objects.create(
+            observation=existing, name='Weight', component_code='29463-7')
+
+        resp = self._post({'name': 'Weight', 'code': '29463-7'})
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertEqual(body['id'], existing.id)
+        self.assertFalse(body['created'])
+        self.assertEqual(
+            Observation.objects.filter(subject=self.patient).count(), 1)
+        self.assertEqual(len(body['components']), 1)
+
+    def test_creates_for_brand_new_patient_with_default_component(self):
+        resp = self._post({'name': 'Weight', 'code': '29463-7'})
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body['created'])
+        obs = Observation.objects.get(id=body['id'])
+        self.assertEqual(obs.subject_id, self.patient.id)
+        self.assertEqual(obs.code, '29463-7')
+        self.assertEqual(obs.author_id, self.physician.id)
+        # No components requested -> one default mirroring the parent, so
+        # the caller always gets a pushable component id back.
+        self.assertEqual(len(body['components']), 1)
+        self.assertEqual(body['components'][0]['code'], '29463-7')
+
+    def test_duplicate_rows_resolve_to_lowest_id(self):
+        first = Observation.objects.create(
+            subject=self.patient, name='Glucose', code='2345-7')
+        Observation.objects.create(
+            subject=self.patient, name='Glucose', code='2345-7')
+
+        resp = self._post({'name': 'Glucose', 'code': '2345-7'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['id'], first.id)
+        self.assertFalse(resp.json()['created'])
+
+    def test_name_fallback_heals_code_onto_legacy_row(self):
+        legacy = Observation.objects.create(
+            subject=self.patient, name='Weight', code=None)
+
+        resp = self._post({'name': 'weight', 'code': '29463-7'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['id'], legacy.id)
+        legacy.refresh_from_db()
+        self.assertEqual(legacy.code, '29463-7')
+
+    # ---- ensure-components ----
+
+    def test_ensure_components_on_component_less_legacy_bp(self):
+        legacy = Observation.objects.create(
+            subject=self.patient, name='Blood Pressure', code='85354-9')
+        bp_components = [
+            {'name': 'Systolic Blood Pressure', 'code': '8480-6'},
+            {'name': 'Diastolic Blood Pressure', 'code': '8462-4'},
+        ]
+
+        resp = self._post({
+            'name': 'Blood Pressure', 'code': '85354-9',
+            'components': bp_components,
+        })
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertEqual(body['id'], legacy.id)
+        self.assertFalse(body['created'])
+        self.assertEqual(len(body['components']), 2)
+        codes = {c['code'] for c in body['components']}
+        self.assertEqual(codes, {'8480-6', '8462-4'})
+
+        # Idempotent retry: same request maps to the same component ids,
+        # creates nothing new.
+        first_ids = {c['code']: c['id'] for c in body['components']}
+        resp2 = self._post({
+            'name': 'Blood Pressure', 'code': '85354-9',
+            'components': bp_components,
+        })
+        second_ids = {c['code']: c['id'] for c in resp2.json()['components']}
+        self.assertEqual(first_ids, second_ids)
+        self.assertEqual(legacy.observation_components.count(), 2)
+
+    def test_component_matched_by_name_gets_code_healed(self):
+        obs = Observation.objects.create(
+            subject=self.patient, name='Blood Pressure', code='85354-9')
+        ObservationComponent.objects.create(
+            observation=obs, name='Systolic Blood Pressure',
+            component_code=None)
+
+        resp = self._post({
+            'name': 'Blood Pressure', 'code': '85354-9',
+            'components': [{'name': 'Systolic', 'code': '8480-6'}],
+        })
+        self.assertEqual(resp.status_code, 200)
+        comps = resp.json()['components']
+        self.assertEqual(len(comps), 1)
+        self.assertEqual(comps[0]['code'], '8480-6')
+        self.assertEqual(obs.observation_components.count(), 1)
+
+    # ---- idempotency ----
+
+    def test_client_uuid_retry_resolves_same_custom_row(self):
+        uuid = '2f9d1f34-9df1-4d38-a184-2f0f6a9b0c11'
+        resp1 = self._post({'name': 'Pain Score', 'client_uuid': uuid})
+        resp2 = self._post({'name': 'Pain Score', 'client_uuid': uuid})
+        self.assertEqual(resp1.status_code, 200)
+        self.assertEqual(resp2.status_code, 200)
+        self.assertEqual(resp1.json()['id'], resp2.json()['id'])
+        self.assertTrue(resp1.json()['created'])
+        self.assertFalse(resp2.json()['created'])
+        self.assertEqual(
+            Observation.objects.filter(subject=self.patient).count(), 1)
+
+    def test_client_uuid_never_resolves_across_patients(self):
+        uuid = '3a1b2c4d-5e6f-4a08-9b1c-2d3e4f5a6b7c'
+        other = User.objects.create_user(username='obs_pt2', password='unused')
+        UserProfile.objects.create(user=other, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=other)
+        Observation.objects.create(
+            subject=other, name='Pain Score', client_uuid=uuid)
+
+        resp = self._post({'name': 'Pain Score', 'client_uuid': uuid})
+        self.assertEqual(resp.status_code, 404)
+
+    # ---- gates + stamp ----
+
+    def test_inaccessible_patient_404s(self):
+        self.client.login(username='obs_stranger', password='pw12345678')
+        resp = self._post({'name': 'Weight', 'code': '29463-7'})
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(Observation.objects.count(), 0)
+
+    def test_missing_name_400s_and_does_not_stamp(self):
+        resp = self._post({'code': '29463-7'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_successful_create_bumps_stamp(self):
+        resp = self._post({'name': 'Weight', 'code': '29463-7'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+
+class MobileCreateObservationConcurrencyTests(TransactionTestCase):
+    """The brand-new-create race: two clients POST the same (patient, code)
+    simultaneously. The patient-row select_for_update() must serialize them
+    so exactly one row exists afterward — observation-row locks can't cover
+    this case (no row to lock yet). TransactionTestCase because the race
+    needs real commits across threads."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='race_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='race_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+
+    def test_concurrent_double_post_yields_exactly_one_row(self):
+        import threading
+        from django.db import connections
+
+        url = f'/api/patient/{self.patient.id}/observation'
+        barrier = threading.Barrier(2)
+        results = []
+
+        def worker():
+            try:
+                c = Client()
+                c.login(username='race_doc', password='pw12345678')
+                barrier.wait(timeout=10)
+                resp = c.post(
+                    url,
+                    data=json.dumps({'name': 'Weight', 'code': '29463-7'}),
+                    content_type='application/json')
+                results.append(resp.json())
+            finally:
+                connections.close_all()
+
+        threads = [threading.Thread(target=worker) for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30)
+
+        self.assertEqual(len(results), 2)
+        ids = {r['id'] for r in results}
+        self.assertEqual(len(ids), 1, 'both callers must resolve to one row')
+        self.assertEqual(
+            Observation.objects.filter(
+                subject=self.patient, code='29463-7').count(), 1)
+        # Exactly one of the two callers performed the create.
+        self.assertEqual(
+            sorted(r['created'] for r in results), [False, True])
+
+
+class MobileCreateObservationValueScopingTests(TestCase):
+    """Wave 2 hardening: the value-create endpoint's component lookup is now
+    scoped to the URL's patient. Previously a global component-id lookup —
+    a value could land on a different patient's chart while the stamp
+    decorator bumped the URL patient (cross-patient write + wrong change
+    signal)."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='vscope_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='vscope_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+        self.other_patient = User.objects.create_user(
+            username='vscope_pt2', password='unused')
+        UserProfile.objects.create(user=self.other_patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.other_patient)
+
+        obs = Observation.objects.create(
+            subject=self.patient, name='Weight', code='29463-7')
+        self.component = ObservationComponent.objects.create(
+            observation=obs, name='Weight', component_code='29463-7')
+
+        self.client = Client()
+        self.client.login(username='vscope_doc', password='pw12345678')
+
+    def _post_value(self, patient_id):
+        return self.client.post(
+            f'/api/patient/{patient_id}/observation/component/{self.component.id}/value',
+            data=json.dumps({'value_quantity': 180}),
+            content_type='application/json')
+
+    def test_value_on_own_patient_component_succeeds(self):
+        resp = self._post_value(self.patient.id)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            ObservationValue.objects.filter(component=self.component).count(), 1)
+
+    def test_value_via_mismatched_patient_url_404s(self):
+        resp = self._post_value(self.other_patient.id)
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(ObservationValue.objects.count(), 0)
+        # The wrong patient's stamp must not move either.
+        self.assertFalse(
+            PatientMutationStamp.objects.filter(
+                patient=self.other_patient).exists())
