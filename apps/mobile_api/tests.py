@@ -5,7 +5,10 @@ this endpoint is the source-of-truth gate for Encounter updates that
 post-date the initial audio-upload POST (notably transcript and
 post-stop note/recorder_status changes).
 """
+import inspect
 import json
+import re
+import sys
 
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
@@ -2257,3 +2260,302 @@ class StaffSetPasswordScopeTests(TestCase):
         self.client.login(username='pw_admin', password='pw12345678')
         self.assertEqual(self._reset(self.far_patient).status_code, 200)
         self.assertEqual(self._reset(self.physician).status_code, 200)
+
+
+class MobileUpdateUserStampTests(TestCase):
+    """mobile_update_user routes on `user_id`, so the touches_patient_stamp
+    decorator can't cover it — it carries a manual touch_patient_stamp call
+    for patient targets (PLAN_RETIRE_ROSTER_WALK Step 1, 2026-07-10). These
+    are the dedicated tests the StampCoverageSweepTests MANUAL_TOUCH bucket
+    points at: without the stamp, a demographics edit is invisible to the
+    active-patient poll on other machines until a manual refresh.
+
+    Stamp rule: TARGET is a patient — staff edit, admin edit, and the
+    patient's own self-edit all change what an open chart displays. Staff
+    profile targets are never stamped (not chart data).
+    """
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='ustamp_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='ustamp_pt', password='pw12345678')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+        self.client = Client()
+
+    def _patch_user(self, user_id, body):
+        return self.client.patch(
+            f'/api/user/{user_id}/update/',
+            data=json.dumps(body),
+            content_type='application/json')
+
+    def test_staff_demographics_edit_bumps_patient_stamp(self):
+        self.client.login(username='ustamp_doc', password='pw12345678')
+        resp = self._patch_user(self.patient.id, {'first_name': 'Corrected'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_patient_self_edit_bumps_own_stamp(self):
+        # Target-is-patient is the rule, not editor-is-staff: a patient
+        # updating their own phone/DOB changes chart-visible data too.
+        self.client.login(username='ustamp_pt', password='pw12345678')
+        resp = self._patch_user(self.patient.id, {'phone': '555-0100'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_staff_self_edit_does_not_stamp(self):
+        self.client.login(username='ustamp_doc', password='pw12345678')
+        resp = self._patch_user(self.physician.id, {'first_name': 'Doc'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(PatientMutationStamp.objects.count(), 0)
+
+    def test_rejected_edit_does_not_stamp(self):
+        # Non-demographics key from staff -> 403 gate fires before any
+        # write; the stamp must not move.
+        self.client.login(username='ustamp_doc', password='pw12345678')
+        resp = self._patch_user(self.patient.id, {'summary': 'nope'})
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(PatientMutationStamp.objects.count(), 0)
+
+    def test_invalid_dob_does_not_stamp(self):
+        self.client.login(username='ustamp_doc', password='pw12345678')
+        resp = self._patch_user(self.patient.id, {'date_of_birth': 'garbage'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(PatientMutationStamp.objects.count(), 0)
+
+
+class MobileUnassignedDocumentAssignStampTests(TestCase):
+    """The assign endpoint's patient_id arrives in the BODY, not the URL, so
+    it carries a manual touch_patient_stamp call (see the view). Dedicated
+    coverage for the StampCoverageSweepTests MANUAL_TOUCH bucket."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='astamp_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='astamp_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+        # A physician IS their own team for the unassigned pool.
+        self.doc = Document.objects.create(
+            document_name='referral.pdf',
+            author=self.physician,
+            patient=None,
+            team=self.physician,
+        )
+        self.client = Client()
+        self.client.login(username='astamp_doc', password='pw12345678')
+
+    def test_assign_bumps_target_patient_stamp(self):
+        resp = self.client.post(
+            f'/api/team/unassigned-document/{self.doc.id}/assign',
+            data=json.dumps({'patient_id': self.patient.id}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_failed_assign_does_not_stamp(self):
+        resp = self.client.post(
+            f'/api/team/unassigned-document/{self.doc.id}/assign',
+            data=json.dumps({}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(PatientMutationStamp.objects.count(), 0)
+
+
+class StampCoverageSweepTests(TestCase):
+    """Every mutating mobile endpoint must be accounted for in exactly one
+    stamp bucket (PLAN_RETIRE_ROSTER_WALK_2026-07.md, Gap A / Step 2).
+
+    With the roster walk retiring, PatientMutationStamp is the ONLY
+    cross-machine change signal — an unstamped patient-scoped write is
+    invisible to open charts until a manual refresh. This sweep turns
+    "forgot the decorator on a new endpoint" into a red test instead of a
+    clinic staleness report: a new URL pattern whose view is in no bucket
+    fails test_every_view_is_accounted_for, forcing a human decision.
+
+    Buckets:
+      STAMPED      — carries @touches_patient_stamp, detected via the
+                     decorator's `_touches_patient_stamp` marker (which
+                     functools.wraps propagates through the outer
+                     decorators to the URL callback).
+      MANUAL_TOUCH — patient id isn't a URL kwarg; the view body calls
+                     touch_patient_stamp itself. Each entry names its
+                     dedicated stamp-movement test class, and the sweep
+                     verifies both the call and the test class exist.
+      ALLOWLIST    — accepts mutating methods but is deliberately
+                     unstamped, with a one-line reason.
+      GET_ONLY     — read-only; excluded from the sweep, and verified
+                     read-only by source inspection (no `request.method`
+                     comparison against a mutating verb).
+    """
+
+    MANUAL_TOUCH = {
+        'mobile_unassigned_document_assign': 'MobileUnassignedDocumentAssignStampTests',
+        'mobile_update_user': 'MobileUpdateUserStampTests',
+    }
+
+    ALLOWLIST = {
+        'mobile_register': 'account creation — no chart data to signal',
+        'mobile_login': 'session auth, not chart data',
+        'mobile_change_password': 'credentials, not chart data',
+        'mobile_staff_set_password': 'credentials, not chart data (audited via profile_edits)',
+        'mobile_toggle_patient_active': 'roster/PatientController state, not chart contents',
+        'mobile_team_assign': 'team membership, not patient chart data',
+        'mobile_team_unassign': 'team membership, not patient chart data',
+        'mobile_upload_signature': 'staff profile asset, not chart data',
+        'mobile_upload_unassigned_document': 'team pool row, patient-unbound until assign (which stamps)',
+        'mobile_unassigned_document_claim': 'pool claim state, patient-unbound',
+        'mobile_unassigned_document_claim_heartbeat': 'pool claim state, patient-unbound',
+        'mobile_unassigned_document_release': 'pool claim state, patient-unbound',
+        'mobile_unassigned_document_delete': 'pool row never belonged to a patient',
+        'mobile_save_my_story_entry': 'poll pull excludes My Story by design; liveness via tab-appear refetch (Gap C decision C2, 2026-07-10)',
+        'mobile_create_label': 'global label catalog, not patient-scoped',
+        'mobile_update_label': 'global label catalog, not patient-scoped',
+        'mobile_batch_events': 'analytics sink, not chart data',
+        'mobile_batch_errors': 'error-report sink, not chart data',
+    }
+
+    GET_ONLY = {
+        'mobile_healthz',
+        'mobile_patients',
+        'mobile_team',
+        'mobile_team_assignments',
+        'mobile_patient_full',
+        'mobile_patient_changed',
+        'mobile_encounter_audio',
+        'mobile_document_file',
+        'mobile_image_file',
+        'mobile_signature_file',
+        'mobile_unassigned_documents_list',
+        'mobile_my_tagged_todos',
+        'get_snomed_to_icd10',
+    }
+
+    @staticmethod
+    def _mobile_view_callbacks():
+        """Enumerate {view_name: callback} for every mobile_api URL pattern.
+        functools.wraps preserves __name__ through the decorator stack."""
+        from apps.mobile_api import urls as mobile_urls
+        return {p.callback.__name__: p.callback for p in mobile_urls.urlpatterns}
+
+    @classmethod
+    def _buckets_for(cls, name, callback):
+        """The detection logic under test: which buckets claim this view."""
+        buckets = []
+        if getattr(callback, '_touches_patient_stamp', False):
+            buckets.append('STAMPED')
+        if name in cls.MANUAL_TOUCH:
+            buckets.append('MANUAL_TOUCH')
+        if name in cls.ALLOWLIST:
+            buckets.append('ALLOWLIST')
+        if name in cls.GET_ONLY:
+            buckets.append('GET_ONLY')
+        return buckets
+
+    def test_every_view_is_accounted_for(self):
+        callbacks = self._mobile_view_callbacks()
+        # Sanity bounds: a broken enumeration (or a route table that
+        # silently stopped importing) must not pass as vacuously green.
+        self.assertGreaterEqual(
+            len(callbacks), 40,
+            'mobile_api URL enumeration looks broken (too few views)')
+        self.assertLessEqual(len(callbacks), 120)
+
+        unaccounted = []
+        multi = []
+        for name, cb in sorted(callbacks.items()):
+            buckets = self._buckets_for(name, cb)
+            if not buckets:
+                unaccounted.append(name)
+            elif len(buckets) > 1:
+                multi.append((name, buckets))
+        self.assertEqual(
+            unaccounted, [],
+            'New endpoint(s) with no stamp decision: %s. Every mutating '
+            'mobile view must carry @touches_patient_stamp, call '
+            'touch_patient_stamp manually (with a dedicated test, add to '
+            'MANUAL_TOUCH), or be added to ALLOWLIST/GET_ONLY with a '
+            'reason. See PLAN_RETIRE_ROSTER_WALK_2026-07.md Gap A.'
+            % unaccounted)
+        self.assertEqual(
+            multi, [],
+            'View(s) claimed by multiple buckets (fix the lists): %s' % multi)
+
+    def test_stamped_count_proves_marker_propagation(self):
+        # If functools.wraps ever stopped propagating the marker through
+        # the outer decorators, STAMPED would collapse to zero and every
+        # decorated view would land in `unaccounted`. This bound makes the
+        # failure mode explicit.
+        callbacks = self._mobile_view_callbacks()
+        stamped = [n for n, cb in callbacks.items()
+                   if getattr(cb, '_touches_patient_stamp', False)]
+        self.assertGreaterEqual(
+            len(stamped), 20,
+            'Marker attribute not visible on URL callbacks — did an outer '
+            'decorator stop using functools.wraps?')
+
+    def test_get_only_views_are_actually_read_only(self):
+        # A view parked in GET_ONLY must not accept a mutating method. If
+        # one grows a POST/PATCH/PUT/DELETE branch, its source will compare
+        # request.method against that verb — flag it out of GET_ONLY.
+        callbacks = self._mobile_view_callbacks()
+        verb_pattern = re.compile(
+            r"request\.method[^\n]*(POST|PATCH|PUT|DELETE)")
+        offenders = []
+        for name in sorted(self.GET_ONLY):
+            self.assertIn(
+                name, callbacks,
+                'GET_ONLY names a view not present in urls.py: %s' % name)
+            src = inspect.getsource(inspect.unwrap(callbacks[name]))
+            if verb_pattern.search(src):
+                offenders.append(name)
+        self.assertEqual(
+            offenders, [],
+            'GET_ONLY view(s) reference a mutating method — move them to '
+            'STAMPED/MANUAL_TOUCH/ALLOWLIST: %s' % offenders)
+
+    def test_manual_touch_views_call_stamp_and_have_dedicated_tests(self):
+        callbacks = self._mobile_view_callbacks()
+        module = sys.modules[__name__]
+        for view_name, test_class_name in self.MANUAL_TOUCH.items():
+            self.assertIn(view_name, callbacks)
+            src = inspect.getsource(inspect.unwrap(callbacks[view_name]))
+            self.assertIn(
+                'touch_patient_stamp(', src,
+                '%s is in MANUAL_TOUCH but its source has no '
+                'touch_patient_stamp call' % view_name)
+            self.assertTrue(
+                hasattr(module, test_class_name),
+                'MANUAL_TOUCH names a missing test class: %s' % test_class_name)
+
+    def test_sweep_flags_an_undeclared_mutating_view(self):
+        # Meta-test of the detection logic: a mutating view with no marker
+        # and no list entry must land in zero buckets (which the main sweep
+        # reports as unaccounted). Guards against the classifier itself
+        # rotting into always-true.
+        def fake_mobile_view(request):
+            if request.method != 'POST':
+                return None
+            return None
+        self.assertEqual(self._buckets_for('fake_mobile_view', fake_mobile_view), [])
+
+    def test_decorator_marker_survives_outer_wrapping(self):
+        # The STAMPED bucket depends on the marker surviving @wraps layers.
+        from django.views.decorators.csrf import csrf_exempt
+        from apps.mobile_api.views import touches_patient_stamp
+
+        @csrf_exempt
+        @touches_patient_stamp
+        def marker_probe(request, patient_id=None):
+            return None
+
+        self.assertTrue(getattr(marker_probe, '_touches_patient_stamp', False))

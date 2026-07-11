@@ -67,7 +67,10 @@ def touches_patient_stamp(view):
     excludes My Story, so a bump there would only buy a wasted pull.
     New patient-scoped write endpoints MUST add this decorator (or call
     touch_patient_stamp manually if patient_id isn't a URL kwarg — see
-    mobile_unassigned_document_assign).
+    mobile_unassigned_document_assign). That invariant is enforced by
+    StampCoverageSweepTests, which checks for the `_touches_patient_stamp`
+    marker attribute below — every mutating mobile view must carry it, have
+    a dedicated manual-touch test, or sit on the sweep's allowlist.
     """
     @functools.wraps(view)
     def wrapped(request, *args, **kwargs):
@@ -79,6 +82,11 @@ def touches_patient_stamp(view):
             except Exception:
                 _stamp_logger.exception('patient mutation stamp failed (non-fatal)')
         return response
+    # Marker for the stamp-coverage sweep. functools.wraps copies __dict__
+    # outward, so the marker survives the outer @login_required /
+    # @csrf_exempt / @transaction.atomic layers and is visible on the
+    # final URL callback.
+    wrapped._touches_patient_stamp = True
     return wrapped
 
 
@@ -546,6 +554,18 @@ def mobile_update_user(request, user_id):
                 'old_name': old_name,
                 'new_name': f"{target_user.first_name} {target_user.last_name}".strip(),
             }, default=str))
+
+    # Demographics are chart data: bump the mutation stamp whenever the
+    # TARGET is a patient — staff edit, admin edit, or the patient's own
+    # self-edit all change what an open chart displays, so the
+    # active-patient poll on other machines must see them. Manual touch
+    # because the decorator keys on a `patient_id` URL kwarg and this
+    # endpoint routes on `user_id`. Staff/admin profile targets are not
+    # chart data and are never stamped. Runs inside @transaction.atomic,
+    # so the stamp commits atomically with the write (same contract as
+    # the decorator on atomic views).
+    if profile.role == 'patient':
+        touch_patient_stamp(target_user_id)
 
     return JsonResponse({'success': True, 'user': _user_dict(target_user, profile)})
 
