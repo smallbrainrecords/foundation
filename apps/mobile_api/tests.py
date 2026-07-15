@@ -2924,3 +2924,52 @@ class MobileCreateObservationValueScopingTests(TestCase):
         self.assertFalse(
             PatientMutationStamp.objects.filter(
                 patient=self.other_patient).exists())
+
+
+class MobileUploadProblemImageRealFileTests(_RBACTestBase):
+    """Round-trip with a REAL decodable JPEG (Track A Pillow-bump gate).
+
+    The other image tests deliberately use fake bytes because the mobile
+    upload path never decodes server-side (width/height arrive as client-
+    supplied form fields). This test keeps one real image flowing
+    upload -> storage -> media proxy -> Pillow decode, so a Pillow or
+    storage upgrade that breaks real files cannot pass the suite on fake
+    bytes alone.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='Lesion')
+        self.url = f'/api/patient/{self.patient.id}/problem/{self.problem.id}/image'
+
+    def test_real_jpeg_uploads_and_reads_back(self):
+        import io
+        from PIL import Image
+
+        buf = io.BytesIO()
+        Image.new('RGB', (64, 48), (10, 120, 200)).save(buf, format='JPEG')
+        jpeg_bytes = buf.getvalue()
+
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.post(self.url, data={
+            'file': SimpleUploadedFile('real.jpg', jpeg_bytes, content_type='image/jpeg'),
+            'client_uuid': '22222222-2222-2222-2222-222222222222',
+            'file_name': 'real.jpg',
+            'image_width': '64',
+            'image_height': '48',
+        })
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['created'])
+
+        fetched = self.client.get(f"/api/media/image/{data['id']}")
+        self.assertEqual(fetched.status_code, 200)
+        body = (b''.join(fetched.streaming_content)
+                if fetched.streaming else fetched.content)
+        self.assertEqual(body, jpeg_bytes)
+
+        img = Image.open(io.BytesIO(body))
+        img.load()
+        self.assertEqual(img.size, (64, 48))
+        self.assertEqual(img.format, 'JPEG')
