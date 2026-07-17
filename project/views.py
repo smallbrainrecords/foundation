@@ -14,12 +14,16 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.http import JsonResponse
 
 
 def home(request):
-    if not request.user.is_authenticated:
-        return render(request, 'index.html', {})
-    elif request.user.is_authenticated:
-        return HttpResponseRedirect('/u/home/')
+    # Track B1 (2026-07-17): the legacy AngularJS web front end is retired —
+    # the root no longer renders `index.html` (an EOL bundle carrying 168
+    # open Dependabot advisories, served unauthenticated for zero product
+    # benefit) and no longer redirects authenticated users into the legacy
+    # web app. The mobile app is the only client (owner policy, recorded
+    # 2026-07-09); Django exists to serve the mobile API. Track B2 removes
+    # the legacy routes and the static bundle itself — EXCEPT `^my_story/`,
+    # which the mobile app still calls (`/my_story/<pid>/get_my_story`).
+    return JsonResponse({'service': 'smallbrain-api', 'status': 'ok'})

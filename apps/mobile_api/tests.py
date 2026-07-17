@@ -3035,6 +3035,26 @@ class MobileObservationValueIdempotencyTests(_RBACTestBase):
             ObservationValue.objects.filter(component=self.component).count(), 3)
 
 
+class RootServesNoLegacyShellTests(TestCase):
+    """Track B1 (2026-07-17): the root URL must never again serve the EOL
+    AngularJS shell (unauthenticated, 168 open advisories) nor redirect into
+    the retired legacy web app."""
+
+    def test_root_is_minimal_json_for_anonymous(self):
+        resp = self.client.get('/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/json')
+        self.assertEqual(json.loads(resp.content)['service'], 'smallbrain-api')
+
+    def test_root_does_not_redirect_authenticated_users_to_legacy_app(self):
+        from django.contrib.auth.models import User as AuthUser
+        AuthUser.objects.create_user(username='rootprobe', password='top_secret')
+        self.client.login(username='rootprobe', password='top_secret')
+        resp = self.client.get('/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content)['service'], 'smallbrain-api')
+
+
 class MobilePatientChangedDiscriminatorTests(_RBACTestBase):
     """Step 0.7 (roster-walk plan): patient-level denial on /changed is 403,
     NEVER 404 — the client's poll kill switch keys on 404/410 to detect the
