@@ -1187,10 +1187,15 @@ class MobileUploadProblemImageTests(_RBACTestBase):
         resp = self.client.post(self.url, data=self._multipart_body())
         self.assertEqual(resp.status_code, 200)
         img = PatientImage.objects.get(id=json.loads(resp.content)['id'])
-        # set_problem_image_path returns "images/<uuid>.jpg" — verify both halves.
+        # set_problem_image_path returns "images/<uuid>.jpg" — verify both
+        # halves. Deflaked 2026-07-17: the old assertNotIn(<numeric id>)
+        # checks failed whenever the RANDOM uuid's hex happened to contain
+        # the id's digits (observed: id 72 inside "…c330d872…"). The actual
+        # contract is that the stem IS a uuid, which implies no raw ids.
+        from uuid import UUID as _UUID
         self.assertTrue(img.image.name.startswith('images/'))
-        self.assertNotIn(str(self.patient.id), img.image.name)
-        self.assertNotIn(str(self.problem.id), img.image.name)
+        stem = img.image.name.rsplit('/', 1)[-1].rsplit('.', 1)[0]
+        _UUID(stem)  # raises ValueError (test error) if not uuid-keyed
 
     def test_post_idempotent_same_client_uuid(self):
         # Second POST with the same client_uuid returns the existing row id
@@ -1995,10 +2000,15 @@ class PatientMutationStampTests(TestCase):
             f'/api/patient/{self.patient.id}/changed?cursor=garbage')
         self.assertEqual(resp.status_code, 400)
 
-    def test_unrelated_physician_gets_404(self):
+    def test_unrelated_physician_gets_403_never_404(self):
+        # Contract changed 2026-07-17 (Step 0.7 discriminator): patient-level
+        # denial is 403 — 404/410 are reserved for the route-level poll kill
+        # switch, so one inaccessible patient can't silently disable polling
+        # for the whole session.
         self.client.login(username='stamp_stranger', password='top_secret')
         resp = self.client.get(f'/api/patient/{self.patient.id}/changed')
-        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(json.loads(resp.content)['error'], 'patient_unavailable')
 
     # ---- write endpoints bump the stamp ----
 
@@ -2973,3 +2983,78 @@ class MobileUploadProblemImageRealFileTests(_RBACTestBase):
         img.load()
         self.assertEqual(img.size, (64, 48))
         self.assertEqual(img.format, 'JPEG')
+
+
+class MobileObservationValueIdempotencyTests(_RBACTestBase):
+    """client_uuid on value-create (build 37+ clients send the value's
+    syncID): a retried create returns the existing row instead of minting a
+    duplicate clinical reading. Migration 0182."""
+
+    def setUp(self):
+        super().setUp()
+        self.observation = Observation.objects.create(
+            subject=self.patient, name='weight', code='3141-9')
+        self.component = ObservationComponent.objects.create(
+            observation=self.observation, name='weight', component_code='3141-9')
+        self.url = (f'/api/patient/{self.patient.id}/observation/'
+                    f'component/{self.component.id}/value')
+        self.assertTrue(self._login(self.attending))
+
+    def _post(self, body):
+        return self.client.post(
+            self.url, data=json.dumps(body), content_type='application/json')
+
+    def test_same_client_uuid_returns_existing_row(self):
+        uuid_str = '33333333-3333-3333-3333-333333333333'
+        first = self._post({'value_quantity': 155, 'client_uuid': uuid_str})
+        self.assertEqual(first.status_code, 200)
+        first_body = json.loads(first.content)
+        self.assertTrue(first_body['created'])
+
+        retry = self._post({'value_quantity': 155, 'client_uuid': uuid_str})
+        self.assertEqual(retry.status_code, 200)
+        retry_body = json.loads(retry.content)
+        self.assertEqual(retry_body['id'], first_body['id'])
+        self.assertFalse(retry_body['created'])
+        self.assertEqual(
+            ObservationValue.objects.filter(component=self.component).count(), 1)
+
+    def test_distinct_client_uuids_create_distinct_rows(self):
+        self._post({'value_quantity': 1,
+                    'client_uuid': '44444444-4444-4444-4444-444444444444'})
+        self._post({'value_quantity': 2,
+                    'client_uuid': '55555555-5555-5555-5555-555555555555'})
+        self.assertEqual(
+            ObservationValue.objects.filter(component=self.component).count(), 2)
+
+    def test_missing_or_garbage_client_uuid_keeps_legacy_create_behavior(self):
+        self._post({'value_quantity': 1})
+        self._post({'value_quantity': 1})
+        self._post({'value_quantity': 1, 'client_uuid': 'not-a-uuid'})
+        self.assertEqual(
+            ObservationValue.objects.filter(component=self.component).count(), 3)
+
+
+class MobilePatientChangedDiscriminatorTests(_RBACTestBase):
+    """Step 0.7 (roster-walk plan): patient-level denial on /changed is 403,
+    NEVER 404 — the client's poll kill switch keys on 404/410 to detect the
+    route being disabled server-side, and one inaccessible patient must not
+    silently kill polling for the whole session."""
+
+    def test_no_access_is_403_not_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.get(f'/api/patient/{self.patient.id}/changed')
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(
+            json.loads(resp.content)['error'], 'patient_unavailable')
+
+    def test_nonexistent_patient_is_also_403(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get('/api/patient/999999/changed')
+        self.assertEqual(resp.status_code, 403)
+
+    def test_attending_still_gets_check_response(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(f'/api/patient/{self.patient.id}/changed')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['changed'])

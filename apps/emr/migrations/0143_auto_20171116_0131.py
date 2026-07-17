@@ -4,14 +4,21 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models, migrations
 
-from emr.models import ObservationValue, UserProfile
-
 
 def changer_user_profile_id_to_user_id(apps, schema_editor):
-    activities = ObservationValue.objects.all()
-    for act in activities:
-        if UserProfile.objects.filter(id=act.author_id).first() is not None:
-            act.author_id = UserProfile.objects.filter(id=act.author_id).first().user_id
+    # Historical models (repaired 2026-07-17): this originally imported the
+    # LIVE ObservationValue/UserProfile from emr.models, so its SELECT
+    # included every column added in later migrations — fresh-schema builds
+    # (test databases, new environments) crashed here the first time
+    # ObservationValue gained a new field (0182's client_uuid). Prod
+    # recorded this migration as applied in 2017, so only from-scratch
+    # builds ever execute this function. Semantics unchanged.
+    ObservationValue = apps.get_model('emr', 'ObservationValue')
+    UserProfile = apps.get_model('emr', 'UserProfile')
+    for act in ObservationValue.objects.all():
+        profile = UserProfile.objects.filter(id=act.author_id).first()
+        if profile is not None:
+            act.author_id = profile.user_id
         act.save()
 
 
