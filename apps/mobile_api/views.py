@@ -3246,16 +3246,51 @@ def mobile_create_observation_value(request, patient_id, component_id):
     if value_quantity is None:
         return JsonResponse({'error': 'value_quantity is required'}, status=400)
 
+    # Idempotent retry (build 37+ clients send client_uuid = the value's
+    # syncID): if this exact create already landed but the response was
+    # lost, return the existing row instead of minting a duplicate clinical
+    # reading. Scoped to the URL's patient like the component lookup above.
+    # Absent/invalid client_uuid falls through to a plain create.
+    import uuid as uuid_lib
+    client_uuid = None
+    raw_uuid = body.get('client_uuid')
+    if raw_uuid:
+        try:
+            client_uuid = uuid_lib.UUID(str(raw_uuid))
+        except (ValueError, AttributeError, TypeError):
+            client_uuid = None
+    if client_uuid:
+        existing = ObservationValue.objects.filter(
+            client_uuid=client_uuid,
+            component__observation__subject_id=patient_id,
+        ).first()
+        if existing is not None:
+            return JsonResponse({'success': True, 'id': existing.id, 'created': False})
+
     val = ObservationValue(
         component=component,
         value_quantity=value_quantity,
         author=request.user,
+        client_uuid=client_uuid,
     )
     effective = body.get('effective_datetime')
     if effective:
         val.effective_datetime = parse_datetime(effective)
-    val.save()
-    return JsonResponse({'success': True, 'id': val.id})
+    from django.db import IntegrityError
+    try:
+        val.save()
+    except IntegrityError:
+        # Concurrent retry lost the unique-index race — the winner's row is
+        # the idempotent answer.
+        if client_uuid:
+            existing = ObservationValue.objects.filter(
+                client_uuid=client_uuid,
+                component__observation__subject_id=patient_id,
+            ).first()
+            if existing is not None:
+                return JsonResponse({'success': True, 'id': existing.id, 'created': False})
+        raise
+    return JsonResponse({'success': True, 'id': val.id, 'created': True})
 
 
 def _emit_observation_audit(observation, user, activity):
@@ -3994,7 +4029,10 @@ def mobile_patient_changed(request, patient_id):
     - `server_time` is captured before the stamp read; the client feeds it
       back as the next cursor, so it can only over-pull, never miss. Emitted
       Z-suffixed (not +00:00) so it survives a query string un-encoded.
-    - No access -> 404 (uniform with the media proxies: don't leak IDs).
+    - No access / unknown patient -> 403 `patient_unavailable` (uniform, so
+      nothing about the id is revealed). 404/410 are RESERVED for the
+      route-level kill switch (Bucket G) — a patient-level denial must
+      never masquerade as the route being disabled.
     """
     from django.utils import timezone
     from django.utils.dateparse import parse_datetime
@@ -4003,7 +4041,15 @@ def mobile_patient_changed(request, patient_id):
     if request.method != 'GET':
         return JsonResponse({'error': 'GET required'}, status=405)
     if not _assert_patient_access(request.user, patient_id):
-        return JsonResponse({'error': 'Patient not found'}, status=404)
+        # 403, deliberately NOT 404 (Step 0.7 discriminator, 2026-07-17):
+        # the client's poll kill switch keys on 404/410 to detect the ROUTE
+        # being disabled server-side (Bucket G rollback). A patient-level
+        # denial answering 404 would silently kill polling for the whole
+        # session over one bad selection. Uniform 403 for both nonexistent
+        # and inaccessible ids (reveals nothing about which), which current
+        # clients route to the harmless transient-backoff path; Phase 3
+        # classifies it explicitly.
+        return JsonResponse({'error': 'patient_unavailable'}, status=403)
 
     server_time = timezone.now()
 

@@ -872,6 +872,12 @@ class ObservationValue(models.Model):
     component = models.ForeignKey(ObservationComponent, related_name='observation_component_values', on_delete=models.CASCADE)
     author = models.ForeignKey(User, null=True, blank=True, related_name='observation_value_authors', on_delete=models.SET_NULL)
     created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    # Client-stamped UUID for idempotent retry (iOS ObservationValue.syncID,
+    # sent as client_uuid since build 37): a create whose response was lost
+    # can be resent without minting a duplicate clinical reading. See
+    # Encounter.client_uuid for the pattern. Nullable so pre-37 clients and
+    # every existing row are untouched.
+    client_uuid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
 
     class Meta:
         ordering = ['effective_datetime', 'created_on']
