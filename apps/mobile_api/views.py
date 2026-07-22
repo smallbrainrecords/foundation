@@ -90,10 +90,99 @@ def touches_patient_stamp(view):
     return wrapped
 
 
+def _canonize_civil_dob(raw):
+    """Detroit-midnight civil-date canon for date_of_birth writes.
+
+    Shared by mobile_register and mobile_update_user (kept in lockstep —
+    BUGFIX_DOB_AND_ROOMING_VITALS 2026-07-09): extract the civil date
+    whatever the input shape (date-only from the civil-date client, full
+    timestamps from older builds), so a Z-suffixed timestamp can't mint
+    another UTC-midnight row. Raises ValueError on unparseable input —
+    callers translate to their own 400.
+    """
+    from datetime import datetime as _dt, time as _time
+    from django.utils import timezone as _dj_tz
+    from django.utils.dateparse import parse_datetime, parse_date
+    _parsed = parse_datetime(raw) or parse_date(raw)
+    if _parsed is None:
+        raise ValueError('unparseable date_of_birth')
+    _civil = _parsed.date() if isinstance(_parsed, _dt) else _parsed
+    return _dj_tz.make_aware(
+        _dt.combine(_civil, _time.min), _dj_tz.get_default_timezone()
+    )
+
+
+def _resolve_assigned_physician(request, body):
+    """Which physician a newly created patient is assigned to.
+
+    Returns (physician_user_or_None, error_JsonResponse_or_None).
+    Resolution order (plan decision 2, 2026-07-22 — explicit assignment
+    with a smart default):
+      1. Explicit body physician_id (400 if it isn't a physician).
+      2. The caller, when the caller is a physician.
+      3. The sole team-leading physician (a physician with at least one
+         PhysicianTeam row). Deliberately NOT "the sole physician user":
+         prod carries a dormant second physician account with no team
+         (id 552, last login 2016). If a second team-leading physician
+         ever exists the server refuses to guess and requires the
+         explicit id — the client grows a dropdown at that point.
+    """
+    from django.contrib.auth.models import User
+    from emr.models import PhysicianTeam
+
+    raw_pid = body.get('physician_id')
+    if raw_pid is not None and raw_pid != '':
+        try:
+            pid = int(raw_pid)
+        except (TypeError, ValueError):
+            return None, JsonResponse(
+                {'success': False, 'message': 'Invalid physician_id'}, status=400)
+        phys = User.objects.filter(id=pid, profile__role='physician').first()
+        if phys is None:
+            return None, JsonResponse(
+                {'success': False,
+                 'message': 'physician_id does not identify a physician'},
+                status=400)
+        return phys, None
+
+    try:
+        if request.user.profile.role == 'physician':
+            return request.user, None
+    except (UserProfile.DoesNotExist, AttributeError):
+        pass
+
+    leader_ids = list(
+        PhysicianTeam.objects.filter(physician__profile__role='physician')
+        .values_list('physician_id', flat=True).distinct()
+    )
+    if len(leader_ids) == 1:
+        phys = User.objects.filter(id=leader_ids[0]).first()
+        if phys is not None:
+            return phys, None
+    return None, JsonResponse(
+        {'success': False,
+         'message': 'physician_id required (no unambiguous default physician)'},
+        status=400)
+
+
+def _ensure_patient_controller(patient_user, physician_user):
+    """Idempotently link a patient to a physician's roster. The controller
+    row is what puts a patient on /api/patients/ and what
+    _assert_patient_access requires — a patient without one is unreachable
+    by every non-admin (Cluster B1, PLAN_PATIENT_ACCESS_AND_DECODE)."""
+    from emr.models import PatientController
+    if PatientController.objects.filter(patient=patient_user).exists():
+        return
+    PatientController.objects.create(
+        patient=patient_user, physician=physician_user)
+
+
 @csrf_exempt
 def mobile_register(request):
-    """POST {username, password, email?, first_name?, last_name?, role?}
-    -> create User + UserProfile. Returns {success, id}.
+    """POST {username, password, email?, first_name?, last_name?, role?,
+    client_uuid?, date_of_birth?, sex?, phone?, physician_id?,
+    force_duplicate_person?} -> create User + UserProfile, plus a
+    PatientController for patients. Returns {success, id, already_existed?}.
 
     Staff-session-only (2026-07-02 policy decision): there is NO
     unauthenticated self-registration — accounts are created by staff via
@@ -103,6 +192,26 @@ def mobile_register(request):
     only admins can create admin accounts. Do not relax this — an open
     endpoint honoring client-supplied roles would let anyone on the
     internet mint a physician/admin account with patient-data access.
+
+    2026-07-22 (Cluster B1 + idempotency, PLAN_PATIENT_ACCESS_AND_DECODE):
+    - Patients get their PatientController at creation, to the physician
+      resolved by _resolve_assigned_physician. Staff roles never get one.
+    - client_uuid (optional) makes creation idempotent: a retry whose
+      first response was lost returns the existing record
+      (already_existed: true) and heals a missing controller instead of
+      409ing. Clients <= build 39 omit it; their plain-create path is
+      unchanged apart from the controller row.
+    - date_of_birth / sex / phone are accepted at creation (Detroit-
+      midnight civil-date canon via _canonize_civil_dob) so creation is
+      one atomic request — there is no profile push queue to repair a
+      lost follow-up PATCH.
+    - Same-person soft check: a new-client create (client_uuid present)
+      of a patient whose first+last name case-insensitively matches an
+      existing patient 409s with error=duplicate_person and
+      existing_patient_id, unless force_duplicate_person is true. This is
+      the guard the 3772/3773 Abby duplicate showed was missing —
+      username-only matching lets a respelled username mint a second
+      chart for the same person. Old clients never hit it.
 
     Field names are snake_case on the wire (macOS APIClient encodes
     .convertToSnakeCase). Non-2xx statuses are used for all failures so
@@ -133,6 +242,30 @@ def mobile_register(request):
     last_name = (body.get('last_name') or '').strip()
     role = body.get('role') or 'patient'
 
+    client_uuid = None
+    raw_uuid = (body.get('client_uuid') or '').strip()
+    if raw_uuid:
+        import uuid as _uuid_mod
+        try:
+            client_uuid = _uuid_mod.UUID(raw_uuid)
+        except (TypeError, ValueError):
+            return JsonResponse(
+                {'success': False, 'message': 'Invalid client_uuid'}, status=400)
+
+        # Idempotent replay: the record already exists from a create whose
+        # response was lost. Return it, and heal a missing controller
+        # (best-effort — an ambiguous default physician skips healing
+        # rather than failing the replay; the backfill remains the net).
+        existing = (UserProfile.objects.select_related('user')
+                    .filter(client_uuid=client_uuid).first())
+        if existing is not None:
+            if existing.role == 'patient':
+                physician, _err = _resolve_assigned_physician(request, body)
+                if physician is not None:
+                    _ensure_patient_controller(existing.user, physician)
+            return JsonResponse(
+                {'success': True, 'id': existing.user_id, 'already_existed': True})
+
     if not username or not password:
         return JsonResponse({'success': False, 'message': 'username and password are required'}, status=400)
     if role not in {choice[0] for choice in ROLE_CHOICES}:
@@ -140,10 +273,42 @@ def mobile_register(request):
     if role == 'admin' and caller_role != 'admin':
         return JsonResponse({'success': False, 'message': 'Only admins can create admin accounts'}, status=403)
 
+    dob_value = None
+    if body.get('date_of_birth'):
+        try:
+            dob_value = _canonize_civil_dob(body['date_of_birth'])
+        except ValueError:
+            return JsonResponse(
+                {'success': False, 'message': 'Invalid date_of_birth'}, status=400)
+    sex = (body.get('sex') or '').strip()
+    phone = (body.get('phone') or body.get('phone_number') or '').strip()
+
     if User.objects.filter(username=username).exists():
         return JsonResponse({'success': False, 'message': 'Username already exists'}, status=409)
     if email and User.objects.filter(email=email).exists():
         return JsonResponse({'success': False, 'message': 'Email already exists'}, status=409)
+
+    if (role == 'patient' and client_uuid is not None
+            and not body.get('force_duplicate_person')
+            and first_name and last_name):
+        dup = (User.objects.filter(profile__role='patient',
+                                   first_name__iexact=first_name,
+                                   last_name__iexact=last_name)
+               .order_by('id').first())
+        if dup is not None:
+            return JsonResponse({
+                'success': False,
+                'error': 'duplicate_person',
+                'message': 'A patient named %s %s already exists'
+                           % (dup.first_name, dup.last_name),
+                'existing_patient_id': dup.id,
+            }, status=409)
+
+    physician = None
+    if role == 'patient':
+        physician, err = _resolve_assigned_physician(request, body)
+        if err is not None:
+            return err
 
     try:
         with transaction.atomic():
@@ -155,9 +320,28 @@ def mobile_register(request):
             )
             user.set_password(password)
             user.save()
-            UserProfile.objects.create(user=user, role=role)
+            profile_kwargs = {'user': user, 'role': role}
+            if client_uuid is not None:
+                profile_kwargs['client_uuid'] = client_uuid
+            if dob_value is not None:
+                profile_kwargs['date_of_birth'] = dob_value
+            if sex:
+                profile_kwargs['sex'] = sex
+            if phone:
+                profile_kwargs['phone_number'] = phone
+            UserProfile.objects.create(**profile_kwargs)
+            if role == 'patient':
+                _ensure_patient_controller(user, physician)
     except IntegrityError:
-        # Lost the race with a concurrent create on the unique username.
+        # Either a concurrent create on the unique username, or our own
+        # duplicate submit racing on the unique client_uuid — the latter
+        # resolves as a replay.
+        if client_uuid is not None:
+            replay = (UserProfile.objects.select_related('user')
+                      .filter(client_uuid=client_uuid).first())
+            if replay is not None:
+                return JsonResponse(
+                    {'success': True, 'id': replay.user_id, 'already_existed': True})
         return JsonResponse({'success': False, 'message': 'Username already exists'}, status=409)
 
     return JsonResponse({'success': True, 'id': user.id})
@@ -460,17 +644,10 @@ def mobile_update_user(request, user_id):
     dob_provided = 'date_of_birth' in body
     dob_value = None
     if dob_provided and body['date_of_birth']:
-        from datetime import datetime as _dt, time as _time
-        from django.utils import timezone as _dj_tz
-        from django.utils.dateparse import parse_datetime, parse_date
-        _raw = body['date_of_birth']
-        _parsed = parse_datetime(_raw) or parse_date(_raw)
-        if _parsed is None:
+        try:
+            dob_value = _canonize_civil_dob(body['date_of_birth'])
+        except ValueError:
             return JsonResponse({'error': 'Invalid date_of_birth'}, status=400)
-        _civil = _parsed.date() if isinstance(_parsed, _dt) else _parsed
-        dob_value = _dj_tz.make_aware(
-            _dt.combine(_civil, _time.min), _dj_tz.get_default_timezone()
-        )
 
     from django.contrib.auth.models import User
     try:

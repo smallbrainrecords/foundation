@@ -3078,3 +3078,220 @@ class MobilePatientChangedDiscriminatorTests(_RBACTestBase):
         resp = self.client.get(f'/api/patient/{self.patient.id}/changed')
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(json.loads(resp.content)['changed'])
+
+
+class MobileRegisterControllerTests(TestCase):
+    """mobile_register: controller-at-creation (Cluster B1), client_uuid
+    idempotency, same-person guard, and demographics-at-creation
+    (PLAN_PATIENT_ACCESS_AND_DECODE_2026-07)."""
+
+    URL = '/api/register/'
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='doc_reg', password='top_secret',
+            email='doc_reg@example.com',
+            first_name='James', last_name='TestRyan')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.nurse = User.objects.create_user(
+            username='nurse_reg', password='top_secret',
+            email='nurse_reg@example.com')
+        UserProfile.objects.create(user=self.nurse, role='nurse')
+        PhysicianTeam.objects.create(physician=self.physician, member=self.nurse)
+        self.client = Client()
+        self.client.login(username='doc_reg', password='top_secret')
+
+    def _post(self, **body):
+        return self.client.post(self.URL, data=json.dumps(body),
+                                content_type='application/json')
+
+    # ---- controller-at-creation ----
+
+    def test_patient_create_creates_controller_old_client(self):
+        # No client_uuid — the <= build-39 request shape. The only new
+        # behavior on this path is the controller row.
+        resp = self._post(username='newpt1', password='pw', role='patient',
+                          first_name='New', last_name='Patient')
+        self.assertEqual(resp.status_code, 200)
+        pid = resp.json()['id']
+        self.assertTrue(PatientController.objects.filter(
+            patient_id=pid, physician=self.physician).exists())
+
+    def test_staff_create_gets_no_controller(self):
+        resp = self._post(username='newsec1', password='pw', role='secretary')
+        self.assertEqual(resp.status_code, 200)
+        sid = resp.json()['id']
+        self.assertFalse(
+            PatientController.objects.filter(patient_id=sid).exists())
+
+    def test_nonphysician_caller_defaults_to_team_leader(self):
+        self.client.logout()
+        self.client.login(username='nurse_reg', password='top_secret')
+        resp = self._post(username='newpt2', password='pw', role='patient',
+                          first_name='Second', last_name='Patient')
+        self.assertEqual(resp.status_code, 200)
+        pc = PatientController.objects.get(patient_id=resp.json()['id'])
+        self.assertEqual(pc.physician_id, self.physician.id)
+
+    def test_dormant_second_physician_does_not_break_default(self):
+        # A physician with no PhysicianTeam (the dormant prod account
+        # shape, id 552) must not make the smart default ambiguous.
+        dormant = User.objects.create_user(username='dormant_doc', password='pw')
+        UserProfile.objects.create(user=dormant, role='physician')
+        self.client.logout()
+        self.client.login(username='nurse_reg', password='top_secret')
+        resp = self._post(username='newpt3', password='pw', role='patient',
+                          first_name='Third', last_name='Patient')
+        self.assertEqual(resp.status_code, 200)
+        pc = PatientController.objects.get(patient_id=resp.json()['id'])
+        self.assertEqual(pc.physician_id, self.physician.id)
+
+    def test_two_team_leading_physicians_requires_explicit_id(self):
+        doc2 = User.objects.create_user(username='doc2_reg', password='pw')
+        UserProfile.objects.create(user=doc2, role='physician')
+        member2 = User.objects.create_user(username='m2_reg', password='pw')
+        UserProfile.objects.create(user=member2, role='nurse')
+        PhysicianTeam.objects.create(physician=doc2, member=member2)
+        self.client.logout()
+        self.client.login(username='nurse_reg', password='top_secret')
+        resp = self._post(username='newpt4', password='pw', role='patient')
+        self.assertEqual(resp.status_code, 400)
+        resp = self._post(username='newpt4', password='pw', role='patient',
+                          physician_id=doc2.id)
+        self.assertEqual(resp.status_code, 200)
+        pc = PatientController.objects.get(patient_id=resp.json()['id'])
+        self.assertEqual(pc.physician_id, doc2.id)
+
+    def test_invalid_physician_id_400(self):
+        resp = self._post(username='newpt5', password='pw', role='patient',
+                          physician_id=self.nurse.id)
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(User.objects.filter(username='newpt5').exists())
+
+    # ---- client_uuid idempotency ----
+
+    def test_client_uuid_retry_returns_existing(self):
+        cu = '11111111-2222-3333-4444-555555555555'
+        first = self._post(username='retrypt', password='pw', role='patient',
+                           first_name='Retry', last_name='Case',
+                           client_uuid=cu)
+        self.assertEqual(first.status_code, 200)
+        pid = first.json()['id']
+        second = self._post(username='retrypt', password='pw', role='patient',
+                            first_name='Retry', last_name='Case',
+                            client_uuid=cu)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(second.json()['id'], pid)
+        self.assertTrue(second.json().get('already_existed'))
+        self.assertEqual(User.objects.filter(username='retrypt').count(), 1)
+        self.assertEqual(
+            PatientController.objects.filter(patient_id=pid).count(), 1)
+
+    def test_client_uuid_replay_heals_missing_controller(self):
+        cu = '99999999-8888-7777-6666-555555555555'
+        first = self._post(username='healpt', password='pw', role='patient',
+                           first_name='Heal', last_name='Case',
+                           client_uuid=cu)
+        pid = first.json()['id']
+        PatientController.objects.filter(patient_id=pid).delete()
+        second = self._post(username='healpt', password='pw', role='patient',
+                            first_name='Heal', last_name='Case',
+                            client_uuid=cu)
+        self.assertEqual(second.status_code, 200)
+        self.assertTrue(PatientController.objects.filter(
+            patient_id=pid, physician=self.physician).exists())
+
+    def test_invalid_client_uuid_400(self):
+        resp = self._post(username='badpt', password='pw', role='patient',
+                          client_uuid='not-a-uuid')
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(User.objects.filter(username='badpt').exists())
+
+    # ---- same-person guard ----
+
+    def test_duplicate_person_409_for_new_client(self):
+        existing = User.objects.create_user(
+            username='abbutler_t', password='pw',
+            first_name='Abby', last_name='Butler')
+        UserProfile.objects.create(user=existing, role='patient')
+        resp = self._post(username='AbbyButler_t', password='pw',
+                          role='patient',
+                          first_name='abby', last_name='BUTLER',
+                          client_uuid='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+        self.assertEqual(resp.status_code, 409)
+        data = resp.json()
+        self.assertEqual(data.get('error'), 'duplicate_person')
+        self.assertEqual(data.get('existing_patient_id'), existing.id)
+        self.assertFalse(User.objects.filter(username='AbbyButler_t').exists())
+
+    def test_duplicate_person_force_overrides(self):
+        existing = User.objects.create_user(
+            username='dupbase', password='pw',
+            first_name='Dup', last_name='Person')
+        UserProfile.objects.create(user=existing, role='patient')
+        resp = self._post(username='dupforce', password='pw', role='patient',
+                          first_name='Dup', last_name='Person',
+                          client_uuid='aaaaaaaa-bbbb-cccc-dddd-eeeeeeee0001',
+                          force_duplicate_person=True)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_duplicate_person_not_checked_for_old_client(self):
+        # No client_uuid -> legacy request shape -> behavior unchanged.
+        existing = User.objects.create_user(
+            username='oldbase', password='pw',
+            first_name='Old', last_name='Client')
+        UserProfile.objects.create(user=existing, role='patient')
+        resp = self._post(username='oldclient2', password='pw',
+                          role='patient',
+                          first_name='Old', last_name='Client')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_same_staff_name_does_not_block_patient(self):
+        # Guard matches role='patient' rows only: a staff member's name
+        # must not block a patient who shares it.
+        resp = self._post(username='jamespt', password='pw', role='patient',
+                          first_name='James', last_name='TestRyan',
+                          client_uuid='aaaaaaaa-bbbb-cccc-dddd-eeeeeeee0002')
+        self.assertEqual(resp.status_code, 200)
+
+    # ---- demographics at creation ----
+
+    def test_dob_canonized_to_detroit_midnight(self):
+        import zoneinfo
+        resp = self._post(username='dobpt', password='pw', role='patient',
+                          first_name='Dob', last_name='Case',
+                          date_of_birth='1980-06-15')
+        self.assertEqual(resp.status_code, 200)
+        prof = UserProfile.objects.get(user_id=resp.json()['id'])
+        self.assertIsNotNone(prof.date_of_birth)
+        local = prof.date_of_birth.astimezone(
+            zoneinfo.ZoneInfo('America/Detroit'))
+        self.assertEqual((local.year, local.month, local.day), (1980, 6, 15))
+        self.assertEqual((local.hour, local.minute), (0, 0))
+
+    def test_invalid_dob_400_creates_nothing(self):
+        resp = self._post(username='baddob', password='pw', role='patient',
+                          date_of_birth='junk')
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(User.objects.filter(username='baddob').exists())
+
+    def test_sex_and_phone_stored(self):
+        resp = self._post(username='demopt', password='pw', role='patient',
+                          first_name='Demo', last_name='Fields',
+                          sex='female', phone='555-0100')
+        self.assertEqual(resp.status_code, 200)
+        prof = UserProfile.objects.get(user_id=resp.json()['id'])
+        self.assertEqual(prof.sex, 'female')
+        self.assertEqual(prof.phone_number, '555-0100')
+
+    # ---- unchanged legacy guarantees ----
+
+    def test_username_conflict_still_409(self):
+        self._post(username='dupu', password='pw', role='patient')
+        resp = self._post(username='dupu', password='pw', role='patient')
+        self.assertEqual(resp.status_code, 409)
+
+    def test_unauthenticated_401(self):
+        self.client.logout()
+        resp = self._post(username='nobody', password='pw')
+        self.assertEqual(resp.status_code, 401)
