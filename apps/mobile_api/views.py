@@ -1225,14 +1225,24 @@ def _mobile_patient_full_inner(request, patient_id):
                     'favorite_name': ev.name_favorite or '',
                 })
 
+            # Null-guarded: prod carried orphaned join rows with a NULL id
+            # (MySQL constraint drift — the model says null=False but the
+            # legacy column allowed NULL). One null element made the entire
+            # patient_full payload undecodable on iOS (non-optional [Int]),
+            # taking the whole chart down (2026-07-22 incident). Migration
+            # 0183 cleans the rows and adds the DB-level NOT NULL; these
+            # guards are defense-in-depth for any residual drift.
             enc_problem_ids = [
                 r.problem_id for r in enc.encounter_problem_records.all()
+                if r.problem_id is not None
             ]
             enc_todo_ids = [
                 r.todo_id for r in enc.encounter_todo_records.all()
+                if r.todo_id is not None
             ]
             enc_obs_value_ids = [
                 r.observation_value_id for r in enc.encounterobservationvalue_set.all()
+                if r.observation_value_id is not None
             ]
 
             physician_name = ''
@@ -1271,11 +1281,16 @@ def _mobile_patient_full_inner(request, patient_id):
             if doc.author:
                 author_name = doc.author.get_full_name() or doc.author.username
 
+            # problem_id/todo_id null-excluded — same constraint-drift guard
+            # as the encounter id arrays above (iOS decodes these as
+            # non-optional [Int]; one null kills the whole payload).
             doc_problem_ids = list(
-                DocumentProblem.objects.filter(document=doc).values_list('problem_id', flat=True)
+                DocumentProblem.objects.filter(document=doc, problem_id__isnull=False)
+                .values_list('problem_id', flat=True)
             )
             doc_todo_ids = list(
-                DocumentTodo.objects.filter(document=doc).values_list('todo_id', flat=True)
+                DocumentTodo.objects.filter(document=doc, todo_id__isnull=False)
+                .values_list('todo_id', flat=True)
             )
 
             doc_labels = [{'id': l.id, 'name': l.name or '', 'css_class': l.css_class or ''} for l in doc.labels.all()]
