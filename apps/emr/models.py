@@ -278,6 +278,12 @@ class UserProfile(models.Model):
     insurance_medicare = models.BooleanField(default=False)
     insurance_note = models.TextField(blank=True)
 
+    # Client-stamped UUID for idempotent registration retries (mobile Add
+    # User flow). Same contract as Encounter/ObservationValue.client_uuid:
+    # a retried create whose first response was lost returns the existing
+    # row instead of 409ing (2026-07-22, PLAN_PATIENT_ACCESS_AND_DECODE).
+    client_uuid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
+
     # Provider (physician) identity fields. Used by the mobile print pipeline
     # so any team member can produce documents signed by their physician.
     credentials = models.CharField(max_length=20, blank=True)
