@@ -1437,6 +1437,39 @@ class SnomedIcd10Map(models.Model):
         ordering = ['map_group', 'map_priority']
         unique_together = ('snomed_concept_id', 'icd10_code', 'map_group', 'map_priority')
 
+    @classmethod
+    def best_icd10_for(cls, concept_id):
+        """Preferred ICD-10 code for a SNOMED concept, or None if unmapped.
+
+        This is the NLM SNOMED CT -> ICD-10-CM Extended Map, whose targets are
+        gated by map rules carried in `map_advice`: rows beginning ``IF `` are
+        CONDITIONAL (apply only in a specific patient context, e.g.
+        "IF AGE ... BEFORE 29.0 DAYS" or "IF QUADRICEPS WEAKNESS"), while
+        ``ALWAYS ...`` rows are the unconditional default. A context-free
+        assignment (we have no patient context here) must prefer the
+        unconditional target, so conditional rows are deprioritized *before*
+        the group/priority/id order. Without this, e.g. hypertension
+        (38341003) picks the neonatal gate P29.2 over the correct default I10.
+
+        The ordering — ``conditional(IF ) ASC, map_group, map_priority, id`` —
+        must stay byte-identical to ``scripts/generate_icd_map.py`` in the SBR1
+        app repo, which bakes the same pick into the app's bundled offline map.
+        If the two diverge, a locally-stamped code and the server-healed code
+        disagree, reintroducing the mismatch class this whole change removes.
+        """
+        row = (
+            cls.objects
+            .filter(snomed_concept_id=concept_id)
+            .annotate(_conditional=models.Case(
+                models.When(map_advice__startswith='IF ', then=models.Value(1)),
+                default=models.Value(0),
+                output_field=models.IntegerField(),
+            ))
+            .order_by('_conditional', 'map_group', 'map_priority', 'id')
+            .first()
+        )
+        return row.icd10_code if row else None
+
 
 class PatientMutationStamp(models.Model):
     """One row per patient: wall-clock time of the most recent chart mutation.
