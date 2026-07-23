@@ -2858,9 +2858,7 @@ def mobile_create_problem(request, patient_id):
     icd10_code = body.get('icd10_code', '') or ''
     if not icd10_code and concept_id:
         from emr.models import SnomedIcd10Map
-        mapping = SnomedIcd10Map.objects.filter(snomed_concept_id=concept_id).first()
-        if mapping:
-            icd10_code = mapping.icd10_code
+        icd10_code = SnomedIcd10Map.best_icd10_for(concept_id) or ''
 
     problem = Problem(
         patient=patient_user,
@@ -2906,9 +2904,9 @@ def mobile_update_problem(request, patient_id, problem_id):
         concept_id = body['concept_id']
         if concept_id:
             from emr.models import SnomedIcd10Map
-            mapping = SnomedIcd10Map.objects.filter(snomed_concept_id=concept_id).first()
-            if mapping:
-                problem.icd10_code = mapping.icd10_code
+            best = SnomedIcd10Map.best_icd10_for(concept_id)
+            if best:
+                problem.icd10_code = best
 
     for field in ('is_active', 'is_controlled', 'authenticated'):
         if field in body:
