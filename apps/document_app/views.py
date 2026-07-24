@@ -45,7 +45,8 @@ def upload_document(request):
     patient_uid = request.POST.get('patient', None)
 
     document_dao = Document.objects.create(document=document, document_name=document.name,
-                                           patient_id=patient_uid, author=request.user)
+                                           patient_id=patient_uid, author=request.user,
+                                           file_size=document.size)
     document_dao.save()
 
     resp['document'] = document_dao.id
