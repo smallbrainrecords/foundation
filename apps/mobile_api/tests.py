@@ -2382,6 +2382,115 @@ class MobileUnassignedDocumentAssignStampTests(TestCase):
         self.assertEqual(PatientMutationStamp.objects.count(), 0)
 
 
+class DocumentFileSizeColumnTests(_RBACTestBase):
+    """`Document.file_size` (2026-07-23): list serializers must read the
+    stored column instead of `doc.document.size` — with GCS storage the
+    per-row stat made the pool list and patient_full documents section
+    scale linearly with row count. Covers: upload endpoints write the
+    column; serializers prefer the column over storage; NULL columns
+    self-heal via one fallback stat; missing blobs degrade to 0 instead
+    of erroring. The download proxy's Content-Length deliberately stays
+    on live storage and is out of scope here."""
+
+    PDF_BYTES = b'%PDF-fake-body-for-size-tests'
+
+    def _upload(self, url, client_uuid):
+        return self.client.post(url, data={
+            'file': SimpleUploadedFile('scan.pdf', self.PDF_BYTES,
+                                       content_type='application/pdf'),
+            'client_uuid': client_uuid,
+            'document_name': 'scan.pdf',
+        })
+
+    def _pool_doc(self, **overrides):
+        """Pool row (patient NULL, team set) with a real stored file."""
+        fields = {
+            'document': SimpleUploadedFile('pool.pdf', self.PDF_BYTES,
+                                           content_type='application/pdf'),
+            'document_name': 'pool.pdf',
+            'author': self.attending,
+            'patient': None,
+            'team': self.attending,
+        }
+        fields.update(overrides)
+        return Document.objects.create(**fields)
+
+    def test_patient_upload_writes_file_size(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._upload(
+            f'/api/patient/{self.patient.id}/document/upload',
+            'cccccccc-cccc-cccc-cccc-cccccccccccc',
+        )
+        self.assertEqual(resp.status_code, 200)
+        doc = Document.objects.get(id=json.loads(resp.content)['id'])
+        self.assertEqual(doc.file_size, len(self.PDF_BYTES))
+
+    def test_unassigned_upload_writes_file_size(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._upload(
+            f'/api/team/{self.attending.id}/unassigned-document/upload',
+            'dddddddd-dddd-dddd-dddd-dddddddddddd',
+        )
+        self.assertEqual(resp.status_code, 200)
+        doc = Document.objects.get(id=json.loads(resp.content)['id'])
+        self.assertEqual(doc.file_size, len(self.PDF_BYTES))
+
+    def test_pool_list_reads_stored_column_not_storage(self):
+        # A deliberately-wrong stored value must be what the list returns —
+        # proof the serializer read the column, not the blob.
+        doc = self._pool_doc(file_size=999_999)
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get('/api/team/unassigned-documents/list')
+        self.assertEqual(resp.status_code, 200)
+        rows = json.loads(resp.content)['documents']
+        row = next(r for r in rows if r['id'] == doc.id)
+        self.assertEqual(row['file_size'], 999_999)
+
+    def test_pool_list_self_heals_null_file_size(self):
+        doc = self._pool_doc(file_size=None)
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get('/api/team/unassigned-documents/list')
+        self.assertEqual(resp.status_code, 200)
+        rows = json.loads(resp.content)['documents']
+        row = next(r for r in rows if r['id'] == doc.id)
+        self.assertEqual(row['file_size'], len(self.PDF_BYTES))
+        doc.refresh_from_db()
+        self.assertEqual(doc.file_size, len(self.PDF_BYTES))
+
+    def test_pool_list_missing_blob_returns_zero(self):
+        # Row references a storage object that doesn't exist: the list must
+        # degrade to 0 and leave the column NULL for audit_doc_files —
+        # never 500 the whole pool.
+        doc = self._pool_doc(file_size=None)
+        Document.objects.filter(id=doc.id).update(
+            document='documents/does-not-exist-anywhere.pdf')
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get('/api/team/unassigned-documents/list')
+        self.assertEqual(resp.status_code, 200)
+        rows = json.loads(resp.content)['documents']
+        row = next(r for r in rows if r['id'] == doc.id)
+        self.assertEqual(row['file_size'], 0)
+        doc.refresh_from_db()
+        self.assertIsNone(doc.file_size)
+
+    def test_patient_full_documents_reads_stored_column(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._upload(
+            f'/api/patient/{self.patient.id}/document/upload',
+            'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+        )
+        doc_id = json.loads(resp.content)['id']
+        Document.objects.filter(id=doc_id).update(file_size=777)
+
+        resp = self.client.get(
+            f'/api/patient/{self.patient.id}/full?sections=documents')
+        self.assertEqual(resp.status_code, 200)
+        payload = json.loads(resp.content)
+        self.assertTrue(payload['success'])
+        row = next(d for d in payload['documents'] if d['id'] == doc_id)
+        self.assertEqual(row['file_size'], 777)
+
+
 class AuditLoggerWiringTests(TestCase):
     """The smallbrain.* operational audit loggers must actually reach an
     INFO-capable handler. Found 2026-07-10: profile_edits and

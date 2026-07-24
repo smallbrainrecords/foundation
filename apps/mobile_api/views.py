@@ -1121,6 +1121,33 @@ def mobile_team_unassign(request):
     return JsonResponse({'success': True})
 
 
+def _document_file_size(doc):
+    """Byte size for document LIST serializers without a per-row GCS stat.
+
+    Reads the stored `Document.file_size` column (written at upload since
+    2026-07-23; legacy rows filled by `backfill_document_sizes`). A NULL
+    column — a row that predates the column, or a creation path that missed
+    it — falls back to ONE live storage stat and self-heals the column via a
+    targeted UPDATE, so the slow path is paid at most once per row ever.
+
+    Returns 0 when the row has no file or the storage object is missing:
+    the mobile contract is a non-optional int (`RemoteDocument.fileSize` on
+    iOS), never null. Do NOT reuse this for the download proxy's
+    Content-Length — that must stay on live storage truth.
+    """
+    if doc.file_size is not None:
+        return doc.file_size
+    if not doc.document:
+        return 0
+    try:
+        size = doc.document.size
+    except Exception:
+        return 0
+    Document.objects.filter(id=doc.id).update(file_size=size)
+    doc.file_size = size
+    return size
+
+
 @csrf_exempt
 @login_required
 def mobile_patient_full(request, patient_id):
@@ -1447,12 +1474,10 @@ def _mobile_patient_full_inner(request, patient_id):
     documents = []
     if not requested_sections or 'documents' in requested_sections:
         for doc in Document.objects.filter(patient=patient_user).select_related('author').prefetch_related('labels'):
-            doc_size = 0
-            if doc.document:
-                try:
-                    doc_size = doc.document.size
-                except Exception:
-                    pass
+            # Stored column, NOT doc.document.size — the per-row GCS stat
+            # made this loop scale at ~24ms/document (1.5–7.7s sections in
+            # prod). See _document_file_size for the NULL-fallback contract.
+            doc_size = _document_file_size(doc)
 
             author_name = ''
             if doc.author:
@@ -1948,6 +1973,9 @@ def mobile_upload_document(request, patient_id):
             'document_name': document_name,
             'author': request.user,
             'patient': patient_user,
+            # In-memory upload size — free, and spares the list serializers
+            # a per-row GCS stat later (see _document_file_size).
+            'file_size': doc_file.size,
         },
     )
 
@@ -2157,7 +2185,9 @@ def _unassigned_doc_dict(doc):
         'document_name': doc.document_name or '',
         'file_name': os.path.basename(doc.document.name) if doc.document else '',
         'mime_type': doc.file_mime_type(),
-        'file_size': doc.document.size if doc.document else 0,
+        # Stored column, NOT doc.document.size — the per-row GCS stat made
+        # the pool list ~2.3s at ~100 rows. See _document_file_size.
+        'file_size': _document_file_size(doc),
         'author_id': doc.author_id,
         'author_name': author_name,
         'created_at': doc.created_on.isoformat() if doc.created_on else None,
@@ -2210,6 +2240,9 @@ def mobile_upload_unassigned_document(request, team_id):
             'author': request.user,
             'patient': None,
             'team': team_user,
+            # In-memory upload size — free, and spares the pool list a
+            # per-row GCS stat later (see _document_file_size).
+            'file_size': doc_file.size,
         },
     )
 

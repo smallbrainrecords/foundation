@@ -1268,6 +1268,18 @@ class Document(models.Model):
     )
     claimed_at = models.DateTimeField(null=True, blank=True)
 
+    # Stored byte size of `document`, written at upload (2026-07-23). List
+    # serializers MUST read this via `mobile_api._document_file_size` rather
+    # than `doc.document.size` — with GCS storage, `.size` is a live metadata
+    # round-trip PER ROW, which made the unassigned-pool list and the
+    # patient_full documents section scale linearly with document count
+    # (~24ms/row observed in prod). NULL means "not yet backfilled"; the
+    # serializer helper falls back to one stat and self-heals the column.
+    # `backfill_document_sizes` fills legacy rows. The download proxy's
+    # Content-Length deliberately still reads live storage (a stale length
+    # there would corrupt the response body framing).
+    file_size = models.BigIntegerField(null=True, blank=True)
+
     class Meta:
         ordering = ['-created_on']
 
