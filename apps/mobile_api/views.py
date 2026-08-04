@@ -3953,6 +3953,44 @@ def mobile_my_tagged_todos(request):
         }, status=500)
 
 
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_mark_tagged_todo_viewed(request, patient_id, tagged_id):
+    """POST -> mark the caller's own TaggedToDoOrder row viewed (status 1).
+
+    First mobile write path for TaggedToDoOrder.status: until 2026-08 the
+    iOS `markAsViewed` flip never left the device (no push path, and the
+    web UI's status=1 line has been commented out for years), so prod held
+    ZERO status=1 rows ever and the mobile home list's Viewed/Accomplished
+    sections were unreachable (BUG_STALE_TAGGED_TODOS_2026-08.md addendum
+    in the SBR1 repo).
+
+    Rules:
+    - Authorization is ownership: the row must belong to request.user.
+      The patient_id URL kwarg exists for @touches_patient_stamp and is
+      validated against the row's todo so the stamp can't bump a chart the
+      write didn't touch (mobile_create_observation_value precedent).
+    - Only the 0 ("new") -> 1 ("viewed") transition writes. Status 2
+      (legacy web "completed") is never downgraded. A repeat POST is an
+      idempotent no-op success with updated=False.
+    - No activity row: viewing a todo is not a clinical action.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    try:
+        tto = TaggedToDoOrder.objects.get(
+            id=tagged_id, user=request.user, todo__patient_id=patient_id)
+    except TaggedToDoOrder.DoesNotExist:
+        return JsonResponse({'error': 'Tagged todo not found'}, status=404)
+
+    if tto.status == 0:
+        tto.status = 1
+        tto.save(update_fields=['status'])
+        return JsonResponse({'success': True, 'status': tto.status, 'updated': True})
+    return JsonResponse({'success': True, 'status': tto.status, 'updated': False})
+
+
 # ---------- Label Catalog endpoints ----------
 
 @csrf_exempt

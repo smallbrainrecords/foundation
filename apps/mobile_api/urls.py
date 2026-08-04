@@ -61,6 +61,7 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/label$', views.mobile_create_todo_label),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/member$', views.mobile_add_todo_member),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/member/(?P<user_id>\d+)$', views.mobile_remove_todo_member),
+    url(r'^patient/(?P<patient_id>\d+)/tagged-todo/(?P<tagged_id>\d+)/viewed$', views.mobile_mark_tagged_todo_viewed),
     # Observation values
     url(r'^patient/(?P<patient_id>\d+)/observation/component/(?P<component_id>\d+)/value$', views.mobile_create_observation_value),
     url(r'^patient/(?P<patient_id>\d+)/observation/value/(?P<value_id>\d+)$', views.mobile_update_observation_value),

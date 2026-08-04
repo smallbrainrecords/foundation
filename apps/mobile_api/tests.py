@@ -20,7 +20,7 @@ from emr.models import (
     Encounter, EncounterEvent,
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
     Problem, ProblemNote, ProblemActivity,
-    ToDo, Observation, ObservationComponent, ObservationValue,
+    ToDo, TaggedToDoOrder, Observation, ObservationComponent, ObservationValue,
     ObservationPinToProblem,
     UserProfile, PatientController, PhysicianTeam,
     PatientImage, Document, DocumentProblem, DocumentTodo,
@@ -3404,3 +3404,105 @@ class MobileRegisterControllerTests(TestCase):
         self.client.logout()
         resp = self._post(username='nobody', password='pw')
         self.assertEqual(resp.status_code, 401)
+
+
+class MobileMarkTaggedTodoViewedTests(TestCase):
+    """POST /api/patient/<pid>/tagged-todo/<tagged_id>/viewed.
+
+    First mobile write path for TaggedToDoOrder.status (2026-08): only the
+    0 -> 1 transition writes, authorization is row ownership, and the URL's
+    patient_id must match the row's todo so @touches_patient_stamp can't
+    bump a chart the write didn't touch.
+    """
+
+    def setUp(self):
+        self.nurse = User.objects.create_user(
+            username='nurse_v', password='top_secret',
+            email='nurse_v@example.com',
+        )
+        self.other_staff = User.objects.create_user(
+            username='doc_v', password='top_secret',
+            email='doc_v@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_v', password='unused',
+            email='pt_v@example.com',
+        )
+        self.other_patient = User.objects.create_user(
+            username='pt_v2', password='unused',
+            email='pt_v2@example.com',
+        )
+        self.todo = ToDo.objects.create(
+            todo='process the requisition', patient=self.patient)
+        self.tag = TaggedToDoOrder.objects.create(
+            todo=self.todo, user=self.nurse, status=0)
+
+        self.client = Client()
+        self.client.login(username='nurse_v', password='top_secret')
+
+    def _url(self, patient_id=None, tagged_id=None):
+        pid = patient_id if patient_id is not None else self.patient.id
+        tid = tagged_id if tagged_id is not None else self.tag.id
+        return f'/api/patient/{pid}/tagged-todo/{tid}/viewed'
+
+    # ---- success path ----
+
+    def test_post_marks_new_row_viewed_and_bumps_stamp(self):
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['updated'])
+        self.assertEqual(data['status'], 1)
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 1)
+        # Patient-scoped write => change signal for open charts.
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_repeat_post_is_idempotent_noop(self):
+        self.tag.status = 1
+        self.tag.save(update_fields=['status'])
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertFalse(data['updated'])
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 1)
+
+    def test_legacy_completed_status_never_downgraded(self):
+        self.tag.status = 2
+        self.tag.save(update_fields=['status'])
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertFalse(data['updated'])
+        self.assertEqual(data['status'], 2)
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 2)
+
+    # ---- authorization / scoping ----
+
+    def test_another_users_row_404s(self):
+        other_tag = TaggedToDoOrder.objects.create(
+            todo=self.todo, user=self.other_staff, status=0)
+        resp = self.client.post(self._url(tagged_id=other_tag.id))
+        self.assertEqual(resp.status_code, 404)
+        other_tag.refresh_from_db()
+        self.assertEqual(other_tag.status, 0)
+
+    def test_mismatched_patient_404s_and_never_stamps(self):
+        resp = self.client.post(self._url(patient_id=self.other_patient.id))
+        self.assertEqual(resp.status_code, 404)
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 0)
+        # 4xx => the decorator must not bump the (wrong) URL patient.
+        self.assertFalse(
+            PatientMutationStamp.objects.filter(patient=self.other_patient).exists())
+
+    def test_get_405s(self):
+        resp = self.client.get(self._url())
+        self.assertEqual(resp.status_code, 405)
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 0)
