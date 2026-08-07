@@ -3173,19 +3173,39 @@ def mobile_create_todo(request, patient_id):
     if not todo_text:
         return JsonResponse({'error': 'todo is required'}, status=400)
 
+    # Server-side belt for the todo->problem invariant (2026-08-07, the
+    # c. diff orphan — todo 97702 arrived with no problem_id ten seconds
+    # after its problem was created). Every client UI has required a problem
+    # since 2026-07-02, so a create arriving without a resolvable problem_id
+    # is always a client-side defect (the false-nil relationship read), and
+    # an accepted orphan is PERMANENT: nothing re-links a null row, and every
+    # pull propagates it to every machine. Rejecting is retryable — the
+    # client keeps the todo dirty and re-pushes next cycle, by which time
+    # the link is normally readable. iOS builds with the client-side fix
+    # defer before ever sending this shape; the belt covers older builds.
+    #
+    # The lookup is patient-scoped (matching mobile_create_problem_relationship):
+    # the previous unscoped get() could silently link another patient's
+    # problem, and its DoesNotExist fallthrough silently orphaned the todo.
+    problem_id = body.get('problem_id')
+    if not problem_id:
+        return JsonResponse(
+            {'error': 'problem_id is required - every todo must be linked to a problem'},
+            status=400,
+        )
+    try:
+        problem = Problem.objects.get(id=problem_id, patient_id=patient_id)
+    except Problem.DoesNotExist:
+        return JsonResponse({'error': 'Problem not found'}, status=404)
+
     from django.utils.dateparse import parse_datetime
 
     todo = ToDo(
         todo=todo_text,
         patient=patient_user,
         user=request.user,
+        problem=problem,
     )
-    problem_id = body.get('problem_id')
-    if problem_id:
-        try:
-            todo.problem = Problem.objects.get(id=problem_id)
-        except Problem.DoesNotExist:
-            pass
     due_date = body.get('due_date')
     if due_date:
         todo.due_date = parse_datetime(due_date)

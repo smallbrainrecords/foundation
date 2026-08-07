@@ -20,7 +20,8 @@ from emr.models import (
     Encounter, EncounterEvent,
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
     Problem, ProblemNote, ProblemActivity,
-    ToDo, TaggedToDoOrder, Observation, ObservationComponent, ObservationValue,
+    ToDo, TaggedToDoOrder, TodoActivity,
+    Observation, ObservationComponent, ObservationValue,
     ObservationPinToProblem,
     UserProfile, PatientController, PhysicianTeam,
     PatientImage, Document, DocumentProblem, DocumentTodo,
@@ -2014,9 +2015,13 @@ class PatientMutationStampTests(TestCase):
 
     def test_successful_create_bumps_and_poll_reports_changed(self):
         cursor = self._poll()['server_time']
+        # problem_id required since the create belt (2026-08-07): a
+        # problem-less create is now rejected, see
+        # MobileCreateTodoProblemBeltTests.
         resp = self.client.post(
             f'/api/patient/{self.patient.id}/todo',
-            data=json.dumps({'todo': 'check BP at home'}),
+            data=json.dumps({'todo': 'check BP at home',
+                             'problem_id': self.problem.id}),
             content_type='application/json')
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(
@@ -3506,3 +3511,91 @@ class MobileMarkTaggedTodoViewedTests(TestCase):
         self.assertEqual(resp.status_code, 405)
         self.tag.refresh_from_db()
         self.assertEqual(self.tag.status, 0)
+
+
+class MobileCreateTodoProblemBeltTests(TestCase):
+    """
+    Server-side belt for the todo->problem invariant (2026-08-07, the c. diff
+    orphan): mobile_create_todo must reject a create whose problem_id is
+    missing, null, unknown, or another patient's — an accepted orphan is
+    permanent (nothing re-links a null row) and propagates to every machine
+    on the next pull. The pre-belt endpoint silently orphaned on all four
+    shapes, and its unscoped Problem.get() could link a foreign chart's
+    problem.
+    """
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='doc_belt', password='top_secret',
+            email='doc_belt@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_belt', password='unused',
+            email='pt_belt@example.com',
+        )
+        self.other_patient = User.objects.create_user(
+            username='pt_belt_other', password='unused',
+            email='pt_belt_other@example.com',
+        )
+        self.problem = Problem.objects.create(
+            patient=self.patient, problem_name='Clostridium difficile colitis (disorder)',
+        )
+        self.foreign_problem = Problem.objects.create(
+            patient=self.other_patient, problem_name='Unrelated (disorder)',
+        )
+        self.url = f'/api/patient/{self.patient.id}/todo'
+        self.client = Client()
+        self.client.login(username='doc_belt', password='top_secret')
+
+    def _post(self, body):
+        return self.client.post(
+            self.url, data=json.dumps(body), content_type='application/json'
+        )
+
+    # ---- success path ----
+
+    def test_linked_create_succeeds_and_writes_both_activity_rows(self):
+        resp = self._post({'todo': 'c. diff', 'problem_id': self.problem.id})
+        self.assertEqual(resp.status_code, 200)
+        todo = ToDo.objects.get(id=resp.json()['id'])
+        self.assertEqual(todo.problem_id, self.problem.id)
+        # The c. diff signature was the MISSING mirrored problem-side row —
+        # a linked create must write both.
+        self.assertEqual(
+            TodoActivity.objects.filter(todo=todo, activity__contains='Added todo').count(), 1)
+        self.assertEqual(
+            ProblemActivity.objects.filter(
+                problem=self.problem, activity__contains='Added todo').count(), 1)
+
+    # ---- the four orphan doors ----
+
+    def test_missing_problem_id_is_rejected(self):
+        # What iOS actually sends on the false-nil read: the key OMITTED
+        # (Codable drops nil optionals), not an explicit null.
+        resp = self._post({'todo': 'c. diff'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_null_problem_id_is_rejected(self):
+        resp = self._post({'todo': 'c. diff', 'problem_id': None})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_unknown_problem_id_is_rejected_not_silently_orphaned(self):
+        # Pre-belt this was `except Problem.DoesNotExist: pass` — the todo
+        # was created problem-less with a 200.
+        resp = self._post({'todo': 'c. diff', 'problem_id': 999999})
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_another_patients_problem_is_rejected(self):
+        # Pre-belt the lookup was unscoped: this request linked the todo to
+        # a DIFFERENT chart's problem.
+        resp = self._post({'todo': 'c. diff', 'problem_id': self.foreign_problem.id})
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_rejection_writes_no_activity_rows(self):
+        self._post({'todo': 'c. diff'})
+        self.assertEqual(TodoActivity.objects.count(), 0)
+        self.assertEqual(ProblemActivity.objects.count(), 0)
