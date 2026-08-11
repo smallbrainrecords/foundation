@@ -1687,6 +1687,44 @@ def mobile_image_file(request, image_id):
     return response
 
 
+_ENCOUNTER_LINKS_LOGGER = logging.getLogger('smallbrain.encounter_links')
+
+
+def _valid_encounter_link_ids(encounter, requested, queryset, kind):
+    """Return the subset of `requested` ids that exist AND belong to the
+    encounter's patient, logging whatever gets dropped.
+
+    A stale id here is normal operation, not garbage input: another machine
+    can delete a reading/todo/problem between this client's last pull and its
+    encounter push, and the client has no deletion signal to learn from.
+    Before this filter existed, one stale ObservationValue id made the
+    bulk_create below raise an FK IntegrityError and 500 the whole PATCH —
+    throwing away the transcript, the event timeline, and every link with it
+    (2026-08-10, encounter 21526: two BP values deleted by another machine
+    78 seconds before the encounter stopped).
+
+    A cross-patient id is a client bug (chart actions taken during another
+    patient's active encounter used to link to it — fixed client-side the
+    same day), but the server must never persist one regardless of client
+    version: that shape staples one patient's orders onto another patient's
+    visit record.
+    """
+    if not requested:
+        return []
+    valid = list(queryset.filter(id__in=requested).values_list('id', flat=True))
+    dropped = sorted(set(requested) - set(valid))
+    if dropped:
+        _ENCOUNTER_LINKS_LOGGER.info(json.dumps({
+            'event': 'encounter_link_ids_dropped',
+            'encounter_id': encounter.id,
+            'patient_id': encounter.patient_id,
+            'kind': kind,
+            'dropped_ids': dropped,
+            'kept_count': len(valid),
+        }))
+    return valid
+
+
 def _apply_encounter_relationships_and_events(encounter, body):
     """Apply problem_ids, todo_ids, observation_value_ids, events from body to encounter.
 
@@ -1696,6 +1734,9 @@ def _apply_encounter_relationships_and_events(encounter, body):
 
     Relationships use replace-by-snapshot: present key clears existing rows for
     THIS encounter and recreates from the list. macOS always sends the full set.
+    Ids that don't exist (deleted elsewhere) or belong to a different patient
+    are silently dropped — see `_valid_encounter_link_ids`. A dropped id must
+    never fail the request: the transcript and events ride the same PATCH.
 
     Events use update_or_create keyed on client_uuid for idempotent retry. Returns
     a list of {sync_id, id} dicts for every event the body touched (new or
@@ -1706,7 +1747,12 @@ def _apply_encounter_relationships_and_events(encounter, body):
     event_mappings = []
 
     if 'problem_ids' in body:
-        problem_ids = [int(pid) for pid in body['problem_ids'] or []]
+        problem_ids = _valid_encounter_link_ids(
+            encounter,
+            [int(pid) for pid in body['problem_ids'] or []],
+            Problem.objects.filter(patient_id=encounter.patient_id),
+            'problem',
+        )
         EncounterProblemRecord.objects.filter(encounter=encounter).delete()
         if problem_ids:
             EncounterProblemRecord.objects.bulk_create([
@@ -1715,7 +1761,12 @@ def _apply_encounter_relationships_and_events(encounter, body):
             ])
 
     if 'todo_ids' in body:
-        todo_ids = [int(tid) for tid in body['todo_ids'] or []]
+        todo_ids = _valid_encounter_link_ids(
+            encounter,
+            [int(tid) for tid in body['todo_ids'] or []],
+            ToDo.objects.filter(patient_id=encounter.patient_id),
+            'todo',
+        )
         EncounterTodoRecord.objects.filter(encounter=encounter).delete()
         if todo_ids:
             EncounterTodoRecord.objects.bulk_create([
@@ -1724,7 +1775,13 @@ def _apply_encounter_relationships_and_events(encounter, body):
             ])
 
     if 'observation_value_ids' in body:
-        ov_ids = [int(vid) for vid in body['observation_value_ids'] or []]
+        ov_ids = _valid_encounter_link_ids(
+            encounter,
+            [int(vid) for vid in body['observation_value_ids'] or []],
+            ObservationValue.objects.filter(
+                component__observation__subject_id=encounter.patient_id),
+            'observation_value',
+        )
         EncounterObservationValue.objects.filter(encounter=encounter).delete()
         if ov_ids:
             EncounterObservationValue.objects.bulk_create([
@@ -3173,19 +3230,39 @@ def mobile_create_todo(request, patient_id):
     if not todo_text:
         return JsonResponse({'error': 'todo is required'}, status=400)
 
+    # Server-side belt for the todo->problem invariant (2026-08-07, the
+    # c. diff orphan — todo 97702 arrived with no problem_id ten seconds
+    # after its problem was created). Every client UI has required a problem
+    # since 2026-07-02, so a create arriving without a resolvable problem_id
+    # is always a client-side defect (the false-nil relationship read), and
+    # an accepted orphan is PERMANENT: nothing re-links a null row, and every
+    # pull propagates it to every machine. Rejecting is retryable — the
+    # client keeps the todo dirty and re-pushes next cycle, by which time
+    # the link is normally readable. iOS builds with the client-side fix
+    # defer before ever sending this shape; the belt covers older builds.
+    #
+    # The lookup is patient-scoped (matching mobile_create_problem_relationship):
+    # the previous unscoped get() could silently link another patient's
+    # problem, and its DoesNotExist fallthrough silently orphaned the todo.
+    problem_id = body.get('problem_id')
+    if not problem_id:
+        return JsonResponse(
+            {'error': 'problem_id is required - every todo must be linked to a problem'},
+            status=400,
+        )
+    try:
+        problem = Problem.objects.get(id=problem_id, patient_id=patient_id)
+    except Problem.DoesNotExist:
+        return JsonResponse({'error': 'Problem not found'}, status=404)
+
     from django.utils.dateparse import parse_datetime
 
     todo = ToDo(
         todo=todo_text,
         patient=patient_user,
         user=request.user,
+        problem=problem,
     )
-    problem_id = body.get('problem_id')
-    if problem_id:
-        try:
-            todo.problem = Problem.objects.get(id=problem_id)
-        except Problem.DoesNotExist:
-            pass
     due_date = body.get('due_date')
     if due_date:
         todo.due_date = parse_datetime(due_date)
@@ -3951,6 +4028,44 @@ def mobile_my_tagged_todos(request):
             'last_todo_id': last_todo_id,
             'trace': trace,
         }, status=500)
+
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_mark_tagged_todo_viewed(request, patient_id, tagged_id):
+    """POST -> mark the caller's own TaggedToDoOrder row viewed (status 1).
+
+    First mobile write path for TaggedToDoOrder.status: until 2026-08 the
+    iOS `markAsViewed` flip never left the device (no push path, and the
+    web UI's status=1 line has been commented out for years), so prod held
+    ZERO status=1 rows ever and the mobile home list's Viewed/Accomplished
+    sections were unreachable (BUG_STALE_TAGGED_TODOS_2026-08.md addendum
+    in the SBR1 repo).
+
+    Rules:
+    - Authorization is ownership: the row must belong to request.user.
+      The patient_id URL kwarg exists for @touches_patient_stamp and is
+      validated against the row's todo so the stamp can't bump a chart the
+      write didn't touch (mobile_create_observation_value precedent).
+    - Only the 0 ("new") -> 1 ("viewed") transition writes. Status 2
+      (legacy web "completed") is never downgraded. A repeat POST is an
+      idempotent no-op success with updated=False.
+    - No activity row: viewing a todo is not a clinical action.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    try:
+        tto = TaggedToDoOrder.objects.get(
+            id=tagged_id, user=request.user, todo__patient_id=patient_id)
+    except TaggedToDoOrder.DoesNotExist:
+        return JsonResponse({'error': 'Tagged todo not found'}, status=404)
+
+    if tto.status == 0:
+        tto.status = 1
+        tto.save(update_fields=['status'])
+        return JsonResponse({'success': True, 'status': tto.status, 'updated': True})
+    return JsonResponse({'success': True, 'status': tto.status, 'updated': False})
 
 
 # ---------- Label Catalog endpoints ----------

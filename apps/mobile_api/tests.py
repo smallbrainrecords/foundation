@@ -20,7 +20,8 @@ from emr.models import (
     Encounter, EncounterEvent,
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
     Problem, ProblemNote, ProblemActivity,
-    ToDo, Observation, ObservationComponent, ObservationValue,
+    ToDo, TaggedToDoOrder, TodoActivity,
+    Observation, ObservationComponent, ObservationValue,
     ObservationPinToProblem,
     UserProfile, PatientController, PhysicianTeam,
     PatientImage, Document, DocumentProblem, DocumentTodo,
@@ -302,7 +303,9 @@ class MobileEncounterRelationshipsAndEventsTests(TestCase):
         self.p2 = Problem.objects.create(patient=self.patient, problem_name='P2')
         self.t1 = ToDo.objects.create(patient=self.patient, todo='T1')
 
-        self.obs = Observation.objects.create(name='Heart rate', code='8867-4')
+        # subject set: the stale-id filter only accepts values that belong to
+        # the encounter's patient (component__observation__subject).
+        self.obs = Observation.objects.create(name='Heart rate', code='8867-4', subject=self.patient)
         self.comp = ObservationComponent.objects.create(observation=self.obs, name='HR', component_code='8867-4')
         self.ov1 = ObservationValue.objects.create(component=self.comp, value_quantity='80')
 
@@ -423,6 +426,130 @@ class MobileEncounterRelationshipsAndEventsTests(TestCase):
         # Skipped, not errored.
         self.assertEqual(json.loads(resp.content)['events'], [])
         self.assertEqual(EncounterEvent.objects.filter(encounter=self.enc).count(), 0)
+
+
+class MobileEncounterStaleAndCrossPatientLinkTests(TestCase):
+    """The PATCH id lists are client snapshots that can be wrong two ways:
+    stale (another machine deleted the row between this client's last pull
+    and its push — the client has no deletion signal to learn from) and
+    cross-patient (pre-2026-08-10 clients linked chart actions taken during
+    ANOTHER patient's active encounter). Neither may fail the request or be
+    persisted: one stale ObservationValue id used to 500 the whole PATCH via
+    the FK IntegrityError, discarding the transcript and the entire event
+    timeline riding the same body (encounter 21526)."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='doc_a', password='top_secret', email='doc_a@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_a', password='unused', email='pt_a@example.com',
+        )
+        self.other_patient = User.objects.create_user(
+            username='pt_b', password='unused', email='pt_b@example.com',
+        )
+        self.client = Client()
+        self.client.login(username='doc_a', password='top_secret')
+
+        self.own_problem = Problem.objects.create(patient=self.patient, problem_name='Own')
+        self.own_todo = ToDo.objects.create(patient=self.patient, todo='Own todo')
+        self.own_obs = Observation.objects.create(
+            name='blood pressure', code='85354-9', subject=self.patient)
+        self.own_comp = ObservationComponent.objects.create(
+            observation=self.own_obs, name='systolic', component_code='8480-6')
+        self.own_value = ObservationValue.objects.create(
+            component=self.own_comp, value_quantity='120')
+
+        self.enc = Encounter.objects.create(
+            physician=self.physician, patient=self.patient,
+            client_uuid='ffffffff-1111-2222-3333-ffffffffffff',
+        )
+        self.url = f'/api/patient/{self.patient.id}/encounter/{self.enc.id}'
+
+    def _patch(self, body):
+        return self.client.patch(self.url, data=json.dumps(body),
+                                 content_type='application/json')
+
+    def test_stale_observation_value_id_dropped_transcript_and_events_survive(self):
+        # The encounter-21526 shape: one live value, one deleted elsewhere.
+        deleted_value = ObservationValue.objects.create(
+            component=self.own_comp, value_quantity='999')
+        deleted_id = deleted_value.id
+        deleted_value.delete()
+
+        resp = self._patch({
+            'transcript': 'the visit transcript',
+            'observation_value_ids': [self.own_value.id, deleted_id],
+            'events': [
+                {'client_uuid': 'ffffffff-aaaa-aaaa-aaaa-000000000001',
+                 'summary': 'Encounter started', 'offset_string': '00:00',
+                 'is_favorite': False, 'datetime': '2026-08-10T20:52:08Z'},
+            ],
+        })
+        self.assertEqual(resp.status_code, 200)
+
+        linked = list(EncounterObservationValue.objects.filter(
+            encounter=self.enc).values_list('observation_value_id', flat=True))
+        self.assertEqual(linked, [self.own_value.id])
+        self.enc.refresh_from_db()
+        self.assertEqual(self.enc.transcript, 'the visit transcript')
+        self.assertEqual(EncounterEvent.objects.filter(encounter=self.enc).count(), 1)
+
+    def test_cross_patient_ids_are_dropped_own_ids_kept(self):
+        other_problem = Problem.objects.create(
+            patient=self.other_patient, problem_name='Not mine')
+        other_todo = ToDo.objects.create(
+            patient=self.other_patient, todo='Not my todo')
+        other_obs = Observation.objects.create(
+            name='weight', code='29463-7', subject=self.other_patient)
+        other_comp = ObservationComponent.objects.create(
+            observation=other_obs, name='weight', component_code='29463-7')
+        other_value = ObservationValue.objects.create(
+            component=other_comp, value_quantity='188')
+
+        resp = self._patch({
+            'problem_ids': [self.own_problem.id, other_problem.id],
+            'todo_ids': [self.own_todo.id, other_todo.id],
+            'observation_value_ids': [self.own_value.id, other_value.id],
+        })
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(
+            list(EncounterProblemRecord.objects.filter(encounter=self.enc)
+                 .values_list('problem_id', flat=True)),
+            [self.own_problem.id])
+        self.assertEqual(
+            list(EncounterTodoRecord.objects.filter(encounter=self.enc)
+                 .values_list('todo_id', flat=True)),
+            [self.own_todo.id])
+        self.assertEqual(
+            list(EncounterObservationValue.objects.filter(encounter=self.enc)
+                 .values_list('observation_value_id', flat=True)),
+            [self.own_value.id])
+
+    def test_all_invalid_ids_still_replace_by_snapshot(self):
+        # Pre-existing link + a body of nothing-but-garbage: replace semantics
+        # hold (key present -> old rows cleared), garbage just contributes
+        # zero new rows.
+        EncounterProblemRecord.objects.create(encounter=self.enc, problem=self.own_problem)
+        resp = self._patch({'problem_ids': [999999]})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            EncounterProblemRecord.objects.filter(encounter=self.enc).count(), 0)
+
+    def test_subjectless_observation_value_is_dropped(self):
+        # Legacy rows can have Observation.subject NULL; their patient can't
+        # be verified, so they never attach to an encounter.
+        orphan_obs = Observation.objects.create(name='legacy', code='0000-0')
+        orphan_comp = ObservationComponent.objects.create(
+            observation=orphan_obs, name='legacy', component_code='0000-0')
+        orphan_value = ObservationValue.objects.create(
+            component=orphan_comp, value_quantity='1')
+
+        resp = self._patch({'observation_value_ids': [orphan_value.id]})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            EncounterObservationValue.objects.filter(encounter=self.enc).count(), 0)
 
 
 class MobileUpdateProblemNoteTests(TestCase):
@@ -2014,9 +2141,13 @@ class PatientMutationStampTests(TestCase):
 
     def test_successful_create_bumps_and_poll_reports_changed(self):
         cursor = self._poll()['server_time']
+        # problem_id required since the create belt (2026-08-07): a
+        # problem-less create is now rejected, see
+        # MobileCreateTodoProblemBeltTests.
         resp = self.client.post(
             f'/api/patient/{self.patient.id}/todo',
-            data=json.dumps({'todo': 'check BP at home'}),
+            data=json.dumps({'todo': 'check BP at home',
+                             'problem_id': self.problem.id}),
             content_type='application/json')
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(
@@ -3404,3 +3535,193 @@ class MobileRegisterControllerTests(TestCase):
         self.client.logout()
         resp = self._post(username='nobody', password='pw')
         self.assertEqual(resp.status_code, 401)
+
+
+class MobileMarkTaggedTodoViewedTests(TestCase):
+    """POST /api/patient/<pid>/tagged-todo/<tagged_id>/viewed.
+
+    First mobile write path for TaggedToDoOrder.status (2026-08): only the
+    0 -> 1 transition writes, authorization is row ownership, and the URL's
+    patient_id must match the row's todo so @touches_patient_stamp can't
+    bump a chart the write didn't touch.
+    """
+
+    def setUp(self):
+        self.nurse = User.objects.create_user(
+            username='nurse_v', password='top_secret',
+            email='nurse_v@example.com',
+        )
+        self.other_staff = User.objects.create_user(
+            username='doc_v', password='top_secret',
+            email='doc_v@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_v', password='unused',
+            email='pt_v@example.com',
+        )
+        self.other_patient = User.objects.create_user(
+            username='pt_v2', password='unused',
+            email='pt_v2@example.com',
+        )
+        self.todo = ToDo.objects.create(
+            todo='process the requisition', patient=self.patient)
+        self.tag = TaggedToDoOrder.objects.create(
+            todo=self.todo, user=self.nurse, status=0)
+
+        self.client = Client()
+        self.client.login(username='nurse_v', password='top_secret')
+
+    def _url(self, patient_id=None, tagged_id=None):
+        pid = patient_id if patient_id is not None else self.patient.id
+        tid = tagged_id if tagged_id is not None else self.tag.id
+        return f'/api/patient/{pid}/tagged-todo/{tid}/viewed'
+
+    # ---- success path ----
+
+    def test_post_marks_new_row_viewed_and_bumps_stamp(self):
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['updated'])
+        self.assertEqual(data['status'], 1)
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 1)
+        # Patient-scoped write => change signal for open charts.
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_repeat_post_is_idempotent_noop(self):
+        self.tag.status = 1
+        self.tag.save(update_fields=['status'])
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['success'])
+        self.assertFalse(data['updated'])
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 1)
+
+    def test_legacy_completed_status_never_downgraded(self):
+        self.tag.status = 2
+        self.tag.save(update_fields=['status'])
+        resp = self.client.post(self._url())
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertFalse(data['updated'])
+        self.assertEqual(data['status'], 2)
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 2)
+
+    # ---- authorization / scoping ----
+
+    def test_another_users_row_404s(self):
+        other_tag = TaggedToDoOrder.objects.create(
+            todo=self.todo, user=self.other_staff, status=0)
+        resp = self.client.post(self._url(tagged_id=other_tag.id))
+        self.assertEqual(resp.status_code, 404)
+        other_tag.refresh_from_db()
+        self.assertEqual(other_tag.status, 0)
+
+    def test_mismatched_patient_404s_and_never_stamps(self):
+        resp = self.client.post(self._url(patient_id=self.other_patient.id))
+        self.assertEqual(resp.status_code, 404)
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 0)
+        # 4xx => the decorator must not bump the (wrong) URL patient.
+        self.assertFalse(
+            PatientMutationStamp.objects.filter(patient=self.other_patient).exists())
+
+    def test_get_405s(self):
+        resp = self.client.get(self._url())
+        self.assertEqual(resp.status_code, 405)
+        self.tag.refresh_from_db()
+        self.assertEqual(self.tag.status, 0)
+
+
+class MobileCreateTodoProblemBeltTests(TestCase):
+    """
+    Server-side belt for the todo->problem invariant (2026-08-07, the c. diff
+    orphan): mobile_create_todo must reject a create whose problem_id is
+    missing, null, unknown, or another patient's — an accepted orphan is
+    permanent (nothing re-links a null row) and propagates to every machine
+    on the next pull. The pre-belt endpoint silently orphaned on all four
+    shapes, and its unscoped Problem.get() could link a foreign chart's
+    problem.
+    """
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='doc_belt', password='top_secret',
+            email='doc_belt@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_belt', password='unused',
+            email='pt_belt@example.com',
+        )
+        self.other_patient = User.objects.create_user(
+            username='pt_belt_other', password='unused',
+            email='pt_belt_other@example.com',
+        )
+        self.problem = Problem.objects.create(
+            patient=self.patient, problem_name='Clostridium difficile colitis (disorder)',
+        )
+        self.foreign_problem = Problem.objects.create(
+            patient=self.other_patient, problem_name='Unrelated (disorder)',
+        )
+        self.url = f'/api/patient/{self.patient.id}/todo'
+        self.client = Client()
+        self.client.login(username='doc_belt', password='top_secret')
+
+    def _post(self, body):
+        return self.client.post(
+            self.url, data=json.dumps(body), content_type='application/json'
+        )
+
+    # ---- success path ----
+
+    def test_linked_create_succeeds_and_writes_both_activity_rows(self):
+        resp = self._post({'todo': 'c. diff', 'problem_id': self.problem.id})
+        self.assertEqual(resp.status_code, 200)
+        todo = ToDo.objects.get(id=resp.json()['id'])
+        self.assertEqual(todo.problem_id, self.problem.id)
+        # The c. diff signature was the MISSING mirrored problem-side row —
+        # a linked create must write both.
+        self.assertEqual(
+            TodoActivity.objects.filter(todo=todo, activity__contains='Added todo').count(), 1)
+        self.assertEqual(
+            ProblemActivity.objects.filter(
+                problem=self.problem, activity__contains='Added todo').count(), 1)
+
+    # ---- the four orphan doors ----
+
+    def test_missing_problem_id_is_rejected(self):
+        # What iOS actually sends on the false-nil read: the key OMITTED
+        # (Codable drops nil optionals), not an explicit null.
+        resp = self._post({'todo': 'c. diff'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_null_problem_id_is_rejected(self):
+        resp = self._post({'todo': 'c. diff', 'problem_id': None})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_unknown_problem_id_is_rejected_not_silently_orphaned(self):
+        # Pre-belt this was `except Problem.DoesNotExist: pass` — the todo
+        # was created problem-less with a 200.
+        resp = self._post({'todo': 'c. diff', 'problem_id': 999999})
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_another_patients_problem_is_rejected(self):
+        # Pre-belt the lookup was unscoped: this request linked the todo to
+        # a DIFFERENT chart's problem.
+        resp = self._post({'todo': 'c. diff', 'problem_id': self.foreign_problem.id})
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(ToDo.objects.count(), 0)
+
+    def test_rejection_writes_no_activity_rows(self):
+        self._post({'todo': 'c. diff'})
+        self.assertEqual(TodoActivity.objects.count(), 0)
+        self.assertEqual(ProblemActivity.objects.count(), 0)
