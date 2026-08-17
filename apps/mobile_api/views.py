@@ -2520,13 +2520,40 @@ def mobile_unassigned_document_assign(request, document_id):
         if new_name:
             doc.document_name = new_name
 
+        update_fields = [
+            'patient', 'team', 'claimed_by', 'claimed_at', 'document_name',
+        ]
+
+        # Carry the client's extraction across the assign. The importing Mac
+        # OCR'd this document at import time, but assign is exactly where its
+        # local pool row is destroyed (hardDeleteLocalPoolDocument) and the
+        # document re-arrives as a fresh row via the patient documents sync —
+        # so text that isn't handed over here is simply lost, and the chart
+        # pays a second OCR later. Optional: an assign that races extraction
+        # just omits the key and the client fills it in afterwards via
+        # mobile_document_text. Blank never clobbers existing text.
+        incoming_text = body.get('extracted_text')
+        if isinstance(incoming_text, str) and (
+            incoming_text or not doc.extracted_text
+        ):
+            doc.extracted_text = incoming_text
+            doc.extracted_text_at = timezone.now()
+            raw_version = body.get('extracted_text_version')
+            try:
+                doc.extracted_text_version = (
+                    int(raw_version) if raw_version not in (None, '') else None
+                )
+            except (TypeError, ValueError):
+                doc.extracted_text_version = None
+            update_fields += [
+                'extracted_text', 'extracted_text_at', 'extracted_text_version',
+            ]
+
         doc.patient = target_patient
         doc.team = None
         doc.claimed_by = None
         doc.claimed_at = None
-        doc.save(update_fields=[
-            'patient', 'team', 'claimed_by', 'claimed_at', 'document_name',
-        ])
+        doc.save(update_fields=update_fields)
 
         _emit_document_audit(
             doc, request.user,
@@ -2600,6 +2627,156 @@ def mobile_unassigned_document_delete(request, document_id):
     }))
 
     return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+def mobile_document_text(request, patient_id, document_id):
+    """POST {extracted_text, extracted_text_version?} -> store the client's
+    OCR/text-layer extraction for one document.
+
+    Extraction runs client-side (Vision OCR is local, free, and scores
+    ~0.97 on this fax corpus); this endpoint is only the shared store, so
+    a document is extracted ONCE for the whole clinic instead of once per
+    Mac per chart. Pages arrive joined by form feed — see
+    `emr.Document.extracted_text`.
+
+    NOT stamped, deliberately (ALLOWLIST in StampCoverageSweepTests). The
+    text is excluded from patient_full by design, so a stamp bump would
+    trigger a full pull that fetches nothing new — and a backfill pass
+    would bump once per document, turning the poll into a pull storm on
+    every other machine. Liveness comes from clients refetching
+    `mobile_patient_document_texts` when a search runs, the same shape as
+    the deliberately-unstamped My Story entry save.
+
+    No audit row either: this is a derived index, not a clinical edit, and
+    a per-document row would bury the real timeline during a backfill.
+
+    Empty text is MEANINGFUL — "extracted, genuinely blank" (an unreadable
+    fax) — and is stored so the page is not re-OCR'd forever. But an empty
+    body never overwrites existing non-empty text: a failed extraction on
+    one machine must not blank a good one from another.
+    """
+    from django.utils import timezone
+
+    if request.method not in ('POST', 'PATCH'):
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    try:
+        doc = Document.objects.get(id=document_id, patient_id=patient_id)
+    except Document.DoesNotExist:
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    body = _parse_body(request)
+    if 'extracted_text' not in body:
+        return JsonResponse({'error': 'extracted_text is required'}, status=400)
+
+    text = body.get('extracted_text')
+    if text is None:
+        text = ''
+    if not isinstance(text, str):
+        return JsonResponse({'error': 'extracted_text must be a string'}, status=400)
+
+    # Never let a blank result clobber a good one (see docstring).
+    if text == '' and doc.extracted_text:
+        return JsonResponse({
+            'success': True, 'stored': False, 'reason': 'kept_existing_text',
+        })
+
+    raw_version = body.get('extracted_text_version')
+    version = None
+    if raw_version not in (None, ''):
+        try:
+            version = int(raw_version)
+        except (TypeError, ValueError):
+            return JsonResponse(
+                {'error': 'extracted_text_version must be an integer'},
+                status=400)
+        if version < 0:
+            return JsonResponse(
+                {'error': 'extracted_text_version must be non-negative'},
+                status=400)
+
+    doc.extracted_text = text
+    doc.extracted_text_at = timezone.now()
+    doc.extracted_text_version = version
+    doc.save(update_fields=[
+        'extracted_text', 'extracted_text_at', 'extracted_text_version',
+    ])
+
+    return JsonResponse({
+        'success': True,
+        'stored': True,
+        'characters': len(text),
+        'extracted_text_at': _iso_z(doc.extracted_text_at),
+    })
+
+
+@csrf_exempt
+@login_required
+def mobile_patient_document_texts(request, patient_id):
+    """GET ?since=<ISO8601> -> extracted text for this patient's documents.
+
+    Returns only rows that HAVE been extracted; the client diffs this
+    against the chart's document list (which it already has from
+    patient_full) to decide what still needs extracting locally. `since`
+    filters on `extracted_text_at` so a warm chart re-fetches almost
+    nothing.
+
+    This is the reason `extracted_text` is absent from patient_full: the
+    payload is fetched only when a search actually runs, instead of riding
+    every chart open.
+    """
+    from django.utils import timezone
+
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    # Captured BEFORE the query, same contract as patient_full / changed:
+    # a client using this as its next `since` can only over-fetch, never
+    # skip a write that landed mid-query.
+    server_time = timezone.now()
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    qs = (Document.objects
+          .filter(patient_id=patient_id)
+          .exclude(extracted_text__isnull=True))
+
+    since_raw = request.GET.get('since')
+    if since_raw:
+        from django.utils.dateparse import parse_datetime
+        # A '+' offset arrives as a space when the client forgot to
+        # percent-encode it; the check endpoint has the same lenient
+        # reparse.
+        parsed = parse_datetime(since_raw) or parse_datetime(
+            since_raw.replace(' ', '+'))
+        if parsed is None:
+            return JsonResponse({'error': 'invalid since'}, status=400)
+        qs = qs.filter(extracted_text_at__gt=parsed)
+
+    rows = qs.values(
+        'id', 'extracted_text', 'extracted_text_at', 'extracted_text_version',
+    ).order_by('id')
+
+    documents = [{
+        'id': r['id'],
+        'extracted_text': r['extracted_text'] or '',
+        'extracted_text_at': (
+            _iso_z(r['extracted_text_at']) if r['extracted_text_at'] else None
+        ),
+        'extracted_text_version': r['extracted_text_version'],
+    } for r in rows]
+
+    return JsonResponse({
+        'success': True,
+        'documents': documents,
+        'server_time': _iso_z(server_time),
+    })
 
 
 @csrf_exempt

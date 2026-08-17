@@ -1280,6 +1280,34 @@ class Document(models.Model):
     # there would corrupt the response body framing).
     file_size = models.BigIntegerField(null=True, blank=True)
 
+    # Full-text index backing document search (2026-08-17). Extraction runs
+    # CLIENT-side at import: the PDFKit text layer where a page has one,
+    # Vision OCR where it doesn't. That per-PAGE choice matters — ~90% of
+    # this corpus is image-only fax (RingCentral rasterizes; fax is a raster
+    # protocol, so no text layer ever survives transmission), and the
+    # ScanSnap subset carries a text layer on page 1 ONLY, so a
+    # whole-document "does it have text?" test would accept page 1 and skip
+    # the other 64.
+    #
+    # Pages are joined by FORM FEED (\f), the conventional page separator in
+    # extracted PDF text. One column stays FULLTEXT-indexable later (form
+    # feed is whitespace to the tokenizer) while clients can still split on
+    # it for the page attribution that snippets and jump-to-page need.
+    #
+    # Deliberately NOT serialized into patient_full: at ~5.4 KB/document
+    # median, a 264-document chart would add ~1.4 MB to the heaviest payload
+    # in the API. Clients read this via `mobile_patient_document_texts` only
+    # when a search actually runs.
+    #
+    # NULL = never attempted. Empty string = attempted and genuinely blank
+    # (an unreadable fax); the two must stay distinguishable or every blank
+    # page gets re-OCR'd forever.
+    extracted_text = models.TextField(null=True, blank=True)
+    extracted_text_at = models.DateTimeField(null=True, blank=True)
+    # Extractor generation, so a later, better pass can find rows worth
+    # re-running without guessing which client build produced them.
+    extracted_text_version = models.PositiveSmallIntegerField(null=True, blank=True)
+
     class Meta:
         ordering = ['-created_on']
 
