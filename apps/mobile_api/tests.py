@@ -1123,10 +1123,11 @@ class _RBACTestBase(TestCase):
         self.client = Client()
 
     def _login(self, user, password='top_secret'):
-        # Patient seed used `password='x'`; other roles use 'top_secret'.
+        # Only `self.patient` is seeded with 'x'; every other user in this
+        # base — `other_patient` included — uses 'top_secret'.
         return self.client.login(
             username=user.username,
-            password='x' if user == self.patient or user == self.other_patient else password,
+            password='x' if user == self.patient else password,
         )
 
 
@@ -1989,11 +1990,12 @@ class MobileCreateProblemNoteTests(TestCase):
         self.physician = User.objects.create_user(username='doc1')
         UserProfile.objects.create(user=self.physician, role='physician')
         
-        # Link physician to patient via PatientController
+        # Link physician to patient via PatientController. The model carries
+        # only patient/physician/author — there is no `is_active` column here
+        # (the iOS PatientController has one; Django's never did).
         PatientController.objects.create(
             patient=self.patient,
             physician=self.physician,
-            is_active=True
         )
         
         # Create Medical Assistant (MA)
