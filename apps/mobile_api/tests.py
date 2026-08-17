@@ -2742,6 +2742,246 @@ class AuditLoggerWiringTests(TestCase):
         self.assertEqual(payload['target_user_id'], patient.id)
 
 
+class MobileDocumentTextTests(TestCase):
+    """Document full-text index: the shared store behind document search.
+
+    Extraction itself is client-side (local Vision OCR, ~0.97 confidence on
+    this fax corpus). These endpoints exist so the result is computed ONCE
+    for the clinic instead of once per Mac per chart.
+    """
+
+    # Form feed — the page separator in `extracted_text`. Declared here so a
+    # change to the contract breaks a named constant, not a mystery literal.
+    FF = '\f'
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='dtext_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='dtext_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+
+        self.doc = Document.objects.create(
+            document_name='cardiology fax',
+            author=self.physician,
+            patient=self.patient,
+        )
+        self.client = Client()
+        self.client.login(username='dtext_doc', password='pw12345678')
+
+    def _set_text(self, text, version=None, doc=None):
+        body = {'extracted_text': text}
+        if version is not None:
+            body['extracted_text_version'] = version
+        return self.client.post(
+            f'/api/patient/{self.patient.id}/document/{(doc or self.doc).id}/text',
+            data=json.dumps(body), content_type='application/json')
+
+    def _get_texts(self, query=''):
+        return self.client.get(
+            f'/api/patient/{self.patient.id}/document-texts{query}')
+
+    # --- round trip -----------------------------------------------------
+
+    def test_stores_and_returns_text(self):
+        resp = self._set_text('metoprolol 25mg daily', version=1)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()['stored'])
+
+        body = self._get_texts().json()
+        self.assertEqual(len(body['documents']), 1)
+        row = body['documents'][0]
+        self.assertEqual(row['id'], self.doc.id)
+        self.assertEqual(row['extracted_text'], 'metoprolol 25mg daily')
+        self.assertEqual(row['extracted_text_version'], 1)
+        self.assertIsNotNone(row['extracted_text_at'])
+        self.assertTrue(body['server_time'].endswith('Z'))
+
+    def test_page_separator_round_trips(self):
+        """Pages are joined by form feed; splitting must recover them intact.
+        This is what gives search a page number to jump to."""
+        pages = ['page one text', 'page two text', 'page three text']
+        self._set_text(self.FF.join(pages))
+        stored = self._get_texts().json()['documents'][0]['extracted_text']
+        self.assertEqual(stored.split(self.FF), pages)
+
+    # --- blank-vs-never-extracted --------------------------------------
+
+    def test_empty_text_is_stored_as_attempted(self):
+        """An unreadable fax must record that it WAS attempted, or every
+        blank page is re-OCR'd forever."""
+        self.assertEqual(self._set_text('').status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, '')
+        self.assertIsNotNone(self.doc.extracted_text_at)
+        # And it comes back in the listing — "extracted, blank" is a fact
+        # the client needs, distinct from absence.
+        self.assertEqual(len(self._get_texts().json()['documents']), 1)
+
+    def test_never_extracted_document_is_absent_from_listing(self):
+        self.assertEqual(self._get_texts().json()['documents'], [])
+
+    def test_empty_text_never_clobbers_existing_text(self):
+        """A failed extraction on one machine must not blank a good one."""
+        self._set_text('real content from a good scan')
+        resp = self._set_text('')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.json()['stored'])
+        self.assertEqual(resp.json()['reason'], 'kept_existing_text')
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, 'real content from a good scan')
+
+    def test_non_empty_text_overwrites(self):
+        self._set_text('first pass')
+        self._set_text('better second pass', version=2)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, 'better second pass')
+        self.assertEqual(self.doc.extracted_text_version, 2)
+
+    # --- validation -----------------------------------------------------
+
+    def test_missing_key_is_400(self):
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/document/{self.doc.id}/text',
+            data=json.dumps({}), content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_non_string_text_is_400(self):
+        resp = self._set_text(['not', 'a', 'string'])
+        self.assertEqual(resp.status_code, 400)
+
+    def test_bad_version_is_400(self):
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/document/{self.doc.id}/text',
+            data=json.dumps({'extracted_text': 'x',
+                             'extracted_text_version': 'not-an-int'}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_get_rejects_post(self):
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/document-texts')
+        self.assertEqual(resp.status_code, 405)
+
+    # --- since= ---------------------------------------------------------
+
+    def test_since_filters_already_seen_rows(self):
+        self._set_text('older document text')
+        cursor = self._get_texts().json()['server_time']
+        # Nothing new since the cursor.
+        self.assertEqual(self._get_texts(f'?since={cursor}').json()['documents'], [])
+
+        second = Document.objects.create(
+            document_name='newer fax', author=self.physician,
+            patient=self.patient)
+        self._set_text('newer document text', doc=second)
+        fresh = self._get_texts(f'?since={cursor}').json()['documents']
+        self.assertEqual([r['id'] for r in fresh], [second.id])
+
+    def test_invalid_since_is_400(self):
+        self.assertEqual(self._get_texts('?since=garbage').status_code, 400)
+
+    # --- access control -------------------------------------------------
+
+    def test_other_users_document_is_404(self):
+        stranger_doc = Document.objects.create(
+            document_name='not mine', author=self.physician,
+            patient=User.objects.create_user(username='dtext_other'))
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/document/{stranger_doc.id}/text',
+            data=json.dumps({'extracted_text': 'x'}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_unrelated_staff_cannot_read_texts(self):
+        User.objects.create_user(username='dtext_stranger', password='pw12345678')
+        UserProfile.objects.create(
+            user=User.objects.get(username='dtext_stranger'), role='physician')
+        other = Client()
+        other.login(username='dtext_stranger', password='pw12345678')
+        resp = other.get(f'/api/patient/{self.patient.id}/document-texts')
+        self.assertEqual(resp.status_code, 404)
+
+    # --- the two design decisions worth pinning -------------------------
+
+    def test_setting_text_does_not_bump_the_patient_stamp(self):
+        """Deliberate (ALLOWLIST in StampCoverageSweepTests): the text is
+        excluded from patient_full, so a bump would trigger a pull that
+        fetches nothing — and a backfill would bump once per document,
+        turning the 30s poll into a pull storm on every other Mac."""
+        self._set_text('some extracted text')
+        self.assertEqual(
+            PatientMutationStamp.objects.filter(patient=self.patient).count(), 0)
+
+    def test_patient_full_does_not_carry_extracted_text(self):
+        """The payload-size invariant: at ~5.4 KB/document median, a
+        264-document chart would add ~1.4 MB to the heaviest response in
+        the API. Text rides document-texts, on demand, or not at all."""
+        self._set_text('text that must not appear in patient_full')
+        resp = self.client.get(f'/api/patient/{self.patient.id}/full')
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn('must not appear in patient_full', resp.content.decode())
+        for doc in resp.json().get('documents', []):
+            self.assertNotIn('extracted_text', doc)
+
+
+class MobileUnassignedDocumentAssignTextTests(TestCase):
+    """Assign is where a pool document's local row is destroyed and the doc
+    re-arrives via patient sync, so text not handed over at assign is lost
+    and the chart pays a second OCR later."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='atext_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='atext_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+        self.doc = Document.objects.create(
+            document_name='pool fax', author=self.physician,
+            patient=None, team=self.physician)
+        self.client = Client()
+        self.client.login(username='atext_doc', password='pw12345678')
+
+    def _assign(self, body):
+        return self.client.post(
+            f'/api/team/unassigned-document/{self.doc.id}/assign',
+            data=json.dumps(body), content_type='application/json')
+
+    def test_assign_carries_extracted_text(self):
+        resp = self._assign({
+            'patient_id': self.patient.id,
+            'extracted_text': 'echo report findings',
+            'extracted_text_version': 1,
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, 'echo report findings')
+        self.assertEqual(self.doc.extracted_text_version, 1)
+        self.assertIsNotNone(self.doc.extracted_text_at)
+
+    def test_assign_without_text_still_succeeds(self):
+        """An assign that races extraction just omits the key; the client
+        fills it in afterwards via the text endpoint."""
+        resp = self._assign({'patient_id': self.patient.id})
+        self.assertEqual(resp.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.patient_id, self.patient.id)
+        self.assertIsNone(self.doc.extracted_text)
+
+    def test_assign_blank_text_does_not_clobber(self):
+        self.doc.extracted_text = 'already extracted'
+        self.doc.save(update_fields=['extracted_text'])
+        self._assign({'patient_id': self.patient.id, 'extracted_text': ''})
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, 'already extracted')
+
+
 class StampCoverageSweepTests(TestCase):
     """Every mutating mobile endpoint must be accounted for in exactly one
     stamp bucket (PLAN_RETIRE_ROSTER_WALK_2026-07.md, Gap A / Step 2).
@@ -2789,6 +3029,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_unassigned_document_release': 'pool claim state, patient-unbound',
         'mobile_unassigned_document_delete': 'pool row never belonged to a patient',
         'mobile_save_my_story_entry': 'poll pull excludes My Story by design; liveness via tab-appear refetch (Gap C decision C2, 2026-07-10)',
+        'mobile_document_text': 'derived OCR index, excluded from patient_full by design; a stamp would trigger pulls that fetch nothing, and a backfill would bump once per document. Liveness via document-texts refetch on search (2026-08-17)',
         'mobile_create_label': 'global label catalog, not patient-scoped',
         'mobile_update_label': 'global label catalog, not patient-scoped',
         'mobile_batch_events': 'analytics sink, not chart data',
@@ -2808,6 +3049,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_signature_file',
         'mobile_unassigned_documents_list',
         'mobile_my_tagged_todos',
+        'mobile_patient_document_texts',
         'get_snomed_to_icd10',
     }
 

@@ -34,6 +34,12 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)$', views.mobile_delete_document),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/problem/(?P<problem_id>\d+)$', views.mobile_document_problem_link),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/todo/(?P<todo_id>\d+)$', views.mobile_document_todo_link),
+    # Document full-text index (2026-08-17). Extraction is client-side; these
+    # two make the result shared, so a document is OCR'd once for the clinic
+    # rather than once per Mac per chart. Text is deliberately absent from
+    # patient_full — see emr.Document.extracted_text.
+    url(r'^patient/(?P<patient_id>\d+)/document-texts$', views.mobile_patient_document_texts),
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/text$', views.mobile_document_text),
     # PR-5 (2026-06-11) Shared unassigned documents pool (per-team).
     url(r'^team/(?P<team_id>\d+)/unassigned-document/upload$', views.mobile_upload_unassigned_document),
     url(r'^team/unassigned-documents/list$', views.mobile_unassigned_documents_list),
