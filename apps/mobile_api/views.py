@@ -1473,7 +1473,30 @@ def _mobile_patient_full_inner(request, patient_id):
     # Documents — included if no sections filter or 'documents' requested
     documents = []
     if not requested_sections or 'documents' in requested_sections:
-        for doc in Document.objects.filter(patient=patient_user).select_related('author').prefetch_related('labels'):
+        patient_docs = list(
+            Document.objects.filter(patient=patient_user).select_related('author').prefetch_related('labels')
+        )
+
+        # Link ids in TWO bulk queries grouped in Python (2026-08-12), not
+        # two queries per document — the per-doc pair added ~2 DB round
+        # trips per document to the section (the same N+1 class as the
+        # per-row GCS stat fixed below). problem_id/todo_id null-excluded —
+        # same constraint-drift guard as the encounter id arrays above (iOS
+        # decodes these as non-optional [Int]; one null kills the payload).
+        doc_ids = [d.id for d in patient_docs]
+        problem_ids_by_doc = {}
+        todo_ids_by_doc = {}
+        if doc_ids:
+            for d_id, p_id in DocumentProblem.objects.filter(
+                document_id__in=doc_ids, problem_id__isnull=False
+            ).values_list('document_id', 'problem_id'):
+                problem_ids_by_doc.setdefault(d_id, []).append(p_id)
+            for d_id, t_id in DocumentTodo.objects.filter(
+                document_id__in=doc_ids, todo_id__isnull=False
+            ).values_list('document_id', 'todo_id'):
+                todo_ids_by_doc.setdefault(d_id, []).append(t_id)
+
+        for doc in patient_docs:
             # Stored column, NOT doc.document.size — the per-row GCS stat
             # made this loop scale at ~24ms/document (1.5–7.7s sections in
             # prod). See _document_file_size for the NULL-fallback contract.
@@ -1482,18 +1505,6 @@ def _mobile_patient_full_inner(request, patient_id):
             author_name = ''
             if doc.author:
                 author_name = doc.author.get_full_name() or doc.author.username
-
-            # problem_id/todo_id null-excluded — same constraint-drift guard
-            # as the encounter id arrays above (iOS decodes these as
-            # non-optional [Int]; one null kills the whole payload).
-            doc_problem_ids = list(
-                DocumentProblem.objects.filter(document=doc, problem_id__isnull=False)
-                .values_list('problem_id', flat=True)
-            )
-            doc_todo_ids = list(
-                DocumentTodo.objects.filter(document=doc, todo_id__isnull=False)
-                .values_list('todo_id', flat=True)
-            )
 
             doc_labels = [{'id': l.id, 'name': l.name or '', 'css_class': l.css_class or ''} for l in doc.labels.all()]
 
@@ -1507,8 +1518,11 @@ def _mobile_patient_full_inner(request, patient_id):
                 'file_path': str(doc.document) if doc.document else '',
                 'author_name': author_name,
                 'created_on': doc.created_on.isoformat() if doc.created_on else None,
-                'problem_ids': doc_problem_ids,
-                'todo_ids': doc_todo_ids,
+                # .get with [] default: the keys are ALWAYS emitted — a
+                # missing key (unlike a garbage element) fails the whole
+                # patient_full decode on iOS.
+                'problem_ids': problem_ids_by_doc.get(doc.id, []),
+                'todo_ids': todo_ids_by_doc.get(doc.id, []),
                 'labels': doc_labels,
             })
 

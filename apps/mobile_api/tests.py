@@ -2622,6 +2622,51 @@ class DocumentFileSizeColumnTests(_RBACTestBase):
         self.assertEqual(row['file_size'], 777)
 
 
+class PatientFullDocumentLinkIdsTests(_RBACTestBase):
+    """patient_full documents link ids (2026-08-12): the per-document
+    DocumentProblem/DocumentTodo query pair became two bulk queries grouped
+    by document_id in Python — the last N+1 in the documents section after
+    the file-size stored-column fix above. These pin the grouping: ids must
+    land on the RIGHT document, and a link-less document must still emit
+    empty arrays (a missing key — unlike a garbage element — fails the whole
+    patient_full decode on iOS)."""
+
+    def _make_doc(self, name):
+        return Document.objects.create(
+            document=SimpleUploadedFile(name, b'%PDF-fake',
+                                        content_type='application/pdf'),
+            document_name=name,
+            author=self.attending,
+            patient=self.patient,
+        )
+
+    def test_link_ids_group_onto_the_right_documents(self):
+        self.assertTrue(self._login(self.attending))
+        doc_linked = self._make_doc('linked.pdf')
+        doc_bare = self._make_doc('bare.pdf')
+
+        p1 = Problem.objects.create(patient=self.patient, problem_name='P1')
+        p2 = Problem.objects.create(patient=self.patient, problem_name='P2')
+        t1 = ToDo.objects.create(patient=self.patient, todo='T1')
+        DocumentProblem.objects.create(document=doc_linked, problem=p1, author=self.attending)
+        DocumentProblem.objects.create(document=doc_linked, problem=p2, author=self.attending)
+        DocumentTodo.objects.create(document=doc_linked, todo=t1, author=self.attending)
+
+        resp = self.client.get(
+            f'/api/patient/{self.patient.id}/full?sections=documents')
+        self.assertEqual(resp.status_code, 200)
+        payload = json.loads(resp.content)
+        self.assertTrue(payload['success'])
+
+        linked_row = next(d for d in payload['documents'] if d['id'] == doc_linked.id)
+        self.assertEqual(sorted(linked_row['problem_ids']), sorted([p1.id, p2.id]))
+        self.assertEqual(linked_row['todo_ids'], [t1.id])
+
+        bare_row = next(d for d in payload['documents'] if d['id'] == doc_bare.id)
+        self.assertEqual(bare_row['problem_ids'], [])
+        self.assertEqual(bare_row['todo_ids'], [])
+
+
 class AuditLoggerWiringTests(TestCase):
     """The smallbrain.* operational audit loggers must actually reach an
     INFO-capable handler. Found 2026-07-10: profile_edits and
