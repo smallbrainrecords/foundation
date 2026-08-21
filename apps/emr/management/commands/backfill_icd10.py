@@ -37,6 +37,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from emr.models import Problem, SnomedIcd10Map
+from emr.mutation_stamp import touch_patient_stamp
 
 
 def _old_buggy_pick(concept_id):
@@ -73,6 +74,22 @@ class Command(BaseCommand):
         self.stdout.write("")
         self.repair_pass(apply=options["fix_conditional"])
 
+    def _touch_stamps(self, patient_ids, apply):
+        """Wake the mobile clients for every patient whose codes changed.
+
+        Best-effort: a stamp failure must never fail a completed data heal.
+        """
+        if not apply or not patient_ids:
+            return
+        stamped = 0
+        for patient_id in patient_ids:
+            try:
+                touch_patient_stamp(patient_id)
+                stamped += 1
+            except Exception:
+                pass
+        self.stdout.write(f"mutation stamps touched    : {stamped}")
+
     # ------------------------------------------------------------- backfill
 
     def backfill_pass(self, apply):
@@ -86,6 +103,7 @@ class Command(BaseCommand):
         concept_ids = list(
             needs_backfill.values_list("concept_id", flat=True).distinct()
         )
+        touched_patients = set()
 
         self.stdout.write("=== ICD-10 backfill (missing codes) ===")
         self.stdout.write(f"mode                       : {'APPLY' if apply else 'dry-run'}")
@@ -109,6 +127,11 @@ class Command(BaseCommand):
 
             mapped_concepts += 1
             if apply:
+                # Capture patients BEFORE the update — afterwards these rows no
+                # longer match the "missing icd10" queryset.
+                touched_patients.update(
+                    pid for pid in concept_qs.values_list("patient_id", flat=True) if pid
+                )
                 updated = concept_qs.update(icd10_code=best)
             else:
                 updated = concept_qs.count()
@@ -121,12 +144,19 @@ class Command(BaseCommand):
         self.stdout.write(f"unmapped concepts (skipped): {unmapped_concepts}")
         self.stdout.write(f"unmapped rows (skipped)    : {unmapped_rows}")
 
+        # A bulk UPDATE writes no PatientMutationStamp, so without this the
+        # corrected codes sit on the server and the mobile `/changed` poll never
+        # fires — clients keep showing the old blank code until someone manually
+        # refreshes the chart. (Observed after the first prod run, 2026-08-19.)
+        self._touch_stamps(touched_patients, apply)
+
         if not apply:
             self.stdout.write("Dry run — nothing written. Use --apply to write.")
 
     # --------------------------------------------------------------- repair
 
     def repair_pass(self, apply):
+        repair_patients = set()
         has_code = Problem.objects.exclude(
             Q(icd10_code__isnull=True) | Q(icd10_code=""),
         ).exclude(
@@ -167,6 +197,9 @@ class Command(BaseCommand):
             )
 
             if apply:
+                repair_patients.update(
+                    pid for pid in buggy_qs.values_list("patient_id", flat=True) if pid
+                )
                 updated = buggy_qs.update(icd10_code=new_pick)
             else:
                 updated = buggy_qs.count()
@@ -181,6 +214,8 @@ class Command(BaseCommand):
         self.stdout.write(
             f"other-source codes (kept)  : {untouched_other_code}"
         )
+
+        self._touch_stamps(repair_patients, apply)
 
         if not apply:
             self.stdout.write("Dry run — nothing written. Use --fix-conditional to write.")
