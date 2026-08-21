@@ -3176,15 +3176,55 @@ def mobile_update_problem(request, patient_id, problem_id):
     old_is_controlled = problem.is_controlled
     old_authenticated = problem.authenticated
 
-    for field in ('problem_name', 'concept_id', 'icd10_code', 'old_problem_name'):
+    from emr.models import SnomedIcd10Map
+    from emr.retired_concepts import SnomedRetiredConcept
+
+    for field in ('problem_name', 'old_problem_name'):
         if field in body:
             setattr(problem, field, body[field])
-            
+
+    # ---- Diagnosis codes: the server owns what the client cannot know ----
+    #
+    # A stale client silently reverted a server-side data heal on 2026-08-21.
+    # `remap_retired_concepts` had advanced problem 25071 from the RETIRED
+    # concept 64593003 to 271737000 (D64.9) at 11:17 EDT. At 17:28 a todo was
+    # saved on that problem — `TodoFormView.save()` marks the parent problem
+    # dirty — and the client pushed the pre-heal values it still held
+    # (concept 64593003, icd10 ""). This loop wrote both verbatim, undoing the
+    # heal, and the order requisition printed 17 seconds later with no ICD.
+    # 292 of 293 sibling problems stayed healed; this one did not.
+    #
+    # The old auto-reheal below could not rescue it: a retired concept has no
+    # map entry, so the blanking stuck. Hence two guards.
+
+    # Guard 1: never let a client REGRESS an active concept to a retired one.
+    # A client that has not pulled since a remap is not proposing a clinical
+    # change, it is echoing a stale copy.
+    if 'concept_id' in body:
+        incoming_concept = (body.get('concept_id') or '').strip()
+        current_concept = (problem.concept_id or '').strip()
+        regressing = (
+            incoming_concept
+            and current_concept
+            and incoming_concept != current_concept
+            and SnomedRetiredConcept.replacement_for(incoming_concept) == current_concept
+        )
+        if not regressing:
+            problem.concept_id = body['concept_id']
+
+    # Guard 2: never let an EMPTY incoming code blank a code the server holds.
+    # Clients send `icd10Code ?? ""` on every problem update, so an empty value
+    # means "I have nothing", never "delete what you have". A non-empty value is
+    # still honoured — that is a real edit.
+    if 'icd10_code' in body:
+        incoming_icd = (body.get('icd10_code') or '').strip()
+        if incoming_icd or not (problem.icd10_code or '').strip():
+            problem.icd10_code = body['icd10_code']
+
     # Auto-assign icd10_code if concept_id is provided but icd10_code is missing
     if 'concept_id' in body and not body.get('icd10_code') and not problem.icd10_code:
-        concept_id = body['concept_id']
+        concept_id = problem.concept_id
         if concept_id:
-            from emr.models import SnomedIcd10Map
             best = SnomedIcd10Map.best_icd10_for(concept_id)
             if best:
                 problem.icd10_code = best
