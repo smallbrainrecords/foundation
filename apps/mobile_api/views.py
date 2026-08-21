@@ -3137,6 +3137,28 @@ def mobile_create_problem(request, patient_id):
 
     concept_id = body.get('concept_id', '') or ''
     icd10_code = body.get('icd10_code', '') or ''
+
+    # Resolve a RETIRED concept to its active successor before anything else.
+    #
+    # The app creates problems from a bundled SNOMED core subset dated 202511,
+    # while the current US release is 20260301. Sixteen of the 6,185 concepts it
+    # offers were retired in between, and NONE of them map to an ICD — so
+    # picking one (Active tuberculosis, Acute angle-closure glaucoma,
+    # Endometriosis of pelvic peritoneum ...) produced a problem with no code,
+    # the same shape as the 2026-08-21 field incident. Six of those sixteen have
+    # a successor that does map.
+    #
+    # Storing the successor rather than merely borrowing its ICD is the point:
+    # it stops new rows entering the database on dead concepts, so
+    # `remap_retired_concepts` has nothing to clean up later and creation,
+    # updating and the heal all agree on what "retired" means. The real fix for
+    # the remaining ten is refreshing the bundled subset.
+    if concept_id:
+        from emr.retired_concepts import SnomedRetiredConcept
+        successor = SnomedRetiredConcept.replacement_for(concept_id)
+        if successor:
+            concept_id = successor
+
     if not icd10_code and concept_id:
         from emr.models import SnomedIcd10Map
         icd10_code = SnomedIcd10Map.best_icd10_for(concept_id) or ''
