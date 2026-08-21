@@ -537,10 +537,26 @@ class Goal(models.Model):
 
 
 class Label(models.Model):
+    """Shared category vocabulary for documents AND todos.
+
+    Note the usage asymmetry: documents carry ~58k label links, todos ~2.3k, so
+    this is primarily a document taxonomy that todos borrow (a label reaches a
+    todo when a labelled PDF is linked to it). Problems use a different table
+    (`ProblemLabel`) and are unaffected by changes here.
+    """
     name = models.TextField(null=True, blank=True)
     css_class = models.TextField(null=True, blank=True)
     author = models.ForeignKey(User, null=True, blank=True, related_name="label_author", on_delete=models.SET_NULL)
     is_all = models.BooleanField(default=False)
+    # SNOMED CT concept for this category, so a future FHIR export is a lookup
+    # rather than a re-derivation. Set on the canonical global labels by
+    # `manage.py consolidate_labels`; blank on user-created ad-hoc labels.
+    # These map to ServiceRequest.category for the order types — except
+    # "screening" (360156006 Screening intent), which is a PURPOSE rather than
+    # an action type and belongs on reasonCode, and "Medication"
+    # (33633005 Prescription of drug), which is a MedicationRequest rather
+    # than a ServiceRequest at all.
+    snomed_category_code = models.CharField(max_length=18, blank=True, null=True)
 
     def __unicode__(self):
         return '%s' % (unicode(self.name))
