@@ -1,0 +1,1150 @@
+{
+  "generated": "2026-08-21T18:50:23.652Z",
+  "source": "icd-mapper",
+  "decisions": [
+    {
+      "concept": "102499006",
+      "name": "Fit and well (finding)",
+      "charts": 2252,
+      "group": "none",
+      "icd": "Z00.00",
+      "icdName": "Encounter for general adult medical examination without abnormal findings"
+    },
+    {
+      "concept": "390076006",
+      "name": "Knee pain (finding)",
+      "charts": 327,
+      "group": "unanimous",
+      "icd": "M25.569",
+      "icdName": "Pain in unspecified knee"
+    },
+    {
+      "concept": "54856001",
+      "name": "Gastroesophageal reflux disease (disorder)",
+      "charts": 234,
+      "group": "choice",
+      "icd": "K21.9",
+      "icdName": "Gastro-esophageal reflux disease without esophagitis"
+    },
+    {
+      "concept": "237572004",
+      "name": "Hypothyroidism (disorder)",
+      "charts": 146,
+      "group": "unanimous",
+      "icd": "E03.9",
+      "icdName": "Hypothyroidism, unspecified"
+    },
+    {
+      "concept": "49233005",
+      "name": "Dyspnea (finding)",
+      "charts": 19,
+      "group": "choice",
+      "icd": "R06.00",
+      "icdName": "Dyspnea, unspecified"
+    },
+    {
+      "concept": "38936003",
+      "name": "Abnormal blood pressure (finding)",
+      "charts": 10,
+      "group": "none",
+      "icd": "R03.0",
+      "icdName": "Elevated blood-pressure reading, without diagnosis of hypertension"
+    },
+    {
+      "concept": "8957000",
+      "name": "Coronary artery disease (disorder)",
+      "charts": 9,
+      "group": "choice",
+      "icd": "I25.10",
+      "icdName": "Atherosclerotic heart disease of native coronary artery without angina pectoris"
+    },
+    {
+      "concept": "11778002",
+      "name": "Vertigo (finding)",
+      "charts": 7,
+      "group": "unanimous",
+      "icd": "H81.13",
+      "icdName": "Benign paroxysmal vertigo, bilateral"
+    },
+    {
+      "concept": "60363000",
+      "name": "Pneumonia (disorder)",
+      "charts": 7,
+      "group": "unanimous",
+      "icd": "J18.9",
+      "icdName": "Pneumonia, unspecified organism"
+    },
+    {
+      "concept": "76355008",
+      "name": "Barrett's esophagus (disorder)",
+      "charts": 6,
+      "group": "choice",
+      "icd": "K22.70",
+      "icdName": "Barrett's esophagus without dysplasia"
+    },
+    {
+      "concept": "79151009",
+      "name": "Dysesthesia (finding)",
+      "charts": 6,
+      "group": "choice",
+      "icd": "R20.3",
+      "icdName": "Hyperesthesia"
+    },
+    {
+      "concept": "441457006",
+      "name": "Cyst (disorder)",
+      "charts": 5,
+      "group": "none",
+      "icd": "L72.8",
+      "icdName": "Other follicular cysts of the skin and subcutaneous tissue"
+    },
+    {
+      "concept": "139668004",
+      "name": "Pain in throat (finding)",
+      "charts": 4,
+      "group": "choice",
+      "icd": "R07.0",
+      "icdName": "Pain in throat"
+    },
+    {
+      "concept": "268639004",
+      "name": "Chronic alcoholism (disorder)",
+      "charts": 4,
+      "group": "unanimous",
+      "icd": "F10.20",
+      "icdName": "Alcohol dependence, uncomplicated"
+    },
+    {
+      "concept": "27321001",
+      "name": "Acute pharyngitis (disorder)",
+      "charts": 4,
+      "group": "unanimous",
+      "icd": "J02.9",
+      "icdName": "Acute pharyngitis, unspecified"
+    },
+    {
+      "concept": "302891003",
+      "name": "Macular degeneration (disorder)",
+      "charts": 4,
+      "group": "unanimous",
+      "icd": "H35.30",
+      "icdName": "Unspecified macular degeneration"
+    },
+    {
+      "concept": "403106007",
+      "name": "Superficial onychomycosis (disorder)",
+      "charts": 4,
+      "group": "unanimous",
+      "icd": "B35.1",
+      "icdName": "Tinea unguium"
+    },
+    {
+      "concept": "6408001",
+      "name": "Finding of nocturia (finding)",
+      "charts": 4,
+      "group": "unanimous",
+      "icd": "R35.1",
+      "icdName": "Nocturia"
+    },
+    {
+      "concept": "235653009",
+      "name": "Gastritis (disorder)",
+      "charts": 3,
+      "group": "choice",
+      "icd": "K29.70",
+      "icdName": "Gastritis, unspecified, without bleeding"
+    },
+    {
+      "concept": "124886009",
+      "name": "Deficiency of vitamin D (disorder)",
+      "charts": 3,
+      "group": "unanimous",
+      "icd": "E55.9",
+      "icdName": "Vitamin D deficiency, unspecified"
+    },
+    {
+      "concept": "139684003",
+      "name": "(Rash) or (C/O a rash) (finding)",
+      "charts": 3,
+      "group": "unanimous",
+      "icd": "R21",
+      "icdName": "Rash and other nonspecific skin eruption"
+    },
+    {
+      "concept": "18222007",
+      "name": "Age related macular degeneration (disorder)",
+      "charts": 3,
+      "group": "unanimous",
+      "icd": "H35.30",
+      "icdName": "Unspecified macular degeneration"
+    },
+    {
+      "concept": "186993002",
+      "name": "Dermatophytosis of foot (& tinea pedis) (disorder)",
+      "charts": 3,
+      "group": "unanimous",
+      "icd": "B35.3",
+      "icdName": "Tinea pedis"
+    },
+    {
+      "concept": "196590006",
+      "name": "Glossodynia (disorder)",
+      "charts": 3,
+      "group": "unanimous",
+      "icd": "K14.6",
+      "icdName": "Glossodynia"
+    },
+    {
+      "concept": "300576004",
+      "name": "Finding of nausea (finding)",
+      "charts": 3,
+      "group": "unanimous",
+      "icd": "R11.0",
+      "icdName": "Nausea"
+    },
+    {
+      "concept": "366912000",
+      "name": "Deep vein thrombosis of lower limb (disorder)",
+      "charts": 3,
+      "group": "unanimous",
+      "icd": "I82.409",
+      "icdName": "Acute embolism and thrombosis of unspecified deep veins of unspecified lower extremity"
+    },
+    {
+      "concept": "41006004",
+      "name": "Depression (finding)",
+      "charts": 3,
+      "group": "unanimous",
+      "icd": "F32.A",
+      "icdName": "Depression, unspecified"
+    },
+    {
+      "concept": "224965009",
+      "name": "Grief finding (finding)",
+      "charts": 3,
+      "group": "none",
+      "icd": "F43.81",
+      "icdName": "Prolonged grief disorder"
+    },
+    {
+      "concept": "14256006",
+      "name": "First degree atrioventricular block (disorder)",
+      "charts": 2,
+      "group": "choice",
+      "icd": "I44.0",
+      "icdName": "Atrioventricular block, first degree"
+    },
+    {
+      "concept": "155664000",
+      "name": "(Oral soft tissue diseases NOS) or (canker) or (cheilitis) or (mucocele of mouth) (disorder)",
+      "charts": 2,
+      "group": "choice",
+      "icd": "K13.79",
+      "icdName": "Other lesions of oral mucosa"
+    },
+    {
+      "concept": "209756003",
+      "name": "Rupture biceps tendon (disorder)",
+      "charts": 2,
+      "group": "choice",
+      "icd": "M66.829",
+      "icdName": "Spontaneous rupture of other tendons, unspecified upper arm"
+    },
+    {
+      "concept": "267178003",
+      "name": "(Ear blocked) or (hearing symptom NOS) (finding)",
+      "charts": 2,
+      "group": "choice",
+      "icd": "H61.23",
+      "icdName": "Impacted cerumen, bilateral"
+    },
+    {
+      "concept": "82020005",
+      "name": "Hypomagnesemia (disorder)",
+      "charts": 2,
+      "group": "choice",
+      "icd": "E83.42",
+      "icdName": "Hypomagnesemia"
+    },
+    {
+      "concept": "102550009",
+      "name": "Leg cramp (finding)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "R25.2",
+      "icdName": "Cramp and spasm"
+    },
+    {
+      "concept": "139151004",
+      "name": "C/O - low back pain (finding)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "M54.50",
+      "icdName": "Low back pain, unspecified"
+    },
+    {
+      "concept": "164623002",
+      "name": "On examination - a rash (disorder)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "R21",
+      "icdName": "Rash and other nonspecific skin eruption"
+    },
+    {
+      "concept": "186514003",
+      "name": "Herpes zoster [organism] or [infection - shingles] (disorder)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "B02.9",
+      "icdName": "Zoster without complications"
+    },
+    {
+      "concept": "195208004",
+      "name": "CVA - cerebrovascular accident (& unspecified [& stroke]) (disorder)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "I63.9",
+      "icdName": "Cerebral infarction, unspecified"
+    },
+    {
+      "concept": "197122008",
+      "name": "Other specified constipation (disorder)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "K59.00",
+      "icdName": "Constipation, unspecified"
+    },
+    {
+      "concept": "201272008",
+      "name": "(Urticaria NOS) or (hives) (disorder)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "L50.9",
+      "icdName": "Urticaria, unspecified"
+    },
+    {
+      "concept": "237114003",
+      "name": "Uterine prolapse (disorder)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "N81.4",
+      "icdName": "Uterovaginal prolapse, unspecified"
+    },
+    {
+      "concept": "249619001",
+      "name": "Loose stool (finding)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "R19.5",
+      "icdName": "Other fecal abnormalities"
+    },
+    {
+      "concept": "266568001",
+      "name": "Haematuria (disorder)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "R31.9",
+      "icdName": "Hematuria, unspecified"
+    },
+    {
+      "concept": "57153001",
+      "name": "Menometrorrhagia (finding)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "N92.1",
+      "icdName": "Excessive and frequent menstruation with irregular cycle"
+    },
+    {
+      "concept": "866003",
+      "name": "Diabetic neuropathy (disorder)",
+      "charts": 2,
+      "group": "unanimous",
+      "icd": "E11.40",
+      "icdName": "Type 2 diabetes mellitus with diabetic neuropathy, unspecified"
+    },
+    {
+      "concept": "154632002",
+      "name": "Tubulovillous adenoma (disorder)",
+      "charts": 2,
+      "group": "none",
+      "icd": "K63.5",
+      "icdName": "Polyp of colon"
+    },
+    {
+      "concept": "225577002",
+      "name": "Stoma finding (finding)",
+      "charts": 2,
+      "group": "none",
+      "icd": "K31.89",
+      "icdName": "Other diseases of stomach and duodenum"
+    },
+    {
+      "concept": "10478009",
+      "name": "Bunion of great toe (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "M21.619",
+      "icdName": "Bunion of unspecified foot"
+    },
+    {
+      "concept": "139108003",
+      "name": "Feels hot/feverish (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R50.9",
+      "icdName": "Fever, unspecified"
+    },
+    {
+      "concept": "139627008",
+      "name": "Unilateral earache (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "H92.02",
+      "icdName": "Otalgia, left ear"
+    },
+    {
+      "concept": "145025009",
+      "name": "Sperm: abnormal constituents (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R86.6",
+      "icdName": "Abnormal cytological findings in specimens from male genital organs"
+    },
+    {
+      "concept": "1508000",
+      "name": "Intracerebral hemorrhage (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "I61.9",
+      "icdName": "Nontraumatic intracerebral hemorrhage, unspecified"
+    },
+    {
+      "concept": "155520002",
+      "name": "Nasal polyp (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "J33.0",
+      "icdName": "Polyp of nasal cavity"
+    },
+    {
+      "concept": "155718002",
+      "name": "Disorder of gastric function (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "K30",
+      "icdName": "Functional dyspepsia"
+    },
+    {
+      "concept": "156676007",
+      "name": "Bunion (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "M21.619",
+      "icdName": "Bunion of unspecified foot"
+    },
+    {
+      "concept": "157719006",
+      "name": "(Chilblains) or (pernio) or (chapped skin) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R23.8",
+      "icdName": "Other skin changes"
+    },
+    {
+      "concept": "162103003",
+      "name": "Diarrhoea (& symptoms) or loose stools (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R19.5",
+      "icdName": "Other fecal abnormalities"
+    },
+    {
+      "concept": "162196004",
+      "name": "(Depressed) or (C/O feeling: [depressed] or [unhappy]) (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "F32.A",
+      "icdName": "Depression, unspecified"
+    },
+    {
+      "concept": "162263008",
+      "name": "(Disturbance of consciousness) or (faint/syncope/vasovagal symptom) (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R41.82",
+      "icdName": "Altered mental status, unspecified"
+    },
+    {
+      "concept": "162380009",
+      "name": "Nasal: [obstruction present] or [C/O congestion] (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R09.81",
+      "icdName": "Nasal congestion"
+    },
+    {
+      "concept": "186989008",
+      "name": "(Dermatophytosis of groin & perianal area) or (Dhobie itch) or (tinea cruris) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "B35.6",
+      "icdName": "Tinea cruris"
+    },
+    {
+      "concept": "191703000",
+      "name": "Anxiety disorder (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "F41.1",
+      "icdName": "Generalized anxiety disorder"
+    },
+    {
+      "concept": "193582000",
+      "name": "Age-related cataract (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "H25.9",
+      "icdName": "Unspecified age-related cataract"
+    },
+    {
+      "concept": "200673002",
+      "name": "Hand: (abscess and/or cellulitis) of (dorsum or palm or unspecified) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "L02.519",
+      "icdName": "Cutaneous abscess of unspecified hand"
+    },
+    {
+      "concept": "200712009",
+      "name": "Pilonidal cyst with abscess (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "L05.01",
+      "icdName": "Pilonidal cyst with abscess"
+    },
+    {
+      "concept": "200761006",
+      "name": "(Dermatitis/dermatoses) or (other skin and subcutaneous tissue inflammatory conditions) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "L08.9",
+      "icdName": "Local infection of the skin and subcutaneous tissue, unspecified"
+    },
+    {
+      "concept": "203109002",
+      "name": "(Myalgia: [unspecified] or [intercostal myalgia]) or (muscle pain) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "M79.10",
+      "icdName": "Myalgia, unspecified site"
+    },
+    {
+      "concept": "208913006",
+      "name": "(Dislocation or subluxation of knee) or (current knee cartilage tear) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "M25.569",
+      "icdName": "Pain in unspecified knee"
+    },
+    {
+      "concept": "233824008",
+      "name": "Myocardial infarction (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "I21.9",
+      "icdName": "Acute myocardial infarction, unspecified"
+    },
+    {
+      "concept": "24133009",
+      "name": "Lateral epicondylitis of elbow joint (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "M77.10",
+      "icdName": "Lateral epicondylitis, unspecified elbow"
+    },
+    {
+      "concept": "266504002",
+      "name": "(Acute gastritis) or (gastric erosion) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "K29.00",
+      "icdName": "Acute gastritis without bleeding"
+    },
+    {
+      "concept": "267699004",
+      "name": "(Cluster headaches) or (migrainous neuralgia) or (migraine NOS) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "G44.009",
+      "icdName": "Cluster headache syndrome, unspecified, not intractable"
+    },
+    {
+      "concept": "267846008",
+      "name": "(Contact dermatitis NOS) or (discoid eczema) or (nummular eczema) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "L30.0",
+      "icdName": "Nummular dermatitis"
+    },
+    {
+      "concept": "268051001",
+      "name": "(Arthritis/arthrosis) or (arthropathy) or (joint disorders) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "M19.90",
+      "icdName": "Unspecified osteoarthritis, unspecified site"
+    },
+    {
+      "concept": "268083007",
+      "name": "(Backache NOS) or (back pain [& low]) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "M54.50",
+      "icdName": "Low back pain, unspecified"
+    },
+    {
+      "concept": "269421007",
+      "name": "(Chilblains) or (pernio) or (chapped skin) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R23.8",
+      "icdName": "Other skin changes"
+    },
+    {
+      "concept": "270542002",
+      "name": "Elbow bursitis (& olecranon) (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "M70.20",
+      "icdName": "Olecranon bursitis, unspecified elbow"
+    },
+    {
+      "concept": "41840003",
+      "name": "Urinary incontinence (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R32",
+      "icdName": "Unspecified urinary incontinence"
+    },
+    {
+      "concept": "70369002",
+      "name": "Seasonal allergic rhinitis (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "J30.1",
+      "icdName": "Allergic rhinitis due to pollen"
+    },
+    {
+      "concept": "74069000",
+      "name": "Allergic drug reaction (disorder)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "Z88.9",
+      "icdName": "Allergy status to unspecified drugs, medicaments and biological substances"
+    },
+    {
+      "concept": "91232002",
+      "name": "Hypersensitivity (finding)",
+      "charts": 1,
+      "group": "choice",
+      "icd": "R45.89",
+      "icdName": "Other symptoms and signs involving emotional state"
+    },
+    {
+      "concept": "128057002",
+      "name": "Deep venous thrombosis of lower extremity (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "I82.409",
+      "icdName": "Acute embolism and thrombosis of unspecified deep veins of unspecified lower extremity"
+    },
+    {
+      "concept": "140352007",
+      "name": "O/E-herpes labialis-cold sore (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "B00.1",
+      "icdName": "Herpesviral vesicular dermatitis"
+    },
+    {
+      "concept": "140692003",
+      "name": "O/E - breast lump hard (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "N63.0",
+      "icdName": "Unspecified lump in unspecified breast"
+    },
+    {
+      "concept": "141323002",
+      "name": "O/E - Right cataract present (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "H26.9",
+      "icdName": "Unspecified cataract"
+    },
+    {
+      "concept": "154770008",
+      "name": "Hyperbilirubinaemia (& [Gilbert's syndrome]) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "E80.4",
+      "icdName": "Gilbert syndrome"
+    },
+    {
+      "concept": "156653009",
+      "name": "(Coccygeal disorder NOS) or (coccydynia) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "M53.3",
+      "icdName": "Sacrococcygeal disorders, not elsewhere classified"
+    },
+    {
+      "concept": "160699002",
+      "name": "(Housing lack) or (homeless) (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "Z59.00",
+      "icdName": "Homelessness unspecified"
+    },
+    {
+      "concept": "162014002",
+      "name": "Dry mouth (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "K11.7",
+      "icdName": "Disturbances of salivary secretion"
+    },
+    {
+      "concept": "162201008",
+      "name": "Insomnia (& C/O) (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "F51.01",
+      "icdName": "Primary insomnia"
+    },
+    {
+      "concept": "162412006",
+      "name": "(Pain) or (C/O: [ache] or [pain]) (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "R52",
+      "icdName": "Pain, unspecified"
+    },
+    {
+      "concept": "186994008",
+      "name": "(Dermatophytosis of the body) or (herpes circinatus) or (tinea corporis) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "B35.4",
+      "icdName": "Tinea corporis"
+    },
+    {
+      "concept": "193168005",
+      "name": "Other idiopathic peripheral neuropathy (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "G60.9",
+      "icdName": "Hereditary and idiopathic neuropathy, unspecified"
+    },
+    {
+      "concept": "193695001",
+      "name": "Vision NOS: [blurred] or [cloudy] or [dull] (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "H53.9",
+      "icdName": "Unspecified visual disturbance"
+    },
+    {
+      "concept": "193912000",
+      "name": "Stye (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "H00.019",
+      "icdName": "Hordeolum externum unspecified eye, unspecified eyelid"
+    },
+    {
+      "concept": "195074009",
+      "name": "Paroxysmal supraventricular tachycardia NOS (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "I47.10",
+      "icdName": "Supraventricular tachycardia, unspecified"
+    },
+    {
+      "concept": "195820004",
+      "name": "(Hay fever) or (allergic rhinitis) due to unspecified allergen (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "J30.9",
+      "icdName": "Allergic rhinitis, unspecified"
+    },
+    {
+      "concept": "196799009",
+      "name": "Hernia of abdominal cavity (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "K46.9",
+      "icdName": "Unspecified abdominal hernia without obstruction or gangrene"
+    },
+    {
+      "concept": "196892006",
+      "name": "Uncomplicated ventral hernia (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "K43.9",
+      "icdName": "Ventral hernia without obstruction or gangrene"
+    },
+    {
+      "concept": "197212009",
+      "name": "Rectal prolapse (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "K62.3",
+      "icdName": "Rectal prolapse"
+    },
+    {
+      "concept": "197470007",
+      "name": "(Melaena) or (blood in stool [& altered]) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "K92.1",
+      "icdName": "Melena"
+    },
+    {
+      "concept": "197471006",
+      "name": "Gastrointestinal bleeding (& [unspecified]) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "K92.2",
+      "icdName": "Gastrointestinal hemorrhage, unspecified"
+    },
+    {
+      "concept": "197795009",
+      "name": "Renal calculus NOS (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "N20.0",
+      "icdName": "Calculus of kidney"
+    },
+    {
+      "concept": "198442007",
+      "name": "Other menopausal and postmenopausal states (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "N95.9",
+      "icdName": "Unspecified menopausal and perimenopausal disorder"
+    },
+    {
+      "concept": "201342000",
+      "name": "(Other skin and subcut tissue disease NOS) or (skin lesion) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "L98.9",
+      "icdName": "Disorder of the skin and subcutaneous tissue, unspecified"
+    },
+    {
+      "concept": "202792000",
+      "name": "Thoracic pain: [spine] or [acute back] (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "M54.6",
+      "icdName": "Pain in thoracic spine"
+    },
+    {
+      "concept": "205500005",
+      "name": "Osteopetrosis (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "Q78.2",
+      "icdName": "Osteopetrosis"
+    },
+    {
+      "concept": "209530008",
+      "name": "Ankle sprain, unspecified (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "S93.409A",
+      "icdName": "Sprain of unspecified ligament of unspecified ankle, initial encounter"
+    },
+    {
+      "concept": "236568008",
+      "name": "Renal transplant disorder (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "T86.10",
+      "icdName": "Unspecified complication of kidney transplant"
+    },
+    {
+      "concept": "23899004",
+      "name": "Atrial paroxysmal tachycardia (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "I47.19",
+      "icdName": "Other supraventricular tachycardia"
+    },
+    {
+      "concept": "262951009",
+      "name": "Traumatic subdural hematoma (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "S06.5X0A",
+      "icdName": "Traumatic subdural hemorrhage without loss of consciousness, initial encounter"
+    },
+    {
+      "concept": "266197009",
+      "name": "(Other coxsackie disease) or (herpangina) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "B08.5",
+      "icdName": "Enteroviral vesicular pharyngitis"
+    },
+    {
+      "concept": "266292008",
+      "name": "(Pulmonary embolism) or (pulmonary infarct) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "I26.99",
+      "icdName": "Other pulmonary embolism without acute cor pulmonale"
+    },
+    {
+      "concept": "266440002",
+      "name": "Inguinal hernia (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "K40.90",
+      "icdName": "Unilateral inguinal hernia, without obstruction or gangrene, not specified as recurrent"
+    },
+    {
+      "concept": "266608009",
+      "name": "Premenopausal menorrhagia (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "N92.0",
+      "icdName": "Excessive and frequent menstruation with regular cycle"
+    },
+    {
+      "concept": "267168001",
+      "name": "Blood in urine - haematuria (& [symptom]) (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "R31.9",
+      "icdName": "Hematuria, unspecified"
+    },
+    {
+      "concept": "267174001",
+      "name": "Tingling: [sensation] or [has sensation] (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "R20.2",
+      "icdName": "Paresthesia of skin"
+    },
+    {
+      "concept": "267179006",
+      "name": "(Post nasal drip) or (nasal symptom NOS) (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "R09.82",
+      "icdName": "Postnasal drip"
+    },
+    {
+      "concept": "267768008",
+      "name": "(Ear disorders NOS) or (destruction ear drum) or (tympanosclerosis) (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "H74.09",
+      "icdName": "Tympanosclerosis, unspecified ear"
+    },
+    {
+      "concept": "269044004",
+      "name": "Lymph nodes: [O/E - lymphadenopathy] or [enlarged] or [O/E] (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "R59.1",
+      "icdName": "Generalized enlarged lymph nodes"
+    },
+    {
+      "concept": "271869003",
+      "name": "Raised blood pressure reading (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "R03.0",
+      "icdName": "Elevated blood-pressure reading, without diagnosis of hypertension"
+    },
+    {
+      "concept": "285301008",
+      "name": "Varicose veins of the leg with rupture (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "I83.899",
+      "icdName": "Varicose veins of unspecified lower extremity with other complications"
+    },
+    {
+      "concept": "300998003",
+      "name": "Acquired lymphedema of leg (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "I89.0",
+      "icdName": "Lymphedema, not elsewhere classified"
+    },
+    {
+      "concept": "313267000",
+      "name": "Stroke NOS (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "I63.9",
+      "icdName": "Cerebral infarction, unspecified"
+    },
+    {
+      "concept": "31462008",
+      "name": "Urinary frequency (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "R35.0",
+      "icdName": "Frequency of micturition"
+    },
+    {
+      "concept": "373644009",
+      "name": "Back pain (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "M54.9",
+      "icdName": "Dorsalgia, unspecified"
+    },
+    {
+      "concept": "390627004",
+      "name": "HPV - Human papillomavirus test positive (finding)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "R89.8",
+      "icdName": "Other abnormal findings in specimens from other organs, systems and tissues"
+    },
+    {
+      "concept": "632009",
+      "name": "Benign essential tremor (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "G25.0",
+      "icdName": "Essential tremor"
+    },
+    {
+      "concept": "70370001",
+      "name": "Pericardial effusion (disorder)",
+      "charts": 1,
+      "group": "unanimous",
+      "icd": "I31.39",
+      "icdName": "Other pericardial effusion (noninflammatory)"
+    },
+    {
+      "concept": "105432008",
+      "name": "Child given for adoption (finding)",
+      "charts": 1,
+      "group": "none",
+      "icd": "Z02.82",
+      "icdName": "Encounter for adoption services"
+    },
+    {
+      "concept": "105572002",
+      "name": "Spiritual strength (finding)",
+      "charts": 1,
+      "group": "none",
+      "icd": "Z71.81",
+      "icdName": "Spiritual or religious counseling"
+    },
+    {
+      "concept": "106100005",
+      "name": "Lower urinary tract finding (finding)",
+      "charts": 1,
+      "group": "none",
+      "icd": "N39.0",
+      "icdName": "Urinary tract infection, site not specified"
+    },
+    {
+      "concept": "116308004",
+      "name": "Finding of shoulder region (finding)",
+      "charts": 1,
+      "group": "none",
+      "icd": "M25.519",
+      "icdName": "Pain in unspecified shoulder"
+    },
+    {
+      "concept": "118937003",
+      "name": "Disorder of lower extremity (disorder)",
+      "charts": 1,
+      "group": "none",
+      "icd": "M79.606",
+      "icdName": "Pain in leg, unspecified"
+    },
+    {
+      "concept": "128619003",
+      "name": "Disorder of toe (disorder)",
+      "charts": 1,
+      "group": "none",
+      "icd": "M79.676",
+      "icdName": "Pain in unspecified toe(s)"
+    },
+    {
+      "concept": "235570008",
+      "name": "Dilatation of bile duct (procedure)",
+      "charts": 1,
+      "group": "none",
+      "icd": "K83.1",
+      "icdName": "Obstruction of bile duct"
+    },
+    {
+      "concept": "246606004",
+      "name": "Ulnar nerve finding (finding)",
+      "charts": 1,
+      "group": "none",
+      "icd": "G56.20",
+      "icdName": "Lesion of ulnar nerve, unspecified upper limb"
+    },
+    {
+      "concept": "Dr.Hengy",
+      "name": "severe nosebleeds",
+      "charts": 1,
+      "group": "none",
+      "icd": "R04.0",
+      "icdName": "Epistaxis"
+    },
+    {
+      "concept": "Feeling really weak",
+      "name": "very weak",
+      "charts": 1,
+      "group": "none",
+      "icd": "M62.81",
+      "icdName": "Muscle weakness (generalized)"
+    }
+  ],
+  "cancelled": [
+    {
+      "concept": "271652003",
+      "name": "Varicose vein finding (finding)",
+      "reason": "no appropriate ICD-10; left uncoded by owner 2026-08-21"
+    },
+    {
+      "concept": "225100009",
+      "name": "Replacing dentures (regime/therapy)",
+      "reason": "no appropriate ICD-10; left uncoded by owner 2026-08-21"
+    },
+    {
+      "concept": "263230006",
+      "name": "Hip fracture NOS (disorder)",
+      "reason": "no appropriate ICD-10; left uncoded by owner 2026-08-21"
+    },
+    {
+      "concept": "106076001",
+      "name": "Skin finding (finding)",
+      "reason": "no appropriate ICD-10; left uncoded by owner 2026-08-21"
+    },
+    {
+      "concept": "134235001",
+      "name": "Neisseria gonorrhoeae nucleic acid detection (finding)",
+      "reason": "no appropriate ICD-10; left uncoded by owner 2026-08-21"
+    },
+    {
+      "concept": "164916001",
+      "name": "Electrocardiogram: Q wave normal (finding)",
+      "reason": "no appropriate ICD-10; left uncoded by owner 2026-08-21"
+    }
+  ]
+}
