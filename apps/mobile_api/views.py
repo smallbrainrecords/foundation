@@ -3628,12 +3628,24 @@ def mobile_create_todo_label(request, patient_id, todo_id):
     if not name:
         return JsonResponse({'error': 'name is required'}, status=400)
 
-    label = Label(
-        name=name,
-        css_class=body.get('css_class', ''),
-        author=request.user,
+    # Reuse an existing label rather than minting a new row every call. The old
+    # unconditional create is why production accumulated 15 Label rows for 6
+    # real categories (Imaging x5, Laboratory x3, Referral x2 ...), and it would
+    # have multiplied once labelling was automated. Prefer the canonical global
+    # row (is_all=True), then the lowest id, so every client converges on one.
+    label = (
+        Label.objects.filter(name__iexact=name)
+        .order_by('-is_all', 'id')
+        .first()
     )
-    label.save()
+    if label is None:
+        label = Label.objects.create(
+            name=name,
+            css_class=body.get('css_class', ''),
+            author=request.user,
+        )
+    # An existing label's css_class/is_all are left alone on purpose: one user
+    # attaching a label must not recolour it for everyone.
     todo.labels.add(label)
     return JsonResponse({'success': True, 'id': label.id})
 
@@ -4273,13 +4285,21 @@ def mobile_create_label(request):
     if not name:
         return JsonResponse({'error': 'name is required'}, status=400)
 
-    label = Label(
-        name=name,
-        css_class=body.get('css_class', ''),
-        author=request.user,
-        is_all=bool(body.get('is_all', False)),
+    # Idempotent by name: a catalog is a set, so "create Laboratory" when one
+    # already exists must return that one, not mint a rival row. Same converge
+    # rule as mobile_create_todo_label (global first, then lowest id).
+    label = (
+        Label.objects.filter(name__iexact=name)
+        .order_by('-is_all', 'id')
+        .first()
     )
-    label.save()
+    if label is None:
+        label = Label.objects.create(
+            name=name,
+            css_class=body.get('css_class', ''),
+            author=request.user,
+            is_all=bool(body.get('is_all', False)),
+        )
     return JsonResponse({
         'success': True,
         'id': label.id,
