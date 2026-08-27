@@ -348,6 +348,13 @@ class Encounter(models.Model):
     # syncID here; server does update_or_create(client_uuid=...) so a retried
     # POST after a network blip can't create a duplicate row.
     client_uuid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
+    # Logical end of the recording, in seconds from the start of the audio.
+    # Set when a physician forgot to stop and the tail of the file is not part
+    # of the visit. NULL = no mark = the whole file is the encounter. The audio
+    # file itself is never altered; every client clamps playback, waveform,
+    # duration display, transcript and audio export to this offset. Only the
+    # recording physician may change it (see mobile_update_encounter).
+    audio_end_offset = models.FloatField(null=True, blank=True)
     # deprecated should be loaded dynamically instead of storing in specific table
     encounter_document = models.ManyToManyField('ObservationValue', through='EncounterObservationValue')
 

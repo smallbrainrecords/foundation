@@ -1461,6 +1461,7 @@ def _mobile_patient_full_inner(request, patient_id):
                 'start_time': enc.starttime.isoformat(),
                 'stop_time': enc.stoptime.isoformat() if enc.stoptime else None,
                 'audio_path': str(enc.audio) if enc.audio else '',
+                'audio_end_offset': enc.audio_end_offset,
                 'note': enc.note or '',
                 'transcript': enc.transcript or '',
                 'recorder_status': enc.recorder_status,
@@ -1961,13 +1962,25 @@ def mobile_create_encounter(request, patient_id):
 @transaction.atomic
 @touches_patient_stamp
 def mobile_update_encounter(request, patient_id, encounter_id):
-    """PATCH {note?, transcript?, recorder_status?, stop_time?, problem_ids?,
-    todo_ids?, observation_value_ids?, events?} — partial update.
+    """PATCH {note?, transcript?, recorder_status?, stop_time?, audio_end_offset?,
+    problem_ids?, todo_ids?, observation_value_ids?, events?} — partial update.
 
     Defensive partial semantics: only keys PRESENT in the body are applied.
     Absent relationship keys preserve existing rows (so omitting problem_ids
     does NOT wipe linked problems). Events: each is upserted by client_uuid;
     response carries the sync_id → server_id mapping for new events.
+
+    `audio_end_offset` (seconds from the start of the audio, or null to clear)
+    is the logical end of a recording whose tail is not part of the visit —
+    see Encounter.audio_end_offset. It is the ONE field here restricted to the
+    recording physician: it changes what every other clinician sees and hears
+    of the visit, so a colleague may not silently shorten someone else's
+    recording. The gate fires only on an actual CHANGE, because a non-owner
+    legitimately PATCHes this encounter for other reasons (the ⌃O transcript
+    backfill runs on whichever Mac asked for it) and may echo the field back
+    unchanged; failing those would break transcript sharing. Clients only send
+    the key when their own user is the recording physician, so this is the
+    belt to the client's braces.
     """
     if request.method not in ('PATCH', 'POST'):
         return JsonResponse({'error': 'PATCH required'}, status=405)
@@ -1988,6 +2001,40 @@ def mobile_update_encounter(request, patient_id, encounter_id):
         enc.recorder_status = int(body['recorder_status'])
     if 'stop_time' in body:
         enc.stoptime = parse_datetime(body['stop_time']) if body['stop_time'] else None
+    if 'audio_end_offset' in body:
+        raw = body['audio_end_offset']
+        if raw is None:
+            new_offset = None
+        else:
+            try:
+                new_offset = float(raw)
+            except (TypeError, ValueError):
+                return JsonResponse(
+                    {'error': 'audio_end_offset must be a number or null'}, status=400
+                )
+            if new_offset < 0:
+                return JsonResponse(
+                    {'error': 'audio_end_offset must not be negative'}, status=400
+                )
+        if new_offset != enc.audio_end_offset:
+            if request.user.id != enc.physician_id:
+                return JsonResponse(
+                    {
+                        'error': 'audio_end_offset_forbidden',
+                        'detail': 'Only the physician who recorded this encounter '
+                                  'can change where it ends.',
+                    },
+                    status=403,
+                )
+            logging.getLogger('smallbrain.encounter_audio').info(json.dumps({
+                'event': 'audio_end_offset_changed',
+                'encounter_id': enc.id,
+                'patient_id': enc.patient_id,
+                'editor_id': request.user.id,
+                'from': enc.audio_end_offset,
+                'to': new_offset,
+            }))
+            enc.audio_end_offset = new_offset
     enc.save()
 
     event_mappings = _apply_encounter_relationships_and_events(enc, body)

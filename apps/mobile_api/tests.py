@@ -139,6 +139,132 @@ class MobileUpdateEncounterTests(TestCase):
         self.assertEqual(resp.status_code, 405)
 
 
+class MobileEncounterAudioEndOffsetTests(TestCase):
+    """`audio_end_offset` — the logical end of a recording whose tail is not
+    part of the visit (physician forgot to stop). The audio file is never
+    altered; clients clamp playback/transcript/export to this offset, so the
+    value is what every other clinician sees of the visit. Hence the one
+    author restriction on this endpoint: only the recording physician may
+    change it.
+    """
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='doc_owner', password='top_secret',
+            email='doc_owner@example.com',
+        )
+        self.colleague = User.objects.create_user(
+            username='doc_other', password='top_secret',
+            email='doc_other@example.com',
+        )
+        self.patient = User.objects.create_user(
+            username='pt_offset', password='unused',
+            email='pt_offset@example.com',
+        )
+        self.encounter = Encounter.objects.create(
+            physician=self.physician,
+            patient=self.patient,
+            note='initial',
+            transcript='original transcript',
+            recorder_status=2,
+        )
+        self.url = f'/api/patient/{self.patient.id}/encounter/{self.encounter.id}'
+        self.client = Client()
+
+    def _patch(self, body, as_user='doc_owner'):
+        self.client.logout()
+        self.client.login(username=as_user, password='top_secret')
+        return self.client.patch(
+            self.url, data=json.dumps(body), content_type='application/json',
+        )
+
+    # ---- owner may set and clear ----
+
+    def test_recording_physician_can_set_the_offset(self):
+        resp = self._patch({'audio_end_offset': 1122.5})
+        self.assertEqual(resp.status_code, 200)
+        self.encounter.refresh_from_db()
+        self.assertEqual(self.encounter.audio_end_offset, 1122.5)
+
+    def test_recording_physician_can_clear_the_offset_with_explicit_null(self):
+        self.encounter.audio_end_offset = 900.0
+        self.encounter.save()
+        resp = self._patch({'audio_end_offset': None})
+        self.assertEqual(resp.status_code, 200)
+        self.encounter.refresh_from_db()
+        self.assertIsNone(self.encounter.audio_end_offset)
+
+    def test_omitting_the_key_preserves_an_existing_offset(self):
+        # Partial semantics: a push that carries only a transcript must not
+        # clear a mark someone set earlier.
+        self.encounter.audio_end_offset = 640.0
+        self.encounter.save()
+        resp = self._patch({'transcript': 'new text'})
+        self.assertEqual(resp.status_code, 200)
+        self.encounter.refresh_from_db()
+        self.assertEqual(self.encounter.audio_end_offset, 640.0)
+
+    # ---- non-owner ----
+
+    def test_colleague_cannot_change_the_offset(self):
+        resp = self._patch({'audio_end_offset': 300.0}, as_user='doc_other')
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(
+            json.loads(resp.content)['error'], 'audio_end_offset_forbidden',
+        )
+        self.encounter.refresh_from_db()
+        self.assertIsNone(self.encounter.audio_end_offset)
+
+    def test_rejected_offset_change_applies_nothing_else_in_the_body(self):
+        # The 403 returns before enc.save(), so a colleague can't get a
+        # partial write through by bundling fields with a forbidden offset.
+        resp = self._patch(
+            {'audio_end_offset': 300.0, 'transcript': 'should not land'},
+            as_user='doc_other',
+        )
+        self.assertEqual(resp.status_code, 403)
+        self.encounter.refresh_from_db()
+        self.assertEqual(self.encounter.transcript, 'original transcript')
+
+    def test_colleague_echoing_the_same_offset_is_allowed(self):
+        # Load-bearing: the gate fires on CHANGE, not on presence. A non-owner
+        # legitimately PATCHes this encounter (the transcript backfill runs on
+        # whichever Mac asked for it) and may echo the field back unchanged.
+        # Failing that would break transcript sharing for every marked visit.
+        self.encounter.audio_end_offset = 640.0
+        self.encounter.save()
+        resp = self._patch(
+            {'audio_end_offset': 640.0, 'transcript': 'backfilled by colleague'},
+            as_user='doc_other',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.encounter.refresh_from_db()
+        self.assertEqual(self.encounter.audio_end_offset, 640.0)
+        self.assertEqual(self.encounter.transcript, 'backfilled by colleague')
+
+    # ---- validation ----
+
+    def test_negative_offset_is_rejected(self):
+        resp = self._patch({'audio_end_offset': -1})
+        self.assertEqual(resp.status_code, 400)
+        self.encounter.refresh_from_db()
+        self.assertIsNone(self.encounter.audio_end_offset)
+
+    def test_non_numeric_offset_is_rejected(self):
+        resp = self._patch({'audio_end_offset': 'halfway'})
+        self.assertEqual(resp.status_code, 400)
+        self.encounter.refresh_from_db()
+        self.assertIsNone(self.encounter.audio_end_offset)
+
+    def test_zero_is_a_legitimate_offset(self):
+        # "the whole recording is tail" — degenerate but valid, and distinct
+        # from null. Must not be swallowed by a falsy check.
+        resp = self._patch({'audio_end_offset': 0})
+        self.assertEqual(resp.status_code, 200)
+        self.encounter.refresh_from_db()
+        self.assertEqual(self.encounter.audio_end_offset, 0.0)
+
+
 class MobileCreateEncounterTests(TestCase):
     """Tests for the text-only encounter create endpoint. Used when macOS has
     recording disabled (events-only mode) so the encounter still reaches the
