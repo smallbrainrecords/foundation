@@ -59,6 +59,7 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/note/(?P<note_id>\d+)$', views.mobile_update_problem_note),
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/label$', views.mobile_create_problem_label),
     url(r'^patient/(?P<patient_id>\d+)/problem/relationship$', views.mobile_create_problem_relationship),
+    url(r'^patient/(?P<patient_id>\d+)/problem/relationship/(?P<relationship_id>\d+)$', views.mobile_delete_problem_relationship),
     # Todo CRUD
     url(r'^patient/(?P<patient_id>\d+)/todo$', views.mobile_create_todo),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)$', views.mobile_update_todo),
