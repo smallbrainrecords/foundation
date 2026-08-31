@@ -19,7 +19,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from emr.models import (
     Encounter, EncounterEvent,
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
-    Problem, ProblemNote, ProblemActivity,
+    Problem, ProblemNote, ProblemActivity, ProblemRelationship,
     ToDo, TaggedToDoOrder, TodoActivity,
     Observation, ObservationComponent, ObservationValue,
     ObservationPinToProblem,
@@ -676,6 +676,92 @@ class MobileEncounterStaleAndCrossPatientLinkTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             EncounterObservationValue.objects.filter(encounter=self.enc).count(), 0)
+
+
+class MobileDeleteProblemRelationshipTests(TestCase):
+    """DELETE for ProblemRelationship (2026-08-30).
+
+    Before this endpoint existed a client could only CREATE relationships, so
+    a removal in the app was local-only and `upsert_relationship` re-created
+    the row on the next pull. These tests pin the two properties the macOS
+    manage sheet relies on: the delete really removes the row, and it cannot
+    reach across charts.
+    """
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='rel_doc', password='top_secret', email='rel_doc@example.com')
+        self.patient = User.objects.create_user(
+            username='rel_pt', password='unused', email='rel_pt@example.com')
+        self.other_patient = User.objects.create_user(
+            username='rel_pt2', password='unused', email='rel_pt2@example.com')
+
+        self.source = Problem.objects.create(
+            patient=self.patient, problem_name='Source problem',
+            is_active=True, is_controlled=False)
+        self.target = Problem.objects.create(
+            patient=self.patient, problem_name='Target problem',
+            is_active=True, is_controlled=False)
+        self.rel = ProblemRelationship.objects.create(
+            source=self.source, target=self.target)
+
+        self.client = Client()
+        self.client.login(username='rel_doc', password='top_secret')
+
+    def _url(self, patient_id=None, relationship_id=None):
+        pid = patient_id if patient_id is not None else self.patient.id
+        rid = relationship_id if relationship_id is not None else self.rel.id
+        return f'/api/patient/{pid}/problem/relationship/{rid}'
+
+    def test_delete_removes_the_row(self):
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+        self.assertFalse(ProblemRelationship.objects.filter(id=self.rel.id).exists())
+
+    def test_delete_on_missing_row_is_success(self):
+        """Idempotent retry: a client whose first response was lost must be
+        able to send the DELETE again without seeing a failure."""
+        # Capture the id first — Django clears `pk` on the instance after
+        # delete(), which would otherwise build a URL that fails to resolve
+        # and 404 for the wrong reason.
+        rel_id = self.rel.id
+        self.rel.delete()
+        resp = self.client.delete(self._url(relationship_id=rel_id))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+
+    def test_delete_cannot_reach_another_chart(self):
+        """The row id is guessable, so patient scoping is the access control."""
+        resp = self.client.delete(self._url(patient_id=self.other_patient.id))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            ProblemRelationship.objects.filter(id=self.rel.id).exists(),
+            'relationship on another chart must survive',
+        )
+
+    def test_delete_emits_no_activity_row(self):
+        """Relationship audit rows are written locally by the client; a server
+        row here would double them up."""
+        before = ProblemActivity.objects.filter(problem=self.source).count()
+        self.client.delete(self._url())
+        after = ProblemActivity.objects.filter(problem=self.source).count()
+        self.assertEqual(after, before)
+
+    def test_non_delete_method_rejected(self):
+        resp = self.client.get(self._url())
+        self.assertEqual(resp.status_code, 405)
+
+    def test_delete_bumps_the_patient_mutation_stamp(self):
+        """Without the stamp the other machine's /changed poll never fires and
+        the removal sits invisible until a manual refresh."""
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists(),
+            'DELETE must touch the patient mutation stamp',
+        )
 
 
 class MobileUpdateProblemNoteTests(TestCase):

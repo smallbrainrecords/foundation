@@ -3511,6 +3511,45 @@ def mobile_create_problem_relationship(request, patient_id):
     return JsonResponse({'success': True, 'id': rel.id})
 
 
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_delete_problem_relationship(request, patient_id, relationship_id):
+    """DELETE -> remove one ProblemRelationship.
+
+    Added 2026-08-30. Until now relationships could only be CREATED server-
+    side, so a client-side removal was purely local and `upsert_relationship`
+    re-materialised the row on the very next pull — the removal silently
+    reverted within one poll cycle. The macOS app's new manage sheet makes
+    removal a first-class action, so it needs a real path.
+
+    Both endpoints of the relationship are verified to belong to `patient_id`,
+    so a caller cannot delete another chart's row by guessing an id.
+
+    Deliberately emits NO ProblemActivity row: relationship add/remove is one
+    of the few audit categories the client still writes locally (see the
+    activity-audit section of the app's CLAUDE.md). Emitting here too would
+    produce two rows for one action.
+
+    A DELETE on an already-gone row is success, so a client whose first
+    response was lost can retry safely.
+    """
+    if request.method != 'DELETE':
+        return JsonResponse({'error': 'DELETE required'}, status=405)
+
+    try:
+        rel = ProblemRelationship.objects.get(
+            id=relationship_id,
+            source__patient_id=patient_id,
+            target__patient_id=patient_id,
+        )
+    except ProblemRelationship.DoesNotExist:
+        return JsonResponse({'success': True})
+
+    rel.delete()
+    return JsonResponse({'success': True})
+
+
 # ---------- Todo endpoints ----------
 
 @csrf_exempt
