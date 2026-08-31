@@ -4226,3 +4226,396 @@ class MobileCreateTodoProblemBeltTests(TestCase):
         self._post({'todo': 'c. diff'})
         self.assertEqual(TodoActivity.objects.count(), 0)
         self.assertEqual(ProblemActivity.objects.count(), 0)
+
+
+class ProblemAuthenticationRuleTests(TestCase):
+    """`Problem.authenticated` — the physician-attestation rule.
+
+    Spec agreed with the owner 2026-08-31; the rule itself lives in
+    `emr.problem_authentication`. Read that module's docstring before
+    changing any expectation here — several of these assertions encode
+    decisions that look like bugs in isolation:
+
+    * mid-level and admin are NOT attesting roles (narrower than the legacy
+      web rule, which used `role in ('physician','admin')`);
+    * a non-physician write that is not one of the three de-authenticating
+      actions leaves the flag exactly as it was, rather than clearing it;
+    * a physician cannot un-authenticate, by design.
+    """
+
+    def setUp(self):
+        self.patient = User.objects.create_user(username='authpt')
+        UserProfile.objects.create(user=self.patient, role='patient')
+
+        self.physician = User.objects.create_user(username='authdoc')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        PatientController.objects.create(patient=self.patient, physician=self.physician)
+
+        self.nurse = User.objects.create_user(username='authnurse')
+        UserProfile.objects.create(user=self.nurse, role='nurse')
+
+        self.midlevel = User.objects.create_user(username='authnp')
+        UserProfile.objects.create(user=self.midlevel, role='mid-level')
+
+        self.admin = User.objects.create_user(username='authadmin')
+        UserProfile.objects.create(user=self.admin, role='admin')
+
+        self.problem = Problem.objects.create(
+            patient=self.patient, problem_name='Hypertension')
+        self.pid = self.patient.id
+
+    # -- helpers -------------------------------------------------------
+
+    def _flag(self):
+        self.problem.refresh_from_db()
+        return self.problem.authenticated
+
+    def _set_flag(self, value):
+        Problem.objects.filter(pk=self.problem.pk).update(authenticated=value)
+
+    def _note_url(self):
+        return f'/api/patient/{self.pid}/problem/{self.problem.id}/note'
+
+    def _post_note(self, text='a note'):
+        return self.client.post(
+            self._note_url(),
+            data=json.dumps({'note': text, 'note_type': 'wiki'}),
+            content_type='application/json')
+
+    def _post_todo(self, title='an order'):
+        return self.client.post(
+            f'/api/patient/{self.pid}/todo',
+            data=json.dumps({'todo': title, 'problem_id': self.problem.id}),
+            content_type='application/json')
+
+    # -- creation ------------------------------------------------------
+
+    def test_physician_created_problem_is_authenticated(self):
+        """The bug this replaces: the endpoint ignored the field entirely, so
+        a physician-created problem was ALWAYS false server-side and the app
+        showed "Authenticated" only until the next pull took it away."""
+        self.client.force_login(self.physician)
+        res = self.client.post(
+            f'/api/patient/{self.pid}/problem',
+            data=json.dumps({'problem_name': 'Asthma'}),
+            content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        created = Problem.objects.get(id=json.loads(res.content)['id'])
+        self.assertTrue(created.authenticated)
+
+    def test_nurse_created_problem_is_not_authenticated(self):
+        self.client.force_login(self.nurse)
+        res = self.client.post(
+            f'/api/patient/{self.pid}/problem',
+            data=json.dumps({'problem_name': 'Asthma'}),
+            content_type='application/json')
+        created = Problem.objects.get(id=json.loads(res.content)['id'])
+        self.assertFalse(created.authenticated)
+
+    # -- roles ---------------------------------------------------------
+
+    def test_only_physician_attests(self):
+        """Owner decision: `physician` alone. Admin and mid-level do NOT
+        attest, which is a deliberate narrowing from the legacy web rule."""
+        for user in (self.nurse, self.midlevel, self.admin):
+            self._set_flag(False)
+            self.client.force_login(user)
+            self.client.post(
+                f'/api/patient/{self.pid}/problem/{self.problem.id}',
+                data=json.dumps({'is_controlled': True}),
+                content_type='application/json')
+            self.assertFalse(
+                self._flag(), f'{user.username} must not authenticate')
+
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        self.client.post(
+            f'/api/patient/{self.pid}/problem/{self.problem.id}',
+            data=json.dumps({'is_controlled': True}),
+            content_type='application/json')
+        self.assertTrue(self._flag())
+
+    # -- the three de-authenticating actions ---------------------------
+
+    def test_nurse_note_creation_clears(self):
+        self._set_flag(True)
+        self.client.force_login(self.nurse)
+        self._post_note()
+        self.assertFalse(self._flag())
+
+    def test_nurse_todo_creation_clears(self):
+        self._set_flag(True)
+        self.client.force_login(self.nurse)
+        self._post_todo()
+        self.assertFalse(self._flag())
+
+    def test_nurse_todo_accomplished_flip_clears(self):
+        todo = ToDo.objects.create(
+            todo='draw labs', patient=self.patient,
+            problem=self.problem, user=self.physician)
+        self._set_flag(True)
+        self.client.force_login(self.nurse)
+        self.client.post(
+            f'/api/patient/{self.pid}/todo/{todo.id}',
+            data=json.dumps({'accomplished': True}),
+            content_type='application/json')
+        self.assertFalse(self._flag())
+
+    def test_nurse_todo_edit_that_is_not_a_status_flip_leaves_flag_alone(self):
+        """The asymmetry is the point: retitling an order does not change
+        what a physician would need to re-read."""
+        todo = ToDo.objects.create(
+            todo='draw labs', patient=self.patient,
+            problem=self.problem, user=self.physician)
+        self._set_flag(True)
+        self.client.force_login(self.nurse)
+        self.client.post(
+            f'/api/patient/{self.pid}/todo/{todo.id}',
+            data=json.dumps({'todo': 'draw labs (fasting)'}),
+            content_type='application/json')
+        self.assertTrue(self._flag())
+
+    def test_nurse_repeating_an_accomplished_value_is_not_a_flip(self):
+        todo = ToDo.objects.create(
+            todo='draw labs', patient=self.patient, problem=self.problem,
+            user=self.physician, accomplished=True)
+        self._set_flag(True)
+        self.client.force_login(self.nurse)
+        self.client.post(
+            f'/api/patient/{self.pid}/todo/{todo.id}',
+            data=json.dumps({'accomplished': True}),
+            content_type='application/json')
+        self.assertTrue(self._flag())
+
+    def test_nurse_note_edit_and_delete_leave_flag_alone(self):
+        """Only CREATING a note clears. Editing or deleting one does not."""
+        note = ProblemNote.objects.create(
+            problem=self.problem, note='original',
+            note_type='wiki', author=self.physician)
+        url = f'/api/patient/{self.pid}/problem/{self.problem.id}/note/{note.id}'
+        self._set_flag(True)
+        self.client.force_login(self.nurse)
+        self.client.patch(
+            url, data=json.dumps({'note': 'amended'}),
+            content_type='application/json')
+        self.assertTrue(self._flag())
+        self.client.delete(url)
+        self.assertTrue(self._flag())
+
+    # -- physician writes set the flag ---------------------------------
+
+    def test_physician_note_creation_authenticates(self):
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        self._post_note()
+        self.assertTrue(self._flag())
+
+    def test_physician_todo_creation_authenticates(self):
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        self._post_todo()
+        self.assertTrue(self._flag())
+
+    def test_physician_todo_accomplished_flip_authenticates(self):
+        """Same action, opposite outcome by role — a physician checking off
+        an order has just read it."""
+        todo = ToDo.objects.create(
+            todo='draw labs', patient=self.patient,
+            problem=self.problem, user=self.physician)
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        self.client.post(
+            f'/api/patient/{self.pid}/todo/{todo.id}',
+            data=json.dumps({'accomplished': True}),
+            content_type='application/json')
+        self.assertTrue(self._flag())
+
+    def test_physician_label_image_pin_and_document_link_authenticate(self):
+        doc = Document.objects.create(
+            patient=self.patient, document_name='fax.pdf', author=self.physician)
+        observation = Observation.objects.create(
+            subject=self.patient, name='Weight', author=self.physician)
+
+        cases = [
+            ('label', lambda: self.client.post(
+                f'/api/patient/{self.pid}/problem/{self.problem.id}/label',
+                data=json.dumps({'name': 'urgent'}),
+                content_type='application/json')),
+            ('document link', lambda: self.client.post(
+                f'/api/patient/{self.pid}/document/{doc.id}'
+                f'/link/problem/{self.problem.id}')),
+            ('observation pin', lambda: self.client.post(
+                f'/api/patient/{self.pid}/observation/{observation.id}'
+                f'/pin/{self.problem.id}')),
+        ]
+        for name, call in cases:
+            self._set_flag(False)
+            self.client.force_login(self.physician)
+            res = call()
+            self.assertEqual(res.status_code, 200, name)
+            self.assertTrue(self._flag(), f'{name} should authenticate')
+
+    def test_nurse_label_and_document_link_leave_flag_alone(self):
+        """Not among the three clearing actions — so the flag is untouched
+        in BOTH directions for a non-physician."""
+        doc = Document.objects.create(
+            patient=self.patient, document_name='fax.pdf', author=self.physician)
+        for value in (True, False):
+            self._set_flag(value)
+            self.client.force_login(self.nurse)
+            self.client.post(
+                f'/api/patient/{self.pid}/problem/{self.problem.id}/label',
+                data=json.dumps({'name': 'routine'}),
+                content_type='application/json')
+            self.assertEqual(self._flag(), value)
+            self.client.post(
+                f'/api/patient/{self.pid}/document/{doc.id}'
+                f'/link/problem/{self.problem.id}')
+            self.assertEqual(self._flag(), value)
+
+    def test_relationship_write_flags_both_problems(self):
+        other = Problem.objects.create(
+            patient=self.patient, problem_name='Diabetes')
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        res = self.client.post(
+            f'/api/patient/{self.pid}/problem/relationship',
+            data=json.dumps({'source_id': self.problem.id, 'target_id': other.id}),
+            content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        other.refresh_from_db()
+        self.assertTrue(self._flag())
+        self.assertTrue(other.authenticated)
+
+        # ... and so does removing it.
+        rel_id = json.loads(res.content)['id']
+        self._set_flag(False)
+        Problem.objects.filter(pk=other.pk).update(authenticated=False)
+        self.client.delete(
+            f'/api/patient/{self.pid}/problem/relationship/{rel_id}')
+        other.refresh_from_db()
+        self.assertTrue(self._flag())
+        self.assertTrue(other.authenticated)
+
+    def test_moving_a_todo_flags_both_problems(self):
+        other = Problem.objects.create(
+            patient=self.patient, problem_name='Diabetes')
+        todo = ToDo.objects.create(
+            todo='draw labs', patient=self.patient,
+            problem=self.problem, user=self.physician)
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        self.client.post(
+            f'/api/patient/{self.pid}/todo/{todo.id}',
+            data=json.dumps({'problem_id': other.id}),
+            content_type='application/json')
+        other.refresh_from_db()
+        self.assertTrue(self._flag(), 'the problem that lost the order')
+        self.assertTrue(other.authenticated, 'the problem that gained it')
+
+    # -- second level is out of scope ----------------------------------
+
+    def test_todo_children_do_not_touch_the_parent_problem(self):
+        """Scope is ONE level. A todo's own comments, labels, members and
+        attached documents are second-level writes."""
+        todo = ToDo.objects.create(
+            todo='draw labs', patient=self.patient,
+            problem=self.problem, user=self.physician)
+        doc = Document.objects.create(
+            patient=self.patient, document_name='fax.pdf', author=self.physician)
+        calls = [
+            ('comment', lambda: self.client.post(
+                f'/api/patient/{self.pid}/todo/{todo.id}/comment',
+                data=json.dumps({'comment': 'drawn'}),
+                content_type='application/json')),
+            ('todo label', lambda: self.client.post(
+                f'/api/patient/{self.pid}/todo/{todo.id}/label',
+                data=json.dumps({'name': 'stat'}),
+                content_type='application/json')),
+            ('document->todo link', lambda: self.client.post(
+                f'/api/patient/{self.pid}/document/{doc.id}'
+                f'/link/todo/{todo.id}')),
+        ]
+        for name, call in calls:
+            self._set_flag(False)
+            self.client.force_login(self.physician)
+            call()
+            self.assertFalse(
+                self._flag(), f'{name} is second-level and must not attest')
+
+    # -- the manual chip endpoint --------------------------------------
+
+    def test_physician_can_authenticate_manually(self):
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        res = self.client.post(
+            f'/api/patient/{self.pid}/problem/{self.problem.id}/authenticate')
+        self.assertEqual(res.status_code, 200)
+        payload = json.loads(res.content)
+        self.assertTrue(payload['authenticated'])
+        self.assertTrue(payload['updated'])
+        self.assertTrue(self._flag())
+
+    def test_manual_authenticate_is_idempotent_and_writes_one_row(self):
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        url = f'/api/patient/{self.pid}/problem/{self.problem.id}/authenticate'
+        self.client.post(url)
+        res = self.client.post(url)
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(json.loads(res.content)['updated'])
+        rows = ProblemActivity.objects.filter(
+            problem=self.problem, activity__startswith='Changed authentication')
+        self.assertEqual(rows.count(), 1)
+
+    def test_non_physician_cannot_authenticate_manually(self):
+        for user in (self.nurse, self.midlevel, self.admin):
+            self._set_flag(False)
+            self.client.force_login(user)
+            res = self.client.post(
+                f'/api/patient/{self.pid}/problem/{self.problem.id}/authenticate')
+            self.assertEqual(res.status_code, 403, user.username)
+            self.assertEqual(
+                json.loads(res.content)['error'], 'authenticate_forbidden')
+            self.assertFalse(self._flag())
+
+    # -- audit-row policy ----------------------------------------------
+
+    def test_derived_flips_write_no_activity_row(self):
+        """Only the manual press is audited. A derived flip is already
+        implied by the note/todo row beside it, naming the same actor at the
+        same instant."""
+        self._set_flag(False)
+        self.client.force_login(self.physician)
+        self._post_note()
+        self.assertTrue(self._flag())
+        self.assertEqual(
+            ProblemActivity.objects.filter(
+                activity__startswith='Changed authentication').count(), 0)
+
+    # -- the PATCH body no longer carries the flag ----------------------
+
+    def test_update_problem_ignores_authenticated_in_the_body(self):
+        """A stale client sends this key on EVERY problem update. Honouring
+        it let a client that had not pulled since a de-authentication
+        silently re-assert the flag — the concept_id stale-echo shape."""
+        self._set_flag(False)
+        self.client.force_login(self.nurse)
+        res = self.client.post(
+            f'/api/patient/{self.pid}/problem/{self.problem.id}',
+            data=json.dumps({'authenticated': True, 'is_controlled': True}),
+            content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(self._flag())
+        self.problem.refresh_from_db()
+        self.assertTrue(self.problem.is_controlled, 'the real edit still applied')
+
+    def test_physician_cannot_un_authenticate_through_the_body(self):
+        """One-way by design: there is no un-authenticate anywhere."""
+        self._set_flag(True)
+        self.client.force_login(self.physician)
+        self.client.post(
+            f'/api/patient/{self.pid}/problem/{self.problem.id}',
+            data=json.dumps({'authenticated': False}),
+            content_type='application/json')
+        self.assertTrue(self._flag())
