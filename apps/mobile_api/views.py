@@ -32,6 +32,10 @@ from emr.models import (
     PatientMutationStamp,
 )
 from emr.mutation_stamp import touch_patient_stamp
+from emr.problem_authentication import (
+    apply_problem_authentication,
+    is_attesting_actor,
+)
 from problems_app.operations import add_problem_activity
 from todo_app.operations import add_todo_activity
 
@@ -2865,6 +2869,7 @@ def mobile_document_problem_link(request, patient_id, document_id, problem_id):
                 problem, request.user,
                 f"Unlinked document: {document_name}"
             )
+        apply_problem_authentication(request, problem)
         return JsonResponse({'success': True})
 
     # POST -> get_or_create
@@ -2877,6 +2882,10 @@ def mobile_document_problem_link(request, patient_id, document_id, problem_id):
             problem, request.user,
             f"Linked document: {document_name}"
         )
+    # Only the document<->PROBLEM link counts. Its sibling endpoint links a
+    # document to a TODO, which is a second-level write and deliberately
+    # leaves the parent problem's flag alone.
+    apply_problem_authentication(request, problem)
     return JsonResponse({'success': True, 'id': link.id, 'created': created})
 
 
@@ -3013,6 +3022,7 @@ def mobile_upload_problem_image(request, patient_id, problem_id):
             f"Added image: {file_name}"
         )
 
+    apply_problem_authentication(request, problem)
     return JsonResponse({'success': True, 'id': img.id, 'created': created})
 
 
@@ -3057,6 +3067,7 @@ def mobile_delete_problem_image(request, patient_id, image_id):
             f"Removed image: {file_name}"
         )
 
+    apply_problem_authentication(request, problem)
     return JsonResponse({'success': True})
 
 
@@ -3217,6 +3228,12 @@ def mobile_create_problem(request, patient_id):
         icd10_code=icd10_code,
         is_active=body.get('is_active', True),
         is_controlled=body.get('is_controlled', False),
+        # Derived, never read from the body: a physician creating a problem
+        # has by definition vouched for it. This endpoint used to ignore the
+        # field entirely, so a physician-created problem was always false
+        # server-side however the client set it locally — the app showed
+        # "Authenticated" until the next pull took it away.
+        authenticated=is_attesting_actor(request.user),
     )
     problem.save()
     add_problem_activity(problem, request.user, f"Added problem: {problem_name}")
@@ -3227,7 +3244,10 @@ def mobile_create_problem(request, patient_id):
 @login_required
 @touches_patient_stamp
 def mobile_update_problem(request, patient_id, problem_id):
-    """PATCH {problem_name?, concept_id?, icd10_code?, is_active?, is_controlled?, authenticated?, old_problem_name?}."""
+    """PATCH {problem_name?, concept_id?, icd10_code?, is_active?, is_controlled?, old_problem_name?}.
+
+    `authenticated` is NOT accepted here — see the comment at the field loop.
+    """
     if request.method not in ('PATCH', 'POST'):
         return JsonResponse({'error': 'PATCH required'}, status=405)
     try:
@@ -3243,7 +3263,6 @@ def mobile_update_problem(request, patient_id, problem_id):
     old_problem_name = problem.problem_name
     old_is_active = problem.is_active
     old_is_controlled = problem.is_controlled
-    old_authenticated = problem.authenticated
 
     from emr.models import SnomedIcd10Map
     from emr.retired_concepts import SnomedRetiredConcept
@@ -3298,7 +3317,15 @@ def mobile_update_problem(request, patient_id, problem_id):
             if best:
                 problem.icd10_code = best
 
-    for field in ('is_active', 'is_controlled', 'authenticated'):
+    # `authenticated` is deliberately NOT in this list and must never be
+    # added back. The flag is derived server-side from the actor's role
+    # (emr.problem_authentication); the manual physician chip has its own
+    # endpoint, `mobile_authenticate_problem`. The client sent this key on
+    # EVERY problem update, so honouring it here meant a client that had not
+    # pulled since a de-authentication would silently re-assert the flag —
+    # the same stale-echo shape that reverted a concept_id heal on
+    # 2026-08-21. Any value supplied here is ignored.
+    for field in ('is_active', 'is_controlled'):
         if field in body:
             setattr(problem, field, body[field])
     problem.save()
@@ -3320,11 +3347,10 @@ def mobile_update_problem(request, patient_id, problem_id):
             problem, request.user,
             f"Changed control status to {_yesno_status(problem.is_controlled, 'Controlled', 'Not Controlled')}"
         )
-    if 'authenticated' in body and problem.authenticated != old_authenticated:
-        add_problem_activity(
-            problem, request.user,
-            f"Changed authentication to {_yesno_status(problem.authenticated, 'Authenticated', 'Not Authenticated')}"
-        )
+    # A problem edit is a write to the problem itself, so it re-derives the
+    # flag. No activity row for the derived flip — only the manual chip
+    # writes one.
+    apply_problem_authentication(request, problem)
     return JsonResponse({'success': True})
 
 
@@ -3382,6 +3408,13 @@ def mobile_create_problem_note(request, patient_id, problem_id):
         if physician:
             TaggedToDoOrder.objects.create(todo=todo, user=physician)
 
+    # One of the three de-authenticating actions: a note written by anyone
+    # other than a physician means the problem now reads differently than
+    # when a physician last vouched for it. A physician's own note
+    # authenticates instead. (The "Note added" alert todo minted just above
+    # is part of this same write, not a second one.)
+    apply_problem_authentication(request, problem, non_physician_clears=True)
+
     return JsonResponse({'success': True, 'id': note.id})
 
 
@@ -3423,6 +3456,10 @@ def mobile_update_problem_note(request, patient_id, problem_id, note_id):
             problem, request.user,
             f"Deleted {old_type} note: {excerpt}{suffix}"
         )
+        # A delete is a write. Editing or removing a note is NOT one of the
+        # three de-authenticating actions, so a non-physician doing it leaves
+        # the flag exactly as it was; only creating a note clears it.
+        apply_problem_authentication(request, problem)
         return JsonResponse({'success': True})
 
     # PATCH path
@@ -3448,6 +3485,7 @@ def mobile_update_problem_note(request, patient_id, problem_id, note_id):
         problem, request.user,
         f"Edited {note.note_type} note: {excerpt}{suffix}"
     )
+    apply_problem_authentication(request, problem)
     return JsonResponse({'success': True})
 
 
@@ -3481,6 +3519,7 @@ def mobile_create_problem_label(request, patient_id, problem_id):
     )
     label.save()
     problem.labels.add(label)
+    apply_problem_authentication(request, problem)
     return JsonResponse({'success': True, 'id': label.id})
 
 
@@ -3508,6 +3547,10 @@ def mobile_create_problem_relationship(request, patient_id):
 
     rel = ProblemRelationship(source=source, target=target)
     rel.save()
+    # Both ends: the write changed how each problem reads, and a physician
+    # who related them looked at both. Mirrors how `add_problem_activity`
+    # fans out over a relationship's two endpoints in the legacy web path.
+    apply_problem_authentication(request, source, target)
     return JsonResponse({'success': True, 'id': rel.id})
 
 
@@ -3546,7 +3589,9 @@ def mobile_delete_problem_relationship(request, patient_id, relationship_id):
     except ProblemRelationship.DoesNotExist:
         return JsonResponse({'success': True})
 
+    source, target = rel.source, rel.target
     rel.delete()
+    apply_problem_authentication(request, source, target)
     return JsonResponse({'success': True})
 
 
@@ -3617,6 +3662,8 @@ def mobile_create_todo(request, patient_id):
             todo.problem, request.user,
             f"Added todo: {todo_text}"
         )
+    # One of the three de-authenticating actions.
+    apply_problem_authentication(request, todo.problem, non_physician_clears=True)
     return JsonResponse({'success': True, 'id': todo.id})
 
 
@@ -3641,6 +3688,10 @@ def mobile_update_todo(request, patient_id, todo_id):
     # state, not the post-save value.
     old_todo_title = todo.todo
     old_accomplished = todo.accomplished
+    # A todo can be MOVED between problems by this endpoint, and both ends
+    # changed: one lost an order, the other gained one. Captured before the
+    # write because `todo.problem` is reassigned below.
+    old_problem = todo.problem
 
     if 'todo' in body:
         todo.todo = body['todo']
@@ -3681,6 +3732,18 @@ def mobile_update_todo(request, patient_id, todo_id):
                 todo.problem, request.user,
                 f'Todo "{todo.todo}" marked {status_word}'
             )
+
+    # An accomplished flip is the third de-authenticating action. Every OTHER
+    # todo edit here — retitle, due date, reorder, moving it to another
+    # problem — is a write that a physician's role authenticates but that a
+    # non-physician's leaves untouched.
+    accomplished_changed = (
+        'accomplished' in body and todo.accomplished != old_accomplished
+    )
+    apply_problem_authentication(
+        request, old_problem, todo.problem,
+        non_physician_clears=accomplished_changed,
+    )
     return JsonResponse({'success': True})
 
 
@@ -4260,6 +4323,7 @@ def mobile_observation_pin(request, patient_id, observation_id, problem_id):
                 problem, request.user,
                 f"Unpinned {observation.name or 'observation'}"
             )
+        apply_problem_authentication(request, problem)
         return JsonResponse({'success': True})
 
     # POST path — get_or_create makes this idempotent. If the pin already
@@ -4275,7 +4339,67 @@ def mobile_observation_pin(request, patient_id, observation_id, problem_id):
             problem, request.user,
             f"Pinned {observation.name or 'observation'} to this problem"
         )
+    # The PIN is a direct child of the problem. Writing the observation or
+    # its values is not — that is a chart-level write, not a problem one.
+    apply_problem_authentication(request, problem)
     return JsonResponse({'success': True, 'id': pin.id, 'created': created})
+
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_authenticate_problem(request, patient_id, problem_id):
+    """POST -> a physician vouches for this problem as it currently reads.
+
+    The manual half of the attestation rule in `emr.problem_authentication`.
+    Everything else derives the flag from the actor's role on writes they
+    were making anyway; this endpoint exists for the case with no other
+    write behind it — a physician who READ the problem, found it correct,
+    and wants to say so.
+
+    Rules:
+    - **Physician only.** 403 `authenticate_forbidden` for anyone else. The
+      client hides the control for non-physicians, so a 403 here means a
+      stale build or a hand-rolled request, not a normal flow.
+    - **One-way.** There is no un-authenticate, by owner decision
+      (2026-08-31): a physician has no reason to assert "I have NOT reviewed
+      this." The flag comes off only when the rule clears it — a
+      non-physician creating a note, creating a todo, or flipping a todo's
+      accomplished status.
+    - **Idempotent.** A repeat POST is success with `updated: False` and
+      writes no second activity row.
+    - **This is the ONLY path that writes an activity row for the flag.**
+      Derived flips are silent; see the module docstring for why.
+
+    Deliberately its own route rather than a field on
+    `mobile_update_problem`: that endpoint no longer accepts `authenticated`
+    at all, because the client sent the key on every problem update and a
+    client that had not pulled since a de-authentication would silently
+    re-assert the flag — the stale-echo shape that reverted a concept_id
+    heal on 2026-08-21. A separate route means the intent has to be
+    deliberate and cannot ride along with an unrelated edit.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        problem = Problem.objects.get(id=problem_id, patient_id=patient_id)
+    except Problem.DoesNotExist:
+        return JsonResponse({'error': 'Problem not found'}, status=404)
+
+    if not is_attesting_actor(request.user):
+        return JsonResponse({'error': 'authenticate_forbidden'}, status=403)
+
+    if problem.authenticated:
+        return JsonResponse({'success': True, 'authenticated': True, 'updated': False})
+
+    problem.authenticated = True
+    problem.save(update_fields=['authenticated'])
+    add_problem_activity(
+        problem, request.user,
+        f"Changed authentication to {_yesno_status(True, 'Authenticated', 'Not Authenticated')}"
+    )
+    return JsonResponse({'success': True, 'authenticated': True, 'updated': True})
 
 
 # ---------- My Tagged Todos endpoint ----------
