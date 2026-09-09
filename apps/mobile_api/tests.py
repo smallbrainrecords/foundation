@@ -4663,6 +4663,10 @@ class MobileDocumentLabelTests(_RBACTestBase):
         self.assertTrue(self.doc.labels.filter(id=data['id']).exists())
         latest = ProblemActivity.objects.order_by('-id').first()
         self.assertIn('Added label: Laboratory', latest.activity)
+        # Patient-scope, never attached to a problem — see the endpoint's
+        # docstring. A label is document metadata; the problem timeline is a
+        # clinical record read back years later.
+        self.assertIsNone(latest.problem)
 
     def test_post_is_idempotent_no_double_attach_no_double_audit(self):
         self.assertTrue(self._login(self.attending))
@@ -4715,6 +4719,7 @@ class MobileDocumentLabelTests(_RBACTestBase):
         self.assertFalse(self.doc.labels.filter(id=label.id).exists())
         latest = ProblemActivity.objects.order_by('-id').first()
         self.assertIn('Removed label: Imaging', latest.activity)
+        self.assertIsNone(latest.problem)
 
     def test_delete_of_an_unattached_label_is_a_silent_success(self):
         label = Label.objects.create(name='Imaging', is_all=True)
@@ -4757,13 +4762,27 @@ class MobileDocumentLabelTests(_RBACTestBase):
         self.problem.refresh_from_db()
         self.assertFalse(self.problem.authenticated)
 
-    def test_audit_lands_on_each_linked_problem(self):
+    def test_audit_never_lands_on_a_linked_problem(self):
+        """Owner decision 2026-09-08: "adding a label does not need to
+        generate a note in a problem". The first version of this endpoint
+        used `_emit_document_audit`, which fans out one ProblemActivity per
+        linked problem — correct for linking/renaming/deleting a document,
+        wrong for a label, and badly wrong once the caller is an automated
+        labeller writing thousands of them."""
         second = Problem.objects.create(patient=self.patient, problem_name='P2')
         DocumentProblem.objects.create(document=self.doc, problem=self.problem, author=self.attending)
         DocumentProblem.objects.create(document=self.doc, problem=second, author=self.attending)
         self.assertTrue(self._login(self.attending))
+        before = {p.id: ProblemActivity.objects.filter(problem=p).count()
+                  for p in (self.problem, second)}
         self._post('Laboratory')
         for problem in (self.problem, second):
-            latest = ProblemActivity.objects.filter(problem=problem).order_by('-id').first()
-            self.assertIsNotNone(latest)
-            self.assertIn('Added label: Laboratory', latest.activity)
+            self.assertEqual(
+                ProblemActivity.objects.filter(problem=problem).count(),
+                before[problem.id],
+                'a label must not write a row onto a problem timeline',
+            )
+        # The trail still exists, patient-scope.
+        latest = ProblemActivity.objects.filter(problem=None).order_by('-id').first()
+        self.assertIsNotNone(latest)
+        self.assertIn('Added label: Laboratory', latest.activity)

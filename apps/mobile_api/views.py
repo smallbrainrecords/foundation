@@ -2985,11 +2985,22 @@ def mobile_document_label(request, patient_id, document_id, label_id=None):
     physician would need to re-read. An automated labeller flipping
     attestation on every fax would be exactly the wrong outcome.
 
-    Audit strings match what iOS has been writing locally
-    (`Added label: <name>` / `Removed label: <name>`) so the timeline reads
-    continuously across the cutover; the client's local `ActivityLogEntry`
-    writes are removed in the same change, per the surgical-deletion
-    pattern in `SBR1@be937a9`.
+    **Audit is patient-scope, NOT fanned out to the linked problems** (owner
+    decision 2026-09-08: "adding a label does not need to generate a note in a
+    problem"). The first version called `_emit_document_audit`, which writes
+    one `ProblemActivity` per linked problem — right for linking, renaming and
+    deleting a document, wrong for a label: a label is document metadata, and
+    a problem timeline is read back years later as a clinical record. It
+    matters more here than it would elsewhere because the caller is an
+    automated labeller, so fanning out would spray machine-authored rows
+    across every chart. This writes a single `problem=None` row instead — the
+    same patient-scope trail `_emit_document_audit` falls back to for an
+    unlinked document. The change is recorded; no problem timeline is touched.
+
+    Audit strings match what iOS wrote locally before the cutover
+    (`Added label: <name>` / `Removed label: <name>`); the client's local
+    `ActivityLogEntry` writes were removed in the same change, per the
+    surgical-deletion pattern in `SBR1@be937a9`.
     """
     if request.method not in ('POST', 'DELETE'):
         return JsonResponse({'error': 'POST or DELETE required'}, status=405)
@@ -3011,8 +3022,8 @@ def mobile_document_label(request, patient_id, document_id, label_id=None):
         if label is None or not doc.labels.filter(id=label.id).exists():
             return JsonResponse({'success': True})
         doc.labels.remove(label)
-        _emit_document_audit(
-            doc, request.user, f"Removed label: {label.name or 'label'}"
+        add_problem_activity(
+            None, request.user, f"Removed label: {label.name or 'label'}"
         )
         return JsonResponse({'success': True})
 
@@ -3036,8 +3047,8 @@ def mobile_document_label(request, patient_id, document_id, label_id=None):
     already_attached = doc.labels.filter(id=label.id).exists()
     if not already_attached:
         doc.labels.add(label)
-        _emit_document_audit(
-            doc, request.user, f"Added label: {label.name or 'label'}"
+        add_problem_activity(
+            None, request.user, f"Added label: {label.name or 'label'}"
         )
     return JsonResponse({
         'success': True,
