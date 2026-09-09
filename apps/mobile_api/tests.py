@@ -25,7 +25,7 @@ from emr.models import (
     ObservationPinToProblem,
     UserProfile, PatientController, PhysicianTeam,
     PatientImage, Document, DocumentProblem, DocumentTodo,
-    PatientMutationStamp,
+    PatientMutationStamp, Label,
 )
 
 
@@ -4619,3 +4619,151 @@ class ProblemAuthenticationRuleTests(TestCase):
             data=json.dumps({'authenticated': False}),
             content_type='application/json')
         self.assertTrue(self._flag())
+
+
+class MobileDocumentLabelTests(_RBACTestBase):
+    """POST/DELETE on `/api/patient/<pid>/document/<doc_id>/label[/<label_id>]`.
+
+    Closes the pull-only gap: `DocumentLabel` had no client->server path at
+    all, so a label applied on one Mac stayed there forever and the
+    insert-only pull never reconciled it away.
+
+    The first caller is auto-labelling at import, which is why idempotency
+    and canonical-row reuse are tested rather than assumed — an automated
+    caller re-creates the duplicate-Label mess `consolidate_labels` cleaned
+    up an order of magnitude faster than a human could.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='P1')
+        self.doc = Document.objects.create(
+            document=SimpleUploadedFile('fax.pdf', b'fake', content_type='application/pdf'),
+            document_name='fax.pdf',
+            author=self.attending,
+            patient=self.patient,
+        )
+        self.url = f'/api/patient/{self.patient.id}/document/{self.doc.id}/label'
+
+    def _label_url(self, label_id):
+        return f'{self.url}/{label_id}'
+
+    def _post(self, name):
+        return self.client.post(
+            self.url, data=json.dumps({'name': name}),
+            content_type='application/json',
+        )
+
+    def test_post_attaches_label_and_emits_audit(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._post('Laboratory')
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.content)
+        self.assertTrue(data['created'])
+        self.assertTrue(self.doc.labels.filter(id=data['id']).exists())
+        latest = ProblemActivity.objects.order_by('-id').first()
+        self.assertIn('Added label: Laboratory', latest.activity)
+
+    def test_post_is_idempotent_no_double_attach_no_double_audit(self):
+        self.assertTrue(self._login(self.attending))
+        self._post('Laboratory')
+        audit_after_first = ProblemActivity.objects.count()
+        resp = self._post('Laboratory')
+        data = json.loads(resp.content)
+        self.assertFalse(data['created'])
+        self.assertEqual(self.doc.labels.count(), 1)
+        self.assertEqual(ProblemActivity.objects.count(), audit_after_first)
+
+    def test_reuses_the_canonical_global_row_rather_than_minting_one(self):
+        """Production accumulated 15 Label rows for 6 categories because the
+        older endpoints created unconditionally. An automated labeller would
+        have multiplied that, so the canonical row must win."""
+        canonical = Label.objects.create(name='Laboratory', css_class='todo-label-red', is_all=True)
+        stray = Label.objects.create(name='Laboratory', css_class='', is_all=False)
+        self.assertTrue(self._login(self.attending))
+        data = json.loads(self._post('Laboratory').content)
+        self.assertEqual(data['id'], canonical.id)
+        self.assertNotEqual(data['id'], stray.id)
+        self.assertEqual(Label.objects.filter(name__iexact='Laboratory').count(), 2)
+
+    def test_name_match_is_case_insensitive(self):
+        canonical = Label.objects.create(name='Imaging', is_all=True)
+        self.assertTrue(self._login(self.attending))
+        data = json.loads(self._post('imaging').content)
+        self.assertEqual(data['id'], canonical.id)
+        self.assertEqual(Label.objects.filter(name__iexact='imaging').count(), 1)
+
+    def test_existing_label_styling_is_left_alone(self):
+        """One document acquiring a label must not recolour it for everyone."""
+        canonical = Label.objects.create(name='Laboratory', css_class='todo-label-red', is_all=True)
+        self.assertTrue(self._login(self.attending))
+        self.client.post(
+            self.url,
+            data=json.dumps({'name': 'Laboratory', 'css_class': 'todo-label-blue'}),
+            content_type='application/json',
+        )
+        canonical.refresh_from_db()
+        self.assertEqual(canonical.css_class, 'todo-label-red')
+        self.assertTrue(canonical.is_all)
+
+    def test_delete_detaches_and_emits_audit(self):
+        label = Label.objects.create(name='Imaging', is_all=True)
+        self.doc.labels.add(label)
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.delete(self._label_url(label.id))
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(self.doc.labels.filter(id=label.id).exists())
+        latest = ProblemActivity.objects.order_by('-id').first()
+        self.assertIn('Removed label: Imaging', latest.activity)
+
+    def test_delete_of_an_unattached_label_is_a_silent_success(self):
+        label = Label.objects.create(name='Imaging', is_all=True)
+        self.assertTrue(self._login(self.attending))
+        before = ProblemActivity.objects.count()
+        resp = self.client.delete(self._label_url(label.id))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(ProblemActivity.objects.count(), before)
+
+    def test_delete_of_a_nonexistent_label_is_a_silent_success(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.delete(self._label_url(999999))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_name_is_required(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.post(
+            self.url, data=json.dumps({'name': '   '}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_stranger_physician_404(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self._post('Laboratory')
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(self.doc.labels.count(), 0)
+
+    def test_labelling_does_not_flip_problem_authentication(self):
+        """Attestation reaches ONE level from the problem. A label on a
+        document is the document's own child - second level - and the
+        2026-08-31 rule states outright that adding a label is not a change
+        a physician would need to re-read. An automated labeller flipping
+        attestation on every inbound fax would be exactly wrong."""
+        DocumentProblem.objects.create(document=self.doc, problem=self.problem, author=self.attending)
+        self.problem.authenticated = False
+        self.problem.save(update_fields=['authenticated'])
+        self.assertTrue(self._login(self.attending))
+        self._post('Laboratory')
+        self.problem.refresh_from_db()
+        self.assertFalse(self.problem.authenticated)
+
+    def test_audit_lands_on_each_linked_problem(self):
+        second = Problem.objects.create(patient=self.patient, problem_name='P2')
+        DocumentProblem.objects.create(document=self.doc, problem=self.problem, author=self.attending)
+        DocumentProblem.objects.create(document=self.doc, problem=second, author=self.attending)
+        self.assertTrue(self._login(self.attending))
+        self._post('Laboratory')
+        for problem in (self.problem, second):
+            latest = ProblemActivity.objects.filter(problem=problem).order_by('-id').first()
+            self.assertIsNotNone(latest)
+            self.assertIn('Added label: Laboratory', latest.activity)

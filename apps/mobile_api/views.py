@@ -2944,6 +2944,108 @@ def mobile_document_todo_link(request, patient_id, document_id, todo_id):
     return JsonResponse({'success': True, 'id': link.id, 'created': created})
 
 
+# ---------- Document Label endpoints (2026-09-08) ----------
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_document_label(request, patient_id, document_id, label_id=None):
+    """POST {name, css_class?} -> attach a Label to a document;
+    DELETE .../label/<label_id> -> detach it.
+
+    Closes the last write-back gap in the document family. `DocumentLabel`
+    was PULL-ONLY on iOS: `upsertDocument` materialised labels from the
+    server and nothing ever pushed one back, so a label applied on a Mac
+    stayed on that Mac forever — and because the pull is insert-only, it
+    was never reconciled away either. That is the per-machine divergence
+    class this codebase has already been bitten by three times (stale team
+    links, ghost documents, stale tagged todos). The client comment at
+    `DocumentDetailView.removeLabel` calls the gap out as "deferred to
+    PR-5"; this is that deferral being paid.
+
+    Both verbs are idempotent, which matters more here than on the sibling
+    link endpoints: the first caller is auto-labelling at import, so a
+    retried POST must not mint a second Label row or a second audit line.
+
+    **Reuses the canonical Label row rather than creating one per call.**
+    Production accumulated 15 Label rows for 6 real categories (Imaging x5,
+    Laboratory x3, Referral x2...) precisely because the old
+    `mobile_create_label` / `mobile_create_todo_label` created
+    unconditionally; `consolidate_labels` cleaned that up and the endpoints
+    were fixed to prefer `is_all=True` then lowest id. An automated caller
+    would have re-created the mess an order of magnitude faster, so the
+    same ordering is used here. An existing label's `css_class` / `is_all`
+    are deliberately left alone — one document acquiring a label must not
+    recolour it for everyone.
+
+    **Deliberately does NOT call `apply_problem_authentication`.** Physician
+    attestation reaches one level from the problem, and a label on a
+    document is the document's own child — second level. The 2026-08-31
+    rule also states outright that adding a label is not a change a
+    physician would need to re-read. An automated labeller flipping
+    attestation on every fax would be exactly the wrong outcome.
+
+    Audit strings match what iOS has been writing locally
+    (`Added label: <name>` / `Removed label: <name>`) so the timeline reads
+    continuously across the cutover; the client's local `ActivityLogEntry`
+    writes are removed in the same change, per the surgical-deletion
+    pattern in `SBR1@be937a9`.
+    """
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'error': 'POST or DELETE required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    try:
+        doc = Document.objects.get(id=document_id, patient_id=patient_id)
+    except Document.DoesNotExist:
+        return JsonResponse({'error': 'Document not found'}, status=404)
+
+    if request.method == 'DELETE':
+        if label_id is None:
+            return JsonResponse({'error': 'label_id is required'}, status=400)
+        label = Label.objects.filter(id=label_id).first()
+        # Retry-safe: a label already detached (or deleted outright) is a
+        # success, not a 404. Same contract as the document DELETE.
+        if label is None or not doc.labels.filter(id=label.id).exists():
+            return JsonResponse({'success': True})
+        doc.labels.remove(label)
+        _emit_document_audit(
+            doc, request.user, f"Removed label: {label.name or 'label'}"
+        )
+        return JsonResponse({'success': True})
+
+    body = _parse_body(request)
+    name = (body.get('name') or '').strip()
+    if not name:
+        return JsonResponse({'error': 'name is required'}, status=400)
+
+    label = (
+        Label.objects.filter(name__iexact=name)
+        .order_by('-is_all', 'id')
+        .first()
+    )
+    if label is None:
+        label = Label.objects.create(
+            name=name,
+            css_class=body.get('css_class', ''),
+            author=request.user,
+        )
+
+    already_attached = doc.labels.filter(id=label.id).exists()
+    if not already_attached:
+        doc.labels.add(label)
+        _emit_document_audit(
+            doc, request.user, f"Added label: {label.name or 'label'}"
+        )
+    return JsonResponse({
+        'success': True,
+        'id': label.id,
+        'created': not already_attached,
+    })
+
+
 # ---------- Problem Image endpoints (PR-2, 2026-06-08) ----------
 
 @csrf_exempt

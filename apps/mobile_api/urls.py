@@ -34,6 +34,11 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)$', views.mobile_delete_document),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/problem/(?P<problem_id>\d+)$', views.mobile_document_problem_link),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/todo/(?P<todo_id>\d+)$', views.mobile_document_todo_link),
+    # Document labels (2026-09-08). POST attaches by NAME (the canonical row is
+    # resolved server-side); DELETE detaches by the label's id, which the client
+    # already holds from the pull.
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/label$', views.mobile_document_label),
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/label/(?P<label_id>\d+)$', views.mobile_document_label),
     # Document full-text index (2026-08-17). Extraction is client-side; these
     # two make the result shared, so a document is OCR'd once for the clinic
     # rather than once per Mac per chart. Text is deliberately absent from
