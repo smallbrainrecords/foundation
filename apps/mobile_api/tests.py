@@ -26,6 +26,7 @@ from emr.models import (
     UserProfile, PatientController, PhysicianTeam,
     PatientImage, Document, DocumentProblem, DocumentTodo,
     PatientMutationStamp, Label,
+    ObservationValueAudit,
 )
 
 
@@ -1172,6 +1173,97 @@ class MobileUpdateObservationValueTests(_ObservationTestBase):
         self.assertEqual(resp.status_code, 404)
 
 
+class MobileObservationValueAuditRowTests(_ObservationTestBase):
+    """The durable record of an edit or delete: ObservationValueAudit, written
+    inside the endpoint's transaction (2026-09-17). The ProblemActivity
+    fan-out is unchanged and still covered above."""
+
+    def _url(self):
+        return f'/api/patient/{self.patient.id}/observation/value/{self.value.id}'
+
+    def test_delete_writes_audit_row_with_snapshots(self):
+        vid = self.value.id
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(ObservationValue.objects.filter(id=vid).exists())
+
+        row = ObservationValueAudit.objects.get(value_id_snapshot=vid)
+        self.assertEqual(row.action, ObservationValueAudit.ACTION_DELETED)
+        self.assertEqual(row.patient_id, self.patient.id)
+        self.assertEqual(row.observation_id_snapshot, self.observation.id)
+        self.assertEqual(row.observation_name, 'Heart Rate')
+        self.assertEqual(row.component_id_snapshot, self.component.id)
+        self.assertEqual(float(row.old_quantity), 72.0)
+        self.assertEqual(row.old_unit, 'bpm')
+        self.assertIsNone(row.new_quantity)
+        self.assertEqual(row.original_author_id, self.physician.id)
+        self.assertEqual(row.original_author_name, 'doc_a')
+        self.assertEqual(row.actor_id, self.physician.id)
+
+    def test_patch_writes_audit_row_with_old_and_new(self):
+        resp = self.client.patch(
+            self._url(),
+            data=json.dumps({'value_quantity': 88, 'value_unit': 'bpm'}),
+            content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        row = ObservationValueAudit.objects.get(value_id_snapshot=self.value.id)
+        self.assertEqual(row.action, ObservationValueAudit.ACTION_EDITED)
+        self.assertEqual(float(row.old_quantity), 72.0)
+        self.assertEqual(float(row.new_quantity), 88.0)
+        self.assertEqual(row.new_unit, 'bpm')
+        # The reading still exists — an edit is not a delete.
+        self.assertTrue(ObservationValue.objects.filter(id=self.value.id).exists())
+
+    def test_rejected_patch_writes_no_audit_row(self):
+        resp = self.client.patch(
+            self._url(), data=json.dumps({}), content_type='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(ObservationValueAudit.objects.exists())
+
+    def test_delete_already_gone_writes_no_second_row(self):
+        self.client.delete(self._url())
+        self.client.delete(self._url())
+        self.assertEqual(ObservationValueAudit.objects.count(), 1)
+
+    def test_failed_audit_write_rolls_the_delete_back(self):
+        """A delete without its audit row must not commit — the row is written
+        inside @transaction.atomic, so an audit failure takes the delete with
+        it rather than leaving a silent gap in the trail."""
+        from unittest import mock
+        vid = self.value.id
+        self.client.raise_request_exception = False
+        with mock.patch(
+            'apps.mobile_api.views._observation_value_audit_row',
+            side_effect=RuntimeError('audit store down'),
+        ):
+            resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 500)
+        self.assertTrue(
+            ObservationValue.objects.filter(id=vid).exists(),
+            'the delete must roll back when its audit row cannot be written')
+        self.assertFalse(ObservationValueAudit.objects.exists())
+
+    def test_patient_full_lists_deleted_value_ids_under_the_observations_gate(self):
+        vid = self.value.id
+        # Before any delete: key present, empty — "prune nothing".
+        resp = self.client.get(f'/api/patient/{self.patient.id}/full')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['deleted_observation_value_ids'], [])
+
+        self.client.delete(self._url())
+
+        resp = self.client.get(f'/api/patient/{self.patient.id}/full')
+        self.assertEqual(resp.json()['deleted_observation_value_ids'], [vid])
+        # A section pull that excludes observations sends the key empty, never
+        # a list the client could mistake for authority over its store.
+        resp = self.client.get(f'/api/patient/{self.patient.id}/full?sections=problems')
+        self.assertEqual(resp.json()['deleted_observation_value_ids'], [])
+        resp = self.client.get(f'/api/patient/{self.patient.id}/full?sections=observations')
+        self.assertEqual(resp.json()['deleted_observation_value_ids'], [vid])
+
+
 class MobileObservationPinTests(_ObservationTestBase):
     """POST/DELETE on the URL-coordinate pin endpoint:
     /api/patient/<pid>/observation/<obs_id>/pin/<problem_id>"""
@@ -1341,6 +1433,89 @@ class _RBACTestBase(TestCase):
             username=user.username,
             password='x' if user == self.patient else password,
         )
+
+
+class MobileObservationValueAuditEndpointTests(_RBACTestBase):
+    """GET /api/patient/<pid>/observation-audit — gated like the media
+    proxies (404 for a patient the caller can't see), keyed by LOINC code or
+    observation id, newest first."""
+
+    def setUp(self):
+        super().setUp()
+        self.observation = Observation.objects.create(
+            name='Weight', code='3141-9', subject=self.patient,
+        )
+        self.component = ObservationComponent.objects.create(
+            name='Weight', observation=self.observation,
+        )
+        self.value = ObservationValue.objects.create(
+            component=self.component, value_quantity=180, value_unit='lb',
+            author=self.attending,
+        )
+        self.value_id = self.value.id
+        # The attending edits, then deletes, the reading.
+        self._login(self.attending)
+        self.client.patch(
+            f'/api/patient/{self.patient.id}/observation/value/{self.value_id}',
+            data=json.dumps({'value_quantity': 178}),
+            content_type='application/json',
+        )
+        self.client.delete(
+            f'/api/patient/{self.patient.id}/observation/value/{self.value_id}')
+        self.client.logout()
+
+    def _get(self, query='code=3141-9', patient=None):
+        pid = (patient or self.patient).id
+        return self.client.get(f'/api/patient/{pid}/observation-audit?{query}')
+
+    def test_attending_sees_edit_then_delete_newest_first(self):
+        self._login(self.attending)
+        resp = self._get()
+        self.assertEqual(resp.status_code, 200)
+        entries = resp.json()['entries']
+        self.assertEqual([e['action'] for e in entries], ['deleted', 'edited'])
+        deleted, edited = entries
+        self.assertEqual(deleted['value_id'], self.value_id)
+        self.assertEqual(deleted['old_quantity'], '178.0000')
+        self.assertIsNone(deleted['new_quantity'])
+        self.assertEqual(edited['old_quantity'], '180.0000')
+        self.assertEqual(edited['new_quantity'], '178.0000')
+        self.assertEqual(deleted['observation_name'], 'Weight')
+        self.assertEqual(deleted['original_author_name'], 'doc_a')
+        self.assertEqual(deleted['actor_name'], 'doc_a')
+        self.assertTrue(deleted['created_on'].endswith('Z'))
+
+    def test_observation_id_filter_matches_code_filter(self):
+        self._login(self.attending)
+        by_code = self._get('code=3141-9').json()['entries']
+        by_id = self._get(f'observation_id={self.observation.id}').json()['entries']
+        self.assertEqual([e['id'] for e in by_code], [e['id'] for e in by_id])
+        self.assertEqual(self._get('code=8867-4').json()['entries'], [])
+
+    def test_team_nurse_admin_and_patient_self_allowed(self):
+        for user in (self.team_nurse, self.admin_user, self.patient):
+            self.client.logout()
+            self.assertTrue(self._login(user))
+            self.assertEqual(self._get().status_code, 200, user.username)
+
+    def test_outsiders_get_404_not_403(self):
+        for user in (self.stranger_doc, self.stranger_nurse, self.other_patient, self.no_profile):
+            self.client.logout()
+            self.assertTrue(self._login(user))
+            resp = self._get()
+            self.assertEqual(resp.status_code, 404, user.username)
+            self.assertNotIn('entries', resp.json())
+
+    def test_missing_selector_400_and_bad_observation_id_400(self):
+        self._login(self.attending)
+        self.assertEqual(self._get('').status_code, 400)
+        self.assertEqual(self._get('observation_id=abc').status_code, 400)
+
+    def test_post_405(self):
+        self._login(self.attending)
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/observation-audit?code=3141-9')
+        self.assertEqual(resp.status_code, 405)
 
 
 class MobileEncounterAudioProxyRBACTests(_RBACTestBase):
@@ -3262,6 +3437,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_unassigned_documents_list',
         'mobile_my_tagged_todos',
         'mobile_patient_document_texts',
+        'mobile_observation_value_audit',
         'get_snomed_to_icd10',
     }
 

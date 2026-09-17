@@ -83,6 +83,8 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/observation$', views.mobile_create_observation),
     url(r'^patient/(?P<patient_id>\d+)/observation/(?P<observation_id>\d+)$', views.mobile_update_observation),
     url(r'^patient/(?P<patient_id>\d+)/observation/(?P<observation_id>\d+)/pin/(?P<problem_id>\d+)$', views.mobile_observation_pin),
+    # Edited/deleted readings, from ObservationValueAudit (read-only)
+    url(r'^patient/(?P<patient_id>\d+)/observation-audit$', views.mobile_observation_value_audit),
     # Label catalog
     url(r'^labels/$', views.mobile_create_label),
     url(r'^labels/(?P<label_id>\d+)$', views.mobile_update_label),
