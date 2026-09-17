@@ -1049,6 +1049,54 @@ class ObservationValueTextNote(models.Model):
         return "%s" % (self.note)
 
 
+class ObservationValueAudit(models.Model):
+    """One row per EDIT or DELETE of an ObservationValue through the mobile
+    API (2026-09-17). The value row itself stays HARD-deleted: nineteen
+    modules read ObservationValue, so a soft-delete flag that every queryset
+    must remember to filter is the wrong primitive. This row is the durable
+    record of what changed, and the source of `deleted_observation_value_ids`
+    in patient_full — which is how a delete made on one Mac reaches the
+    others (the client's pull was insert-only, so a deleted reading lived on
+    in every other store).
+
+    Denormalised on purpose: patient, observation, component and value ids
+    are copied as plain integers. A per-patient query must never join through
+    a row that no longer exists, and the observation itself may be deleted
+    later. Written inside the endpoint's transaction, so a delete without its
+    audit row cannot be committed.
+    """
+    ACTION_EDITED = 'edited'
+    ACTION_DELETED = 'deleted'
+    ACTION_CHOICES = ((ACTION_EDITED, 'Edited'), (ACTION_DELETED, 'Deleted'))
+
+    patient = models.ForeignKey(User, related_name='observation_value_audits', on_delete=models.CASCADE)
+    observation_id_snapshot = models.IntegerField()
+    observation_code = models.CharField(max_length=10, blank=True, default='')
+    observation_name = models.CharField(max_length=255, blank=True, default='')
+    component_id_snapshot = models.IntegerField(null=True, blank=True)
+    value_id_snapshot = models.IntegerField(db_index=True)
+    client_uuid = models.UUIDField(null=True, blank=True)
+    action = models.CharField(max_length=8, choices=ACTION_CHOICES)
+    old_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    new_quantity = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    old_unit = models.CharField(max_length=45, blank=True, default='')
+    new_unit = models.CharField(max_length=45, blank=True, default='')
+    old_effective_datetime = models.DateTimeField(null=True, blank=True)
+    new_effective_datetime = models.DateTimeField(null=True, blank=True)
+    original_author = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    original_author_name = models.CharField(max_length=255, blank=True, default='')
+    actor = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    actor_name = models.CharField(max_length=255, blank=True, default='')
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_on']
+        indexes = [
+            models.Index(fields=['patient', 'action'], name='emr_ovaudit_patient_action'),
+            models.Index(fields=['patient', 'observation_code'], name='emr_ovaudit_patient_code'),
+        ]
+
+
 class CommonProblem(models.Model):
     """
     TODO: Should we managed two kind of problem OR one kind of problem having property to define it type

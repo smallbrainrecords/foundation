@@ -30,6 +30,7 @@ from emr.models import (
     MyStoryTextComponent, MyStoryTextComponentEntry,
     TaggedToDoOrder,
     PatientMutationStamp,
+    ObservationValueAudit,
 )
 from emr.mutation_stamp import touch_patient_stamp
 from emr.problem_authentication import (
@@ -1388,6 +1389,19 @@ def _mobile_patient_full_inner(request, patient_id):
                 'components': components,
             })
 
+    # Readings deleted through the mobile API, from the audit table. The
+    # value rows are hard-deleted, so absence from `observations` can't be
+    # the signal — that list is capped at max_obs_values per component, and a
+    # missing row is indistinguishable from an old one. Same gate as
+    # `observations`; a client that doesn't see the key prunes nothing.
+    deleted_value_ids = []
+    if not requested_sections or 'observations' in requested_sections:
+        deleted_value_ids = list(
+            ObservationValueAudit.objects.filter(
+                patient=patient_user, action=ObservationValueAudit.ACTION_DELETED,
+            ).values_list('value_id_snapshot', flat=True)
+        )
+
     # Observation pins to problems
     pins = []
     if not requested_sections or 'observations' in requested_sections:
@@ -1576,6 +1590,7 @@ def _mobile_patient_full_inner(request, patient_id):
         'todos': todos,
         'observations': observations,
         'observation_pins': pins,
+        'deleted_observation_value_ids': deleted_value_ids,
         'encounters': encounters,
         'documents': documents,
         'problem_activities': problem_activities,
@@ -4327,22 +4342,59 @@ def mobile_update_observation(request, patient_id, observation_id):
     return JsonResponse({'success': True})
 
 
+def _observation_value_audit_row(value, observation, actor, action, old, new=None):
+    """Durable record of an edit or delete — see ObservationValueAudit.
+
+    `old` and `new` are (quantity, unit, effective_datetime) tuples; `new` is
+    None for a delete. Called INSIDE the endpoint's transaction and, for a
+    delete, BEFORE `value.delete()` (which nulls the instance's pk), so the
+    row carries the value's id and a delete without its record can't commit.
+    """
+    author = value.author
+    return ObservationValueAudit.objects.create(
+        patient_id=observation.subject_id,
+        observation_id_snapshot=observation.id,
+        observation_code=(observation.code or '')[:10],
+        observation_name=(observation.name or '')[:255],
+        component_id_snapshot=value.component_id,
+        value_id_snapshot=value.id,
+        client_uuid=value.client_uuid,
+        action=action,
+        old_quantity=old[0],
+        old_unit=(old[1] or '')[:45],
+        old_effective_datetime=old[2],
+        new_quantity=new[0] if new else None,
+        new_unit=((new[1] or '')[:45]) if new else '',
+        new_effective_datetime=new[2] if new else None,
+        original_author=author,
+        original_author_name=(author.get_full_name() or author.username) if author else '',
+        actor=actor,
+        actor_name=actor.get_full_name() or actor.username,
+    )
+
+
 @csrf_exempt
 @login_required
+@transaction.atomic
 @touches_patient_stamp
 def mobile_update_observation_value(request, patient_id, value_id):
     """PATCH {value_quantity?, value_unit?, effective_datetime?} -> update;
     DELETE -> hard-remove ObservationValue.
 
     Auth chain: value -> component -> observation, with the observation's
-    subject_id matching patient_id. Audit fans out per pinned problem.
+    subject_id matching patient_id. Two audit records per change, both
+    inside this transaction: the ProblemActivity fan-out per pinned problem
+    (or problem=None) as before, and an ObservationValueAudit row with the
+    old and new quantity/unit/time, the original author and the actor —
+    the durable one, and the source of `deleted_observation_value_ids` in
+    patient_full.
     """
     if request.method not in ('PATCH', 'POST', 'DELETE'):
         return JsonResponse({'error': 'PATCH or DELETE required'}, status=405)
 
     try:
         value = ObservationValue.objects.select_related(
-            'component__observation'
+            'component__observation', 'author',
         ).get(
             id=value_id,
             component__observation__subject_id=patient_id,
@@ -4355,11 +4407,15 @@ def mobile_update_observation_value(request, patient_id, value_id):
         return JsonResponse({'error': 'Value not found'}, status=404)
 
     observation = value.component.observation
+    old = (value.value_quantity, value.value_unit, value.effective_datetime)
 
     if request.method == 'DELETE':
         # Snapshot for audit before destroy.
         old_quantity = value.value_quantity
         old_unit = value.value_unit or ''
+        _observation_value_audit_row(
+            value, observation, request.user, ObservationValueAudit.ACTION_DELETED, old=old,
+        )
         value.delete()
         msg = f"Deleted {observation.name or 'observation'} reading: {old_quantity}{old_unit}"
         _emit_observation_audit(observation, request.user, msg)
@@ -4390,12 +4446,72 @@ def mobile_update_observation_value(request, patient_id, value_id):
         return JsonResponse({'error': 'At least one field required'}, status=400)
 
     value.save()
+    _observation_value_audit_row(
+        value, observation, request.user, ObservationValueAudit.ACTION_EDITED, old=old,
+        new=(value.value_quantity, value.value_unit, value.effective_datetime),
+    )
 
     quantity_label = f"{value.value_quantity}{value.value_unit or ''}".strip()
     msg = f"Edited {observation.name or 'observation'} reading: {quantity_label}"
     _emit_observation_audit(observation, request.user, msg)
 
     return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+def mobile_observation_value_audit(request, patient_id):
+    """GET ?code=<LOINC> | ?observation_id=<id> -> this patient's edited and
+    deleted readings on that observation, newest first, from
+    ObservationValueAudit (the app's "Deleted & edited readings" section).
+
+    Keyed by LOINC code first because one local record in the app can stand
+    for several server observations sharing a code. Access-gated like the
+    media proxies: a patient the caller can't see answers 404, uniform with
+    not-found. Read-only — it stays in StampCoverageSweepTests.GET_ONLY.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    rows = ObservationValueAudit.objects.filter(patient_id=patient_id)
+    code = (request.GET.get('code') or '').strip()
+    observation_id = request.GET.get('observation_id')
+    if code:
+        rows = rows.filter(observation_code=code)
+    elif observation_id:
+        try:
+            rows = rows.filter(observation_id_snapshot=int(observation_id))
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'observation_id must be an integer'}, status=400)
+    else:
+        return JsonResponse({'error': 'code or observation_id required'}, status=400)
+
+    def quantity(q):
+        return str(q) if q is not None else None
+
+    def when(dt):
+        return dt.isoformat() if dt else None
+
+    entries = [{
+        'id': row.id,
+        'action': row.action,
+        'value_id': row.value_id_snapshot,
+        'observation_id': row.observation_id_snapshot,
+        'observation_code': row.observation_code,
+        'observation_name': row.observation_name,
+        'old_quantity': quantity(row.old_quantity),
+        'new_quantity': quantity(row.new_quantity),
+        'old_unit': row.old_unit,
+        'new_unit': row.new_unit,
+        'old_effective_datetime': when(row.old_effective_datetime),
+        'new_effective_datetime': when(row.new_effective_datetime),
+        'original_author_name': row.original_author_name,
+        'actor_name': row.actor_name,
+        'created_on': _iso_z(row.created_on),
+    } for row in rows.order_by('-created_on', '-id')[:500]]
+    return JsonResponse({'success': True, 'entries': entries})
 
 
 @csrf_exempt
