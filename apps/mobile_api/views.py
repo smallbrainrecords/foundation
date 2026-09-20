@@ -7,6 +7,7 @@ import hashlib
 import json
 import logging
 import mimetypes
+import datetime
 import os
 import re
 
@@ -15,7 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
 from django.db.models.functions import Coalesce
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from emr.models import (
@@ -1634,8 +1635,38 @@ def mobile_encounter_audio(request, encounter_id):
     # The bulk transcription pass proved the cost — it read three such rows as
     # a network outage and sat backing off against them (2026-09-20).
     try:
+        size = enc.audio.size
+    except Exception as exc:
+        logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
+            'event': 'audio_object_missing',
+            'encounter_id': enc.id,
+            'patient_id': enc.patient_id,
+            'audio_name': enc.audio.name,
+            'error': type(exc).__name__,
+        }))
+        return JsonResponse({'error': 'No audio file'}, status=404)
+
+    # Anything Cloud Run cannot relay is handed over as a signed URL instead.
+    #
+    # Cloud Run caps a NON-STREAMED response at 32 MiB and answers 500 when it
+    # is exceeded — while Django logs a perfectly good 200, which is why this
+    # was invisible until the sizes were compared. Measured 2026-09-20: every
+    # failing download was >= 32.1 MiB and every succeeding one <= 10.5 MiB,
+    # and ~9.8% of the untranscribed backlog (~1,600 visits) is over the line.
+    # Those are the LONG visits, so the ones most worth having.
+    #
+    # The access gate above still decides; the redirect only moves the bytes
+    # off a 1-CPU container that would otherwise relay 347 GB. The URL is
+    # short-lived and names one object.
+    if size > _AUDIO_REDIRECT_THRESHOLD:
+        signed = _signed_media_url(enc.audio)
+        if signed:
+            return HttpResponseRedirect(signed)
+        # Signing unavailable (permissions, a non-GCS storage in dev): fall
+        # through and try to serve it, which is no worse than before.
+
+    try:
         handle = enc.audio.open('rb')
-        content_length = enc.audio.size
     except Exception as exc:
         logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
             'event': 'audio_object_missing',
@@ -1647,7 +1678,7 @@ def mobile_encounter_audio(request, encounter_id):
         return JsonResponse({'error': 'No audio file'}, status=404)
 
     response = FileResponse(handle, content_type=mime_type or 'audio/mpeg')
-    response['Content-Length'] = content_length
+    response['Content-Length'] = size
     response['Content-Disposition'] = (
         'inline; filename="%s"' % os.path.basename(enc.audio.name)
     )
@@ -3344,6 +3375,54 @@ def _accessible_patient_ids(user):
     elif role == 'patient':
         return [user.id]
     return []
+
+
+# Cloud Run's non-streamed response cap. Files at or above it cannot be
+# relayed, so they are redirected instead. Deliberately a little under 32 MiB:
+# headers count toward the cap, and the margin costs nothing.
+_AUDIO_REDIRECT_THRESHOLD = 30 * 1024 * 1024
+
+# How long a redirect URL stays usable. Long enough for a slow download of a
+# 40 MB file, short enough that a leaked link is stale almost immediately.
+_SIGNED_URL_TTL = datetime.timedelta(minutes=15)
+
+
+def _signed_media_url(field_file):
+    """A time-limited direct URL for a stored object, or None.
+
+    NOT `field_file.url`: django-storages asks the credentials to sign
+    themselves, and on Cloud Run those are compute credentials holding only a
+    token — it raises "you need a private key to sign credentials". Signing
+    has to go through the IAM SignBlob API instead, which needs the runtime
+    service account to hold roles/iam.serviceAccountTokenCreator ON ITSELF
+    (granted 2026-09-20).
+
+    Returns None rather than raising: a caller that cannot get a URL falls
+    back to serving the bytes, which is exactly the behaviour that existed
+    before. A signing outage must not take the whole endpoint down.
+    """
+    try:
+        import google.auth
+        from google.auth.transport import requests as google_requests
+
+        blob = field_file.storage.bucket.blob(field_file.name)
+        credentials, _ = google.auth.default()
+        credentials.refresh(google_requests.Request())
+        return blob.generate_signed_url(
+            version='v4',
+            expiration=_SIGNED_URL_TTL,
+            method='GET',
+            service_account_email=credentials.service_account_email,
+            access_token=credentials.token,
+        )
+    except Exception as exc:
+        logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
+            'event': 'signed_url_failed',
+            'name': getattr(field_file, 'name', None),
+            'error': type(exc).__name__,
+            'detail': str(exc)[:200],
+        }))
+        return None
 
 
 @csrf_exempt

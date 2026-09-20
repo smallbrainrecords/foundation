@@ -5262,3 +5262,92 @@ class EncounterTranscriptsByIdTests(_RBACTestBase):
                       (302, 401, 403))
         self.assertTrue(self._login(self.attending))
         self.assertEqual(self.client.post(self.URL, {'ids': '1'}).status_code, 405)
+
+
+class EncounterAudioLargeFileRedirectTests(_RBACTestBase):
+    """Audio too large for Cloud Run to relay is handed over as a signed URL.
+
+    Cloud Run caps a non-streamed response at 32 MiB and answers 500 when it
+    is exceeded, while Django logs a perfectly good 200 — which is why this
+    went unnoticed until sizes were compared. Measured 2026-09-20: every
+    failing download was >= 32.1 MiB, every succeeding one <= 10.5 MiB, and
+    ~9.8% of the untranscribed backlog is over the line.
+    """
+
+    def _encounter(self):
+        enc = Encounter.objects.create(
+            physician=self.attending, patient=self.patient,
+            stoptime=timezone.now(), recorder_status=2,
+        )
+        enc.audio = 'p/visit.m4a'
+        enc.save()
+        return enc
+
+    def _get(self, enc):
+        return self.client.get('/api/media/encounter/%d/audio' % enc.id)
+
+    def test_a_large_file_redirects_to_a_signed_url(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                return_value=40 * 1024 * 1024), \
+             mock.patch('apps.mobile_api.views._signed_media_url',
+                        return_value='https://storage.example/signed?sig=x') as signer:
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp['Location'], 'https://storage.example/signed?sig=x')
+        self.assertTrue(signer.called)
+
+    def test_a_small_file_is_still_served_directly(self):
+        # The redirect is for what cannot be relayed, not a wholesale change
+        # of how audio is served — 90% of files keep the existing path.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                return_value=5 * 1024 * 1024), \
+             mock.patch.object(FieldFile, 'open', return_value=io.BytesIO(b'abc')), \
+             mock.patch('apps.mobile_api.views._signed_media_url') as signer:
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(signer.called, 'signed a file that did not need it')
+
+    def test_a_signing_failure_falls_back_to_serving_the_bytes(self):
+        # A signing outage must not take the endpoint down; falling through is
+        # exactly the behaviour that existed before the redirect.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                return_value=40 * 1024 * 1024), \
+             mock.patch.object(FieldFile, 'open', return_value=io.BytesIO(b'abc')), \
+             mock.patch('apps.mobile_api.views._signed_media_url', return_value=None):
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_the_access_gate_runs_before_any_redirect(self):
+        # The redirect must never become a way around the PHI gate.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.stranger_doc))
+        with mock.patch('apps.mobile_api.views._signed_media_url',
+                        return_value='https://storage.example/signed') as signer:
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(signer.called, 'signed a URL for a forbidden patient')
+
+    def test_a_missing_object_is_404_even_when_large(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                side_effect=FileNotFoundError('gone')), \
+             mock.patch('apps.mobile_api.views._signed_media_url') as signer:
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(signer.called)
+
+    def test_the_threshold_sits_below_cloud_runs_cap(self):
+        # Headers count toward Cloud Run's 32 MiB, so the margin is the point.
+        from apps.mobile_api.views import _AUDIO_REDIRECT_THRESHOLD
+        self.assertLess(_AUDIO_REDIRECT_THRESHOLD, 32 * 1024 * 1024)
