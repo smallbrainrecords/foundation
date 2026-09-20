@@ -3415,6 +3415,68 @@ def mobile_untranscribed_encounters(request):
     })
 
 
+@csrf_exempt
+@login_required
+def mobile_encounter_transcripts(request):
+    """GET ?ids=1,2,3 -> {id: transcript} for those encounters, for the ones
+    the caller may see that actually have a transcript.
+
+    **Why this exists.** The bulk transcription pass writes straight to the
+    server and never touches the app's local store, so a Mac's own copy of an
+    encounter keeps its empty transcript. `upsertEncounter` already safe-merges
+    a server transcript into a local row that has none — but only when that
+    patient's chart is pulled, one at a time, and the background roster walk
+    was retired in July. With ~2,000 charts, most transcripts would never
+    arrive. This lets a client fill them in directly.
+
+    **Only rows WITH a transcript come back.** Absence means the server has
+    none either, which is the answer a client needs to stop asking. Returning
+    thousands of empty strings would be noise measured in megabytes.
+
+    Not filtered to the caller's own recordings, unlike
+    `mobile_untranscribed_encounters`: producing a transcript is an action only
+    the recording clinician should spend effort on, but READING one is
+    ordinary chart access, and a colleague's visit on a shared chart is part of
+    that record. Access is gated per patient exactly as the media proxies are.
+
+    Read-only: no patient stamp, no writes. Stays in
+    StampCoverageSweepTests.GET_ONLY.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    raw = (request.GET.get('ids') or '').strip()
+    if not raw:
+        return JsonResponse({'error': 'ids required'}, status=400)
+    try:
+        ids = [int(part) for part in raw.split(',') if part.strip()]
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'ids must be integers'}, status=400)
+    if not ids:
+        return JsonResponse({'error': 'ids required'}, status=400)
+    # A transcript is ~18 KB, so the cap is about response size, not database
+    # cost. The client batches well below it.
+    if len(ids) > _TRANSCRIPT_BATCH_LIMIT:
+        return JsonResponse(
+            {'error': 'too many ids', 'limit': _TRANSCRIPT_BATCH_LIMIT},
+            status=400,
+        )
+
+    rows = Encounter.objects.filter(id__in=ids).exclude(transcript='')
+    accessible = _accessible_patient_ids(request.user)
+    if accessible is not None:
+        rows = rows.filter(patient_id__in=accessible)
+
+    transcripts = [
+        {'id': enc.id, 'transcript': enc.transcript}
+        for enc in rows.only('id', 'transcript')
+    ]
+    return JsonResponse({'success': True, 'transcripts': transcripts})
+
+
+_TRANSCRIPT_BATCH_LIMIT = 200
+
+
 # ---------- Problem endpoints ----------
 
 def _yesno_status(value, on_label, off_label):

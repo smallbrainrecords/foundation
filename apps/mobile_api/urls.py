@@ -91,6 +91,9 @@ urlpatterns = [
     # Untranscribed encounters, cross-patient: drives Settings -> Transcribe.
     # Own recordings only; read-only.
     url(r'^encounters/untranscribed$', views.mobile_untranscribed_encounters),
+    # Transcripts by encounter id, so a Mac can fill in local rows the bulk
+    # pass transcribed server-side. Read-only.
+    url(r'^encounters/transcripts$', views.mobile_encounter_transcripts),
     # Tagged todos (cross-patient)
     url(r'^my-tagged-todos/$', views.mobile_my_tagged_todos),
     # Analytics

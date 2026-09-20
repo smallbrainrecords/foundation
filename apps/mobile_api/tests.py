@@ -3446,6 +3446,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_patient_document_texts',
         'mobile_observation_value_audit',
         'mobile_untranscribed_encounters',
+        'mobile_encounter_transcripts',
         'get_snomed_to_icd10',
     }
 
@@ -5184,3 +5185,80 @@ class EncounterAudioMissingObjectTests(_RBACTestBase):
         self.assertTrue(self._login(self.stranger_doc))
         resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
         self.assertEqual(resp.status_code, 404)
+
+
+class EncounterTranscriptsByIdTests(_RBACTestBase):
+    """`mobile_encounter_transcripts` — filling a Mac's local rows.
+
+    The transcription pass writes only to the server, and the app's per-chart
+    pull would take ~2,000 chart visits to catch up, so this is the route that
+    actually gets the words onto a machine.
+    """
+
+    URL = '/api/encounters/transcripts'
+
+    def _encounter(self, physician, patient, transcript='some words'):
+        enc = Encounter.objects.create(
+            physician=physician, patient=patient,
+            stoptime=timezone.now(), recorder_status=2, transcript=transcript,
+        )
+        return enc
+
+    def test_returns_the_transcript_for_an_accessible_encounter(self):
+        enc = self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertTrue(body['success'])
+        self.assertEqual(body['transcripts'], [{'id': enc.id, 'transcript': 'some words'}])
+
+    def test_an_untranscribed_encounter_is_simply_absent(self):
+        # Absence is the answer a client needs to stop asking. Returning
+        # thousands of empty strings would be megabytes of noise.
+        enc = self._encounter(self.attending, self.patient, transcript='')
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual(body['transcripts'], [])
+
+    def test_a_colleagues_recording_on_a_shared_chart_is_returned(self):
+        # Deliberately unlike mobile_untranscribed_encounters: PRODUCING a
+        # transcript is the recording clinician's job, but READING one is
+        # ordinary chart access.
+        enc = self._encounter(self.stranger_doc, self.patient)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual([r['id'] for r in body['transcripts']], [enc.id])
+
+    def test_an_inaccessible_patients_encounter_is_not_returned(self):
+        enc = self._encounter(self.stranger_doc, self.other_patient)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual(body['transcripts'], [])
+
+    def test_a_mixed_batch_returns_only_what_is_allowed(self):
+        mine = self._encounter(self.attending, self.patient)
+        theirs = self._encounter(self.stranger_doc, self.other_patient)
+        self.assertTrue(self._login(self.attending))
+        ids = '%d,%d' % (mine.id, theirs.id)
+        body = self.client.get(self.URL, {'ids': ids}).json()
+        self.assertEqual([r['id'] for r in body['transcripts']], [mine.id])
+
+    def test_admin_sees_any_patients_transcript(self):
+        enc = self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.admin_user))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual([r['id'] for r in body['transcripts']], [enc.id])
+
+    def test_bad_input(self):
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).status_code, 400)
+        self.assertEqual(self.client.get(self.URL, {'ids': ''}).status_code, 400)
+        self.assertEqual(self.client.get(self.URL, {'ids': 'a,b'}).status_code, 400)
+        over = ','.join(str(n) for n in range(300))
+        self.assertEqual(self.client.get(self.URL, {'ids': over}).status_code, 400)
+
+    def test_requires_login_and_rejects_post(self):
+        self.client.logout()
+        self.assertIn(self.client.get(self.URL, {'ids': '1'}).status_code,
+                      (302, 401, 403))
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.post(self.URL, {'ids': '1'}).status_code, 405)
