@@ -3295,6 +3295,109 @@ def _assert_patient_access(user, patient_id):
     return False
 
 
+def _accessible_patient_ids(user):
+    """The patient ids `user` has clinical access to, as a queryset/list, or
+    `None` meaning "every patient".
+
+    Set-wise twin of `_assert_patient_access`, for the one endpoint that has
+    to filter a CROSS-PATIENT queryset rather than answer a single id: calling
+    the per-id gate once per row would be one query per encounter.
+
+    **These two must stay in lockstep** — the same lockstep rule
+    `_assert_patient_access` already carries with `mobile_patients`. The
+    agreement is not left to review: `UntranscribedEncounterAccessTests`
+    asserts, role by role, that a patient id is in this set if and only if
+    `_assert_patient_access` allows it.
+    """
+    try:
+        role = user.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        return []
+
+    if role == 'admin':
+        return None
+    elif role == 'physician':
+        return PatientController.objects.filter(
+            physician=user).values_list('patient_id', flat=True)
+    elif role in ('secretary', 'mid-level', 'nurse'):
+        physician_ids = PhysicianTeam.objects.filter(
+            member=user).values_list('physician_id', flat=True)
+        return PatientController.objects.filter(
+            physician_id__in=physician_ids).values_list('patient_id', flat=True)
+    elif role == 'patient':
+        return [user.id]
+    return []
+
+
+@csrf_exempt
+@login_required
+def mobile_untranscribed_encounters(request):
+    """GET ?limit=<n> -> the CALLER'S OWN finished recordings that have audio
+    and no transcript, newest first. Drives the app's Settings -> Transcribe
+    pass.
+
+    **Own recordings only** (`physician=request.user`, owner decision
+    2026-09-19). A transcript is produced from a recording of a visit the
+    caller conducted; a colleague's untranscribed visits are their own to run.
+
+    **Also access-gated**, set-wise, and that is not belt-and-braces: a
+    physician who recorded a visit for a patient since transferred to another
+    physician fails `_assert_patient_access`, so `mobile_encounter_audio`
+    would 404 the download. Listing such a row would hand the client work it
+    can never complete, and the pass would meet it again on every run.
+
+    **Newest first**, the opposite of the document text backfill's oldest
+    first: a recent visit is the one still clinically live, and it is the one
+    a physician is waiting on. The pass runs until exhausted, so the order
+    decides what gets done if it is stopped early, not what gets done at all.
+
+    `total` counts every match, not just the page — the app shows it as the
+    work remaining.
+
+    Read-only: no patient stamp, and it stays in
+    StampCoverageSweepTests.GET_ONLY.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    try:
+        limit = int(request.GET.get('limit') or 200)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'limit must be an integer'}, status=400)
+    limit = max(1, min(limit, 1000))
+
+    rows = Encounter.objects.filter(
+        physician=request.user,
+        recorder_status=2,
+        transcript='',
+    ).exclude(audio='')
+
+    accessible = _accessible_patient_ids(request.user)
+    if accessible is not None:
+        rows = rows.filter(patient_id__in=accessible)
+
+    total = rows.count()
+    page = rows.order_by('-starttime', '-id')[:limit]
+
+    encounters = [{
+        'id': enc.id,
+        'patient_id': enc.patient_id,
+        'start_time': _iso_z(enc.starttime),
+        'stop_time': _iso_z(enc.stoptime) if enc.stoptime else None,
+        'audio_end_offset': enc.audio_end_offset,
+        # Basename only. The client writes the downloaded bytes to a temp file
+        # and opens it with AVAudioFile, which reads the extension — guessing
+        # ".m4a" would mis-open the legacy recordings that are not.
+        'audio_name': os.path.basename(enc.audio.name) if enc.audio else None,
+    } for enc in page]
+
+    return JsonResponse({
+        'success': True,
+        'total': total,
+        'encounters': encounters,
+    })
+
+
 # ---------- Problem endpoints ----------
 
 def _yesno_status(value, on_label, off_label):

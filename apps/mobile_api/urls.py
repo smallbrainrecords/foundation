@@ -88,6 +88,9 @@ urlpatterns = [
     # Label catalog
     url(r'^labels/$', views.mobile_create_label),
     url(r'^labels/(?P<label_id>\d+)$', views.mobile_update_label),
+    # Untranscribed encounters, cross-patient: drives Settings -> Transcribe.
+    # Own recordings only; read-only.
+    url(r'^encounters/untranscribed$', views.mobile_untranscribed_encounters),
     # Tagged todos (cross-patient)
     url(r'^my-tagged-todos/$', views.mobile_my_tagged_todos),
     # Analytics

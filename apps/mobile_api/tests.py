@@ -5,6 +5,7 @@ this endpoint is the source-of-truth gate for Encounter updates that
 post-date the initial audio-upload POST (notably transcript and
 post-stop note/recorder_status changes).
 """
+import datetime
 import inspect
 import json
 import logging
@@ -13,6 +14,9 @@ import sys
 
 from django.test import TestCase, TransactionTestCase, Client
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.db import transaction
+from django.db.utils import IntegrityError
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -3438,6 +3442,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_my_tagged_todos',
         'mobile_patient_document_texts',
         'mobile_observation_value_audit',
+        'mobile_untranscribed_encounters',
         'get_snomed_to_icd10',
     }
 
@@ -4962,3 +4967,163 @@ class MobileDocumentLabelTests(_RBACTestBase):
         latest = ProblemActivity.objects.filter(problem=None).order_by('-id').first()
         self.assertIsNotNone(latest)
         self.assertIn('Added label: Laboratory', latest.activity)
+
+
+class UntranscribedEncounterAccessTests(_RBACTestBase):
+    """`mobile_untranscribed_encounters` — what it lists, and for whom.
+
+    The filter has two independent halves and both matter: the caller must
+    have RECORDED the visit, and must still have clinical access to the
+    patient. Dropping either half produces a list the client cannot act on
+    (a colleague's visit it may not PATCH; a transferred patient's audio the
+    media proxy 404s), and the pass re-meets those rows on every run.
+    """
+
+    URL = '/api/encounters/untranscribed'
+
+    def _encounter(self, physician, patient, transcript='', audio='e.m4a',
+                   recorder_status=2, starttime=None):
+        enc = Encounter.objects.create(
+            physician=physician,
+            patient=patient,
+            stoptime=timezone.now(),
+            recorder_status=recorder_status,
+            transcript=transcript,
+        )
+        enc.audio = audio
+        if starttime is not None:
+            Encounter.objects.filter(id=enc.id).update(starttime=starttime)
+        enc.save()
+        return enc
+
+    def test_lists_own_untranscribed_encounter_with_audio(self):
+        enc = self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(self.URL)
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body['success'])
+        self.assertEqual(body['total'], 1)
+        self.assertEqual([e['id'] for e in body['encounters']], [enc.id])
+        row = body['encounters'][0]
+        self.assertEqual(row['patient_id'], self.patient.id)
+        self.assertIsNotNone(row['start_time'])
+
+    def test_excludes_an_encounter_that_already_has_a_transcript(self):
+        self._encounter(self.attending, self.patient, transcript='words')
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 0)
+
+    def test_excludes_an_encounter_with_no_audio(self):
+        self._encounter(self.attending, self.patient, audio='')
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 0)
+
+    def test_excludes_an_encounter_still_recording(self):
+        # recorder_status 0 = recording, 1 = paused. Only a stopped visit is
+        # finished enough to transcribe.
+        self._encounter(self.attending, self.patient, recorder_status=0)
+        self._encounter(self.attending, self.patient, recorder_status=1)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 0)
+
+    def test_the_schema_forbids_a_null_transcript(self):
+        """Why the filter is a plain `transcript=''` with no isnull branch.
+
+        The column is NOT NULL, so "" is the only way a row can say
+        "never transcribed". A defensive `Q(transcript__isnull=True)` would
+        be a claim about data that cannot exist.
+        """
+        enc = self._encounter(self.attending, self.patient)
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Encounter.objects.filter(id=enc.id).update(transcript=None)
+
+    def test_does_not_list_a_colleagues_recording(self):
+        # Same patient, recorded by another physician. Visible to this caller
+        # in the chart, but not theirs to transcribe.
+        PatientController.objects.create(
+            patient=self.patient, physician=self.stranger_doc)
+        self._encounter(self.stranger_doc, self.patient)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 0)
+
+    def test_does_not_list_a_patient_the_caller_can_no_longer_see(self):
+        # Recorded by this physician, but the patient has since transferred:
+        # mobile_encounter_audio would 404 the download, so listing it would
+        # hand the pass work it can never finish.
+        enc = self._encounter(self.attending, self.patient)
+        PatientController.objects.filter(
+            patient=self.patient, physician=self.attending).delete()
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL).json()
+        self.assertEqual(body['total'], 0)
+        self.assertNotIn(enc.id, [e['id'] for e in body['encounters']])
+
+    def test_newest_first(self):
+        old = self._encounter(
+            self.attending, self.patient,
+            starttime=timezone.now() - datetime.timedelta(days=30))
+        new = self._encounter(
+            self.attending, self.patient,
+            starttime=timezone.now() - datetime.timedelta(days=1))
+        self.assertTrue(self._login(self.attending))
+        ids = [e['id'] for e in self.client.get(self.URL).json()['encounters']]
+        self.assertEqual(ids, [new.id, old.id])
+
+    def test_total_counts_every_match_not_just_the_page(self):
+        for _ in range(3):
+            self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'limit': 1}).json()
+        self.assertEqual(body['total'], 3)
+        self.assertEqual(len(body['encounters']), 1)
+
+    def test_limit_is_clamped_and_a_bad_limit_is_a_400(self):
+        self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL, {'limit': 0}).status_code, 200)
+        self.assertEqual(self.client.get(self.URL, {'limit': 99999}).status_code, 200)
+        self.assertEqual(
+            self.client.get(self.URL, {'limit': 'lots'}).status_code, 400)
+
+    def test_requires_login_and_rejects_post(self):
+        self.client.logout()
+        self.assertIn(self.client.get(self.URL).status_code, (302, 401, 403))
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.post(self.URL).status_code, 405)
+
+    def test_admin_sees_their_own_recordings_across_patients(self):
+        self._encounter(self.admin_user, self.patient)
+        self._encounter(self.admin_user, self.other_patient)
+        self.assertTrue(self._login(self.admin_user))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 2)
+
+    def test_accessible_patient_ids_agrees_with_the_per_id_gate(self):
+        """The lockstep guard for `_accessible_patient_ids`.
+
+        The set-wise helper exists only so this endpoint can filter a
+        cross-patient queryset in one query instead of one per row. If it ever
+        disagrees with `_assert_patient_access`, this endpoint either leaks a
+        chart or hides one — so the agreement is asserted rather than
+        reviewed, role by role, over every patient in the fixture.
+        """
+        from apps.mobile_api.views import (
+            _accessible_patient_ids, _assert_patient_access,
+        )
+        patients = [self.patient, self.other_patient]
+        users = [
+            self.attending, self.stranger_doc, self.team_nurse,
+            self.stranger_nurse, self.admin_user, self.patient,
+            self.other_patient, self.no_profile,
+        ]
+        for user in users:
+            allowed = _accessible_patient_ids(user)
+            for pt in patients:
+                set_wise = True if allowed is None else pt.id in set(allowed)
+                per_id = _assert_patient_access(user, pt.id)
+                self.assertEqual(
+                    set_wise, per_id,
+                    f'{user.username} vs patient {pt.id}: '
+                    f'set-wise={set_wise} per-id={per_id}',
+                )
