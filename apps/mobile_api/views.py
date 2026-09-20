@@ -7,6 +7,7 @@ import hashlib
 import json
 import logging
 import mimetypes
+import datetime
 import os
 import re
 
@@ -15,7 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
 from django.db.models.functions import Coalesce
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from emr.models import (
@@ -1626,11 +1627,58 @@ def mobile_encounter_audio(request, encounter_id):
         return JsonResponse({'error': 'No audio file'}, status=404)
 
     mime_type, _ = mimetypes.guess_type(enc.audio.name)
-    response = FileResponse(
-        enc.audio.open('rb'),
-        content_type=mime_type or 'audio/mpeg',
-    )
-    response['Content-Length'] = enc.audio.size
+    # A row can name an object the bucket does not have — legacy rows whose
+    # file was never migrated, or one deleted out from under the record. Both
+    # `.open()` and `.size` raise for those, and letting that become a 500 is
+    # wrong twice over: the file genuinely is NOT FOUND, and a 5xx tells a
+    # client "try again later" about something no amount of later will fix.
+    # The bulk transcription pass proved the cost — it read three such rows as
+    # a network outage and sat backing off against them (2026-09-20).
+    try:
+        size = enc.audio.size
+    except Exception as exc:
+        logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
+            'event': 'audio_object_missing',
+            'encounter_id': enc.id,
+            'patient_id': enc.patient_id,
+            'audio_name': enc.audio.name,
+            'error': type(exc).__name__,
+        }))
+        return JsonResponse({'error': 'No audio file'}, status=404)
+
+    # Anything Cloud Run cannot relay is handed over as a signed URL instead.
+    #
+    # Cloud Run caps a NON-STREAMED response at 32 MiB and answers 500 when it
+    # is exceeded — while Django logs a perfectly good 200, which is why this
+    # was invisible until the sizes were compared. Measured 2026-09-20: every
+    # failing download was >= 32.1 MiB and every succeeding one <= 10.5 MiB,
+    # and ~9.8% of the untranscribed backlog (~1,600 visits) is over the line.
+    # Those are the LONG visits, so the ones most worth having.
+    #
+    # The access gate above still decides; the redirect only moves the bytes
+    # off a 1-CPU container that would otherwise relay 347 GB. The URL is
+    # short-lived and names one object.
+    if size > _AUDIO_REDIRECT_THRESHOLD:
+        signed = _signed_media_url(enc.audio)
+        if signed:
+            return HttpResponseRedirect(signed)
+        # Signing unavailable (permissions, a non-GCS storage in dev): fall
+        # through and try to serve it, which is no worse than before.
+
+    try:
+        handle = enc.audio.open('rb')
+    except Exception as exc:
+        logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
+            'event': 'audio_object_missing',
+            'encounter_id': enc.id,
+            'patient_id': enc.patient_id,
+            'audio_name': enc.audio.name,
+            'error': type(exc).__name__,
+        }))
+        return JsonResponse({'error': 'No audio file'}, status=404)
+
+    response = FileResponse(handle, content_type=mime_type or 'audio/mpeg')
+    response['Content-Length'] = size
     response['Content-Disposition'] = (
         'inline; filename="%s"' % os.path.basename(enc.audio.name)
     )
@@ -3293,6 +3341,219 @@ def _assert_patient_access(user, patient_id):
     elif role == 'patient':
         return user.id == patient_id
     return False
+
+
+def _accessible_patient_ids(user):
+    """The patient ids `user` has clinical access to, as a queryset/list, or
+    `None` meaning "every patient".
+
+    Set-wise twin of `_assert_patient_access`, for the one endpoint that has
+    to filter a CROSS-PATIENT queryset rather than answer a single id: calling
+    the per-id gate once per row would be one query per encounter.
+
+    **These two must stay in lockstep** — the same lockstep rule
+    `_assert_patient_access` already carries with `mobile_patients`. The
+    agreement is not left to review: `UntranscribedEncounterAccessTests`
+    asserts, role by role, that a patient id is in this set if and only if
+    `_assert_patient_access` allows it.
+    """
+    try:
+        role = user.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        return []
+
+    if role == 'admin':
+        return None
+    elif role == 'physician':
+        return PatientController.objects.filter(
+            physician=user).values_list('patient_id', flat=True)
+    elif role in ('secretary', 'mid-level', 'nurse'):
+        physician_ids = PhysicianTeam.objects.filter(
+            member=user).values_list('physician_id', flat=True)
+        return PatientController.objects.filter(
+            physician_id__in=physician_ids).values_list('patient_id', flat=True)
+    elif role == 'patient':
+        return [user.id]
+    return []
+
+
+# Cloud Run's non-streamed response cap. Files at or above it cannot be
+# relayed, so they are redirected instead. Deliberately a little under 32 MiB:
+# headers count toward the cap, and the margin costs nothing.
+_AUDIO_REDIRECT_THRESHOLD = 30 * 1024 * 1024
+
+# How long a redirect URL stays usable. Long enough for a slow download of a
+# 40 MB file, short enough that a leaked link is stale almost immediately.
+_SIGNED_URL_TTL = datetime.timedelta(minutes=15)
+
+
+def _signed_media_url(field_file):
+    """A time-limited direct URL for a stored object, or None.
+
+    NOT `field_file.url`: django-storages asks the credentials to sign
+    themselves, and on Cloud Run those are compute credentials holding only a
+    token — it raises "you need a private key to sign credentials". Signing
+    has to go through the IAM SignBlob API instead, which needs the runtime
+    service account to hold roles/iam.serviceAccountTokenCreator ON ITSELF
+    (granted 2026-09-20).
+
+    Returns None rather than raising: a caller that cannot get a URL falls
+    back to serving the bytes, which is exactly the behaviour that existed
+    before. A signing outage must not take the whole endpoint down.
+    """
+    try:
+        import google.auth
+        from google.auth.transport import requests as google_requests
+
+        blob = field_file.storage.bucket.blob(field_file.name)
+        credentials, _ = google.auth.default()
+        credentials.refresh(google_requests.Request())
+        return blob.generate_signed_url(
+            version='v4',
+            expiration=_SIGNED_URL_TTL,
+            method='GET',
+            service_account_email=credentials.service_account_email,
+            access_token=credentials.token,
+        )
+    except Exception as exc:
+        logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
+            'event': 'signed_url_failed',
+            'name': getattr(field_file, 'name', None),
+            'error': type(exc).__name__,
+            'detail': str(exc)[:200],
+        }))
+        return None
+
+
+@csrf_exempt
+@login_required
+def mobile_untranscribed_encounters(request):
+    """GET ?limit=<n> -> the CALLER'S OWN finished recordings that have audio
+    and no transcript, newest first. Drives the app's Settings -> Transcribe
+    pass.
+
+    **Own recordings only** (`physician=request.user`, owner decision
+    2026-09-19). A transcript is produced from a recording of a visit the
+    caller conducted; a colleague's untranscribed visits are their own to run.
+
+    **Also access-gated**, set-wise, and that is not belt-and-braces: a
+    physician who recorded a visit for a patient since transferred to another
+    physician fails `_assert_patient_access`, so `mobile_encounter_audio`
+    would 404 the download. Listing such a row would hand the client work it
+    can never complete, and the pass would meet it again on every run.
+
+    **Newest first**, the opposite of the document text backfill's oldest
+    first: a recent visit is the one still clinically live, and it is the one
+    a physician is waiting on. The pass runs until exhausted, so the order
+    decides what gets done if it is stopped early, not what gets done at all.
+
+    `total` counts every match, not just the page — the app shows it as the
+    work remaining.
+
+    Read-only: no patient stamp, and it stays in
+    StampCoverageSweepTests.GET_ONLY.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    try:
+        limit = int(request.GET.get('limit') or 200)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'limit must be an integer'}, status=400)
+    limit = max(1, min(limit, 1000))
+
+    rows = Encounter.objects.filter(
+        physician=request.user,
+        recorder_status=2,
+        transcript='',
+    ).exclude(audio='')
+
+    accessible = _accessible_patient_ids(request.user)
+    if accessible is not None:
+        rows = rows.filter(patient_id__in=accessible)
+
+    total = rows.count()
+    page = rows.order_by('-starttime', '-id')[:limit]
+
+    encounters = [{
+        'id': enc.id,
+        'patient_id': enc.patient_id,
+        'start_time': _iso_z(enc.starttime),
+        'stop_time': _iso_z(enc.stoptime) if enc.stoptime else None,
+        'audio_end_offset': enc.audio_end_offset,
+        # Basename only. The client writes the downloaded bytes to a temp file
+        # and opens it with AVAudioFile, which reads the extension — guessing
+        # ".m4a" would mis-open the legacy recordings that are not.
+        'audio_name': os.path.basename(enc.audio.name) if enc.audio else None,
+    } for enc in page]
+
+    return JsonResponse({
+        'success': True,
+        'total': total,
+        'encounters': encounters,
+    })
+
+
+@csrf_exempt
+@login_required
+def mobile_encounter_transcripts(request):
+    """GET ?ids=1,2,3 -> {id: transcript} for those encounters, for the ones
+    the caller may see that actually have a transcript.
+
+    **Why this exists.** The bulk transcription pass writes straight to the
+    server and never touches the app's local store, so a Mac's own copy of an
+    encounter keeps its empty transcript. `upsertEncounter` already safe-merges
+    a server transcript into a local row that has none — but only when that
+    patient's chart is pulled, one at a time, and the background roster walk
+    was retired in July. With ~2,000 charts, most transcripts would never
+    arrive. This lets a client fill them in directly.
+
+    **Only rows WITH a transcript come back.** Absence means the server has
+    none either, which is the answer a client needs to stop asking. Returning
+    thousands of empty strings would be noise measured in megabytes.
+
+    Not filtered to the caller's own recordings, unlike
+    `mobile_untranscribed_encounters`: producing a transcript is an action only
+    the recording clinician should spend effort on, but READING one is
+    ordinary chart access, and a colleague's visit on a shared chart is part of
+    that record. Access is gated per patient exactly as the media proxies are.
+
+    Read-only: no patient stamp, no writes. Stays in
+    StampCoverageSweepTests.GET_ONLY.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    raw = (request.GET.get('ids') or '').strip()
+    if not raw:
+        return JsonResponse({'error': 'ids required'}, status=400)
+    try:
+        ids = [int(part) for part in raw.split(',') if part.strip()]
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'ids must be integers'}, status=400)
+    if not ids:
+        return JsonResponse({'error': 'ids required'}, status=400)
+    # A transcript is ~18 KB, so the cap is about response size, not database
+    # cost. The client batches well below it.
+    if len(ids) > _TRANSCRIPT_BATCH_LIMIT:
+        return JsonResponse(
+            {'error': 'too many ids', 'limit': _TRANSCRIPT_BATCH_LIMIT},
+            status=400,
+        )
+
+    rows = Encounter.objects.filter(id__in=ids).exclude(transcript='')
+    accessible = _accessible_patient_ids(request.user)
+    if accessible is not None:
+        rows = rows.filter(patient_id__in=accessible)
+
+    transcripts = [
+        {'id': enc.id, 'transcript': enc.transcript}
+        for enc in rows.only('id', 'transcript')
+    ]
+    return JsonResponse({'success': True, 'transcripts': transcripts})
+
+
+_TRANSCRIPT_BATCH_LIMIT = 200
 
 
 # ---------- Problem endpoints ----------

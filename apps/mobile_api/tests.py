@@ -5,7 +5,9 @@ this endpoint is the source-of-truth gate for Encounter updates that
 post-date the initial audio-upload POST (notably transcript and
 post-stop note/recorder_status changes).
 """
+import datetime
 import inspect
+import io
 import json
 import logging
 import re
@@ -13,6 +15,11 @@ import sys
 
 from django.test import TestCase, TransactionTestCase, Client
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.db.models.fields.files import FieldFile
+from unittest import mock
+from django.db import transaction
+from django.db.utils import IntegrityError
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -3438,6 +3445,8 @@ class StampCoverageSweepTests(TestCase):
         'mobile_my_tagged_todos',
         'mobile_patient_document_texts',
         'mobile_observation_value_audit',
+        'mobile_untranscribed_encounters',
+        'mobile_encounter_transcripts',
         'get_snomed_to_icd10',
     }
 
@@ -4962,3 +4971,383 @@ class MobileDocumentLabelTests(_RBACTestBase):
         latest = ProblemActivity.objects.filter(problem=None).order_by('-id').first()
         self.assertIsNotNone(latest)
         self.assertIn('Added label: Laboratory', latest.activity)
+
+
+class UntranscribedEncounterAccessTests(_RBACTestBase):
+    """`mobile_untranscribed_encounters` — what it lists, and for whom.
+
+    The filter has two independent halves and both matter: the caller must
+    have RECORDED the visit, and must still have clinical access to the
+    patient. Dropping either half produces a list the client cannot act on
+    (a colleague's visit it may not PATCH; a transferred patient's audio the
+    media proxy 404s), and the pass re-meets those rows on every run.
+    """
+
+    URL = '/api/encounters/untranscribed'
+
+    def _encounter(self, physician, patient, transcript='', audio='e.m4a',
+                   recorder_status=2, starttime=None):
+        enc = Encounter.objects.create(
+            physician=physician,
+            patient=patient,
+            stoptime=timezone.now(),
+            recorder_status=recorder_status,
+            transcript=transcript,
+        )
+        enc.audio = audio
+        if starttime is not None:
+            Encounter.objects.filter(id=enc.id).update(starttime=starttime)
+        enc.save()
+        return enc
+
+    def test_lists_own_untranscribed_encounter_with_audio(self):
+        enc = self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(self.URL)
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body['success'])
+        self.assertEqual(body['total'], 1)
+        self.assertEqual([e['id'] for e in body['encounters']], [enc.id])
+        row = body['encounters'][0]
+        self.assertEqual(row['patient_id'], self.patient.id)
+        self.assertIsNotNone(row['start_time'])
+
+    def test_excludes_an_encounter_that_already_has_a_transcript(self):
+        self._encounter(self.attending, self.patient, transcript='words')
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 0)
+
+    def test_excludes_an_encounter_with_no_audio(self):
+        self._encounter(self.attending, self.patient, audio='')
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 0)
+
+    def test_excludes_an_encounter_still_recording(self):
+        # recorder_status 0 = recording, 1 = paused. Only a stopped visit is
+        # finished enough to transcribe.
+        self._encounter(self.attending, self.patient, recorder_status=0)
+        self._encounter(self.attending, self.patient, recorder_status=1)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 0)
+
+    def test_the_schema_forbids_a_null_transcript(self):
+        """Why the filter is a plain `transcript=''` with no isnull branch.
+
+        The column is NOT NULL, so "" is the only way a row can say
+        "never transcribed". A defensive `Q(transcript__isnull=True)` would
+        be a claim about data that cannot exist.
+        """
+        enc = self._encounter(self.attending, self.patient)
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Encounter.objects.filter(id=enc.id).update(transcript=None)
+
+    def test_does_not_list_a_colleagues_recording(self):
+        # Same patient, recorded by another physician. Visible to this caller
+        # in the chart, but not theirs to transcribe.
+        PatientController.objects.create(
+            patient=self.patient, physician=self.stranger_doc)
+        self._encounter(self.stranger_doc, self.patient)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 0)
+
+    def test_does_not_list_a_patient_the_caller_can_no_longer_see(self):
+        # Recorded by this physician, but the patient has since transferred:
+        # mobile_encounter_audio would 404 the download, so listing it would
+        # hand the pass work it can never finish.
+        enc = self._encounter(self.attending, self.patient)
+        PatientController.objects.filter(
+            patient=self.patient, physician=self.attending).delete()
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL).json()
+        self.assertEqual(body['total'], 0)
+        self.assertNotIn(enc.id, [e['id'] for e in body['encounters']])
+
+    def test_newest_first(self):
+        old = self._encounter(
+            self.attending, self.patient,
+            starttime=timezone.now() - datetime.timedelta(days=30))
+        new = self._encounter(
+            self.attending, self.patient,
+            starttime=timezone.now() - datetime.timedelta(days=1))
+        self.assertTrue(self._login(self.attending))
+        ids = [e['id'] for e in self.client.get(self.URL).json()['encounters']]
+        self.assertEqual(ids, [new.id, old.id])
+
+    def test_total_counts_every_match_not_just_the_page(self):
+        for _ in range(3):
+            self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'limit': 1}).json()
+        self.assertEqual(body['total'], 3)
+        self.assertEqual(len(body['encounters']), 1)
+
+    def test_limit_is_clamped_and_a_bad_limit_is_a_400(self):
+        self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL, {'limit': 0}).status_code, 200)
+        self.assertEqual(self.client.get(self.URL, {'limit': 99999}).status_code, 200)
+        self.assertEqual(
+            self.client.get(self.URL, {'limit': 'lots'}).status_code, 400)
+
+    def test_requires_login_and_rejects_post(self):
+        self.client.logout()
+        self.assertIn(self.client.get(self.URL).status_code, (302, 401, 403))
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.post(self.URL).status_code, 405)
+
+    def test_admin_sees_their_own_recordings_across_patients(self):
+        self._encounter(self.admin_user, self.patient)
+        self._encounter(self.admin_user, self.other_patient)
+        self.assertTrue(self._login(self.admin_user))
+        self.assertEqual(self.client.get(self.URL).json()['total'], 2)
+
+    def test_accessible_patient_ids_agrees_with_the_per_id_gate(self):
+        """The lockstep guard for `_accessible_patient_ids`.
+
+        The set-wise helper exists only so this endpoint can filter a
+        cross-patient queryset in one query instead of one per row. If it ever
+        disagrees with `_assert_patient_access`, this endpoint either leaks a
+        chart or hides one — so the agreement is asserted rather than
+        reviewed, role by role, over every patient in the fixture.
+        """
+        from apps.mobile_api.views import (
+            _accessible_patient_ids, _assert_patient_access,
+        )
+        patients = [self.patient, self.other_patient]
+        users = [
+            self.attending, self.stranger_doc, self.team_nurse,
+            self.stranger_nurse, self.admin_user, self.patient,
+            self.other_patient, self.no_profile,
+        ]
+        for user in users:
+            allowed = _accessible_patient_ids(user)
+            for pt in patients:
+                set_wise = True if allowed is None else pt.id in set(allowed)
+                per_id = _assert_patient_access(user, pt.id)
+                self.assertEqual(
+                    set_wise, per_id,
+                    f'{user.username} vs patient {pt.id}: '
+                    f'set-wise={set_wise} per-id={per_id}',
+                )
+
+
+class EncounterAudioMissingObjectTests(_RBACTestBase):
+    """A row naming an object the bucket does not have answers 404, not 500.
+
+    Field case 2026-09-20: three legacy rows pointed at .mp3 files absent from
+    the bucket. `enc.audio.open()` raised, Django turned it into a 500, and the
+    bulk transcription pass read three consecutive 5xx as a network outage and
+    sat backing off against files no amount of waiting would produce.
+    """
+
+    def _encounter(self, audio='gone/missing.mp3'):
+        enc = Encounter.objects.create(
+            physician=self.attending, patient=self.patient,
+            stoptime=timezone.now(), recorder_status=2,
+        )
+        enc.audio = audio
+        enc.save()
+        return enc
+
+    def test_missing_object_is_404_not_500(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+            FieldFile, 'open', side_effect=FileNotFoundError('File does not exist')
+        ):
+            resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_a_size_failure_is_also_404(self):
+        # `.open()` can succeed lazily and `.size` be the call that raises,
+        # depending on the storage backend — both paths must answer 404.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(FieldFile, 'open', return_value=io.BytesIO(b'x')), \
+             mock.patch.object(
+                 type(enc.audio), 'size',
+                 new_callable=mock.PropertyMock,
+                 side_effect=FileNotFoundError('File does not exist')):
+            resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_an_empty_audio_field_is_still_404(self):
+        enc = self._encounter(audio='')
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_access_gate_still_applies_before_any_storage_call(self):
+        # The uniform-404 privacy rule must not be weakened by the new branch.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
+        self.assertEqual(resp.status_code, 404)
+
+
+class EncounterTranscriptsByIdTests(_RBACTestBase):
+    """`mobile_encounter_transcripts` — filling a Mac's local rows.
+
+    The transcription pass writes only to the server, and the app's per-chart
+    pull would take ~2,000 chart visits to catch up, so this is the route that
+    actually gets the words onto a machine.
+    """
+
+    URL = '/api/encounters/transcripts'
+
+    def _encounter(self, physician, patient, transcript='some words'):
+        enc = Encounter.objects.create(
+            physician=physician, patient=patient,
+            stoptime=timezone.now(), recorder_status=2, transcript=transcript,
+        )
+        return enc
+
+    def test_returns_the_transcript_for_an_accessible_encounter(self):
+        enc = self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertTrue(body['success'])
+        self.assertEqual(body['transcripts'], [{'id': enc.id, 'transcript': 'some words'}])
+
+    def test_an_untranscribed_encounter_is_simply_absent(self):
+        # Absence is the answer a client needs to stop asking. Returning
+        # thousands of empty strings would be megabytes of noise.
+        enc = self._encounter(self.attending, self.patient, transcript='')
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual(body['transcripts'], [])
+
+    def test_a_colleagues_recording_on_a_shared_chart_is_returned(self):
+        # Deliberately unlike mobile_untranscribed_encounters: PRODUCING a
+        # transcript is the recording clinician's job, but READING one is
+        # ordinary chart access.
+        enc = self._encounter(self.stranger_doc, self.patient)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual([r['id'] for r in body['transcripts']], [enc.id])
+
+    def test_an_inaccessible_patients_encounter_is_not_returned(self):
+        enc = self._encounter(self.stranger_doc, self.other_patient)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual(body['transcripts'], [])
+
+    def test_a_mixed_batch_returns_only_what_is_allowed(self):
+        mine = self._encounter(self.attending, self.patient)
+        theirs = self._encounter(self.stranger_doc, self.other_patient)
+        self.assertTrue(self._login(self.attending))
+        ids = '%d,%d' % (mine.id, theirs.id)
+        body = self.client.get(self.URL, {'ids': ids}).json()
+        self.assertEqual([r['id'] for r in body['transcripts']], [mine.id])
+
+    def test_admin_sees_any_patients_transcript(self):
+        enc = self._encounter(self.attending, self.patient)
+        self.assertTrue(self._login(self.admin_user))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual([r['id'] for r in body['transcripts']], [enc.id])
+
+    def test_bad_input(self):
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).status_code, 400)
+        self.assertEqual(self.client.get(self.URL, {'ids': ''}).status_code, 400)
+        self.assertEqual(self.client.get(self.URL, {'ids': 'a,b'}).status_code, 400)
+        over = ','.join(str(n) for n in range(300))
+        self.assertEqual(self.client.get(self.URL, {'ids': over}).status_code, 400)
+
+    def test_requires_login_and_rejects_post(self):
+        self.client.logout()
+        self.assertIn(self.client.get(self.URL, {'ids': '1'}).status_code,
+                      (302, 401, 403))
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.post(self.URL, {'ids': '1'}).status_code, 405)
+
+
+class EncounterAudioLargeFileRedirectTests(_RBACTestBase):
+    """Audio too large for Cloud Run to relay is handed over as a signed URL.
+
+    Cloud Run caps a non-streamed response at 32 MiB and answers 500 when it
+    is exceeded, while Django logs a perfectly good 200 — which is why this
+    went unnoticed until sizes were compared. Measured 2026-09-20: every
+    failing download was >= 32.1 MiB, every succeeding one <= 10.5 MiB, and
+    ~9.8% of the untranscribed backlog is over the line.
+    """
+
+    def _encounter(self):
+        enc = Encounter.objects.create(
+            physician=self.attending, patient=self.patient,
+            stoptime=timezone.now(), recorder_status=2,
+        )
+        enc.audio = 'p/visit.m4a'
+        enc.save()
+        return enc
+
+    def _get(self, enc):
+        return self.client.get('/api/media/encounter/%d/audio' % enc.id)
+
+    def test_a_large_file_redirects_to_a_signed_url(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                return_value=40 * 1024 * 1024), \
+             mock.patch('apps.mobile_api.views._signed_media_url',
+                        return_value='https://storage.example/signed?sig=x') as signer:
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp['Location'], 'https://storage.example/signed?sig=x')
+        self.assertTrue(signer.called)
+
+    def test_a_small_file_is_still_served_directly(self):
+        # The redirect is for what cannot be relayed, not a wholesale change
+        # of how audio is served — 90% of files keep the existing path.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                return_value=5 * 1024 * 1024), \
+             mock.patch.object(FieldFile, 'open', return_value=io.BytesIO(b'abc')), \
+             mock.patch('apps.mobile_api.views._signed_media_url') as signer:
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(signer.called, 'signed a file that did not need it')
+
+    def test_a_signing_failure_falls_back_to_serving_the_bytes(self):
+        # A signing outage must not take the endpoint down; falling through is
+        # exactly the behaviour that existed before the redirect.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                return_value=40 * 1024 * 1024), \
+             mock.patch.object(FieldFile, 'open', return_value=io.BytesIO(b'abc')), \
+             mock.patch('apps.mobile_api.views._signed_media_url', return_value=None):
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_the_access_gate_runs_before_any_redirect(self):
+        # The redirect must never become a way around the PHI gate.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.stranger_doc))
+        with mock.patch('apps.mobile_api.views._signed_media_url',
+                        return_value='https://storage.example/signed') as signer:
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(signer.called, 'signed a URL for a forbidden patient')
+
+    def test_a_missing_object_is_404_even_when_large(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                side_effect=FileNotFoundError('gone')), \
+             mock.patch('apps.mobile_api.views._signed_media_url') as signer:
+            resp = self._get(enc)
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(signer.called)
+
+    def test_the_threshold_sits_below_cloud_runs_cap(self):
+        # Headers count toward Cloud Run's 32 MiB, so the margin is the point.
+        from apps.mobile_api.views import _AUDIO_REDIRECT_THRESHOLD
+        self.assertLess(_AUDIO_REDIRECT_THRESHOLD, 32 * 1024 * 1024)
