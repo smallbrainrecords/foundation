@@ -1626,11 +1626,28 @@ def mobile_encounter_audio(request, encounter_id):
         return JsonResponse({'error': 'No audio file'}, status=404)
 
     mime_type, _ = mimetypes.guess_type(enc.audio.name)
-    response = FileResponse(
-        enc.audio.open('rb'),
-        content_type=mime_type or 'audio/mpeg',
-    )
-    response['Content-Length'] = enc.audio.size
+    # A row can name an object the bucket does not have — legacy rows whose
+    # file was never migrated, or one deleted out from under the record. Both
+    # `.open()` and `.size` raise for those, and letting that become a 500 is
+    # wrong twice over: the file genuinely is NOT FOUND, and a 5xx tells a
+    # client "try again later" about something no amount of later will fix.
+    # The bulk transcription pass proved the cost — it read three such rows as
+    # a network outage and sat backing off against them (2026-09-20).
+    try:
+        handle = enc.audio.open('rb')
+        content_length = enc.audio.size
+    except Exception as exc:
+        logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
+            'event': 'audio_object_missing',
+            'encounter_id': enc.id,
+            'patient_id': enc.patient_id,
+            'audio_name': enc.audio.name,
+            'error': type(exc).__name__,
+        }))
+        return JsonResponse({'error': 'No audio file'}, status=404)
+
+    response = FileResponse(handle, content_type=mime_type or 'audio/mpeg')
+    response['Content-Length'] = content_length
     response['Content-Disposition'] = (
         'inline; filename="%s"' % os.path.basename(enc.audio.name)
     )

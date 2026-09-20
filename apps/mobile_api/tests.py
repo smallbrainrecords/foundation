@@ -7,6 +7,7 @@ post-stop note/recorder_status changes).
 """
 import datetime
 import inspect
+import io
 import json
 import logging
 import re
@@ -15,6 +16,8 @@ import sys
 from django.test import TestCase, TransactionTestCase, Client
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models.fields.files import FieldFile
+from unittest import mock
 from django.db import transaction
 from django.db.utils import IntegrityError
 
@@ -5127,3 +5130,57 @@ class UntranscribedEncounterAccessTests(_RBACTestBase):
                     f'{user.username} vs patient {pt.id}: '
                     f'set-wise={set_wise} per-id={per_id}',
                 )
+
+
+class EncounterAudioMissingObjectTests(_RBACTestBase):
+    """A row naming an object the bucket does not have answers 404, not 500.
+
+    Field case 2026-09-20: three legacy rows pointed at .mp3 files absent from
+    the bucket. `enc.audio.open()` raised, Django turned it into a 500, and the
+    bulk transcription pass read three consecutive 5xx as a network outage and
+    sat backing off against files no amount of waiting would produce.
+    """
+
+    def _encounter(self, audio='gone/missing.mp3'):
+        enc = Encounter.objects.create(
+            physician=self.attending, patient=self.patient,
+            stoptime=timezone.now(), recorder_status=2,
+        )
+        enc.audio = audio
+        enc.save()
+        return enc
+
+    def test_missing_object_is_404_not_500(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+            FieldFile, 'open', side_effect=FileNotFoundError('File does not exist')
+        ):
+            resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_a_size_failure_is_also_404(self):
+        # `.open()` can succeed lazily and `.size` be the call that raises,
+        # depending on the storage backend — both paths must answer 404.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(FieldFile, 'open', return_value=io.BytesIO(b'x')), \
+             mock.patch.object(
+                 type(enc.audio), 'size',
+                 new_callable=mock.PropertyMock,
+                 side_effect=FileNotFoundError('File does not exist')):
+            resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_an_empty_audio_field_is_still_404(self):
+        enc = self._encounter(audio='')
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_access_gate_still_applies_before_any_storage_call(self):
+        # The uniform-404 privacy rule must not be weakened by the new branch.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.get('/api/media/encounter/%d/audio' % enc.id)
+        self.assertEqual(resp.status_code, 404)
