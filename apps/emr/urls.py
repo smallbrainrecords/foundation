@@ -14,9 +14,11 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
-from django.urls import path
-from . import views
 
-urlpatterns = [
-    path('api/snomed/validate/', views.validate_snomed_problem, name='validate_snomed'),
-]
+# Nothing includes this module: project/urls.py never loads apps/emr/urls.py,
+# so a route added here is unreachable (it 404s). Mobile API routes belong in
+# apps/mobile_api/urls.py. The last route here, api/snomed/validate/, 404'd on
+# every call from 2026-05 until it was removed on 2026-09-28; the app now runs
+# that broader/narrower SNOMED check locally.
+
+urlpatterns = []
