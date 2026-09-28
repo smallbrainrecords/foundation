@@ -3376,6 +3376,145 @@ class MobileUnassignedDocumentAssignTextTests(TestCase):
         self.assertEqual(self.doc.extracted_text, 'already extracted')
 
 
+
+class DocumentOriginalFileNameTests(_RBACTestBase):
+    """`Document.original_file_name` (2026-09-28): the name a file arrived
+    under. The storage key is a random uuid and the client's copy of the name
+    is overwritten by the pool poll, so without this column an auto-generated
+    name can never be told apart from the file's own name."""
+
+    PDF_BYTES = b'%PDF-fake-body-for-original-name-tests'
+    ARRIVED_AS = 'Kelly Ryan 2026-09-21 08-47.pdf'
+
+    def _upload(self, url, client_uuid, file_name=ARRIVED_AS, document_name='CBC, CMP'):
+        return self.client.post(url, data={
+            'file': SimpleUploadedFile(file_name, self.PDF_BYTES,
+                                       content_type='application/pdf'),
+            'client_uuid': client_uuid,
+            'document_name': document_name,
+        })
+
+    def _pool_url(self):
+        return f'/api/team/{self.attending.id}/unassigned-document/upload'
+
+    def test_patient_upload_records_original_file_name(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._upload(
+            f'/api/patient/{self.patient.id}/document/upload',
+            'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')
+        self.assertEqual(resp.status_code, 200)
+        doc = Document.objects.get(id=json.loads(resp.content)['id'])
+        self.assertEqual(doc.original_file_name, self.ARRIVED_AS)
+        self.assertEqual(doc.document_name, 'CBC, CMP')
+
+    def test_pool_upload_records_original_file_name(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._upload(self._pool_url(), 'ffffffff-ffff-ffff-ffff-ffffffffffff')
+        self.assertEqual(resp.status_code, 200)
+        doc = Document.objects.get(id=json.loads(resp.content)['id'])
+        self.assertEqual(doc.original_file_name, self.ARRIVED_AS)
+
+    def test_replayed_upload_keeps_the_first_file_name(self):
+        """client_uuid replays are no-ops; the column is written once."""
+        self.assertTrue(self._login(self.attending))
+        uuid = '12121212-1212-1212-1212-121212121212'
+        self._upload(self._pool_url(), uuid)
+        self._upload(self._pool_url(), uuid, file_name='renamed later.pdf')
+        doc = Document.objects.get(client_uuid=uuid)
+        self.assertEqual(doc.original_file_name, self.ARRIVED_AS)
+
+    def test_pool_list_returns_original_file_name(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self._upload(self._pool_url(), '34343434-3434-3434-3434-343434343434')
+        doc_id = json.loads(resp.content)['id']
+        rows = json.loads(
+            self.client.get('/api/team/unassigned-documents/list').content)['documents']
+        row = next(r for r in rows if r['id'] == doc_id)
+        self.assertEqual(row['original_file_name'], self.ARRIVED_AS)
+        # `file_name` stays the storage key — the reason the new key exists.
+        self.assertNotEqual(row['file_name'], self.ARRIVED_AS)
+
+    def test_pool_list_legacy_row_has_no_original_file_name(self):
+        doc = Document.objects.create(
+            document_name='old fax', author=self.attending,
+            patient=None, team=self.attending)
+        self.assertTrue(self._login(self.attending))
+        rows = json.loads(
+            self.client.get('/api/team/unassigned-documents/list').content)['documents']
+        row = next(r for r in rows if r['id'] == doc.id)
+        self.assertIsNone(row['original_file_name'])
+
+
+class MobileUnassignedDocumentAssignRenameAuditTests(TestCase):
+    """A name typed on the unassigned screen reaches the server only through
+    assign. Before 2026-09-28 assign applied it silently, so a person
+    replacing an auto-generated name left no trace; it now writes the same
+    `Renamed document:` row the document-screen rename does."""
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='arename_doc', password='pw12345678')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.patient = User.objects.create_user(
+            username='arename_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+        self.doc = Document.objects.create(
+            document_name='CBC, CMP', author=self.physician,
+            patient=None, team=self.physician)
+        self.client = Client()
+        self.client.login(username='arename_doc', password='pw12345678')
+
+    def _assign(self, **extra):
+        body = {'patient_id': self.patient.id}
+        body.update(extra)
+        return self.client.post(
+            f'/api/team/unassigned-document/{self.doc.id}/assign',
+            data=json.dumps(body), content_type='application/json')
+
+    def _activities(self):
+        return list(ProblemActivity.objects.order_by('id')
+                    .values_list('activity', 'problem_id', 'author_id'))
+
+    def test_new_name_records_a_rename_before_the_add(self):
+        resp = self._assign(document_name='annual labs')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(self._activities(), [
+            ('Renamed document: CBC, CMP -> annual labs', None, self.physician.id),
+            ('Added document: annual labs', None, self.physician.id),
+        ])
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'annual labs')
+
+    def test_unchanged_name_records_no_rename(self):
+        self._assign(document_name='CBC, CMP')
+        self.assertEqual(
+            [a for a, _, _ in self._activities()], ['Added document: CBC, CMP'])
+
+    def test_omitted_name_records_no_rename(self):
+        self._assign()
+        self.assertEqual(
+            [a for a, _, _ in self._activities()], ['Added document: CBC, CMP'])
+
+    def test_blank_previous_name_reads_as_document(self):
+        Document.objects.filter(id=self.doc.id).update(document_name='')
+        self._assign(document_name='echo')
+        self.assertEqual(
+            [a for a, _, _ in self._activities()],
+            ['Renamed document: document -> echo', 'Added document: echo'])
+
+    def test_refused_assign_records_nothing(self):
+        from django.utils import timezone
+        other = User.objects.create_user(username='arename_other', password='x')
+        UserProfile.objects.create(user=other, role='physician')
+        Document.objects.filter(id=self.doc.id).update(
+            claimed_by=other, claimed_at=timezone.now())
+        resp = self._assign(document_name='annual labs')
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(self._activities(), [])
+
+
 class StampCoverageSweepTests(TestCase):
     """Every mutating mobile endpoint must be accounted for in exactly one
     stamp bucket (PLAN_RETIRE_ROSTER_WALK_2026-07.md, Gap A / Step 2).

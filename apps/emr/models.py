@@ -1379,6 +1379,16 @@ class Document(models.Model):
     # re-running without guessing which client build produced them.
     extracted_text_version = models.PositiveSmallIntegerField(null=True, blank=True)
 
+    # The file name the document arrived under, as the uploading client sent
+    # it (2026-09-28). Nothing else keeps it: `set_document_path_uuid` writes
+    # the object under a random key, and the client's own copy of the name is
+    # overwritten by the next pool poll. Without it an auto-generated name
+    # (the client's DocumentAutoNamer, applied before upload) cannot be told
+    # apart from the name the file came in with, on any machine, ever.
+    # Written once at upload and never updated. NULL = uploaded before the
+    # column existed, or by a path that doesn't record it.
+    original_file_name = models.TextField(null=True, blank=True)
+
     class Meta:
         ordering = ['-created_on']
 

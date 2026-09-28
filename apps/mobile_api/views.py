@@ -2161,6 +2161,9 @@ def mobile_upload_document(request, patient_id):
             # In-memory upload size — free, and spares the list serializers
             # a per-row GCS stat later (see _document_file_size).
             'file_size': doc_file.size,
+            # The name the file arrived under — the storage key is a random
+            # uuid, so this is the only copy (see Document.original_file_name).
+            'original_file_name': doc_file.name,
         },
     )
 
@@ -2369,6 +2372,11 @@ def _unassigned_doc_dict(doc):
         'team_id': doc.team_id,
         'document_name': doc.document_name or '',
         'file_name': os.path.basename(doc.document.name) if doc.document else '',
+        # What the file arrived as. `file_name` above is the uuid storage
+        # key, which is why clients showing "was: <original>" under an
+        # auto-named row need this instead. None for rows uploaded before
+        # the column existed.
+        'original_file_name': doc.original_file_name,
         'mime_type': doc.file_mime_type(),
         # Stored column, NOT doc.document.size — the per-row GCS stat made
         # the pool list ~2.3s at ~100 rows. See _document_file_size.
@@ -2428,6 +2436,10 @@ def mobile_upload_unassigned_document(request, team_id):
             # In-memory upload size — free, and spares the pool list a
             # per-row GCS stat later (see _document_file_size).
             'file_size': doc_file.size,
+            # The name the file arrived under. For a pool document this is
+            # what the client's auto-namer replaced, when it named it before
+            # upload (see Document.original_file_name).
+            'original_file_name': doc_file.name,
         },
     )
 
@@ -2580,7 +2592,8 @@ def mobile_unassigned_document_assign(request, document_id):
     document_name?}`. Validates the caller currently holds the claim (or
     that the claim is unheld); validates the caller has access to the
     target patient; UPDATEs the row in place; emits the standard
-    `Added document: <name>` audit on the patient timeline."""
+    `Added document: <name>` audit on the patient timeline, preceded by
+    `Renamed document: <old> -> <new>` when `document_name` changes it."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
@@ -2630,8 +2643,16 @@ def mobile_unassigned_document_assign(request, document_id):
                 'claimed_by_id': doc.claimed_by_id,
             }, status=409)
 
+        # A name typed on the unassigned screen reaches the server only
+        # here — there is no rename endpoint for pool documents — so this is
+        # where it has to be recorded. Before 2026-09-28 it was applied
+        # silently, and a person replacing an auto-generated name left no
+        # trace anywhere; renames on the document screen already did.
         new_name = body.get('document_name')
+        renamed_from = None
         if new_name:
+            if new_name != (doc.document_name or ''):
+                renamed_from = doc.document_name or ''
             doc.document_name = new_name
 
         update_fields = [
@@ -2669,6 +2690,15 @@ def mobile_unassigned_document_assign(request, document_id):
         doc.claimed_at = None
         doc.save(update_fields=update_fields)
 
+        # Same wording as the document-screen rename (mobile_delete_document)
+        # so one query finds every rename, whichever screen it came from.
+        # Emitted BEFORE the add: the rename happened in the pool, and the
+        # timeline should read that way.
+        if renamed_from is not None:
+            _emit_document_audit(
+                doc, request.user,
+                f"Renamed document: {renamed_from or 'document'} -> {doc.document_name}",
+            )
         _emit_document_audit(
             doc, request.user,
             f"Added document: {doc.document_name or 'document'}",
