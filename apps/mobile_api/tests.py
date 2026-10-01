@@ -5490,3 +5490,168 @@ class EncounterAudioLargeFileRedirectTests(_RBACTestBase):
         # Headers count toward Cloud Run's 32 MiB, so the margin is the point.
         from apps.mobile_api.views import _AUDIO_REDIRECT_THRESHOLD
         self.assertLess(_AUDIO_REDIRECT_THRESHOLD, 32 * 1024 * 1024)
+
+
+class UsualVitalsEndpointTests(TestCase):
+    """The endpoints that apply `emr.usual_vitals` (owner decisions 2026-10-01).
+
+    Unit coverage of the rule itself is in emr/tests/test_usual_vitals.py;
+    these pin down where it fires: creating a problem, re-coding one, and a
+    physician's pin that makes a pairing qualify — and what an unpin leaves
+    behind.
+    """
+
+    HTN = '38341003'
+    WEIGHT = '3141-9'
+
+    def setUp(self):
+        from emr.models import ObservationPinOptOut  # noqa: F401 — fail loudly if missing
+        self.physician = self._user('uv_doc', 'physician')
+        self.nurse = self._user('uv_nurse', 'nurse')
+        self.patient = self._user('uv_pt', 'patient')
+        PatientController.objects.create(patient=self.patient, physician=self.physician)
+        PhysicianTeam.objects.create(physician=self.physician, member=self.nurse)
+        self.weight = self._record(self.patient)
+        self._seeded = 0
+        self.client = Client()
+
+    def _user(self, name, role):
+        user = User.objects.create_user(username=name, password='pw')
+        UserProfile.objects.create(user=user, role=role)
+        return user
+
+    def _record(self, patient):
+        observation = Observation.objects.create(subject=patient, name='weight', code=self.WEIGHT)
+        ObservationComponent.objects.create(observation=observation, name='weight', component_code=self.WEIGHT)
+        return observation
+
+    def _seed_physician_pins(self, charts):
+        for _ in range(charts):
+            self._seeded += 1
+            other = self._user(f'uv_seed{self._seeded}', 'patient')
+            problem = Problem.objects.create(patient=other, problem_name='Hypertension', concept_id=self.HTN)
+            ObservationPinToProblem.objects.create(
+                observation=self._record(other), problem=problem, author=self.physician)
+
+    def _login(self, user):
+        self.client.login(username=user.username, password='pw')
+
+    def _create_problem(self, concept_id=HTN):
+        return self.client.post(
+            f'/api/patient/{self.patient.id}/problem',
+            data=json.dumps({'problem_name': 'Hypertension', 'concept_id': concept_id}),
+            content_type='application/json')
+
+    def _pin_url(self, problem):
+        return f'/api/patient/{self.patient.id}/observation/{self.weight.id}/pin/{problem.id}'
+
+    # -- creation ------------------------------------------------------
+
+    def test_creating_a_problem_pins_its_usual_vitals_and_says_so(self):
+        self._seed_physician_pins(3)
+        self._login(self.nurse)
+
+        resp = self._create_problem()
+
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.content)
+        self.assertEqual(body['auto_pinned'], 1)
+        pin = ObservationPinToProblem.objects.get(problem_id=body['id'])
+        self.assertEqual(pin.observation, self.weight)
+        self.assertIsNone(pin.author)
+
+    def test_automatic_pins_do_not_authenticate_a_nurses_problem(self):
+        self._seed_physician_pins(3)
+        self._login(self.nurse)
+
+        body = json.loads(self._create_problem().content)
+
+        self.assertEqual(body['auto_pinned'], 1)
+        self.assertFalse(Problem.objects.get(id=body['id']).authenticated)
+
+    def test_nothing_to_pin_reports_zero(self):
+        self._login(self.physician)
+        body = json.loads(self._create_problem().content)
+        self.assertEqual(body['auto_pinned'], 0)
+        self.assertFalse(ObservationPinToProblem.objects.filter(problem_id=body['id']).exists())
+
+    def test_a_usual_vitals_failure_never_fails_the_create(self):
+        # The create endpoint has no client_uuid: an error here would make the
+        # app retry a create the server already did, minting a duplicate.
+        from unittest import mock
+        self._seed_physician_pins(3)
+        self._login(self.physician)
+        with mock.patch('apps.mobile_api.views.apply_usual_vitals', side_effect=RuntimeError('boom')):
+            resp = self._create_problem()
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.content)
+        self.assertEqual(body['auto_pinned'], 0)
+        self.assertTrue(Problem.objects.filter(id=body['id']).exists())
+
+    # -- re-coding -----------------------------------------------------
+
+    def test_recoding_a_problem_pins_the_new_concepts_vitals(self):
+        self._seed_physician_pins(3)
+        problem = Problem.objects.create(patient=self.patient, problem_name='High BP', concept_id='')
+        self._login(self.physician)
+
+        resp = self.client.patch(
+            f'/api/patient/{self.patient.id}/problem/{problem.id}',
+            data=json.dumps({'concept_id': self.HTN}), content_type='application/json')
+
+        self.assertEqual(json.loads(resp.content)['auto_pinned'], 1)
+        self.assertTrue(ObservationPinToProblem.objects.filter(problem=problem).exists())
+
+    def test_echoing_the_same_concept_pins_nothing(self):
+        # Clients send concept_id on every problem update; that is not a re-code.
+        problem = Problem.objects.create(patient=self.patient, problem_name='Hypertension', concept_id=self.HTN)
+        self._seed_physician_pins(3)
+        self._login(self.physician)
+
+        resp = self.client.patch(
+            f'/api/patient/{self.patient.id}/problem/{problem.id}',
+            data=json.dumps({'concept_id': self.HTN, 'is_controlled': True}), content_type='application/json')
+
+        self.assertEqual(json.loads(resp.content)['auto_pinned'], 0)
+        self.assertFalse(ObservationPinToProblem.objects.filter(problem=problem).exists())
+
+    # -- unpin / re-pin ------------------------------------------------
+
+    def test_an_unpin_is_remembered_and_a_manual_pin_forgets_it(self):
+        from emr.models import ObservationPinOptOut
+        problem = Problem.objects.create(patient=self.patient, problem_name='Hypertension', concept_id=self.HTN)
+        ObservationPinToProblem.objects.create(observation=self.weight, problem=problem)
+        self._login(self.nurse)
+
+        self.client.delete(self._pin_url(problem))
+        self.assertTrue(ObservationPinOptOut.objects.filter(problem=problem, code=self.WEIGHT).exists())
+
+        self.client.post(self._pin_url(problem))
+        self.assertFalse(ObservationPinOptOut.objects.filter(problem=problem).exists())
+
+    # -- the crossing --------------------------------------------------
+
+    def _bystander(self):
+        other = self._user('uv_bystander', 'patient')
+        self._record(other)
+        return Problem.objects.create(patient=other, problem_name='Hypertension', concept_id=self.HTN)
+
+    def test_a_physicians_third_chart_pins_the_vital_everywhere(self):
+        self._seed_physician_pins(2)
+        bystander = self._bystander()
+        problem = Problem.objects.create(patient=self.patient, problem_name='Hypertension', concept_id=self.HTN)
+        self._login(self.physician)
+
+        self.assertEqual(self.client.post(self._pin_url(problem)).status_code, 200)
+
+        self.assertTrue(ObservationPinToProblem.objects.filter(problem=bystander, author=None).exists())
+
+    def test_a_nurses_pin_never_makes_a_pairing_qualify(self):
+        self._seed_physician_pins(2)
+        bystander = self._bystander()
+        problem = Problem.objects.create(patient=self.patient, problem_name='Hypertension', concept_id=self.HTN)
+        self._login(self.nurse)
+
+        self.client.post(self._pin_url(problem))
+
+        self.assertFalse(ObservationPinToProblem.objects.filter(problem=bystander).exists())

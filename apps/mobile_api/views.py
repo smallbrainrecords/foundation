@@ -38,6 +38,12 @@ from emr.problem_authentication import (
     apply_problem_authentication,
     is_attesting_actor,
 )
+from emr.usual_vitals import (
+    apply_usual_vitals,
+    clear_opt_out,
+    propagate_if_newly_qualified,
+    record_opt_out,
+)
 from problems_app.operations import add_problem_activity
 from todo_app.operations import add_todo_activity
 
@@ -3595,11 +3601,41 @@ def _yesno_status(value, on_label, off_label):
     return on_label if value else off_label
 
 
+_USUAL_VITALS_LOGGER = logging.getLogger('smallbrain.usual_vitals')
+
+
+def _role_of(user):
+    try:
+        return user.profile.role
+    except (UserProfile.DoesNotExist, AttributeError):
+        return None
+
+
+def _apply_usual_vitals_safely(problem):
+    """Pin the problem's usual vitals (`emr.usual_vitals`); returns how many.
+
+    Best-effort by contract. It runs after the problem write has already
+    succeeded, and the create endpoint has no client_uuid: an error escaping
+    here would make the app retry a create the server already did and mint a
+    duplicate problem. A failure costs the pins, never the problem.
+    """
+    try:
+        return len(apply_usual_vitals(problem).pinned)
+    except Exception:
+        _USUAL_VITALS_LOGGER.exception('usual vitals failed for problem %s', problem.id)
+        return 0
+
+
 @csrf_exempt
 @login_required
 @touches_patient_stamp
 def mobile_create_problem(request, patient_id):
-    """POST {problem_name, concept_id?, icd10_code?, is_active?, is_controlled?} -> create Problem."""
+    """POST {problem_name, concept_id?, icd10_code?, is_active?, is_controlled?} -> create Problem.
+
+    Responds {success, id, auto_pinned}: `auto_pinned` counts the usual vitals
+    pinned on creation, so the app knows to pull the chart's vitals now rather
+    than at its next poll.
+    """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
     try:
@@ -3656,7 +3692,8 @@ def mobile_create_problem(request, patient_id):
     )
     problem.save()
     add_problem_activity(problem, request.user, f"Added problem: {problem_name}")
-    return JsonResponse({'success': True, 'id': problem.id})
+    auto_pinned = _apply_usual_vitals_safely(problem)
+    return JsonResponse({'success': True, 'id': problem.id, 'auto_pinned': auto_pinned})
 
 
 @csrf_exempt
@@ -3682,6 +3719,7 @@ def mobile_update_problem(request, patient_id, problem_id):
     old_problem_name = problem.problem_name
     old_is_active = problem.is_active
     old_is_controlled = problem.is_controlled
+    old_concept_id = (problem.concept_id or '').strip()
 
     from emr.models import SnomedIcd10Map
     from emr.retired_concepts import SnomedRetiredConcept
@@ -3770,7 +3808,15 @@ def mobile_update_problem(request, patient_id, problem_id):
     # flag. No activity row for the derived flip — only the manual chip
     # writes one.
     apply_problem_authentication(request, problem)
-    return JsonResponse({'success': True})
+
+    # A re-coded problem is, for its vitals, a new problem: pin what the new
+    # concept usually carries. Compared after the guards above, so a stale
+    # client echoing the concept it already had changes nothing here.
+    auto_pinned = 0
+    new_concept_id = (problem.concept_id or '').strip()
+    if new_concept_id and new_concept_id != old_concept_id:
+        auto_pinned = _apply_usual_vitals_safely(problem)
+    return JsonResponse({'success': True, 'auto_pinned': auto_pinned})
 
 
 # ---------- Problem Note endpoints ----------
@@ -4843,6 +4889,9 @@ def mobile_observation_pin(request, patient_id, observation_id, problem_id):
                 problem, request.user,
                 f"Unpinned {observation.name or 'observation'}"
             )
+        # Even on a retry that finds nothing to delete: the intent is the same,
+        # and without this the usual-vitals rule would put the pin back.
+        record_opt_out(problem, observation, request.user)
         apply_problem_authentication(request, problem)
         return JsonResponse({'success': True})
 
@@ -4859,6 +4908,14 @@ def mobile_observation_pin(request, patient_id, observation_id, problem_id):
             problem, request.user,
             f"Pinned {observation.name or 'observation'} to this problem"
         )
+    clear_opt_out(problem, observation)
+    if created and _role_of(request.user) == 'physician':
+        # A physician's pin may be the third chart that makes this pairing a
+        # usual one; if so every chart with the problem gets it now.
+        try:
+            propagate_if_newly_qualified(pin)
+        except Exception:
+            _USUAL_VITALS_LOGGER.exception('usual vitals propagation failed for pin %s', pin.id)
     # The PIN is a direct child of the problem. Writing the observation or
     # its values is not — that is a chart-level write, not a problem one.
     apply_problem_authentication(request, problem)
