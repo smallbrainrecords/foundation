@@ -927,6 +927,26 @@ class ObservationPinToProblem(models.Model):
     problem = models.ForeignKey(Problem, null=True, blank=True, related_name='pin_problems', on_delete=models.SET_NULL)
 
 
+class ObservationPinOptOut(models.Model):
+    """A vital someone deliberately unpinned from one problem.
+
+    `emr.usual_vitals` pins a problem's usual vitals automatically; without
+    this row it would put back a pin a clinician had just taken off. Keyed by
+    LOINC code rather than by observation, so the opt-out survives the
+    chart's record being merged or recreated. Written by the unpin endpoint,
+    cleared when someone pins that vital to the problem again by hand.
+    """
+    problem = models.ForeignKey(Problem, related_name='pin_opt_outs', on_delete=models.CASCADE)
+    code = models.CharField(max_length=10)
+    author = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['problem', 'code'], name='uniq_pin_opt_out_problem_code'),
+        ]
+
+
 class Country(models.Model):
     iso3 = models.CharField(max_length=3)
     iso_num = models.CharField(max_length=3)
