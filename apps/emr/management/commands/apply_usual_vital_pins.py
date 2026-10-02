@@ -54,7 +54,7 @@ class Command(BaseCommand):
                     ObservationPinOptOut.objects.get_or_create(problem_id=problem_id, code=code)
 
         cache = _Cache()
-        pinned, created, opted_out, untracked = Counter(), Counter(), Counter(), Counter()
+        pinned, created, coded, opted_out, untracked = Counter(), Counter(), Counter(), Counter(), Counter()
         problems_changed, charts_changed = 0, set()
         for problem in Problem.objects.filter(concept_id__in=list(rules)).order_by('id').iterator():
             concept = (problem.concept_id or '').strip()
@@ -68,6 +68,7 @@ class Command(BaseCommand):
             for name in outcome.pinned:
                 pinned[(concept, name)] += 1
             created.update(outcome.created)
+            coded.update(outcome.coded)
             opted_out.update(outcome.opted_out)
             untracked.update(outcome.untracked)
             if outcome.pinned:
@@ -78,6 +79,8 @@ class Command(BaseCommand):
             self._say('pinned', concept, name, n)
         for name, n in created.most_common():
             self._say('records_created', name, n)
+        for name, n in coded.most_common():
+            self._say('uncoded_records_given_code', name, n)
         for code, n in opted_out.most_common():
             self._say('skipped_opted_out', code, n)
         for code, n in untracked.most_common():
