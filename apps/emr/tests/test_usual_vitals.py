@@ -16,7 +16,7 @@ from emr.models import (
     ObservationUnit, Problem, ProblemActivity, UserProfile,
 )
 from emr.usual_vitals import (
-    apply_usual_vitals, propagate_if_newly_qualified, qualifying_codes,
+    _Cache, apply_usual_vitals, propagate_if_newly_qualified, qualifying_codes,
     qualifying_codes_by_concept,
 )
 
@@ -250,6 +250,64 @@ class MissingRecordTests(UsualVitalsTestBase):
         self.assertEqual(Observation.objects.get(subject=newcomer, code='2345-7').name, 'Glucose')
 
 
+    def test_a_record_with_no_code_is_the_charts_record(self):
+        # Prod 2026-10-01: one chart tracked glucose in a record that never got
+        # a LOINC code, and the backfill would have minted a second "Glucose".
+        self.seed_pairing(DM2, '2345-7', 'Glucose', charts=3, unit='mg/dL')
+        patient = self.patient()
+        legacy = Observation.objects.create(subject=patient, name='glucose', code='')
+        problem = self.problem(patient, DM2)
+
+        outcome = apply_usual_vitals(problem)
+
+        self.assertEqual(outcome.created, [])
+        self.assertEqual(outcome.coded, ['glucose'])
+        self.assertEqual(Observation.objects.filter(subject=patient).count(), 1)
+        legacy.refresh_from_db()
+        self.assertEqual(legacy.code, '2345-7')
+        self.assertTrue(ObservationPinToProblem.objects.filter(problem=problem, observation=legacy).exists())
+
+    def test_an_uncoded_record_already_pinned_is_left_alone(self):
+        self.seed_pairing(DM2, '2345-7', 'Glucose', charts=3)
+        patient = self.patient()
+        legacy = Observation.objects.create(subject=patient, name='Glucose', code=None)
+        problem = self.problem(patient, DM2)
+        self.pin(legacy, problem, self.nurse)
+
+        self.assertEqual(apply_usual_vitals(problem).pinned, [])
+        self.assertEqual(ObservationPinToProblem.objects.filter(problem=problem).count(), 1)
+        self.assertEqual(Observation.objects.filter(subject=patient).count(), 1)
+
+    def test_an_uncoded_record_of_another_vital_is_not_taken(self):
+        self.seed_pairing(DM2, '2345-7', 'Glucose', charts=3)
+        patient = self.patient()
+        Observation.objects.create(subject=patient, name='Weight', code='')
+        problem = self.problem(patient, DM2)
+
+        outcome = apply_usual_vitals(problem)
+
+        self.assertEqual(outcome.coded, [])
+        self.assertEqual(outcome.created, ['Glucose'])
+
+    def test_a_dry_run_counts_a_new_record_once_per_chart(self):
+        # Prod's first dry run reported 150 new records where 118 would be
+        # made: a chart with two qualifying problems was counted per problem.
+        self.seed_pairing(DM2, A1C, 'a1c', charts=3)
+        patient = self.patient()
+        first, second = self.problem(patient, DM2), self.problem(patient, DM2)
+
+        cache = _Cache()
+        outcomes = [apply_usual_vitals(p, dry_run=True, cache=cache) for p in (first, second)]
+        self.assertEqual([o.created for o in outcomes], [['a1c'], []])
+        self.assertEqual([o.pinned for o in outcomes], [['a1c'], ['a1c']])
+
+        # The real run agrees: one record, two pins.
+        for p in (first, second):
+            apply_usual_vitals(p, cache=_Cache())
+        self.assertEqual(Observation.objects.filter(subject=patient, code=A1C).count(), 1)
+        self.assertEqual(ObservationPinToProblem.objects.filter(problem__in=[first, second]).count(), 2)
+
+
 class PropagationTests(UsualVitalsTestBase):
 
     def test_the_pin_that_makes_a_pairing_qualify_reaches_every_chart(self):
@@ -338,3 +396,19 @@ class BackfillCommandTests(UsualVitalsTestBase):
         self.run_command('--apply')
 
         self.assertFalse(ObservationPinOptOut.objects.filter(problem=self.problem_a).exists())
+
+    def test_an_uncoded_record_is_reported_and_coded_not_duplicated(self):
+        other = self.patient()
+        legacy = Observation.objects.create(subject=other, name='weight', code='')
+        self.problem(other, HTN)
+
+        dry = self.run_command()
+        self.assertIn('RPT|uncoded_records_given_code\tweight\t1', dry)
+        self.assertNotIn('RPT|records_created', dry)
+        legacy.refresh_from_db()
+        self.assertEqual(legacy.code, '', 'a dry run writes nothing')
+
+        self.run_command('--apply')
+        legacy.refresh_from_db()
+        self.assertEqual(legacy.code, WEIGHT)
+        self.assertEqual(Observation.objects.filter(subject=other).count(), 1)

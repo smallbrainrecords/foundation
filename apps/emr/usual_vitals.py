@@ -24,7 +24,9 @@ Owner decisions, 2026-10-01 — change these deliberately, not by drift:
   that problem track it** (at least half; diabetes -> A1C and glucose sit near
   92%). Otherwise that vital is skipped. Records are only created for ACTIVE
   problems — an empty A1C tile on a chart whose diabetes was resolved years
-  ago is noise.
+  ago is noise. A legacy record of the vital that never got a code (matched
+  by a name the coded records use) IS the chart's record: it gets the code
+  and the pin, never a twin beside it.
 * **Never automatically: INR** (owner: "don't include the INR automatically" —
   only warfarin patients have one, and the legacy web attached an INR-clinic
   record to an INR pin) **and PHQ-2** (retired from the product 2026-06-14).
@@ -49,7 +51,7 @@ from dataclasses import dataclass, field
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from emr.models import (
     Observation, ObservationComponent, ObservationPinOptOut,
@@ -114,9 +116,17 @@ class _Template:
 class _Cache:
     """Per-run memo. A pairing can be applied to hundreds of charts in one
     request or one backfill; the share and the template don't change between
-    them."""
+    them.
+
+    `planned` exists for dry runs only: {(patient_id, code): name} for the
+    records a dry run would have created, so the same chart's next problem is
+    counted as pinning that record rather than creating a second. Without it
+    the 2026-10-01 dry run reported 150 new records where 118 would be made.
+    """
     shares: dict = field(default_factory=dict)
     templates: dict = field(default_factory=dict)
+    names: dict = field(default_factory=dict)
+    planned: dict = field(default_factory=dict)
 
 
 def tracked_share(concept_id, code, cache=None):
@@ -176,6 +186,43 @@ def _template(code, cache=None):
     return template
 
 
+def _names_for(code, cache=None):
+    """Every name the practice's coded records of this vital go by, lowercased:
+    how a legacy record with no code is recognised as the same vital."""
+    if cache is not None and code in cache.names:
+        return cache.names[code]
+    names = {
+        _clean(name).lower()
+        for name in (
+            Observation.objects.filter(code=code)
+            .exclude(name__isnull=True).exclude(name='')
+            .values_list('name', flat=True).distinct()
+        )
+    }
+    names.discard('')
+    if cache is not None:
+        cache.names[code] = names
+    return names
+
+
+def _codeless_record(patient_id, code, cache=None):
+    """The chart's record of this vital that never got a code, matched by a name
+    the vital's coded records use. Minting a coded record beside it would give
+    the chart two tiles of one vital — the 2026-10-01 dry run found one chart
+    with an uncoded "Glucose" that the backfill would have duplicated.
+    `mobile_create_observation` resolves the same shape the same way: it heals
+    the code onto the legacy row."""
+    names = _names_for(code, cache)
+    if not names:
+        return None
+    candidates = (
+        Observation.objects.filter(subject_id=patient_id)
+        .filter(Q(code__isnull=True) | Q(code=''))
+        .order_by('id')
+    )
+    return next((obs for obs in candidates if _clean(obs.name).lower() in names), None)
+
+
 def _create_record(patient_id, code, template):
     observation = Observation.objects.create(
         subject_id=patient_id,
@@ -197,6 +244,7 @@ def _create_record(patient_id, code, template):
 class Outcome:
     pinned: list = field(default_factory=list)     # names of the vitals pinned
     created: list = field(default_factory=list)    # names of records created to pin
+    coded: list = field(default_factory=list)      # names of uncoded legacy records given the code
     opted_out: list = field(default_factory=list)  # codes someone had unpinned here
     untracked: list = field(default_factory=list)  # codes with no record, too uncommon to create
 
@@ -244,18 +292,37 @@ def apply_usual_vitals(problem, *, codes=None, dry_run=False, cache=None, also_o
                 .order_by('id').first()
             )
             if observation is None:
+                legacy = _codeless_record(problem.patient_id, code, cache)
+                if legacy is not None:
+                    if ObservationPinToProblem.objects.filter(problem=problem, observation=legacy).exists():
+                        continue  # already pinned, through the record that had no code
+                    if not dry_run:
+                        legacy.code = code
+                        legacy.save(update_fields=['code'])
+                    outcome.coded.append(legacy.name or code)
+                    observation = legacy
+
+            planned_key = (problem.patient_id, code)
+            if observation is not None:
+                name = observation.name or code
+            elif dry_run and cache is not None and planned_key in cache.planned:
+                # This dry run already "created" it for another of the chart's
+                # problems; the real run would find that record and pin it.
+                name = cache.planned[planned_key]
+            else:
                 template = None
                 if problem.is_active and tracked_share(concept, code, cache) >= CREATE_RECORD_MIN_SHARE:
                     template = _template(code, cache)
                 if template is None:
                     outcome.untracked.append(code)
                     continue
-                if not dry_run:
+                if dry_run:
+                    if cache is not None:
+                        cache.planned[planned_key] = template.name
+                else:
                     observation = _create_record(problem.patient_id, code, template)
                 outcome.created.append(template.name)
                 name = template.name
-            else:
-                name = observation.name or code
             if not dry_run:
                 ObservationPinToProblem.objects.create(observation=observation, problem=problem, author=None)
             outcome.pinned.append(name)
