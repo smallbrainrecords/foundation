@@ -5655,3 +5655,167 @@ class UsualVitalsEndpointTests(TestCase):
         self.client.post(self._pin_url(problem))
 
         self.assertFalse(ObservationPinToProblem.objects.filter(problem=bystander).exists())
+
+
+class MobilePatientFullTodoPrefetchTests(TestCase):
+    """mobile_patient_full sends the todos block on EVERY call, whatever
+    `sections` asks for, and it used to run three queries per todo — tagged
+    members, labels, comments. A week of production requests fit ~2.9 ms per
+    query, so a chart with 229 todos spent about two seconds here on every
+    pull, including the Encounters tab's first open (2026-10-06).
+
+    The block now prefetches the three child collections. These tests pin the
+    two things that change must never trade away: the query count does not
+    grow with the chart, and the JSON a client receives is what it was.
+    """
+
+    def setUp(self):
+        from emr.models import ToDoComment
+        self.ToDoComment = ToDoComment
+        self.physician = User.objects.create_user(
+            username='pf_doc', password='pw12345678',
+            first_name='Pat', last_name='Physician')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        self.nurse = User.objects.create_user(
+            username='pf_nurse', password='unused',
+            first_name='Nan', last_name='Nurse')
+        UserProfile.objects.create(user=self.nurse, role='nurse')
+        self.patient = User.objects.create_user(
+            username='pf_pt', password='unused')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(
+            physician=self.physician, patient=self.patient)
+        self.label_a = Label.objects.create(name='Imaging', css_class='todo-label-blue')
+        self.label_b = Label.objects.create(name='Labs', css_class='todo-label-red')
+        self.client = Client()
+        self.client.login(username='pf_doc', password='pw12345678')
+        self._clock = timezone.now() - datetime.timedelta(days=30)
+
+    def _todo(self, text, patient=None, order=0):
+        return ToDo.objects.create(
+            todo=text, patient=patient or self.patient,
+            user=self.physician, order=order)
+
+    def _comment(self, todo, text, at=None):
+        """ToDoComment.datetime is auto_now, so the timestamp is set with an
+        UPDATE — the only way to give a test comment a chosen time."""
+        c = self.ToDoComment.objects.create(todo=todo, user=self.nurse, comment=text)
+        if at is None:
+            self._clock += datetime.timedelta(minutes=1)
+            at = self._clock
+        self.ToDoComment.objects.filter(id=c.id).update(datetime=at)
+        return c
+
+    def _populated_todo(self, i):
+        t = self._todo(f'order {i}', order=i)
+        TaggedToDoOrder.objects.create(todo=t, user=self.nurse, order=0)
+        t.labels.add(self.label_a)
+        self._comment(t, f'first on {i}')
+        self._comment(t, f'second on {i}')
+        return t
+
+    def _get(self, sections='todos'):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        url = f'/api/patient/{self.patient.id}/full'
+        if sections:
+            url += f'?sections={sections}'
+        with CaptureQueriesContext(connection) as ctx:
+            resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        return resp.json(), len(ctx.captured_queries)
+
+    def test_query_count_does_not_grow_with_the_number_of_todos(self):
+        for i in range(2):
+            self._populated_todo(i)
+        _, with_two = self._get()
+        for i in range(2, 12):
+            self._populated_todo(i)
+        body, with_twelve = self._get()
+
+        self.assertEqual(len(body['todos']), 12)
+        self.assertEqual(
+            with_two, with_twelve,
+            'the todos block must cost the same number of queries for 2 todos '
+            'as for 12 — a difference means a per-todo query is back '
+            '(a .filter()/.order_by() on a related manager inside the loop '
+            'bypasses the prefetch)')
+
+    def test_query_count_is_flat_on_the_encounters_section_too(self):
+        """The Encounters tab asks for sections=encounters and still gets the
+        whole todos block — that request is where the cost was felt."""
+        self._populated_todo(0)
+        _, with_one = self._get('encounters')
+        for i in range(1, 9):
+            self._populated_todo(i)
+        _, with_nine = self._get('encounters')
+        self.assertEqual(with_one, with_nine)
+
+    def test_children_arrive_complete_and_in_the_order_clients_have_always_seen(self):
+        t = self._todo('echocardiogram')
+        first_tag = TaggedToDoOrder.objects.create(todo=t, user=self.nurse, order=5)
+        second_tag = TaggedToDoOrder.objects.create(todo=t, user=self.physician, order=1)
+        t.labels.add(self.label_a, self.label_b)
+        base = timezone.now() - datetime.timedelta(days=2)
+        oldest = self._comment(t, 'oldest', at=base)
+        # Two comments saved in the same second: newest-first cannot order
+        # them, and the serializer has always returned such a pair id-ascending.
+        tie_low = self._comment(t, 'tie, lower id', at=base + datetime.timedelta(hours=1))
+        tie_high = self._comment(t, 'tie, higher id', at=base + datetime.timedelta(hours=1))
+        newest = self._comment(t, 'newest', at=base + datetime.timedelta(hours=2))
+
+        body, _ = self._get()
+        todo = next(x for x in body['todos'] if x['id'] == t.id)
+
+        self.assertEqual(
+            [c['id'] for c in todo['comments']],
+            [newest.id, tie_low.id, tie_high.id, oldest.id])
+        self.assertEqual(todo['comments'][0]['comment'], 'newest')
+        self.assertEqual(todo['comments'][0]['user_id'], self.nurse.id)
+        self.assertEqual(todo['comments'][0]['user_name'], 'Nan Nurse')
+
+        self.assertEqual([m['id'] for m in todo['members']], [first_tag.id, second_tag.id])
+        nurse_row = todo['members'][0]
+        self.assertEqual(nurse_row['user_id'], self.nurse.id)
+        self.assertEqual(nurse_row['username'], 'pf_nurse')
+        self.assertEqual(nurse_row['user_name'], 'Nan Nurse')
+        self.assertEqual(nurse_row['role'], 'nurse')
+        self.assertEqual(todo['members'][1]['role'], 'physician')
+
+        self.assertEqual(
+            sorted((lbl['id'], lbl['name'], lbl['css_class']) for lbl in todo['labels']),
+            sorted([(self.label_a.id, 'Imaging', 'todo-label-blue'),
+                    (self.label_b.id, 'Labs', 'todo-label-red')]))
+
+    def test_a_todo_with_no_children_gets_empty_lists_not_missing_keys(self):
+        t = self._todo('bare order')
+        body, _ = self._get()
+        todo = next(x for x in body['todos'] if x['id'] == t.id)
+        self.assertEqual(todo['members'], [])
+        self.assertEqual(todo['labels'], [])
+        self.assertEqual(todo['comments'], [])
+
+    def test_children_stay_with_their_own_todo_and_their_own_chart(self):
+        """A prefetch fetches children for many parents in one query and
+        hands them out by foreign key — the failure to guard against is a
+        child attached to the wrong parent."""
+        mine_a = self._populated_todo(0)
+        mine_b = self._todo('second order', order=1)
+        self._comment(mine_b, 'only on b')
+        other_patient = User.objects.create_user(username='pf_other', password='unused')
+        UserProfile.objects.create(user=other_patient, role='patient')
+        PatientController.objects.create(physician=self.physician, patient=other_patient)
+        theirs = self._todo('someone else', patient=other_patient)
+        self._comment(theirs, 'must not appear on this chart')
+        TaggedToDoOrder.objects.create(todo=theirs, user=self.physician, order=0)
+
+        body, _ = self._get()
+        by_id = {x['id']: x for x in body['todos']}
+
+        self.assertEqual(set(by_id), {mine_a.id, mine_b.id})
+        self.assertEqual([c['comment'] for c in by_id[mine_b.id]['comments']], ['only on b'])
+        self.assertEqual(by_id[mine_b.id]['members'], [])
+        self.assertEqual(
+            [c['comment'] for c in by_id[mine_a.id]['comments']],
+            ['second on 0', 'first on 0'])
+        self.assertNotIn('must not appear on this chart', json.dumps(body))
