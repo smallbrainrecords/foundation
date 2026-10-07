@@ -77,13 +77,28 @@ def file_fingerprint(rows):
     return fingerprint((c, code, g, p) for c, g, p, code, _ in rows)
 
 
-def table_fingerprint():
+def table_fingerprint(table=None):
+    """The fingerprint of the map table (or of `table`, a staging copy).
+
+    On MySQL the database computes it: `CRC32()` there is the same CRC-32 as
+    `zlib.crc32`, and one aggregate row is far cheaper than streaming every map
+    row to the job on production's small instance.
+    """
+    from django.db import connection
     from emr.models import SnomedIcd10Map
-    return fingerprint(
-        SnomedIcd10Map.objects
-        .values_list('snomed_concept_id', 'icd10_code', 'map_group', 'map_priority')
-        .iterator(chunk_size=20000)
-    )
+
+    table = table or SnomedIcd10Map._meta.db_table
+    with connection.cursor() as cursor:
+        name = connection.ops.quote_name(table)
+        if connection.vendor == 'mysql':
+            cursor.execute(
+                "SELECT COUNT(*), COALESCE(SUM(CRC32(CONCAT_WS('#', snomed_concept_id, "
+                f"icd10_code, map_group, map_priority))), 0) FROM {name}"
+            )
+            count, total = cursor.fetchone()
+            return int(count), int(total)
+        cursor.execute(f'SELECT snomed_concept_id, icd10_code, map_group, map_priority FROM {name}')
+        return fingerprint(iter(cursor.fetchone, None))
 
 
 def table_matches_bundled_map(path=None):

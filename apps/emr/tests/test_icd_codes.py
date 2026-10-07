@@ -21,13 +21,15 @@ from unittest import mock
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.db import IntegrityError, connection
+from django.test import TestCase, TransactionTestCase
 
 from emr import icd_codes
 from emr.icd_codes import (
     assignable_icd10_for, explain_assignable, is_billable, is_legacy_pick,
     placeholder_pick_for, resolve_incoming_icd,
 )
+from emr.icd_map import table_fingerprint
 from emr.management.commands.repair_icd10_codes import classify
 from emr.models import PatientMutationStamp, Problem, SnomedIcd10Map, UserProfile
 from emr.tests.icd_fixtures import (
@@ -152,7 +154,30 @@ class IcdRuleTests(IcdFixtureMixin, TestCase):
             resolve_incoming_icd(CHOL, '', current='E78.00')
 
 
-class LoadIcd10MapTests(IcdFixtureMixin, TestCase):
+class LoadIcd10MapTests(IcdFixtureMixin, TransactionTestCase):
+    """`load_icd10_map`. A TransactionTestCase because on MySQL the command
+    swaps tables with DDL, which commits implicitly and would break out of a
+    TestCase's wrapping transaction."""
+
+    LIVE = SnomedIcd10Map._meta.db_table
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(self.drop_side_tables)
+
+    def drop_side_tables(self):
+        with connection.cursor() as cursor:
+            cursor.execute(f'DROP TABLE IF EXISTS {self.LIVE}_new')
+            cursor.execute(f'DROP TABLE IF EXISTS {self.LIVE}_previous')
+
+    def table_exists(self, name):
+        return name in connection.introspection.table_names()
+
+    def codes_in(self, table):
+        with connection.cursor() as cursor:
+            cursor.execute(f'SELECT icd10_code FROM {table} ORDER BY icd10_code')
+            return [row[0] for row in cursor.fetchall()]
+
     def run_loader(self, *args, **kwargs):
         out = StringIO()
         kwargs.setdefault('mapfile', self.map_file)
@@ -170,6 +195,7 @@ class LoadIcd10MapTests(IcdFixtureMixin, TestCase):
         output = self.run_loader()
         self.assertIn('Dry run', output)
         self.assertEqual(SnomedIcd10Map.objects.count(), 1)
+        self.assertFalse(self.table_exists(f'{self.LIVE}_new'))
 
     def test_apply_replaces_the_table_rather_than_adding_to_it(self):
         # The defect: the old command appended with ignore_conflicts, so a
@@ -180,6 +206,37 @@ class LoadIcd10MapTests(IcdFixtureMixin, TestCase):
         self.assertEqual(SnomedIcd10Map.objects.count(), len(MAP_ROWS))
         self.assertFalse(SnomedIcd10Map.objects.filter(icd10_code='R05').exists())
         self.assertEqual(SnomedIcd10Map.best_icd10_for(COUGH), 'R05.9')
+        self.assertEqual(SnomedIcd10Map.best_icd10_for(HTN), 'I10')
+
+    def test_the_replaced_table_is_kept_until_the_next_reload(self):
+        # Undoing a bad load is a rename back, not a restore from a dump.
+        self.stale_row()
+        self.run_loader(apply=True)
+        self.assertEqual(self.codes_in(f'{self.LIVE}_previous'), ['R05'])
+        self.assertFalse(self.table_exists(f'{self.LIVE}_new'))
+
+        smaller = self._write('smaller.tsv', bundled_map_text(MAP_ROWS[:3]))
+        self.run_loader(mapfile=smaller, apply=True)
+        self.assertEqual(SnomedIcd10Map.objects.count(), 3)
+        self.assertEqual(len(self.codes_in(f'{self.LIVE}_previous')), len(MAP_ROWS))
+
+    def test_the_new_table_keeps_the_schema_the_model_expects(self):
+        # The live table is now a `LIKE` copy; the unique key must have come
+        # with it or a later append could reintroduce duplicate rows.
+        self.run_loader(apply=True)
+        with self.assertRaises(IntegrityError):
+            SnomedIcd10Map.objects.create(
+                snomed_concept_id=COUGH, map_group=1, map_priority=1, icd10_code='R05.9', map_advice='x')
+
+    def test_a_staging_table_left_by_a_dead_run_is_rebuilt(self):
+        with connection.cursor() as cursor:
+            cursor.execute(f'CREATE TABLE {self.LIVE}_new LIKE {self.LIVE}')
+            cursor.execute(
+                f"INSERT INTO {self.LIVE}_new (snomed_concept_id, icd10_code, map_advice, map_group, map_priority) "
+                "VALUES ('1', 'JUNK', 'x', 1, 1)")
+        self.run_loader(apply=True)
+        self.assertEqual(SnomedIcd10Map.objects.count(), len(MAP_ROWS))
+        self.assertFalse(SnomedIcd10Map.objects.filter(icd10_code='JUNK').exists())
 
     def test_a_second_run_has_nothing_to_do(self):
         self.run_loader(apply=True)
@@ -219,19 +276,28 @@ class LoadIcd10MapTests(IcdFixtureMixin, TestCase):
                 self.run_loader(apply=True)
         icd_codes.clear_caches()
 
-    def test_a_failed_replace_leaves_the_old_table(self):
+    def test_a_staging_table_that_does_not_match_is_never_swapped_in(self):
         stale = self.stale_row()
-        real = __import__('emr.icd_map', fromlist=['table_fingerprint']).table_fingerprint
-        calls = []
+        from emr import icd_map
+        real = icd_map.table_fingerprint
 
-        def flaky():
-            calls.append(1)
-            return real() if len(calls) == 1 else (0, 0)
+        def wrong_for_staging(table=None):
+            return (0, 0) if table else real()
 
-        with mock.patch('emr.management.commands.load_icd10_map.table_fingerprint', side_effect=flaky):
-            with self.assertRaisesMessage(CommandError, 'rolled back'):
+        with mock.patch('emr.management.commands.load_icd10_map.table_fingerprint', side_effect=wrong_for_staging):
+            with self.assertRaisesMessage(CommandError, 'live table was not touched'):
                 self.run_loader(apply=True)
         self.assertEqual(list(SnomedIcd10Map.objects.values_list('id', flat=True)), [stale.id])
+        self.assertFalse(self.table_exists(f'{self.LIVE}_new'))
+        self.assertFalse(self.table_exists(f'{self.LIVE}_previous'))
+
+    def test_the_database_and_python_fingerprints_agree(self):
+        # The loader compares a checksum MySQL computed with one Python
+        # computed from the file. If the two ever disagreed on the same rows,
+        # every load would be refused — or, worse, a wrong one accepted.
+        from emr.icd_map import file_fingerprint, read_bundled_map
+        self.load_map_rows()
+        self.assertEqual(table_fingerprint(), file_fingerprint(read_bundled_map(self.map_file)[0]))
 
 
 class RepairIcd10CodesTests(IcdFixtureMixin, TestCase):
