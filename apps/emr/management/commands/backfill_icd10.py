@@ -36,6 +36,7 @@ Safe to dry-run against prod. Writes are per-concept bulk UPDATEs.
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
+from emr.icd_codes import assignable_icd10_for
 from emr.models import Problem, SnomedIcd10Map
 from emr.mutation_stamp import touch_patient_stamp
 
@@ -116,7 +117,9 @@ class Command(BaseCommand):
         unmapped_concepts = 0
 
         for concept_id in concept_ids:
-            best = SnomedIcd10Map.best_icd10_for(concept_id)
+            # `assignable_icd10_for`, not the raw map pick: it never hands out a `?` placeholder or a
+            # non-billable code, and it honours the owner's recorded decisions (emr.icd_codes).
+            best = assignable_icd10_for(concept_id)
 
             concept_qs = needs_backfill.filter(concept_id=concept_id)
 
@@ -177,7 +180,7 @@ class Command(BaseCommand):
         untouched_other_code = 0
 
         for concept_id in concept_ids:
-            new_pick = SnomedIcd10Map.best_icd10_for(concept_id)
+            new_pick = assignable_icd10_for(concept_id)
             if new_pick is None:
                 continue
             old_pick = _old_buggy_pick(concept_id)
