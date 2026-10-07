@@ -51,7 +51,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Q
 
-from emr.models import Problem, SnomedIcd10Map
+from emr.icd_codes import assignable_icd10_for
+from emr.models import Problem
 from emr.mutation_stamp import touch_patient_stamp
 
 DATA_FILE = os.path.join(
@@ -122,7 +123,9 @@ class Command(BaseCommand):
         patients = set()
 
         for retired, active in sorted(healable.items()):
-            icd = SnomedIcd10Map.best_icd10_for(active)
+            # `assignable_icd10_for`, not the raw map pick: it never hands out a `?` placeholder or a
+            # non-billable code, and it honours the owner's recorded decisions (emr.icd_codes).
+            icd = assignable_icd10_for(active)
             if not icd:
                 # Successor exists but carries no ICD target — leave the row
                 # alone rather than advancing the concept for no benefit.

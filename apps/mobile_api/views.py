@@ -33,6 +33,7 @@ from emr.models import (
     PatientMutationStamp,
     ObservationValueAudit,
 )
+from emr.icd_codes import billable_codes, resolve_incoming_icd
 from emr.mutation_stamp import touch_patient_stamp
 from emr.problem_authentication import (
     apply_problem_authentication,
@@ -3700,9 +3701,21 @@ def mobile_create_problem(request, patient_id):
         if successor:
             concept_id = successor
 
-    if not icd10_code and concept_id:
-        from emr.models import SnomedIcd10Map
-        icd10_code = SnomedIcd10Map.best_icd10_for(concept_id) or ''
+    # The server decides what code is stored, not the client (2026-10-06).
+    # This used to keep whatever non-empty code the client sent and only map
+    # when it sent none — and every app build stamps a code locally from a
+    # bundled map, so a build carrying a bad map wrote bad codes straight into
+    # the database: category headers, WHO ICD-10 codes, `?` placeholders. A
+    # billable code that is not an old map's pick is still kept as sent; that
+    # is a deliberate choice (a staged Common Problem code). See emr.icd_codes.
+    icd10_code = resolve_incoming_icd(
+        concept_id, icd10_code, current='', concept_changed=True,
+        context={
+            'endpoint': 'create_problem',
+            'patient_id': patient_user.id,
+            'user_agent': request.META.get('HTTP_USER_AGENT', '')[:80],
+        },
+    )
 
     problem = Problem(
         patient=patient_user,
@@ -3749,7 +3762,6 @@ def mobile_update_problem(request, patient_id, problem_id):
     old_is_controlled = problem.is_controlled
     old_concept_id = (problem.concept_id or '').strip()
 
-    from emr.models import SnomedIcd10Map
     from emr.retired_concepts import SnomedRetiredConcept
 
     for field in ('problem_name', 'old_problem_name'):
@@ -3787,20 +3799,37 @@ def mobile_update_problem(request, patient_id, problem_id):
 
     # Guard 2: never let an EMPTY incoming code blank a code the server holds.
     # Clients send `icd10Code ?? ""` on every problem update, so an empty value
-    # means "I have nothing", never "delete what you have". A non-empty value is
-    # still honoured — that is a real edit.
-    if 'icd10_code' in body:
-        incoming_icd = (body.get('icd10_code') or '').strip()
-        if incoming_icd or not (problem.icd10_code or '').strip():
-            problem.icd10_code = body['icd10_code']
-
-    # Auto-assign icd10_code if concept_id is provided but icd10_code is missing
-    if 'concept_id' in body and not body.get('icd10_code') and not problem.icd10_code:
-        concept_id = problem.concept_id
-        if concept_id:
-            best = SnomedIcd10Map.best_icd10_for(concept_id)
-            if best:
-                problem.icd10_code = best
+    # means "I have nothing", never "delete what you have".
+    #
+    # Guard 3 (2026-10-06): never STORE a code that is not billable ICD-10-CM,
+    # and never let an old map's pick overwrite a repaired one. A non-empty
+    # incoming code used to be honoured verbatim as "a real edit" — but the
+    # client sends its locally-held code on every update, so a Mac that had
+    # not pulled since a repair pushed the old code straight back (the same
+    # stale-echo shape as the concept regression above). A billable code that
+    # is not an old map's pick is still honoured.
+    #
+    # One more case lives in the helper: when the concept really changed and
+    # the client sent no usable code, the code held here belongs to the OLD
+    # concept, so it is replaced with the new concept's code (or blanked)
+    # instead of being kept as a mismatched pair. A concept that was CLEARED
+    # does not count as a change — clients also send `conceptId ?? ""`, and a
+    # code-less shell problem pushed dirty must not take the code with it.
+    new_concept = (problem.concept_id or '').strip()
+    concept_really_changed = bool(new_concept) and new_concept != old_concept_id
+    if 'icd10_code' in body or 'concept_id' in body:
+        problem.icd10_code = resolve_incoming_icd(
+            new_concept,
+            body.get('icd10_code'),
+            current=problem.icd10_code,
+            concept_changed=concept_really_changed,
+            context={
+                'endpoint': 'update_problem',
+                'problem_id': problem.id,
+                'patient_id': problem.patient_id,
+                'user_agent': request.META.get('HTTP_USER_AGENT', '')[:80],
+            },
+        )
 
     # `authenticated` is deliberately NOT in this list and must never be
     # added back. The flag is derived server-side from the actor's role
@@ -5422,11 +5451,19 @@ def get_snomed_to_icd10(request):
         map_advice__icontains='ADDITIONAL DIGITS REQUIRED'
     ).order_by('map_group', 'map_priority')
 
+    # Offer only codes that can be stored. This feeds the Settings -> Common
+    # Problems picker, whose choice is then sent as a problem's code on create;
+    # before 2026-10-06 it listed category headers, WHO codes and `?`
+    # placeholders straight from the table. No reference list -> no filtering.
+    billable = billable_codes()
+
     # Dedupe by icd10_code: keep the first (lowest map_group/map_priority) per unique target.
     seen = set()
     result = []
     for row in rows:
         if row.icd10_code in seen:
+            continue
+        if billable is not None and row.icd10_code not in billable:
             continue
         seen.add(row.icd10_code)
         result.append({

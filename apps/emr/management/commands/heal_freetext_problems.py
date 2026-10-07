@@ -43,7 +43,8 @@ import os
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
-from emr.models import Problem, SnomedIcd10Map
+from emr.icd_codes import assignable_icd10_for
+from emr.models import Problem
 from emr.mutation_stamp import touch_patient_stamp
 
 DATA_FILE = os.path.join(
@@ -105,7 +106,9 @@ class Command(BaseCommand):
             if not concept:
                 unmatched_names[key] = len(rows)
                 continue
-            icd = SnomedIcd10Map.best_icd10_for(concept) or ""
+            # `assignable_icd10_for`, not the raw map pick: it never hands out a `?` placeholder or a
+            # non-billable code, and it honours the owner's recorded decisions (emr.icd_codes).
+            icd = assignable_icd10_for(concept) or ""
             matched_rows += len(rows)
             if icd:
                 coded_rows += len(rows)
