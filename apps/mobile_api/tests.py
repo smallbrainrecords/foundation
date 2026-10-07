@@ -23,6 +23,8 @@ from django.db.utils import IntegrityError
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from emr.tests import icd_fixtures as icd
+from emr.tests.icd_fixtures import IcdFixtureMixin
 from emr.models import (
     Encounter, EncounterEvent,
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
@@ -5819,3 +5821,143 @@ class MobilePatientFullTodoPrefetchTests(TestCase):
             [c['comment'] for c in by_id[mine_a.id]['comments']],
             ['second on 0', 'first on 0'])
         self.assertNotIn('must not appear on this chart', json.dumps(body))
+
+
+class ProblemIcdGuardTests(IcdFixtureMixin, TestCase):
+    """Problem create/update never store a code that is not billable ICD-10-CM.
+
+    The rule and its reasons live in `emr.icd_codes`; `emr.tests.test_icd_codes`
+    covers the helper. These go through the endpoints, because that is where
+    it failed: both stored whatever non-empty code the client sent, and every
+    app build stamps a code from a map bundled into it — so a build carrying a
+    bad map wrote category headers and WHO codes straight into the database,
+    and a Mac that had not pulled since a repair pushed the old code back.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.load_map_rows()
+        self.patient = User.objects.create_user(username='icdguardpt')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        self.physician = User.objects.create_user(username='icdguarddoc')
+        UserProfile.objects.create(user=self.physician, role='physician')
+        PatientController.objects.create(patient=self.patient, physician=self.physician)
+        self.client.force_login(self.physician)
+
+    def create(self, **body):
+        body.setdefault('problem_name', 'A problem')
+        res = self.client.post(
+            f'/api/patient/{self.patient.id}/problem',
+            data=json.dumps(body), content_type='application/json')
+        self.assertEqual(res.status_code, 200, res.content)
+        return Problem.objects.get(id=json.loads(res.content)['id'])
+
+    def update(self, problem, **body):
+        res = self.client.patch(
+            f'/api/patient/{self.patient.id}/problem/{problem.id}',
+            data=json.dumps(body), content_type='application/json')
+        self.assertEqual(res.status_code, 200, res.content)
+        problem.refresh_from_db()
+        return problem
+
+    def stored(self, concept, code):
+        return Problem.objects.create(
+            patient=self.patient, problem_name='Stored', concept_id=concept, icd10_code=code)
+
+    # -- create --------------------------------------------------------
+
+    def test_an_old_builds_category_header_is_replaced_on_create(self):
+        self.assertEqual(self.create(concept_id=icd.CHOL, icd10_code='E78.0').icd10_code, 'E78.00')
+
+    def test_a_placeholder_is_never_stored_on_create(self):
+        self.assertEqual(self.create(concept_id=icd.SPRAIN, icd10_code='S93.409?').icd10_code, '')
+        self.assertEqual(self.create(concept_id=icd.SPRAIN).icd10_code, '')
+
+    def test_a_non_billable_code_for_an_unmapped_concept_is_blank(self):
+        self.assertEqual(self.create(concept_id=icd.UNKNOWN, icd10_code='M25.56').icd10_code, '')
+
+    def test_a_deliberate_billable_code_is_kept_on_create(self):
+        # A Common Problem's staged code: not what the map would pick.
+        self.assertEqual(self.create(concept_id=icd.CHOL, icd10_code='K21.9').icd10_code, 'K21.9')
+
+    def test_an_old_builds_billable_pick_is_replaced_on_create(self):
+        self.assertEqual(self.create(concept_id=icd.DEPRESSION, icd10_code='F32.9').icd10_code, 'F32.A')
+
+    def test_a_recorded_decision_codes_a_new_problem(self):
+        self.assertEqual(self.create(concept_id=icd.FIT).icd10_code, 'Z00.00')
+
+    def test_a_free_text_problem_stays_uncoded(self):
+        self.assertEqual(self.create().icd10_code, '')
+
+    # -- update --------------------------------------------------------
+
+    def test_a_stale_client_cannot_undo_a_repair(self):
+        # The row was repaired E78.0 -> E78.00; this Mac has not pulled since
+        # and sends what it still holds with an unrelated edit.
+        problem = self.stored(icd.CHOL, 'E78.00')
+        self.update(problem, concept_id=icd.CHOL, icd10_code='E78.0', is_controlled=True)
+        self.assertEqual(problem.icd10_code, 'E78.00')
+        self.assertTrue(problem.is_controlled)
+
+    def test_a_stale_client_cannot_restore_the_old_tables_billable_pick(self):
+        problem = self.stored(icd.DEPRESSION, 'F32.A')
+        self.update(problem, concept_id=icd.DEPRESSION, icd10_code='F32.9')
+        self.assertEqual(problem.icd10_code, 'F32.A')
+
+    def test_an_empty_code_does_not_blank_the_stored_one(self):
+        problem = self.stored(icd.CHOL, 'E78.00')
+        self.update(problem, concept_id=icd.CHOL, icd10_code='')
+        self.assertEqual(problem.icd10_code, 'E78.00')
+
+    def test_a_deliberate_billable_code_is_kept_on_update(self):
+        problem = self.stored(icd.CHOL, 'E78.00')
+        self.update(problem, icd10_code='K21.9')
+        self.assertEqual(problem.icd10_code, 'K21.9')
+
+    def test_recoding_a_problem_replaces_the_old_concepts_code(self):
+        # Before: an empty incoming code left hypertension's I10 beside the
+        # cough's SNOMED code.
+        problem = self.stored(icd.HTN, 'I10')
+        self.update(problem, concept_id=icd.COUGH, icd10_code='')
+        self.assertEqual((problem.concept_id, problem.icd10_code), (icd.COUGH, 'R05.9'))
+
+    def test_recoding_to_a_concept_with_no_code_blanks_the_old_one(self):
+        problem = self.stored(icd.HTN, 'I10')
+        self.update(problem, concept_id=icd.SPRAIN, icd10_code='')
+        self.assertEqual(problem.icd10_code, '')
+
+    def test_clearing_the_concept_keeps_the_code(self):
+        # Clients send `conceptId ?? ""`; a code-less shell problem pushed
+        # dirty must not take the stored code with it.
+        problem = self.stored(icd.CHOL, 'E78.00')
+        self.update(problem, concept_id='', icd10_code='')
+        self.assertEqual(problem.icd10_code, 'E78.00')
+
+    def test_coding_a_free_text_problem_assigns_its_code(self):
+        problem = self.stored('', '')
+        self.update(problem, concept_id=icd.CHOL)
+        self.assertEqual(problem.icd10_code, 'E78.00')
+
+    def test_an_update_that_mentions_neither_field_leaves_the_code_alone(self):
+        problem = self.stored(icd.CHOL, 'E78.0')   # not yet repaired
+        self.update(problem, is_controlled=True)
+        self.assertEqual(problem.icd10_code, 'E78.0')
+
+    def test_the_replacement_is_logged_with_the_client_that_sent_it(self):
+        with self.assertLogs('smallbrain.icd_guard', level='INFO') as logs:
+            self.client.post(
+                f'/api/patient/{self.patient.id}/problem',
+                data=json.dumps({'problem_name': 'Chol', 'concept_id': icd.CHOL, 'icd10_code': 'E78.0'}),
+                content_type='application/json', HTTP_USER_AGENT='SBR1/71 CFNetwork')
+        row = json.loads(logs.output[0].split(':', 2)[2])
+        self.assertEqual(
+            (row['reason'], row['incoming'], row['stored'], row['endpoint'], row['user_agent']),
+            ('not_billable', 'E78.0', 'E78.00', 'create_problem', 'SBR1/71 CFNetwork'))
+
+    # -- the Common Problems code picker ---------------------------------
+
+    def test_the_code_picker_offers_only_billable_codes(self):
+        res = self.client.get('/api/mapping/snomed-to-icd/', {'concept_id': icd.HTN})
+        self.assertEqual([option['code'] for option in json.loads(res.content)], ['I10'])
+        res = self.client.get('/api/mapping/snomed-to-icd/', {'concept_id': icd.SPRAIN})
+        self.assertEqual(json.loads(res.content), [])
