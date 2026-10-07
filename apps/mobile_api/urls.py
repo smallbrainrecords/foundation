@@ -94,6 +94,12 @@ urlpatterns = [
     # Transcripts by encounter id, so a Mac can fill in local rows the bulk
     # pass transcribed server-side. Read-only.
     url(r'^encounters/transcripts$', views.mobile_encounter_transcripts),
+    # Word timing: the visits still to time, the result of timing one, and
+    # timings by encounter id so a Mac can keep its own copy.
+    url(r'^encounters/untimed$', views.mobile_untimed_encounters),
+    url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/transcript-timing$',
+        views.mobile_encounter_transcript_timing),
+    url(r'^encounters/transcript-timings$', views.mobile_encounter_transcript_timings),
     # Tagged todos (cross-patient)
     url(r'^my-tagged-todos/$', views.mobile_my_tagged_todos),
     # Analytics

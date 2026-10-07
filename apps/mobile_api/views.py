@@ -16,7 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
 from django.db.models.functions import Coalesce
-from django.http import FileResponse, HttpResponseRedirect, JsonResponse
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from emr.models import (
@@ -26,7 +26,7 @@ from emr.models import (
     Observation, ObservationComponent, ObservationValue, ObservationPinToProblem,
     PatientImage,
     Encounter, EncounterEvent, EncounterProblemRecord, EncounterTodoRecord,
-    EncounterObservationValue,
+    EncounterObservationValue, EncounterTranscriptTiming,
     Document, DocumentProblem, DocumentTodo,
     MyStoryTextComponent, MyStoryTextComponentEntry,
     TaggedToDoOrder,
@@ -1983,10 +1983,14 @@ def mobile_upload_encounter_audio(request, patient_id):
         defaults['stoptime'] = parse_datetime(stop_time)
 
     if client_uuid:
-        enc, _ = Encounter.objects.update_or_create(
+        enc, created = Encounter.objects.update_or_create(
             client_uuid=client_uuid,
             defaults=defaults,
         )
+        if not created:
+            # A retried upload replaced the audio. Any timing row (or a
+            # `no_audio` verdict) described the file that was there before.
+            _drop_transcript_timing(enc, 'audio_replaced')
     else:
         # Legacy clients without client_uuid still get a fresh row.
         enc = Encounter.objects.create(**defaults)
@@ -2098,7 +2102,13 @@ def mobile_update_encounter(request, patient_id, encounter_id):
     if 'note' in body:
         enc.note = body['note'] or ''
     if 'transcript' in body:
-        enc.transcript = body['transcript'] or ''
+        new_transcript = body['transcript'] or ''
+        if new_transcript != enc.transcript:
+            # Word timings are only true of the transcript they were made
+            # with. This write knows nothing about them, so they go; the
+            # visit returns to the untimed list and is timed again.
+            _drop_transcript_timing(enc, 'transcript_changed')
+        enc.transcript = new_transcript
     if 'recorder_status' in body and body['recorder_status'] is not None:
         enc.recorder_status = int(body['recorder_status'])
     if 'stop_time' in body:
@@ -2137,6 +2147,9 @@ def mobile_update_encounter(request, patient_id, encounter_id):
                 'to': new_offset,
             }))
             enc.audio_end_offset = new_offset
+            # Timings made under the old mark describe words the new mark
+            # may have cut off (or leave out words it has let back in).
+            _drop_transcript_timing(enc, 'audio_end_offset_changed')
     enc.save()
 
     event_mappings = _apply_encounter_relationships_and_events(enc, body)
@@ -3619,6 +3632,445 @@ def mobile_encounter_transcripts(request):
 
 
 _TRANSCRIPT_BATCH_LIMIT = 200
+
+
+# ---------- Transcript word timing ----------
+
+# Far above any real visit (the longest recording on file is a few hours;
+# ~160 words a minute) and low enough that a malformed body cannot make the
+# server hold millions of strings.
+_TIMING_MAX_WORDS = 200000
+
+# How many ids one request may name. The `meta=1` form returns three small
+# values per row, so it can take many; the full form returns the words.
+_TIMING_META_BATCH_LIMIT = 500
+_TIMING_BATCH_LIMIT = 50
+
+# Ceiling on the words returned by one response. Cloud Run refuses a
+# non-streamed response over 32 MiB (and answers 500 while Django logs 200),
+# and this container has 512 MiB of memory. A typical visit is ~70 KB, so 8 MiB
+# is a full batch with room to spare; rows that do not fit are named in
+# `deferred` and the client asks again.
+_TIMING_RESPONSE_BYTE_BUDGET = 8 * 1024 * 1024
+
+_timing_logger = logging.getLogger('smallbrain.transcript_timing')
+
+
+def _drop_transcript_timing(enc, reason):
+    """Delete an encounter's timing row because something it was true of has
+    changed. No-op (one cheap DELETE) when there is none.
+
+    Called by every write that changes the transcript, the end mark or the
+    audio without supplying new timings. Deleting — rather than keeping the row
+    and flagging it — is what makes a misaligned timing impossible to serve:
+    the visit simply goes back on the untimed list.
+    """
+    deleted, _ = EncounterTranscriptTiming.objects.filter(encounter=enc).delete()
+    if deleted:
+        _timing_logger.info(json.dumps({
+            'event': 'timing_dropped',
+            'encounter_id': enc.id,
+            'patient_id': enc.patient_id,
+            'reason': reason,
+        }))
+
+
+def _same_audio_end_offset(a, b):
+    if a is None or b is None:
+        return a is None and b is None
+    try:
+        return abs(float(a) - float(b)) < 0.001
+    except (TypeError, ValueError):
+        return False
+
+
+def _encounter_audio_is_missing(enc):
+    """True when the encounter names no audio, or names an object the storage
+    does not have. Same test `mobile_encounter_audio` uses to answer 404."""
+    if not enc.audio:
+        return True
+    try:
+        enc.audio.size
+    except Exception:
+        return True
+    return False
+
+
+def _int_list(value, low, high):
+    """`value` as a list of plain ints within [low, high], or None."""
+    if not isinstance(value, list):
+        return None
+    for item in value:
+        # bool is an int subclass; True/False are not timings.
+        if isinstance(item, bool) or not isinstance(item, int):
+            return None
+        if item < low or item > high:
+            return None
+    return value
+
+
+@csrf_exempt
+@login_required
+def mobile_untimed_encounters(request):
+    """GET ?limit=<n> -> the CALLER'S OWN finished recordings that have audio
+    and no word-timing row yet, newest first. Drives Settings -> Transcribe.
+
+    The same list as `mobile_untranscribed_encounters` with one difference in
+    what "done" means: there it is a non-empty transcript, here it is an
+    `EncounterTranscriptTiming` row. So a visit that already has a transcript
+    IS listed — it is re-transcribed to get its timings, and its transcript is
+    replaced by the one the timings belong to (owner decision 2026-10-04:
+    overwriting is acceptable; the audio is never touched).
+
+    Because `silent` and `no_audio` are rows too, a visit that can never be
+    timed leaves this list once that is known, and `total` reaches zero when
+    the work is done. The older list could not do that — a silent recording
+    came back forever.
+
+    Own recordings only and access-gated set-wise, for the reasons given on
+    `mobile_untranscribed_encounters`.
+
+    Read-only: no patient stamp; stays in StampCoverageSweepTests.GET_ONLY.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    try:
+        limit = int(request.GET.get('limit') or 200)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'limit must be an integer'}, status=400)
+    limit = max(1, min(limit, 1000))
+
+    rows = Encounter.objects.filter(
+        physician=request.user,
+        recorder_status=2,
+        transcript_timing__isnull=True,
+    ).exclude(audio='')
+
+    accessible = _accessible_patient_ids(request.user)
+    if accessible is not None:
+        rows = rows.filter(patient_id__in=accessible)
+
+    total = rows.count()
+    # `.only(...)`: unlike the untranscribed list, these rows mostly HAVE a
+    # transcript (~18 KB each), and a page of 1,000 must not read 18 MB of
+    # text it is not going to send.
+    page = rows.order_by('-starttime', '-id').only(
+        'id', 'patient_id', 'starttime', 'stoptime', 'audio_end_offset', 'audio',
+    )[:limit]
+
+    encounters = [{
+        'id': enc.id,
+        'patient_id': enc.patient_id,
+        'start_time': _iso_z(enc.starttime),
+        'stop_time': _iso_z(enc.stoptime) if enc.stoptime else None,
+        'audio_end_offset': enc.audio_end_offset,
+        'audio_name': os.path.basename(enc.audio.name) if enc.audio else None,
+    } for enc in page]
+
+    return JsonResponse({
+        'success': True,
+        'total': total,
+        'encounters': encounters,
+    })
+
+
+@csrf_exempt
+@login_required
+@transaction.atomic
+@touches_patient_stamp
+def mobile_encounter_transcript_timing(request, patient_id, encounter_id):
+    """POST the result of timing one visit. Three outcomes:
+
+    `{outcome: "timed", transcript, words, starts_ms, durations_ms,
+      confidences, audio_end_offset?, audio_duration_ms?, engine?}`
+        Replaces the encounter's transcript with `transcript` and stores the
+        word timings, in one transaction. Refused unless the arrays are the
+        same length and `' '.join(words) == transcript` exactly — that
+        equality is what lets every reader treat word N of the transcript as
+        timing N.
+
+    `{outcome: "silent", audio_end_offset?, audio_duration_ms?, engine?}`
+        The recording transcribed cleanly to no words. Recorded so the visit
+        leaves the untimed list. **The existing transcript is left alone**: a
+        transcript is never cleared without a replacement in hand.
+
+    `{outcome: "no_audio"}`
+        The client could not download the audio. Recorded only if the SERVER
+        also finds the object missing; otherwise 409, because the client's
+        failure was something else.
+
+    Gated like the media proxies (404 for a patient the caller cannot see)
+    and restricted to the physician who recorded the visit, the same person
+    `mobile_untimed_encounters` offers it to.
+
+    `audio_end_offset` is the mark the client transcribed under. If the
+    encounter's mark has changed since the client read the list, the result
+    describes the wrong stretch of audio and is refused with 409 — otherwise a
+    transcript made from the whole file could overwrite one the physician had
+    just cut short.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Encounter not found'}, status=404)
+
+    try:
+        enc = Encounter.objects.select_for_update().get(
+            id=encounter_id, patient_id=patient_id)
+    except Encounter.DoesNotExist:
+        return JsonResponse({'error': 'Encounter not found'}, status=404)
+
+    if request.user.id != enc.physician_id:
+        return JsonResponse({
+            'error': 'transcript_timing_forbidden',
+            'detail': 'Only the physician who recorded this encounter can '
+                      'replace its transcript.',
+        }, status=403)
+
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+    if not isinstance(body, dict):
+        return JsonResponse({'error': 'invalid JSON'}, status=400)
+
+    outcome = body.get('outcome')
+    if outcome not in (EncounterTranscriptTiming.OUTCOME_TIMED,
+                       EncounterTranscriptTiming.OUTCOME_SILENT,
+                       EncounterTranscriptTiming.OUTCOME_NO_AUDIO):
+        return JsonResponse({'error': 'unknown outcome'}, status=400)
+
+    # The outcome only — a timed row's payload is tens of kilobytes this
+    # request has no use for.
+    existing_outcome = EncounterTranscriptTiming.objects.filter(
+        encounter=enc).values_list('outcome', flat=True).first()
+
+    engine = body.get('engine') or ''
+    if not isinstance(engine, str):
+        return JsonResponse({'error': 'engine must be a string'}, status=400)
+    engine = engine[:120]
+
+    audio_duration_ms = body.get('audio_duration_ms')
+    if audio_duration_ms is not None:
+        if (isinstance(audio_duration_ms, bool)
+                or not isinstance(audio_duration_ms, int)
+                or audio_duration_ms < 0 or audio_duration_ms > 2147483647):
+            return JsonResponse(
+                {'error': 'audio_duration_ms must be a non-negative integer'},
+                status=400)
+
+    if outcome == EncounterTranscriptTiming.OUTCOME_NO_AUDIO:
+        if existing_outcome == EncounterTranscriptTiming.OUTCOME_TIMED:
+            return JsonResponse({'error': 'already_timed'}, status=409)
+        if not _encounter_audio_is_missing(enc):
+            return JsonResponse({'error': 'audio_present'}, status=409)
+        EncounterTranscriptTiming.objects.update_or_create(
+            encounter=enc,
+            defaults={
+                'outcome': outcome, 'transcript_sha256': '', 'word_count': 0,
+                'payload': '', 'audio_duration_ms': None, 'engine': engine,
+                'created_by': request.user,
+            })
+        _timing_logger.info(json.dumps({
+            'event': 'timing_recorded', 'outcome': outcome,
+            'encounter_id': enc.id, 'patient_id': enc.patient_id,
+        }))
+        return JsonResponse({'success': True, 'outcome': outcome, 'word_count': 0})
+
+    if not _same_audio_end_offset(body.get('audio_end_offset'), enc.audio_end_offset):
+        return JsonResponse({
+            'error': 'audio_end_offset_changed',
+            'audio_end_offset': enc.audio_end_offset,
+        }, status=409)
+
+    if outcome == EncounterTranscriptTiming.OUTCOME_SILENT:
+        if existing_outcome == EncounterTranscriptTiming.OUTCOME_TIMED:
+            return JsonResponse({'error': 'already_timed'}, status=409)
+        EncounterTranscriptTiming.objects.update_or_create(
+            encounter=enc,
+            defaults={
+                'outcome': outcome, 'transcript_sha256': '', 'word_count': 0,
+                'payload': '', 'audio_duration_ms': audio_duration_ms,
+                'engine': engine, 'created_by': request.user,
+            })
+        _timing_logger.info(json.dumps({
+            'event': 'timing_recorded', 'outcome': outcome,
+            'encounter_id': enc.id, 'patient_id': enc.patient_id,
+            'kept_transcript_chars': len(enc.transcript or ''),
+        }))
+        return JsonResponse({'success': True, 'outcome': outcome, 'word_count': 0})
+
+    # ---- timed ----
+    transcript = body.get('transcript')
+    words = body.get('words')
+    if not isinstance(transcript, str) or not transcript:
+        return JsonResponse({'error': 'transcript required'}, status=400)
+    if not isinstance(words, list) or not words:
+        return JsonResponse({'error': 'words required'}, status=400)
+    if len(words) > _TIMING_MAX_WORDS:
+        return JsonResponse(
+            {'error': 'too many words', 'limit': _TIMING_MAX_WORDS}, status=400)
+    for word in words:
+        # A word with a space in it would still satisfy the join below while
+        # making "word N of the transcript" ambiguous for every reader.
+        if not isinstance(word, str) or not word or any(ch.isspace() for ch in word):
+            return JsonResponse(
+                {'error': 'each word must be a non-empty string with no whitespace'},
+                status=400)
+
+    starts = _int_list(body.get('starts_ms'), -1, 2147483647)
+    durations = _int_list(body.get('durations_ms'), -1, 2147483647)
+    confidences = _int_list(body.get('confidences'), -1, 100)
+    if starts is None or durations is None or confidences is None:
+        return JsonResponse({
+            'error': 'starts_ms, durations_ms and confidences must be lists of integers',
+        }, status=400)
+    if not (len(starts) == len(durations) == len(confidences) == len(words)):
+        return JsonResponse({'error': 'array lengths differ'}, status=400)
+
+    if ' '.join(words) != transcript:
+        return JsonResponse({'error': 'transcript_words_mismatch'}, status=400)
+
+    payload = json.dumps({
+        'words': words,
+        'starts_ms': starts,
+        'durations_ms': durations,
+        'confidences': confidences,
+    }, separators=(',', ':'), ensure_ascii=False)
+
+    previous = enc.transcript or ''
+    replaced = previous != transcript
+    if replaced:
+        enc.transcript = transcript
+        enc.save(update_fields=['transcript'])
+
+    EncounterTranscriptTiming.objects.update_or_create(
+        encounter=enc,
+        defaults={
+            'outcome': outcome,
+            'format_version': 1,
+            'transcript_sha256': hashlib.sha256(transcript.encode('utf-8')).hexdigest(),
+            'word_count': len(words),
+            'payload': payload,
+            'audio_duration_ms': audio_duration_ms,
+            'engine': engine,
+            'created_by': request.user,
+        })
+
+    # Counts only — never the words. This is the record of how much each
+    # re-transcription changed, across the whole archive.
+    _timing_logger.info(json.dumps({
+        'event': 'timing_recorded', 'outcome': outcome,
+        'encounter_id': enc.id, 'patient_id': enc.patient_id,
+        'word_count': len(words),
+        'previous_word_count': len(previous.split()),
+        'had_transcript': bool(previous),
+        'transcript_replaced': replaced,
+    }))
+    return JsonResponse({
+        'success': True, 'outcome': outcome, 'word_count': len(words),
+        'transcript_replaced': replaced,
+    })
+
+
+@csrf_exempt
+@login_required
+def mobile_encounter_transcript_timings(request):
+    """GET ?ids=1,2,3[&meta=1] -> word timings for those encounters, for the
+    ones the caller may see that have a `timed` row.
+
+    Two forms, because a Mac checking what it already holds must not download
+    it all again to find out:
+
+    `meta=1`  -> `{timings: [{id, transcript_sha256, word_count}]}`. Tiny. The
+        client compares the hash with the copy it holds; an id it asked about
+        that is ABSENT has no timing on the server, which is its signal to
+        drop a copy that has since been invalidated.
+
+    without   -> the same rows plus `audio_duration_ms`, `engine`,
+        `format_version` and `payload` (the four parallel arrays described on
+        `EncounterTranscriptTiming`). Rows are added until
+        `_TIMING_RESPONSE_BYTE_BUDGET` is reached; ids that did not fit are
+        returned in `deferred` for the client to ask for again. At least one
+        row is always returned, so a single very long visit cannot stall.
+
+    Not restricted to the caller's own recordings: producing timings is the
+    recording physician's job, reading them is ordinary chart access (the
+    same split as the transcript endpoints).
+
+    Read-only: no patient stamp; stays in StampCoverageSweepTests.GET_ONLY.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+
+    meta_only = (request.GET.get('meta') or '') in ('1', 'true')
+    batch_limit = _TIMING_META_BATCH_LIMIT if meta_only else _TIMING_BATCH_LIMIT
+
+    raw = (request.GET.get('ids') or '').strip()
+    if not raw:
+        return JsonResponse({'error': 'ids required'}, status=400)
+    try:
+        ids = [int(part) for part in raw.split(',') if part.strip()]
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'ids must be integers'}, status=400)
+    if not ids:
+        return JsonResponse({'error': 'ids required'}, status=400)
+    if len(ids) > batch_limit:
+        return JsonResponse(
+            {'error': 'too many ids', 'limit': batch_limit}, status=400)
+
+    rows = EncounterTranscriptTiming.objects.filter(
+        encounter_id__in=ids, outcome=EncounterTranscriptTiming.OUTCOME_TIMED)
+    accessible = _accessible_patient_ids(request.user)
+    if accessible is not None:
+        rows = rows.filter(encounter__patient_id__in=accessible)
+
+    if meta_only:
+        timings = [
+            {'id': encounter_id, 'transcript_sha256': sha, 'word_count': count}
+            for encounter_id, sha, count in rows.order_by('encounter_id').values_list(
+                'encounter_id', 'transcript_sha256', 'word_count')
+        ]
+        return JsonResponse({'success': True, 'timings': timings})
+
+    # Decide what fits BEFORE reading any payload, from the lengths alone, so
+    # an over-budget batch never pulls megabytes out of MySQL to discard them.
+    from django.db.models.functions import Length
+    sized = list(rows.annotate(payload_chars=Length('payload')).order_by(
+        'encounter_id').values_list('encounter_id', 'payload_chars'))
+    chosen, deferred, used = [], [], 0
+    for encounter_id, chars in sized:
+        # 4 bytes per character is UTF-8's worst case; transcripts are almost
+        # entirely ASCII, so this over-counts slightly, in the safe direction.
+        cost = (chars or 0) * 4
+        if chosen and used + cost > _TIMING_RESPONSE_BYTE_BUDGET:
+            deferred.append(encounter_id)
+            continue
+        chosen.append(encounter_id)
+        used += cost
+
+    parts = []
+    for row in rows.filter(encounter_id__in=chosen).order_by('encounter_id').only(
+            'encounter_id', 'transcript_sha256', 'word_count', 'payload',
+            'audio_duration_ms', 'engine', 'format_version').iterator(chunk_size=10):
+        head = json.dumps({
+            'id': row.encounter_id,
+            'transcript_sha256': row.transcript_sha256,
+            'word_count': row.word_count,
+            'audio_duration_ms': row.audio_duration_ms,
+            'engine': row.engine,
+            'format_version': row.format_version,
+        }, separators=(',', ':'))
+        # The stored payload is JSON this module serialised itself, so it is
+        # spliced in as text: decoding and re-encoding megabytes of arrays on
+        # a one-CPU container, to produce the same bytes, would be pure cost.
+        parts.append(head[:-1] + ',"payload":' + row.payload + '}')
+
+    body = ('{"success":true,"timings":[' + ','.join(parts)
+            + '],"deferred":' + json.dumps(deferred) + '}')
+    return HttpResponse(body, content_type='application/json')
 
 
 # ---------- Problem endpoints ----------
