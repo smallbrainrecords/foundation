@@ -411,6 +411,74 @@ class EncounterEvent(models.Model):
         return '%s:%s' % (h, s)
 
 
+class EncounterTranscriptTiming(models.Model):
+    """When each word of an encounter's transcript was spoken.
+
+    One row per encounter, written by the recording physician's Mac after it
+    re-transcribes the visit asking Apple's recogniser for per-word timing
+    (Settings -> Transcribe). The app is the only producer and the only
+    reader; nothing on the server interprets the words.
+
+    **A side table, not columns on Encounter.** `mobile_patient_full` selects
+    whole Encounter rows on every chart open, so a large column there would
+    be read from MySQL for a serializer that never uses it. A one-to-one
+    reverse relation costs a chart open nothing.
+
+    **The row carries the words themselves, not offsets into
+    `Encounter.transcript`.** Several writers set the transcript knowing
+    nothing about timing (the end-mark flow, another Mac's transcript push,
+    the ordinary encounter PATCH), and one differing character would shift
+    every later word. So the two are kept equal by rule instead:
+
+      * `mobile_encounter_transcript_timing` writes the transcript and this
+        row together, and refuses unless `' '.join(words) == transcript`;
+      * any other write that CHANGES the transcript, the end mark or the
+        audio deletes this row (see `_drop_transcript_timing`), which puts
+        the visit back on the untimed list.
+
+    `transcript_sha256` lets a client check its own copy of the transcript
+    against the timing it holds without comparing the text.
+
+    `outcome` also records the two ways a visit is finished WITHOUT timing,
+    so the pass stops meeting it: `silent` (transcribed cleanly to no words)
+    and `no_audio` (the stored object is missing, verified server-side).
+    Without these the "remaining" count could never reach zero.
+
+    `payload` (outcome `timed` only) is compact JSON with four parallel
+    arrays, one entry per word:
+        words         the word, exactly as it appears in the transcript
+        starts_ms     start, milliseconds from the start of the audio (-1 unknown)
+        durations_ms  length in milliseconds (-1 unknown)
+        confidences   recogniser confidence 0-100 (-1 unknown)
+    """
+    OUTCOME_TIMED = 'timed'
+    OUTCOME_SILENT = 'silent'
+    OUTCOME_NO_AUDIO = 'no_audio'
+    OUTCOME_CHOICES = (
+        (OUTCOME_TIMED, 'Timed'),
+        (OUTCOME_SILENT, 'Silent'),
+        (OUTCOME_NO_AUDIO, 'No audio'),
+    )
+
+    encounter = models.OneToOneField(
+        Encounter, related_name='transcript_timing', on_delete=models.CASCADE)
+    outcome = models.CharField(
+        max_length=16, choices=OUTCOME_CHOICES, default=OUTCOME_TIMED)
+    format_version = models.PositiveSmallIntegerField(default=1)
+    transcript_sha256 = models.CharField(max_length=64, blank=True, default='')
+    word_count = models.PositiveIntegerField(default=0)
+    payload = models.TextField(blank=True, default='')
+    # Length of the audio file the client actually opened, which the
+    # start/stop timestamps only approximate (pauses, a forgotten stop).
+    audio_duration_ms = models.PositiveIntegerField(null=True, blank=True)
+    # What produced this, e.g. "apple-speech;macOS 27.0;en_US".
+    engine = models.CharField(max_length=120, blank=True, default='')
+    created_by = models.ForeignKey(
+        User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+
 # @Deprecated
 class TextNote(models.Model):
     author = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)

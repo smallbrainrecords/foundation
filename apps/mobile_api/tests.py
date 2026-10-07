@@ -36,6 +36,7 @@ from emr.models import (
     PatientImage, Document, DocumentProblem, DocumentTodo,
     PatientMutationStamp, Label,
     ObservationValueAudit,
+    EncounterTranscriptTiming,
 )
 
 
@@ -3588,6 +3589,8 @@ class StampCoverageSweepTests(TestCase):
         'mobile_observation_value_audit',
         'mobile_untranscribed_encounters',
         'mobile_encounter_transcripts',
+        'mobile_untimed_encounters',
+        'mobile_encounter_transcript_timings',
         'get_snomed_to_icd10',
     }
 
@@ -5961,3 +5964,694 @@ class ProblemIcdGuardTests(IcdFixtureMixin, TestCase):
         self.assertEqual([option['code'] for option in json.loads(res.content)], ['I10'])
         res = self.client.get('/api/mapping/snomed-to-icd/', {'concept_id': icd.SPRAIN})
         self.assertEqual(json.loads(res.content), [])
+
+
+# ---------------------------------------------------------------------------
+# Transcript word timing
+# ---------------------------------------------------------------------------
+
+class _TimingTestBase(_RBACTestBase):
+    """Helpers shared by the word-timing suites."""
+
+    WORDS = ['Good', 'morning,', 'how', 'are', 'you', 'feeling?']
+
+    def _encounter(self, physician=None, patient=None, transcript='',
+                   audio='e.m4a', recorder_status=2, starttime=None,
+                   audio_end_offset=None):
+        enc = Encounter.objects.create(
+            physician=physician or self.attending,
+            patient=patient or self.patient,
+            stoptime=timezone.now(),
+            recorder_status=recorder_status,
+            transcript=transcript,
+            audio_end_offset=audio_end_offset,
+        )
+        enc.audio = audio
+        enc.save()
+        if starttime is not None:
+            Encounter.objects.filter(id=enc.id).update(starttime=starttime)
+        return enc
+
+    def _timing_url(self, enc, patient=None):
+        return '/api/patient/%d/encounter/%d/transcript-timing' % (
+            (patient or enc.patient).id, enc.id)
+
+    def _timed_body(self, words=None, **overrides):
+        words = list(self.WORDS if words is None else words)
+        body = {
+            'outcome': 'timed',
+            'transcript': ' '.join(words),
+            'words': words,
+            'starts_ms': [index * 400 for index in range(len(words))],
+            'durations_ms': [300] * len(words),
+            'confidences': [90] * len(words),
+            'audio_duration_ms': 61000,
+            'engine': 'apple-speech;test',
+        }
+        body.update(overrides)
+        return body
+
+    def _post(self, enc, body, patient=None):
+        return self.client.post(
+            self._timing_url(enc, patient),
+            data=json.dumps(body), content_type='application/json')
+
+    def _row(self, enc, outcome='timed', words=None):
+        words = list(self.WORDS if words is None else words)
+        timed = outcome == 'timed'
+        return EncounterTranscriptTiming.objects.create(
+            encounter=enc, outcome=outcome,
+            word_count=len(words) if timed else 0,
+            transcript_sha256='a' * 64 if timed else '',
+            payload=json.dumps({
+                'words': words,
+                'starts_ms': [0] * len(words),
+                'durations_ms': [1] * len(words),
+                'confidences': [50] * len(words),
+            }, separators=(',', ':')) if timed else '',
+        )
+
+
+class UntimedEncounterListTests(_TimingTestBase):
+    """`mobile_untimed_encounters` — what Settings -> Transcribe is offered.
+
+    "Done" here is a timing ROW, not a non-empty transcript: a visit that
+    already has words is still listed until it has been re-transcribed with
+    timings, and a visit that can never be timed leaves once that is recorded.
+    """
+
+    URL = '/api/encounters/untimed'
+
+    def _ids(self, user=None):
+        self.assertTrue(self._login(user or self.attending))
+        body = self.client.get(self.URL).json()
+        self.assertTrue(body['success'])
+        return [row['id'] for row in body['encounters']], body['total']
+
+    def test_lists_a_visit_that_already_has_a_transcript(self):
+        # The whole point of the new list: an existing transcript is not
+        # "done", because it has no timings.
+        enc = self._encounter(transcript='already has words')
+        ids, total = self._ids()
+        self.assertEqual(ids, [enc.id])
+        self.assertEqual(total, 1)
+
+    def test_lists_a_visit_with_no_transcript(self):
+        enc = self._encounter()
+        self.assertEqual(self._ids()[0], [enc.id])
+
+    def test_a_timing_row_of_any_outcome_takes_the_visit_off_the_list(self):
+        # `silent` and `no_audio` are done-signals too — without them the
+        # remaining count could never reach zero.
+        for outcome in ('timed', 'silent', 'no_audio'):
+            self._row(self._encounter(), outcome=outcome)
+        open_one = self._encounter()
+        ids, total = self._ids()
+        self.assertEqual(ids, [open_one.id])
+        self.assertEqual(total, 1)
+
+    def test_excludes_no_audio_and_unfinished_recordings(self):
+        self._encounter(audio='')
+        self._encounter(recorder_status=0)
+        self._encounter(recorder_status=1)
+        self.assertEqual(self._ids(), ([], 0))
+
+    def test_does_not_list_a_colleagues_recording(self):
+        PatientController.objects.create(
+            patient=self.patient, physician=self.stranger_doc)
+        self._encounter(physician=self.stranger_doc)
+        self.assertEqual(self._ids(), ([], 0))
+
+    def test_does_not_list_a_patient_the_caller_can_no_longer_see(self):
+        self._encounter()
+        PatientController.objects.filter(
+            patient=self.patient, physician=self.attending).delete()
+        self.assertEqual(self._ids(), ([], 0))
+
+    def test_newest_first_and_limit_with_full_total(self):
+        now = timezone.now()
+        old = self._encounter(starttime=now - datetime.timedelta(days=30))
+        new = self._encounter(starttime=now - datetime.timedelta(days=1))
+        mid = self._encounter(starttime=now - datetime.timedelta(days=10))
+        self.assertEqual(self._ids()[0], [new.id, mid.id, old.id])
+        body = self.client.get(self.URL, {'limit': '2'}).json()
+        self.assertEqual([r['id'] for r in body['encounters']], [new.id, mid.id])
+        self.assertEqual(body['total'], 3)
+
+    def test_carries_what_the_client_needs_to_transcribe(self):
+        self._encounter(audio='recordings/visit.mp3', audio_end_offset=12.5)
+        self.assertTrue(self._login(self.attending))
+        row = self.client.get(self.URL).json()['encounters'][0]
+        self.assertEqual(row['patient_id'], self.patient.id)
+        self.assertEqual(row['audio_name'], 'visit.mp3')
+        self.assertEqual(row['audio_end_offset'], 12.5)
+        self.assertIsNotNone(row['start_time'])
+
+    def test_does_not_read_transcripts_to_build_the_page(self):
+        # These rows mostly HAVE a transcript; a page of 1,000 must not pull
+        # megabytes of text it never sends.
+        self._encounter(transcript='w ' * 5000)
+        self.assertTrue(self._login(self.attending))
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as queries:
+            self.client.get(self.URL)
+        page_selects = [q['sql'] for q in queries
+                        if 'emr_encounter' in q['sql'] and 'ORDER BY' in q['sql']]
+        self.assertTrue(page_selects)
+        for sql in page_selects:
+            self.assertNotIn('`transcript`', sql)
+
+    def test_bad_limit_and_method(self):
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL, {'limit': 'x'}).status_code, 400)
+        self.assertEqual(self.client.post(self.URL).status_code, 405)
+        self.client.logout()
+        self.assertIn(self.client.get(self.URL).status_code, (302, 401, 403))
+
+
+class EncounterTranscriptTimingWriteTests(_TimingTestBase):
+    """`mobile_encounter_transcript_timing` — recording the result of timing
+    one visit."""
+
+    def test_timed_replaces_the_transcript_and_stores_the_words(self):
+        enc = self._encounter(transcript='an older transcript of the visit')
+        self.assertTrue(self._login(self.attending))
+        resp = self._post(enc, self._timed_body())
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(resp.json()['word_count'], len(self.WORDS))
+        self.assertTrue(resp.json()['transcript_replaced'])
+
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, ' '.join(self.WORDS))
+        row = EncounterTranscriptTiming.objects.get(encounter=enc)
+        self.assertEqual(row.outcome, 'timed')
+        self.assertEqual(row.word_count, len(self.WORDS))
+        self.assertEqual(row.audio_duration_ms, 61000)
+        self.assertEqual(row.engine, 'apple-speech;test')
+        self.assertEqual(row.created_by, self.attending)
+        import hashlib
+        self.assertEqual(
+            row.transcript_sha256,
+            hashlib.sha256(enc.transcript.encode('utf-8')).hexdigest())
+        payload = json.loads(row.payload)
+        self.assertEqual(payload['words'], self.WORDS)
+        self.assertEqual(payload['starts_ms'], [0, 400, 800, 1200, 1600, 2000])
+        self.assertEqual(len(payload['durations_ms']), len(self.WORDS))
+        self.assertEqual(len(payload['confidences']), len(self.WORDS))
+
+    def test_the_words_always_rebuild_the_transcript(self):
+        # The invariant every reader relies on: word N of the transcript is
+        # timing N.
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self._post(enc, self._timed_body())
+        enc.refresh_from_db()
+        row = EncounterTranscriptTiming.objects.get(encounter=enc)
+        self.assertEqual(enc.transcript.split(' '), json.loads(row.payload)['words'])
+
+    def test_non_ascii_words_survive(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        words = ['Sjögren’s', 'café', '37°C']
+        self.assertEqual(self._post(enc, self._timed_body(words=words)).status_code, 200)
+        self.assertEqual(
+            json.loads(EncounterTranscriptTiming.objects.get(encounter=enc).payload)['words'],
+            words)
+
+    def test_a_transcript_that_does_not_match_its_words_is_refused(self):
+        enc = self._encounter(transcript='original')
+        self.assertTrue(self._login(self.attending))
+        for bad in (
+            self._timed_body(transcript='Good morning, how are you'),
+            self._timed_body(transcript=' '.join(self.WORDS) + ' '),
+            self._timed_body(transcript='  '.join(self.WORDS)),
+        ):
+            resp = self._post(enc, bad)
+            self.assertEqual(resp.status_code, 400)
+            self.assertEqual(resp.json()['error'], 'transcript_words_mismatch')
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, 'original')
+        self.assertFalse(EncounterTranscriptTiming.objects.filter(encounter=enc).exists())
+
+    def test_malformed_bodies_are_refused_and_write_nothing(self):
+        enc = self._encounter(transcript='original')
+        self.assertTrue(self._login(self.attending))
+        base = self._timed_body()
+        bad_bodies = [
+            {'outcome': 'nonsense'},
+            {},
+            self._timed_body(transcript=''),
+            self._timed_body(words=[], transcript=''),
+            dict(base, starts_ms=base['starts_ms'][:-1]),
+            dict(base, durations_ms=base['durations_ms'] + [1]),
+            dict(base, confidences=[101] * len(self.WORDS)),
+            dict(base, confidences=[-2] * len(self.WORDS)),
+            dict(base, starts_ms=[-2] * len(self.WORDS)),
+            dict(base, starts_ms=[1.5] * len(self.WORDS)),
+            dict(base, starts_ms=[True] * len(self.WORDS)),
+            dict(base, starts_ms='nope'),
+            dict(base, audio_duration_ms=-1),
+            dict(base, audio_duration_ms='long'),
+            # A word with a space inside still satisfies the join, and would
+            # make "word N" ambiguous.
+            dict(base, words=['Good morning,', 'how', 'are', 'you', 'feeling?'] + ['x'],
+                 transcript='Good morning, how are you feeling? x'),
+            dict(base, words=self.WORDS[:-1] + ['']),
+            dict(base, words=self.WORDS[:-1] + [7]),
+        ]
+        for body in bad_bodies:
+            resp = self._post(enc, body)
+            self.assertEqual(resp.status_code, 400, (body, resp.content))
+        resp = self.client.post(self._timing_url(enc), data='not json',
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, 'original')
+        self.assertFalse(EncounterTranscriptTiming.objects.filter(encounter=enc).exists())
+
+    def test_too_many_words_is_refused(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        from apps.mobile_api import views
+        with mock.patch.object(views, '_TIMING_MAX_WORDS', 3):
+            self.assertEqual(self._post(enc, self._timed_body()).status_code, 400)
+
+    def test_posting_again_replaces_rather_than_duplicates(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self._post(enc, self._timed_body()).status_code, 200)
+        again = self._post(enc, self._timed_body(words=['Second', 'pass']))
+        self.assertEqual(again.status_code, 200)
+        self.assertEqual(EncounterTranscriptTiming.objects.filter(encounter=enc).count(), 1)
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, 'Second pass')
+        self.assertEqual(EncounterTranscriptTiming.objects.get(encounter=enc).word_count, 2)
+
+    def test_an_identical_repost_reports_nothing_replaced(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self._post(enc, self._timed_body())
+        self.assertFalse(self._post(enc, self._timed_body()).json()['transcript_replaced'])
+
+    # ---- who may write ----
+
+    def test_a_colleague_with_access_may_not_replace_someone_elses_transcript(self):
+        PatientController.objects.create(
+            patient=self.patient, physician=self.stranger_doc)
+        enc = self._encounter(transcript='original')
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self._post(enc, self._timed_body())
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json()['error'], 'transcript_timing_forbidden')
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, 'original')
+
+    def test_admin_and_team_nurse_may_not_write_either(self):
+        enc = self._encounter(transcript='original')
+        for user in (self.admin_user, self.team_nurse):
+            self.assertTrue(self._login(user))
+            self.assertEqual(self._post(enc, self._timed_body()).status_code, 403)
+            self.client.logout()
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, 'original')
+
+    def test_no_access_is_a_uniform_404(self):
+        # The gate mobile_update_encounter lacks: a caller with no clinical
+        # access learns nothing, not even that the encounter exists.
+        enc = self._encounter(transcript='original')
+        for user in (self.stranger_doc, self.stranger_nurse,
+                     self.other_patient, self.no_profile):
+            self.assertTrue(self._login(user))
+            self.assertEqual(self._post(enc, self._timed_body()).status_code, 404)
+            self.client.logout()
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, 'original')
+
+    def test_the_recording_physician_loses_the_right_with_the_patient(self):
+        enc = self._encounter(transcript='original')
+        PatientController.objects.filter(
+            patient=self.patient, physician=self.attending).delete()
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self._post(enc, self._timed_body()).status_code, 404)
+
+    def test_encounter_must_belong_to_the_patient_in_the_url(self):
+        PatientController.objects.create(
+            patient=self.other_patient, physician=self.attending)
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        resp = self._post(enc, self._timed_body(), patient=self.other_patient)
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(EncounterTranscriptTiming.objects.exists())
+
+    def test_requires_login_and_post(self):
+        enc = self._encounter()
+        self.assertIn(self._post(enc, self._timed_body()).status_code, (302, 401, 403))
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self._timing_url(enc)).status_code, 405)
+
+    # ---- the end mark ----
+
+    def test_a_result_made_under_a_stale_end_mark_is_refused(self):
+        # The physician cut the visit short after this client read the list.
+        # A transcript made from the whole file must not overwrite that.
+        enc = self._encounter(transcript='', audio_end_offset=30.0)
+        self.assertTrue(self._login(self.attending))
+        resp = self._post(enc, self._timed_body())            # sent no mark
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(resp.json()['error'], 'audio_end_offset_changed')
+        self.assertEqual(resp.json()['audio_end_offset'], 30.0)
+        resp = self._post(enc, self._timed_body(audio_end_offset=45.0))
+        self.assertEqual(resp.status_code, 409)
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, '')
+        self.assertFalse(EncounterTranscriptTiming.objects.exists())
+
+    def test_a_result_made_under_the_current_end_mark_is_accepted(self):
+        enc = self._encounter(audio_end_offset=30.0)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(
+            self._post(enc, self._timed_body(audio_end_offset=30.0)).status_code, 200)
+
+    def test_a_mark_sent_for_an_unmarked_visit_is_refused(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(
+            self._post(enc, self._timed_body(audio_end_offset=10.0)).status_code, 409)
+
+    # ---- silent ----
+
+    def test_silent_is_recorded_and_never_clears_an_existing_transcript(self):
+        # A transcript is never cleared without a replacement in hand.
+        enc = self._encounter(transcript='words from an earlier pass')
+        self.assertTrue(self._login(self.attending))
+        resp = self._post(enc, {'outcome': 'silent', 'audio_duration_ms': 4000})
+        self.assertEqual(resp.status_code, 200)
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, 'words from an earlier pass')
+        row = EncounterTranscriptTiming.objects.get(encounter=enc)
+        self.assertEqual((row.outcome, row.word_count, row.payload), ('silent', 0, ''))
+        self.assertEqual(row.audio_duration_ms, 4000)
+
+    def test_silent_may_not_replace_a_timed_row(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self._post(enc, self._timed_body())
+        resp = self._post(enc, {'outcome': 'silent'})
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(EncounterTranscriptTiming.objects.get(encounter=enc).outcome, 'timed')
+
+    def test_timed_may_replace_a_silent_row(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self._post(enc, {'outcome': 'silent'})
+        self.assertEqual(self._post(enc, self._timed_body()).status_code, 200)
+        self.assertEqual(EncounterTranscriptTiming.objects.get(encounter=enc).outcome, 'timed')
+
+    # ---- no_audio ----
+
+    def test_no_audio_is_recorded_when_the_server_finds_the_object_missing(self):
+        enc = self._encounter(transcript='kept', audio='gone/missing.mp3')
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                side_effect=FileNotFoundError('File does not exist')):
+            resp = self._post(enc, {'outcome': 'no_audio'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(EncounterTranscriptTiming.objects.get(encounter=enc).outcome, 'no_audio')
+        enc.refresh_from_db()
+        self.assertEqual(enc.transcript, 'kept')
+
+    def test_no_audio_is_refused_when_the_object_is_there(self):
+        # The client's download failed for some other reason. Recording
+        # "no audio" would take a good recording off the list for ever.
+        enc = self._encounter(audio='present.mp3')
+        self.assertTrue(self._login(self.attending))
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                return_value=1234):
+            resp = self._post(enc, {'outcome': 'no_audio'})
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(resp.json()['error'], 'audio_present')
+        self.assertFalse(EncounterTranscriptTiming.objects.exists())
+
+    def test_no_audio_may_not_replace_a_timed_row(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self._post(enc, self._timed_body())
+        with mock.patch.object(
+                type(enc.audio), 'size', new_callable=mock.PropertyMock,
+                side_effect=FileNotFoundError('x')):
+            self.assertEqual(self._post(enc, {'outcome': 'no_audio'}).status_code, 409)
+
+    # ---- the change signal ----
+
+    def test_a_successful_write_bumps_the_patient_stamp(self):
+        enc = self._encounter()
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        self.assertTrue(self._login(self.attending))
+        self._post(enc, self._timed_body())
+        self.assertTrue(PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_a_refused_write_does_not_bump_the_stamp(self):
+        enc = self._encounter()
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        self.assertTrue(self._login(self.attending))
+        self._post(enc, self._timed_body(transcript='mismatch'))
+        self.assertFalse(PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_the_log_line_carries_counts_and_never_the_words(self):
+        enc = self._encounter(transcript='three words before')
+        self.assertTrue(self._login(self.attending))
+        with self.assertLogs('smallbrain.transcript_timing', level='INFO') as captured:
+            self._post(enc, self._timed_body())
+        line = json.loads(captured.records[0].getMessage())
+        self.assertEqual(line['word_count'], len(self.WORDS))
+        self.assertEqual(line['previous_word_count'], 3)
+        self.assertTrue(line['transcript_replaced'])
+        joined = ' '.join(r.getMessage() for r in captured.records)
+        for word in self.WORDS + ['three', 'before']:
+            self.assertNotIn(word, joined)
+
+
+class EncounterTranscriptTimingReadTests(_TimingTestBase):
+    """`mobile_encounter_transcript_timings` — a Mac fetching its own copy."""
+
+    URL = '/api/encounters/transcript-timings'
+
+    def _timed(self, **kwargs):
+        enc = self._encounter(**kwargs)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self._post(enc, self._timed_body()).status_code, 200)
+        self.client.logout()
+        return enc
+
+    def test_meta_returns_hash_and_count_only(self):
+        enc = self._timed()
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id), 'meta': '1'}).json()
+        row = EncounterTranscriptTiming.objects.get(encounter=enc)
+        self.assertEqual(body['timings'], [{
+            'id': enc.id,
+            'transcript_sha256': row.transcript_sha256,
+            'word_count': len(self.WORDS),
+        }])
+
+    def test_full_returns_exactly_what_was_stored(self):
+        enc = self._timed()
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(self.URL, {'ids': str(enc.id)})
+        self.assertEqual(resp['Content-Type'], 'application/json')
+        body = resp.json()
+        self.assertTrue(body['success'])
+        self.assertEqual(body['deferred'], [])
+        (row,) = body['timings']
+        self.assertEqual(row['id'], enc.id)
+        self.assertEqual(row['word_count'], len(self.WORDS))
+        self.assertEqual(row['audio_duration_ms'], 61000)
+        self.assertEqual(row['engine'], 'apple-speech;test')
+        self.assertEqual(row['format_version'], 1)
+        self.assertEqual(row['payload']['words'], self.WORDS)
+        self.assertEqual(row['payload']['starts_ms'], [0, 400, 800, 1200, 1600, 2000])
+        self.assertEqual(row['payload']['durations_ms'], [300] * len(self.WORDS))
+        self.assertEqual(row['payload']['confidences'], [90] * len(self.WORDS))
+
+    def test_non_ascii_round_trips_through_the_spliced_response(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        words = ['Sjögren’s', 'café', '“quoted”', 'back\\slash']
+        self.assertEqual(self._post(enc, self._timed_body(words=words)).status_code, 200)
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual(body['timings'][0]['payload']['words'], words)
+
+    def test_silent_and_no_audio_rows_are_not_timings(self):
+        silent = self._encounter()
+        missing = self._encounter()
+        self._row(silent, outcome='silent')
+        self._row(missing, outcome='no_audio')
+        self.assertTrue(self._login(self.attending))
+        ids = '%d,%d' % (silent.id, missing.id)
+        self.assertEqual(self.client.get(self.URL, {'ids': ids}).json()['timings'], [])
+        self.assertEqual(
+            self.client.get(self.URL, {'ids': ids, 'meta': '1'}).json()['timings'], [])
+
+    def test_an_untimed_encounter_is_simply_absent(self):
+        enc = self._encounter(transcript='words, no timing')
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(self.URL, {'ids': str(enc.id), 'meta': '1'}).json()
+        self.assertEqual(body['timings'], [])
+
+    def test_a_colleague_on_a_shared_chart_may_read(self):
+        enc = self._timed()
+        self.assertTrue(self._login(self.team_nurse))
+        body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual([r['id'] for r in body['timings']], [enc.id])
+
+    def test_an_inaccessible_patients_timing_is_not_returned(self):
+        enc = self._timed()
+        for user in (self.stranger_doc, self.stranger_nurse,
+                     self.other_patient, self.no_profile):
+            self.assertTrue(self._login(user))
+            for params in ({'ids': str(enc.id)}, {'ids': str(enc.id), 'meta': '1'}):
+                self.assertEqual(self.client.get(self.URL, params).json()['timings'], [])
+            self.client.logout()
+
+    def test_admin_may_read(self):
+        enc = self._timed()
+        self.assertTrue(self._login(self.admin_user))
+        body = self.client.get(self.URL, {'ids': str(enc.id), 'meta': '1'}).json()
+        self.assertEqual([r['id'] for r in body['timings']], [enc.id])
+
+    def test_rows_over_the_byte_budget_are_deferred_not_dropped(self):
+        encs = [self._timed() for _ in range(3)]
+        self.assertTrue(self._login(self.attending))
+        ids = ','.join(str(e.id) for e in encs)
+        from apps.mobile_api import views
+        one_row = len(EncounterTranscriptTiming.objects.get(encounter=encs[0]).payload) * 4
+        with mock.patch.object(views, '_TIMING_RESPONSE_BYTE_BUDGET', one_row + 1):
+            body = self.client.get(self.URL, {'ids': ids}).json()
+        self.assertEqual([r['id'] for r in body['timings']], [encs[0].id])
+        self.assertEqual(body['deferred'], [encs[1].id, encs[2].id])
+
+    def test_one_row_larger_than_the_budget_still_comes_back(self):
+        # Otherwise a single very long visit could never be fetched.
+        enc = self._timed()
+        self.assertTrue(self._login(self.attending))
+        from apps.mobile_api import views
+        with mock.patch.object(views, '_TIMING_RESPONSE_BYTE_BUDGET', 1):
+            body = self.client.get(self.URL, {'ids': str(enc.id)}).json()
+        self.assertEqual([r['id'] for r in body['timings']], [enc.id])
+        self.assertEqual(body['deferred'], [])
+
+    def test_bad_input_and_limits(self):
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.URL).status_code, 400)
+        self.assertEqual(self.client.get(self.URL, {'ids': ''}).status_code, 400)
+        self.assertEqual(self.client.get(self.URL, {'ids': 'a,b'}).status_code, 400)
+        many = ','.join(str(n) for n in range(1, 52))
+        self.assertEqual(self.client.get(self.URL, {'ids': many}).status_code, 400)
+        # The meta form may name more, because it returns almost nothing.
+        self.assertEqual(
+            self.client.get(self.URL, {'ids': many, 'meta': '1'}).status_code, 200)
+        too_many = ','.join(str(n) for n in range(1, 502))
+        self.assertEqual(
+            self.client.get(self.URL, {'ids': too_many, 'meta': '1'}).status_code, 400)
+
+    def test_requires_login_and_rejects_post(self):
+        self.assertIn(self.client.get(self.URL, {'ids': '1'}).status_code, (302, 401, 403))
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.post(self.URL, {'ids': '1'}).status_code, 405)
+
+
+class TranscriptTimingInvalidationTests(_TimingTestBase):
+    """A timing row is only true of the transcript, end mark and audio it was
+    made with. Every other writer of those three must drop it."""
+
+    def setUp(self):
+        super().setUp()
+        self.enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self._post(self.enc, self._timed_body()).status_code, 200)
+
+    def _patch(self, body):
+        return self.client.patch(
+            '/api/patient/%d/encounter/%d' % (self.patient.id, self.enc.id),
+            data=json.dumps(body), content_type='application/json')
+
+    def _has_timing(self):
+        return EncounterTranscriptTiming.objects.filter(encounter=self.enc).exists()
+
+    def test_a_patch_that_changes_the_transcript_drops_the_timing(self):
+        self.assertEqual(self._patch({'transcript': 'something else'}).status_code, 200)
+        self.assertFalse(self._has_timing())
+
+    def test_a_patch_that_empties_the_transcript_drops_the_timing(self):
+        # The end-mark flow empties the transcript before re-transcribing.
+        self.assertEqual(self._patch({'transcript': ''}).status_code, 200)
+        self.assertFalse(self._has_timing())
+
+    def test_a_patch_echoing_the_same_transcript_keeps_the_timing(self):
+        # pushUpdateEncounter sends the transcript on every encounter update.
+        self.assertEqual(
+            self._patch({'transcript': ' '.join(self.WORDS), 'note': 'n'}).status_code, 200)
+        self.assertTrue(self._has_timing())
+
+    def test_a_patch_without_a_transcript_keeps_the_timing(self):
+        self.assertEqual(self._patch({'note': 'only the note'}).status_code, 200)
+        self.assertTrue(self._has_timing())
+
+    def test_changing_the_end_mark_drops_the_timing(self):
+        self.assertEqual(self._patch({'audio_end_offset': 12.0}).status_code, 200)
+        self.assertFalse(self._has_timing())
+
+    def test_echoing_an_unchanged_end_mark_keeps_the_timing(self):
+        self.assertEqual(self._patch({'audio_end_offset': None}).status_code, 200)
+        self.assertTrue(self._has_timing())
+
+    def test_a_dropped_visit_returns_to_the_untimed_list(self):
+        self.assertEqual(self.client.get('/api/encounters/untimed').json()['total'], 0)
+        self._patch({'transcript': 'something else'})
+        body = self.client.get('/api/encounters/untimed').json()
+        self.assertEqual([r['id'] for r in body['encounters']], [self.enc.id])
+
+    def test_silent_and_no_audio_rows_are_dropped_by_a_new_transcript_too(self):
+        for outcome in ('silent', 'no_audio'):
+            EncounterTranscriptTiming.objects.filter(encounter=self.enc).delete()
+            Encounter.objects.filter(id=self.enc.id).update(transcript='')
+            self._row(self.enc, outcome=outcome)
+            self.assertEqual(self._patch({'transcript': 'words arrived'}).status_code, 200)
+            self.assertFalse(self._has_timing(), outcome)
+
+    def test_a_retried_audio_upload_drops_the_timing(self):
+        import uuid
+        client_uuid = uuid.uuid4()
+        Encounter.objects.filter(id=self.enc.id).update(client_uuid=client_uuid)
+        resp = self.client.post(
+            '/api/patient/%d/encounter/upload-audio' % self.patient.id,
+            {'file': SimpleUploadedFile('again.m4a', b'audio-bytes'),
+             'client_uuid': str(client_uuid)})
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(resp.json()['id'], self.enc.id)
+        self.assertFalse(self._has_timing())
+
+    def test_deleting_the_encounter_removes_its_timing(self):
+        self.enc.delete()
+        self.assertFalse(EncounterTranscriptTiming.objects.exists())
+
+
+class TranscriptTimingStaysOutOfPatientFullTests(_TimingTestBase):
+    """The reason this is a side table: opening a chart must not pay for it."""
+
+    def test_patient_full_never_reads_the_timing_table(self):
+        enc = self._encounter()
+        self.assertTrue(self._login(self.attending))
+        self._post(enc, self._timed_body())
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as queries:
+            resp = self.client.get('/api/patient/%d/full' % self.patient.id)
+        self.assertEqual(resp.status_code, 200)
+        touched = [q['sql'] for q in queries
+                   if 'emr_encountertranscripttiming' in q['sql']]
+        self.assertEqual(touched, [])
+        self.assertNotIn('starts_ms', resp.content.decode())
