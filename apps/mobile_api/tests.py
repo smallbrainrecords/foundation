@@ -29,7 +29,7 @@ from emr.models import (
     Encounter, EncounterEvent,
     EncounterProblemRecord, EncounterTodoRecord, EncounterObservationValue,
     Problem, ProblemNote, ProblemActivity, ProblemRelationship,
-    ToDo, TaggedToDoOrder, TodoActivity,
+    ToDo, ToDoComment, TaggedToDoOrder, TodoActivity,
     Observation, ObservationComponent, ObservationValue,
     ObservationPinToProblem,
     UserProfile, PatientController, PhysicianTeam,
@@ -4674,8 +4674,13 @@ class MobileTodoActivityLogTests(_RBACTestBase):
         self.client.post(
             self._todo_url('/member'), data=json.dumps({'user_id': self.team_nurse.id}),
             content_type='application/json')
-        self.client.post(
+        resp = self.client.post(
             self._todo_url('/comment'), data=json.dumps({'comment': 'scheduled for Tuesday'}),
+            content_type='application/json')
+        comment_id = json.loads(resp.content)['id']
+        self.client.post(
+            self._todo_url(f'/comment/{comment_id}'),
+            data=json.dumps({'comment': 'scheduled for Wednesday'}),
             content_type='application/json')
         self.client.post(self._doc_link_url())
         self.client.post(
@@ -4686,6 +4691,7 @@ class MobileTodoActivityLogTests(_RBACTestBase):
             content_type='application/json')
         self.client.delete(self._doc_link_url())
         self.client.delete(self._todo_url(f'/member/{self.team_nurse.id}'))
+        self._update(due_date=None)
         self._update(accomplished=True)
 
         self.assertEqual(self._log(), [
@@ -4695,11 +4701,13 @@ class MobileTodoActivityLogTests(_RBACTestBase):
             'Moved from problem "Hypertension" to problem "Diabetes"',
             'Nia Nurse - nurse joined this todo',
             'Added comment',
+            'Edited comment',
             'Linked document: echo report',
             'Printed requisition signed by Ada Attending',
             'Downloaded requisition signed by Ada Attending',
             'Unlinked document: echo report',
             'Unpinned Nia Nurse',
+            'Removed due date',
             'Updated status to accomplished',
         ])
         # Every row names who did it, and reaches the app through patient_full.
@@ -4845,6 +4853,235 @@ class MobileTodoActivityLogTests(_RBACTestBase):
             content_type='application/json')
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(self._log(), [])
+
+
+class MobileUpdateTodoCommentTests(_RBACTestBase):
+    """PATCH /api/patient/<pid>/todo/<id>/comment/<comment_id>.
+
+    The app has always let a comment be edited on screen; until 2026-10-09
+    there was no route for the edit, so it stayed on the Mac that made it.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.attending.first_name = 'Ada'
+        self.attending.last_name = 'Attending'
+        self.attending.save()
+        self.todo = ToDo.objects.create(todo='echocardiogram', patient=self.patient)
+        self.other_todo = ToDo.objects.create(todo='cbc', patient=self.patient)
+        self.comment = ToDoComment.objects.create(
+            todo=self.todo, user=self.attending, comment='scheduled for Tuesday')
+        # A fixed time in the past, so a restamp would show.
+        self.written_at = timezone.now() - datetime.timedelta(days=3)
+        ToDoComment.objects.filter(id=self.comment.id).update(datetime=self.written_at)
+        self._login(self.team_nurse)
+
+    def _url(self, patient_id=None, todo_id=None, comment_id=None):
+        pid = patient_id if patient_id is not None else self.patient.id
+        tid = todo_id if todo_id is not None else self.todo.id
+        cid = comment_id if comment_id is not None else self.comment.id
+        return f'/api/patient/{pid}/todo/{tid}/comment/{cid}'
+
+    def _patch(self, text, **kwargs):
+        return self.client.patch(
+            self._url(**kwargs), data=json.dumps({'comment': text}),
+            content_type='application/json')
+
+    def _text(self):
+        return ToDoComment.objects.get(id=self.comment.id).comment
+
+    def _log(self):
+        return list(TodoActivity.objects.filter(todo=self.todo)
+                    .order_by('id').values_list('activity', flat=True))
+
+    # ---- the edit ----
+
+    def test_the_text_changes_and_the_todo_says_who_edited_it(self):
+        resp = self._patch('  scheduled for Wednesday  ')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(json.loads(resp.content), {'success': True, 'updated': True})
+        self.assertEqual(self._text(), 'scheduled for Wednesday')
+        self.assertEqual(self._log(), ['Edited comment'])
+        row = TodoActivity.objects.get(todo=self.todo)
+        self.assertEqual(row.author, self.team_nurse)
+        self.assertEqual(row.comment_id, self.comment.id)
+
+    def test_post_is_accepted_like_patch(self):
+        # The app's other "update" calls go out as POST.
+        resp = self.client.post(
+            self._url(), data=json.dumps({'comment': 'by post'}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(self._text(), 'by post')
+
+    def test_the_comment_keeps_its_time_and_its_author(self):
+        # `datetime` is auto_now: a plain save would restamp it and move the
+        # comment to the end of the thread on every Mac that pulls it fresh.
+        self._patch('scheduled for Wednesday')
+        comment = ToDoComment.objects.get(id=self.comment.id)
+        self.assertEqual(comment.datetime, self.written_at)
+        self.assertEqual(comment.user, self.attending)
+
+    def test_the_new_text_reaches_patient_full(self):
+        self._patch('scheduled for Wednesday')
+        full = json.loads(self.client.get(f'/api/patient/{self.patient.id}/full').content)
+        todo = next(t for t in full['todos'] if t['id'] == self.todo.id)
+        self.assertEqual(
+            [c['comment'] for c in todo['comments']], ['scheduled for Wednesday'])
+
+    def test_it_bumps_the_patient_stamp(self):
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        self._patch('scheduled for Wednesday')
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    # ---- no change, no row ----
+
+    def test_the_same_text_again_is_a_success_that_writes_nothing(self):
+        resp = self._patch('scheduled for Tuesday')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content), {'success': True, 'updated': False})
+        self.assertEqual(self._log(), [])
+        self._patch('scheduled for Wednesday')
+        self._patch('scheduled for Wednesday')
+        self.assertEqual(self._log(), ['Edited comment'])
+
+    def test_empty_text_is_refused(self):
+        for text in ('', '   ', None):
+            self.assertEqual(self._patch(text).status_code, 400)
+        self.assertEqual(self._text(), 'scheduled for Tuesday')
+        self.assertEqual(self._log(), [])
+
+    # ---- who may edit ----
+
+    def test_staff_may_edit_a_colleagues_comment(self):
+        self.assertEqual(self._patch('edited by the nurse').status_code, 200)
+        self.assertEqual(self._text(), 'edited by the nurse')
+
+    def test_a_patient_may_edit_only_their_own_comment(self):
+        own = ToDoComment.objects.create(
+            todo=self.todo, user=self.patient, comment='I will fast beforehand')
+        self.client.logout()
+        self._login(self.patient)
+
+        self.assertEqual(self._patch('I will not fast', comment_id=own.id).status_code, 200)
+        self.assertEqual(ToDoComment.objects.get(id=own.id).comment, 'I will not fast')
+
+        resp = self._patch('rewritten by the patient')
+        # 404, never 403: the app reads 403 as "signed out".
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(self._text(), 'scheduled for Tuesday')
+        self.assertEqual(self._log(), ['Edited comment'])   # the patient's own, only
+
+    def test_a_caller_without_access_404s(self):
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._patch('x').status_code, 404)
+        self.assertEqual(self._text(), 'scheduled for Tuesday')
+        self.assertFalse(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    # ---- scoping ----
+
+    def test_the_comment_must_belong_to_the_todo_and_the_chart_in_the_url(self):
+        self.assertEqual(self._patch('x', todo_id=self.other_todo.id).status_code, 404)
+        self.client.logout()
+        self._login(self.admin_user)
+        self.assertEqual(self._patch('x', patient_id=self.other_patient.id).status_code, 404)
+        self.assertEqual(self._text(), 'scheduled for Tuesday')
+
+    def test_an_unknown_comment_404s(self):
+        self.assertEqual(self._patch('x', comment_id=987654321).status_code, 404)
+
+    def test_get_and_delete_405(self):
+        self.assertEqual(self.client.get(self._url()).status_code, 405)
+        self.assertEqual(self.client.delete(self._url()).status_code, 405)
+        self.assertEqual(self._text(), 'scheduled for Tuesday')
+
+
+class MobileRemoveTodoLabelTests(_RBACTestBase):
+    """DELETE /api/patient/<pid>/todo/<id>/label/<label_id>.
+
+    Until 2026-10-09 a label could be added to a todo from the app and never
+    taken off: the app deleted its local row, the server kept the link, and
+    the next pull put the label back.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.imaging = Label.objects.create(name='Imaging', css_class='todo-label-purple', is_all=True)
+        self.lab = Label.objects.create(name='Laboratory', css_class='todo-label-red', is_all=True)
+        self.todo = ToDo.objects.create(todo='chest ct', patient=self.patient)
+        self.sibling = ToDo.objects.create(todo='mri brain', patient=self.patient)
+        self.other_todo = ToDo.objects.create(todo='xray', patient=self.other_patient)
+        self.todo.labels.add(self.imaging, self.lab)
+        self.sibling.labels.add(self.imaging)
+        self.other_todo.labels.add(self.imaging)
+        self._login(self.team_nurse)
+
+    def _url(self, label=None, patient_id=None, todo_id=None):
+        pid = patient_id if patient_id is not None else self.patient.id
+        tid = todo_id if todo_id is not None else self.todo.id
+        lid = (label or self.imaging).id
+        return f'/api/patient/{pid}/todo/{tid}/label/{lid}'
+
+    def _labels(self, todo=None):
+        return sorted((todo or self.todo).labels.values_list('name', flat=True))
+
+    def test_the_label_comes_off_this_todo_only(self):
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertEqual(json.loads(resp.content), {'success': True, 'removed': True})
+        self.assertEqual(self._labels(), ['Laboratory'])
+        # A label is one shared row for the whole practice: the row survives,
+        # and every other todo keeps it.
+        self.assertTrue(Label.objects.filter(id=self.imaging.id).exists())
+        self.assertEqual(self._labels(self.sibling), ['Imaging'])
+        self.assertEqual(self._labels(self.other_todo), ['Imaging'])
+
+    def test_it_is_gone_from_patient_full(self):
+        self.client.delete(self._url())
+        full = json.loads(self.client.get(f'/api/patient/{self.patient.id}/full').content)
+        todo = next(t for t in full['todos'] if t['id'] == self.todo.id)
+        self.assertEqual([l['name'] for l in todo['labels']], ['Laboratory'])
+
+    def test_removing_it_twice_is_still_a_success(self):
+        self.client.delete(self._url())
+        resp = self.client.delete(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(json.loads(resp.content), {'success': True, 'removed': False})
+        self.assertEqual(self._labels(), ['Laboratory'])
+
+    def test_a_label_the_todo_never_had_or_that_does_not_exist_is_a_success(self):
+        never = Label.objects.create(name='Referral', is_all=True)
+        self.assertEqual(self.client.delete(self._url(never)).status_code, 200)
+        resp = self.client.delete(
+            f'/api/patient/{self.patient.id}/todo/{self.todo.id}/label/987654321')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(self._labels(), ['Imaging', 'Laboratory'])
+
+    def test_it_bumps_the_patient_stamp_and_writes_no_activity_row(self):
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        self.client.delete(self._url())
+        self.assertTrue(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+        self.assertEqual(TodoActivity.objects.filter(todo=self.todo).count(), 0)
+
+    def test_a_caller_without_access_404s_and_nothing_comes_off(self):
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        self.assertEqual(self.client.delete(self._url()).status_code, 404)
+        self.assertEqual(self._labels(), ['Imaging', 'Laboratory'])
+
+    def test_another_charts_todo_404s_and_keeps_its_label(self):
+        resp = self.client.delete(self._url(todo_id=self.other_todo.id))
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(self._labels(self.other_todo), ['Imaging'])
+
+    def test_only_delete_is_accepted(self):
+        for call in (self.client.get, self.client.post, self.client.patch):
+            self.assertEqual(call(self._url()).status_code, 405)
+        self.assertEqual(self._labels(), ['Imaging', 'Laboratory'])
 
 
 class MobileCreateTodoProblemBeltTests(TestCase):
