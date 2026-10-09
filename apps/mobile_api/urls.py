@@ -70,6 +70,7 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/todo$', views.mobile_create_todo),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)$', views.mobile_update_todo),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/log-print$', views.mobile_log_todo_print),
+    url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/log-download$', views.mobile_log_todo_download),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/comment$', views.mobile_create_todo_comment),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/label$', views.mobile_create_todo_label),
     url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/member$', views.mobile_add_todo_member),

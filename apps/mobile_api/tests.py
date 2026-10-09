@@ -4469,6 +4469,384 @@ class MobileMarkTaggedTodoViewedTests(TestCase):
         self.assertEqual(self.tag.status, 0)
 
 
+class MobileLogTodoRequisitionOutputTests(_RBACTestBase):
+    """POST /api/patient/<pid>/todo/<id>/log-print and .../log-download.
+
+    One TodoActivity row per order that left the app on a requisition, so
+    the todo's Activity list can say it was printed or downloaded. The two
+    routes share everything but the verb (2026-10-09); before that only the
+    print was recorded, and it had no tests.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.attending.first_name = 'Ada'
+        self.attending.last_name = 'Attending'
+        self.attending.save()
+        self.todo = ToDo.objects.create(todo='cbc, cmp', patient=self.patient)
+        self.other_todo = ToDo.objects.create(
+            todo='lipid panel', patient=self.other_patient)
+        self._login(self.team_nurse)
+
+    def _url(self, kind, patient_id=None, todo_id=None):
+        pid = patient_id if patient_id is not None else self.patient.id
+        tid = todo_id if todo_id is not None else self.todo.id
+        return f'/api/patient/{pid}/todo/{tid}/log-{kind}'
+
+    def _post(self, kind, body=None, **kwargs):
+        return self.client.post(
+            self._url(kind, **kwargs),
+            data=json.dumps(body or {}),
+            content_type='application/json',
+        )
+
+    def _activities(self, todo=None):
+        return list(
+            TodoActivity.objects.filter(todo=todo or self.todo)
+            .order_by('id').values_list('activity', flat=True))
+
+    # ---- wording ----
+
+    def test_print_names_the_signing_provider(self):
+        resp = self._post('print', {'provider_id': self.attending.id})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+        self.assertEqual(
+            self._activities(),
+            ['Printed requisition signed by Ada Attending'])
+
+    def test_download_names_the_signing_provider(self):
+        resp = self._post('download', {'provider_id': self.attending.id})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(json.loads(resp.content)['success'])
+        self.assertEqual(
+            self._activities(),
+            ['Downloaded requisition signed by Ada Attending'])
+
+    def test_without_a_provider_the_row_is_the_bare_verb(self):
+        self.assertEqual(self._post('print').status_code, 200)
+        self.assertEqual(self._post('download').status_code, 200)
+        self.assertEqual(
+            self._activities(),
+            ['Printed requisition', 'Downloaded requisition'])
+
+    def test_unknown_or_garbage_provider_falls_back_to_the_bare_verb(self):
+        self.assertEqual(
+            self._post('download', {'provider_id': 987654321}).status_code, 200)
+        self.assertEqual(
+            self._post('download', {'provider_id': 'nope'}).status_code, 200)
+        self.assertEqual(
+            self._activities(),
+            ['Downloaded requisition', 'Downloaded requisition'])
+
+    def test_the_route_decides_the_verb_not_the_body(self):
+        # A body can't turn one into the other: an older server has no
+        # download route at all, so a download there is a 404, never a
+        # "Printed" row.
+        self._post('download', {'kind': 'print', 'verb': 'Printed'})
+        self._post('print', {'kind': 'download', 'verb': 'Downloaded'})
+        self.assertEqual(
+            self._activities(),
+            ['Downloaded requisition', 'Printed requisition'])
+
+    # ---- who did it, and where it shows ----
+
+    def test_the_row_is_authored_by_the_caller_not_the_provider(self):
+        self._post('download', {'provider_id': self.attending.id})
+        row = TodoActivity.objects.get(todo=self.todo)
+        self.assertEqual(row.author, self.team_nurse)
+
+    def test_rows_reach_patient_full_where_the_app_reads_them(self):
+        self._post('print', {'provider_id': self.attending.id})
+        self._post('download', {'provider_id': self.attending.id})
+        resp = self.client.get(f'/api/patient/{self.patient.id}/full')
+        self.assertEqual(resp.status_code, 200)
+        rows = [a for a in json.loads(resp.content)['todo_activities']
+                if a['todo_id'] == self.todo.id]
+        self.assertEqual(
+            sorted(a['activity'] for a in rows),
+            ['Downloaded requisition signed by Ada Attending',
+             'Printed requisition signed by Ada Attending'])
+
+    def test_both_routes_bump_the_patient_stamp(self):
+        for kind in ('print', 'download'):
+            PatientMutationStamp.objects.filter(patient=self.patient).delete()
+            self.assertEqual(self._post(kind).status_code, 200)
+            self.assertTrue(
+                PatientMutationStamp.objects.filter(patient=self.patient).exists(),
+                kind)
+
+    # ---- authorization / scoping ----
+
+    def test_a_caller_without_access_404s_and_writes_nothing(self):
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        for kind in ('print', 'download'):
+            self.assertEqual(self._post(kind).status_code, 404, kind)
+        self.assertEqual(self._activities(), [])
+        self.assertFalse(
+            PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_another_patients_todo_404s_and_writes_nothing(self):
+        for kind in ('print', 'download'):
+            resp = self._post(kind, todo_id=self.other_todo.id)
+            self.assertEqual(resp.status_code, 404, kind)
+        self.assertEqual(self._activities(self.other_todo), [])
+
+    def test_get_405s_and_writes_nothing(self):
+        for kind in ('print', 'download'):
+            self.assertEqual(self.client.get(self._url(kind)).status_code, 405, kind)
+        self.assertEqual(self._activities(), [])
+
+    def test_anonymous_callers_are_turned_away(self):
+        self.client.logout()
+        for kind in ('print', 'download'):
+            resp = self._post(kind)
+            self.assertNotEqual(resp.status_code, 200, kind)
+        self.assertEqual(self._activities(), [])
+
+
+class MobileTodoActivityLogTests(_RBACTestBase):
+    """What a todo's Activity list holds — one row for every change to the
+    todo that reaches the server, written by the endpoint that made it.
+
+    The whole list is pinned here (2026-10-09) because the app shows it as
+    the todo's history and nothing else did: the create, rename, status,
+    comment and member rows had no tests, and a changed due date, a move to
+    another problem and an attached or removed document wrote no row at all
+    (the legacy web logged the due date and attachments; the mobile
+    endpoints had dropped them).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.team_nurse.first_name = 'Nia'
+        self.team_nurse.last_name = 'Nurse'
+        self.team_nurse.save()
+        self.attending.first_name = 'Ada'
+        self.attending.last_name = 'Attending'
+        self.attending.save()
+        self.htn = Problem.objects.create(patient=self.patient, problem_name='Hypertension')
+        self.dm = Problem.objects.create(patient=self.patient, problem_name='Diabetes')
+        self.todo = ToDo.objects.create(
+            todo='cbc, cmp', patient=self.patient, problem=self.htn, user=self.attending)
+        self.doc = Document.objects.create(
+            document=SimpleUploadedFile('echo.pdf', b'fake-pdf', content_type='application/pdf'),
+            document_name='echo report',
+            author=self.attending,
+            patient=self.patient,
+        )
+        self._login(self.attending)
+
+    # ---- helpers ----
+
+    def _todo_url(self, suffix=''):
+        return f'/api/patient/{self.patient.id}/todo/{self.todo.id}{suffix}'
+
+    def _update(self, **fields):
+        resp = self.client.post(
+            self._todo_url(), data=json.dumps(fields), content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        return resp
+
+    def _doc_link_url(self):
+        return (f'/api/patient/{self.patient.id}/document/{self.doc.id}'
+                f'/link/todo/{self.todo.id}')
+
+    def _log(self, todo=None):
+        return list(
+            TodoActivity.objects.filter(todo=todo or self.todo)
+            .order_by('id').values_list('activity', flat=True))
+
+    # ---- the whole story ----
+
+    def test_a_todos_life_reads_back_in_order(self):
+        resp = self.client.post(
+            f'/api/patient/{self.patient.id}/todo',
+            data=json.dumps({'todo': 'echocardiogram', 'problem_id': self.htn.id}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.todo = ToDo.objects.get(id=json.loads(resp.content)['id'])
+
+        self._update(todo='echocardiogram, with contrast')
+        self._update(due_date='2032-08-01T04:00:00.000Z')
+        self._update(problem_id=self.dm.id)
+        self.client.post(
+            self._todo_url('/member'), data=json.dumps({'user_id': self.team_nurse.id}),
+            content_type='application/json')
+        self.client.post(
+            self._todo_url('/comment'), data=json.dumps({'comment': 'scheduled for Tuesday'}),
+            content_type='application/json')
+        self.client.post(self._doc_link_url())
+        self.client.post(
+            self._todo_url('/log-print'), data=json.dumps({'provider_id': self.attending.id}),
+            content_type='application/json')
+        self.client.post(
+            self._todo_url('/log-download'), data=json.dumps({'provider_id': self.attending.id}),
+            content_type='application/json')
+        self.client.delete(self._doc_link_url())
+        self.client.delete(self._todo_url(f'/member/{self.team_nurse.id}'))
+        self._update(accomplished=True)
+
+        self.assertEqual(self._log(), [
+            'Added todo: echocardiogram',
+            'Todo name changed from "echocardiogram" to "echocardiogram, with contrast"',
+            'Changed due date to Aug 1, 2032',
+            'Moved from problem "Hypertension" to problem "Diabetes"',
+            'Nia Nurse - nurse joined this todo',
+            'Added comment',
+            'Linked document: echo report',
+            'Printed requisition signed by Ada Attending',
+            'Downloaded requisition signed by Ada Attending',
+            'Unlinked document: echo report',
+            'Unpinned Nia Nurse',
+            'Updated status to accomplished',
+        ])
+        # Every row names who did it, and reaches the app through patient_full.
+        self.assertEqual(
+            set(TodoActivity.objects.filter(todo=self.todo).values_list('author_id', flat=True)),
+            {self.attending.id})
+        full = json.loads(self.client.get(f'/api/patient/{self.patient.id}/full').content)
+        sent = [a['activity'] for a in full['todo_activities'] if a['todo_id'] == self.todo.id]
+        self.assertEqual(sorted(sent), sorted(self._log()))
+
+    # ---- text ----
+
+    def test_resending_the_same_text_writes_nothing(self):
+        self._update(todo='cbc, cmp')
+        self.assertEqual(self._log(), [])
+
+    # ---- due date ----
+
+    def test_due_date_set_changed_and_removed(self):
+        self._update(due_date='2032-08-01T04:00:00.000Z')
+        self._update(due_date='2032-09-01T04:00:00.000Z')
+        self._update(due_date=None)
+        self.assertEqual(self._log(), [
+            'Changed due date to Aug 1, 2032',
+            'Changed due date to Sep 1, 2032',
+            'Removed due date',
+        ])
+
+    def test_the_same_due_day_resent_writes_nothing(self):
+        # The app sends the due date with EVERY edit of the todo. The same
+        # day again — to the millisecond or at another hour — is no change.
+        self._update(due_date='2032-08-01T04:00:00.000Z')
+        self._update(due_date='2032-08-01T04:00:00.000Z', todo='cbc, cmp, lipids')
+        self._update(due_date='2032-08-01T16:30:00.000Z')
+        self._update(order=7)
+        self.assertEqual(self._log(), [
+            'Changed due date to Aug 1, 2032',
+            'Todo name changed from "cbc, cmp" to "cbc, cmp, lipids"',
+        ])
+
+    def test_the_due_day_is_the_clinics_day_not_utc(self):
+        # 02:00 UTC on Aug 1 is still July 31 in Detroit.
+        self._update(due_date='2032-08-01T02:00:00.000Z')
+        self.assertEqual(self._log(), ['Changed due date to Jul 31, 2032'])
+
+    def test_no_due_date_stays_silent(self):
+        self._update(due_date=None)
+        self._update(todo='cbc, cmp, lipids')   # key absent
+        self.assertEqual(
+            self._log(), ['Todo name changed from "cbc, cmp" to "cbc, cmp, lipids"'])
+
+    # ---- problem ----
+
+    def test_resending_the_same_problem_writes_nothing(self):
+        # The app sends problem_id with every edit too.
+        self._update(problem_id=self.htn.id, todo='cbc, cmp, lipids')
+        self.assertEqual(
+            self._log(), ['Todo name changed from "cbc, cmp" to "cbc, cmp, lipids"'])
+
+    def test_first_link_and_unlink_have_their_own_words(self):
+        orphan = ToDo.objects.create(todo='old order', patient=self.patient)
+        self.todo = orphan
+        self._update(problem_id=self.dm.id)
+        self._update(problem_id=None)
+        self.assertEqual(self._log(), [
+            'Linked to problem "Diabetes"',
+            'Removed from problem "Diabetes"',
+        ])
+
+    def test_an_unknown_problem_id_changes_nothing_and_writes_nothing(self):
+        self._update(problem_id=987654321)
+        self.todo.refresh_from_db()
+        self.assertEqual(self.todo.problem_id, self.htn.id)
+        self.assertEqual(self._log(), [])
+
+    def test_another_charts_problem_is_refused_and_never_named(self):
+        foreign = Problem.objects.create(
+            patient=self.other_patient, problem_name='Somebody Else Secret')
+        self._update(problem_id=foreign.id)
+        self.todo.refresh_from_db()
+        self.assertEqual(self.todo.problem_id, self.htn.id)
+        self.assertEqual(self._log(), [])
+
+    def test_a_move_does_not_add_a_row_to_either_problems_timeline(self):
+        before = ProblemActivity.objects.count()
+        self._update(problem_id=self.dm.id)
+        self.assertEqual(ProblemActivity.objects.count(), before)
+
+    # ---- members ----
+
+    def test_pinning_twice_or_unpinning_twice_writes_one_row_each(self):
+        for _ in range(2):
+            self.client.post(
+                self._todo_url('/member'), data=json.dumps({'user_id': self.team_nurse.id}),
+                content_type='application/json')
+        for _ in range(2):
+            self.client.delete(self._todo_url(f'/member/{self.team_nurse.id}'))
+        self.assertEqual(
+            self._log(), ['Nia Nurse - nurse joined this todo', 'Unpinned Nia Nurse'])
+
+    # ---- documents ----
+
+    def test_linking_twice_or_unlinking_twice_writes_one_row_each(self):
+        for _ in range(2):
+            self.assertEqual(self.client.post(self._doc_link_url()).status_code, 200)
+        for _ in range(2):
+            self.assertEqual(self.client.delete(self._doc_link_url()).status_code, 200)
+        self.assertEqual(
+            self._log(), ['Linked document: echo report', 'Unlinked document: echo report'])
+
+    def test_the_problem_side_row_is_still_written(self):
+        self.client.post(self._doc_link_url())
+        self.assertEqual(
+            list(ProblemActivity.objects.filter(problem=self.htn)
+                 .values_list('activity', flat=True)),
+            ['Linked document to todo: echo report'])
+
+    def test_deleting_an_attached_document_says_so_on_each_todo(self):
+        other = ToDo.objects.create(todo='follow-up visit', patient=self.patient, problem=self.htn)
+        unrelated = ToDo.objects.create(todo='flu shot', patient=self.patient, problem=self.htn)
+        DocumentTodo.objects.create(document=self.doc, todo=self.todo, author=self.attending)
+        DocumentTodo.objects.create(document=self.doc, todo=other, author=self.attending)
+
+        resp = self.client.delete(f'/api/patient/{self.patient.id}/document/{self.doc.id}')
+        self.assertEqual(resp.status_code, 200, resp.content)
+
+        self.assertEqual(self._log(), ['Removed document: echo report'])
+        self.assertEqual(self._log(other), ['Removed document: echo report'])
+        self.assertEqual(self._log(unrelated), [])
+
+    # ---- deliberately silent ----
+
+    def test_reordering_writes_nothing(self):
+        self._update(order=3)
+        self.assertEqual(self._log(), [])
+
+    def test_a_refused_update_writes_nothing(self):
+        self.client.logout()
+        self._login(self.attending)
+        resp = self.client.post(
+            f'/api/patient/{self.other_patient.id}/todo/{self.todo.id}',
+            data=json.dumps({'todo': 'x', 'due_date': '2032-08-01T04:00:00.000Z'}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(self._log(), [])
+
+
 class MobileCreateTodoProblemBeltTests(TestCase):
     """
     Server-side belt for the todo->problem invariant (2026-08-07, the c. diff

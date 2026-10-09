@@ -2308,6 +2308,11 @@ def mobile_delete_document(request, patient_id, document_id):
     linked_problems = list(
         DocumentProblem.objects.filter(document=doc).select_related('problem')
     )
+    # Same for the todos it was attached to: each one's own log says the
+    # document is gone (2026-10-09).
+    linked_todos = list(
+        DocumentTodo.objects.filter(document=doc).select_related('todo')
+    )
 
     if doc.document:
         # Triggers the django-storages GCS backend delete, removing the
@@ -2323,6 +2328,9 @@ def mobile_delete_document(request, patient_id, document_id):
                 add_problem_activity(link.problem, request.user, audit_msg)
     else:
         add_problem_activity(None, request.user, audit_msg)
+    for link in linked_todos:
+        if link.todo is not None:
+            add_todo_activity(link.todo, request.user, audit_msg)
 
     return JsonResponse({'success': True})
 
@@ -3039,7 +3047,10 @@ def mobile_document_todo_link(request, patient_id, document_id, todo_id):
     URL-coordinate identity, idempotent via `get_or_create` on POST. Audit
     is written to the todo's parent problem when one exists, falling back
     to `problem=None` for problemless todos — same patient-scope-legal-
-    trail policy as the unpinned-observation case in PR-3.
+    trail policy as the unpinned-observation case in PR-3 — and, since
+    2026-10-09, to the todo's own activity as well ("Linked document: …" /
+    "Unlinked document: …"), so the todo's Activity list shows it on every
+    Mac. A repeat POST or DELETE that changes nothing writes neither row.
     """
     if request.method not in ('POST', 'DELETE'):
         return JsonResponse({'error': 'POST or DELETE required'}, status=405)
@@ -3070,6 +3081,10 @@ def mobile_document_todo_link(request, patient_id, document_id, todo_id):
                 audit_problem, request.user,
                 f"Unlinked document from todo: {document_name}"
             )
+            # ...and on the todo's own log (2026-10-09). Before this a todo's
+            # Activity list never said a document had been attached or taken
+            # off, except on the one Mac that did it.
+            add_todo_activity(todo, request.user, f"Unlinked document: {document_name}")
         return JsonResponse({'success': True})
 
     # POST -> get_or_create
@@ -3082,6 +3097,7 @@ def mobile_document_todo_link(request, patient_id, document_id, todo_id):
             audit_problem, request.user,
             f"Linked document to todo: {document_name}"
         )
+        add_todo_activity(todo, request.user, f"Linked document: {document_name}")
     return JsonResponse({'success': True, 'id': link.id, 'created': created})
 
 
@@ -4641,11 +4657,29 @@ def mobile_create_todo(request, patient_id):
     return JsonResponse({'success': True, 'id': todo.id})
 
 
+def _todo_due_day(value):
+    """A todo's due date as the calendar day the clinic reads it on. A due
+    date is a day, not an instant; this is what its activity row compares
+    and prints."""
+    if value is None:
+        return None
+    from django.utils import timezone
+    if timezone.is_naive(value):
+        return value.date()
+    return timezone.localtime(value).date()
+
+
 @csrf_exempt
 @login_required
 @touches_patient_stamp
 def mobile_update_todo(request, patient_id, todo_id):
-    """PATCH {todo?, accomplished?, due_date?, order?, problem_id?}."""
+    """PATCH {todo?, accomplished?, due_date?, order?, problem_id?}.
+
+    Writes one TodoActivity row for each thing that actually changed — the
+    text, the status, the due day, the problem — and none for a value sent
+    again unchanged, which the app does for most of them on every edit.
+    A changed `order` writes nothing.
+    """
     if request.method not in ('PATCH', 'POST'):
         return JsonResponse({'error': 'PATCH required'}, status=405)
     try:
@@ -4662,6 +4696,7 @@ def mobile_update_todo(request, patient_id, todo_id):
     # state, not the post-save value.
     old_todo_title = todo.todo
     old_accomplished = todo.accomplished
+    old_due_day = _todo_due_day(todo.due_date)
     # A todo can be MOVED between problems by this endpoint, and both ends
     # changed: one lost an order, the other gained one. Captured before the
     # write because `todo.problem` is reassigned below.
@@ -4678,8 +4713,13 @@ def mobile_update_todo(request, patient_id, todo_id):
     if 'problem_id' in body:
         if body['problem_id']:
             try:
-                todo.problem = Problem.objects.get(id=body['problem_id'])
-            except Problem.DoesNotExist:
+                # Scoped to this chart (2026-10-09): the lookup took any
+                # patient's problem, and the move row below prints the
+                # problem's name. Another chart's id is treated like an
+                # unknown one — the todo stays where it was.
+                todo.problem = Problem.objects.get(
+                    id=body['problem_id'], patient_id=patient_id)
+            except (Problem.DoesNotExist, TypeError, ValueError):
                 pass
         else:
             todo.problem = None
@@ -4707,6 +4747,37 @@ def mobile_update_todo(request, patient_id, todo_id):
                 f'Todo "{todo.todo}" marked {status_word}'
             )
 
+    # Due date -> todo-side row, as the legacy web wrote one. Compared as
+    # calendar DAYS, not instants: the app sends the due date with every edit
+    # of the todo, and a re-sent date that differs only in sub-day precision
+    # must not write "changed" on each of them.
+    if 'due_date' in body:
+        new_due_day = _todo_due_day(todo.due_date)
+        if new_due_day != old_due_day:
+            if new_due_day is None:
+                add_todo_activity(todo, request.user, "Removed due date")
+            else:
+                add_todo_activity(
+                    todo, request.user,
+                    f"Changed due date to {new_due_day:%b} {new_due_day.day}, {new_due_day.year}"
+                )
+
+    # Moved to another problem -> todo-side row naming both ends. (Reorder is
+    # deliberately not logged: the legacy web's "Updated order of this todo."
+    # rows said nothing a reader could use.)
+    old_problem_id = old_problem.id if old_problem is not None else None
+    if 'problem_id' in body and todo.problem_id != old_problem_id:
+        if old_problem is None:
+            activity = f'Linked to problem "{todo.problem.problem_name}"'
+        elif todo.problem is None:
+            activity = f'Removed from problem "{old_problem.problem_name}"'
+        else:
+            activity = (
+                f'Moved from problem "{old_problem.problem_name}" '
+                f'to problem "{todo.problem.problem_name}"'
+            )
+        add_todo_activity(todo, request.user, activity)
+
     # An accomplished flip is the third de-authenticating action. Every OTHER
     # todo edit here — retitle, due date, reorder, moving it to another
     # problem — is a write that a physician's role authenticates but that a
@@ -4721,14 +4792,14 @@ def mobile_update_todo(request, patient_id, todo_id):
     return JsonResponse({'success': True})
 
 
-@csrf_exempt
-@login_required
-@touches_patient_stamp
-def mobile_log_todo_print(request, patient_id, todo_id):
-    """POST {provider_id?: int} -> emits a 'printed requisition' TodoActivity
-    row. macOS fire-and-forgets this after a successful Order Requisition
-    print so the audit trail mirrors the server-authoritative pattern
-    documented in CLAUDE.md (vs. an macOS-local ActivityLogEntry write).
+def _log_todo_requisition_output(request, patient_id, todo_id, verb):
+    """Write the TodoActivity row for one order leaving the app on a
+    requisition: '<verb> requisition signed by <provider>', or
+    '<verb> requisition' when no provider resolves.
+
+    The ROUTE picks the verb, never the body. A server that predates the
+    download route answers 404 for it, so a download can go unrecorded
+    there but can never be written down as a print.
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
@@ -4754,12 +4825,36 @@ def mobile_log_todo_print(request, patient_id, todo_id):
             pass
 
     if provider_name:
-        activity = f"Printed requisition signed by {provider_name}"
+        activity = f"{verb} requisition signed by {provider_name}"
     else:
-        activity = "Printed requisition"
+        activity = f"{verb} requisition"
 
     add_todo_activity(todo, request.user, activity)
     return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_log_todo_print(request, patient_id, todo_id):
+    """POST {provider_id?: int} -> emits a 'Printed requisition' TodoActivity
+    row. The app sends one per order on the paper after an Order Requisition
+    print, so the audit trail stays server-authoritative (vs. an app-local
+    ActivityLogEntry write).
+    """
+    return _log_todo_requisition_output(request, patient_id, todo_id, 'Printed')
+
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_log_todo_download(request, patient_id, todo_id):
+    """POST {provider_id?: int} -> emits a 'Downloaded requisition'
+    TodoActivity row. The app sends one per order in the file after the
+    requisition's "Save document" has written the PDF. Same body, checks and
+    wording as the print route; only the verb differs.
+    """
+    return _log_todo_requisition_output(request, patient_id, todo_id, 'Downloaded')
 
 
 # ---------- Todo Comment endpoints ----------
