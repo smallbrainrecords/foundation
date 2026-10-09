@@ -4889,6 +4889,56 @@ def mobile_create_todo_comment(request, patient_id, todo_id):
     return JsonResponse({'success': True, 'id': comment.id})
 
 
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_update_todo_comment(request, patient_id, todo_id, comment_id):
+    """PATCH {comment} -> change the text of a todo comment.
+
+    The app has always let a comment be edited on screen, and nothing carried
+    the edit here: it stayed on the Mac that made it (2026-10-09). This is
+    the route it now comes through.
+
+    Who may edit: a staff member who can see the chart may edit any comment
+    on it, as the legacy web allowed; a patient may edit only their own. The
+    todo's activity names whoever made the edit. Anything else answers 404 -
+    never 403, which the app reads as "signed out" and would stop its whole
+    push pass for.
+
+    The comment keeps its original time. `ToDoComment.datetime` is `auto_now`,
+    so a plain save would restamp it and move the comment to the bottom of
+    the thread on every Mac that had not seen it yet; only the text column is
+    written. The same text sent again is a success that writes nothing.
+    """
+    if request.method not in ('PATCH', 'POST'):
+        return JsonResponse({'error': 'PATCH required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    try:
+        comment = ToDoComment.objects.select_related('todo').get(
+            id=comment_id, todo_id=todo_id, todo__patient_id=patient_id)
+    except ToDoComment.DoesNotExist:
+        return JsonResponse({'error': 'Comment not found'}, status=404)
+
+    if _role_of(request.user) == 'patient' and comment.user_id != request.user.id:
+        return JsonResponse({'error': 'Comment not found'}, status=404)
+
+    body = _parse_body(request)
+    new_text = (body.get('comment') or '').strip()
+    if not new_text:
+        return JsonResponse({'error': 'comment is required'}, status=400)
+
+    if new_text == (comment.comment or ''):
+        return JsonResponse({'success': True, 'updated': False})
+
+    comment.comment = new_text
+    comment.save(update_fields=['comment'])
+    add_todo_activity(comment.todo, request.user, "Edited comment", comment=comment)
+    return JsonResponse({'success': True, 'updated': True})
+
+
 # ---------- Todo Label endpoints ----------
 
 @csrf_exempt
@@ -4928,6 +4978,40 @@ def mobile_create_todo_label(request, patient_id, todo_id):
     # attaching a label must not recolour it for everyone.
     todo.labels.add(label)
     return JsonResponse({'success': True, 'id': label.id})
+
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_remove_todo_label(request, patient_id, todo_id, label_id):
+    """DELETE -> take a label off ONE todo.
+
+    There was no way to do this from the app: a label removed on screen was
+    deleted locally, the server kept it, and the next pull put it back
+    (2026-10-09).
+
+    A `Label` is a shared vocabulary row - "Imaging" is one row for every todo
+    in the practice - so this removes the link between this todo and the
+    label and never the label itself. Idempotent: taking off a label the todo
+    does not carry is a success, so a retried request cannot fail.
+
+    Writes no activity row, like the route that adds one.
+    """
+    if request.method != 'DELETE':
+        return JsonResponse({'error': 'DELETE required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    try:
+        todo = ToDo.objects.get(id=todo_id, patient_id=patient_id)
+    except ToDo.DoesNotExist:
+        return JsonResponse({'error': 'Todo not found'}, status=404)
+
+    removed = todo.labels.filter(id=label_id).exists()
+    if removed:
+        todo.labels.remove(label_id)
+    return JsonResponse({'success': True, 'removed': removed})
 
 
 # ---------- Todo Member endpoints ----------
