@@ -4710,6 +4710,10 @@ class MobileTodoActivityLogTests(_RBACTestBase):
             'Removed due date',
             'Updated status to accomplished',
         ])
+        # The sentence `backfill_todo_accomplished_at` reads completion times
+        # from: if this wording changes, that command must change with it.
+        from emr.management.commands.backfill_todo_accomplished_at import DONE_ACTIVITIES
+        self.assertIn(self._log()[-1], DONE_ACTIVITIES)
         # Every row names who did it, and reaches the app through patient_full.
         self.assertEqual(
             set(TodoActivity.objects.filter(todo=self.todo).values_list('author_id', flat=True)),
