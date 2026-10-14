@@ -88,6 +88,10 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/observation/(?P<observation_id>\d+)/pin/(?P<problem_id>\d+)$', views.mobile_observation_pin),
     # Edited/deleted readings, from ObservationValueAudit (read-only)
     url(r'^patient/(?P<patient_id>\d+)/observation-audit$', views.mobile_observation_value_audit),
+    # Suggested todos: what the calling physician usually orders on this kind
+    # of problem (read-only; emr.todo_suggestions)
+    url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/todo-suggestions$',
+        views.mobile_todo_suggestions),
     # Label catalog
     url(r'^labels/$', views.mobile_create_label),
     url(r'^labels/(?P<label_id>\d+)$', views.mobile_update_label),

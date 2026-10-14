@@ -1015,6 +1015,49 @@ class ObservationPinOptOut(models.Model):
         ]
 
 
+class TodoSuggestionStat(models.Model):
+    """How often one physician orders one todo title on one kind of problem.
+
+    The table behind the app's suggested todos (`emr.todo_suggestions` has the
+    rule and the owner's decisions). It is DERIVED: nothing writes a row here
+    except `build_todo_suggestion_stats`, which replaces the whole table, so
+    a row never needs repairing and losing the table costs one rebuild.
+
+    Only titles that pass the evidence floor are stored at all (ordered at
+    least `MIN_ORDERS` times, for at least `MIN_PATIENTS` different patients).
+    A todo title is free text and can name a patient or their family; a title
+    typed once never reaches this table, so it can never be offered on someone
+    else's chart.
+
+    `physician_user_id` is a plain integer, not a foreign key, on purpose. On
+    MySQL the table is replaced by `CREATE TABLE ... LIKE` and one `RENAME
+    TABLE` (the db-f1-micro rule), and `LIKE` does not copy foreign keys: a
+    real FK would be silently dropped by the first rebuild and the table would
+    stop matching its migration.
+
+    `problem_key` is `c:<SNOMED concept id>` or, for a problem with no
+    concept, `n:<lower-cased name>`. `title_key` is the title with case,
+    spacing and trailing punctuation removed; `title` is the spelling the
+    physician used most often.
+    """
+    physician_user_id = models.PositiveIntegerField()
+    problem_key = models.CharField(max_length=255)
+    title_key = models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+    # Visits in which this title was ordered on a problem with this key.
+    n_orders = models.PositiveIntegerField()
+    # Visits in which a problem with this key was opened (the same number on
+    # every row sharing a physician and key).
+    n_opens = models.PositiveIntegerField()
+    n_patients = models.PositiveIntegerField()
+    built_on = models.DateTimeField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['physician_user_id', 'problem_key'], name='todo_suggest_lookup'),
+        ]
+
+
 class Country(models.Model):
     iso3 = models.CharField(max_length=3)
     iso_num = models.CharField(max_length=3)
