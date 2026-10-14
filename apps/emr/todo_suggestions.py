@@ -44,8 +44,9 @@ Definitions, all per physician:
 
 A kind of problem is its SNOMED concept, or its lower-cased name when it has
 none (`problem_key`). Two titles are the same when they differ only in case,
-spacing or trailing punctuation (`normalize_title`). The app carries the same
-two functions; the vectors in the tests are shared with it.
+spacing or trailing punctuation, and the retired web's "a1c repeats in <N>
+months" is an "A1C" (`normalize_title`). The app carries the same two
+functions; the vectors in the tests are shared with it.
 """
 import datetime
 import heapq
@@ -85,6 +86,17 @@ EXCLUDED_TITLE_KEYS = frozenset({
 
 _WHITESPACE = re.compile(r'\s+')
 _TRAILING_PUNCTUATION = ' .,;:!'
+
+# The retired web's A1C widget wrote two titles for one order. "Repeat in 3
+# months" wrote "A1C"; "Add a different order" took a month count and wrote
+# "a1c repeats in <N> months". Both are an A1C (owner, 2026-10-14), so the
+# second is read as the first: it counts toward the same habit, it is offered
+# as "A1C", and an open one hides an "A1C" suggestion. A note added after it
+# ("... (through va)") leaves it an A1C. Matched on the normalized title; the
+# app's `TodoSuggestionPolicy.isLegacyA1CTitle` is the same rule.
+_LEGACY_A1C = re.compile(r'a1c repeats in [0-9]+ months?(?:[^a-z0-9].*)?', re.S)
+LEGACY_A1C_TITLE_KEY = 'a1c'
+LEGACY_A1C_SPELLING = 'A1C'
 
 # The timeline wordings for a problem page being opened. The first two are the
 # retired web's (markup and all), the last two the app's.
@@ -127,8 +139,19 @@ def _collapse(text):
 
 def normalize_title(title):
     """The form under which two todo titles count as the same order: case,
-    spacing and trailing punctuation removed. '' for an empty title."""
-    return _collapse(title).rstrip(_TRAILING_PUNCTUATION).lower()
+    spacing and trailing punctuation removed, and the retired web's
+    "a1c repeats in <N> months" read as "a1c". '' for an empty title."""
+    key = _collapse(title).rstrip(_TRAILING_PUNCTUATION).lower()
+    return LEGACY_A1C_TITLE_KEY if _LEGACY_A1C.fullmatch(key) else key
+
+
+def display_title(title):
+    """How an ordered title is spelled when it is offered: as typed, except a
+    legacy A1C title, which is offered as the order it was."""
+    collapsed = _collapse(title)
+    if _LEGACY_A1C.fullmatch(collapsed.rstrip(_TRAILING_PUNCTUATION).lower()):
+        return LEGACY_A1C_SPELLING
+    return collapsed
 
 
 def problem_key(concept_id, name):
@@ -287,7 +310,7 @@ def collect_units(physician_ids=None, report=None):
             return
         # An order on a problem with no "opened" entry still makes a unit, so
         # a title can never be ordered more often than its problem was seen.
-        units.setdefault((encounter_id, key), {}).setdefault(title_key, _collapse(title))
+        units.setdefault((encounter_id, key), {}).setdefault(title_key, display_title(title))
 
     def key_for_todo(patient_id, problem_id):
         problem = index.by_id.get(problem_id)

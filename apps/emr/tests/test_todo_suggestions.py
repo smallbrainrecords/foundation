@@ -42,6 +42,18 @@ TITLE_VECTORS = [
     ('ua c&s if indicated', 'ua c&s if indicated'),
     ('', ''),
     ('  .  ', ''),
+    # The retired web's A1C widget wrote "a1c repeats in <N> months" for an
+    # A1C ordered at a chosen interval. It is an A1C (owner, 2026-10-14).
+    ('A1C repeats in 6 months', 'a1c'),
+    ('a1c repeats in 1 months', 'a1c'),
+    ('a1c  repeats in 12 month.', 'a1c'),
+    ('a1c repeats in 6 months (through VA)', 'a1c'),
+    ('a1c repeats in 12 months if keeping weight', 'a1c'),
+    # Only that wording.
+    ('a1c repeats in six months', 'a1c repeats in six months'),
+    ('a1c repeats in 4 monthsx', 'a1c repeats in 4 monthsx'),
+    ('repeat a1c in 6 months', 'repeat a1c in 6 months'),
+    ('cbc, a1c repeats in 6 months', 'cbc, a1c repeats in 6 months'),
 ]
 
 PROBLEM_KEY_VECTORS = [
@@ -212,9 +224,16 @@ class CollectionTests(SuggestionTestBase):
     def test_a_web_order_is_read_from_its_entry(self):
         patient = self.patient()
         problem = self.problem(patient)
-        self.web_order(self.visit(patient), problem, 'A1C repeats in 6 months')
+        self.web_order(self.visit(patient), problem, 'CBC, CMP, lipids')
         (unit,) = self.units()
-        self.assertEqual(unit.titles, {'a1c repeats in 6 months': 'A1C repeats in 6 months'})
+        self.assertEqual(unit.titles, {'cbc, cmp, lipids': 'CBC, CMP, lipids'})
+
+    def test_a_legacy_a1c_order_is_an_a1c_and_is_offered_as_one(self):
+        patient = self.patient()
+        problem = self.problem(patient)
+        self.web_order(self.visit(patient), problem, 'a1c repeats in 6 months')
+        (unit,) = self.units()
+        self.assertEqual(unit.titles, {'a1c': 'A1C'})
 
     def test_the_title_is_what_was_ordered_not_what_the_todo_says_now(self):
         # About 7% of todos are retitled after they are ordered. The habit is
@@ -391,6 +410,17 @@ class RateTests(SuggestionTestBase):
         (row,) = self.rows()
         self.assertEqual((row.title_key, row.n_orders, row.n_opens, row.n_patients), ('a1c', 5, 5, 5))
 
+    def test_legacy_a1c_orders_count_toward_the_a1c_habit(self):
+        # Three plain and three legacy orders are six A1C orders: one row,
+        # offered as "A1C", where before they were two rows under the floor.
+        self.habit('A1C', 3)
+        for _ in range(3):
+            patient = self.patient()
+            self.web_order(self.visit(patient), self.problem(patient), 'a1c repeats in 4 months')
+        (row,) = self.rows()
+        self.assertEqual((row.title_key, row.title, row.n_orders, row.n_patients),
+                         ('a1c', 'A1C', 6, 6))
+
     def test_four_orders_are_not_a_habit(self):
         self.habit('A1C', 4)
         self.assertEqual(self.rows(), [])
@@ -502,6 +532,13 @@ class ServingTests(SuggestionTestBase):
         # Last had it in June, and that one is still open.
         self.assertEqual(history, {'a1c': (june, june)})
 
+    def test_an_open_legacy_a1c_is_a_pending_a1c(self):
+        patient = self.patient()
+        problem = self.problem(patient)
+        june = datetime.datetime(2026, 6, 2, 15, 0, tzinfo=datetime.timezone.utc)
+        self.todo(patient, problem, 'a1c repeats in 6 months', june)
+        self.assertEqual(rule.patient_title_history(patient.id, ['a1c']), {'a1c': (june, june)})
+
     def test_a_finished_todo_is_not_pending(self):
         patient = self.patient()
         problem = self.problem(patient)
@@ -571,13 +608,13 @@ class ReplayTests(SuggestionTestBase):
                          {'shown': 0, 'opens_showing': 0, 'shown_and_ordered': 0})
 
     def test_the_command_reports_without_printing_a_title(self):
-        self.habit('A1C repeats in 6 months', 6)
+        self.habit('Mammogram at Sparrow', 6)
         out = StringIO()
         call_command('replay_todo_suggestions', since='2025-03-01', stdout=out)
         text = out.getvalue()
         self.assertIn('top 3', text)
         self.assertIn('ordered titles  : 6', text)
-        self.assertNotIn('repeats', text.lower())
+        self.assertNotIn('sparrow', text.lower())
 
     def test_the_command_refuses_a_bad_date(self):
         with self.assertRaises(CommandError):
