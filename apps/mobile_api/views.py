@@ -11,6 +11,7 @@ import datetime
 import os
 import re
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -39,6 +40,7 @@ from emr.problem_authentication import (
     apply_problem_authentication,
     is_attesting_actor,
 )
+from emr.todo_suggestions import patient_title_history, suggestions_for
 from emr.usual_vitals import (
     apply_usual_vitals,
     clear_opt_out,
@@ -5537,6 +5539,74 @@ def mobile_observation_value_audit(request, patient_id):
         'created_on': _iso_z(row.created_on),
     } for row in rows.order_by('-created_on', '-id')[:500]]
     return JsonResponse({'success': True, 'entries': entries})
+
+
+@csrf_exempt
+@login_required
+def mobile_todo_suggestions(request, patient_id, problem_id):
+    """GET -> the todo titles the calling physician most often orders on this
+    kind of problem, most often first, for the app's suggested todos.
+
+    The rule and the owner's decisions are in `emr.todo_suggestions`; the rows
+    come from `TodoSuggestionStat`, rebuilt by `build_todo_suggestion_stats`.
+    This view only reads.
+
+      * A patient the caller cannot see answers 404, uniform with not-found.
+      * The CALLER's own habits, and physicians only: any other role gets an
+        empty list, not an error, so the app needs no role logic of its own
+        to stay quiet.
+      * `settings.TODO_SUGGESTIONS_ENABLED = False` answers every request with
+        an empty list and `enabled: false`: a switch for the whole practice
+        that needs no app update.
+
+    Each suggestion carries its rate (`orders` of the `opens` of this kind of
+    problem) and two facts about THIS patient, so the app can decide what is
+    worth showing: when they last had a todo with that title, and since when
+    one has been open. Deciding is the app's job; nothing is filtered here
+    beyond the evidence floor the table was built with.
+
+    Read-only: it stays in StampCoverageSweepTests.GET_ONLY.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+    try:
+        problem = Problem.objects.get(id=problem_id, patient_id=patient_id)
+    except Problem.DoesNotExist:
+        return JsonResponse({'error': 'Problem not found'}, status=404)
+
+    if not getattr(settings, 'TODO_SUGGESTIONS_ENABLED', True):
+        return JsonResponse({'success': True, 'enabled': False, 'suggestions': []})
+    if _role_of(request.user) != 'physician':
+        return JsonResponse({'success': True, 'enabled': True, 'suggestions': []})
+
+    key, rows = suggestions_for(request.user.id, problem)
+    history = patient_title_history(patient_id, [row.title_key for row in rows])
+
+    def when(dt):
+        return _iso_z(dt.astimezone(datetime.timezone.utc)) if dt else None
+
+    suggestions = []
+    for row in rows:
+        last_ordered_on, pending_since = history.get(row.title_key, (None, None))
+        suggestions.append({
+            'title': row.title,
+            'key': row.title_key,
+            'orders': row.n_orders,
+            'opens': row.n_opens,
+            'patients': row.n_patients,
+            'probability': round(row.n_orders / row.n_opens, 4),
+            'last_ordered_on': when(last_ordered_on),
+            'pending_since': when(pending_since),
+        })
+    return JsonResponse({
+        'success': True,
+        'enabled': True,
+        'problem_key': key,
+        'built_on': when(rows[0].built_on) if rows else None,
+        'suggestions': suggestions,
+    })
 
 
 @csrf_exempt

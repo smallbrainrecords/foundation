@@ -37,6 +37,12 @@ COMPRESS_ENABLED = True
 VOICE_CONTROL = False
 SYNCING = False
 
+# Suggested todos on the app's problem page (emr.todo_suggestions). With this
+# off the endpoint answers every request with an empty list, so setting the
+# environment variable TODO_SUGGESTIONS_ENABLED=false on the service switches
+# the feature off on every Mac without an app update.
+TODO_SUGGESTIONS_ENABLED = env.bool('TODO_SUGGESTIONS_ENABLED', default=True)
+
 SECRET_KEY = env('SECRET_KEY', default="{~9@e\1VKr|zlM&vl5ZJTOqBX#b!Aa1cv;pN!J\H=cL=<48<|7r4s1Z!U")
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 

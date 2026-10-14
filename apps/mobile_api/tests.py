@@ -37,6 +37,7 @@ from emr.models import (
     PatientMutationStamp, Label,
     ObservationValueAudit,
     EncounterTranscriptTiming,
+    TodoSuggestionStat,
 )
 
 
@@ -3591,6 +3592,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_encounter_transcripts',
         'mobile_untimed_encounters',
         'mobile_encounter_transcript_timings',
+        'mobile_todo_suggestions',
         'get_snomed_to_icd10',
     }
 
@@ -7274,3 +7276,149 @@ class TranscriptTimingStaysOutOfPatientFullTests(_TimingTestBase):
                    if 'emr_encountertranscripttiming' in q['sql']]
         self.assertEqual(touched, [])
         self.assertNotIn('starts_ms', resp.content.decode())
+
+
+class MobileTodoSuggestionsTests(_RBACTestBase):
+    """GET /api/patient/<pid>/problem/<problem_id>/todo-suggestions — what the
+    calling physician usually orders on this kind of problem.
+
+    The counting rule is tested in `emr/tests/test_todo_suggestions.py`; this
+    is the door: who may ask, whose habits they get, and the switch that turns
+    it off for everyone.
+    """
+
+    DM2 = '44054006'
+
+    def setUp(self):
+        super().setUp()
+        self.problem = Problem.objects.create(
+            patient=self.patient, problem_name='Diabetes mellitus type 2 (disorder)',
+            concept_id=self.DM2)
+        self.url = '/api/patient/%d/problem/%d/todo-suggestions' % (self.patient.id, self.problem.id)
+
+    def _stat(self, title, orders, opens, physician=None, key=None):
+        return TodoSuggestionStat.objects.create(
+            physician_user_id=(physician or self.attending).id,
+            problem_key=key or 'c:' + self.DM2,
+            title_key=title.lower(), title=title,
+            n_orders=orders, n_opens=opens, n_patients=12, built_on=timezone.now())
+
+    def _todo(self, title, created_on, accomplished=False):
+        todo = ToDo.objects.create(
+            patient=self.patient, problem=self.problem, todo=title, accomplished=accomplished)
+        ToDo.objects.filter(id=todo.id).update(created_on=created_on)
+        return todo
+
+    def test_a_physician_gets_their_habits_most_often_ordered_first(self):
+        self._stat('microalbumin', 20, 200)
+        self._stat('A1C', 62, 200)
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body['success'])
+        self.assertTrue(body['enabled'])
+        self.assertEqual(body['problem_key'], 'c:' + self.DM2)
+        self.assertTrue(body['built_on'].endswith('Z'))
+        self.assertEqual([s['title'] for s in body['suggestions']], ['A1C', 'microalbumin'])
+        first = body['suggestions'][0]
+        self.assertEqual(
+            (first['key'], first['orders'], first['opens'], first['patients'], first['probability']),
+            ('a1c', 62, 200, 12, 0.31))
+        # This patient has never had it.
+        self.assertIsNone(first['last_ordered_on'])
+        self.assertIsNone(first['pending_since'])
+
+    def test_each_suggestion_says_when_this_patient_last_had_it(self):
+        self._stat('A1C', 62, 200)
+        self._stat('microalbumin', 20, 200)
+        march = datetime.datetime(2026, 3, 12, 15, 0, tzinfo=datetime.timezone.utc)
+        june = datetime.datetime(2026, 6, 2, 15, 0, tzinfo=datetime.timezone.utc)
+        self._todo('A1C', march, accomplished=True)
+        self._todo('a1c.', june)
+        self._todo('Microalbumin', march, accomplished=True)
+        self.assertTrue(self._login(self.attending))
+        by_key = {s['key']: s for s in self.client.get(self.url).json()['suggestions']}
+        self.assertEqual(by_key['a1c']['last_ordered_on'], '2026-06-02T15:00:00Z')
+        self.assertEqual(by_key['a1c']['pending_since'], '2026-06-02T15:00:00Z')
+        self.assertEqual(by_key['microalbumin']['last_ordered_on'], '2026-03-12T15:00:00Z')
+        self.assertIsNone(by_key['microalbumin']['pending_since'])
+
+    def test_a_patient_the_caller_cannot_see_answers_404(self):
+        self._stat('A1C', 62, 200, physician=self.stranger_doc)
+        self.assertTrue(self._login(self.stranger_doc))
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 404)
+        self.assertNotIn('suggestions', resp.json())
+
+    def test_a_problem_on_another_chart_answers_404(self):
+        theirs = Problem.objects.create(
+            patient=self.other_patient, problem_name='Gout (disorder)', concept_id='90560007')
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(
+            '/api/patient/%d/problem/%d/todo-suggestions' % (self.patient.id, theirs.id))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_other_roles_get_an_empty_list_not_an_error(self):
+        # Physicians only (owner decision). A nurse or an admin with access to
+        # the chart is answered, quietly, with nothing.
+        self._stat('A1C', 62, 200)
+        self._stat('A1C', 62, 200, physician=self.team_nurse)
+        self._stat('A1C', 62, 200, physician=self.admin_user)
+        for user in (self.team_nurse, self.admin_user):
+            self.client.logout()
+            self.assertTrue(self._login(user))
+            resp = self.client.get(self.url)
+            self.assertEqual(resp.status_code, 200, user.username)
+            self.assertEqual(resp.json(), {'success': True, 'enabled': True, 'suggestions': []})
+
+    def test_a_physician_is_never_offered_a_colleagues_habits(self):
+        colleague = User.objects.create_user(username='doc_c', password='top_secret')
+        UserProfile.objects.create(user=colleague, role='physician')
+        PatientController.objects.create(patient=self.patient, physician=colleague)
+        self._stat('A1C', 62, 200)
+        self.assertTrue(self._login(colleague))
+        body = self.client.get(self.url).json()
+        self.assertEqual(body['suggestions'], [])
+        self.assertIsNone(body['built_on'])
+
+    def test_a_different_kind_of_problem_has_its_own_list(self):
+        self._stat('lipids', 62, 200, key='c:38341003')
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.url).json()['suggestions'], [])
+
+    def test_the_switch_turns_it_off_for_everyone(self):
+        self._stat('A1C', 62, 200)
+        self.assertTrue(self._login(self.attending))
+        with self.settings(TODO_SUGGESTIONS_ENABLED=False):
+            resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {'success': True, 'enabled': False, 'suggestions': []})
+
+    def test_the_switch_does_not_open_a_chart_the_caller_cannot_see(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        with self.settings(TODO_SUGGESTIONS_ENABLED=False):
+            self.assertEqual(self.client.get(self.url).status_code, 404)
+
+    def test_only_get_is_allowed(self):
+        self.assertTrue(self._login(self.attending))
+        for method in (self.client.post, self.client.patch, self.client.delete):
+            self.assertEqual(method(self.url).status_code, 405)
+
+    def test_an_unauthenticated_request_is_turned_away(self):
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_it_only_reads(self):
+        self._stat('A1C', 62, 200)
+        self._todo('A1C', timezone.now())
+        self.assertTrue(self._login(self.attending))
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as queries:
+            self.assertEqual(self.client.get(self.url).status_code, 200)
+        writes = [q['sql'] for q in queries
+                  if q['sql'].lstrip().split(' ', 1)[0].upper() in ('INSERT', 'UPDATE', 'DELETE')
+                  and 'django_session' not in q['sql']]
+        self.assertEqual(writes, [])
+        self.assertFalse(PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
