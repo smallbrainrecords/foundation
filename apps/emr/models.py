@@ -1051,6 +1051,11 @@ class TodoSuggestionStat(models.Model):
     n_opens = models.PositiveIntegerField()
     n_patients = models.PositiveIntegerField()
     built_on = models.DateTimeField()
+    # How many calendar months after the visit this physician usually makes
+    # this title due, or NULL when their due dates for it are not consistent
+    # enough to suggest one (`emr.todo_suggestions.usual_due_months`). The app
+    # turns it into the 1st of the month that many months from today.
+    usual_due_months = models.PositiveSmallIntegerField(null=True, blank=True)
 
     class Meta:
         indexes = [

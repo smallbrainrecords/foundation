@@ -17,6 +17,10 @@ from: how many titles appear per problem opened, on what share of opens
 anything appears, how many of the shown titles were ordered, and what share
 of all ordered titles they covered.
 
+Last, the usual due dates: for each ordered title that had one at the time
+(learned from earlier visits only), whether the order was given a date at all
+and how close it was to the usual one.
+
 Nothing is written, and no todo title is printed.
 """
 import datetime
@@ -24,7 +28,9 @@ import datetime
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from emr.todo_suggestions import MIN_ORDERS, MIN_PATIENTS, collect_units, replay
+from emr.todo_suggestions import (
+    MIN_ORDERS, MIN_PATIENTS, collect_units, due_dates_as_ordered, order_visit_starts, replay,
+)
 
 TOP = (1, 3, 5)
 CUTOFFS = (0.05, 0.10, 0.20)
@@ -56,7 +62,9 @@ class Command(BaseCommand):
         if not units:
             self.stdout.write('No finished visits found.')
             return
-        result = replay(units, since, CUTOFFS, TOP, options['min_orders'], options['min_patients'])
+        due_dates = due_dates_as_ordered(order_visit_starts(units))
+        result = replay(units, since, CUTOFFS, TOP, options['min_orders'], options['min_patients'],
+                        due_dates=due_dates)
 
         out = self.stdout.write
         out('=== Replay of suggested todos ===')
@@ -80,3 +88,12 @@ class Command(BaseCommand):
                 f"{_percent(bucket['opens_showing'], result['opens']):>17}   "
                 f"{_percent(bucket['shown_and_ordered'], bucket['shown']):>22}   "
                 f"{_percent(bucket['shown_and_ordered'], result['ordered_titles']):>22}")
+        due = result['due']
+        out('')
+        out('Due dates: ordered titles that had a usual due date at the time')
+        out(f"  offered         : {due['offered']}")
+        out(f"  given a date    : {due['dated']}  ({_percent(due['dated'], due['offered'])})")
+        out(f"    same month    : {_percent(due['same_month'], due['dated'])} of those")
+        out(f"    within a month: {_percent(due['within_a_month'], due['dated'])} of those")
+        out(f"  given no date   : {due['undated']}")
+        out(f"  date unknown    : {due['unknown']}  (changed or removed later)")

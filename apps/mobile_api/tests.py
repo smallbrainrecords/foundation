@@ -7296,12 +7296,13 @@ class MobileTodoSuggestionsTests(_RBACTestBase):
             concept_id=self.DM2)
         self.url = '/api/patient/%d/problem/%d/todo-suggestions' % (self.patient.id, self.problem.id)
 
-    def _stat(self, title, orders, opens, physician=None, key=None):
+    def _stat(self, title, orders, opens, physician=None, key=None, due_months=None):
         return TodoSuggestionStat.objects.create(
             physician_user_id=(physician or self.attending).id,
             problem_key=key or 'c:' + self.DM2,
             title_key=title.lower(), title=title,
-            n_orders=orders, n_opens=opens, n_patients=12, built_on=timezone.now())
+            n_orders=orders, n_opens=opens, n_patients=12, built_on=timezone.now(),
+            usual_due_months=due_months)
 
     def _todo(self, title, created_on, accomplished=False):
         todo = ToDo.objects.create(
@@ -7328,6 +7329,15 @@ class MobileTodoSuggestionsTests(_RBACTestBase):
         # This patient has never had it.
         self.assertIsNone(first['last_ordered_on'])
         self.assertIsNone(first['pending_since'])
+
+    def test_each_suggestion_carries_its_usual_due_months_or_null(self):
+        self._stat('annual', 62, 200, due_months=13)
+        self._stat('microalbumin', 20, 200)
+        self.assertTrue(self._login(self.attending))
+        by_key = {s['key']: s for s in self.client.get(self.url).json()['suggestions']}
+        self.assertEqual(by_key['annual']['due_months'], 13)
+        self.assertIn('due_months', by_key['microalbumin'])
+        self.assertIsNone(by_key['microalbumin']['due_months'])
 
     def test_each_suggestion_says_when_this_patient_last_had_it(self):
         self._stat('A1C', 62, 200)
