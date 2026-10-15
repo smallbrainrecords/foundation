@@ -22,7 +22,7 @@ from django.utils import timezone
 from emr import todo_suggestions as rule
 from emr.models import (
     Encounter, EncounterEvent, EncounterProblemRecord, EncounterTodoRecord, Problem,
-    ToDo, TodoSuggestionStat, UserProfile,
+    ToDo, TodoActivity, TodoSuggestionStat, UserProfile,
 )
 
 DM2 = '44054006'
@@ -108,6 +108,88 @@ class TextRuleTests(SimpleTestCase):
         self.assertIsNone(rule._WEB_ORDER.match(without))
 
 
+class DueChangeTests(SimpleTestCase):
+    """What a due-date activity row set. The retired web logged whatever its
+    form posted; the app endpoint logs one fixed wording."""
+
+    def test_the_retired_webs_dates(self):
+        cases = [
+            ('Changed due date of this todo to <b>10/01/2017</b>.', datetime.date(2017, 10, 1)),
+            ('Changed due date of this todo to <b>5/5/2019</b>.', datetime.date(2019, 5, 5)),
+            ('Changed due date of this todo to <b>08/08/18</b>.', datetime.date(2018, 8, 8)),
+        ]
+        for text, expected in cases:
+            self.assertEqual(rule.parse_due_change(text), expected, text)
+
+    def test_the_apps_wording(self):
+        self.assertEqual(rule.parse_due_change('Changed due date to Aug 1, 2032'),
+                         datetime.date(2032, 8, 1))
+
+    def test_a_removal_is_no_date(self):
+        self.assertIsNone(rule.parse_due_change('Removed due date of this todo.'))
+        self.assertIsNone(rule.parse_due_change('Removed due date'))
+
+    def test_a_date_that_cannot_be_read_is_unknown_not_a_guess(self):
+        # All of these occur in production's activity rows.
+        for text in ('Changed due date of this todo to <b>12/17</b>.',
+                     'Changed due date of this todo to <b>2</b>.',
+                     'Changed due date of this todo to <b>02/30/2017</b>.',
+                     'Changed due date of this todo to <b>03/03/202</b>.',
+                     'Changed due date to Feb 30, 2027'):
+            self.assertIs(rule.parse_due_change(text), rule.DUE_UNKNOWN, text)
+
+
+class UsualDueMonthsTests(SimpleTestCase):
+    """When a habit is consistent enough to suggest a due date."""
+
+    def test_a_consistent_habit_gives_its_gap(self):
+        self.assertEqual(rule.usual_due_months([13] * 5, 5), 13)
+
+    def test_four_dated_orders_are_not_enough(self):
+        self.assertIsNone(rule.usual_due_months([13] * 4, 4))
+
+    def test_most_orders_must_be_dated(self):
+        # Eight of ten known orders dated (80%) is enough; seven is not.
+        self.assertEqual(rule.usual_due_months([13] * 8, 10), 13)
+        self.assertIsNone(rule.usual_due_months([13] * 7, 10))
+
+    def test_most_dates_must_fall_within_a_month_of_the_usual_gap(self):
+        # 12 and 13 are within a month of each other; 3 is not.
+        self.assertEqual(rule.usual_due_months([12] * 4 + [13] * 3 + [3] * 3, 10), 12)
+        self.assertIsNone(rule.usual_due_months([12] * 4 + [13] * 2 + [3] * 4, 10))
+
+    def test_a_tie_goes_to_the_shorter_gap(self):
+        self.assertEqual(rule.usual_due_months([12] * 3 + [13] * 3, 6), 12)
+
+    def test_a_gap_outside_the_offered_range_is_not_suggested(self):
+        # Due the month it was ordered would already be past on the 1st.
+        self.assertIsNone(rule.usual_due_months([0] * 5, 5))
+        self.assertIsNone(rule.usual_due_months([300] * 5, 5))
+
+    def test_no_known_orders_is_no_date(self):
+        self.assertIsNone(rule.usual_due_months([], 0))
+
+    def history(self, gaps):
+        start = datetime.datetime(2020, 1, 6, 14, 0, tzinfo=datetime.timezone.utc)
+        return [(start + datetime.timedelta(days=7 * n), gap) for n, gap in enumerate(gaps)]
+
+    def test_the_usual_gap_follows_the_recent_orders_when_a_habit_changes(self):
+        # The owner's annual: years at 13 months, then 12. All of history
+        # still says 13; the last 30 orders say 12.
+        history = self.history([13] * 40 + [12] * 30)
+        self.assertEqual(rule.usual_due_months([gap for _, gap in history], len(history)), 13)
+        self.assertEqual(rule.recent_usual_due_months(history), 12)
+
+    def test_recent_means_by_visit_date_not_by_list_order(self):
+        history = self.history([13] * 40 + [12] * 30)
+        self.assertEqual(rule.recent_usual_due_months(list(reversed(history))), 12)
+
+    def test_undated_orders_in_the_window_count_against_it(self):
+        # 30 recent orders, 7 of them undated: 77% dated is under 80%.
+        history = self.history([12] * 40 + [12] * 23 + [None] * 7)
+        self.assertIsNone(rule.recent_usual_due_months(history))
+
+
 class SuggestionFixtures:
     """Builders for visits, timeline entries and todos. A mixin, so the same
     builders serve the TestCase suites and the TransactionTestCase ones."""
@@ -152,30 +234,44 @@ class SuggestionFixtures:
         EncounterEvent.objects.filter(id=event.id).update(datetime=when)
         return event
 
-    def todo(self, patient, problem, title, created_on):
-        todo = ToDo.objects.create(patient=patient, problem=problem, todo=title)
+    def todo(self, patient, problem, title, created_on, due=None):
+        todo = ToDo.objects.create(patient=patient, problem=problem, todo=title, due_date=due)
         ToDo.objects.filter(id=todo.id).update(created_on=created_on)
         todo.refresh_from_db()
         return todo
 
+    def due_after(self, encounter, months):
+        """The 1st of the month `months` calendar months after the visit's
+        day, at midnight on the clinic's calendar: how a due date entered as
+        a month and year is stored."""
+        day = timezone.localtime(encounter.starttime).date()
+        index = day.year * 12 + day.month - 1 + months
+        return timezone.make_aware(datetime.datetime(index // 12, index % 12 + 1, 1))
+
+    def due_logged(self, todo, text, when):
+        """A due-date activity row on `todo`, logged at `when`."""
+        activity = TodoActivity.objects.create(todo=todo, activity=text)
+        TodoActivity.objects.filter(id=activity.id).update(created_on=when)
+        return activity
+
     def opened(self, encounter, problem, minute=1):
         return self.entry(encounter, f'Reviewed problem: {problem.problem_name}', minute)
 
-    def app_order(self, encounter, problem, title, minute=2, opened=True):
+    def app_order(self, encounter, problem, title, minute=2, opened=True, due=None):
         """A problem opened and a todo added on it, as the app records them."""
         if opened:
             self.opened(encounter, problem, minute - 1)
         when = encounter.starttime + datetime.timedelta(minutes=minute)
-        todo = self.todo(encounter.patient, problem, title, when + datetime.timedelta(seconds=2))
+        todo = self.todo(encounter.patient, problem, title, when + datetime.timedelta(seconds=2), due)
         self.entry(encounter, f'Todo added: {title}', minute)
         return todo
 
-    def web_order(self, encounter, problem, title, minute=2, opened=True):
+    def web_order(self, encounter, problem, title, minute=2, opened=True, due=None):
         """The same, as the retired web recorded them."""
         if opened:
             self.entry(encounter, f'Clicked <u>problem</u>: <b>{problem.problem_name}</b>', minute - 1)
         when = encounter.starttime + datetime.timedelta(minutes=minute)
-        todo = self.todo(encounter.patient, problem, title, when)
+        todo = self.todo(encounter.patient, problem, title, when, due)
         self.entry(
             encounter,
             f'Added <u>todo</u> : <a href="#/todo/{todo.id}"><b>{title}</b></a> '
@@ -184,15 +280,23 @@ class SuggestionFixtures:
         )
         return todo
 
-    def habit(self, title, times, concept=DM2, physician=None, same_patient=False):
-        """`times` visits, each ordering `title` on a problem of that kind."""
+    def habit(self, title, times, concept=DM2, physician=None, same_patient=False, due_months=None):
+        """`times` visits, each ordering `title` on a problem of that kind.
+        `due_months` makes each order due that many calendar months after its
+        visit: one number for all, or a list with one per order (None for an
+        order given no due date). Returns the todos."""
         patient = self.patient() if same_patient else None
         problem = self.problem(patient, concept) if same_patient else None
-        for _ in range(times):
+        todos = []
+        for n in range(times):
             if not same_patient:
                 patient = self.patient()
                 problem = self.problem(patient, concept)
-            self.app_order(self.visit(patient, physician), problem, title)
+            encounter = self.visit(patient, physician)
+            months = due_months[n] if isinstance(due_months, list) else due_months
+            due = self.due_after(encounter, months) if months is not None else None
+            todos.append(self.app_order(encounter, problem, title, due=due))
+        return todos
 
     def units(self, **kwargs):
         return rule.collect_units(**kwargs)
@@ -220,6 +324,23 @@ class CollectionTests(SuggestionTestBase):
         self.app_order(self.visit(patient), problem, 'A1C')
         (unit,) = self.units()
         self.assertEqual(unit.titles, {'a1c': 'A1C'})
+
+    def test_each_order_names_the_todo_it_was_matched_to(self):
+        patient = self.patient()
+        problem = self.problem(patient)
+        encounter = self.visit(patient)
+        app_todo = self.app_order(encounter, problem, 'A1C')
+        web_todo = self.web_order(encounter, problem, 'microalbumin', minute=5, opened=False)
+        (unit,) = self.units()
+        self.assertEqual(unit.todo_ids, {'a1c': app_todo.id, 'microalbumin': web_todo.id})
+
+    def test_a_web_order_whose_todo_is_gone_names_none(self):
+        patient = self.patient()
+        problem = self.problem(patient)
+        todo = self.web_order(self.visit(patient), problem, 'microalbumin')
+        todo.delete()
+        (unit,) = self.units()
+        self.assertEqual(unit.todo_ids, {'microalbumin': None})
 
     def test_a_web_order_is_read_from_its_entry(self):
         patient = self.patient()
@@ -400,6 +521,71 @@ class CollectionTests(SuggestionTestBase):
         self.assertEqual([unit.encounter_id for unit in self.units()], [first.id, second.id])
 
 
+class DueAsOrderedTests(SuggestionTestBase):
+    """The due date an order was given at the time (`due_dates_as_ordered`)."""
+
+    def order(self, due=None):
+        patient = self.patient()
+        encounter = self.visit(patient)
+        todo = self.app_order(encounter, self.problem(patient), 'annual', due=due)
+        return encounter, todo
+
+    def as_ordered(self, encounter, todo):
+        return rule.due_dates_as_ordered({todo.id: encounter.starttime})[todo.id]
+
+    def test_a_date_given_with_the_order_is_its_day_on_the_clinics_calendar(self):
+        # Midnight on the 1st in Detroit is 04:00 or 05:00 UTC the same day;
+        # it must not come back as the last day of the month before.
+        encounter, todo = self.order()
+        ToDo.objects.filter(id=todo.id).update(due_date=self.due_after(encounter, 13))
+        self.assertEqual(self.as_ordered(encounter, todo), datetime.date(2026, 4, 1))
+
+    def test_an_order_given_no_date_is_none(self):
+        encounter, todo = self.order()
+        self.assertIsNone(self.as_ordered(encounter, todo))
+
+    def test_a_change_logged_on_the_day_of_the_visit_is_the_date_as_ordered(self):
+        # The retired web set the due date in a second step; a later change
+        # does not alter what was ordered.
+        encounter, todo = self.order(due=None)
+        self.due_logged(todo, 'Changed due date of this todo to <b>04/01/2026</b>.',
+                        encounter.starttime + datetime.timedelta(minutes=5))
+        self.due_logged(todo, 'Changed due date of this todo to <b>09/01/2026</b>.',
+                        encounter.starttime + datetime.timedelta(days=40))
+        ToDo.objects.filter(id=todo.id).update(due_date=self.due_after(encounter, 18))
+        self.assertEqual(self.as_ordered(encounter, todo), datetime.date(2026, 4, 1))
+
+    def test_a_date_changed_later_leaves_the_original_unknown(self):
+        encounter, todo = self.order(due=None)
+        ToDo.objects.filter(id=todo.id).update(due_date=self.due_after(encounter, 18))
+        self.due_logged(todo, 'Changed due date to Sep 1, 2026',
+                        encounter.starttime + datetime.timedelta(days=40))
+        self.assertIs(self.as_ordered(encounter, todo), rule.DUE_UNKNOWN)
+
+    def test_a_date_removed_later_leaves_the_original_unknown(self):
+        encounter, todo = self.order(due=None)
+        self.due_logged(todo, 'Removed due date', encounter.starttime + datetime.timedelta(days=40))
+        self.assertIs(self.as_ordered(encounter, todo), rule.DUE_UNKNOWN)
+
+    def test_an_unreadable_change_on_the_day_is_unknown(self):
+        encounter, todo = self.order(due=None)
+        self.due_logged(todo, 'Changed due date of this todo to <b>12/17</b>.',
+                        encounter.starttime + datetime.timedelta(minutes=5))
+        self.assertIs(self.as_ordered(encounter, todo), rule.DUE_UNKNOWN)
+
+    def test_another_todos_changes_do_not_count(self):
+        encounter, todo = self.order(due=None)
+        _, other = self.order(due=None)
+        self.due_logged(other, 'Removed due date', encounter.starttime + datetime.timedelta(days=40))
+        self.assertIsNone(self.as_ordered(encounter, todo))
+
+    def test_a_todo_that_no_longer_exists_is_unknown(self):
+        encounter, todo = self.order()
+        gone = todo.id
+        todo.delete()
+        self.assertIs(rule.due_dates_as_ordered({gone: encounter.starttime})[gone], rule.DUE_UNKNOWN)
+
+
 class RateTests(SuggestionTestBase):
     def rows(self, **kwargs):
         rows, _ = rule.build_rows(self.units(), **kwargs)
@@ -420,6 +606,47 @@ class RateTests(SuggestionTestBase):
         (row,) = self.rows()
         self.assertEqual((row.title_key, row.title, row.n_orders, row.n_patients),
                          ('a1c', 'A1C', 6, 6))
+
+    def rows_with_due_dates(self):
+        units = self.units()
+        rows, _ = rule.build_rows(units, due_dates=rule.due_dates_as_ordered(rule.order_visit_starts(units)))
+        return rows
+
+    def test_a_consistent_due_date_is_stored_with_the_title(self):
+        self.habit('annual', 5, concept='102499006', due_months=13)
+        (row,) = self.rows_with_due_dates()
+        self.assertEqual((row.title_key, row.usual_due_months), ('annual', 13))
+
+    def test_scattered_due_dates_store_none(self):
+        self.habit('cbc, cmp, lipids', 5, due_months=[2, 6, 12, 13, 24])
+        (row,) = self.rows_with_due_dates()
+        self.assertIsNone(row.usual_due_months)
+
+    def test_a_title_mostly_ordered_without_a_date_stores_none(self):
+        # Five dated, two not: 71% dated is under the 80% needed.
+        self.habit('annual', 7, concept='102499006', due_months=[13] * 5 + [None, None])
+        (row,) = self.rows_with_due_dates()
+        self.assertIsNone(row.usual_due_months)
+
+    def test_orders_whose_date_was_changed_later_are_left_out_not_counted_as_undated(self):
+        todos = self.habit('annual', 8, concept='102499006', due_months=[13] * 5 + [None] * 3)
+        for todo in todos[5:]:
+            self.due_logged(todo, 'Changed due date to Sep 1, 2027',
+                            todo.created_on + datetime.timedelta(days=30))
+        (row,) = self.rows_with_due_dates()
+        self.assertEqual(row.usual_due_months, 13)
+
+    def test_without_due_dates_every_row_stores_none(self):
+        self.habit('annual', 5, concept='102499006', due_months=13)
+        (row,) = self.rows()
+        self.assertIsNone(row.usual_due_months)
+
+    def test_totals_count_the_due_dates_read(self):
+        self.habit('annual', 6, concept='102499006', due_months=[13] * 5 + [None])
+        units = self.units()
+        _, totals = rule.build_rows(units, due_dates=rule.due_dates_as_ordered(rule.order_visit_starts(units)))
+        self.assertEqual((totals['orders_due_known'], totals['orders_dated'], totals['rows_with_a_due_date']),
+                         (6, 5, 1))
 
     def test_four_orders_are_not_a_habit(self):
         self.habit('A1C', 4)
@@ -607,6 +834,20 @@ class ReplayTests(SuggestionTestBase):
         self.assertEqual(result['policy'][0.60],
                          {'shown': 0, 'opens_showing': 0, 'shown_and_ordered': 0})
 
+    def test_due_dates_are_judged_from_earlier_visits_only(self):
+        # Five visits teach "due in 13 months"; three later visits are judged:
+        # due in 13 (same month), in 15 (more than a month off), and undated.
+        self.habit('annual', 8, concept='102499006', due_months=[13] * 5 + [13, 15, None])
+        units = self.units()
+        due_dates = rule.due_dates_as_ordered(rule.order_visit_starts(units))
+        result = rule.replay(units, self.START + datetime.timedelta(days=6, hours=-1), due_dates=due_dates)
+        self.assertEqual(result['due'], {'offered': 3, 'dated': 2, 'same_month': 1,
+                                         'within_a_month': 1, 'undated': 1, 'unknown': 0})
+
+    def test_no_due_tally_without_due_dates(self):
+        self.habit('annual', 5)
+        self.assertNotIn('due', self.replay())
+
     def test_the_command_reports_without_printing_a_title(self):
         self.habit('Mammogram at Sparrow', 6)
         out = StringIO()
@@ -672,6 +913,19 @@ class BuildCommandTests(BuildFixtures, TransactionTestCase):
              row.n_orders, row.n_opens, row.n_patients),
             (self.physician.id, 'c:' + DM2, 'a1c', 'A1C', 5, 5, 5))
         self.assertLess(abs((timezone.now() - row.built_on).total_seconds()), 120)
+
+    def test_apply_stores_the_usual_due_months(self):
+        self.habit('annual', 5, concept='102499006', due_months=13)
+        self.habit('A1C', 5, due_months=[2, 6, 12, 13, 24])
+        self.build(apply=True)
+        stored = dict(TodoSuggestionStat.objects.values_list('title_key', 'usual_due_months'))
+        self.assertEqual(stored, {'annual': 13, 'a1c': None})
+
+    def test_a_dry_run_reports_the_rows_with_a_due_date(self):
+        self.habit('annual', 5, concept='102499006', due_months=13)
+        output = self.build()
+        self.assertIn('usual due date  : 1 rows', output)
+        self.assertIn('due as ordered  : known for 5 of 5 orders, 5 of them dated', output)
 
     def test_a_second_rebuild_gives_the_same_table(self):
         self.habit('A1C', 5)

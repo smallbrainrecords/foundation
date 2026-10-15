@@ -47,6 +47,28 @@ none (`problem_key`). Two titles are the same when they differ only in case,
 spacing or trailing punctuation, and the retired web's "a1c repeats in <N>
 months" is an "A1C" (`normalize_title`). The app carries the same two
 functions; the vectors in the tests are shared with it.
+
+Usual due date (owner decisions 2026-10-14, `PLAN_TODO_SUGGESTION_DUE_DATES_2026-10.md`
+in the app repository): a stored title also carries how many calendar months
+after the visit this physician usually makes it due, when their habit is
+consistent, so the app can fill the due date in. It follows the habit, not a
+fixed interval, and it is learned from the RECENT orders of the title
+(`DUE_RECENT_ORDERS`), because habits drift: the owner's annual moved from 13
+months to 12 around 2025. Measured on the owner's history, the big lab panels
+and screening tests are not consistent and get none; annual, A1C and a
+handful of others do.
+
+  due as ordered  the due date the order was given at the time. A due-date
+          change logged within `ORDER_DAY` of the visit's start is the date
+          as ordered (the retired web set it in a second step); otherwise
+          the todo's due date as it reads now, but only if no change or
+          removal came later — then the original is not recorded anywhere.
+          Those orders, and orders whose todo is gone, are left out of the
+          due-date figures: 2,971 of 47,868 on the local copy of production
+          (`due_dates_as_ordered`).
+  gap     calendar months from the visit's day to the due date's month, on
+          the clinic's calendar. Due dates are months in practice: 71% fall
+          on the 1st, and the app's Add Todo sheet takes a month and year.
 """
 import datetime
 import heapq
@@ -54,9 +76,11 @@ import re
 from collections import Counter, defaultdict, namedtuple
 
 from django.db.models import Q
+from django.utils import timezone
 
 from emr.models import (
-    Encounter, EncounterEvent, EncounterProblemRecord, Problem, ToDo, TodoSuggestionStat,
+    Encounter, EncounterEvent, EncounterProblemRecord, Problem, ToDo, TodoActivity,
+    TodoSuggestionStat,
 )
 
 # Evidence floor for a title to be stored and offered.
@@ -127,8 +151,57 @@ _ORDER_PREFIXES = ('Added <u>todo</u>', 'Todo added:')
 # later) is paired with the todo created nearest to it, within this long.
 APP_ORDER_MATCH_WINDOW = datetime.timedelta(minutes=15)
 
-Unit = namedtuple('Unit', 'physician_id patient_id encounter_id started problem_key titles')
-StatRow = namedtuple('StatRow', 'physician_id problem_key title_key title n_orders n_opens n_patients')
+# A due-date change logged within this long of the visit's start is the date
+# the order was given (`due_dates_as_ordered`).
+ORDER_DAY = datetime.timedelta(days=1)
+
+# A title gets a usual due date only when the habit is consistent: at least
+# this many orders with a known due date, at least this share of the orders
+# with a known answer dated at all, and at least this share of the dated ones
+# within a month of the most common gap — all over the recent window below.
+# On the local copy of production (to 2026-07-22) these give 20 of 536 rows a
+# date (annual at 12 months, "PE" at 12, A1C at 3, a few panels); the big
+# panels and screening tests fail on scattered gaps.
+DUE_MIN_DATED_ORDERS = 5
+DUE_MIN_SHARE_DATED = 0.80
+DUE_MIN_SHARE_NEAR = 0.70
+# The usual gap is learned from this many of the title's most recent orders
+# whose due date as ordered is known, not from all of history. Replayed on
+# the owner's 2025-26 visits (local copy to 2026-07-22): with all history the
+# suggested month was the one ordered 30% of the time; with the last 30
+# orders, 67%; within a month either way about 89%. The owner's annual is
+# why — since 2025, 428 dated annuals were due in 12 months and 128 in 13,
+# while all of history still favours 13. A 12-month window measured the same
+# (67%) but leaves titles ordered a few times a year with too few orders.
+DUE_RECENT_ORDERS = 30
+# A usual gap outside this range is not offered: 0 would be due the month it
+# was ordered (already past on the 1st), and more than this is a typo's habit.
+DUE_MONTHS_RANGE = range(1, 121)
+
+
+class _DueUnknown:
+    """The answer for an order whose due date as ordered cannot be known."""
+
+    def __repr__(self):
+        return 'DUE_UNKNOWN'
+
+
+DUE_UNKNOWN = _DueUnknown()
+
+_MONTHS = {name: number for number, name in enumerate(
+    ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'), start=1)}
+
+# The two wordings of a due-date change: the retired web's (whatever its form
+# posted, nearly always M/D/YYYY) and the app endpoint's (`mobile_update_todo`).
+_WEB_DUE_CHANGE = re.compile(r'^Changed due date of this todo to <b>(.*?)</b>')
+_APP_DUE_CHANGE = re.compile(r'^Changed due date to ([A-Z][a-z]{2}) (\d{1,2}), (\d{4})')
+_WEB_DUE_DATE = re.compile(r'^\s*(\d{1,2})/(\d{1,2})/(\d{4}|\d{2})\s*$')
+_DUE_PREFIXES = ('Changed due date', 'Removed due date')
+
+Unit = namedtuple('Unit', 'physician_id patient_id encounter_id started problem_key titles todo_ids',
+                  defaults=(None,))
+StatRow = namedtuple('StatRow', 'physician_id problem_key title_key title n_orders n_opens n_patients '
+                                'usual_due_months', defaults=(None,))
 
 
 # ---------------------------------------------------------------- text rules
@@ -235,6 +308,10 @@ def collect_units(physician_ids=None, report=None):
     """Every (visit, kind of problem) unit, oldest visit first, with the
     titles ordered in it. `physician_ids` limits it to those physicians.
 
+    Each unit's `todo_ids` names the todo each title's order was matched to
+    (None when the todo no longer exists), which is where its due date is
+    read from (`due_dates_as_ordered`).
+
     `report`, when given, is filled with how many timeline entries were read
     and how many app-era orders found no todo. A rising unmatched count means
     a wording or a timing assumption here has stopped holding.
@@ -272,6 +349,7 @@ def collect_units(physician_ids=None, report=None):
         linked[encounter_id].add(problem_id)
 
     units = {}
+    unit_todos = defaultdict(dict)   # (encounter_id, key) -> {title_key: todo_id}
     web_orders = []   # (encounter_id, todo_id, title, problem name)
     app_orders = defaultdict(list)   # encounter_id -> [(when, title)]
 
@@ -304,13 +382,15 @@ def collect_units(physician_ids=None, report=None):
             report['app_order_entries'] += 1
             app_orders[encounter_id].append((happened_at or logged_at, match.group(1)))
 
-    def add_order(encounter_id, key, title):
+    def add_order(encounter_id, key, title, todo_id):
         title_key = normalize_title(title)
         if not key or not title_key or title_key in EXCLUDED_TITLE_KEYS:
             return
         # An order on a problem with no "opened" entry still makes a unit, so
         # a title can never be ordered more often than its problem was seen.
         units.setdefault((encounter_id, key), {}).setdefault(title_key, display_title(title))
+        # The same title twice in one unit is one order; its first todo is it.
+        unit_todos[(encounter_id, key)].setdefault(title_key, todo_id)
 
     def key_for_todo(patient_id, problem_id):
         problem = index.by_id.get(problem_id)
@@ -333,7 +413,8 @@ def collect_units(physician_ids=None, report=None):
                 # says which problem it was added to.
                 key = index.key_for_opened_name(
                     patient_id, problem_name, linked.get(encounter_id, ()))
-            add_order(encounter_id, key, title)
+            add_order(encounter_id, key, title,
+                      todo_id if todo_patient_id == patient_id else None)
 
     if app_orders:
         # The app's entry does not name the todo, so it is matched to one of
@@ -366,7 +447,7 @@ def collect_units(physician_ids=None, report=None):
                 if same:
                     row = min(same, key=lambda row: (abs(row[0] - when), row[1]))
                     del unused[row[1]]
-                    add_order(encounter_id, key_for_todo(patient_id, row[3]), title)
+                    add_order(encounter_id, key_for_todo(patient_id, row[3]), title, row[1])
                 else:
                     retitled.append((when, title))
             # Then the ones retitled since, by the nearest creation time.
@@ -378,25 +459,157 @@ def collect_units(physician_ids=None, report=None):
                     continue
                 row = min(near, key=lambda row: (abs(row[0] - when), row[1]))
                 del unused[row[1]]
-                add_order(encounter_id, key_for_todo(patient_id, row[3]), title)
+                add_order(encounter_id, key_for_todo(patient_id, row[3]), title, row[1])
 
     result = [
         Unit(visits[encounter_id][0], visits[encounter_id][1], encounter_id,
-             visits[encounter_id][2], key, titles)
+             visits[encounter_id][2], key, titles, dict(unit_todos.get((encounter_id, key), {})))
         for (encounter_id, key), titles in units.items()
     ]
     result.sort(key=lambda unit: (unit.started, unit.encounter_id, unit.problem_key))
     return result
 
 
+# -------------------------------------------------------------- due dates
+
+def parse_due_change(activity):
+    """What one due-date activity row set: a date, None for a removal, or
+    DUE_UNKNOWN when its date cannot be read. The retired web logged whatever
+    its form posted — nearly always M/D/YYYY, but "12/17" and "2" occur."""
+    text = (activity or '').strip()
+    if text.startswith('Removed due date'):
+        return None
+    match = _APP_DUE_CHANGE.match(text)
+    if match:
+        month = _MONTHS.get(match.group(1))
+        day, year = int(match.group(2)), int(match.group(3))
+    else:
+        match = _WEB_DUE_CHANGE.match(text)
+        parts = _WEB_DUE_DATE.match(match.group(1)) if match else None
+        if not parts:
+            return DUE_UNKNOWN
+        month, day, year = (int(part) for part in parts.groups())
+        if year < 100:
+            year += 2000
+    try:
+        return datetime.date(year, month, day)
+    except (TypeError, ValueError):
+        return DUE_UNKNOWN
+
+
+def clinic_date(value):
+    """The clinic's calendar day (`settings.TIME_ZONE`) of a datetime; a date
+    passes through."""
+    if isinstance(value, datetime.datetime):
+        return timezone.localtime(value).date() if timezone.is_aware(value) else value.date()
+    return value
+
+
+def month_gap(visit_started, due):
+    """Calendar months from the visit's day to the due date's month."""
+    visit_day = clinic_date(visit_started)
+    return (due.year - visit_day.year) * 12 + due.month - visit_day.month
+
+
+def order_visit_starts(units):
+    """`{todo_id: start of the visit it was ordered in}` for every order
+    whose todo is known."""
+    starts = {}
+    for unit in units:
+        for todo_id in (unit.todo_ids or {}).values():
+            if todo_id is not None:
+                starts.setdefault(todo_id, unit.started)
+    return starts
+
+
+def due_dates_as_ordered(order_starts):
+    """`{todo_id: due date as ordered}` for `{todo_id: visit start}`: a date,
+    None when the order was given no due date, or DUE_UNKNOWN.
+
+    The last due-date change logged within ORDER_DAY of the visit's start is
+    the date as ordered. Without one, the todo's due date as it reads now —
+    unless a change or a removal was logged later, which leaves the original
+    unrecorded: DUE_UNKNOWN. So is a todo that no longer exists.
+    """
+    ids = sorted(order_starts)
+    current = {}
+    changes = defaultdict(list)
+    wanted = Q()
+    for prefix in _DUE_PREFIXES:
+        wanted |= Q(activity__startswith=prefix)
+    for start in range(0, len(ids), 2000):
+        chunk = ids[start:start + 2000]
+        current.update(ToDo.objects.filter(id__in=chunk).values_list('id', 'due_date'))
+        for todo_id, activity, logged_at in (
+            TodoActivity.objects.filter(todo_id__in=chunk).filter(wanted)
+            .order_by().values_list('todo_id', 'activity', 'created_on')
+        ):
+            changes[todo_id].append((logged_at, parse_due_change(activity)))
+
+    result = {}
+    for todo_id, started in order_starts.items():
+        if todo_id not in current:
+            result[todo_id] = DUE_UNKNOWN
+            continue
+        logged = sorted(changes.get(todo_id, ()), key=lambda change: change[0])
+        as_ordered = [value for when, value in logged if when <= started + ORDER_DAY]
+        if as_ordered:
+            result[todo_id] = as_ordered[-1]
+        elif logged:
+            result[todo_id] = DUE_UNKNOWN
+        else:
+            due = current[todo_id]
+            result[todo_id] = clinic_date(due) if due else None
+    return result
+
+
+def usual_due_months(gaps, known_orders):
+    """The usual gap in months for one physician, kind of problem and title,
+    or None when the habit is not consistent enough to suggest a date.
+
+    `gaps` are the dated orders' gaps; `known_orders` counts every order whose
+    due date as ordered is known, dated or not. The most common gap wins, the
+    shorter one on a tie.
+    """
+    if len(gaps) < DUE_MIN_DATED_ORDERS or not known_orders:
+        return None
+    if len(gaps) / known_orders < DUE_MIN_SHARE_DATED:
+        return None
+    counts = Counter(gaps)
+    usual = min(counts, key=lambda months: (-counts[months], months))
+    near = sum(n for months, n in counts.items() if abs(months - usual) <= 1)
+    if near / len(gaps) < DUE_MIN_SHARE_NEAR:
+        return None
+    return usual if usual in DUE_MONTHS_RANGE else None
+
+
+def _order_due(unit, title_key, due_dates):
+    """The due date as ordered for one title of one unit."""
+    todo_id = (unit.todo_ids or {}).get(title_key)
+    return DUE_UNKNOWN if todo_id is None else due_dates.get(todo_id, DUE_UNKNOWN)
+
+
+def recent_usual_due_months(history):
+    """`usual_due_months` over the last DUE_RECENT_ORDERS of `history`, a
+    list of `(visit start, gap or None for an undated order)` for one
+    physician, kind of problem and title, holding only orders whose due date
+    as ordered is known."""
+    recent = sorted(history, key=lambda entry: entry[0])[-DUE_RECENT_ORDERS:]
+    return usual_due_months([gap for _, gap in recent if gap is not None], len(recent))
+
+
 # ------------------------------------------------------------------ rates
 
-def build_rows(units, min_orders=MIN_ORDERS, min_patients=MIN_PATIENTS):
-    """The rows the table should hold for these units, and a few totals."""
+def build_rows(units, min_orders=MIN_ORDERS, min_patients=MIN_PATIENTS, due_dates=None):
+    """The rows the table should hold for these units, and a few totals.
+
+    With `due_dates` (`due_dates_as_ordered`), each row also carries its
+    usual due date; without, every row's is None."""
     opens = Counter()
     orders = Counter()
     patients = defaultdict(set)
     spellings = defaultdict(Counter)
+    due_history = defaultdict(list)   # pair -> [(visit start, gap or None)], known dates only
     for unit in units:
         opens[(unit.physician_id, unit.problem_key)] += 1
         for title_key, spelling in unit.titles.items():
@@ -404,6 +617,11 @@ def build_rows(units, min_orders=MIN_ORDERS, min_patients=MIN_PATIENTS):
             orders[pair] += 1
             patients[pair].add(unit.patient_id)
             spellings[(unit.physician_id, title_key)][spelling] += 1
+            if due_dates is not None:
+                due = _order_due(unit, title_key, due_dates)
+                if due is not DUE_UNKNOWN:
+                    due_history[pair].append(
+                        (unit.started, None if due is None else month_gap(unit.started, due)))
 
     rows = []
     for pair, n_orders in orders.items():
@@ -420,6 +638,7 @@ def build_rows(units, min_orders=MIN_ORDERS, min_patients=MIN_PATIENTS):
         rows.append(StatRow(
             physician_id, key, title_key, title[:255],
             n_orders, opens[(physician_id, key)], len(patients[pair]),
+            recent_usual_due_months(due_history[pair]),
         ))
     rows.sort(key=lambda row: (row.physician_id, row.problem_key, -row.n_orders, row.title_key))
 
@@ -431,6 +650,9 @@ def build_rows(units, min_orders=MIN_ORDERS, min_patients=MIN_PATIENTS):
         'orders': sum(len(unit.titles) for unit in units),
         'distinct_pairs': len(orders),
         'rows': len(rows),
+        'orders_due_known': sum(len(history) for history in due_history.values()),
+        'orders_dated': sum(1 for history in due_history.values() for _, gap in history if gap is not None),
+        'rows_with_a_due_date': sum(1 for row in rows if row.usual_due_months is not None),
     }
     return rows, totals
 
@@ -478,7 +700,7 @@ def patient_title_history(patient_id, title_keys):
 # ----------------------------------------------------------------- replay
 
 def replay(units, since, cutoffs=(0.05, 0.10, 0.20), top=(1, 3, 5),
-           min_orders=MIN_ORDERS, min_patients=MIN_PATIENTS, shown_cap=3):
+           min_orders=MIN_ORDERS, min_patients=MIN_PATIENTS, shown_cap=3, due_dates=None):
     """How the rule would have done on history: every unit from `since` on is
     ranked using only the visits before it.
 
@@ -488,15 +710,24 @@ def replay(units, since, cutoffs=(0.05, 0.10, 0.20), top=(1, 3, 5),
       policy: {cutoff: {shown, opens_showing, shown_and_ordered}} for what the
               app would really show: at most `shown_cap` titles that pass the
               evidence floor and whose rate is at least the cutoff.
+      due:    only with `due_dates`. For each ordered title that had a usual
+              due date at the time (`recent_usual_due_months` over earlier
+              visits only): `offered`, and
+              how its due date as ordered compared — `dated` (of which
+              `same_month` and `within_a_month`), `undated`, `unknown`.
     """
     opens = Counter()
     orders = defaultdict(Counter)
     patients = defaultdict(set)
+    due_history = defaultdict(list)
     result = {
         'opens': 0, 'opens_with_an_order': 0, 'ordered_titles': 0,
         'hits': {k: 0 for k in top},
         'policy': {c: {'shown': 0, 'opens_showing': 0, 'shown_and_ordered': 0} for c in cutoffs},
     }
+    if due_dates is not None:
+        result['due'] = {'offered': 0, 'dated': 0, 'same_month': 0, 'within_a_month': 0,
+                         'undated': 0, 'unknown': 0}
     deepest = max(top)
 
     def rank(item):
@@ -541,10 +772,33 @@ def replay(units, since, cutoffs=(0.05, 0.10, 0.20), top=(1, 3, 5),
                     bucket['opens_showing'] += 1 if shown else 0
                     bucket['shown_and_ordered'] += len(ordered.intersection(shown))
 
+                if due_dates is not None:
+                    for title_key in ordered:
+                        usual = recent_usual_due_months(due_history[scope + (title_key,)])
+                        if usual is None:
+                            continue
+                        tally = result['due']
+                        tally['offered'] += 1
+                        due = _order_due(unit, title_key, due_dates)
+                        if due is DUE_UNKNOWN:
+                            tally['unknown'] += 1
+                        elif due is None:
+                            tally['undated'] += 1
+                        else:
+                            gap = month_gap(unit.started, due)
+                            tally['dated'] += 1
+                            tally['same_month'] += 1 if gap == usual else 0
+                            tally['within_a_month'] += 1 if abs(gap - usual) <= 1 else 0
+
         for unit in visit_units:
             scope = (unit.physician_id, unit.problem_key)
             opens[scope] += 1
             for title_key in unit.titles:
                 orders[scope][title_key] += 1
                 patients[scope + (title_key,)].add(unit.patient_id)
+                if due_dates is not None:
+                    due = _order_due(unit, title_key, due_dates)
+                    if due is not DUE_UNKNOWN:
+                        due_history[scope + (title_key,)].append(
+                            (unit.started, None if due is None else month_gap(unit.started, due)))
     return result

@@ -6,8 +6,10 @@
 `emr.todo_suggestions` holds the rule. This command reads every finished
 visit, counts how often each physician ordered each todo title on each kind of
 problem, and REPLACES `TodoSuggestionStat` with the titles that pass the
-evidence floor. It is safe to run as often as wanted: the table is derived, so
-a rebuild can only bring it up to date. Nothing else writes to it.
+evidence floor. Each stored title also gets its usual due date, when the
+physician's due dates for it are consistent (`usual_due_months`). It is safe
+to run as often as wanted: the table is derived, so a rebuild can only bring
+it up to date. Nothing else writes to it.
 
 Nothing schedules this. Run it as a Cloud Run job (the recipe is under
 "One-off management commands against prod" in the app repository's CLAUDE.md);
@@ -34,7 +36,9 @@ from django.db import connection, transaction
 from django.utils import timezone
 
 from emr.models import TodoSuggestionStat
-from emr.todo_suggestions import MIN_ORDERS, MIN_PATIENTS, build_rows, collect_units
+from emr.todo_suggestions import (
+    MIN_ORDERS, MIN_PATIENTS, build_rows, collect_units, due_dates_as_ordered, order_visit_starts,
+)
 
 _LOGGER = logging.getLogger('smallbrain.todo_suggestions')
 
@@ -76,7 +80,8 @@ class Command(BaseCommand):
         self.say(f"evidence floor  : {options['min_orders']} orders, {options['min_patients']} patients")
 
         units = collect_units(physicians)
-        rows, totals = build_rows(units, options['min_orders'], options['min_patients'])
+        due_dates = due_dates_as_ordered(order_visit_starts(units))
+        rows, totals = build_rows(units, options['min_orders'], options['min_patients'], due_dates)
         self.say(f"physicians      : {totals['physicians']}")
         self.say(f"visits          : {totals['visits']}")
         self.say(f"problem opens   : {totals['units']}  ({totals['units_with_an_order']} with an order)")
@@ -85,7 +90,14 @@ class Command(BaseCommand):
         # The stored titles all cleared the several-patients floor, so the
         # most common few are safe to print as a sanity check.
         for row in sorted(rows, key=lambda r: -r.n_orders)[:5]:
-            self.say(f'                  {row.n_orders:>5} of {row.n_opens:<5} {row.problem_key}  "{row.title}"')
+            self.say(f'                  {row.n_orders:>5} of {row.n_opens:<5} {row.problem_key}  "{row.title}"'
+                     + (f'  due {row.usual_due_months} mo' if row.usual_due_months is not None else ''))
+        self.say(f"due as ordered  : known for {totals['orders_due_known']} of {totals['orders']} orders, "
+                 f"{totals['orders_dated']} of them dated")
+        self.say(f"usual due date  : {totals['rows_with_a_due_date']} rows")
+        for row in sorted((r for r in rows if r.usual_due_months is not None), key=lambda r: -r.n_orders)[:10]:
+            self.say(f'                  {row.n_orders:>5} orders  {row.usual_due_months:>3} mo  '
+                     f'{row.problem_key}  "{row.title}"')
 
         if not apply:
             self.say('Dry run — nothing written. Re-run with --apply to replace the table.')
@@ -130,13 +142,14 @@ class Command(BaseCommand):
 
             insert = (
                 f'INSERT INTO {quote(staging)} '
-                '(physician_user_id, problem_key, title_key, title, n_orders, n_opens, n_patients, built_on) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+                '(physician_user_id, problem_key, title_key, title, n_orders, n_opens, n_patients, '
+                'usual_due_months, built_on) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
             )
             for start in range(0, len(rows), INSERT_BATCH):
                 cursor.executemany(insert, [
                     (row.physician_id, row.problem_key, row.title_key, row.title,
-                     row.n_orders, row.n_opens, row.n_patients, stamp)
+                     row.n_orders, row.n_opens, row.n_patients, row.usual_due_months, stamp)
                     for row in rows[start:start + INSERT_BATCH]
                 ])
 
@@ -174,7 +187,8 @@ class Command(BaseCommand):
                 TodoSuggestionStat(
                     physician_user_id=row.physician_id, problem_key=row.problem_key,
                     title_key=row.title_key, title=row.title, n_orders=row.n_orders,
-                    n_opens=row.n_opens, n_patients=row.n_patients, built_on=built_on,
+                    n_opens=row.n_opens, n_patients=row.n_patients,
+                    usual_due_months=row.usual_due_months, built_on=built_on,
                 )
                 for row in rows
             ], batch_size=INSERT_BATCH)

@@ -5565,6 +5565,12 @@ def mobile_todo_suggestions(request, patient_id, problem_id):
     one has been open. Deciding is the app's job; nothing is filtered here
     beyond the evidence floor the table was built with.
 
+    `due_months` is how many calendar months after the visit this physician
+    usually makes the title due, or null when their due dates for it are not
+    consistent (`emr.todo_suggestions.usual_due_months`). The app fills the
+    1st of that month into the Add Todo sheet; for A1C it applies its own
+    rule from the patient's last A1C instead. An older app ignores the key.
+
     Read-only: it stays in StampCoverageSweepTests.GET_ONLY.
     """
     if request.method != 'GET':
@@ -5599,6 +5605,7 @@ def mobile_todo_suggestions(request, patient_id, problem_id):
             'probability': round(row.n_orders / row.n_opens, 4),
             'last_ordered_on': when(last_ordered_on),
             'pending_since': when(pending_since),
+            'due_months': row.usual_due_months,
         })
     return JsonResponse({
         'success': True,
