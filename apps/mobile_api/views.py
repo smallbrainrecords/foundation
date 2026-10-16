@@ -29,6 +29,7 @@ from emr.models import (
     Encounter, EncounterEvent, EncounterProblemRecord, EncounterTodoRecord,
     EncounterObservationValue, EncounterTranscriptTiming,
     Document, DocumentProblem, DocumentTodo,
+    TodoProblem,
     MyStoryTextComponent, MyStoryTextComponentEntry,
     TaggedToDoOrder,
     PatientMutationStamp,
@@ -1327,6 +1328,11 @@ def _mobile_patient_full_inner(request, patient_id):
             queryset=ToDoComment.objects.select_related('user').order_by('-datetime', 'id'),
             to_attr='prefetched_comments',
         ),
+        Prefetch(
+            'extra_problem_links',
+            queryset=TodoProblem.objects.order_by('id'),
+            to_attr='prefetched_extra_problems',
+        ),
     )
     for t in todo_qs:
         members = []
@@ -1359,6 +1365,13 @@ def _mobile_patient_full_inner(request, patient_id):
             'accomplished_at': t.accomplished_at.isoformat() if t.accomplished_at else None,
             'due_date': t.due_date.isoformat() if t.due_date else None,
             'problem_id': t.problem_id if t.problem_id else None,
+            # The problems this order is ALSO for (`TodoProblem`), home
+            # excluded. Always present: an absent key means an older server
+            # to the app, which then leaves its local links alone.
+            'extra_problem_ids': [
+                x.problem_id for x in t.prefetched_extra_problems
+                if x.problem_id != t.problem_id
+            ],
             'order': t.order,
             'created_on': t.created_on.isoformat() if t.created_on else None,
             'labels': [{'id': l.id, 'name': l.name or '', 'css_class': l.css_class or ''} for l in t.labels.all()],
@@ -3103,6 +3116,57 @@ def mobile_document_todo_link(request, patient_id, document_id, todo_id):
     return JsonResponse({'success': True, 'id': link.id, 'created': created})
 
 
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_todo_problem_link(request, patient_id, todo_id, problem_id):
+    """POST -> say a todo is also for another problem; DELETE -> take it off.
+
+    The extra-problem link (`TodoProblem`, 2026-10-16). URL-coordinate
+    identity like the document links: POST is idempotent through
+    `get_or_create` (a repeat returns the same id with `created: False`) and
+    DELETE of a link that is not there succeeds.
+
+    Linking the todo's own HOME problem changes nothing and answers
+    `{success, id: None, home: True}` — the home problem is never also an
+    extra, and the app drops a local link that comes back without an id.
+
+    Deliberately silent (owner decisions 2026-10-16): no ProblemActivity or
+    TodoActivity row on either end, and no `apply_problem_authentication` —
+    an extra link is a tag on the order, not a write to any problem, so it
+    neither authenticates nor de-authenticates one, the home problem
+    included. The patient stamp still moves so other Macs pull the link.
+    """
+    if request.method not in ('POST', 'DELETE'):
+        return JsonResponse({'error': 'POST or DELETE required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    try:
+        todo = ToDo.objects.get(id=todo_id, patient_id=patient_id)
+    except ToDo.DoesNotExist:
+        return JsonResponse({'error': 'Todo not found'}, status=404)
+
+    try:
+        problem = Problem.objects.get(id=problem_id, patient_id=patient_id)
+    except Problem.DoesNotExist:
+        return JsonResponse({'error': 'Problem not found'}, status=404)
+
+    if request.method == 'DELETE':
+        TodoProblem.objects.filter(todo=todo, problem=problem).delete()
+        return JsonResponse({'success': True})
+
+    if todo.problem_id == problem.id:
+        return JsonResponse({'success': True, 'id': None, 'created': False, 'home': True})
+
+    link, created = TodoProblem.objects.get_or_create(
+        todo=todo, problem=problem,
+        defaults={'author': request.user},
+    )
+    return JsonResponse({'success': True, 'id': link.id, 'created': created})
+
+
 # ---------- Document Label endpoints (2026-09-08) ----------
 
 @csrf_exempt
@@ -4768,6 +4832,11 @@ def mobile_update_todo(request, patient_id, todo_id):
     # deliberately not logged: the legacy web's "Updated order of this todo."
     # rows said nothing a reader could use.)
     old_problem_id = old_problem.id if old_problem is not None else None
+    # A todo moved onto a problem it was already ALSO for: that problem is
+    # its home now, and the home problem is never also an extra. The old
+    # home is not kept as an extra — a move is a move.
+    if 'problem_id' in body and todo.problem_id and todo.problem_id != old_problem_id:
+        TodoProblem.objects.filter(todo=todo, problem_id=todo.problem_id).delete()
     if 'problem_id' in body and todo.problem_id != old_problem_id:
         if old_problem is None:
             activity = f'Linked to problem "{todo.problem.problem_name}"'
@@ -5761,7 +5830,8 @@ def mobile_my_tagged_todos(request):
             TaggedToDoOrder.objects
             .filter(user=request.user, todo__accomplished=False, todo__isnull=False)
             .select_related('todo', 'todo__patient', 'todo__patient__profile', 'todo__problem')
-            .prefetch_related('todo__labels', 'todo__comments', 'todo__comments__user')
+            .prefetch_related('todo__labels', 'todo__comments', 'todo__comments__user',
+                              'todo__extra_problem_links')
         )
 
         todos = []
@@ -5810,6 +5880,10 @@ def mobile_my_tagged_todos(request):
                 'accomplished_at': t.accomplished_at.isoformat() if t.accomplished_at else None,
                 'due_date': t.due_date.isoformat() if t.due_date else None,
                 'problem_id': t.problem_id if t.problem_id else None,
+                'extra_problem_ids': [
+                    x.problem_id for x in t.extra_problem_links.all()
+                    if x.problem_id != t.problem_id
+                ],
                 'problem_name': problem_name,
                 'patient_id': t.patient_id,
                 'patient_name': patient_name,

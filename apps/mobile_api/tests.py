@@ -38,6 +38,7 @@ from emr.models import (
     ObservationValueAudit,
     EncounterTranscriptTiming,
     TodoSuggestionStat,
+    TodoProblem,
 )
 
 
@@ -7432,3 +7433,245 @@ class MobileTodoSuggestionsTests(_RBACTestBase):
         self.assertEqual(writes, [])
         self.assertFalse(PatientMutationStamp.objects.filter(patient=self.patient).exists())
 
+
+
+class MobileTodoProblemLinkTests(_RBACTestBase):
+    """POST/DELETE `/api/patient/<pid>/todo/<todo_id>/link/problem/<problem_id>`
+    — a todo that is ALSO for another problem (`TodoProblem`, 2026-10-16).
+
+    Pins the owner's decisions: the home problem stays the todo's problem and
+    is never also an extra; a link writes no activity row on either end; and
+    a link never changes any problem's `authenticated`, the home problem's
+    included."""
+
+    def setUp(self):
+        super().setUp()
+        self.home = Problem.objects.create(patient=self.patient, problem_name='Diabetes')
+        self.extra = Problem.objects.create(patient=self.patient, problem_name='Hypertension')
+        self.third = Problem.objects.create(patient=self.patient, problem_name='Hyperlipidemia')
+        self.todo = ToDo.objects.create(
+            todo='cbc, cmp, lipids', patient=self.patient,
+            user=self.attending, problem=self.home)
+        self.url = self._url(self.todo, self.extra)
+
+    def _url(self, todo, problem, patient=None):
+        pid = (patient or self.patient).id
+        return f'/api/patient/{pid}/todo/{todo.id}/link/problem/{problem.id}'
+
+    def _activity_counts(self):
+        return (ProblemActivity.objects.count(), TodoActivity.objects.count())
+
+    # -- writes --------------------------------------------------------
+
+    def test_post_creates_the_link_with_its_author(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.post(self.url)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        self.assertTrue(data['created'])
+        link = TodoProblem.objects.get(todo=self.todo, problem=self.extra)
+        self.assertEqual(data['id'], link.id)
+        self.assertEqual(link.author, self.attending)
+        # The home problem is untouched: the todo is still listed under it.
+        self.todo.refresh_from_db()
+        self.assertEqual(self.todo.problem, self.home)
+
+    def test_post_twice_returns_the_same_row(self):
+        self.assertTrue(self._login(self.attending))
+        first = self.client.post(self.url).json()
+        second = self.client.post(self.url).json()
+        self.assertFalse(second['created'])
+        self.assertEqual(first['id'], second['id'])
+        self.assertEqual(TodoProblem.objects.filter(todo=self.todo).count(), 1)
+
+    def test_delete_removes_the_link_and_a_missing_link_still_succeeds(self):
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra, author=self.attending)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.delete(self.url).status_code, 200)
+        self.assertFalse(TodoProblem.objects.filter(todo=self.todo).exists())
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {'success': True})
+
+    def test_delete_leaves_the_todos_other_links_alone(self):
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        TodoProblem.objects.create(todo=self.todo, problem=self.third)
+        self.assertTrue(self._login(self.attending))
+        self.client.delete(self.url)
+        self.assertEqual(
+            list(TodoProblem.objects.filter(todo=self.todo).values_list('problem_id', flat=True)),
+            [self.third.id])
+
+    def test_linking_the_home_problem_is_a_no_op(self):
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.post(self._url(self.todo, self.home))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {'success': True, 'id': None, 'created': False, 'home': True})
+        self.assertFalse(TodoProblem.objects.exists())
+
+    def test_the_pair_is_unique_in_the_database(self):
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+
+    def test_deleting_the_problem_or_the_todo_takes_the_link_with_it(self):
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        TodoProblem.objects.create(todo=self.todo, problem=self.third)
+        self.extra.delete()
+        self.assertEqual(TodoProblem.objects.count(), 1)
+        self.todo.delete()
+        self.assertEqual(TodoProblem.objects.count(), 0)
+
+    # -- silent: no activity, no authentication -----------------------
+
+    def test_adding_and_removing_writes_no_activity_row_anywhere(self):
+        self.assertTrue(self._login(self.attending))
+        before = self._activity_counts()
+        self.client.post(self.url)
+        self.client.delete(self.url)
+        self.assertEqual(self._activity_counts(), before)
+
+    def test_a_physician_link_authenticates_no_problem(self):
+        self.assertTrue(self._login(self.attending))
+        self.client.post(self.url)
+        self.client.delete(self._url(self.todo, self.third))
+        for p in (self.home, self.extra, self.third):
+            p.refresh_from_db()
+            self.assertFalse(p.authenticated, p.problem_name)
+
+    def test_a_non_physician_link_clears_no_problem(self):
+        Problem.objects.filter(patient=self.patient).update(authenticated=True)
+        self.assertTrue(self._login(self.team_nurse))
+        self.assertEqual(self.client.post(self.url).status_code, 200)
+        self.assertEqual(self.client.delete(self.url).status_code, 200)
+        for p in (self.home, self.extra, self.third):
+            p.refresh_from_db()
+            self.assertTrue(p.authenticated, p.problem_name)
+
+    def test_the_patient_stamp_moves_so_other_macs_pull(self):
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        self.assertTrue(self._login(self.attending))
+        self.client.post(self.url)
+        self.assertTrue(PatientMutationStamp.objects.filter(patient=self.patient).exists())
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        self.client.delete(self.url)
+        self.assertTrue(PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    # -- who and what --------------------------------------------------
+
+    def test_a_team_nurse_may_link(self):
+        self.assertTrue(self._login(self.team_nurse))
+        self.assertEqual(self.client.post(self.url).status_code, 200)
+        self.assertTrue(TodoProblem.objects.filter(todo=self.todo, problem=self.extra).exists())
+
+    def test_someone_who_cannot_see_the_chart_gets_404_and_writes_nothing(self):
+        for user in (self.stranger_doc, self.stranger_nurse, self.other_patient, self.no_profile):
+            self.client.logout()
+            self.assertTrue(self._login(user))
+            self.assertEqual(self.client.post(self.url).status_code, 404, user.username)
+            self.assertEqual(self.client.delete(self.url).status_code, 404, user.username)
+        self.assertFalse(TodoProblem.objects.exists())
+
+    def test_both_ends_must_belong_to_the_patient_in_the_url(self):
+        other_problem = Problem.objects.create(patient=self.other_patient, problem_name='Elsewhere')
+        other_todo = ToDo.objects.create(todo='x', patient=self.other_patient, problem=other_problem)
+        self.assertTrue(self._login(self.admin_user))
+        self.assertEqual(self.client.post(self._url(self.todo, other_problem)).status_code, 404)
+        self.assertEqual(self.client.post(self._url(other_todo, self.extra)).status_code, 404)
+        self.assertEqual(self.client.delete(self._url(self.todo, other_problem)).status_code, 404)
+        self.assertFalse(TodoProblem.objects.exists())
+
+    def test_only_post_and_delete(self):
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+        self.assertEqual(self.client.patch(self.url).status_code, 405)
+
+    def test_an_unauthenticated_request_is_turned_away(self):
+        self.assertEqual(self.client.post(self.url).status_code, 302)
+        self.assertFalse(TodoProblem.objects.exists())
+
+    # -- moving the todo -----------------------------------------------
+
+    def _move(self, problem):
+        return self.client.patch(
+            f'/api/patient/{self.patient.id}/todo/{self.todo.id}',
+            data=json.dumps({'problem_id': problem.id}),
+            content_type='application/json')
+
+    def test_moving_onto_an_extra_removes_that_link_and_does_not_keep_the_old_home(self):
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        TodoProblem.objects.create(todo=self.todo, problem=self.third)
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self._move(self.extra).status_code, 200)
+        self.todo.refresh_from_db()
+        self.assertEqual(self.todo.problem, self.extra)
+        self.assertEqual(
+            sorted(TodoProblem.objects.filter(todo=self.todo).values_list('problem_id', flat=True)),
+            [self.third.id])
+
+    def test_moving_elsewhere_keeps_the_extras(self):
+        other = Problem.objects.create(patient=self.patient, problem_name='Fatigue')
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        self.assertTrue(self._login(self.attending))
+        self._move(other)
+        self.assertEqual(
+            list(TodoProblem.objects.filter(todo=self.todo).values_list('problem_id', flat=True)),
+            [self.extra.id])
+
+    def test_an_edit_that_does_not_move_the_todo_keeps_the_extras(self):
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        self.assertTrue(self._login(self.attending))
+        self._move(self.home)
+        self.assertEqual(TodoProblem.objects.filter(todo=self.todo).count(), 1)
+
+    # -- what the app pulls --------------------------------------------
+
+    def _full_todo(self, sections='todos'):
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get(f'/api/patient/{self.patient.id}/full?sections={sections}').json()
+        return next(t for t in body['todos'] if t['id'] == self.todo.id)
+
+    def test_patient_full_sends_the_extras_in_link_order(self):
+        TodoProblem.objects.create(todo=self.todo, problem=self.third)
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        todo = self._full_todo()
+        self.assertEqual(todo['extra_problem_ids'], [self.third.id, self.extra.id])
+        self.assertEqual(todo['problem_id'], self.home.id)
+
+    def test_patient_full_sends_an_empty_list_not_a_missing_key(self):
+        self.assertEqual(self._full_todo('encounters')['extra_problem_ids'], [])
+
+    def test_patient_full_never_lists_the_home_problem_as_an_extra(self):
+        # A row that names the home (written before a move, or by hand) is
+        # not an extra: the app must never see the home problem twice.
+        TodoProblem.objects.create(todo=self.todo, problem=self.home)
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        self.assertEqual(self._full_todo()['extra_problem_ids'], [self.extra.id])
+
+    def test_my_tagged_todos_sends_the_extras_too(self):
+        TaggedToDoOrder.objects.create(todo=self.todo, user=self.attending)
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        self.assertTrue(self._login(self.attending))
+        body = self.client.get('/api/my-tagged-todos/').json()
+        todo = next(t for t in body['todos'] if t['id'] == self.todo.id)
+        self.assertEqual(todo['extra_problem_ids'], [self.extra.id])
+
+    def test_extras_add_no_per_todo_query_to_patient_full(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        self.assertTrue(self._login(self.attending))
+
+        def count():
+            with CaptureQueriesContext(connection) as ctx:
+                self.client.get(f'/api/patient/{self.patient.id}/full?sections=todos')
+            return len(ctx.captured_queries)
+
+        TodoProblem.objects.create(todo=self.todo, problem=self.extra)
+        with_one = count()
+        for i in range(8):
+            t = ToDo.objects.create(todo=f'order {i}', patient=self.patient, problem=self.home)
+            TodoProblem.objects.create(todo=t, problem=self.extra)
+            TodoProblem.objects.create(todo=t, problem=self.third)
+        self.assertEqual(count(), with_one)
