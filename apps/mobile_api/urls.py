@@ -34,6 +34,7 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)$', views.mobile_delete_document),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/problem/(?P<problem_id>\d+)$', views.mobile_document_problem_link),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/link/todo/(?P<todo_id>\d+)$', views.mobile_document_todo_link),
+    url(r'^patient/(?P<patient_id>\d+)/todo/(?P<todo_id>\d+)/link/problem/(?P<problem_id>\d+)$', views.mobile_todo_problem_link),
     # Document labels (2026-09-08). POST attaches by NAME (the canonical row is
     # resolved server-side); DELETE detaches by the label's id, which the client
     # already holds from the pull.

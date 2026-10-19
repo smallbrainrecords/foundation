@@ -714,6 +714,39 @@ class TaggedToDoOrder(models.Model):
         return '%s' % (unicode(self.todo.todo))
 
 
+class TodoProblem(models.Model):
+    """One EXTRA problem a todo is also for (2026-10-16).
+
+    A todo keeps exactly one home problem — `ToDo.problem`, which every
+    reader of "the todo's problem" still means. An order that serves several
+    problems (one lab draw for diabetes, hypertension and cholesterol) says
+    so with these rows, and the app's requisition prints each extra
+    problem's diagnosis after the home one.
+
+    Owner decisions, each pinned by a test:
+    - an extra is a passive tag: the todo is listed under its home problem
+      only, its events go to the home problem's Activity only, and adding or
+      removing a link writes no activity row anywhere;
+    - adding or removing a link never changes any problem's `authenticated`,
+      the home problem's included;
+    - the home problem is never also an extra: linking it is a no-op, and
+      moving a todo onto one of its extras removes that link.
+
+    Written only by `mobile_todo_problem_link` (and pruned by
+    `mobile_update_todo` on a move). Unique on (todo, problem) from day one,
+    so the idempotent POST can never mint a second row.
+    """
+    todo = models.ForeignKey(ToDo, related_name='extra_problem_links', on_delete=models.CASCADE)
+    problem = models.ForeignKey(Problem, related_name='extra_todo_links', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['todo', 'problem'], name='uniq_todo_problem_todo_problem'),
+        ]
+
+
 class LabeledToDoList(models.Model):
     name = models.TextField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # author
