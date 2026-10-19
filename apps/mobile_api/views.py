@@ -5045,17 +5045,15 @@ def mobile_add_todo_member(request, patient_id, todo_id):
     # Only write the activity row on a fresh tag — get_or_create returning
     # an existing row means the member was already tagged, and emitting a
     # row in that case would be a phantom audit event.
+    #
+    # Wording (owner decision 2026-10-15): the app says "tagged", never
+    # "member" or "joined", and the row's author already says who did it, so
+    # the row names only the person tagged. Rows written before this keep
+    # their old text ("<Name> - <role> joined this todo") — the activity
+    # table is an audit record.
     if created:
         member_name = member.get_full_name() or member.username
-        try:
-            role = member.profile.role
-        except UserProfile.DoesNotExist:
-            role = ''
-        suffix = f" - {role}" if role else ""
-        add_todo_activity(
-            todo, request.user,
-            f"{member_name}{suffix} joined this todo"
-        )
+        add_todo_activity(todo, request.user, f"Tagged {member_name}")
     return JsonResponse({'success': True, 'id': tto.id})
 
 
@@ -5084,7 +5082,10 @@ def mobile_remove_todo_member(request, patient_id, todo_id, user_id):
     member = tto.user
     member_name = member.get_full_name() or member.username
     tto.delete()
-    add_todo_activity(todo, request.user, f"Unpinned {member_name}")
+    # Was "Unpinned <Name>" before 2026-10-15 — see mobile_add_todo_member.
+    # Not to be confused with the "Unpinned <vital>" PROBLEM activity that
+    # apply_usual_vital_pins reads as an opt-out; that one is unchanged.
+    add_todo_activity(todo, request.user, f"Untagged {member_name}")
     return JsonResponse({'success': True, 'deleted': 1})
 
 

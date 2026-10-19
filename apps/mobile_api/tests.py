@@ -4701,14 +4701,14 @@ class MobileTodoActivityLogTests(_RBACTestBase):
             'Todo name changed from "echocardiogram" to "echocardiogram, with contrast"',
             'Changed due date to Aug 1, 2032',
             'Moved from problem "Hypertension" to problem "Diabetes"',
-            'Nia Nurse - nurse joined this todo',
+            'Tagged Nia Nurse',
             'Added comment',
             'Edited comment',
             'Linked document: echo report',
             'Printed requisition signed by Ada Attending',
             'Downloaded requisition signed by Ada Attending',
             'Unlinked document: echo report',
-            'Unpinned Nia Nurse',
+            'Untagged Nia Nurse',
             'Removed due date',
             'Updated status to accomplished',
         ])
@@ -4802,9 +4802,9 @@ class MobileTodoActivityLogTests(_RBACTestBase):
         self._update(problem_id=self.dm.id)
         self.assertEqual(ProblemActivity.objects.count(), before)
 
-    # ---- members ----
+    # ---- tags ----
 
-    def test_pinning_twice_or_unpinning_twice_writes_one_row_each(self):
+    def test_tagging_twice_or_untagging_twice_writes_one_row_each(self):
         for _ in range(2):
             self.client.post(
                 self._todo_url('/member'), data=json.dumps({'user_id': self.team_nurse.id}),
@@ -4812,7 +4812,7 @@ class MobileTodoActivityLogTests(_RBACTestBase):
         for _ in range(2):
             self.client.delete(self._todo_url(f'/member/{self.team_nurse.id}'))
         self.assertEqual(
-            self._log(), ['Nia Nurse - nurse joined this todo', 'Unpinned Nia Nurse'])
+            self._log(), ['Tagged Nia Nurse', 'Untagged Nia Nurse'])
 
     # ---- documents ----
 
