@@ -301,6 +301,31 @@ class DocumentRenameReportTests(TestCase):
         self.assertFalse(renames[0]['anchored'])
         self.assertEqual(documents[newer.id]['match'], 'traced')
 
+    def test_documents_uploaded_together_each_keep_their_own_creation_name(self):
+        """A stranded batch retried at once: one person, several uploads in
+        the same second, so every document sees every `Added document:` row.
+        Each must still anchor only its own rename — taking the whole batch's
+        names unanchored all 25 "phq" renames on the 2026-10-20 run."""
+        first = self.document(at(3), 'phq', arrival='2026_09_03_12_13_36.pdf')
+        second = self.document(at(3), 'phq', arrival='2026_09_03_12_13_50.pdf')
+        third = self.document(at(3), 'annual', arrival='2026_09_03_12_14_02.pdf')
+        for name in ('2026_09_03_12_13_36', '2026_09_03_12_13_50', '2026_09_03_12_14_02'):
+            self.added(at(3), name)
+        self.rename(at(4), '2026_09_03_12_13_36', 'phq')
+        self.rename(at(5), '2026_09_03_12_13_50', 'phq')
+        self.rename(at(6), '2026_09_03_12_14_02', 'annual')
+
+        renames, documents, summary = self.run_report()
+
+        self.assertTrue(all(r['anchored'] for r in renames))
+        for doc in (first, second, third):
+            self.assertEqual(documents[doc.id]['origin'], 'chart')
+            self.assertEqual(documents[doc.id]['match'], 'traced')
+            self.assertEqual(len(documents[doc.id]['renames']), 1)
+        self.assertEqual(documents[first.id]['first_name'], '2026_09_03_12_13_36')
+        self.assertEqual(documents[second.id]['first_name'], '2026_09_03_12_13_50')
+        self.assertEqual(summary['ambiguous'], 0)
+
     def test_a_document_still_in_the_pool_never_claims_a_rename(self):
         waiting = self.document(at(3), 'CBC', arrival='a.pdf', patient=None, team=self.team)
         assigned = self.document(at(3, hour=13), 'CBC', arrival='b.pdf')

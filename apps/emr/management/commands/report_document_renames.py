@@ -160,7 +160,7 @@ class Rename:
 
 class Doc:
     __slots__ = ('id', 'created_on', 'author_id', 'author', 'patient_id', 'team_id', 'arrival',
-                 'name', 'creation_names', 'chain', 'first_name', 'consistent')
+                 'name', 'creation_names', 'creation_name', 'chain', 'first_name', 'consistent')
 
     def __init__(self, doc_id, created_on, author_id, author, patient_id, team_id, arrival, name):
         self.id = doc_id
@@ -172,6 +172,7 @@ class Doc:
         self.arrival = arrival
         self.name = name or ''
         self.creation_names = set()
+        self.creation_name = None
         self.chain = []
         self.first_name = self.name
         self.consistent = True
@@ -218,7 +219,16 @@ def collapse_rename_rows(rows):
 
 def mark_chart_uploads(docs, added_rows):
     """A chart upload writes `Added document: <name>` by the uploader in the
-    same request. `added_rows` are (created_on, author_id, activity)."""
+    same request. `added_rows` are (created_on, author_id, activity).
+
+    `creation_names` holds every such row near the document's creation, which
+    is enough to call it a chart upload. When one person uploads several
+    documents within the same two seconds — a stranded batch retried at once
+    — every document in the batch sees every row, so the document's OWN name
+    is resolved separately (`creation_name`): the row naming its arrival
+    name, else the only row, else the row naming its current name. Measured:
+    anchoring on the whole set unanchored all 25 "phq" renames on the
+    2026-10-20 run, because their scans were uploaded in batches."""
     by_author = defaultdict(list)
     for at, author_id, text in added_rows:
         by_author[author_id].append((at, text[len(ADDED_PREFIX):]))
@@ -227,6 +237,12 @@ def mark_chart_uploads(docs, added_rows):
             name for at, name in by_author.get(doc.author_id, ())
             if abs(at - doc.created_on) <= CREATION_SLACK
         }
+        if doc.arrival_stem in doc.creation_names:
+            doc.creation_name = doc.arrival_stem
+        elif len(doc.creation_names) == 1:
+            doc.creation_name = next(iter(doc.creation_names))
+        elif doc.name in doc.creation_names:
+            doc.creation_name = doc.name
 
 
 def anchor_renames(docs, renames):
@@ -237,8 +253,8 @@ def anchor_renames(docs, renames):
     for doc in docs:
         if doc.arrival_stem:
             by_name[doc.arrival_stem].add(doc)
-        for name in doc.creation_names:
-            by_name[name].add(doc)
+        if doc.creation_name:
+            by_name[doc.creation_name].add(doc)
     for rename in renames:
         old, _ = _split_rename(rename.text)
         owners = [doc for doc in by_name.get(old, ()) if doc.could_own(rename)]
@@ -282,7 +298,8 @@ def trace_renames(doc, renames):
         walk.append(([rename] + walk[-1][0], current))
 
     if doc.creation_names:
-        starts = [step for step in walk if step[1] in doc.creation_names]
+        own = {doc.creation_name} if doc.creation_name else doc.creation_names
+        starts = [step for step in walk if step[1] in own]
         doc.consistent = bool(starts)
         chosen = starts[-1] if starts else walk[-1]
     elif doc.arrival_stem is not None and any(step[1] == doc.arrival_stem for step in walk):
