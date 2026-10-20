@@ -58,6 +58,13 @@ class DocumentRenameReportTests(TestCase):
             )
             ProblemActivity.objects.filter(pk=row.pk).update(created_on=when)
 
+    def added(self, when, name, author=None):
+        """The row a chart upload writes in its own request (and assign
+        writes later, by whoever assigns)."""
+        row = ProblemActivity.objects.create(
+            problem=None, author=author or self.staff, activity=f'Added document: {name}')
+        ProblemActivity.objects.filter(pk=row.pk).update(created_on=when)
+
     def problem(self, patient=None):
         return Problem.objects.create(patient=patient or self.patient, problem_name='Hypertension')
 
@@ -172,7 +179,7 @@ class DocumentRenameReportTests(TestCase):
         self.assertFalse(documents[doc.id]['auto_named'])
         self.assertEqual(documents[doc.id]['first_name'], 'scan')
         self.assertEqual(summary['auto_named'], 0)
-        self.assertEqual(summary['not_auto_named_renamed'], 1)
+        self.assertEqual(summary['pool_not_auto_named_renamed'], 1)
 
     def test_without_an_arrival_name_auto_naming_is_unknown(self):
         doc = self.document(at(3), 'CBC', arrival=None)
@@ -180,7 +187,7 @@ class DocumentRenameReportTests(TestCase):
         _, documents, summary = self.run_report()
 
         self.assertIsNone(documents[doc.id]['auto_named'])
-        self.assertEqual(summary['documents_with_arrival_name'], 0)
+        self.assertEqual(summary['with_arrival_name'], 0)
         self.assertEqual(summary['auto_named'], 0)
 
     def test_a_rename_before_the_document_existed_is_not_its_own(self):
@@ -241,7 +248,87 @@ class DocumentRenameReportTests(TestCase):
 
         self.assertTrue(documents[doc.id]['in_pool'])
         self.assertIsNone(documents[doc.id]['patient_id'])
-        self.assertEqual(summary['documents_still_in_pool'], 1)
+        self.assertEqual(summary['still_in_pool'], 1)
+
+    # MARK: - Anchors, the pool, and where a document was uploaded
+
+    def test_a_rename_from_an_arrival_name_belongs_to_that_document(self):
+        """The first production run: 26 documents named "phq", one rename to
+        it. The rename's old name is one document's scanner stamp."""
+        renamed = self.document(at(3), 'phq', arrival='2026_09_03_09_11_16.pdf')
+        typed = self.document(at(3, hour=13), 'phq', arrival='2026_09_03_09_50_18.pdf')
+        self.added(at(3, hour=13), 'phq')
+        self.rename(at(4), '2026_09_03_09_11_16', 'phq')
+
+        renames, documents, summary = self.run_report()
+
+        self.assertTrue(renames[0]['anchored'])
+        self.assertEqual(renames[0]['documents'], [renamed.id])
+        self.assertEqual(documents[renamed.id]['match'], 'traced')
+        self.assertEqual(documents[renamed.id]['first_name'], '2026_09_03_09_11_16')
+        self.assertFalse(documents[renamed.id]['auto_named'])
+        self.assertEqual(documents[typed.id]['match'], 'none')
+        self.assertEqual(documents[typed.id]['origin'], 'chart')
+        self.assertTrue(documents[typed.id]['named_before_upload'])
+        self.assertFalse(documents[typed.id]['auto_named'])
+        self.assertEqual(summary['ambiguous'], 0)
+        self.assertEqual(summary['renames_anchored'], 1)
+        self.assertEqual(summary['chart_named_before_upload'], 1)
+        self.assertEqual(summary['auto_named'], 0)
+
+    def test_a_document_still_in_the_pool_never_claims_a_rename(self):
+        waiting = self.document(at(3), 'CBC', arrival='a.pdf', patient=None, team=self.team)
+        assigned = self.document(at(3, hour=13), 'CBC', arrival='b.pdf')
+        self.rename(at(4), 'CMP', 'CBC')
+
+        _, documents, summary = self.run_report()
+
+        self.assertEqual(documents[waiting.id]['match'], 'none')
+        self.assertEqual(documents[assigned.id]['match'], 'traced')
+        self.assertEqual(documents[assigned.id]['first_name'], 'CMP')
+        self.assertEqual(summary['auto_named_renamed'], 1)
+        self.assertEqual(summary['auto_named_still_in_pool'], 1)
+        self.assertEqual(summary['ambiguous'], 0)
+
+    def test_an_added_row_by_the_uploader_at_creation_marks_a_chart_upload(self):
+        chart = self.document(at(3), 'CBC', arrival='a.pdf')
+        self.added(at(3, second=1), 'CBC')
+        pool = self.document(at(3, hour=13), 'CMP', arrival='b.pdf')
+        # Assign writes its own row, later and by whoever assigned it.
+        self.added(at(4), 'CMP', author=self.team)
+
+        _, documents, summary = self.run_report()
+
+        self.assertEqual(documents[chart.id]['origin'], 'chart')
+        self.assertFalse(documents[chart.id]['auto_named'])
+        self.assertEqual(documents[pool.id]['origin'], 'pool')
+        self.assertTrue(documents[pool.id]['auto_named'])
+        self.assertEqual(summary['from_chart'], 1)
+        self.assertEqual(summary['from_pool'], 1)
+
+    def test_a_chart_upload_is_traced_back_only_to_its_creation_name(self):
+        doc = self.document(at(3), 'CBC', arrival='x.pdf')
+        self.added(at(3), 'labs')
+        self.rename(at(4), 'CMP', 'labs')   # some other document's
+        self.rename(at(5), 'labs', 'CBC')
+
+        renames, documents, _ = self.run_report()
+
+        line = documents[doc.id]
+        self.assertEqual(line['first_name'], 'labs')
+        self.assertEqual(len(line['renames']), 1)
+        self.assertEqual(line['match'], 'traced')
+        unclaimed = [r for r in renames if not r['documents']]
+        self.assertEqual([r['old'] for r in unclaimed], ['CMP'])
+
+    def test_a_chart_upload_that_cannot_reach_its_creation_name_is_inconsistent(self):
+        doc = self.document(at(3), 'CBC', arrival='x.pdf')
+        self.added(at(3), 'labs')
+
+        _, documents, summary = self.run_report()
+
+        self.assertEqual(documents[doc.id]['match'], 'inconsistent')
+        self.assertEqual(summary['inconsistent'], 1)
 
     # MARK: - Output
 
