@@ -29,14 +29,13 @@ its creation came from a chart, and its first name is that row's name. Only
 pool uploads are named by the auto-namer, so `auto_named` is true only for a
 pool document whose first name differs from its arrival name. A chart
 document whose first name differs (`named_before_upload`) was named by a
-person before its upload landed — measured on the first production run: 26
-documents named "phq" this way.
+person before its upload landed; the window measured on 2026-10-20 had none.
 
 **Tracing renames to documents is a heuristic, and says so.** A rename row
 carries no document id. Three things narrow it:
-  1. A rename whose old name is exactly one candidate document's arrival name
-     is that document's (`anchored`) — the arrival names are scanner stamps
-     and fax file names, nearly unique.
+  1. A rename whose old name is exactly one candidate document's arrival name,
+     or a chart upload's creation name, is that document's (`anchored`) —
+     those names are scanner stamps and fax file names, nearly unique.
   2. A document still in the pool has never been renamed (pool documents have
      no rename endpoint; the name changes at assign).
   3. A chart document's renames must lead back to its creation name.
@@ -45,7 +44,12 @@ name: the latest unclaimed rename after the document was created whose new
 name is that name, on the same patient or unlinked. When one unanchored rename
 is claimed by two documents, both are reported `match: "ambiguous"` and
 counted apart, never guessed. Documents created up to `--lookback-days` before
-the window also take part in claiming; they are not reported.
+the window also take part in claiming and anchoring; they are not reported.
+The default is 120 days because a document is often renamed months after it
+arrived: on the 2026-10-20 run the largest ambiguous groups were renames of
+documents uploaded in June and July (19 documents claimed one rename of a
+July document). A wider lookback can only anchor more renames or reveal a
+claim that was a guess.
 
 Nothing is written. On MySQL the session is set READ ONLY for the duration of
 the command and restored afterwards. Plain SELECTs under autocommit take no
@@ -227,14 +231,17 @@ def mark_chart_uploads(docs, added_rows):
 
 def anchor_renames(docs, renames):
     """A rename whose old name is exactly one candidate document's arrival
-    name belongs to that document."""
-    by_stem = defaultdict(list)
+    name or chart creation name belongs to that document. Run after
+    `mark_chart_uploads`."""
+    by_name = defaultdict(set)
     for doc in docs:
         if doc.arrival_stem:
-            by_stem[doc.arrival_stem].append(doc)
+            by_name[doc.arrival_stem].add(doc)
+        for name in doc.creation_names:
+            by_name[name].add(doc)
     for rename in renames:
         old, _ = _split_rename(rename.text)
-        owners = [doc for doc in by_stem.get(old, ()) if doc.could_own(rename)]
+        owners = [doc for doc in by_name.get(old, ()) if doc.could_own(rename)]
         if len(owners) == 1:
             rename.anchor = owners[0].id
 
@@ -291,8 +298,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--since', help='First day, YYYY-MM-DD (UTC). Default: 31 days before --until.')
         parser.add_argument('--until', help='Day after the last, YYYY-MM-DD (UTC). Default: now.')
-        parser.add_argument('--lookback-days', type=int, default=30,
-                            help='Older documents that may claim a rename (not reported). Default 30.')
+        parser.add_argument('--lookback-days', type=int, default=120,
+                            help='Older documents that may own a rename (not reported). Default 120.')
         parser.add_argument('--summary-only', action='store_true', help='Print only the summary line.')
 
     def handle(self, *args, **options):

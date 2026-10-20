@@ -253,8 +253,9 @@ class DocumentRenameReportTests(TestCase):
     # MARK: - Anchors, the pool, and where a document was uploaded
 
     def test_a_rename_from_an_arrival_name_belongs_to_that_document(self):
-        """The first production run: 26 documents named "phq", one rename to
-        it. The rename's old name is one document's scanner stamp."""
+        """The first production run pinned the latest of 25 renames to "phq"
+        on every document named "phq". Each rename's old name is its own
+        document's scanner stamp."""
         renamed = self.document(at(3), 'phq', arrival='2026_09_03_09_11_16.pdf')
         typed = self.document(at(3, hour=13), 'phq', arrival='2026_09_03_09_50_18.pdf')
         self.added(at(3, hour=13), 'phq')
@@ -275,6 +276,30 @@ class DocumentRenameReportTests(TestCase):
         self.assertEqual(summary['renames_anchored'], 1)
         self.assertEqual(summary['chart_named_before_upload'], 1)
         self.assertEqual(summary['auto_named'], 0)
+
+    def test_a_rename_from_a_chart_uploads_creation_name_belongs_to_it(self):
+        """The 2026-10-20 run's largest ambiguous groups: a document uploaded
+        in June or July (no arrival name recorded then) renamed this month to
+        a name newer documents also carry. Its upload row names it, and the
+        default lookback reaches back that far."""
+        june = datetime(2026, 6, 20, 12, tzinfo=dt_tz.utc)
+        older = self.document(june, 'CBC', arrival=None)
+        self.added(june, 'Kelly Ryan 2026-06-20 12-00')
+        newer = self.document(at(3), 'CBC', arrival='b.pdf')
+        self.rename(at(4), 'Kelly Ryan 2026-06-20 12-00', 'CBC')
+
+        renames, documents, summary = self.run_report()
+
+        self.assertTrue(renames[0]['anchored'])
+        self.assertEqual(renames[0]['documents'], [older.id])
+        self.assertEqual(documents[newer.id]['match'], 'none')
+        self.assertEqual(summary['auto_named_kept'], 1)
+
+        # With a 30-day lookback the June document takes no part, and the
+        # newer one is handed its rename.
+        renames, documents, _ = self.run_report('--lookback-days', '30')
+        self.assertFalse(renames[0]['anchored'])
+        self.assertEqual(documents[newer.id]['match'], 'traced')
 
     def test_a_document_still_in_the_pool_never_claims_a_rename(self):
         waiting = self.document(at(3), 'CBC', arrival='a.pdf', patient=None, team=self.team)
