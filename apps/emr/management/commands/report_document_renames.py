@@ -15,23 +15,37 @@ in Cloud Logging as `jsonPayload`):
   * `kind: "rename"` — one per rename. `_emit_document_audit` writes one row
     per linked problem, so rows with the same author and text written within
     two seconds are one rename. `patient_id` is known only for linked rows.
-  * `kind: "document"` — one per document created in the window: the name it
-    arrived under (`original_file_name`, recorded since emr 0191), the name it
-    was first given, its current name, and the renames traced to it.
-    `auto_named` is true when the first name differs from the arrival name —
-    the auto-namer is the only thing that names a document before upload.
+  * `kind: "document"` — one per document created in the window: where it
+    was uploaded (`origin`), the name it arrived under (`original_file_name`,
+    recorded since emr 0191), the name it was first given, its current name,
+    and the renames traced to it.
   * `kind: "summary"` — the counts, last.
 
+**Origin: pool or chart.** A chart upload (`mobile_upload_document`) writes
+`Added document: <name>` by the uploader in the same request; a pool upload
+writes nothing until it is assigned, later and usually by someone else. So a
+document with an `Added document:` row by its uploader within two seconds of
+its creation came from a chart, and its first name is that row's name. Only
+pool uploads are named by the auto-namer, so `auto_named` is true only for a
+pool document whose first name differs from its arrival name. A chart
+document whose first name differs (`named_before_upload`) was named by a
+person before its upload landed — measured on the first production run: 26
+documents named "phq" this way.
+
 **Tracing renames to documents is a heuristic, and says so.** A rename row
-carries no document id. A document's renames are found by walking back from
-its current name: the latest rename after the document was created whose new
-name is that name, on the same patient or unlinked, then the same from that
-rename's old name. When one rename is claimed by two documents (two faxes both
-renamed to "CBC" the same week, unlinked), both are reported
-`match: "ambiguous"` and counted apart, never guessed. Documents created up to
-`--lookback-days` before the window also take part in claiming, so a rename of
-an older document is less likely to be pinned on a new one; they are not
-reported.
+carries no document id. Three things narrow it:
+  1. A rename whose old name is exactly one candidate document's arrival name
+     is that document's (`anchored`) — the arrival names are scanner stamps
+     and fax file names, nearly unique.
+  2. A document still in the pool has never been renamed (pool documents have
+     no rename endpoint; the name changes at assign).
+  3. A chart document's renames must lead back to its creation name.
+Beyond that, a document's renames are found by walking back from its current
+name: the latest unclaimed rename after the document was created whose new
+name is that name, on the same patient or unlinked. When one unanchored rename
+is claimed by two documents, both are reported `match: "ambiguous"` and
+counted apart, never guessed. Documents created up to `--lookback-days` before
+the window also take part in claiming; they are not reported.
 
 Nothing is written. On MySQL the session is set READ ONLY for the duration of
 the command and restored afterwards. Plain SELECTs under autocommit take no
@@ -42,20 +56,22 @@ patient names (ids only). Safe to run against prod.
 """
 import json
 import os
+from collections import defaultdict
 from datetime import datetime, time, timedelta, timezone as dt_tz
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
+from django.db.models import Q
 
 from emr.models import Document, ProblemActivity
 
 RENAME_PREFIX = 'Renamed document: '
+ADDED_PREFIX = 'Added document: '
 ARROW = ' -> '
 # One request writes one row per linked problem, in a loop.
 FAN_OUT_WINDOW = timedelta(seconds=2)
 # `created_on` on the document and on its audit rows come from separate
-# `now()` calls in one request; a rename can never precede its document by
-# more than this.
+# `now()` calls in one request.
 CREATION_SLACK = timedelta(seconds=2)
 
 
@@ -93,7 +109,8 @@ def _old_name_if_renamed_to(text, name):
 
 
 class Rename:
-    __slots__ = ('index', 'at', 'author_id', 'author', 'text', 'problem_ids', 'patient_ids', 'claims')
+    __slots__ = ('index', 'at', 'author_id', 'author', 'text', 'problem_ids', 'patient_ids',
+                 'anchor', 'claims')
 
     def __init__(self, index, at, author_id, author, text):
         self.index = index
@@ -103,6 +120,7 @@ class Rename:
         self.text = text
         self.problem_ids = []
         self.patient_ids = set()
+        self.anchor = None
         self.claims = []
 
     @property
@@ -131,8 +149,47 @@ class Rename:
             'scope': 'unlinked' if self.unlinked else 'problem',
             'problem_ids': sorted(self.problem_ids),
             'patient_id': self.patient_id,
+            'anchored': self.anchor is not None,
             'documents': sorted(self.claims),
         }
+
+
+class Doc:
+    __slots__ = ('id', 'created_on', 'author_id', 'author', 'patient_id', 'team_id', 'arrival',
+                 'name', 'creation_names', 'chain', 'first_name', 'consistent')
+
+    def __init__(self, doc_id, created_on, author_id, author, patient_id, team_id, arrival, name):
+        self.id = doc_id
+        self.created_on = created_on
+        self.author_id = author_id
+        self.author = author
+        self.patient_id = patient_id
+        self.team_id = team_id
+        self.arrival = arrival
+        self.name = name or ''
+        self.creation_names = set()
+        self.chain = []
+        self.first_name = self.name
+        self.consistent = True
+
+    @property
+    def in_pool(self):
+        return self.patient_id is None and self.team_id is not None
+
+    @property
+    def origin(self):
+        return 'chart' if self.creation_names else 'pool'
+
+    @property
+    def arrival_stem(self):
+        return os.path.splitext(self.arrival)[0] if self.arrival else None
+
+    def could_own(self, rename):
+        if self.in_pool:
+            return False   # never renamed: the pool has no rename endpoint
+        if rename.at < self.created_on - CREATION_SLACK:
+            return False
+        return rename.could_belong_to(self.patient_id)
 
 
 def collapse_rename_rows(rows):
@@ -155,25 +212,54 @@ def collapse_rename_rows(rows):
     return renames
 
 
-def trace_renames(created_on, patient_id, name, renames):
-    """The renames that took a document from its first name to `name`,
-    oldest first, and its first name. Walks back from the current name,
-    taking at each step the latest unused rename to that name that could be
-    this document's and happened after it was created."""
-    chain = []
+def mark_chart_uploads(docs, added_rows):
+    """A chart upload writes `Added document: <name>` by the uploader in the
+    same request. `added_rows` are (created_on, author_id, activity)."""
+    by_author = defaultdict(list)
+    for at, author_id, text in added_rows:
+        by_author[author_id].append((at, text[len(ADDED_PREFIX):]))
+    for doc in docs:
+        doc.creation_names = {
+            name for at, name in by_author.get(doc.author_id, ())
+            if abs(at - doc.created_on) <= CREATION_SLACK
+        }
+
+
+def anchor_renames(docs, renames):
+    """A rename whose old name is exactly one candidate document's arrival
+    name belongs to that document."""
+    by_stem = defaultdict(list)
+    for doc in docs:
+        if doc.arrival_stem:
+            by_stem[doc.arrival_stem].append(doc)
+    for rename in renames:
+        old, _ = _split_rename(rename.text)
+        owners = [doc for doc in by_stem.get(old, ()) if doc.could_own(rename)]
+        if len(owners) == 1:
+            rename.anchor = owners[0].id
+
+
+def trace_renames(doc, renames):
+    """Set `doc.chain` (oldest first) and `doc.first_name`. Walks back from
+    the current name, taking at each step the latest rename to that name that
+    this document could own and no other document is anchored to; then keeps
+    the longest stretch of that walk that ends where the document must have
+    started — its creation name for a chart upload, its arrival name for a
+    pool upload when the walk reaches it."""
+    if doc.in_pool:
+        return
+    walk = [([], doc.name)]
     used = set()
     upper = None
-    current = name
+    current = doc.name
     while True:
         best = None
         for rename in renames:
-            if rename.index in used:
+            if rename.index in used or not doc.could_own(rename):
                 continue
-            if rename.at < created_on - CREATION_SLACK:
+            if rename.anchor is not None and rename.anchor != doc.id:
                 continue
             if upper is not None and rename.at > upper:
-                continue
-            if not rename.could_belong_to(patient_id):
                 continue
             old = _old_name_if_renamed_to(rename.text, current)
             if old is None:
@@ -183,11 +269,20 @@ def trace_renames(created_on, patient_id, name, renames):
         if best is None:
             break
         rename, old = best
-        chain.insert(0, rename)
         used.add(rename.index)
         upper = rename.at
         current = old
-    return chain, current
+        walk.append(([rename] + walk[-1][0], current))
+
+    if doc.creation_names:
+        starts = [step for step in walk if step[1] in doc.creation_names]
+        doc.consistent = bool(starts)
+        chosen = starts[-1] if starts else walk[-1]
+    elif doc.arrival_stem is not None and any(step[1] == doc.arrival_stem for step in walk):
+        chosen = [step for step in walk if step[1] == doc.arrival_stem][-1]
+    else:
+        chosen = walk[-1]
+    doc.chain, doc.first_name = chosen
 
 
 class Command(BaseCommand):
@@ -225,80 +320,110 @@ class Command(BaseCommand):
             self.stdout.write(json.dumps(line, ensure_ascii=False))
 
     def report(self, since, until, lookback):
-        rows = list(
+        earliest = since - lookback - CREATION_SLACK
+        # One pass over the activity table for both kinds of row.
+        activity = list(
             ProblemActivity.objects
-            .filter(activity__startswith=RENAME_PREFIX, created_on__gte=since, created_on__lt=until)
+            .filter(Q(activity__startswith=RENAME_PREFIX) | Q(activity__startswith=ADDED_PREFIX),
+                    created_on__gte=earliest, created_on__lt=until)
             .values_list('created_on', 'author_id', 'author__username', 'activity',
                          'problem_id', 'problem__patient_id')
         )
-        renames = collapse_rename_rows(rows)
+        renames = collapse_rename_rows([
+            row for row in activity
+            if row[3].startswith(RENAME_PREFIX) and row[0] >= since
+        ])
+        added_rows = [(row[0], row[1], row[3]) for row in activity if row[3].startswith(ADDED_PREFIX)]
 
-        documents = list(
+        docs = [
+            Doc(*values) for values in
             Document.objects
             .filter(created_on__gte=since - lookback, created_on__lt=until)
             .order_by('created_on', 'id')
             .values_list('id', 'created_on', 'author_id', 'author__username', 'patient_id',
                          'team_id', 'original_file_name', 'document_name')
-        )
+        ]
+        mark_chart_uploads(docs, added_rows)
+        anchor_renames(docs, renames)
+        for doc in docs:
+            trace_renames(doc, renames)
+            for rename in doc.chain:
+                rename.claims.append(doc.id)
 
-        traced = []
-        for doc_id, created_on, author_id, author, patient_id, team_id, arrival, name in documents:
-            chain, first_name = trace_renames(created_on, patient_id, name or '', renames)
-            for rename in chain:
-                rename.claims.append(doc_id)
-            traced.append((doc_id, created_on, author_id, author, patient_id, team_id, arrival, name, chain, first_name))
-
-        lines = []
         summary = {
             'kind': 'summary',
             'since': _iso(since),
             'until': _iso(until),
             'renames': len(renames),
             'renames_unlinked': sum(1 for r in renames if r.unlinked),
+            'renames_anchored': sum(1 for r in renames if r.anchor is not None),
             'renames_unclaimed': sum(1 for r in renames if not r.claims),
             'documents': 0,
-            'documents_with_arrival_name': 0,
-            'documents_still_in_pool': 0,
+            'from_pool': 0,
+            'from_chart': 0,
+            'still_in_pool': 0,
+            'with_arrival_name': 0,
             'auto_named': 0,
             'auto_named_kept': 0,
             'auto_named_renamed': 0,
-            'not_auto_named_renamed': 0,
+            'auto_named_still_in_pool': 0,
+            'pool_not_auto_named': 0,
+            'pool_not_auto_named_renamed': 0,
+            'chart_named_before_upload': 0,
             'ambiguous': 0,
+            'inconsistent': 0,
         }
-        for doc_id, created_on, author_id, author, patient_id, team_id, arrival, name, chain, first_name in traced:
-            if created_on < since:
+        lines = []
+        for doc in docs:
+            if doc.created_on < since:
                 continue
-            ambiguous = any(len(r.claims) > 1 for r in chain)
-            match = 'ambiguous' if ambiguous else ('traced' if chain else 'none')
-            arrival_stem = os.path.splitext(arrival)[0] if arrival else None
-            auto_named = None if arrival_stem is None else first_name != arrival_stem
-            in_pool = patient_id is None and team_id is not None
+            ambiguous = any(len(r.claims) > 1 for r in doc.chain)
+            if ambiguous:
+                match = 'ambiguous'
+            elif not doc.consistent:
+                match = 'inconsistent'
+            else:
+                match = 'traced' if doc.chain else 'none'
+            stem = doc.arrival_stem
+            named_before_upload = None if stem is None else doc.first_name != stem
+            auto_named = (named_before_upload if doc.origin == 'pool' else False) if stem is not None else None
 
             summary['documents'] += 1
-            summary['documents_with_arrival_name'] += arrival_stem is not None
-            summary['documents_still_in_pool'] += in_pool
-            if ambiguous:
+            summary['from_' + doc.origin] += 1
+            summary['still_in_pool'] += doc.in_pool
+            summary['with_arrival_name'] += stem is not None
+            if match == 'ambiguous':
                 summary['ambiguous'] += 1
+            elif match == 'inconsistent':
+                summary['inconsistent'] += 1
+            elif doc.origin == 'chart':
+                summary['chart_named_before_upload'] += bool(named_before_upload)
             elif auto_named:
                 summary['auto_named'] += 1
-                summary['auto_named_renamed' if chain else 'auto_named_kept'] += 1
-            elif auto_named is False and chain:
-                summary['not_auto_named_renamed'] += 1
+                if doc.in_pool:
+                    summary['auto_named_still_in_pool'] += 1
+                else:
+                    summary['auto_named_renamed' if doc.chain else 'auto_named_kept'] += 1
+            elif auto_named is False:
+                summary['pool_not_auto_named'] += 1
+                summary['pool_not_auto_named_renamed'] += bool(doc.chain)
 
             lines.append({
                 'kind': 'document',
-                'id': doc_id,
-                'created_on': _iso(created_on),
-                'uploaded_by_id': author_id,
-                'uploaded_by': author,
-                'patient_id': patient_id,
-                'in_pool': in_pool,
-                'arrival_name': arrival,
-                'first_name': first_name,
-                'name': name,
+                'id': doc.id,
+                'created_on': _iso(doc.created_on),
+                'uploaded_by_id': doc.author_id,
+                'uploaded_by': doc.author,
+                'patient_id': doc.patient_id,
+                'origin': doc.origin,
+                'in_pool': doc.in_pool,
+                'arrival_name': doc.arrival,
+                'first_name': doc.first_name,
+                'name': doc.name,
+                'named_before_upload': named_before_upload,
                 'auto_named': auto_named,
-                'renamed': bool(chain),
-                'renames': [r.index for r in chain],
+                'renamed': bool(doc.chain),
+                'renames': [r.index for r in doc.chain],
                 'match': match,
             })
 
