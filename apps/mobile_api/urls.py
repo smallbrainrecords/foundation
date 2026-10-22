@@ -108,6 +108,10 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/encounter/(?P<encounter_id>\d+)/transcript-timing$',
         views.mobile_encounter_transcript_timing),
     url(r'^encounters/transcript-timings$', views.mobile_encounter_transcript_timings),
+    # Chart search feed: the charts this login may search with when each
+    # last changed, and one chart's searchable text. Read-only.
+    url(r'^search/charts$', views.mobile_search_charts),
+    url(r'^patient/(?P<patient_id>\d+)/search-text$', views.mobile_patient_search_text),
     # Tagged todos (cross-patient)
     url(r'^my-tagged-todos/$', views.mobile_my_tagged_todos),
     # Analytics
