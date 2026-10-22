@@ -19,6 +19,7 @@ from django.db.models import Q
 from django.db.models.functions import Coalesce
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.gzip import gzip_page
 
 from emr.models import (
     UserProfile, PatientController, PhysicianTeam,
@@ -30,7 +31,7 @@ from emr.models import (
     EncounterObservationValue, EncounterTranscriptTiming,
     Document, DocumentProblem, DocumentTodo,
     TodoProblem,
-    MyStoryTextComponent, MyStoryTextComponentEntry,
+    MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry,
     TaggedToDoOrder,
     PatientMutationStamp,
     ObservationValueAudit,
@@ -4188,6 +4189,395 @@ def mobile_encounter_transcript_timings(request):
     body = ('{"success":true,"timings":[' + ','.join(parts)
             + '],"deferred":' + json.dumps(deferred) + '}')
     return HttpResponse(body, content_type='application/json')
+
+
+# ---------- Chart search feed ----------
+#
+# Two read-only endpoints that fill the app's local chart search index
+# (`chart_text.sqlite`, kept outside SwiftData): the charts a login may search,
+# with when each last changed, and one chart's searchable text.
+#
+# A feed rather than a search endpoint (owner decision 2026-10-21): the search
+# runs on the Mac so it is instant and works offline, and it has to be
+# complete — a Mac holds only the charts it has opened, each as of its last
+# pull, so searching its own store would silently miss charts and everything
+# added since. Searching here instead would mean scanning ~300 MB of
+# transcripts per query, or building FULLTEXT indexes over them, on a
+# db-f1-micro.
+
+# Roles that may search. Patients are refused: a chart's search text includes
+# staff-side records (Activity rows, visit transcripts, colleagues' comments)
+# that the patient app does not show.
+_SEARCH_STAFF_ROLES = ('physician', 'mid-level', 'nurse', 'secretary', 'admin')
+
+# Ceiling on the document text one search-text response carries. Everything
+# else on a chart is small next to it (the largest chart on a clinic Mac holds
+# ~1 MB of transcripts and ~0.6 MB of Activity rows); document text is what
+# grows, a page of OCR at a time. Same figure and reasons as
+# `_TIMING_RESPONSE_BYTE_BUDGET`: Cloud Run refuses a non-streamed response
+# over 32 MiB, and the container has 512 MiB of memory.
+_SEARCH_DOCUMENT_TEXT_BUDGET = 8 * 1024 * 1024
+
+
+def _search_display_name(user):
+    if user is None:
+        return ''
+    return user.get_full_name() or user.username
+
+
+def _search_changed_at(patient_ids):
+    """{patient_id: when its searchable text last changed}, for `patient_ids`
+    (a list or a values queryset). A patient with no signal is absent.
+
+    The newest of three signals, because two writes that change searchable
+    text deliberately do not move the patient stamp:
+      - `PatientMutationStamp`: every stamped mobile write (problems, notes,
+        todos, comments, visits, transcripts, documents, the profile).
+      - `Document.extracted_text_at`: `mobile_document_text` is on the stamp
+        sweep's ALLOWLIST, so text read from a fax moves no stamp.
+      - My Story entries: `mobile_save_my_story_entry` is ALLOWLISTed too.
+
+    Coarse on purpose. Recording a vital also moves the stamp and costs one
+    needless re-download of that chart's text; missing a change would leave
+    search silently wrong.
+    """
+    from django.db.models import Max
+
+    latest = {}
+
+    def note(patient_id, at):
+        if at is not None and (patient_id not in latest or at > latest[patient_id]):
+            latest[patient_id] = at
+
+    for patient_id, at in PatientMutationStamp.objects.filter(
+            patient_id__in=patient_ids).values_list('patient_id', 'last_mutation_at'):
+        note(patient_id, at)
+    for row in (Document.objects
+                .filter(patient_id__in=patient_ids, extracted_text_at__isnull=False)
+                .order_by().values('patient_id').annotate(at=Max('extracted_text_at'))):
+        note(row['patient_id'], row['at'])
+    for row in (MyStoryTextComponentEntry.objects
+                .filter(patient_id__in=patient_ids, datetime__isnull=False)
+                .order_by().values('patient_id').annotate(at=Max('datetime'))):
+        note(row['patient_id'], row['at'])
+    return latest
+
+
+def _search_chart_text(patient_id):
+    """Everything searchable on one chart except its documents.
+
+    Text is sent RAW, legacy markup and all; the app renders it with
+    `String.strippingLegacyFormatting` before indexing. Not `_strip_html`,
+    which patient_full applies to visit timeline rows: a blanket `<[^>]*>`
+    strip deletes clinical text such as "bp < 120 or dbp < 70>".
+
+    Visibility follows what the app is sent and shows, so search can never
+    surface text the chart itself hides:
+      - Activity rows are the ones patient_full sends (rows on this chart's
+        problems and todos). Patient-scope rows with no problem reach no
+        chart, here or in the app.
+      - My Story uses `get_my_story`'s staff rule: the patient's own tabs and
+        components plus shared ones (`is_all`) written by the patient's
+        physicians, private ones excluded.
+      - Visits with no transcript, note or timeline row are left out; they
+        carry no text.
+    """
+    from django.contrib.auth.models import User
+    from django.db.models import Prefetch
+
+    is_active = User.objects.filter(id=patient_id).values_list(
+        'is_active', flat=True).first()
+    summary = UserProfile.objects.filter(user_id=patient_id).values_list(
+        'summary', flat=True).first()
+
+    problems = [{
+        'id': problem.id,
+        'name': problem.problem_name or '',
+        'old_name': problem.old_problem_name or '',
+        'concept_id': problem.concept_id or '',
+        'icd10_code': problem.icd10_code or '',
+        'is_active': problem.is_active,
+        'start_date': _iso_z(problem.start_date) if problem.start_date else None,
+        'labels': [label.name for label in problem.labels.all() if label.name],
+    } for problem in Problem.objects.filter(
+        patient_id=patient_id).prefetch_related('labels').order_by('id')]
+
+    notes = [{
+        'id': note.id,
+        'problem_id': note.problem_id,
+        'note_type': note.note_type or 'wiki',
+        'text': note.note or '',
+        'author_name': _search_display_name(note.author),
+        'created_on': _iso_z(note.created_on) if note.created_on else None,
+    } for note in ProblemNote.objects.filter(
+        problem__patient_id=patient_id).select_related('author').order_by('id')]
+
+    todos = [{
+        'id': todo.id,
+        'problem_id': todo.problem_id,
+        'text': todo.todo or '',
+        'accomplished': todo.accomplished,
+        'created_on': _iso_z(todo.created_on) if todo.created_on else None,
+        'labels': [label.name for label in todo.labels.all() if label.name],
+    } for todo in ToDo.objects.filter(
+        patient_id=patient_id).prefetch_related('labels').order_by('id')]
+
+    comments = [{
+        'id': comment.id,
+        'todo_id': comment.todo_id,
+        'text': comment.comment or '',
+        'author_name': _search_display_name(comment.user),
+        'datetime': _iso_z(comment.datetime) if comment.datetime else None,
+    } for comment in ToDoComment.objects.filter(
+        todo__patient_id=patient_id).select_related('user').order_by('id')]
+
+    encounters = []
+    for encounter in (Encounter.objects
+                      .filter(patient_id=patient_id)
+                      .only('id', 'starttime', 'transcript', 'note')
+                      .prefetch_related(Prefetch(
+                          'encounter_events',
+                          queryset=EncounterEvent.objects.order_by('datetime', 'id'),
+                      ))
+                      .order_by('id')):
+        events = [{
+            'id': event.id,
+            'datetime': _iso_z(event.datetime),
+            'summary': event.summary,
+        } for event in encounter.encounter_events.all() if event.summary]
+        if not (encounter.transcript or encounter.note or events):
+            continue
+        encounters.append({
+            'id': encounter.id,
+            'start_time': _iso_z(encounter.starttime),
+            'transcript': encounter.transcript or '',
+            'note': encounter.note or '',
+            'events': events,
+        })
+
+    # One list for both server tables. Their ids are separate sequences, so
+    # the app keys a row by (kind, id), never by id alone.
+    activities = [{
+        'kind': 'problem',
+        'id': row.id,
+        'problem_id': row.problem_id,
+        'todo_id': None,
+        'text': row.activity or '',
+        'author_name': _search_display_name(row.author),
+        'created_on': _iso_z(row.created_on) if row.created_on else None,
+    } for row in ProblemActivity.objects.filter(
+        problem__patient_id=patient_id).select_related('author').order_by('id')]
+    activities += [{
+        'kind': 'todo',
+        'id': row.id,
+        'problem_id': None,
+        'todo_id': row.todo_id,
+        'text': row.activity or '',
+        'author_name': _search_display_name(row.author),
+        'created_on': _iso_z(row.created_on) if row.created_on else None,
+    } for row in TodoActivity.objects.filter(
+        todo__patient_id=patient_id).select_related('author').order_by('id')]
+
+    physicians = PatientController.objects.filter(
+        patient_id=patient_id).values_list('physician_id', flat=True)
+    own_or_shared = Q(patient_id=patient_id) | (Q(author_id__in=physicians) & Q(is_all=True))
+    visible_tabs = MyStoryTab.objects.filter(own_or_shared, private=False)
+    visible_components = MyStoryTextComponent.objects.filter(
+        own_or_shared, private=False, tab__in=visible_tabs)
+    my_story = [{
+        'id': entry.id,
+        'component_id': entry.component_id,
+        'component_name': entry.component.name or '',
+        'tab_name': entry.component.tab.name if entry.component.tab else '',
+        'text': entry.text or '',
+        'author_name': _search_display_name(entry.author),
+        'datetime': _iso_z(entry.datetime) if entry.datetime else None,
+    } for entry in MyStoryTextComponentEntry.objects.filter(
+        patient_id=patient_id, component__in=visible_components,
+    ).select_related('component', 'component__tab', 'author').order_by('id')]
+
+    return {
+        'is_active': bool(is_active),
+        'summary': summary or '',
+        'problems': problems,
+        'notes': notes,
+        'todos': todos,
+        'comments': comments,
+        'encounters': encounters,
+        'activities': activities,
+        'my_story': my_story,
+    }
+
+
+def _search_documents(patient_id, after=None):
+    """This chart's documents in id order with their extracted text, as many
+    as fit `_SEARCH_DOCUMENT_TEXT_BUDGET` -> (documents, next_after).
+
+    `next_after` is the id to send back as `documents_after`, or None when
+    this page ends the list. Pages are cut in id order, never by skipping a
+    large document for smaller ones behind it, or the cursor would pass over
+    it. At least one document is always returned, so a single very large
+    fax cannot stall the paging.
+
+    `text` is null for a document nobody has read yet and "" for one read and
+    found blank; the app counts the first kind as "not read" in its results.
+    """
+    from django.db.models.functions import Length
+
+    rows = Document.objects.filter(patient_id=patient_id)
+    if after is not None:
+        rows = rows.filter(id__gt=after)
+
+    # Decide what fits from the lengths alone, before any text leaves MySQL.
+    sized = list(rows.annotate(text_chars=Length('extracted_text')).order_by(
+        'id').values_list('id', 'text_chars'))
+    chosen, used = [], 0
+    for document_id, chars in sized:
+        # 4 bytes per character is UTF-8's worst case; OCR text is nearly all
+        # ASCII, so this over-counts, in the safe direction.
+        cost = (chars or 0) * 4
+        if chosen and used + cost > _SEARCH_DOCUMENT_TEXT_BUDGET:
+            break
+        chosen.append(document_id)
+        used += cost
+    next_after = chosen[-1] if len(chosen) < len(sized) else None
+
+    documents = [{
+        'id': document.id,
+        'name': document.document_name or '',
+        'original_file_name': document.original_file_name or '',
+        'created_on': _iso_z(document.created_on) if document.created_on else None,
+        'labels': [label.name for label in document.labels.all() if label.name],
+        'text': document.extracted_text,
+    } for document in (Document.objects
+                       .filter(id__in=chosen)
+                       .only('id', 'document_name', 'original_file_name',
+                             'created_on', 'extracted_text')
+                       .prefetch_related('labels')
+                       .order_by('id'))]
+    return documents, next_after
+
+
+@csrf_exempt
+@login_required
+@gzip_page
+def mobile_search_charts(request):
+    """GET -> every patient this login may search, whether the account is
+    active, and when the chart's searchable text last changed.
+
+    `{success, server_time, patients: [{id, is_active, changed_at}]}`: one row
+    per patient in `_accessible_patient_ids` (every patient, for an admin).
+    `changed_at` is null when nothing has been recorded for the chart since
+    the stamp system shipped; a Mac that has never indexed that chart
+    downloads it anyway.
+
+    **The list is also the access list.** The app answers a search only from
+    charts on it, so a clinic Mac shared by two logins never shows one login's
+    patients to the other, and a chart this login loses access to leaves its
+    search at the next check.
+
+    Inactive patients are listed with `is_active: false` rather than left
+    out: the home search covers active accounts only (owner decision
+    2026-10-21), but a chart's own Search tab works for an inactive patient
+    too, and a patient made active again must appear without waiting for a
+    change to their chart.
+
+    Read-only: no patient stamp; stays in StampCoverageSweepTests.GET_ONLY.
+    """
+    from django.contrib.auth.models import User
+    from django.utils import timezone
+
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+    if _role_of(request.user) not in _SEARCH_STAFF_ROLES:
+        return JsonResponse({'error': 'staff_only'}, status=403)
+
+    # Captured BEFORE the reads, the same contract as patient_full: a client
+    # comparing answers can only re-download, never miss a write.
+    server_time = timezone.now()
+
+    accessible = _accessible_patient_ids(request.user)
+    if accessible is None:
+        accessible = UserProfile.objects.filter(role='patient').values_list(
+            'user_id', flat=True)
+
+    changed = _search_changed_at(accessible)
+    patients = [{
+        'id': patient_id,
+        'is_active': is_active,
+        'changed_at': _iso_z(changed[patient_id]) if patient_id in changed else None,
+    } for patient_id, is_active in User.objects.filter(
+        id__in=accessible).order_by('id').values_list('id', 'is_active')]
+
+    return JsonResponse({
+        'success': True,
+        'server_time': _iso_z(server_time),
+        'patients': patients,
+    })
+
+
+@csrf_exempt
+@login_required
+@gzip_page
+def mobile_patient_search_text(request, patient_id):
+    """GET [?documents_after=<id>] -> one chart's searchable text, for the
+    app's local search index.
+
+    `{success, server_time, changed_at, patient_id, is_active, summary,
+    problems, notes, todos, comments, encounters, activities, my_story,
+    documents, documents_next}`. See `_search_chart_text` for what each list
+    holds and why, and `_search_documents` for the document pages: when
+    `documents_next` is not null the app asks again with
+    `documents_after=<documents_next>`, and that answer carries ONLY the
+    documents (plus `server_time`, `changed_at`, `patient_id`).
+
+    `changed_at` is the same value `mobile_search_charts` lists for this
+    patient, read BEFORE the chart is: the app stores it with the text, so a
+    write landing mid-read makes the chart look changed again at the next
+    check rather than vanishing from search.
+
+    Gzip-compressed for clients that accept it (URLSession does): this is the
+    largest payload in the API, and text compresses about fourfold.
+
+    Read-only: no patient stamp; stays in StampCoverageSweepTests.GET_ONLY.
+    """
+    from django.utils import timezone
+
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+    if _role_of(request.user) not in _SEARCH_STAFF_ROLES:
+        return JsonResponse({'error': 'staff_only'}, status=403)
+    if not _assert_patient_access(request.user, patient_id):
+        # 403 for unknown and inaccessible ids alike, revealing nothing. 404
+        # stays the answer of a server without this route, which the app
+        # reads as "no search feed on this server".
+        return JsonResponse({'error': 'patient_unavailable'}, status=403)
+    patient_id = int(patient_id)
+
+    documents_after = None
+    raw_after = (request.GET.get('documents_after') or '').strip()
+    if raw_after:
+        try:
+            documents_after = int(raw_after)
+        except ValueError:
+            return JsonResponse(
+                {'error': 'documents_after must be an integer'}, status=400)
+
+    server_time = timezone.now()
+    changed_at = _search_changed_at([patient_id]).get(patient_id)
+
+    documents, documents_next = _search_documents(patient_id, after=documents_after)
+    body = {
+        'success': True,
+        'server_time': _iso_z(server_time),
+        'changed_at': _iso_z(changed_at) if changed_at else None,
+        'patient_id': patient_id,
+        'documents': documents,
+        'documents_next': documents_next,
+    }
+    if documents_after is None:
+        body.update(_search_chart_text(patient_id))
+    return JsonResponse(body)
 
 
 # ---------- Problem endpoints ----------

@@ -39,6 +39,8 @@ from emr.models import (
     EncounterTranscriptTiming,
     TodoSuggestionStat,
     TodoProblem,
+    ProblemLabel,
+    MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry,
 )
 
 
@@ -3600,6 +3602,8 @@ class StampCoverageSweepTests(TestCase):
         'mobile_untimed_encounters',
         'mobile_encounter_transcript_timings',
         'mobile_todo_suggestions',
+        'mobile_search_charts',
+        'mobile_patient_search_text',
         'get_snomed_to_icd10',
     }
 
@@ -7793,3 +7797,412 @@ class MobilePatientFullReportOnlyTests(_RBACTestBase):
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(json.loads(logs.records[0].getMessage())['event'],
                          'patient_full_refused')
+
+
+class ChartSearchListTests(_RBACTestBase):
+    """`mobile_search_charts`: the charts a login may search, and when each
+    last changed.
+
+    The list is the app's access list for search — a chart that is not on it
+    is never answered from, whatever the Mac's index holds — so most of these
+    are about who sees which row.
+    """
+
+    URL = '/api/search/charts'
+
+    def _rows(self, user):
+        self.assertTrue(self._login(user))
+        resp = self.client.get(self.URL)
+        self.assertEqual(resp.status_code, 200)
+        return resp.json()['patients']
+
+    def _ids(self, user):
+        return {row['id'] for row in self._rows(user)}
+
+    def test_a_physician_lists_their_own_patients_only(self):
+        self.assertEqual(self._ids(self.attending), {self.patient.id})
+
+    def test_a_team_nurse_lists_the_team_physicians_patients(self):
+        self.assertEqual(self._ids(self.team_nurse), {self.patient.id})
+
+    def test_staff_with_no_patients_list_none(self):
+        self.assertEqual(self._ids(self.stranger_doc), set())
+        self.assertEqual(self._ids(self.stranger_nurse), set())
+
+    def test_an_admin_lists_every_patient(self):
+        self.assertEqual(
+            self._ids(self.admin_user), {self.patient.id, self.other_patient.id})
+
+    def test_the_list_agrees_with_the_per_patient_gate(self):
+        # The per-chart endpoint answers through `_assert_patient_access`; a
+        # chart listed here that it then refused would sit in the Mac's queue
+        # failing forever, and one it allowed but this left out could never
+        # be searched.
+        from apps.mobile_api.views import _assert_patient_access
+        for user in (self.attending, self.stranger_doc, self.team_nurse,
+                     self.stranger_nurse, self.admin_user):
+            listed = self._ids(user)
+            for candidate in (self.patient, self.other_patient):
+                self.assertEqual(
+                    candidate.id in listed,
+                    _assert_patient_access(user, candidate.id),
+                    '%s / %s' % (user.username, candidate.username))
+
+    def test_patients_and_users_without_a_role_are_refused(self):
+        for user in (self.patient, self.no_profile):
+            self.assertTrue(self._login(user))
+            resp = self.client.get(self.URL)
+            self.assertEqual(resp.status_code, 403)
+            self.assertEqual(resp.json()['error'], 'staff_only')
+
+    def test_a_signed_out_request_is_sent_to_login(self):
+        self.assertEqual(self.client.get(self.URL).status_code, 302)
+
+    def test_only_get_is_accepted(self):
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.post(self.URL).status_code, 405)
+
+    def test_an_inactive_patient_is_listed_as_inactive(self):
+        self.patient.is_active = False
+        self.patient.save()
+        [row] = self._rows(self.attending)
+        self.assertEqual(row['id'], self.patient.id)
+        self.assertFalse(row['is_active'])
+
+    def test_server_time_is_z_suffixed(self):
+        self.assertTrue(self._login(self.attending))
+        self.assertTrue(self.client.get(self.URL).json()['server_time'].endswith('Z'))
+
+    def test_changed_at_is_null_when_nothing_was_recorded(self):
+        [row] = self._rows(self.attending)
+        self.assertIsNone(row['changed_at'])
+
+    def test_changed_at_is_the_newest_of_the_three_signals(self):
+        # Document text and My Story entries are written by endpoints that do
+        # not move the patient stamp, so both are read beside it.
+        from apps.mobile_api.views import _iso_z
+        base = timezone.now() - datetime.timedelta(days=10)
+
+        def changed_at():
+            [row] = self._rows(self.attending)
+            return row['changed_at']
+
+        stamp = PatientMutationStamp.objects.create(
+            patient=self.patient, last_mutation_at=base)
+        self.assertEqual(changed_at(), _iso_z(base))
+
+        document = Document.objects.create(
+            author=self.attending, patient=self.patient,
+            document_name='labs', extracted_text='potassium 4.1')
+        Document.objects.filter(id=document.id).update(
+            extracted_text_at=base + datetime.timedelta(days=1))
+        self.assertEqual(changed_at(), _iso_z(base + datetime.timedelta(days=1)))
+
+        entry = MyStoryTextComponentEntry.objects.create(
+            text='quit smoking', patient=self.patient, author=self.attending)
+        MyStoryTextComponentEntry.objects.filter(id=entry.id).update(
+            datetime=base + datetime.timedelta(days=2))
+        self.assertEqual(changed_at(), _iso_z(base + datetime.timedelta(days=2)))
+
+        stamp.last_mutation_at = base + datetime.timedelta(days=3)
+        stamp.save()
+        self.assertEqual(changed_at(), _iso_z(base + datetime.timedelta(days=3)))
+
+    def test_another_patients_changes_do_not_move_this_chart(self):
+        PatientMutationStamp.objects.create(
+            patient=self.other_patient, last_mutation_at=timezone.now())
+        [row] = self._rows(self.attending)
+        self.assertIsNone(row['changed_at'])
+
+
+class ChartSearchTextTests(_RBACTestBase):
+    """`mobile_patient_search_text`: everything searchable on one chart.
+
+    The rule under most of these: search may never show text the chart itself
+    hides — a private My Story entry, a pool fax, another patient's rows —
+    and must carry every kind of text the chart does show.
+    """
+
+    def setUp(self):
+        super().setUp()
+        p = self.patient
+        UserProfile.objects.filter(user=p).update(
+            summary='Retired machinist, lives with his daughter')
+
+        self.problem = Problem.objects.create(
+            patient=p, problem_name='Hypertension',
+            old_problem_name='High blood pressure',
+            concept_id='38341003', icd10_code='I10')
+        self.problem.labels.add(ProblemLabel.objects.create(name='cardio', patient=p))
+        self.note = ProblemNote.objects.create(
+            problem=self.problem, author=self.attending,
+            note='Started lisinopril 10 mg', note_type='wiki')
+
+        self.todo = ToDo.objects.create(
+            todo='ref to cardiology', patient=p, problem=self.problem)
+        self.todo.labels.add(Label.objects.create(name='referral'))
+        self.comment = ToDoComment.objects.create(
+            todo=self.todo, user=self.team_nurse, comment='Faxed the referral')
+
+        self.visit = Encounter.objects.create(
+            physician=self.attending, patient=p,
+            transcript='we talked about eliquis and the bleeding')
+        self.event = EncounterEvent.objects.create(
+            encounter=self.visit, summary='bp < 120 or dbp < 70>')
+        # No transcript, note or timeline row: nothing to search.
+        self.silent_visit = Encounter.objects.create(
+            physician=self.attending, patient=p)
+
+        self.problem_activity = ProblemActivity.objects.create(
+            problem=self.problem, author=self.attending,
+            activity='Added wiki note: <b>Started lisinopril</b>')
+        self.todo_activity = TodoActivity.objects.create(
+            todo=self.todo, author=self.attending,
+            activity='Added todo: ref to cardiology')
+        # Patient-scope audit row: reaches no chart.
+        ProblemActivity.objects.create(
+            problem=None, author=self.attending, activity='Added label: Lab')
+
+        tab = MyStoryTab.objects.create(
+            name='Social History', private=False, patient=p, author=self.attending)
+        tobacco = MyStoryTextComponent.objects.create(
+            name='Tobacco', private=False, tab=tab, patient=p, author=self.attending)
+        self.story = MyStoryTextComponentEntry.objects.create(
+            text='smokes 1 ppd', component=tobacco, patient=p, author=self.attending)
+        private_component = MyStoryTextComponent.objects.create(
+            name='Private', private=True, tab=tab, patient=p, author=self.attending)
+        MyStoryTextComponentEntry.objects.create(
+            text='private words', component=private_component, patient=p,
+            author=self.attending)
+        private_tab = MyStoryTab.objects.create(
+            name='Hidden', private=True, patient=p, author=self.attending)
+        under_private_tab = MyStoryTextComponent.objects.create(
+            name='Under hidden', private=False, tab=private_tab, patient=p,
+            author=self.attending)
+        MyStoryTextComponentEntry.objects.create(
+            text='hidden by its tab', component=under_private_tab, patient=p,
+            author=self.attending)
+        # A shared section the patient's own physician wrote for everyone ...
+        shared_tab = MyStoryTab.objects.create(
+            name='Family History', private=False, is_all=True,
+            patient=self.other_patient, author=self.attending)
+        father = MyStoryTextComponent.objects.create(
+            name='Father', private=False, is_all=True, tab=shared_tab,
+            patient=self.other_patient, author=self.attending)
+        self.shared_story = MyStoryTextComponentEntry.objects.create(
+            text='father had an MI at 50', component=father, patient=p,
+            author=self.attending)
+        # ... and one shared by a physician who is not this patient's.
+        strangers_tab = MyStoryTab.objects.create(
+            name='Stranger History', private=False, is_all=True,
+            patient=self.other_patient, author=self.stranger_doc)
+        strangers = MyStoryTextComponent.objects.create(
+            name='Stranger', private=False, is_all=True, tab=strangers_tab,
+            patient=self.other_patient, author=self.stranger_doc)
+        MyStoryTextComponentEntry.objects.create(
+            text='not shared with this chart', component=strangers, patient=p,
+            author=self.stranger_doc)
+
+        self.read_doc = Document.objects.create(
+            author=self.attending, patient=p, document_name='echo report',
+            extracted_text='EF 55%\fmild MR', extracted_text_at=timezone.now())
+        self.read_doc.labels.add(Label.objects.create(name='Imaging'))
+        self.unread_doc = Document.objects.create(
+            author=self.attending, patient=p, document_name='old fax')
+        # Not this chart's: a pool fax and another patient's document.
+        Document.objects.create(
+            author=self.attending, team=self.attending,
+            document_name='pool fax', extracted_text='pool words')
+        Document.objects.create(
+            author=self.attending, patient=self.other_patient,
+            document_name='theirs', extracted_text='their words')
+        Problem.objects.create(patient=self.other_patient, problem_name='Gout')
+
+    @property
+    def url(self):
+        return '/api/patient/%d/search-text' % self.patient.id
+
+    def _get(self, user=None, **params):
+        self.assertTrue(self._login(user or self.attending))
+        return self.client.get(self.url, params)
+
+    def test_staff_with_access_are_answered(self):
+        for user in (self.attending, self.team_nurse, self.admin_user):
+            self.assertEqual(self._get(user).status_code, 200, user.username)
+
+    def test_staff_without_access_get_a_uniform_refusal(self):
+        for user in (self.stranger_doc, self.stranger_nurse):
+            resp = self._get(user)
+            self.assertEqual(resp.status_code, 403, user.username)
+            self.assertEqual(resp.json()['error'], 'patient_unavailable')
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get('/api/patient/999999/search-text')
+        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.json()['error'], 'patient_unavailable')
+
+    def test_patients_are_refused_even_their_own_chart(self):
+        # The text includes staff-side records the patient app never shows.
+        for user in (self.patient, self.no_profile):
+            resp = self._get(user)
+            self.assertEqual(resp.status_code, 403)
+            self.assertEqual(resp.json()['error'], 'staff_only')
+
+    def test_only_get_is_accepted(self):
+        self.assertTrue(self._login(self.attending))
+        self.assertEqual(self.client.post(self.url).status_code, 405)
+
+    def test_carries_every_kind_of_chart_text(self):
+        body = self._get().json()
+        self.assertTrue(body['success'])
+        self.assertEqual(body['patient_id'], self.patient.id)
+        self.assertTrue(body['is_active'])
+        self.assertEqual(body['summary'], 'Retired machinist, lives with his daughter')
+
+        [problem] = body['problems']
+        self.assertEqual(problem['id'], self.problem.id)
+        self.assertEqual(problem['name'], 'Hypertension')
+        self.assertEqual(problem['old_name'], 'High blood pressure')
+        self.assertEqual(problem['concept_id'], '38341003')
+        self.assertEqual(problem['icd10_code'], 'I10')
+        self.assertEqual(problem['labels'], ['cardio'])
+
+        [note] = body['notes']
+        self.assertEqual(
+            (note['id'], note['problem_id'], note['note_type'], note['text']),
+            (self.note.id, self.problem.id, 'wiki', 'Started lisinopril 10 mg'))
+        self.assertEqual(note['author_name'], 'doc_a')
+
+        [todo] = body['todos']
+        self.assertEqual(
+            (todo['id'], todo['problem_id'], todo['text'], todo['labels']),
+            (self.todo.id, self.problem.id, 'ref to cardiology', ['referral']))
+        self.assertFalse(todo['accomplished'])
+
+        [comment] = body['comments']
+        self.assertEqual(
+            (comment['id'], comment['todo_id'], comment['text'], comment['author_name']),
+            (self.comment.id, self.todo.id, 'Faxed the referral', 'nurse_a'))
+
+        [visit] = body['encounters']
+        self.assertEqual(visit['id'], self.visit.id)
+        self.assertEqual(visit['transcript'], 'we talked about eliquis and the bleeding')
+        self.assertEqual([e['id'] for e in visit['events']], [self.event.id])
+
+        self.assertEqual(
+            {(a['kind'], a['id']) for a in body['activities']},
+            {('problem', self.problem_activity.id), ('todo', self.todo_activity.id)})
+
+        self.assertEqual(
+            {s['text'] for s in body['my_story']},
+            {'smokes 1 ppd', 'father had an MI at 50'})
+        tobacco = next(s for s in body['my_story'] if s['id'] == self.story.id)
+        self.assertEqual(
+            (tobacco['tab_name'], tobacco['component_name']), ('Social History', 'Tobacco'))
+
+        self.assertEqual(
+            [d['id'] for d in body['documents']], [self.read_doc.id, self.unread_doc.id])
+        read = body['documents'][0]
+        self.assertEqual(read['name'], 'echo report')
+        self.assertEqual(read['text'], 'EF 55%\fmild MR')
+        self.assertEqual(read['labels'], ['Imaging'])
+        # Never read: null, which the app counts as "not read yet" rather
+        # than as a blank page.
+        self.assertIsNone(body['documents'][1]['text'])
+        self.assertIsNone(body['documents_next'])
+
+    def test_text_is_sent_raw(self):
+        # The app strips legacy markup with its own renderer. The blanket strip
+        # patient_full applies to timeline rows would eat "< 120 or dbp < 70>".
+        body = self._get().json()
+        self.assertEqual(body['encounters'][0]['events'][0]['summary'],
+                         'bp < 120 or dbp < 70>')
+        problem_row = next(a for a in body['activities'] if a['kind'] == 'problem')
+        self.assertEqual(problem_row['text'], 'Added wiki note: <b>Started lisinopril</b>')
+
+    def test_my_story_hides_what_the_chart_hides(self):
+        texts = {s['text'] for s in self._get().json()['my_story']}
+        self.assertNotIn('private words', texts)
+        self.assertNotIn('hidden by its tab', texts)
+        self.assertNotIn('not shared with this chart', texts)
+
+    def test_an_inactive_patients_chart_is_still_served(self):
+        # The chart's own Search tab works for an inactive patient.
+        self.patient.is_active = False
+        self.patient.save()
+        resp = self._get()
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.json()['is_active'])
+
+    def test_documents_come_in_pages_cut_at_the_budget(self):
+        from apps.mobile_api import views
+        big = Document.objects.create(
+            author=self.attending, patient=self.patient, document_name='big',
+            extracted_text='x' * 100)
+        # 14 characters of echo text cost 56 bytes; the 100-character document
+        # (400) cannot follow it under a 100-byte budget.
+        with mock.patch.object(views, '_SEARCH_DOCUMENT_TEXT_BUDGET', 100):
+            first = self._get().json()
+            self.assertEqual(
+                [d['id'] for d in first['documents']],
+                [self.read_doc.id, self.unread_doc.id])
+            self.assertEqual(first['documents_next'], self.unread_doc.id)
+
+            second = self.client.get(
+                self.url, {'documents_after': first['documents_next']}).json()
+        # Over the budget on its own, and still returned: a page always
+        # carries at least one document.
+        self.assertEqual([d['id'] for d in second['documents']], [big.id])
+        self.assertIsNone(second['documents_next'])
+        # A document page carries the documents only.
+        self.assertNotIn('problems', second)
+        self.assertNotIn('encounters', second)
+        self.assertEqual(second['patient_id'], self.patient.id)
+
+    def test_documents_after_must_be_an_integer(self):
+        self.assertEqual(self._get(documents_after='x').status_code, 400)
+
+    def test_changed_at_matches_the_list(self):
+        PatientMutationStamp.objects.create(
+            patient=self.patient,
+            last_mutation_at=timezone.now() - datetime.timedelta(hours=1))
+        chart = self._get().json()['changed_at']
+        [row] = self.client.get('/api/search/charts').json()['patients']
+        self.assertIsNotNone(chart)
+        self.assertEqual(row['changed_at'], chart)
+
+    def test_compressed_for_a_client_that_accepts_gzip(self):
+        import gzip
+        self.assertTrue(self._login(self.attending))
+        resp = self.client.get(self.url, HTTP_ACCEPT_ENCODING='gzip')
+        self.assertEqual(resp['Content-Encoding'], 'gzip')
+        self.assertTrue(json.loads(gzip.decompress(resp.content))['success'])
+
+    def test_query_count_does_not_grow_with_the_chart(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        self.assertTrue(self._login(self.attending))
+
+        def count():
+            with CaptureQueriesContext(connection) as ctx:
+                self.assertEqual(self.client.get(self.url).status_code, 200)
+            return len(ctx.captured_queries)
+
+        before = count()
+        for i in range(5):
+            problem = Problem.objects.create(patient=self.patient, problem_name='p%d' % i)
+            problem.labels.add(ProblemLabel.objects.create(name='l%d' % i, patient=self.patient))
+            ProblemNote.objects.create(problem=problem, author=self.attending,
+                                       note='n%d' % i, note_type='history')
+            ProblemActivity.objects.create(problem=problem, author=self.attending,
+                                           activity='a%d' % i)
+            todo = ToDo.objects.create(todo='t%d' % i, patient=self.patient, problem=problem)
+            todo.labels.add(Label.objects.create(name='tl%d' % i))
+            ToDoComment.objects.create(todo=todo, user=self.attending, comment='c%d' % i)
+            TodoActivity.objects.create(todo=todo, author=self.attending, activity='ta%d' % i)
+            visit = Encounter.objects.create(physician=self.attending, patient=self.patient,
+                                             transcript='words %d' % i)
+            EncounterEvent.objects.create(encounter=visit, summary='e%d' % i)
+            document = Document.objects.create(author=self.attending, patient=self.patient,
+                                               document_name='d%d' % i, extracted_text='dt%d' % i)
+            document.labels.add(Label.objects.create(name='dl%d' % i))
+        self.assertEqual(count(), before)
