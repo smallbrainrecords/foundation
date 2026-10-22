@@ -43,6 +43,15 @@ SYNCING = False
 # the feature off on every Mac without an app update.
 TODO_SUGGESTIONS_ENABLED = env.bool('TODO_SUGGESTIONS_ENABLED', default=True)
 
+# Per-patient access check on the mobile chart endpoint (mobile_patient_full).
+# Off, the check only LOGS the requests it would refuse
+# (`patient_full_would_refuse` on the smallbrain.patient_access logger) and
+# serves them as before; on, it refuses them. Starts off because staff with no
+# team assignment read charts today, and refusing them unannounced would lock
+# a clinician out mid-clinic. Turn on by setting the environment variable
+# PATIENT_FULL_ACCESS_ENFORCED=true on the service once the log is clean.
+PATIENT_FULL_ACCESS_ENFORCED = env.bool('PATIENT_FULL_ACCESS_ENFORCED', default=False)
+
 SECRET_KEY = env('SECRET_KEY', default="{~9@e\1VKr|zlM&vl5ZJTOqBX#b!Aa1cv;pN!J\H=cL=<48<|7r4s1Z!U")
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 

@@ -58,6 +58,7 @@ def _strip_html(text):
 
 
 _stamp_logger = logging.getLogger(__name__)
+_patient_access_logger = logging.getLogger('smallbrain.patient_access')
 _STAMP_MUTATING_METHODS = ('POST', 'PATCH', 'PUT', 'DELETE')
 
 
@@ -1167,9 +1168,43 @@ def _document_file_size(doc):
 @csrf_exempt
 @login_required
 def mobile_patient_full(request, patient_id):
-    """GET -> full patient data: problems, notes, labels, todos, observations."""
+    """GET -> full patient data: problems, notes, labels, todos, observations.
+
+    Checks that the caller may see this chart (`_assert_patient_access`).
+    Until 2026-10-22 it checked only that someone was signed in, so any
+    account, a patient's included, could read any chart by id.
+
+    **Report-only until `settings.PATIENT_FULL_ACCESS_ENFORCED` is on.** Off,
+    a request the check would refuse is logged (`patient_full_would_refuse`)
+    and served as before. The July 2026 production copy shows why: only 3 of
+    9 nurses and 3 of 4 secretaries are on a physician's team, no mid-level
+    is on any, and the app's roster shows such staff EVERY patient (its
+    empty-list fallback), so they read charts today. Enforcing blind could
+    lock a clinician out mid-clinic; the log names who would be refused
+    first.
+
+    The refusal is **404 with a JSON body, never 403**, and is the same for an
+    unknown id. The app reads 401 and 403 as "signed out"
+    (`APIError.isSessionExpired`) and ends the session, while this refusal is
+    met in ordinary use: a physician on a shared clinic Mac sees every chart
+    in the Mac's store, including charts another login pulled. A 404 fails
+    that one chart's load, which the app shows with its Load button, and
+    leaves the session alone.
+    """
     import traceback as tb
     from django.contrib.auth.models import User
+
+    if not _assert_patient_access(request.user, patient_id):
+        enforced = getattr(settings, 'PATIENT_FULL_ACCESS_ENFORCED', False)
+        _patient_access_logger.warning(json.dumps({
+            'event': 'patient_full_refused' if enforced else 'patient_full_would_refuse',
+            'user_id': request.user.id,
+            'role': _role_of(request.user),
+            'patient_id': int(patient_id),
+            'serviceContext': {'service': 'smallbrain-api'},
+        }))
+        if enforced:
+            return JsonResponse({'error': 'patient_unavailable'}, status=404)
 
     try:
         return _mobile_patient_full_inner(request, patient_id)

@@ -13,7 +13,7 @@ import logging
 import re
 import sys
 
-from django.test import TestCase, TransactionTestCase, Client
+from django.test import TestCase, TransactionTestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models.fields.files import FieldFile
@@ -1258,6 +1258,12 @@ class MobileObservationValueAuditRowTests(_ObservationTestBase):
         self.assertFalse(ObservationValueAudit.objects.exists())
 
     def test_patient_full_lists_deleted_value_ids_under_the_observations_gate(self):
+        # The chart read is access-checked (mobile_patient_full); give this
+        # fixture's users the roles and the link a real physician and patient
+        # have, so the test holds with enforcement on.
+        UserProfile.objects.create(user=self.physician, role='physician')
+        UserProfile.objects.create(user=self.patient, role='patient')
+        PatientController.objects.create(patient=self.patient, physician=self.physician)
         vid = self.value.id
         # Before any delete: key present, empty — "prune nothing".
         resp = self.client.get(f'/api/patient/{self.patient.id}/full')
@@ -7675,3 +7681,115 @@ class MobileTodoProblemLinkTests(_RBACTestBase):
             TodoProblem.objects.create(todo=t, problem=self.extra)
             TodoProblem.objects.create(todo=t, problem=self.third)
         self.assertEqual(count(), with_one)
+
+
+@override_settings(PATIENT_FULL_ACCESS_ENFORCED=True)
+class MobilePatientFullAccessTests(_RBACTestBase):
+    """`mobile_patient_full` answers only for a chart the caller may see,
+    once `PATIENT_FULL_ACCESS_ENFORCED` is on (see the report-only tests
+    below for the default).
+
+    Until 2026-10-22 it checked only that someone was signed in, so any
+    account — a patient's included — could read any chart by id.
+
+    The refusal is a 404 with a JSON body, NEVER a 403: the app reads 401 and
+    403 as "signed out" (`APIError.isSessionExpired`) and ends the session,
+    and a physician on a shared clinic Mac can open a chart another login
+    pulled, so this refusal is met in ordinary use. A 404 fails that one
+    chart's load and leaves the session alone.
+    """
+
+    def _get(self, user, patient_id=None, **params):
+        self.assertTrue(self._login(user))
+        return self.client.get(
+            '/api/patient/%d/full' % (patient_id or self.patient.id), params)
+
+    def _assert_refused(self, resp):
+        self.assertEqual(resp.status_code, 404)
+        body = resp.json()
+        self.assertEqual(body['error'], 'patient_unavailable')
+        self.assertNotIn('problems', body)
+        self.assertNotIn('patient', body)
+
+    def setUp(self):
+        super().setUp()
+        Problem.objects.create(patient=self.patient, problem_name='Hypertension')
+
+    def test_staff_with_access_are_answered(self):
+        for user in (self.attending, self.team_nurse, self.admin_user):
+            resp = self._get(user)
+            self.assertEqual(resp.status_code, 200, user.username)
+            self.assertEqual(
+                [p['problem_name'] for p in resp.json()['problems']], ['Hypertension'])
+
+    def test_a_patient_reads_their_own_chart(self):
+        self.assertEqual(self._get(self.patient).status_code, 200)
+
+    def test_staff_without_access_are_refused(self):
+        for user in (self.stranger_doc, self.stranger_nurse):
+            self._assert_refused(self._get(user))
+
+    def test_another_patient_is_refused(self):
+        self._assert_refused(self._get(self.other_patient))
+
+    def test_a_user_without_a_role_is_refused(self):
+        self._assert_refused(self._get(self.no_profile))
+
+    def test_a_section_fetch_is_refused_too(self):
+        # The app's per-section loads go through the same route.
+        self._assert_refused(self._get(self.stranger_doc, sections='todos'))
+
+    def test_an_unknown_id_is_answered_like_an_inaccessible_one(self):
+        # Uniform, so nothing about which ids exist is revealed.
+        self._assert_refused(self._get(self.attending, patient_id=999999))
+        self._assert_refused(self._get(self.admin_user, patient_id=999999))
+
+    def test_a_staff_member_is_not_a_patient_chart(self):
+        # Admins may read every PATIENT; a staff account's id is not a chart.
+        self._assert_refused(self._get(self.admin_user, patient_id=self.attending.id))
+
+
+class MobilePatientFullReportOnlyTests(_RBACTestBase):
+    """With `PATIENT_FULL_ACCESS_ENFORCED` off (the default), a request the
+    check would refuse is served exactly as before and logged, so the owner
+    can see who would be locked out before switching enforcement on."""
+
+    LOGGER = 'smallbrain.patient_access'
+
+    def setUp(self):
+        super().setUp()
+        Problem.objects.create(patient=self.patient, problem_name='Hypertension')
+
+    def test_enforcement_is_off_unless_the_environment_turns_it_on(self):
+        from django.conf import settings
+        self.assertFalse(settings.PATIENT_FULL_ACCESS_ENFORCED)
+
+    @override_settings(PATIENT_FULL_ACCESS_ENFORCED=False)
+    def test_a_request_it_would_refuse_is_served_and_logged(self):
+        self.assertTrue(self._login(self.stranger_nurse))
+        with self.assertLogs(self.LOGGER, level='WARNING') as logs:
+            resp = self.client.get('/api/patient/%d/full' % self.patient.id)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            [p['problem_name'] for p in resp.json()['problems']], ['Hypertension'])
+        [line] = logs.records
+        entry = json.loads(line.getMessage())
+        self.assertEqual(entry['event'], 'patient_full_would_refuse')
+        self.assertEqual(entry['user_id'], self.stranger_nurse.id)
+        self.assertEqual(entry['role'], 'nurse')
+        self.assertEqual(entry['patient_id'], self.patient.id)
+
+    def test_an_allowed_request_logs_nothing(self):
+        self.assertTrue(self._login(self.attending))
+        with self.assertNoLogs(self.LOGGER, level='WARNING'):
+            resp = self.client.get('/api/patient/%d/full' % self.patient.id)
+        self.assertEqual(resp.status_code, 200)
+
+    @override_settings(PATIENT_FULL_ACCESS_ENFORCED=True)
+    def test_an_enforced_refusal_is_logged_as_refused(self):
+        self.assertTrue(self._login(self.stranger_doc))
+        with self.assertLogs(self.LOGGER, level='WARNING') as logs:
+            resp = self.client.get('/api/patient/%d/full' % self.patient.id)
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(json.loads(logs.records[0].getMessage())['event'],
+                         'patient_full_refused')
