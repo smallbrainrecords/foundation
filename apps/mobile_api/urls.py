@@ -112,6 +112,9 @@ urlpatterns = [
     # last changed, and one chart's searchable text. Read-only.
     url(r'^search/charts$', views.mobile_search_charts),
     url(r'^patient/(?P<patient_id>\d+)/search-text$', views.mobile_patient_search_text),
+    # Which OpenEMR chart this patient is: read by ⌃O, written only after a
+    # clinician confirms the match (emr.OpenEMRPatientLink).
+    url(r'^patient/(?P<patient_id>\d+)/openemr-link$', views.mobile_openemr_patient_link),
     # Tagged todos (cross-patient)
     url(r'^my-tagged-todos/$', views.mobile_my_tagged_todos),
     # Analytics

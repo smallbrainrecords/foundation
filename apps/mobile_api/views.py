@@ -4580,6 +4580,127 @@ def mobile_patient_search_text(request, patient_id):
     return JsonResponse(body)
 
 
+# ---------- OpenEMR patient link ----------
+
+_OPENEMR_LINKS_LOGGER = logging.getLogger('smallbrain.openemr_links')
+
+_OPENEMR_UUID_RE = re.compile(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+
+
+def _openemr_link_body(link):
+    if link is None:
+        return {'success': True, 'linked': False}
+    by = link.confirmed_by
+    return {
+        'success': True,
+        'linked': True,
+        'openemr_patient_uuid': link.openemr_patient_uuid,
+        'confirmed_at': _iso_z(link.confirmed_at),
+        'confirmed_by_id': by.id if by else None,
+        'confirmed_by_name': (by.get_full_name() or by.username) if by else None,
+    }
+
+
+def _log_openemr_link(message, request, patient_id, uuid, previous_uuid=None):
+    _OPENEMR_LINKS_LOGGER.info(json.dumps({
+        'severity': 'INFO',
+        'message': message,
+        'patient_id': int(patient_id),
+        'actor_id': request.user.id,
+        'openemr_patient_uuid': uuid,
+        'previous_openemr_patient_uuid': previous_uuid,
+        'serviceContext': {'service': 'smallbrain-api'},
+    }))
+
+
+@csrf_exempt
+@login_required
+def mobile_openemr_patient_link(request, patient_id):
+    """Which OpenEMR chart this patient is (emr.OpenEMRPatientLink).
+
+    GET    -> `{success, linked}`, plus `openemr_patient_uuid`,
+              `confirmed_at`, `confirmed_by_id`, `confirmed_by_name` when
+              linked.
+    PUT    `{openemr_patient_uuid}` -> confirm the link; same body back.
+    DELETE -> remove a wrong link; `{success, linked: false}`.
+
+    The app reads this when ⌃O runs and writes it only after a clinician has
+    picked the OpenEMR chart from a list of candidates. Patients may read
+    their own link but never write one.
+
+    PUT on an already-linked patient replaces the link (the old uuid is
+    logged); PUT of the uuid it already holds changes nothing. An OpenEMR
+    chart already linked to ANOTHER Small Brain patient is refused with 409
+    `openemr_chart_already_linked`, which does not say whose it is: the
+    caller may not have access to that patient.
+
+    Not stamped (StampCoverageSweepTests.ALLOWLIST): the link is not part of
+    patient_full, and the app fetches it fresh every time ⌃O runs.
+    """
+    from django.db import IntegrityError
+    from django.utils import timezone
+    from emr.models import OpenEMRPatientLink
+
+    if request.method not in ('GET', 'PUT', 'DELETE'):
+        return JsonResponse({'error': 'GET, PUT or DELETE required'}, status=405)
+
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    link = (OpenEMRPatientLink.objects
+            .select_related('confirmed_by')
+            .filter(patient_id=patient_id)
+            .first())
+
+    if request.method == 'GET':
+        return JsonResponse(_openemr_link_body(link))
+
+    if _role_of(request.user) == 'patient':
+        return JsonResponse({'error': 'Staff only'}, status=403)
+
+    if request.method == 'DELETE':
+        if link is not None:
+            removed = link.openemr_patient_uuid
+            link.delete()
+            _log_openemr_link('openemr_link_removed', request, patient_id, None, removed)
+        return JsonResponse(_openemr_link_body(None))
+
+    body = _parse_body(request)
+    raw = body.get('openemr_patient_uuid')
+    uuid = raw.strip().lower() if isinstance(raw, str) else ''
+    if not _OPENEMR_UUID_RE.match(uuid):
+        return JsonResponse(
+            {'error': 'openemr_patient_uuid must be a UUID'}, status=400)
+
+    if link is not None and link.openemr_patient_uuid == uuid:
+        return JsonResponse(_openemr_link_body(link))
+
+    if (OpenEMRPatientLink.objects
+            .filter(openemr_patient_uuid=uuid)
+            .exclude(patient_id=patient_id)
+            .exists()):
+        return JsonResponse(
+            {'error': 'openemr_chart_already_linked'}, status=409)
+
+    previous = link.openemr_patient_uuid if link is not None else None
+    if link is None:
+        link = OpenEMRPatientLink(patient_id=int(patient_id))
+    link.openemr_patient_uuid = uuid
+    link.confirmed_by = request.user
+    link.confirmed_at = timezone.now()
+    try:
+        with transaction.atomic():
+            link.save()
+    except IntegrityError:
+        # Another request linked this chart (or this patient) in between.
+        return JsonResponse(
+            {'error': 'openemr_chart_already_linked'}, status=409)
+
+    _log_openemr_link('openemr_link_set', request, patient_id, uuid, previous)
+    return JsonResponse(_openemr_link_body(link))
+
+
 # ---------- Problem endpoints ----------
 
 def _yesno_status(value, on_label, off_label):
