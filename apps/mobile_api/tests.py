@@ -3576,6 +3576,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_unassigned_document_delete': 'pool row never belonged to a patient',
         'mobile_save_my_story_entry': 'poll pull excludes My Story by design; liveness via tab-appear refetch (Gap C decision C2, 2026-07-10)',
         'mobile_document_text': 'derived OCR index, excluded from patient_full by design; a stamp would trigger pulls that fetch nothing, and a backfill would bump once per document. Liveness via document-texts refetch on search (2026-08-17)',
+        'mobile_openemr_patient_link': 'cross-system link, not part of patient_full; the app reads it fresh on every ⌃O (2026-11-03)',
         'mobile_create_label': 'global label catalog, not patient-scoped',
         'mobile_update_label': 'global label catalog, not patient-scoped',
         'mobile_batch_events': 'analytics sink, not chart data',
@@ -8206,3 +8207,147 @@ class ChartSearchTextTests(_RBACTestBase):
                                                document_name='d%d' % i, extracted_text='dt%d' % i)
             document.labels.add(Label.objects.create(name='dl%d' % i))
         self.assertEqual(count(), before)
+
+
+class OpenEMRPatientLinkTests(_RBACTestBase):
+    """`mobile_openemr_patient_link`: which OpenEMR chart a patient is.
+
+    ⌃O puts the linked chart's medications into a de-identified paste, where
+    a wrong link cannot be seen. So: only people with access to the chart see
+    or change its link, a patient never writes one, and one OpenEMR chart can
+    never belong to two Small Brain patients.
+    """
+
+    UUID = '9a6c2f4e-1b3d-4e5f-8a7b-0c1d2e3f4a5b'
+    OTHER_UUID = '0f1e2d3c-4b5a-4968-8776-655443322110'
+
+    def _url(self, patient=None):
+        return '/api/patient/%d/openemr-link' % (patient or self.patient).id
+
+    def _put(self, uuid, patient=None):
+        return self.client.put(
+            self._url(patient), data=json.dumps({'openemr_patient_uuid': uuid}),
+            content_type='application/json')
+
+    def _link_count(self):
+        from emr.models import OpenEMRPatientLink
+        return OpenEMRPatientLink.objects.count()
+
+    def test_unlinked_chart_reads_as_not_linked(self):
+        self._login(self.attending)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'success': True, 'linked': False})
+
+    def test_put_links_and_get_returns_who_confirmed_it(self):
+        self._login(self.attending)
+        response = self._put(self.UUID)
+        self.assertEqual(response.status_code, 200)
+        body = self.client.get(self._url()).json()
+        self.assertTrue(body['linked'])
+        self.assertEqual(body['openemr_patient_uuid'], self.UUID)
+        self.assertEqual(body['confirmed_by_id'], self.attending.id)
+        self.assertTrue(body['confirmed_at'].endswith('Z'))
+
+    def test_uuid_is_stored_lowercase(self):
+        self._login(self.attending)
+        self._put('  ' + self.UUID.upper() + ' ')
+        self.assertEqual(
+            self.client.get(self._url()).json()['openemr_patient_uuid'], self.UUID)
+
+    def test_malformed_uuid_is_refused(self):
+        self._login(self.attending)
+        for bad in ('', '12', 'not-a-uuid', None, 42, self.UUID + 'x'):
+            response = self._put(bad)
+            self.assertEqual(response.status_code, 400, bad)
+        self.assertEqual(self._link_count(), 0)
+
+    def test_same_uuid_again_changes_nothing(self):
+        self._login(self.attending)
+        first = self._put(self.UUID).json()
+        self._login(self.team_nurse)
+        again = self._put(self.UUID).json()
+        self.assertEqual(again['confirmed_by_id'], self.attending.id)
+        self.assertEqual(again['confirmed_at'], first['confirmed_at'])
+        self.assertEqual(self._link_count(), 1)
+
+    def test_put_of_another_uuid_replaces_the_link_and_logs_the_old_one(self):
+        self._login(self.attending)
+        self._put(self.UUID)
+        with self.assertLogs('smallbrain.openemr_links', level='INFO') as logs:
+            response = self._put(self.OTHER_UUID)
+        self.assertEqual(response.json()['openemr_patient_uuid'], self.OTHER_UUID)
+        self.assertEqual(self._link_count(), 1)
+        row = json.loads(logs.records[0].getMessage())
+        self.assertEqual(row['message'], 'openemr_link_set')
+        self.assertEqual(row['previous_openemr_patient_uuid'], self.UUID)
+        self.assertEqual(row['openemr_patient_uuid'], self.OTHER_UUID)
+        self.assertEqual(row['actor_id'], self.attending.id)
+
+    def test_a_chart_linked_to_another_patient_is_refused_without_naming_them(self):
+        PatientController.objects.create(
+            patient=self.other_patient, physician=self.attending)
+        self._login(self.attending)
+        self._put(self.UUID, patient=self.other_patient)
+        response = self._put(self.UUID)
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json(), {'error': 'openemr_chart_already_linked'})
+        self.assertFalse(self.client.get(self._url()).json()['linked'])
+
+    def test_delete_removes_the_link_and_logs_it(self):
+        self._login(self.attending)
+        self._put(self.UUID)
+        with self.assertLogs('smallbrain.openemr_links', level='INFO') as logs:
+            response = self.client.delete(self._url())
+        self.assertEqual(response.json(), {'success': True, 'linked': False})
+        self.assertEqual(self._link_count(), 0)
+        row = json.loads(logs.records[0].getMessage())
+        self.assertEqual(row['message'], 'openemr_link_removed')
+        self.assertEqual(row['previous_openemr_patient_uuid'], self.UUID)
+
+    def test_delete_of_an_unlinked_chart_is_a_no_op(self):
+        self._login(self.attending)
+        response = self.client.delete(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()['linked'])
+
+    def test_team_member_and_admin_may_link(self):
+        for user in (self.team_nurse, self.admin_user):
+            self._login(user)
+            self.client.delete(self._url())
+            self.assertEqual(self._put(self.UUID).status_code, 200, user.username)
+
+    def test_callers_without_access_get_404_for_read_and_write(self):
+        for user in (self.stranger_doc, self.stranger_nurse,
+                     self.other_patient, self.no_profile):
+            self._login(user)
+            self.assertEqual(self.client.get(self._url()).status_code, 404, user.username)
+            self.assertEqual(self._put(self.UUID).status_code, 404, user.username)
+            self.assertEqual(self.client.delete(self._url()).status_code, 404, user.username)
+        self.assertEqual(self._link_count(), 0)
+
+    def test_patient_reads_own_link_but_cannot_write_it(self):
+        self._login(self.attending)
+        self._put(self.UUID)
+        self._login(self.patient)
+        self.assertTrue(self.client.get(self._url()).json()['linked'])
+        self.assertEqual(self._put(self.OTHER_UUID).status_code, 403)
+        self.assertEqual(self.client.delete(self._url()).status_code, 403)
+        self.assertEqual(
+            self.client.get(self._url()).json()['openemr_patient_uuid'], self.UUID)
+
+    def test_post_is_refused(self):
+        self._login(self.attending)
+        response = self.client.post(
+            self._url(), data=json.dumps({'openemr_patient_uuid': self.UUID}),
+            content_type='application/json')
+        self.assertEqual(response.status_code, 405)
+
+    def test_logged_out_caller_is_redirected_to_login(self):
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 302)
+
+    def test_links_logger_reaches_info(self):
+        self.assertLessEqual(
+            logging.getLogger('smallbrain.openemr_links').getEffectiveLevel(),
+            logging.INFO)

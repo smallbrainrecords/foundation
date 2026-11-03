@@ -1778,3 +1778,30 @@ class PatientMutationStamp(models.Model):
     """
     patient = models.OneToOneField(User, on_delete=models.CASCADE, related_name='mutation_stamp')
     last_mutation_at = models.DateTimeField(db_index=True)
+
+
+class OpenEMRPatientLink(models.Model):
+    """Which OpenEMR chart is this Small Brain patient (2026-11-03).
+
+    The two systems share no patient identifier: OpenEMR's chart number
+    (`pubpid`) holds Practice Fusion GUIDs, and matching by name and date of
+    birth is not acceptable for a clinical record. So the link is explicit,
+    and a person confirms it: the first time ⌃O runs on an unlinked chart,
+    the app searches OpenEMR, shows the candidates, and saves the one the
+    clinician picks here. ⌃O then reads that chart's medication list and
+    allergies through OpenEMR's FHIR API.
+
+    `openemr_patient_uuid` is OpenEMR's FHIR Patient id (`patient_data.uuid`),
+    not its `pid`: the uuid is what the FHIR API addresses, and it is stable.
+
+    One-to-one both ways from day one. A second Small Brain patient can never
+    claim the same OpenEMR chart, because a wrong link puts another person's
+    medications into a de-identified paste where nothing reveals the mistake.
+
+    Written only by `mobile_openemr_patient_link`, which logs every set and
+    remove to `smallbrain.openemr_links`.
+    """
+    patient = models.OneToOneField(User, on_delete=models.CASCADE, related_name='openemr_link')
+    openemr_patient_uuid = models.CharField(max_length=36, unique=True)
+    confirmed_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    confirmed_at = models.DateTimeField()
