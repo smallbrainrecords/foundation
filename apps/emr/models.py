@@ -1560,6 +1560,23 @@ class Document(models.Model):
 
     class Meta:
         ordering = ['-created_on']
+        indexes = [
+            # The chart-search list (`mobile_search_charts` ->
+            # `_search_changed_at`) asks every few minutes, from every Mac,
+            # for each chart's newest `extracted_text_at`. Without this index
+            # MySQL answers it by reading every document ROW, and since the
+            # 2026-11 text backfill nearly every row carries several KB of
+            # `extracted_text` inline. On production's db-f1-micro that call
+            # went 8 -> 14 -> 22 s in three days for the clinic logins; on
+            # 2026-11-06 it passed the app's 60 s request timeout, the app
+            # re-asked while the server was still working, and the abandoned
+            # queries filled gunicorn's 4 slots — chart loads took up to
+            # 190 s. With the index the aggregate reads the index alone
+            # ("Covering index lookup"; 160 -> 13 ms on a padded local copy).
+            # Spec: ChartSearchListTests.test_changed_at_reads_an_index_not_the_documents.
+            models.Index(fields=['patient', 'extracted_text_at'],
+                         name='emr_doc_patient_text_at'),
+        ]
 
     def __unicode__(self):
         return "%s" % self.document.path
