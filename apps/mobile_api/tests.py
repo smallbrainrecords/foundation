@@ -7915,6 +7915,38 @@ class ChartSearchListTests(_RBACTestBase):
         [row] = self._rows(self.attending)
         self.assertIsNone(row['changed_at'])
 
+    def test_changed_at_reads_an_index_not_the_documents(self):
+        # 2026-11-06: with no index on (patient, extracted_text_at), the
+        # document half of `_search_changed_at` read every document ROW, each
+        # carrying its fax text inline after the 2026-11 text backfill. On
+        # production's db-f1-micro the list call passed the app's 60 s
+        # timeout, the app re-asked while the server was still working, and
+        # chart loads queued behind the abandoned queries. Ask MySQL how it
+        # answers the query the function really sends, for each kind of
+        # login: from the index alone, never the rows.
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        from apps.mobile_api.views import _accessible_patient_ids, _search_changed_at
+        if connection.vendor != 'mysql':
+            self.skipTest('query plans are checked on MySQL, which production runs')
+
+        for n in range(3):
+            Document.objects.create(
+                author=self.attending, patient=self.patient,
+                document_name='fax %d' % n, extracted_text='potassium 4.1 ' * 300)
+        Document.objects.update(extracted_text_at=timezone.now())
+
+        for user in (self.attending, self.team_nurse):
+            with CaptureQueriesContext(connection) as queries:
+                _search_changed_at(_accessible_patient_ids(user))
+            [sql] = [q['sql'] for q in queries.captured_queries
+                     if 'FROM `emr_document`' in q['sql']]
+            with connection.cursor() as cursor:
+                cursor.execute('EXPLAIN FORMAT=TREE ' + sql)
+                plan = cursor.fetchone()[0]
+            self.assertIn('Covering index', plan, '%s:\n%s' % (user.username, plan))
+            self.assertIn('emr_doc_patient_text_at', plan, '%s:\n%s' % (user.username, plan))
+
 
 class ChartSearchTextTests(_RBACTestBase):
     """`mobile_patient_search_text`: everything searchable on one chart.
