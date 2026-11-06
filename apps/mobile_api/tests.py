@@ -7948,6 +7948,51 @@ class ChartSearchListTests(_RBACTestBase):
             self.assertIn('emr_doc_patient_text_at', plan, '%s:\n%s' % (user.username, plan))
 
 
+class SearchListTimingReportTests(_RBACTestBase):
+    """`report_search_list_timing`: the read-only production check of the
+    chart-search list query (2026-11-06)."""
+
+    def _report(self):
+        from django.core.management import call_command
+        out = io.StringIO()
+        call_command('report_search_list_timing', stdout=out)
+        return [json.loads(line) for line in out.getvalue().splitlines() if line.strip()]
+
+    def test_one_line_per_active_staff_login_then_a_summary(self):
+        lines = self._report()
+        logins = {line['user_id']: line for line in lines if line['kind'] == 'login'}
+        self.assertEqual(lines[-1]['kind'], 'summary')
+        for user in (self.attending, self.team_nurse, self.admin_user,
+                     self.stranger_doc, self.stranger_nurse):
+            self.assertIn(user.id, logins, user.username)
+        self.assertNotIn(self.patient.id, logins)
+        self.assertEqual(logins[self.attending.id]['patients'], 1)
+        self.assertEqual(logins[self.team_nurse.id]['patients'], 1)
+        self.assertEqual(logins[self.stranger_nurse.id]['patients'], 0)
+        self.assertEqual(lines[-1]['logins'], len(logins))
+
+    def test_it_says_whether_the_plan_uses_the_index(self):
+        from django.db import connection
+        if connection.vendor != 'mysql':
+            self.skipTest('query plans are checked on MySQL, which production runs')
+        Document.objects.create(
+            author=self.attending, patient=self.patient,
+            document_name='labs', extracted_text='potassium 4.1 ' * 300)
+        Document.objects.update(extracted_text_at=timezone.now())
+        lines = self._report()
+        logins = {line['user_id']: line for line in lines if line['kind'] == 'login'}
+        for user in (self.attending, self.team_nurse):
+            self.assertTrue(logins[user.id]['document_plan_uses_index'], logins[user.id])
+            self.assertEqual(logins[user.id]['charts_with_a_change'], 1)
+        self.assertNotIn('document_plan_uses_index', logins[self.stranger_nurse.id])
+        self.assertTrue(lines[-1]['every_plan_uses_index'])
+
+    def test_nothing_is_written(self):
+        before = (Document.objects.count(), PatientMutationStamp.objects.count())
+        self._report()
+        self.assertEqual((Document.objects.count(), PatientMutationStamp.objects.count()), before)
+
+
 class ChartSearchTextTests(_RBACTestBase):
     """`mobile_patient_search_text`: everything searchable on one chart.
 
