@@ -119,6 +119,14 @@ urlpatterns = [
     url(r'^my-tagged-todos/$', views.mobile_my_tagged_todos),
     # Analytics
     url(r'^events/batch/$', views.mobile_batch_events),
+    # Fax (RingCentral): the practice's recipient directory, sending a
+    # requisition, and the sender's recent transmissions.
+    url(r'^fax/recipients$', views.mobile_fax_recipients),
+    url(r'^fax/recipient/(?P<recipient_id>\d+)$', views.mobile_fax_recipient),
+    url(r'^fax/import-candidates$', views.mobile_fax_import_candidates),
+    url(r'^fax/import$', views.mobile_fax_import),
+    url(r'^fax/transmissions$', views.mobile_fax_transmissions),
+    url(r'^patient/(?P<patient_id>\d+)/fax/requisition$', views.mobile_fax_requisition),
     # Error reporting
     url(r'^errors/batch/$', views.mobile_batch_errors),
     # Terminology mapping

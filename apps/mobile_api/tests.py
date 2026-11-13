@@ -3577,6 +3577,9 @@ class StampCoverageSweepTests(TestCase):
         'mobile_save_my_story_entry': 'poll pull excludes My Story by design; liveness via tab-appear refetch (Gap C decision C2, 2026-07-10)',
         'mobile_document_text': 'derived OCR index, excluded from patient_full by design; a stamp would trigger pulls that fetch nothing, and a backfill would bump once per document. Liveness via document-texts refetch on search (2026-08-17)',
         'mobile_openemr_patient_link': 'cross-system link, not part of patient_full; the app reads it fresh on every ⌃O (2026-11-03)',
+        'mobile_fax_recipients': 'practice fax directory, not chart data',
+        'mobile_fax_recipient': 'practice fax directory, not chart data',
+        'mobile_fax_import': 'practice fax directory, not chart data',
         'mobile_create_label': 'global label catalog, not patient-scoped',
         'mobile_update_label': 'global label catalog, not patient-scoped',
         'mobile_batch_events': 'analytics sink, not chart data',
@@ -3598,6 +3601,8 @@ class StampCoverageSweepTests(TestCase):
         'mobile_my_tagged_todos',
         'mobile_patient_document_texts',
         'mobile_observation_value_audit',
+        'mobile_fax_transmissions',
+        'mobile_fax_import_candidates',
         'mobile_untranscribed_encounters',
         'mobile_encounter_transcripts',
         'mobile_untimed_encounters',
@@ -8428,3 +8433,514 @@ class OpenEMRPatientLinkTests(_RBACTestBase):
         self.assertLessEqual(
             logging.getLogger('smallbrain.openemr_links').getEffectiveLevel(),
             logging.INFO)
+
+
+class _FakeRingCentral:
+    """Stands in for `emr.ringcentral_fax`: records what was sent and
+    answers what the test says."""
+
+    def __init__(self):
+        self.configured = True
+        self.sent = []
+        self.send_error = None
+        self.send_reading = {'state': 'queued', 'rc_status': 'Queued', 'error': '', 'page_count': None}
+        self.status_reading = {'state': 'queued', 'rc_status': 'Queued', 'error': '', 'page_count': None}
+        self.status_calls = 0
+        self.next_id = 9000
+
+    def install(self, test):
+        from unittest import mock
+        from emr import ringcentral_fax
+        for name, replacement in (
+            ('is_configured', lambda: self.configured),
+            ('send_fax', self._send),
+            ('message_status', self._status),
+        ):
+            patcher = mock.patch.object(ringcentral_fax, name, replacement)
+            patcher.start()
+            test.addCleanup(patcher.stop)
+
+    def _send(self, pdf_bytes, to_number, filename='requisition.pdf'):
+        from emr import ringcentral_fax
+        if self.send_error:
+            raise ringcentral_fax.FaxError(self.send_error)
+        self.sent.append((pdf_bytes, to_number))
+        self.next_id += 1
+        return dict(self.send_reading, message_id=str(self.next_id))
+
+    def _status(self, message_id):
+        self.status_calls += 1
+        return dict(self.status_reading)
+
+
+class MobileFaxRecipientTests(_RBACTestBase):
+    """GET/POST /api/fax/recipients and PATCH/DELETE /api/fax/recipient/<id>:
+    the practice's fax directory. Any staff role maintains it; the number is
+    typed twice; one row per number; entries are retired, never deleted."""
+
+    def setUp(self):
+        super().setUp()
+        self.rc = _FakeRingCentral()
+        self.rc.install(self)
+        self._login(self.team_nurse)
+
+    def _add(self, name='Quest Diagnostics', number='(586) 555-1234', confirm=None, **extra):
+        body = dict(name=name, fax_number=number,
+                    fax_number_confirm=number if confirm is None else confirm, **extra)
+        return self.client.post(
+            '/api/fax/recipients', data=json.dumps(body), content_type='application/json')
+
+    def test_a_nurse_adds_and_lists_an_entry(self):
+        resp = self._add(note='labs')
+        self.assertEqual(resp.status_code, 200)
+        entry = json.loads(resp.content)['recipient']
+        self.assertEqual(entry['fax_number'], '15865551234')
+        self.assertEqual(entry['display_number'], '586-555-1234')
+        self.assertEqual(entry['delivered_count'], 0)
+        listed = json.loads(self.client.get('/api/fax/recipients').content)
+        self.assertTrue(listed['configured'])
+        self.assertEqual([r['name'] for r in listed['recipients']], ['Quest Diagnostics'])
+
+    def test_the_list_says_when_the_server_has_no_credential(self):
+        self.rc.configured = False
+        self.assertFalse(json.loads(self.client.get('/api/fax/recipients').content)['configured'])
+
+    def test_a_patient_gets_nothing(self):
+        self._login(self.patient)
+        self.assertEqual(self.client.get('/api/fax/recipients').status_code, 404)
+        self.assertEqual(self._add().status_code, 404)
+
+    def test_the_number_must_be_typed_twice_and_match(self):
+        resp = self._add(confirm='586-555-1235')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(json.loads(resp.content)['error'], 'fax_numbers_differ')
+        from emr.models import FaxRecipient
+        self.assertEqual(FaxRecipient.objects.count(), 0)
+
+    def test_a_number_that_is_not_a_fax_number_is_refused(self):
+        for bad in ('555-1234', '1-086-555-1234', '586-155-1234', '2-586-555-1234', '', 'fax'):
+            resp = self._add(number=bad)
+            self.assertEqual(resp.status_code, 400, bad)
+            self.assertEqual(json.loads(resp.content)['error'], 'invalid_fax_number', bad)
+
+    def test_a_name_is_required(self):
+        self.assertEqual(json.loads(self._add(name='  ').content)['error'], 'name_required')
+
+    def test_a_number_already_listed_answers_with_its_entry(self):
+        first = json.loads(self._add().content)['recipient']
+        resp = self._add(name='Quest (again)', number='1 586 555 1234')
+        self.assertEqual(resp.status_code, 409)
+        body = json.loads(resp.content)
+        self.assertEqual(body['error'], 'duplicate_fax_number')
+        self.assertEqual(body['existing']['id'], first['id'])
+
+    def test_retiring_hides_an_entry_and_adding_its_number_brings_it_back(self):
+        from emr.models import FaxRecipient
+        entry = json.loads(self._add().content)['recipient']
+        self.assertEqual(self.client.delete('/api/fax/recipient/%d' % entry['id']).status_code, 200)
+        self.assertEqual(FaxRecipient.objects.count(), 1)
+        self.assertEqual(json.loads(self.client.get('/api/fax/recipients').content)['recipients'], [])
+        self.assertEqual(self._add().status_code, 409)
+        self.assertTrue(FaxRecipient.objects.get(id=entry['id']).is_active)
+
+    def test_renaming_keeps_the_number_and_needs_no_second_typing(self):
+        entry = json.loads(self._add().content)['recipient']
+        resp = self.client.patch(
+            '/api/fax/recipient/%d' % entry['id'],
+            data=json.dumps({'name': 'Quest — Shelby'}), content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        after = json.loads(resp.content)['recipient']
+        self.assertEqual(after['name'], 'Quest — Shelby')
+        self.assertEqual(after['fax_number'], '15865551234')
+
+    def test_a_changed_number_is_typed_twice_and_starts_unproven(self):
+        from emr.models import FaxRecipient
+        entry = json.loads(self._add().content)['recipient']
+        FaxRecipient.objects.filter(id=entry['id']).update(delivered_count=4)
+        url = '/api/fax/recipient/%d' % entry['id']
+        once = self.client.patch(
+            url, data=json.dumps({'fax_number': '586-555-9999'}), content_type='application/json')
+        self.assertEqual(json.loads(once.content)['error'], 'fax_numbers_differ')
+        twice = self.client.patch(
+            url, data=json.dumps({'fax_number': '586-555-9999', 'fax_number_confirm': '5865559999'}),
+            content_type='application/json')
+        self.assertEqual(twice.status_code, 200)
+        after = json.loads(twice.content)['recipient']
+        self.assertEqual(after['fax_number'], '15865559999')
+        self.assertEqual(after['delivered_count'], 0)
+
+    def test_a_number_cannot_be_changed_to_another_entrys(self):
+        json.loads(self._add().content)
+        other = json.loads(self._add(name='Labcorp', number='586-555-7777').content)['recipient']
+        resp = self.client.patch(
+            '/api/fax/recipient/%d' % other['id'],
+            data=json.dumps({'fax_number': '5865551234', 'fax_number_confirm': '5865551234'}),
+            content_type='application/json')
+        self.assertEqual(resp.status_code, 409)
+
+
+class MobileFaxRequisitionTests(_RBACTestBase):
+    """POST /api/patient/<pid>/fax/requisition and GET /api/fax/transmissions.
+
+    The requisition PDF goes to a directory entry through RingCentral; every
+    order on it gets an Activity row; the fax settles later, once, when the
+    sender's app asks."""
+
+    PDF = b'%PDF-1.4 requisition'
+
+    def setUp(self):
+        super().setUp()
+        from emr.models import FaxRecipient
+        self.rc = _FakeRingCentral()
+        self.rc.install(self)
+        self.attending.first_name = 'Ada'
+        self.attending.last_name = 'Attending'
+        self.attending.save()
+        self.todo = ToDo.objects.create(todo='cbc, cmp', patient=self.patient)
+        self.second = ToDo.objects.create(todo='lipid panel', patient=self.patient)
+        self.other_todo = ToDo.objects.create(todo='tsh', patient=self.other_patient)
+        self.recipient = FaxRecipient.objects.create(name='Quest', fax_number='15865551234')
+        self._login(self.team_nurse)
+
+    def _send(self, patient_id=None, uuid='11111111-1111-1111-1111-111111111111',
+              todo_ids=None, recipient_id=None, content=None, provider=True):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        data = {
+            'file': SimpleUploadedFile('req.pdf', content or self.PDF, content_type='application/pdf'),
+            'client_uuid': uuid,
+            'recipient_id': str(recipient_id if recipient_id is not None else self.recipient.id),
+            'todo_ids': todo_ids if todo_ids is not None else '%d,%d' % (self.todo.id, self.second.id),
+        }
+        if provider:
+            data['provider_id'] = str(self.attending.id)
+        pid = patient_id if patient_id is not None else self.patient.id
+        return self.client.post('/api/patient/%d/fax/requisition' % pid, data=data)
+
+    def _activities(self, todo):
+        return list(TodoActivity.objects.filter(todo=todo).order_by('id').values_list('activity', flat=True))
+
+    def _mine(self):
+        return json.loads(self.client.get('/api/fax/transmissions').content)['transmissions']
+
+    def _age_checks(self):
+        from emr.models import FaxTransmission
+        FaxTransmission.objects.update(checked_on=None)
+
+    # ---- sending ----
+
+    def test_a_nurse_faxes_and_every_order_says_so(self):
+        resp = self._send()
+        self.assertEqual(resp.status_code, 200)
+        sent = json.loads(resp.content)['transmission']
+        self.assertEqual(sent['status'], 'queued')
+        self.assertEqual(sent['recipient_name'], 'Quest')
+        self.assertEqual(self.rc.sent, [(self.PDF, '15865551234')])
+        row = 'Faxed requisition signed by Ada Attending to Quest (fax 586-555-1234)'
+        self.assertEqual(self._activities(self.todo), [row])
+        self.assertEqual(self._activities(self.second), [row])
+        self.assertEqual(
+            TodoActivity.objects.filter(todo=self.todo).first().author_id, self.team_nurse.id)
+
+    def test_without_a_provider_the_row_names_none(self):
+        self._send(provider=False)
+        self.assertEqual(
+            self._activities(self.todo), ['Faxed requisition to Quest (fax 586-555-1234)'])
+
+    def test_the_patient_stamp_moves(self):
+        PatientMutationStamp.objects.filter(patient_id=self.patient.id).delete()
+        self._send()
+        self.assertTrue(PatientMutationStamp.objects.filter(patient_id=self.patient.id).exists())
+
+    def test_the_same_request_again_never_faxes_twice(self):
+        first = json.loads(self._send().content)['transmission']
+        again = self._send()
+        self.assertEqual(again.status_code, 200)
+        body = json.loads(again.content)
+        self.assertTrue(body['replayed'])
+        self.assertEqual(body['transmission']['id'], first['id'])
+        self.assertEqual(len(self.rc.sent), 1)
+        self.assertEqual(len(self._activities(self.todo)), 1)
+
+    # ---- refusals ----
+
+    def test_no_access_to_the_chart_is_not_found(self):
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._send().status_code, 404)
+        self.assertEqual(self.rc.sent, [])
+
+    def test_a_patient_cannot_fax_their_own_orders(self):
+        self._login(self.patient)
+        self.assertEqual(self._send().status_code, 404)
+        self.assertEqual(self.rc.sent, [])
+
+    def test_an_order_from_another_chart_stops_the_whole_fax(self):
+        resp = self._send(todo_ids='%d,%d' % (self.todo.id, self.other_todo.id))
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(self.rc.sent, [])
+        self.assertEqual(self._activities(self.todo), [])
+
+    def test_no_orders_is_refused(self):
+        self.assertEqual(self._send(todo_ids='').status_code, 400)
+
+    def test_a_retired_or_unknown_recipient_is_refused(self):
+        self.recipient.is_active = False
+        self.recipient.save()
+        resp = self._send()
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(json.loads(resp.content)['error'], 'recipient_not_found')
+        self.assertEqual(self._send(recipient_id=999999, uuid='2').status_code, 400)
+        self.assertEqual(self.rc.sent, [])
+
+    def test_a_file_that_is_not_a_pdf_is_refused(self):
+        resp = self._send(content=b'<html>')
+        self.assertEqual(json.loads(resp.content)['error'], 'not_a_pdf')
+        self.assertEqual(self.rc.sent, [])
+
+    def test_a_server_without_the_credential_says_so_and_keeps_nothing(self):
+        from emr.models import FaxTransmission
+        self.rc.configured = False
+        resp = self._send()
+        self.assertEqual(resp.status_code, 503)
+        self.assertEqual(json.loads(resp.content)['error'], 'fax_not_configured')
+        self.assertEqual(FaxTransmission.objects.count(), 0)
+
+    def test_ringcentral_refusing_writes_nothing_on_the_orders_and_can_be_retried(self):
+        self.rc.send_error = 'RingCentral did not accept the fax: HTTP 500'
+        resp = self._send()
+        self.assertEqual(resp.status_code, 502)
+        self.assertEqual(json.loads(resp.content)['error'], 'fax_send_failed')
+        self.assertEqual(self._activities(self.todo), [])
+        self.rc.send_error = None
+        retry = self._send()
+        self.assertEqual(retry.status_code, 200)
+        self.assertEqual(json.loads(retry.content)['transmission']['status'], 'queued')
+        self.assertEqual(len(self.rc.sent), 1)
+        self.assertEqual(len(self._activities(self.todo)), 1)
+
+    def test_a_second_request_while_the_first_is_still_sending_waits(self):
+        from emr.models import FaxTransmission
+        FaxTransmission.objects.create(
+            client_uuid='11111111-1111-1111-1111-111111111111', patient=self.patient,
+            sender=self.team_nurse, recipient=self.recipient, recipient_name='Quest',
+            fax_number='15865551234', status=FaxTransmission.SENDING)
+        resp = self._send()
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(self.rc.sent, [])
+
+    # ---- settling ----
+
+    def test_delivery_is_written_once_and_proves_the_number(self):
+        from emr.models import FaxRecipient
+        self._send()
+        self.assertEqual(self._mine()[0]['status'], 'queued')
+        self.rc.status_reading = {'state': 'delivered', 'rc_status': 'Sent', 'error': '', 'page_count': 1}
+        self._age_checks()
+        self.assertEqual(self._mine()[0]['status'], 'delivered')
+        self._age_checks()
+        self.assertEqual(self._mine()[0]['status'], 'delivered')
+        self.assertEqual(self._activities(self.todo)[1:], ['Fax to Quest delivered (1 page)'])
+        self.assertEqual(self._activities(self.second)[1:], ['Fax to Quest delivered (1 page)'])
+        self.assertEqual(FaxRecipient.objects.get(id=self.recipient.id).delivered_count, 1)
+        self.assertFalse(TaggedToDoOrder.objects.filter(todo=self.todo).exists())
+
+    def test_a_failure_says_why_and_tags_the_sender_as_new(self):
+        from emr.models import FaxRecipient
+        TaggedToDoOrder.objects.create(todo=self.second, user=self.team_nurse, status=1)
+        self._send()
+        self.rc.status_reading = {
+            'state': 'failed', 'rc_status': 'SendingFailed', 'error': 'Busy', 'page_count': None}
+        self._age_checks()
+        mine = self._mine()
+        self.assertEqual(mine[0]['status'], 'failed')
+        self.assertEqual(mine[0]['error'], 'Busy')
+        self.assertEqual(self._activities(self.todo)[1:], ['Fax to Quest failed: Busy'])
+        new_tag = TaggedToDoOrder.objects.get(todo=self.todo, user=self.team_nurse)
+        self.assertEqual(new_tag.status, 0)
+        self.assertEqual(TaggedToDoOrder.objects.filter(todo=self.second, user=self.team_nurse).count(), 1)
+        self.assertEqual(TaggedToDoOrder.objects.get(todo=self.second, user=self.team_nurse).status, 0)
+        self.assertEqual(FaxRecipient.objects.get(id=self.recipient.id).delivered_count, 0)
+
+    def test_a_queued_fax_is_not_asked_about_twice_in_a_row(self):
+        self._send()
+        self._mine()
+        self._mine()
+        self.assertEqual(self.rc.status_calls, 1)
+
+    def test_ringcentral_settling_at_once_is_recorded_at_once(self):
+        self.rc.send_reading = {
+            'state': 'failed', 'rc_status': 'SendingFailed', 'error': 'InvalidNumber', 'page_count': None}
+        sent = json.loads(self._send().content)['transmission']
+        self.assertEqual(sent['status'], 'failed')
+        self.assertEqual(self._activities(self.todo)[1:], ['Fax to Quest failed: InvalidNumber'])
+
+    def test_the_list_is_the_callers_own(self):
+        self._send()
+        self._login(self.attending)
+        self.assertEqual(self._mine(), [])
+
+
+class MobileFaxImportTests(_RBACTestBase):
+    """GET /api/fax/import-candidates and POST /api/fax/import: seeding the
+    fax directory from what the clinic already has in RingCentral — the
+    credential owner's contacts, and where faxes went in the last year."""
+
+    def setUp(self):
+        super().setUp()
+        from unittest import mock
+        from apps.mobile_api import views
+        from emr import ringcentral_fax
+        self.rc = _FakeRingCentral()
+        self.rc.install(self)
+        self.contacts = [
+            {'fax_number': '(586) 555-1234', 'name': 'Quest Diagnostics', 'note': 'Pat Smith'},
+            {'fax_number': '248-555-7777', 'name': 'Henry Ford Imaging', 'note': ''},
+            {'fax_number': '555-0000', 'name': 'Not a number', 'note': ''},
+        ]
+        self.history = [
+            {'fax_number': '15865551234', 'name': '', 'times_faxed': 12,
+             'times_delivered': 11, 'last_faxed': '2026-11-01T10:00:00Z'},
+            {'fax_number': '+15865559000', 'name': '', 'times_faxed': 3,
+             'times_delivered': 0, 'last_faxed': '2026-10-01T10:00:00Z'},
+        ]
+        self.contacts_error = None
+        self.history_error = None
+        self.reads = {'contacts': 0, 'history': 0}
+
+        def read_contacts():
+            self.reads['contacts'] += 1
+            if self.contacts_error:
+                raise ringcentral_fax.FaxError(self.contacts_error)
+            return [dict(c) for c in self.contacts]
+
+        def read_history(days=365):
+            self.reads['history'] += 1
+            if self.history_error:
+                raise ringcentral_fax.FaxError(self.history_error)
+            return [dict(h) for h in self.history]
+
+        for name, replacement in (('contact_fax_numbers', read_contacts),
+                                  ('sent_fax_numbers', read_history)):
+            patcher = mock.patch.object(ringcentral_fax, name, replacement)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        # The five-minute cache is per process; every test starts without it.
+        views._FAX_CANDIDATE_CACHE.update(at=0.0, value=None)
+        self.addCleanup(lambda: views._FAX_CANDIDATE_CACHE.update(at=0.0, value=None))
+        self._login(self.team_nurse)
+
+    def _candidates(self, **params):
+        resp = self.client.get('/api/fax/import-candidates', params)
+        return resp, json.loads(resp.content)
+
+    def _import(self, entries):
+        resp = self.client.post(
+            '/api/fax/import', data=json.dumps({'entries': entries}),
+            content_type='application/json')
+        return resp, json.loads(resp.content)
+
+    def test_contacts_and_history_merge_into_one_entry_per_number(self):
+        resp, body = self._candidates()
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(body['problems'], {})
+        by_number = {c['fax_number']: c for c in body['candidates']}
+        self.assertEqual(set(by_number), {'15865551234', '12485557777', '15865559000'})
+        quest = by_number['15865551234']
+        self.assertEqual(quest['name'], 'Quest Diagnostics')
+        self.assertEqual(quest['note'], 'Pat Smith')
+        self.assertTrue(quest['in_contacts'])
+        self.assertEqual((quest['times_faxed'], quest['times_delivered']), (12, 11))
+        self.assertEqual(quest['display_number'], '586-555-1234')
+        unnamed = by_number['15865559000']
+        self.assertEqual(unnamed['name'], '')
+        self.assertFalse(unnamed['in_contacts'])
+        # Most faxed first.
+        self.assertEqual(body['candidates'][0]['fax_number'], '15865551234')
+
+    def test_a_number_already_in_the_directory_is_not_offered(self):
+        from emr.models import FaxRecipient
+        FaxRecipient.objects.create(name='Quest', fax_number='15865551234')
+        _, body = self._candidates()
+        self.assertNotIn('15865551234', [c['fax_number'] for c in body['candidates']])
+
+    def test_one_source_failing_is_named_and_the_other_still_answers(self):
+        self.contacts_error = 'RingCentral did not answer: HTTP 403'
+        resp, body = self._candidates()
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('contacts', body['problems'])
+        self.assertNotIn('history', body['problems'])
+        self.assertEqual(
+            sorted(c['fax_number'] for c in body['candidates']), ['15865551234', '15865559000'])
+
+    def test_a_failed_read_is_tried_again_and_a_good_one_is_kept(self):
+        self.history_error = 'boom'
+        self._candidates()
+        self._candidates()
+        self.assertEqual(self.reads['history'], 2)
+        self.history_error = None
+        self._candidates()
+        self._candidates()
+        self.assertEqual(self.reads, {'contacts': 3, 'history': 3})
+        self._candidates(fresh='1')
+        self.assertEqual(self.reads['contacts'], 4)
+
+    def test_a_patient_and_an_unconfigured_server_get_nothing(self):
+        self.rc.configured = False
+        self.assertEqual(self._candidates()[0].status_code, 503)
+        self.assertEqual(self._import([{'fax_number': '5865551234', 'name': 'Q'}])[0].status_code, 503)
+        self.rc.configured = True
+        self._login(self.patient)
+        self.assertEqual(self._candidates()[0].status_code, 404)
+        self.assertEqual(self._import([{'fax_number': '5865551234', 'name': 'Q'}])[0].status_code, 404)
+
+    def test_importing_adds_entries_proven_by_their_delivered_faxes(self):
+        from emr.models import FaxRecipient
+        resp, body = self._import([
+            {'fax_number': '15865551234', 'name': 'Quest Diagnostics', 'note': 'labs'},
+            {'fax_number': '248-555-7777', 'name': 'Henry Ford Imaging'},
+            {'fax_number': '15865559000', 'name': 'Labcorp'},
+        ])
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(body['added']), 3)
+        self.assertEqual(body['skipped'], [])
+        quest = FaxRecipient.objects.get(fax_number='15865551234')
+        self.assertEqual((quest.name, quest.note, quest.delivered_count), ('Quest Diagnostics', 'labs', 11))
+        self.assertEqual(quest.created_by_id, self.team_nurse.id)
+        # In contacts only, and faxed three times but never delivered: unproven.
+        self.assertEqual(FaxRecipient.objects.get(fax_number='12485557777').delivered_count, 0)
+        self.assertEqual(FaxRecipient.objects.get(fax_number='15865559000').delivered_count, 0)
+
+    def test_a_number_ringcentral_does_not_have_cannot_be_imported(self):
+        from emr.models import FaxRecipient
+        resp, body = self._import([{'fax_number': '313-555-4444', 'name': 'Made up'}])
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(body['added'], [])
+        self.assertEqual(body['skipped'], [{'fax_number': '13135554444', 'reason': 'not_in_ringcentral'}])
+        self.assertEqual(FaxRecipient.objects.count(), 0)
+
+    def test_unnamed_listed_and_malformed_entries_are_skipped_with_reasons(self):
+        from emr.models import FaxRecipient
+        FaxRecipient.objects.create(name='Quest', fax_number='15865551234')
+        _, body = self._import([
+            {'fax_number': '15865551234', 'name': 'Quest again'},
+            {'fax_number': '15865559000', 'name': '  '},
+            {'fax_number': '555', 'name': 'Short'},
+        ])
+        self.assertEqual(body['added'], [])
+        self.assertEqual(
+            [s['reason'] for s in body['skipped']],
+            ['already_listed', 'name_required', 'invalid_fax_number'])
+        self.assertEqual(FaxRecipient.objects.count(), 1)
+
+    def test_importing_a_retired_number_brings_it_back_with_the_new_name(self):
+        from emr.models import FaxRecipient
+        old = FaxRecipient.objects.create(name='Old name', fax_number='15865551234', is_active=False)
+        _, body = self._import([{'fax_number': '15865551234', 'name': 'Quest Diagnostics'}])
+        self.assertEqual(len(body['added']), 1)
+        old.refresh_from_db()
+        self.assertTrue(old.is_active)
+        self.assertEqual(old.name, 'Quest Diagnostics')
+        self.assertEqual(old.delivered_count, 11)
+        self.assertEqual(FaxRecipient.objects.count(), 1)
+
+    def test_no_entries_is_refused(self):
+        self.assertEqual(self._import([])[0].status_code, 400)

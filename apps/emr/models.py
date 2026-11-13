@@ -1822,3 +1822,79 @@ class OpenEMRPatientLink(models.Model):
     openemr_patient_uuid = models.CharField(max_length=36, unique=True)
     confirmed_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     confirmed_at = models.DateTimeField()
+
+
+class FaxRecipient(models.Model):
+    """One place the practice faxes orders to (2026-11-12).
+
+    A practice-wide directory any staff member can maintain. A fax goes only
+    to a number picked from here, never to one typed at send time: a wrong
+    number sends a patient's order to a stranger.
+
+    `fax_number` is digits with the country code ("15865551234"), the form
+    RingCentral takes. One row per number.
+
+    `delivered_count` is how many faxes to this entry RingCentral has
+    reported delivered. Zero means the number has never been proven, and the
+    app says so before sending.
+
+    Entries are retired (`is_active = False`), never deleted, so an old
+    transmission still names where it went. Written only by the
+    `mobile_fax_recipients` / `mobile_fax_recipient` endpoints, which log
+    every change to `smallbrain.fax`.
+    """
+    name = models.CharField(max_length=255)
+    fax_number = models.CharField(max_length=16, unique=True)
+    note = models.CharField(max_length=255, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    delivered_count = models.IntegerField(default=0)
+    created_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+
+class FaxTransmission(models.Model):
+    """One fax the practice sent, and what became of it (2026-11-12).
+
+    The record of what left the building: who sent it, for which patient,
+    to whom, at which number, which orders were on it, and whether
+    RingCentral delivered it. The recipient's name and number are copied
+    here, so the row stays true after the directory entry is edited.
+
+    `client_uuid` makes the send idempotent: the app retrying a request
+    whose answer it lost gets this row back and nothing is faxed twice.
+
+    States: `sending` (row written, RingCentral not yet answered), `queued`
+    (RingCentral accepted it), `delivered`, `failed`. `todo_ids` is a JSON
+    list of the orders on the requisition, kept as plain integers so the
+    row survives a todo's deletion.
+    """
+    SENDING = 'sending'
+    QUEUED = 'queued'
+    DELIVERED = 'delivered'
+    FAILED = 'failed'
+
+    client_uuid = models.CharField(max_length=36, unique=True)
+    patient = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    sender = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    provider_name = models.CharField(max_length=255, blank=True, default='')
+    recipient = models.ForeignKey(FaxRecipient, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    recipient_name = models.CharField(max_length=255)
+    fax_number = models.CharField(max_length=16)
+    todo_ids = models.TextField(default='[]')
+    status = models.CharField(max_length=16, default=SENDING)
+    rc_message_id = models.CharField(max_length=64, blank=True, default='')
+    rc_status = models.CharField(max_length=64, blank=True, default='')
+    error = models.TextField(blank=True, default='')
+    page_count = models.IntegerField(null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    checked_on = models.DateTimeField(null=True, blank=True)
+    settled_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_on']
+        indexes = [models.Index(fields=['sender', 'created_on'], name='emr_fax_sender_created')]

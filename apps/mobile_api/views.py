@@ -6865,3 +6865,659 @@ def mobile_patient_changed(request, patient_id):
 
     changed = bool(stamp_at is not None and stamp_at > cursor)
     return JsonResponse({'changed': changed, 'server_time': _iso_z(server_time)})
+
+
+# ---------- Fax (RingCentral) ----------
+#
+# Orders go out by fax from the requisition sheet (2026-11-12). The app
+# uploads the PDF it would have printed with a recipient picked from the
+# practice's directory; this server hands it to RingCentral with the one
+# clinic credential (`emr.ringcentral_fax`), keeps a row per transmission,
+# and writes the todo Activity rows.
+#
+# A fax settles minutes after it is accepted, and nothing schedules work on
+# this service, so status is refreshed LAZILY: the sender's app asks for its
+# recent transmissions, and each one still queued is checked with RingCentral
+# then (at most every `_FAX_RECHECK_SECONDS`).
+
+_FAX_LOGGER = logging.getLogger('smallbrain.fax')
+_FAX_MAX_BYTES = 20 * 1024 * 1024
+_FAX_RECHECK_SECONDS = 10
+_FAX_RECENT_HOURS = 48
+# How long a row may sit in `sending` before another request may take it
+# over: longer than the RingCentral call's own timeout, so a slow first
+# request is never raced.
+_FAX_SENDING_GRACE_SECONDS = 90
+
+
+def _fax_caller_is_staff(user):
+    return _role_of(user) in _SEARCH_STAFF_ROLES
+
+
+def _normalize_fax_number(raw):
+    """Digits with the US country code ("15865551234"), or None when `raw`
+    is not a North American fax number. Never guesses: a number with the
+    wrong count of digits is refused, not padded or trimmed."""
+    digits = re.sub(r'\D', '', str(raw or ''))
+    if len(digits) == 10:
+        digits = '1' + digits
+    if len(digits) != 11 or digits[0] != '1':
+        return None
+    # Area code and exchange both start 2-9.
+    if digits[1] in '01' or digits[4] in '01':
+        return None
+    return digits
+
+
+def _display_fax_number(digits):
+    if len(digits) == 11 and digits[0] == '1':
+        return '%s-%s-%s' % (digits[1:4], digits[4:7], digits[7:])
+    return digits
+
+
+def _fax_recipient_json(recipient):
+    return {
+        'id': recipient.id,
+        'name': recipient.name,
+        'fax_number': recipient.fax_number,
+        'display_number': _display_fax_number(recipient.fax_number),
+        'note': recipient.note,
+        'is_active': recipient.is_active,
+        'delivered_count': recipient.delivered_count,
+    }
+
+
+def _fax_transmission_json(row):
+    try:
+        todo_ids = json.loads(row.todo_ids or '[]')
+    except ValueError:
+        todo_ids = []
+    return {
+        'id': row.id,
+        'client_uuid': row.client_uuid,
+        'patient_id': row.patient_id,
+        'status': row.status,
+        'recipient_name': row.recipient_name,
+        'fax_number': row.fax_number,
+        'display_number': _display_fax_number(row.fax_number),
+        'todo_ids': todo_ids,
+        'error': row.error,
+        'page_count': row.page_count,
+        'created_on': _iso_z(row.created_on) if row.created_on else None,
+        'settled_on': _iso_z(row.settled_on) if row.settled_on else None,
+    }
+
+
+def _read_recipient_fields(body, existing=None):
+    """(fields, error). The number must be typed twice and match: a single
+    mistyped digit is the whole risk of this table."""
+    fields = {}
+    if 'name' in body or existing is None:
+        name = str(body.get('name') or '').strip()
+        if not name:
+            return None, 'name_required'
+        fields['name'] = name[:255]
+    if 'note' in body:
+        fields['note'] = str(body.get('note') or '').strip()[:255]
+    if 'fax_number' in body or existing is None:
+        number = _normalize_fax_number(body.get('fax_number'))
+        if number is None:
+            return None, 'invalid_fax_number'
+        if existing is None or number != existing.fax_number:
+            if _normalize_fax_number(body.get('fax_number_confirm')) != number:
+                return None, 'fax_numbers_differ'
+        fields['fax_number'] = number
+    return fields, None
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_recipients(request):
+    """GET -> {configured, recipients: [active entries]}.
+    POST {name, fax_number, fax_number_confirm, note?} -> the new entry.
+
+    Any staff role may read and add (owner decision 2026-11-12). A number
+    already in the table answers 409 with the entry that has it — brought
+    back into use if it had been retired — and never a second row.
+    """
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Not found'}, status=404)
+    from emr import ringcentral_fax
+    from emr.models import FaxRecipient
+
+    if request.method == 'GET':
+        rows = FaxRecipient.objects.filter(is_active=True).order_by('name', 'id')
+        return JsonResponse({
+            'success': True,
+            'configured': ringcentral_fax.is_configured(),
+            'recipients': [_fax_recipient_json(r) for r in rows],
+        })
+    if request.method != 'POST':
+        return JsonResponse({'error': 'GET or POST required'}, status=405)
+
+    fields, error = _read_recipient_fields(_parse_body(request))
+    if error:
+        return JsonResponse({'error': error}, status=400)
+    existing = FaxRecipient.objects.filter(fax_number=fields['fax_number']).first()
+    if existing is not None:
+        if not existing.is_active:
+            existing.is_active = True
+            existing.updated_by = request.user
+            existing.save(update_fields=['is_active', 'updated_by', 'updated_on'])
+            _FAX_LOGGER.info(json.dumps({
+                'event': 'fax_recipient_restored', 'recipient_id': existing.id,
+                'actor_id': request.user.id}))
+        return JsonResponse({
+            'error': 'duplicate_fax_number',
+            'existing': _fax_recipient_json(existing)}, status=409)
+    recipient = FaxRecipient.objects.create(
+        created_by=request.user, updated_by=request.user,
+        note=fields.get('note', ''), name=fields['name'],
+        fax_number=fields['fax_number'])
+    _FAX_LOGGER.info(json.dumps({
+        'event': 'fax_recipient_added', 'recipient_id': recipient.id,
+        'name': recipient.name, 'fax_number': recipient.fax_number,
+        'actor_id': request.user.id}))
+    return JsonResponse({'success': True, 'recipient': _fax_recipient_json(recipient)})
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_recipient(request, recipient_id):
+    """PATCH {name?, note?, fax_number?+fax_number_confirm} -> the entry.
+    DELETE -> retires it (kept so old transmissions still name it).
+
+    A changed number starts the entry's delivered count again: the count
+    says "this number has been proven", and a new number has not been.
+    """
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Not found'}, status=404)
+    from emr.models import FaxRecipient
+    try:
+        recipient = FaxRecipient.objects.get(id=recipient_id)
+    except FaxRecipient.DoesNotExist:
+        return JsonResponse({'error': 'Recipient not found'}, status=404)
+
+    if request.method == 'DELETE':
+        if recipient.is_active:
+            recipient.is_active = False
+            recipient.updated_by = request.user
+            recipient.save(update_fields=['is_active', 'updated_by', 'updated_on'])
+            _FAX_LOGGER.info(json.dumps({
+                'event': 'fax_recipient_retired', 'recipient_id': recipient.id,
+                'actor_id': request.user.id}))
+        return JsonResponse({'success': True})
+    if request.method != 'PATCH':
+        return JsonResponse({'error': 'PATCH or DELETE required'}, status=405)
+
+    fields, error = _read_recipient_fields(_parse_body(request), existing=recipient)
+    if error:
+        return JsonResponse({'error': error}, status=400)
+    new_number = fields.get('fax_number', recipient.fax_number)
+    if new_number != recipient.fax_number:
+        clash = FaxRecipient.objects.filter(fax_number=new_number).exclude(id=recipient.id).first()
+        if clash is not None:
+            return JsonResponse({
+                'error': 'duplicate_fax_number',
+                'existing': _fax_recipient_json(clash)}, status=409)
+        fields['delivered_count'] = 0
+    before = {'name': recipient.name, 'fax_number': recipient.fax_number}
+    for key, value in fields.items():
+        setattr(recipient, key, value)
+    recipient.updated_by = request.user
+    recipient.save()
+    _FAX_LOGGER.info(json.dumps({
+        'event': 'fax_recipient_edited', 'recipient_id': recipient.id,
+        'before': before,
+        'after': {'name': recipient.name, 'fax_number': recipient.fax_number},
+        'actor_id': request.user.id}))
+    return JsonResponse({'success': True, 'recipient': _fax_recipient_json(recipient)})
+
+
+_FAX_CANDIDATE_CACHE = {'at': 0.0, 'value': None}
+_FAX_CANDIDATE_CACHE_SECONDS = 300
+
+
+def _fax_import_candidates(fresh=False):
+    """Fax numbers the clinic already has in RingCentral, merged from two
+    places: the credential owner's contacts, and where faxes were sent in the
+    last year. One entry per number. Returns (candidates by number, problems).
+
+    Each source is read on its own. One failing does not hide the other, and
+    `problems` says which failed, so a short list is never taken for a
+    complete one. Kept for five minutes in this process: contacts are in
+    RingCentral's 10-calls-a-minute group, and the import request that
+    follows the list must check its numbers against the same answer.
+    """
+    import time
+    from emr import ringcentral_fax
+
+    cached = _FAX_CANDIDATE_CACHE['value']
+    if (not fresh and cached is not None
+            and time.time() - _FAX_CANDIDATE_CACHE['at'] < _FAX_CANDIDATE_CACHE_SECONDS):
+        return cached
+
+    by_number = {}
+    problems = {}
+
+    def entry_for(raw):
+        number = _normalize_fax_number(raw)
+        if number is None:
+            return None
+        return by_number.setdefault(number, {
+            'fax_number': number, 'name': '', 'note': '', 'in_contacts': False,
+            'times_faxed': 0, 'times_delivered': 0, 'last_faxed': ''})
+
+    try:
+        for sent in ringcentral_fax.sent_fax_numbers():
+            entry = entry_for(sent['fax_number'])
+            if entry is None:
+                continue
+            entry['times_faxed'] += sent['times_faxed']
+            entry['times_delivered'] += sent['times_delivered']
+            entry['last_faxed'] = max(entry['last_faxed'], sent['last_faxed'])
+            entry['name'] = entry['name'] or sent['name']
+    except (ringcentral_fax.FaxError, ringcentral_fax.FaxNotConfigured) as error:
+        problems['history'] = str(error)[:300]
+
+    try:
+        for contact in ringcentral_fax.contact_fax_numbers():
+            entry = entry_for(contact['fax_number'])
+            if entry is None:
+                continue
+            # A contact's name is one a person chose; it wins over the
+            # history's.
+            if not entry['in_contacts']:
+                entry['name'] = contact['name'] or entry['name']
+                entry['note'] = contact['note']
+            entry['in_contacts'] = True
+    except (ringcentral_fax.FaxError, ringcentral_fax.FaxNotConfigured) as error:
+        problems['contacts'] = str(error)[:300]
+
+    value = (by_number, problems)
+    # An answer with a failed source is not kept: the next press should try
+    # that source again.
+    if not problems:
+        _FAX_CANDIDATE_CACHE['value'] = value
+        _FAX_CANDIDATE_CACHE['at'] = time.time()
+    return value
+
+
+def _fax_candidate_json(entry):
+    return {
+        'fax_number': entry['fax_number'],
+        'display_number': _display_fax_number(entry['fax_number']),
+        'name': entry['name'],
+        'note': entry['note'],
+        'in_contacts': entry['in_contacts'],
+        'times_faxed': entry['times_faxed'],
+        'times_delivered': entry['times_delivered'],
+        'last_faxed': entry['last_faxed'] or None,
+    }
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_import_candidates(request):
+    """GET -> {candidates, problems}: fax numbers the clinic already has in
+    RingCentral that are not in the directory, most faxed first.
+
+    `problems` names a source that could not be read ('contacts', 'history')
+    with RingCentral's reason. An empty `candidates` with a problem is "could
+    not look", not "nothing to import".
+    """
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Not found'}, status=404)
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+    from emr import ringcentral_fax
+    from emr.models import FaxRecipient
+    if not ringcentral_fax.is_configured():
+        return JsonResponse({'error': 'fax_not_configured'}, status=503)
+
+    by_number, problems = _fax_import_candidates(fresh=request.GET.get('fresh') == '1')
+    listed = set(FaxRecipient.objects.filter(is_active=True).values_list('fax_number', flat=True))
+    candidates = [e for n, e in by_number.items() if n not in listed]
+    candidates.sort(key=lambda e: (-e['times_faxed'], (e['name'] or '~').lower(), e['fax_number']))
+    return JsonResponse({
+        'success': True,
+        'candidates': [_fax_candidate_json(e) for e in candidates],
+        'problems': problems,
+        'history_days': ringcentral_fax.HISTORY_DAYS,
+    })
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_import(request):
+    """POST {entries: [{fax_number, name, note?}]} -> {added, skipped}.
+
+    Adds numbers from RingCentral to the directory. A number is taken only
+    if RingCentral really has it (the same merged list the candidates
+    endpoint returns): this route skips the type-it-twice rule, so it must
+    not be a way to add a number nobody ever used. Each entry needs a name.
+
+    An entry starts with the number of faxes RingCentral delivered there in
+    the last year as its delivered count, so a number the clinic has faxed
+    for months is not shown as unproven, and one that is only in someone's
+    contacts is.
+    """
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Not found'}, status=404)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    from emr import ringcentral_fax
+    from emr.models import FaxRecipient
+    if not ringcentral_fax.is_configured():
+        return JsonResponse({'error': 'fax_not_configured'}, status=503)
+
+    entries = _parse_body(request).get('entries')
+    if not isinstance(entries, list) or not entries:
+        return JsonResponse({'error': 'entries is required'}, status=400)
+    by_number, problems = _fax_import_candidates()
+
+    added, skipped = [], []
+    for raw in entries[:500]:
+        if not isinstance(raw, dict):
+            continue
+        number = _normalize_fax_number(raw.get('fax_number'))
+        name = str(raw.get('name') or '').strip()[:255]
+        note = str(raw.get('note') or '').strip()[:255]
+        shown = str(raw.get('fax_number') or '')[:32]
+        if number is None:
+            skipped.append({'fax_number': shown, 'reason': 'invalid_fax_number'})
+            continue
+        known = by_number.get(number)
+        if known is None:
+            skipped.append({'fax_number': number, 'reason': 'not_in_ringcentral'})
+            continue
+        if not name:
+            skipped.append({'fax_number': number, 'reason': 'name_required'})
+            continue
+        existing = FaxRecipient.objects.filter(fax_number=number).first()
+        if existing is not None and existing.is_active:
+            skipped.append({'fax_number': number, 'reason': 'already_listed'})
+            continue
+        if existing is not None:
+            existing.is_active = True
+            existing.name = name
+            existing.note = note
+            existing.delivered_count = max(existing.delivered_count, known['times_delivered'])
+            existing.updated_by = request.user
+            existing.save()
+            recipient = existing
+        else:
+            recipient = FaxRecipient.objects.create(
+                name=name, fax_number=number, note=note,
+                delivered_count=known['times_delivered'],
+                created_by=request.user, updated_by=request.user)
+        added.append(recipient)
+        _FAX_LOGGER.info(json.dumps({
+            'event': 'fax_recipient_imported', 'recipient_id': recipient.id,
+            'name': recipient.name, 'fax_number': recipient.fax_number,
+            'in_contacts': known['in_contacts'], 'times_faxed': known['times_faxed'],
+            'actor_id': request.user.id}))
+    return JsonResponse({
+        'success': True,
+        'added': [_fax_recipient_json(r) for r in added],
+        'skipped': skipped,
+        'problems': problems,
+    })
+
+
+def _fax_todos(row):
+    try:
+        ids = [int(i) for i in json.loads(row.todo_ids or '[]')]
+    except (ValueError, TypeError):
+        ids = []
+    return list(ToDo.objects.filter(id__in=ids, patient_id=row.patient_id))
+
+
+def _settle_fax(row_id, reading):
+    """Record that a queued fax was delivered or failed. Exactly once: the
+    row is locked and re-read, and only a row still `queued` is settled, so
+    two Macs asking at the same moment write one set of Activity rows.
+
+    Delivered: each order's Activity says so, and the directory entry's
+    delivered count goes up. Failed: each order's Activity says why, and the
+    sender is tagged on each order as New, so the order comes back to their
+    My Tagged Todos — the failure reaches the person who sent it.
+    """
+    from emr.models import FaxRecipient, FaxTransmission
+    from django.db.models import F
+    from django.utils import timezone
+
+    with transaction.atomic():
+        row = FaxTransmission.objects.select_for_update().get(id=row_id)
+        if row.status != FaxTransmission.QUEUED:
+            return row
+        row.rc_status = reading.get('rc_status') or row.rc_status
+        row.checked_on = timezone.now()
+        if reading.get('page_count') is not None:
+            row.page_count = reading['page_count']
+        state = reading.get('state')
+        if state not in ('delivered', 'failed'):
+            row.save(update_fields=['rc_status', 'checked_on', 'page_count'])
+            return row
+
+        row.status = state
+        row.settled_on = timezone.now()
+        row.error = reading.get('error') or ''
+        row.save()
+        todos = _fax_todos(row)
+        if state == 'delivered':
+            pages = ''
+            if row.page_count:
+                pages = ' (%d page%s)' % (row.page_count, '' if row.page_count == 1 else 's')
+            activity = 'Fax to %s delivered%s' % (row.recipient_name, pages)
+            if row.recipient_id:
+                FaxRecipient.objects.filter(id=row.recipient_id).update(
+                    delivered_count=F('delivered_count') + 1)
+        else:
+            reason = row.error or row.rc_status or 'no reason given'
+            activity = 'Fax to %s failed: %s' % (row.recipient_name, reason)
+        for todo in todos:
+            add_todo_activity(todo, row.sender, activity)
+            if state == 'failed' and row.sender_id:
+                tag = TaggedToDoOrder.objects.filter(todo=todo, user_id=row.sender_id).first()
+                if tag is None:
+                    TaggedToDoOrder.objects.create(todo=todo, user_id=row.sender_id, status=0)
+                elif tag.status != 0:
+                    tag.status = 0
+                    tag.save(update_fields=['status'])
+        _FAX_LOGGER.info(json.dumps({
+            'event': 'fax_' + state, 'transmission_id': row.id,
+            'patient_id': row.patient_id, 'sender_id': row.sender_id,
+            'recipient_id': row.recipient_id, 'fax_number': row.fax_number,
+            'rc_status': row.rc_status, 'error': row.error}))
+        return row
+
+
+def _refresh_fax(row):
+    """Ask RingCentral about a queued fax, unless it was asked a moment ago.
+    A failure to ask changes nothing: the fax is still queued as far as
+    anyone knows."""
+    from emr import ringcentral_fax
+    from emr.models import FaxTransmission
+    from django.utils import timezone
+
+    if row.status != FaxTransmission.QUEUED or not row.rc_message_id:
+        return row
+    now = timezone.now()
+    if row.checked_on and (now - row.checked_on).total_seconds() < _FAX_RECHECK_SECONDS:
+        return row
+    try:
+        reading = ringcentral_fax.message_status(row.rc_message_id)
+    except (ringcentral_fax.FaxError, ringcentral_fax.FaxNotConfigured):
+        FaxTransmission.objects.filter(id=row.id).update(checked_on=now)
+        return row
+    return _settle_fax(row.id, reading)
+
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_fax_requisition(request, patient_id):
+    """POST multipart {file: the requisition PDF, client_uuid, recipient_id,
+    todo_ids: "1,2,3", provider_id?} -> {success, transmission}.
+
+    Sends the PDF to the directory entry's number through RingCentral and
+    writes "Faxed requisition signed by <provider> to <recipient> (fax <number>)"
+    on every order named. Any staff role with access to the chart may send.
+
+    Refusals are 404 or 4xx with a code, never 403 (the app reads 403 as
+    signed out). `fax_not_configured` (503) is a server with no RingCentral
+    credential. `fax_send_failed` (502) means RingCentral did not take it:
+    nothing was faxed, nothing is written on the todos, and the same
+    client_uuid may be sent again.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+    if not _assert_patient_access(request.user, patient_id):
+        return JsonResponse({'error': 'Patient not found'}, status=404)
+
+    from django.contrib.auth.models import User
+    from django.db import IntegrityError
+    from django.utils import timezone
+    from emr import ringcentral_fax
+    from emr.models import FaxRecipient, FaxTransmission
+
+    client_uuid = (request.POST.get('client_uuid') or '').strip()
+    if not client_uuid or len(client_uuid) > 36:
+        return JsonResponse({'error': 'client_uuid is required'}, status=400)
+
+    try:
+        todo_ids = sorted({int(i) for i in (request.POST.get('todo_ids') or '').split(',') if i.strip()})
+    except ValueError:
+        return JsonResponse({'error': 'invalid_todo_ids'}, status=400)
+    if not todo_ids:
+        return JsonResponse({'error': 'todo_ids is required'}, status=400)
+    todos = list(ToDo.objects.filter(id__in=todo_ids, patient_id=patient_id))
+    if len(todos) != len(todo_ids):
+        # Every order must be on THIS chart. One that is not means the
+        # request was built wrong, and a requisition is one patient's.
+        return JsonResponse({'error': 'Todo not found'}, status=404)
+
+    try:
+        recipient = FaxRecipient.objects.get(
+            id=int(request.POST.get('recipient_id') or 0), is_active=True)
+    except (FaxRecipient.DoesNotExist, ValueError):
+        return JsonResponse({'error': 'recipient_not_found'}, status=400)
+
+    upload = request.FILES.get('file')
+    if not upload:
+        return JsonResponse({'error': 'No file provided'}, status=400)
+    if upload.size > _FAX_MAX_BYTES:
+        return JsonResponse({'error': 'file_too_large'}, status=400)
+    pdf_bytes = upload.read()
+    if not pdf_bytes.startswith(b'%PDF'):
+        return JsonResponse({'error': 'not_a_pdf'}, status=400)
+
+    if not ringcentral_fax.is_configured():
+        return JsonResponse({'error': 'fax_not_configured'}, status=503)
+
+    provider_name = ''
+    try:
+        provider = User.objects.get(id=int(request.POST.get('provider_id') or 0))
+        provider_name = provider.get_full_name() or provider.username
+    except (User.DoesNotExist, ValueError):
+        pass
+
+    # Claim the client_uuid before anything is faxed. The unique column is
+    # the mutex: of two requests with one uuid, one creates the row.
+    try:
+        with transaction.atomic():
+            row = FaxTransmission.objects.create(
+                client_uuid=client_uuid, patient_id=int(patient_id),
+                sender=request.user, provider_name=provider_name,
+                recipient=recipient, recipient_name=recipient.name,
+                fax_number=recipient.fax_number,
+                todo_ids=json.dumps(todo_ids), status=FaxTransmission.SENDING)
+    except IntegrityError:
+        row = FaxTransmission.objects.get(client_uuid=client_uuid)
+        if row.patient_id != int(patient_id):
+            return JsonResponse({'error': 'client_uuid is required'}, status=400)
+        if row.rc_message_id:
+            # Already handed to RingCentral: this is a retry of a request
+            # whose answer was lost. Never fax twice.
+            return JsonResponse({
+                'success': True, 'replayed': True,
+                'transmission': _fax_transmission_json(row)})
+        age = (timezone.now() - row.created_on).total_seconds()
+        if row.status == FaxTransmission.SENDING and age < _FAX_SENDING_GRACE_SECONDS:
+            return JsonResponse({'error': 'fax_in_progress'}, status=409)
+        # An earlier attempt never reached RingCentral: take the row over,
+        # with what THIS request asked for.
+        row.recipient = recipient
+        row.recipient_name = recipient.name
+        row.fax_number = recipient.fax_number
+        row.todo_ids = json.dumps(todo_ids)
+        row.provider_name = provider_name
+        row.sender = request.user
+        row.status = FaxTransmission.SENDING
+        row.error = ''
+        row.save()
+
+    try:
+        sent = ringcentral_fax.send_fax(pdf_bytes, recipient.fax_number)
+    except (ringcentral_fax.FaxError, ringcentral_fax.FaxNotConfigured) as error:
+        row.status = FaxTransmission.FAILED
+        row.error = str(error)[:500]
+        row.settled_on = timezone.now()
+        row.save()
+        _FAX_LOGGER.warning(json.dumps({
+            'event': 'fax_not_accepted', 'transmission_id': row.id,
+            'patient_id': row.patient_id, 'sender_id': request.user.id,
+            'recipient_id': recipient.id, 'error': row.error}))
+        return JsonResponse({'error': 'fax_send_failed', 'detail': row.error}, status=502)
+
+    row.rc_message_id = sent['message_id']
+    row.rc_status = sent.get('rc_status') or ''
+    row.page_count = sent.get('page_count')
+    row.status = FaxTransmission.QUEUED
+    row.save()
+
+    signed = (' signed by %s' % provider_name) if provider_name else ''
+    activity = 'Faxed requisition%s to %s (fax %s)' % (
+        signed, recipient.name, _display_fax_number(recipient.fax_number))
+    for todo in todos:
+        add_todo_activity(todo, request.user, activity)
+    _FAX_LOGGER.info(json.dumps({
+        'event': 'fax_queued', 'transmission_id': row.id,
+        'patient_id': row.patient_id, 'sender_id': request.user.id,
+        'recipient_id': recipient.id, 'fax_number': recipient.fax_number,
+        'todo_ids': todo_ids, 'rc_message_id': row.rc_message_id}))
+
+    # RingCentral can answer with a settled state at once (a refused number).
+    if sent.get('state') in ('delivered', 'failed'):
+        row = _settle_fax(row.id, sent)
+    return JsonResponse({'success': True, 'transmission': _fax_transmission_json(row)})
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_transmissions(request):
+    """GET -> {transmissions: the caller's own faxes from the last 48 hours,
+    newest first}, each still-queued one checked with RingCentral first.
+
+    This is what moves a fax from queued to delivered or failed: the
+    sender's app asks while it has a fax outstanding. Settling writes the
+    todo Activity rows and bumps the patient's stamp through them.
+    """
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Not found'}, status=404)
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required'}, status=405)
+    from django.utils import timezone
+    from emr.models import FaxTransmission
+
+    since = timezone.now() - datetime.timedelta(hours=_FAX_RECENT_HOURS)
+    rows = list(FaxTransmission.objects.filter(
+        sender=request.user, created_on__gte=since).order_by('-created_on', '-id')[:100])
+    rows = [_refresh_fax(row) for row in rows]
+    return JsonResponse({
+        'success': True,
+        'transmissions': [_fax_transmission_json(row) for row in rows],
+    })
