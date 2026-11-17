@@ -1,5 +1,6 @@
 from django.urls import re_path as url
 from . import views
+from . import fax_review
 
 urlpatterns = [
     url(r'^healthz/?$', views.mobile_healthz),
@@ -128,6 +129,20 @@ urlpatterns = [
     url(r'^fax/transmissions$', views.mobile_fax_transmissions),
     url(r'^fax/inbox/check$', views.mobile_fax_inbox_check),
     url(r'^patient/(?P<patient_id>\d+)/fax/requisition$', views.mobile_fax_requisition),
+    # Preparing and approving documents (emr.DocumentReview): the lists, a
+    # chart's reviews, and each step. See apps/mobile_api/fax_review.py.
+    url(r'^fax/reviews$', fax_review.mobile_fax_reviews),
+    url(r'^patient/(?P<patient_id>\d+)/document-reviews$', fax_review.mobile_patient_document_reviews),
+    url(r'^fax/review/(?P<document_id>\d+)$', fax_review.mobile_fax_review),
+    url(r'^fax/review/(?P<document_id>\d+)/ready$', fax_review.mobile_fax_review_ready),
+    url(r'^fax/review/(?P<document_id>\d+)/file$', fax_review.mobile_fax_review_file),
+    url(r'^fax/review/(?P<document_id>\d+)/later$', fax_review.mobile_fax_review_later),
+    url(r'^fax/review/(?P<document_id>\d+)/send-back$', fax_review.mobile_fax_review_send_back),
+    url(r'^fax/review/(?P<document_id>\d+)/approve$', fax_review.mobile_fax_review_approve),
+    url(r'^fax/review/(?P<document_id>\d+)/set-aside$', fax_review.mobile_fax_review_set_aside),
+    url(r'^fax/review/(?P<document_id>\d+)/restore$', fax_review.mobile_fax_review_restore),
+    url(r'^fax/review/(?P<document_id>\d+)/pages$', fax_review.mobile_fax_review_pages),
+    url(r'^fax/review/(?P<document_id>\d+)/original$', fax_review.mobile_fax_review_original),
     # Error reporting
     url(r'^errors/batch/$', views.mobile_batch_errors),
     # Terminology mapping
