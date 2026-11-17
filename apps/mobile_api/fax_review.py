@@ -12,6 +12,11 @@ Rules, each load-bearing:
     moves) plus the label, the problem links and the review row. The chart
     shows the document at once, marked not yet reviewed, so staff can answer
     a patient's call about it.
+  * **Staff may file some kinds straight to the chart** (`file`), with no
+    review: only a fax whose label is in `FAX_STAFF_FILE_LABELS` (empty by
+    default, so nothing qualifies until the owner picks), only from the pool,
+    never a flagged one. Anything else answers 409 `needs_review` and is
+    left as it was; staff can always send any fax to the physician instead.
   * **Only the physician whose pool the fax came in on approves or sends
     back.** Staff, other physicians and admins get 403 `not_approver`.
   * **Approval makes the follow-through, in one transaction**: the fax is
@@ -316,7 +321,8 @@ def mobile_fax_reviews(request):
 @login_required
 def mobile_patient_document_reviews(request, patient_id):
     """GET -> the review of each of this chart's documents that has one, for
-    the Docs tab's mark ("Not yet reviewed" / "Reviewed by …"). Read-only."""
+    the Docs tab's mark ("Not yet reviewed" / "Reviewed by …" / "Filed by …",
+    the last for a fax staff filed with no review). Read-only."""
     if request.method != 'GET':
         return _refuse('GET required', 405)
     if not api._fax_caller_is_staff(request.user) or not api._assert_patient_access(request.user, patient_id):
@@ -344,12 +350,14 @@ def mobile_patient_document_reviews(request, patient_id):
 @csrf_exempt
 @login_required
 def mobile_fax_review(request, document_id):
-    """GET -> {review: one document's review, or null when it has none}.
+    """GET -> {review: one document's review, or null when it has none,
+    staff_file_labels: the labels staff may file without review}.
 
     The prepare sheet asks before it shows a pool fax, because the pool list
     does not say whether pages were removed on another Mac: without the list
     of removed pages a Mac would number pages from its own, possibly
-    outdated, copy of the file. Read-only."""
+    outdated, copy of the file. The same answer tells it whether to offer
+    "File to chart". Read-only."""
     if request.method != 'GET':
         return _refuse('GET required', 405)
     if not api._fax_caller_is_staff(request.user):
@@ -358,11 +366,12 @@ def mobile_fax_review(request, document_id):
     if doc is None or not _can_reach(request.user, doc):
         return _not_found()
     if not enabled():
-        return JsonResponse({'success': True, 'enabled': False, 'review': None})
+        return JsonResponse({'success': True, 'enabled': False, 'review': None, 'staff_file_labels': []})
     review = DocumentReview.objects.filter(document=doc).select_related(
         'order_todo', 'order_todo__problem', 'prepared_by', 'returned_by', 'approved_by', 'set_aside_by').first()
     return JsonResponse({'success': True, 'enabled': True,
-                         'review': review_json(review, detail=True) if review else None})
+                         'review': review_json(review, detail=True) if review else None,
+                         'staff_file_labels': staff_file_labels()})
 
 
 # ---------------------------------------------------------------------------
@@ -384,6 +393,17 @@ def _rename(request, doc, name):
 # The document-type labels. A document carries one of them; "screening" and
 # any ad-hoc label sit beside it and are never touched here.
 TYPE_LABELS = ('laboratory', 'imaging', 'procedure', 'correspondence', 'referral', 'medication')
+
+
+def staff_file_labels():
+    """The type labels staff may file without the physician's approval:
+    `FAX_STAFF_FILE_LABELS`, case ignored, keeping only type labels, in
+    TYPE_LABELS order. Empty unless the owner has chosen some."""
+    configured = getattr(settings, 'FAX_STAFF_FILE_LABELS', None) or []
+    if isinstance(configured, str):
+        configured = configured.split(',')
+    wanted = {str(name).strip().lower() for name in configured}
+    return [name for name in TYPE_LABELS if name in wanted]
 
 
 def _set_label(request, doc, name):
@@ -519,8 +539,38 @@ def _order_todo(patient_id, raw):
     return ToDo.objects.filter(id=todo_id, patient_id=patient_id).select_related('problem').first()
 
 
+def _assign_from_pool(request, doc, patient, body):
+    """Assign: the same row change and audit as
+    mobile_unassigned_document_assign, with the name staff chose and the page
+    text their Mac read. Clears `Document.team`, so a caller that needs the
+    pool's team reads it first."""
+    old_name = doc.document_name or ''
+    new_name = (body.get('document_name') or '').strip()[:MAX_NAME] or old_name
+    doc.document_name = new_name
+    fields = ['patient', 'team', 'claimed_by', 'claimed_at', 'document_name']
+    text = body.get('extracted_text')
+    if isinstance(text, str) and (text or not doc.extracted_text):
+        doc.extracted_text = text
+        doc.extracted_text_at = timezone.now()
+        try:
+            version = body.get('extracted_text_version')
+            doc.extracted_text_version = int(version) if version not in (None, '') else None
+        except (TypeError, ValueError):
+            doc.extracted_text_version = None
+        fields += ['extracted_text', 'extracted_text_at', 'extracted_text_version']
+    doc.patient = patient
+    doc.team = None
+    doc.claimed_by = None
+    doc.claimed_at = None
+    doc.save(update_fields=fields)
+    if new_name != old_name:
+        api._emit_document_audit(
+            doc, request.user, f"Renamed document: {old_name or 'document'} -> {new_name}")
+    api._emit_document_audit(doc, request.user, f"Added document: {new_name or 'document'}")
+
+
 # ---------------------------------------------------------------------------
-# Staff: ready, set aside, restore
+# Staff: ready, file, set aside, restore
 # ---------------------------------------------------------------------------
 
 @csrf_exempt
@@ -570,31 +620,7 @@ def mobile_fax_review_ready(request, document_id):
             review.team_id = doc.team_id
 
         if from_pool:
-            # Assign: the same row change and audit as
-            # mobile_unassigned_document_assign.
-            old_name = doc.document_name or ''
-            new_name = (body.get('document_name') or '').strip()[:MAX_NAME] or old_name
-            doc.document_name = new_name
-            fields = ['patient', 'team', 'claimed_by', 'claimed_at', 'document_name']
-            text = body.get('extracted_text')
-            if isinstance(text, str) and (text or not doc.extracted_text):
-                doc.extracted_text = text
-                doc.extracted_text_at = timezone.now()
-                try:
-                    version = body.get('extracted_text_version')
-                    doc.extracted_text_version = int(version) if version not in (None, '') else None
-                except (TypeError, ValueError):
-                    doc.extracted_text_version = None
-                fields += ['extracted_text', 'extracted_text_at', 'extracted_text_version']
-            doc.patient = patient
-            doc.team = None
-            doc.claimed_by = None
-            doc.claimed_at = None
-            doc.save(update_fields=fields)
-            if new_name != old_name:
-                api._emit_document_audit(
-                    doc, request.user, f"Renamed document: {old_name or 'document'} -> {new_name}")
-            api._emit_document_audit(doc, request.user, f"Added document: {new_name or 'document'}")
+            _assign_from_pool(request, doc, patient, body)
         else:
             if doc.patient_id != patient.id:
                 stamped.add(_take_off_chart(request, doc))
@@ -625,6 +651,74 @@ def mobile_fax_review_ready(request, document_id):
         answer = review_json(review, detail=True)
 
     _log('fax_review_ready', request, document_id=doc.id, patient_id=patient.id, from_pool=from_pool)
+    return JsonResponse({'success': True, 'review': answer})
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_review_file(request, document_id):
+    """POST {patient_id, label, document_name?, problem_ids?, order_todo_id?,
+    note?, extracted_text?, extracted_text_version?} -> the fax is filed to
+    the chart with no review (owner decision 2026-11-17: staff may file some
+    kinds directly).
+
+    Only a fax still in the pool, only with a label in
+    `FAX_STAFF_FILE_LABELS`, and never a flagged one: anything else answers
+    409 (`needs_review`, `not_in_pool`, `set_aside`) and nothing changes.
+    It is assign plus the prepared fields; because no approval follows, the
+    order the fax answers is linked now (never checked off). The review row
+    is kept in state `filed`, so the chart says who filed it and the
+    physician's queue never shows it.
+    """
+    refusal = _gate(request, 'POST')
+    if refusal:
+        return refusal
+    body = _body(request)
+    if body is None:
+        return _refuse('invalid_json', 400)
+    allowed = staff_file_labels()
+    label = str(body.get('label') or '').strip()
+    if label.lower() not in allowed or bool(body.get('flagged')):
+        return _refuse('needs_review', 409, staff_file_labels=allowed)
+    target_id = body.get('patient_id')
+    if not target_id or not api._assert_patient_access(request.user, target_id):
+        return _refuse('patient_not_found', 404)
+    patient = User.objects.filter(id=target_id).first()
+    if patient is None:
+        return _refuse('patient_not_found', 404)
+
+    with transaction.atomic():
+        doc, review = _locked(document_id)
+        if doc is None or not _can_reach(request.user, doc):
+            return _not_found()
+        if review is not None and review.state == DocumentReview.SET_ASIDE:
+            return _refuse('set_aside', 409)
+        if doc.patient_id is not None:
+            return _refuse('not_in_pool', 409, state=review.state if review else None)
+        if _held_by_other(request.user, doc):
+            return _refuse('already_claimed', 409, claimed_by_name=_display(doc.claimed_by))
+        if review is None:
+            review = DocumentReview(document=doc)
+        review.team_id = doc.team_id
+        _assign_from_pool(request, doc, patient, body)
+        _set_label(request, doc, label)
+        if isinstance(body.get('problem_ids'), list):
+            _set_problems(request, doc, body['problem_ids'])
+        order = _order_todo(patient.id, body.get('order_todo_id'))
+        if order is not None:
+            _link_todo(request, doc, order)
+        review.order_todo = order
+        review.note = str(body.get('note') or '')[:MAX_NOTE]
+        review.flagged = False
+        review.state = DocumentReview.FILED
+        review.prepared_by = request.user
+        review.prepared_at = timezone.now()
+        review.save()
+        # Manual stamp: the chart is named in the body, not the URL.
+        touch_patient_stamp(patient.id)
+        answer = review_json(review)
+
+    _log('fax_review_filed', request, document_id=doc.id, patient_id=patient.id, label=label.lower())
     return JsonResponse({'success': True, 'review': answer})
 
 
@@ -744,8 +838,6 @@ def _call_title(step, patient_name, doc_name, message):
         return f"Call {patient_name}: {message}" if message else f"Call {patient_name} about {doc_name}"
     if step == DocumentReview.TELL_PATIENT:
         return f"Tell {patient_name} the {doc_name} is fine" + (f": {message}" if message else '')
-    if step == DocumentReview.NORMAL_LETTER:
-        return f"Send {patient_name} a normal-result letter: {doc_name}" + (f" ({message})" if message else '')
     return None
 
 
@@ -757,9 +849,10 @@ def mobile_fax_review_approve(request, document_id):
     problem_ids?, order_todo_id?}} -> reviewed. Approver only.
 
     `next_step` is one of staff_call, physician_call, tell_patient,
-    nothing_to_tell, normal_letter. Every step but nothing_to_tell makes a
-    todo: the call (or the letter to send) tagged to whoever prepared the
-    fax, or to the physician for physician_call. A `follow_up_title` with
+    nothing_to_tell (the physician's keys 1–4; there is no letter step). Every
+    step but nothing_to_tell makes a todo: the call, or telling the patient,
+    tagged to whoever prepared the fax, or to the physician for
+    physician_call. A `follow_up_title` with
     `follow_up_days` makes the follow-up order, due that many days out,
     tagged to the preparer. The fax is linked to its order either way, and
     the order is checked off when `mark_order_done`.

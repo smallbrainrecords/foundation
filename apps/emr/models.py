@@ -1951,6 +1951,9 @@ class DocumentReview(models.Model):
       new        — in the pool, nothing decided (a row exists only because a
                    page was removed, or it was restored from set-aside)
       ready      — filed to the chart by staff, waiting for the physician
+      filed      — filed to the chart by staff with no review, allowed only
+                   for the labels in `FAX_STAFF_FILE_LABELS`; never in the
+                   physician's queue
       returned   — sent back to staff with `returned_note`; still on the chart
       approved   — reviewed; `next_step` says what happens with the patient
       set_aside  — not for a chart. The document is off every chart and out
@@ -1974,16 +1977,18 @@ class DocumentReview(models.Model):
     """
     NEW = 'new'
     READY = 'ready'
+    FILED = 'filed'
     RETURNED = 'returned'
     APPROVED = 'approved'
     SET_ASIDE = 'set_aside'
 
+    # The physician's four keys. There is no letter step: Return means
+    # nothing to tell, results included (owner decision 2026-11-17).
     STAFF_CALL = 'staff_call'
     PHYSICIAN_CALL = 'physician_call'
     TELL_PATIENT = 'tell_patient'
     NOTHING_TO_TELL = 'nothing_to_tell'
-    NORMAL_LETTER = 'normal_letter'
-    NEXT_STEPS = (STAFF_CALL, PHYSICIAN_CALL, TELL_PATIENT, NOTHING_TO_TELL, NORMAL_LETTER)
+    NEXT_STEPS = (STAFF_CALL, PHYSICIAN_CALL, TELL_PATIENT, NOTHING_TO_TELL)
 
     document = models.OneToOneField(Document, related_name='review', on_delete=models.CASCADE)
     state = models.CharField(max_length=16, default=NEW)

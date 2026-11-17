@@ -3559,6 +3559,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_unassigned_document_assign': 'MobileUnassignedDocumentAssignStampTests',
         'mobile_update_user': 'MobileUpdateUserStampTests',
         'mobile_fax_review_ready': 'FaxReviewStampTests',
+        'mobile_fax_review_file': 'FaxReviewStampTests',
         'mobile_fax_review_send_back': 'FaxReviewStampTests',
         'mobile_fax_review_approve': 'FaxReviewStampTests',
         'mobile_fax_review_set_aside': 'FaxReviewStampTests',
@@ -9234,6 +9235,119 @@ class FaxReviewReadyTests(_FaxReviewBase):
         self.assertEqual(self._post('ready', {'patient_id': self.patient.id}, doc=filed).status_code, 409)
 
 
+class FaxReviewFileTests(_FaxReviewBase):
+    """POST /api/fax/review/<id>/file — staff file a kind the owner chose
+    straight to the chart, with no review (owner decision 2026-11-17)."""
+
+    def _file(self, **extra):
+        body = {'patient_id': self.patient.id, 'document_name': 'Records request',
+                'label': 'Correspondence', 'problem_ids': [self.problem.id]}
+        body.update(extra)
+        return self._post('file', body)
+
+    def test_an_allowed_kind_is_filed_with_no_review(self):
+        self._login(self.team_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['correspondence']):
+            response = self._file(order_todo_id=self.order.id, note='FYI')
+        self.assertEqual(response.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual((self.doc.patient_id, self.doc.team_id, self.doc.document_name),
+                         (self.patient.id, None, 'Records request'))
+        self.assertEqual([l.name for l in self.doc.labels.all()], ['Correspondence'])
+        self.assertTrue(DocumentProblem.objects.filter(document=self.doc, problem=self.problem).exists())
+        review = self._review()
+        self.assertEqual((review.state, review.team_id, review.prepared_by_id, review.note, review.flagged),
+                         ('filed', self.attending.id, self.team_nurse.id, 'FYI', False))
+        # No approval follows, so the order is linked now, and never checked off.
+        self.assertTrue(DocumentTodo.objects.filter(document=self.doc, todo=self.order).exists())
+        self.order.refresh_from_db()
+        self.assertFalse(self.order.accomplished)
+        self.assertIn('Added document: Records request',
+                      list(ProblemActivity.objects.values_list('activity', flat=True)))
+
+    def test_a_filed_fax_never_reaches_the_physicians_queue(self):
+        self._login(self.team_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['correspondence']):
+            self._file()
+        self.client.logout()
+        self._login(self.attending)
+        self.assertEqual(self.client.get('/api/fax/reviews').json()['queue'], [])
+        marks = self.client.get(f'/api/patient/{self.patient.id}/document-reviews').json()['reviews']
+        self.assertEqual([(m['document_id'], m['state'], m['prepared_by_name']) for m in marks],
+                         [(self.doc.id, 'filed', 'Amy Stone')])
+        self.assertEqual(self._post('approve', {'next_step': 'nothing_to_tell'}).status_code, 409)
+
+    def test_a_kind_not_on_the_list_must_go_to_the_physician(self):
+        from emr.models import DocumentReview
+        self._login(self.team_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['correspondence']):
+            response = self._file(label='Laboratory')
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'needs_review'))
+        self.assertEqual(response.json()['staff_file_labels'], ['correspondence'])
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.patient_id)
+        self.assertFalse(DocumentReview.objects.filter(document=self.doc).exists())
+
+    def test_nothing_can_be_filed_until_the_owner_picks_kinds(self):
+        self._login(self.team_nurse)
+        response = self._file()
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'needs_review'))
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.patient_id)
+
+    def test_a_flagged_fax_must_go_to_the_physician(self):
+        self._login(self.team_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['correspondence']):
+            response = self._file(flagged=True)
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'needs_review'))
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.patient_id)
+
+    def test_only_a_fax_in_the_pool_can_be_filed(self):
+        # Waiting for the physician, or sent back by him: it stays his.
+        self._prepared()
+        self._post('send-back', {'note': 'Which chart?'})
+        self.client.logout()
+        self._login(self.team_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['correspondence', 'laboratory']):
+            response = self._file()
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'not_in_pool'))
+        self.assertEqual(self._review().state, 'returned')
+
+    def test_a_chart_the_caller_cannot_open_is_refused(self):
+        self._login(self.stranger_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['correspondence']):
+            self.assertEqual(self._file().status_code, 404)
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.patient_id)
+
+    def test_switched_off_refuses(self):
+        self._login(self.team_nurse)
+        with override_settings(FAX_REVIEW_ENABLED=False, FAX_STAFF_FILE_LABELS=['correspondence']):
+            self.assertEqual(self._file().status_code, 503)
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.patient_id)
+
+    def test_a_filed_fax_can_be_set_aside_and_filed_again(self):
+        self._login(self.team_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['correspondence']):
+            self.assertEqual(self._file().status_code, 200)
+            self.assertEqual(self._post('set-aside').status_code, 200)
+            self.doc.refresh_from_db()
+            self.assertIsNone(self.doc.patient_id)
+            self.assertEqual(self._post('restore').status_code, 200)
+            self.assertEqual(self._file().status_code, 200)
+        self.assertEqual(self._review().state, 'filed')
+
+    def test_the_sheet_is_told_which_kinds_staff_may_file(self):
+        self._login(self.team_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['Medication', ' CORRESPONDENCE', 'records request']):
+            body = self.client.get(f'/api/fax/review/{self.doc.id}').json()
+        self.assertEqual(body['staff_file_labels'], ['correspondence', 'medication'])
+        self.assertIsNone(body['review'])
+        self.assertEqual(self.client.get(f'/api/fax/review/{self.doc.id}').json()['staff_file_labels'], [])
+
+
 class FaxReviewListTests(_FaxReviewBase):
     """GET /api/fax/reviews and the chart's document reviews."""
 
@@ -9346,7 +9460,7 @@ class FaxReviewApproveTests(_FaxReviewBase):
         self.assertEqual(todo.todo, 'Call Nora Vance about CMP')
         self.assertEqual(TaggedToDoOrder.objects.get(todo=todo).user_id, self.attending.id)
 
-    def test_tell_the_patient_and_the_letter_are_todos_for_the_preparer(self):
+    def test_tell_the_patient_is_a_todo_for_the_preparer_under_the_faxs_problem(self):
         self._prepared()
         body = self._post('approve', {'next_step': 'tell_patient'}).json()
         self.assertEqual(self._todo(body['todo_ids'][0]).todo, 'Tell Nora Vance the CMP is fine')
@@ -9358,11 +9472,21 @@ class FaxReviewApproveTests(_FaxReviewBase):
         self._post('ready', {'patient_id': self.patient.id, 'problem_ids': [self.other_problem.id]}, doc=second)
         self.client.logout()
         self._login(self.attending)
-        body = self._post('approve', {'next_step': 'normal_letter'}, doc=second).json()
-        letter = self._todo(body['todo_ids'][0])
-        self.assertEqual((letter.todo, letter.problem_id),
-                         ('Send Nora Vance a normal-result letter: Lipid', self.other_problem.id))
-        self.assertEqual(TaggedToDoOrder.objects.get(todo=letter).user_id, self.team_nurse.id)
+        body = self._post('approve', {'next_step': 'tell_patient'}, doc=second).json()
+        told = self._todo(body['todo_ids'][0])
+        self.assertEqual((told.todo, told.problem_id),
+                         ('Tell Nora Vance the Lipid is fine', self.other_problem.id))
+        self.assertEqual(TaggedToDoOrder.objects.get(todo=told).user_id, self.team_nurse.id)
+
+    def test_there_is_no_letter_step(self):
+        # Owner decision 2026-11-17: Return means nothing to tell, results
+        # included; a patient is told through "tell the patient" (key 3).
+        self._prepared()
+        todos = ToDo.objects.count()
+        response = self._post('approve', {'next_step': 'normal_letter'})
+        self.assertEqual((response.status_code, response.json()['error']), (400, 'next_step_required'))
+        self.assertEqual(ToDo.objects.count(), todos)
+        self.assertEqual(self._review().state, 'ready')
 
     def test_a_follow_up_order_is_a_dated_todo_for_the_preparer(self):
         self._prepared()
@@ -9608,6 +9732,11 @@ class FaxReviewStampTests(_FaxReviewBase):
     def test_setting_a_waiting_fax_aside_stamps_the_chart_it_leaves(self):
         self._prepared()
         self._moves(lambda: self._post('set-aside'))
+
+    def test_filing_without_review_stamps_the_chart(self):
+        self._login(self.team_nurse)
+        with override_settings(FAX_STAFF_FILE_LABELS=['correspondence']):
+            self._moves(lambda: self._post('file', {'patient_id': self.patient.id, 'label': 'Correspondence'}))
 
 
 class FaxReviewFollowUpTests(_FaxReviewBase):

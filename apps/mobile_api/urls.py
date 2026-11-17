@@ -135,6 +135,7 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/document-reviews$', fax_review.mobile_patient_document_reviews),
     url(r'^fax/review/(?P<document_id>\d+)$', fax_review.mobile_fax_review),
     url(r'^fax/review/(?P<document_id>\d+)/ready$', fax_review.mobile_fax_review_ready),
+    url(r'^fax/review/(?P<document_id>\d+)/file$', fax_review.mobile_fax_review_file),
     url(r'^fax/review/(?P<document_id>\d+)/send-back$', fax_review.mobile_fax_review_send_back),
     url(r'^fax/review/(?P<document_id>\d+)/approve$', fax_review.mobile_fax_review_approve),
     url(r'^fax/review/(?P<document_id>\d+)/set-aside$', fax_review.mobile_fax_review_set_aside),

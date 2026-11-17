@@ -63,6 +63,13 @@ INBOUND_FAX_START = env.str('INBOUND_FAX_START', default='')
 # app build that has them is in use.
 FAX_REVIEW_ENABLED = env.bool('FAX_REVIEW_ENABLED', default=True)
 
+# The document labels staff may file straight to the chart without the
+# physician's approval (owner decision 2026-11-17 that some may; which ones is
+# the owner's). Comma-separated, case ignored, only the six document-type
+# labels count (laboratory, imaging, procedure, correspondence, referral,
+# medication). Empty — the default — means every fax goes to the physician.
+FAX_STAFF_FILE_LABELS = env.list('FAX_STAFF_FILE_LABELS', default=[])
+
 # Per-patient access check on the mobile chart endpoint (mobile_patient_full).
 # Off, the check only LOGS the requests it would refuse
 # (`patient_full_would_refuse` on the smallbrain.patient_access logger) and
