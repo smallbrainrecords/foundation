@@ -1933,3 +1933,87 @@ class InboundFax(models.Model):
         ordering = ['-received_at']
 
 
+
+
+class DocumentReview(models.Model):
+    """Where one document stands between arriving and the physician's
+    sign-off (2026-11-17, inbound-fax plan phase 2 — SBR1
+    PLAN_INBOUND_FAX_2026-11.md).
+
+    Staff prepare a fax from the unassigned pool (patient, name, label, the
+    open order it answers, problems, a note) and mark it ready; the physician
+    whose pool it arrived in approves it with one click, sends it back with a
+    note, or sets it aside. One row per document, made the first time
+    anything about its review is recorded; a document with no row was filed
+    the old way and has no review.
+
+    States:
+      new        — in the pool, nothing decided (a row exists only because a
+                   page was removed, or it was restored from set-aside)
+      ready      — filed to the chart by staff, waiting for the physician
+      returned   — sent back to staff with `returned_note`; still on the chart
+      approved   — reviewed; `next_step` says what happens with the patient
+      set_aside  — not for a chart. The document is off every chart and out
+                   of the pool list; `restore` puts it back in the pool for
+                   30 days, after which `purge_set_aside_faxes` may delete it
+
+    `team` is the physician whose pool the document came in on, kept here
+    because assigning a document clears `Document.team`. That physician is
+    the approver.
+
+    Pages: `original_file` is the storage name of the file as it arrived,
+    kept the first time a page is removed and never deleted or rewritten, so
+    the fax as received can always be served and a removed page put back.
+    `removed_pages` is a JSON list of {page, by, by_name, at, reason} with
+    `page` numbered in the file as received.
+
+    `changes` is a JSON list of what the physician changed from what staff
+    prepared, [{field, from, to}], so preparers can see what gets corrected.
+
+    Written only by `apps.mobile_api.fax_review`.
+    """
+    NEW = 'new'
+    READY = 'ready'
+    RETURNED = 'returned'
+    APPROVED = 'approved'
+    SET_ASIDE = 'set_aside'
+
+    STAFF_CALL = 'staff_call'
+    PHYSICIAN_CALL = 'physician_call'
+    TELL_PATIENT = 'tell_patient'
+    NOTHING_TO_TELL = 'nothing_to_tell'
+    NORMAL_LETTER = 'normal_letter'
+    NEXT_STEPS = (STAFF_CALL, PHYSICIAN_CALL, TELL_PATIENT, NOTHING_TO_TELL, NORMAL_LETTER)
+
+    document = models.OneToOneField(Document, related_name='review', on_delete=models.CASCADE)
+    state = models.CharField(max_length=16, default=NEW)
+    team = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+
+    prepared_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    prepared_at = models.DateTimeField(null=True, blank=True)
+    note = models.TextField(blank=True, default='')
+    flagged = models.BooleanField(default=False)
+    order_todo = models.ForeignKey(ToDo, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+
+    returned_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    returned_at = models.DateTimeField(null=True, blank=True)
+    returned_note = models.TextField(blank=True, default='')
+
+    approved_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    next_step = models.CharField(max_length=32, blank=True, default='')
+    message = models.TextField(blank=True, default='')
+    order_marked_done = models.BooleanField(default=False)
+    changes = models.TextField(default='[]')
+
+    set_aside_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    set_aside_at = models.DateTimeField(null=True, blank=True)
+
+    original_file = models.CharField(max_length=255, blank=True, default='')
+    removed_pages = models.TextField(default='[]')
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['state', 'team'], name='emr_docreview_state_team')]

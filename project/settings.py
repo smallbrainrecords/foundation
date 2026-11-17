@@ -55,6 +55,14 @@ INBOUND_FAX_ENABLED = env.bool('INBOUND_FAX_ENABLED', default=False)
 INBOUND_FAX_TEAM_ID = env.int('INBOUND_FAX_TEAM_ID', default=0)
 INBOUND_FAX_START = env.str('INBOUND_FAX_START', default='')
 
+# Preparing and approving documents (apps.mobile_api.fax_review, 2026-11-17):
+# staff prepare each fax from the pool and the physician approves it. With
+# this off the review list answers `enabled: false` and every review write
+# is refused, so FAX_REVIEW_ENABLED=false on the service puts every Mac back
+# on plain assign with no app update. Nothing reaches these routes until an
+# app build that has them is in use.
+FAX_REVIEW_ENABLED = env.bool('FAX_REVIEW_ENABLED', default=True)
+
 # Per-patient access check on the mobile chart endpoint (mobile_patient_full).
 # Off, the check only LOGS the requests it would refuse
 # (`patient_full_would_refuse` on the smallbrain.patient_access logger) and

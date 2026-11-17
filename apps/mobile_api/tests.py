@@ -3558,6 +3558,11 @@ class StampCoverageSweepTests(TestCase):
     MANUAL_TOUCH = {
         'mobile_unassigned_document_assign': 'MobileUnassignedDocumentAssignStampTests',
         'mobile_update_user': 'MobileUpdateUserStampTests',
+        'mobile_fax_review_ready': 'FaxReviewStampTests',
+        'mobile_fax_review_send_back': 'FaxReviewStampTests',
+        'mobile_fax_review_approve': 'FaxReviewStampTests',
+        'mobile_fax_review_set_aside': 'FaxReviewStampTests',
+        'mobile_fax_review_pages': 'FaxReviewStampTests',
     }
 
     ALLOWLIST = {
@@ -3581,6 +3586,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_recipient': 'practice fax directory, not chart data',
         'mobile_fax_import': 'practice fax directory, not chart data',
         'mobile_fax_inbox_check': 'files received faxes into the team pool, patient-unbound until assign (which stamps)',
+        'mobile_fax_review_restore': 'a set-aside fax returns to the team pool, patient-unbound',
         'mobile_create_label': 'global label catalog, not patient-scoped',
         'mobile_update_label': 'global label catalog, not patient-scoped',
         'mobile_batch_events': 'analytics sink, not chart data',
@@ -3604,6 +3610,9 @@ class StampCoverageSweepTests(TestCase):
         'mobile_observation_value_audit',
         'mobile_fax_transmissions',
         'mobile_fax_import_candidates',
+        'mobile_fax_reviews',
+        'mobile_patient_document_reviews',
+        'mobile_fax_review_original',
         'mobile_untranscribed_encounters',
         'mobile_encounter_transcripts',
         'mobile_untimed_encounters',
@@ -9082,3 +9091,519 @@ class UnassignedListInboundFaxFieldsTests(_RBACTestBase):
         self.assertEqual((rows[imported.id]['source'], rows[imported.id]['page_count']), ('ringcentral', 3))
         self.assertIsNotNone(rows[imported.id]['received_at'])
         self.assertEqual((rows[uploaded.id]['source'], rows[uploaded.id]['page_count']), (None, None))
+
+
+class _FaxReviewBase(_RBACTestBase):
+    """A fax in the attending's pool, a chart with a problem and an open
+    order, and the nurse who prepares it."""
+
+    def setUp(self):
+        super().setUp()
+        import shutil
+        import tempfile
+        from django.core.files.base import ContentFile
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, True)
+        override = override_settings(MEDIA_ROOT=media)
+        override.enable()
+        self.addCleanup(override.disable)
+        self.patient.first_name, self.patient.last_name = 'Nora', 'Vance'
+        self.patient.save()
+        self.team_nurse.first_name, self.team_nurse.last_name = 'Amy', 'Stone'
+        self.team_nurse.save()
+        self.problem = Problem.objects.create(patient=self.patient, problem_name='Hypertension')
+        self.other_problem = Problem.objects.create(patient=self.patient, problem_name='Diabetes')
+        self.order = ToDo.objects.create(todo='CMP', patient=self.patient, user=self.attending,
+                                         problem=self.problem)
+        self.doc = Document.objects.create(
+            document=ContentFile(b'%PDF-1.4 as received', name='fax.pdf'),
+            document_name='Fax from NMRL', author=self.attending, patient=None, team=self.attending)
+
+    def _post(self, action, body=None, doc=None):
+        return self.client.post(
+            f'/api/fax/review/{(doc or self.doc).id}/{action}',
+            data=json.dumps(body or {}), content_type='application/json')
+
+    def _ready(self, **extra):
+        body = {'patient_id': self.patient.id, 'document_name': 'CMP', 'label': 'Laboratory',
+                'problem_ids': [self.problem.id], 'order_todo_id': self.order.id,
+                'note': 'K is 5.9', 'flagged': True}
+        body.update(extra)
+        return self._post('ready', body)
+
+    def _prepared(self):
+        self._login(self.team_nurse)
+        self.assertEqual(self._ready().status_code, 200)
+        self.client.logout()
+        self._login(self.attending)
+
+    def _review(self):
+        from emr.models import DocumentReview
+        return DocumentReview.objects.get(document=self.doc)
+
+    def _stamp(self, patient=None):
+        row = PatientMutationStamp.objects.filter(patient=patient or self.patient).first()
+        return row.last_mutation_at if row else None
+
+
+class FaxReviewReadyTests(_FaxReviewBase):
+    """POST /api/fax/review/<id>/ready — staff file a fax and send it to the
+    physician."""
+
+    def test_ready_files_the_fax_with_what_staff_prepared(self):
+        self._login(self.team_nurse)
+        response = self._ready()
+        self.assertEqual(response.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual((self.doc.patient_id, self.doc.team_id, self.doc.document_name),
+                         (self.patient.id, None, 'CMP'))
+        self.assertEqual([l.name for l in self.doc.labels.all()], ['Laboratory'])
+        self.assertTrue(DocumentProblem.objects.filter(document=self.doc, problem=self.problem).exists())
+        review = self._review()
+        self.assertEqual((review.state, review.team_id, review.prepared_by_id, review.order_todo_id,
+                          review.note, review.flagged),
+                         ('ready', self.attending.id, self.team_nurse.id, self.order.id, 'K is 5.9', True))
+        # The order is linked only when the physician approves.
+        self.assertFalse(DocumentTodo.objects.filter(document=self.doc).exists())
+        activities = list(ProblemActivity.objects.values_list('activity', flat=True))
+        self.assertIn('Added document: CMP', activities)
+        self.assertIn('Renamed document: Fax from NMRL -> CMP', activities)
+        self.assertIn('Linked document: CMP', activities)
+
+    def test_staff_linking_a_problem_leaves_its_attestation_alone(self):
+        self.problem.authenticated = True
+        self.problem.save()
+        self._login(self.team_nurse)
+        self._ready()
+        self.problem.refresh_from_db()
+        self.assertTrue(self.problem.authenticated)
+
+    def test_a_chart_the_caller_cannot_open_is_refused(self):
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._ready().status_code, 404)
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.patient_id)
+
+    def test_a_patient_gets_a_json_not_found(self):
+        self._login(self.patient)
+        response = self._ready()
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+    def test_a_fax_someone_else_is_working_is_refused(self):
+        self.doc.claimed_by, self.doc.claimed_at = self.attending, timezone.now()
+        self.doc.save()
+        self._login(self.team_nurse)
+        self.assertEqual(self._ready().status_code, 409)
+
+    def test_another_charts_order_and_problem_are_ignored(self):
+        foreign_problem = Problem.objects.create(patient=self.other_patient, problem_name='Asthma')
+        foreign_order = ToDo.objects.create(todo='PFT', patient=self.other_patient, problem=foreign_problem)
+        self._login(self.team_nurse)
+        self._ready(problem_ids=[foreign_problem.id], order_todo_id=foreign_order.id)
+        self.assertFalse(DocumentProblem.objects.filter(document=self.doc).exists())
+        self.assertIsNone(self._review().order_todo_id)
+
+    def test_switched_off_refuses_and_changes_nothing(self):
+        self._login(self.team_nurse)
+        with override_settings(FAX_REVIEW_ENABLED=False):
+            self.assertEqual(self._ready().status_code, 503)
+            self.assertEqual(self.client.get('/api/fax/reviews').json(), {'success': True, 'enabled': False})
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.patient_id)
+
+    def test_a_returned_fax_can_be_moved_to_the_right_chart(self):
+        PatientController.objects.create(patient=self.other_patient, physician=self.attending)
+        self._prepared()
+        self._post('send-back', {'note': 'Wrong patient'})
+        self.client.logout()
+        self._login(self.team_nurse)
+        response = self._ready(patient_id=self.other_patient.id, problem_ids=[], order_todo_id=None)
+        self.assertEqual(response.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.patient_id, self.other_patient.id)
+        self.assertFalse(DocumentProblem.objects.filter(document=self.doc).exists())
+        self.assertTrue(ProblemActivity.objects.filter(
+            problem=self.problem, activity='Removed document: CMP').exists())
+        self.assertEqual(self._review().state, 'ready')
+
+    def test_a_chart_document_nobody_prepared_cannot_enter_review(self):
+        filed = Document.objects.create(document_name='Old', author=self.attending, patient=self.patient)
+        self._login(self.team_nurse)
+        self.assertEqual(self._post('ready', {'patient_id': self.patient.id}, doc=filed).status_code, 409)
+
+
+class FaxReviewListTests(_FaxReviewBase):
+    """GET /api/fax/reviews and the chart's document reviews."""
+
+    def test_the_queue_shows_what_was_prepared_flagged_first(self):
+        from django.core.files.base import ContentFile
+        plain = Document.objects.create(document=ContentFile(b'%PDF-1.4', name='b.pdf'),
+                                        document_name='Letter', author=self.attending, team=self.attending)
+        self._login(self.team_nurse)
+        self._post('ready', {'patient_id': self.patient.id, 'label': 'Correspondence'}, doc=plain)
+        self._ready()
+        self.client.logout()
+        self._login(self.attending)
+        body = self.client.get('/api/fax/reviews').json()
+        self.assertTrue(body['enabled'] and body['is_approver'])
+        self.assertEqual([r['document_id'] for r in body['queue']], [self.doc.id, plain.id])
+        row = body['queue'][0]
+        self.assertEqual((row['patient']['name'], row['prepared_by_name'], row['note'], row['labels']),
+                         ('Nora Vance', 'Amy Stone', 'K is 5.9', ['Laboratory']))
+        self.assertEqual(row['order_todo']['title'], 'CMP')
+        self.assertIn(self.order.id, [o['id'] for o in row['open_orders']])
+        self.assertEqual({p['name'] for p in row['problems']}, {'Hypertension', 'Diabetes'})
+
+    def test_another_teams_queue_is_not_shown(self):
+        self._prepared()
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        self.assertEqual(self.client.get('/api/fax/reviews').json()['queue'], [])
+        self.client.logout()
+        self._login(self.stranger_doc)
+        self.assertEqual(self.client.get('/api/fax/reviews').json()['queue'], [])
+
+    def test_the_chart_says_not_yet_reviewed_then_reviewed(self):
+        self._prepared()
+        url = f'/api/patient/{self.patient.id}/document-reviews'
+        self.assertEqual(self.client.get(url).json()['reviews'][0]['state'], 'ready')
+        self._post('approve', {'next_step': 'nothing_to_tell'})
+        row = self.client.get(url).json()['reviews'][0]
+        self.assertEqual((row['state'], row['document_id']), ('approved', self.doc.id))
+        self.assertIsNotNone(row['approved_at'])
+        self.client.logout()
+        self._login(self.stranger_doc)
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+
+class FaxReviewApproveTests(_FaxReviewBase):
+    """POST /api/fax/review/<id>/approve — one click, and the follow-through
+    is made of ordinary todos."""
+
+    def _todo(self, todo_id):
+        return ToDo.objects.get(id=todo_id)
+
+    def test_only_the_physician_whose_pool_it_is_approves(self):
+        self._prepared()
+        for user in (self.team_nurse, self.admin_user):
+            self.client.logout()
+            self._login(user)
+            response = self._post('approve', {'next_step': 'nothing_to_tell'})
+            self.assertEqual(response.status_code, 403, user.username)
+            self.assertEqual(response.json()['error'], 'not_approver')
+        self.client.logout()
+        self._login(self.stranger_doc)
+        self.assertEqual(self._post('approve', {'next_step': 'nothing_to_tell'}).status_code, 404)
+        self.assertEqual(self._review().state, 'ready')
+
+    def test_nothing_to_tell_links_the_order_and_makes_no_todo(self):
+        self._prepared()
+        before = ToDo.objects.count()
+        body = self._post('approve', {'next_step': 'nothing_to_tell'}).json()
+        self.assertEqual((body['todo_ids'], ToDo.objects.count()), ([], before))
+        self.assertTrue(DocumentTodo.objects.filter(document=self.doc, todo=self.order).exists())
+        self.order.refresh_from_db()
+        self.assertFalse(self.order.accomplished)
+        review = self._review()
+        self.assertEqual((review.state, review.approved_by_id, review.next_step),
+                         ('approved', self.attending.id, 'nothing_to_tell'))
+        self.assertTrue(TodoActivity.objects.filter(todo=self.order, activity='Linked document: CMP').exists())
+
+    def test_staff_call_makes_a_todo_tagged_to_the_preparer(self):
+        self.problem.authenticated = False
+        self.problem.save()
+        self._prepared()
+        body = self._post('approve', {'next_step': 'staff_call', 'message': 'Stop the K supplement',
+                                      'mark_order_done': True}).json()
+        todo = self._todo(body['todo_ids'][0])
+        self.assertEqual((todo.todo, todo.problem_id, todo.patient_id, todo.user_id),
+                         ('Call Nora Vance: Stop the K supplement', self.problem.id, self.patient.id,
+                          self.attending.id))
+        tag = TaggedToDoOrder.objects.get(todo=todo)
+        self.assertEqual((tag.user_id, tag.status), (self.team_nurse.id, 0))
+        self.assertTrue(DocumentTodo.objects.filter(document=self.doc, todo=todo).exists())
+        activities = list(TodoActivity.objects.filter(todo=todo).values_list('activity', flat=True))
+        self.assertIn('Added todo: Call Nora Vance: Stop the K supplement', activities)
+        self.assertIn('Tagged Amy Stone', activities)
+        self.assertTrue(ProblemActivity.objects.filter(
+            problem=self.problem, activity='Added todo: Call Nora Vance: Stop the K supplement').exists())
+        # The order is checked off, with the rows a check-off writes.
+        self.order.refresh_from_db()
+        self.assertTrue(self.order.accomplished and self.order.accomplished_at is not None)
+        self.assertTrue(TodoActivity.objects.filter(
+            todo=self.order, activity='Updated status to accomplished').exists())
+        self.assertTrue(self._review().order_marked_done)
+        # A physician's todo write attests the problem.
+        self.problem.refresh_from_db()
+        self.assertTrue(self.problem.authenticated)
+
+    def test_i_will_call_is_tagged_to_the_physician(self):
+        self._prepared()
+        body = self._post('approve', {'next_step': 'physician_call'}).json()
+        todo = self._todo(body['todo_ids'][0])
+        self.assertEqual(todo.todo, 'Call Nora Vance about CMP')
+        self.assertEqual(TaggedToDoOrder.objects.get(todo=todo).user_id, self.attending.id)
+
+    def test_tell_the_patient_and_the_letter_are_todos_for_the_preparer(self):
+        self._prepared()
+        body = self._post('approve', {'next_step': 'tell_patient'}).json()
+        self.assertEqual(self._todo(body['todo_ids'][0]).todo, 'Tell Nora Vance the CMP is fine')
+        from django.core.files.base import ContentFile
+        second = Document.objects.create(document=ContentFile(b'%PDF-1.4', name='c.pdf'),
+                                         document_name='Lipid', author=self.attending, team=self.attending)
+        self.client.logout()
+        self._login(self.team_nurse)
+        self._post('ready', {'patient_id': self.patient.id, 'problem_ids': [self.other_problem.id]}, doc=second)
+        self.client.logout()
+        self._login(self.attending)
+        body = self._post('approve', {'next_step': 'normal_letter'}, doc=second).json()
+        letter = self._todo(body['todo_ids'][0])
+        self.assertEqual((letter.todo, letter.problem_id),
+                         ('Send Nora Vance a normal-result letter: Lipid', self.other_problem.id))
+        self.assertEqual(TaggedToDoOrder.objects.get(todo=letter).user_id, self.team_nurse.id)
+
+    def test_a_follow_up_order_is_a_dated_todo_for_the_preparer(self):
+        self._prepared()
+        body = self._post('approve', {'next_step': 'nothing_to_tell', 'follow_up_title': 'BMP',
+                                      'follow_up_days': 7, 'problem_id': self.other_problem.id}).json()
+        todo = self._todo(body['todo_ids'][0])
+        self.assertEqual((todo.todo, todo.problem_id), ('BMP', self.other_problem.id))
+        self.assertAlmostEqual((todo.due_date - timezone.now()).days, 6, delta=1)
+        self.assertEqual([l.name for l in todo.labels.all()], ['Laboratory'])
+        self.assertEqual(TaggedToDoOrder.objects.get(todo=todo).user_id, self.team_nurse.id)
+
+    def test_a_follow_up_needs_a_due_date(self):
+        self._prepared()
+        response = self._post('approve', {'next_step': 'nothing_to_tell', 'follow_up_title': 'BMP'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self._review().state, 'ready')
+
+    def test_a_todo_with_no_problem_to_go_under_is_refused_whole(self):
+        from django.core.files.base import ContentFile
+        bare = Document.objects.create(document=ContentFile(b'%PDF-1.4', name='d.pdf'),
+                                       document_name='Note', author=self.attending, team=self.attending)
+        self._login(self.team_nurse)
+        self._post('ready', {'patient_id': self.patient.id}, doc=bare)
+        self.client.logout()
+        self._login(self.attending)
+        before = ToDo.objects.count()
+        response = self._post('approve', {'next_step': 'staff_call'}, doc=bare)
+        self.assertEqual((response.status_code, response.json()['error']), (400, 'problem_required'))
+        self.assertEqual(ToDo.objects.count(), before)
+        from emr.models import DocumentReview
+        self.assertEqual(DocumentReview.objects.get(document=bare).state, 'ready')
+
+    def test_approving_twice_makes_one_set_of_todos(self):
+        self._prepared()
+        first = self._post('approve', {'next_step': 'staff_call'}).json()
+        count = ToDo.objects.count()
+        second = self._post('approve', {'next_step': 'staff_call'}).json()
+        self.assertEqual(len(first['todo_ids']), 1)
+        self.assertEqual((second['already'], second['todo_ids'], ToDo.objects.count()), (True, [], count))
+
+    def test_what_the_physician_changed_is_recorded(self):
+        self._prepared()
+        self._post('approve', {'next_step': 'nothing_to_tell', 'edits': {
+            'document_name': 'CMP 11/16', 'label': 'Laboratory',
+            'problem_ids': [self.problem.id, self.other_problem.id], 'order_todo_id': None}})
+        review = self._review()
+        fields = [c['field'] for c in json.loads(review.changes)]
+        self.assertEqual(fields, ['document_name', 'problems', 'order'])
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'CMP 11/16')
+        self.assertFalse(DocumentTodo.objects.filter(document=self.doc).exists())
+        week = self.client.get('/api/fax/reviews').json()['week']
+        self.assertEqual(week, {'approved': 1, 'changed': 1})
+
+    def test_an_unchanged_edit_records_nothing(self):
+        self._prepared()
+        self._post('approve', {'next_step': 'nothing_to_tell', 'edits': {
+            'document_name': 'CMP', 'label': 'laboratory', 'problem_ids': [self.problem.id],
+            'order_todo_id': self.order.id}})
+        self.assertEqual(self._review().changes, '[]')
+
+    def test_send_back_returns_it_to_staff_with_the_note(self):
+        self._prepared()
+        self.assertEqual(self._post('send-back', {'note': 'Wrong patient: this is Doris'}).status_code, 200)
+        review = self._review()
+        self.assertEqual((review.state, review.returned_note, review.returned_by_id),
+                         ('returned', 'Wrong patient: this is Doris', self.attending.id))
+        self.assertEqual(self._post('approve', {'next_step': 'nothing_to_tell'}).status_code, 409)
+        self.client.logout()
+        self._login(self.team_nurse)
+        body = self.client.get('/api/fax/reviews').json()
+        self.assertEqual([r['document_id'] for r in body['returned']], [self.doc.id])
+        self.assertEqual(self._post('send-back', {}).status_code, 403)
+
+
+class FaxReviewSetAsideTests(_FaxReviewBase):
+    """Set aside, restore within 30 days, and the purge command."""
+
+    def test_a_pool_fax_set_aside_leaves_the_pool_list_and_can_come_back(self):
+        self._login(self.team_nurse)
+        self.assertEqual(self._post('set-aside').status_code, 200)
+        pool = self.client.get('/api/team/unassigned-documents/list').json()['documents']
+        self.assertEqual(pool, [])
+        body = self.client.get('/api/fax/reviews').json()
+        self.assertEqual([r['document_id'] for r in body['set_aside']], [self.doc.id])
+        self.assertEqual(body['set_aside'][0]['set_aside_by_name'], 'Amy Stone')
+        self.assertEqual(self._post('restore').status_code, 200)
+        pool = self.client.get('/api/team/unassigned-documents/list').json()['documents']
+        self.assertEqual([d['id'] for d in pool], [self.doc.id])
+
+    def test_a_waiting_fax_set_aside_leaves_the_chart(self):
+        self._prepared()
+        self.assertEqual(self._post('set-aside').status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual((self.doc.patient_id, self.doc.team_id), (None, self.attending.id))
+        self.assertFalse(DocumentProblem.objects.filter(document=self.doc).exists())
+        self.assertTrue(ProblemActivity.objects.filter(
+            problem=self.problem, activity='Removed document: CMP').exists())
+        self.assertEqual(self.client.get(f'/api/patient/{self.patient.id}/document-reviews').json()['reviews'], [])
+
+    def test_an_approved_fax_cannot_be_set_aside(self):
+        self._prepared()
+        self._post('approve', {'next_step': 'nothing_to_tell'})
+        self.assertEqual(self._post('set-aside').status_code, 409)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.patient_id, self.patient.id)
+
+    def test_restore_ends_after_thirty_days_and_the_purge_is_a_dry_run_by_default(self):
+        from io import StringIO
+        from django.core.management import call_command
+        from emr.models import DocumentReview
+        self._login(self.team_nurse)
+        self._post('set-aside')
+        DocumentReview.objects.filter(document=self.doc).update(
+            set_aside_at=timezone.now() - datetime.timedelta(days=31))
+        self.assertEqual(self._post('restore').status_code, 409)
+        self.assertEqual(self.client.get('/api/fax/reviews').json()['set_aside'], [])
+        out = StringIO()
+        call_command('purge_set_aside_faxes', stdout=out)
+        self.assertEqual((json.loads(out.getvalue())['found'], Document.objects.filter(id=self.doc.id).count()),
+                         (1, 1))
+        out = StringIO()
+        call_command('purge_set_aside_faxes', '--apply', stdout=out)
+        self.assertEqual(json.loads(out.getvalue())['deleted'], 1)
+        self.assertFalse(Document.objects.filter(id=self.doc.id).exists())
+
+    def test_the_purge_never_takes_a_recent_or_filed_fax(self):
+        from io import StringIO
+        from django.core.management import call_command
+        self._login(self.team_nurse)
+        self._post('set-aside')
+        call_command('purge_set_aside_faxes', '--apply', '--days', '1', stdout=StringIO())
+        self.assertTrue(Document.objects.filter(id=self.doc.id).exists())
+
+
+class FaxReviewPagesTests(_FaxReviewBase):
+    """POST /api/fax/review/<id>/pages — the kept pages replace the file; the
+    fax as received is kept and can be served and restored."""
+
+    def _pages(self, removed, data=b'%PDF-1.4 kept pages', count=3, reasons=None):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        body = {'removed_pages': json.dumps(removed), 'original_page_count': str(count)}
+        if reasons:
+            body['reasons'] = json.dumps(reasons)
+        if data is not None:
+            body['file'] = SimpleUploadedFile('kept.pdf', data, content_type='application/pdf')
+        return self.client.post(f'/api/fax/review/{self.doc.id}/pages', data=body)
+
+    def _file(self):
+        self.doc.refresh_from_db()
+        with self.doc.document.open('rb') as handle:
+            return handle.read()
+
+    def test_removing_a_page_keeps_the_fax_as_received(self):
+        self._login(self.team_nurse)
+        response = self._pages([1], reasons={'1': 'Cover sheet'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._file(), b'%PDF-1.4 kept pages')
+        entry = response.json()['removed_pages'][0]
+        self.assertEqual((entry['page'], entry['by_name'], entry['reason']), (1, 'Amy Stone', 'Cover sheet'))
+        original = self.client.get(f'/api/fax/review/{self.doc.id}/original')
+        self.assertEqual(b''.join(original.streaming_content), b'%PDF-1.4 as received')
+        self.assertEqual(self.doc.file_size, len(b'%PDF-1.4 kept pages'))
+
+    def test_a_second_removal_keeps_the_first_entry_and_the_same_original(self):
+        self._login(self.team_nurse)
+        self._pages([1])
+        first = self._review().removed_pages
+        self.client.logout()
+        self._login(self.attending)
+        self._pages([1, 3], data=b'%PDF-1.4 one page left')
+        entries = json.loads(self._review().removed_pages)
+        self.assertEqual(entries[0], json.loads(first)[0])
+        self.assertEqual((entries[1]['page'], entries[1]['by']), (3, self.attending.id))
+        original = self.client.get(f'/api/fax/review/{self.doc.id}/original')
+        self.assertEqual(b''.join(original.streaming_content), b'%PDF-1.4 as received')
+
+    def test_putting_every_page_back_restores_the_file_as_received(self):
+        self._login(self.team_nurse)
+        self._pages([2])
+        self.assertEqual(self._pages([], data=None).status_code, 200)
+        self.assertEqual(self._file(), b'%PDF-1.4 as received')
+        review = self._review()
+        self.assertEqual((review.removed_pages, review.original_file), ('[]', ''))
+        self.assertEqual(self.client.get(f'/api/fax/review/{self.doc.id}/original').status_code, 404)
+
+    def test_the_last_page_and_a_non_pdf_are_refused(self):
+        self._login(self.team_nurse)
+        self.assertEqual(self._pages([1, 2, 3]).status_code, 400)
+        self.assertEqual(self._pages([1], data=b'not a pdf').status_code, 400)
+        self.assertEqual(self._pages([1], data=None).status_code, 400)
+        self.assertEqual(self._file(), b'%PDF-1.4 as received')
+
+    def test_pages_removed_by_the_physician_count_as_a_change(self):
+        self._prepared()
+        self._pages([1])
+        self._post('approve', {'next_step': 'nothing_to_tell'})
+        self.assertEqual([c['field'] for c in json.loads(self._review().changes)], ['pages'])
+        self.assertEqual(self._pages([1, 2]).status_code, 409)
+
+    def test_the_text_is_cleared_so_the_kept_pages_are_read_again(self):
+        self.doc.extracted_text, self.doc.extracted_text_at = 'cover\fresult', timezone.now()
+        self.doc.save()
+        self._login(self.team_nurse)
+        self._pages([1])
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.extracted_text)
+
+    def test_another_team_cannot_touch_or_read_it(self):
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._pages([1]).status_code, 404)
+        self.assertEqual(self.client.get(f'/api/fax/review/{self.doc.id}/original').status_code, 404)
+
+
+class FaxReviewStampTests(_FaxReviewBase):
+    """Each review write that changes a chart moves that chart's stamp (the
+    routes carry the document, not the patient, in their URL)."""
+
+    def _moves(self, action):
+        before = self._stamp()
+        action()
+        after = self._stamp()
+        self.assertIsNotNone(after)
+        self.assertTrue(before is None or after > before)
+
+    def test_ready_send_back_approve_set_aside_and_pages_each_stamp_the_chart(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self._login(self.team_nurse)
+        self._moves(lambda: self._ready())
+        self.client.logout()
+        self._login(self.attending)
+        self._moves(lambda: self._post('send-back', {'note': 'check'}))
+        self._moves(lambda: self.client.post(f'/api/fax/review/{self.doc.id}/pages', data={
+            'removed_pages': '[1]', 'original_page_count': '2',
+            'file': SimpleUploadedFile('k.pdf', b'%PDF-1.4 kept', content_type='application/pdf')}))
+        self.client.logout()
+        self._login(self.team_nurse)
+        self._moves(lambda: self._ready())
+        self.client.logout()
+        self._login(self.attending)
+        self._moves(lambda: self._post('approve', {'next_step': 'nothing_to_tell'}))
+
+    def test_setting_a_waiting_fax_aside_stamps_the_chart_it_leaves(self):
+        self._prepared()
+        self._moves(lambda: self._post('set-aside'))

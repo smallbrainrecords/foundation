@@ -2585,7 +2585,10 @@ def mobile_unassigned_documents_list(request):
     _sweep_expired_claims()
 
     allowed = _user_team_ids(request.user)
-    qs = Document.objects.filter(patient__isnull=True, team__isnull=False)
+    # A fax set aside (emr.DocumentReview) is kept, off every chart, and is
+    # not pool work: it is listed by mobile_fax_reviews instead.
+    qs = Document.objects.filter(patient__isnull=True, team__isnull=False).exclude(
+        review__state='set_aside')
     if allowed is None:
         pass  # admin: no further filter
     elif not allowed:
