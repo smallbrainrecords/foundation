@@ -2029,3 +2029,32 @@ class DocumentReview(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['state', 'team'], name='emr_docreview_state_team')]
+
+
+class DocumentEdit(models.Model):
+    """One edit of a chart document's file made in the app (2026-11-17):
+    text typed onto its pages, the editor's OWN signature, or both, burned
+    into a new PDF on the Mac and uploaded whole.
+
+    The file as it was before the edit is kept in `previous_file` and never
+    deleted, so every version of a signed document stays: the earliest
+    edit's `previous_file` is the document as it was before anyone edited
+    it. `signed` says the edit placed the editor's signature (the app offers
+    each person only their own); `text_count` and `pages` say what else was
+    added and where. `client_uuid` makes a retried upload return the first
+    one instead of writing a second version.
+
+    Written only by `apps.mobile_api.document_edit`.
+    """
+    document = models.ForeignKey(Document, related_name='edits', on_delete=models.CASCADE)
+    edited_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    edited_at = models.DateTimeField(auto_now_add=True)
+    signed = models.BooleanField(default=False)
+    text_count = models.PositiveIntegerField(default=0)
+    pages = models.TextField(default='[]')
+    previous_file = models.CharField(max_length=255)
+    new_file = models.CharField(max_length=255)
+    client_uuid = models.CharField(max_length=64, unique=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['document', 'edited_at'], name='emr_docedit_doc_at')]

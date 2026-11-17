@@ -1,6 +1,7 @@
 from django.urls import re_path as url
 from . import views
 from . import fax_review
+from . import document_edit
 
 urlpatterns = [
     url(r'^healthz/?$', views.mobile_healthz),
@@ -47,6 +48,9 @@ urlpatterns = [
     # patient_full — see emr.Document.extracted_text.
     url(r'^patient/(?P<patient_id>\d+)/document-texts$', views.mobile_patient_document_texts),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/text$', views.mobile_document_text),
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/edit$', document_edit.mobile_document_edit),
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/edits$', document_edit.mobile_document_edits),
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/before-edits$', document_edit.mobile_document_before_edits),
     # PR-5 (2026-06-11) Shared unassigned documents pool (per-team).
     url(r'^team/(?P<team_id>\d+)/unassigned-document/upload$', views.mobile_upload_unassigned_document),
     url(r'^team/unassigned-documents/list$', views.mobile_unassigned_documents_list),

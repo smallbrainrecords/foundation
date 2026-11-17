@@ -59,7 +59,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from emr.models import (
-    Document, DocumentProblem, DocumentReview, DocumentTodo, Label, Problem,
+    Document, DocumentEdit, DocumentProblem, DocumentReview, DocumentTodo, Label, Problem,
     TaggedToDoOrder, ToDo,
 )
 from emr.mutation_stamp import touch_patient_stamp
@@ -233,6 +233,11 @@ def review_json(review, detail=False):
         'later_at': _iso(review.later_at),
         'removed_pages': removed,
         'has_original': bool(review.original_file),
+        # Signed or written on in the app: pages can no longer be removed.
+        'edited': bool(doc.edits.all()),
+        # The stored file name, so an edit made from the queue is checked
+        # against the file it was made on (document_edit's `base_file`).
+        'file_path': doc.document.name if doc.document else '',
         **api._inbound_fax_fields(doc),
     }
     if detail and doc.patient_id:
@@ -250,7 +255,7 @@ def _reviews(state):
     return DocumentReview.objects.filter(state=state).select_related(
         'document', 'document__patient', 'document__patient__profile', 'document__inbound_fax',
         'order_todo', 'order_todo__problem', 'prepared_by', 'returned_by', 'approved_by',
-        'set_aside_by', 'later_by').prefetch_related('document__labels')
+        'set_aside_by', 'later_by').prefetch_related('document__labels', 'document__edits')
 
 
 def _visible(queryset, user):
@@ -1043,8 +1048,10 @@ def mobile_fax_review_pages(request, document_id):
 
     The file as received is never deleted. Who removed each page and when is
     kept; a page still out keeps its first entry. Refused once the fax is
-    approved or set aside. The document's text is cleared so the next Mac to
-    read it indexes the kept pages.
+    approved or set aside, and once the document was signed or written on in
+    the app (409 `document_edited`: the re-cut would drop what was added).
+    The document's text is cleared so the next Mac to read it indexes the
+    kept pages.
     """
     refusal = _gate(request, 'POST')
     if refusal:
@@ -1085,6 +1092,10 @@ def mobile_fax_review_pages(request, document_id):
             return _refuse('already_claimed', 409, claimed_by_name=_display(doc.claimed_by))
         if not doc.document:
             return _refuse('no_file', 409)
+        if DocumentEdit.objects.filter(document=doc).exists():
+            # Signed or written on in the app: re-cutting from the fax as
+            # received would silently drop what was added.
+            return _refuse('document_edited', 409)
         if review is None:
             if not wanted:
                 return JsonResponse({'success': True, 'removed_pages': [], 'has_original': False})
