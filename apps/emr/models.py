@@ -1950,9 +1950,12 @@ class DocumentReview(models.Model):
     States:
       new        — in the pool, nothing decided (a row exists only because a
                    page was removed, or it was restored from set-aside)
+      later      — "do it later": staff parked it to finish later
+                   (`later_by`, `later_at`, an optional `note`). Still in the
+                   pool, on no chart, not in the physician's queue
       ready      — filed to the chart by staff, waiting for the physician
-      filed      — filed to the chart by staff with no review, allowed only
-                   for the labels in `FAX_STAFF_FILE_LABELS`; never in the
+      filed      — filed to the chart by staff with no review (staff decide,
+                   fax by fax; `FAX_STAFF_FILE_ENABLED`); never in the
                    physician's queue
       returned   — sent back to staff with `returned_note`; still on the chart
       approved   — reviewed; `next_step` says what happens with the patient
@@ -1976,6 +1979,7 @@ class DocumentReview(models.Model):
     Written only by `apps.mobile_api.fax_review`.
     """
     NEW = 'new'
+    LATER = 'later'
     READY = 'ready'
     FILED = 'filed'
     RETURNED = 'returned'
@@ -2013,6 +2017,9 @@ class DocumentReview(models.Model):
 
     set_aside_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     set_aside_at = models.DateTimeField(null=True, blank=True)
+
+    later_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    later_at = models.DateTimeField(null=True, blank=True)
 
     original_file = models.CharField(max_length=255, blank=True, default='')
     removed_pages = models.TextField(default='[]')

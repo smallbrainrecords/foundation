@@ -12,11 +12,14 @@ Rules, each load-bearing:
     moves) plus the label, the problem links and the review row. The chart
     shows the document at once, marked not yet reviewed, so staff can answer
     a patient's call about it.
-  * **Staff may file some kinds straight to the chart** (`file`), with no
-    review: only a fax whose label is in `FAX_STAFF_FILE_LABELS` (empty by
-    default, so nothing qualifies until the owner picks), only from the pool,
-    never a flagged one. Anything else answers 409 `needs_review` and is
-    left as it was; staff can always send any fax to the physician instead.
+  * **Staff decide, fax by fax** (owner decision 2026-11-17, whatever the
+    fax's type): send it to the physician (`ready`), file it to the chart
+    themselves with no review (`file`), or park it in "do it later"
+    (`later`) to finish another time. Filing is refused for a flagged fax
+    (409 `flagged`: turn the flag off first) and when
+    `FAX_STAFF_FILE_ENABLED=false` (409 `staff_filing_off`). A parked fax
+    stays in the pool, on no chart and out of the physician's queue, until
+    someone prepares it.
   * **Only the physician whose pool the fax came in on approves or sends
     back.** Staff, other physicians and admins get 403 `not_approver`.
   * **Approval makes the follow-through, in one transaction**: the fax is
@@ -226,6 +229,8 @@ def review_json(review, detail=False):
         'changed_fields': [c.get('field') for c in _changes(review) if isinstance(c, dict)],
         'set_aside_by_name': _display(review.set_aside_by) if review.set_aside_by_id else '',
         'set_aside_at': _iso(review.set_aside_at),
+        'later_by_name': _display(review.later_by) if review.later_by_id else '',
+        'later_at': _iso(review.later_at),
         'removed_pages': removed,
         'has_original': bool(review.original_file),
         **api._inbound_fax_fields(doc),
@@ -245,7 +250,7 @@ def _reviews(state):
     return DocumentReview.objects.filter(state=state).select_related(
         'document', 'document__patient', 'document__patient__profile', 'document__inbound_fax',
         'order_todo', 'order_todo__problem', 'prepared_by', 'returned_by', 'approved_by',
-        'set_aside_by').prefetch_related('document__labels')
+        'set_aside_by', 'later_by').prefetch_related('document__labels')
 
 
 def _visible(queryset, user):
@@ -275,6 +280,8 @@ def mobile_fax_reviews(request):
       queue      — prepared, waiting for the physician: flagged first, then
                    the longest waiting. Staff see it too, read-only.
       returned   — sent back to staff with a note
+      later      — parked by staff to finish later, the longest parked
+                   first; still in the pool
       set_aside  — set aside in the last 30 days (restorable)
       week       — approvals in the last 7 days and how many the physician
                    changed
@@ -294,6 +301,7 @@ def mobile_fax_reviews(request):
     queue = _visible(_reviews(DocumentReview.READY), user)
     queue.sort(key=lambda r: (0 if r.flagged else 1, r.prepared_at or r.created_on))
     returned = _visible(_reviews(DocumentReview.RETURNED).order_by('-returned_at'), user)
+    later = _visible(_reviews(DocumentReview.LATER).order_by('later_at', 'id'), user)
     cutoff = timezone.now() - datetime.timedelta(days=RESTORE_DAYS)
     set_aside = _visible(
         _reviews(DocumentReview.SET_ASIDE).filter(set_aside_at__gte=cutoff).order_by('-set_aside_at'), user)
@@ -311,6 +319,7 @@ def mobile_fax_reviews(request):
         # Staff Macs ask every 30 s for the counts.
         'queue': [review_json(r, detail=approver) for r in queue],
         'returned': [review_json(r, detail=True) for r in returned],
+        'later': [review_json(r) for r in later],
         'set_aside': [review_json(r) for r in set_aside],
         'week': {'approved': recent.count(), 'changed': recent.exclude(changes='[]').count()},
         'restore_days': RESTORE_DAYS,
@@ -351,7 +360,7 @@ def mobile_patient_document_reviews(request, patient_id):
 @login_required
 def mobile_fax_review(request, document_id):
     """GET -> {review: one document's review, or null when it has none,
-    staff_file_labels: the labels staff may file without review}.
+    staff_may_file: whether staff may file it without review}.
 
     The prepare sheet asks before it shows a pool fax, because the pool list
     does not say whether pages were removed on another Mac: without the list
@@ -366,12 +375,13 @@ def mobile_fax_review(request, document_id):
     if doc is None or not _can_reach(request.user, doc):
         return _not_found()
     if not enabled():
-        return JsonResponse({'success': True, 'enabled': False, 'review': None, 'staff_file_labels': []})
+        return JsonResponse({'success': True, 'enabled': False, 'review': None, 'staff_may_file': False})
     review = DocumentReview.objects.filter(document=doc).select_related(
-        'order_todo', 'order_todo__problem', 'prepared_by', 'returned_by', 'approved_by', 'set_aside_by').first()
+        'order_todo', 'order_todo__problem', 'prepared_by', 'returned_by', 'approved_by', 'set_aside_by',
+        'later_by').first()
     return JsonResponse({'success': True, 'enabled': True,
                          'review': review_json(review, detail=True) if review else None,
-                         'staff_file_labels': staff_file_labels()})
+                         'staff_may_file': staff_may_file()})
 
 
 # ---------------------------------------------------------------------------
@@ -395,15 +405,10 @@ def _rename(request, doc, name):
 TYPE_LABELS = ('laboratory', 'imaging', 'procedure', 'correspondence', 'referral', 'medication')
 
 
-def staff_file_labels():
-    """The type labels staff may file without the physician's approval:
-    `FAX_STAFF_FILE_LABELS`, case ignored, keeping only type labels, in
-    TYPE_LABELS order. Empty unless the owner has chosen some."""
-    configured = getattr(settings, 'FAX_STAFF_FILE_LABELS', None) or []
-    if isinstance(configured, str):
-        configured = configured.split(',')
-    wanted = {str(name).strip().lower() for name in configured}
-    return [name for name in TYPE_LABELS if name in wanted]
+def staff_may_file():
+    """Whether staff may file a fax to the chart without the physician's
+    approval: on unless `FAX_STAFF_FILE_ENABLED=false`."""
+    return bool(getattr(settings, 'FAX_STAFF_FILE_ENABLED', True))
 
 
 def _set_label(request, doc, name):
@@ -659,16 +664,16 @@ def mobile_fax_review_ready(request, document_id):
 def mobile_fax_review_file(request, document_id):
     """POST {patient_id, label, document_name?, problem_ids?, order_todo_id?,
     note?, extracted_text?, extracted_text_version?} -> the fax is filed to
-    the chart with no review (owner decision 2026-11-17: staff may file some
-    kinds directly).
+    the chart with no review (owner decision 2026-11-17: staff decide, fax
+    by fax, whatever its type).
 
-    Only a fax still in the pool, only with a label in
-    `FAX_STAFF_FILE_LABELS`, and never a flagged one: anything else answers
-    409 (`needs_review`, `not_in_pool`, `set_aside`) and nothing changes.
-    It is assign plus the prepared fields; because no approval follows, the
-    order the fax answers is linked now (never checked off). The review row
-    is kept in state `filed`, so the chart says who filed it and the
-    physician's queue never shows it.
+    Only a fax still in the pool (new or parked), with a label, never a
+    flagged one, and only while `FAX_STAFF_FILE_ENABLED`: otherwise 400
+    `label_required` or 409 (`flagged`, `staff_filing_off`, `not_in_pool`,
+    `set_aside`) and nothing changes. It is assign plus the prepared fields;
+    because no approval follows, the order the fax answers is linked now
+    (never checked off). The review row is kept in state `filed`, so the
+    chart says who filed it and the physician's queue never shows it.
     """
     refusal = _gate(request, 'POST')
     if refusal:
@@ -676,10 +681,13 @@ def mobile_fax_review_file(request, document_id):
     body = _body(request)
     if body is None:
         return _refuse('invalid_json', 400)
-    allowed = staff_file_labels()
+    if not staff_may_file():
+        return _refuse('staff_filing_off', 409)
     label = str(body.get('label') or '').strip()
-    if label.lower() not in allowed or bool(body.get('flagged')):
-        return _refuse('needs_review', 409, staff_file_labels=allowed)
+    if not label:
+        return _refuse('label_required', 400)
+    if bool(body.get('flagged')):
+        return _refuse('flagged', 409)
     target_id = body.get('patient_id')
     if not target_id or not api._assert_patient_access(request.user, target_id):
         return _refuse('patient_not_found', 404)
@@ -719,6 +727,51 @@ def mobile_fax_review_file(request, document_id):
         answer = review_json(review)
 
     _log('fax_review_filed', request, document_id=doc.id, patient_id=patient.id, label=label.lower())
+    return JsonResponse({'success': True, 'review': answer})
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_review_later(request, document_id):
+    """POST {note?} -> "do it later": staff park a pool fax to finish another
+    time (owner decision 2026-11-17).
+
+    The fax stays in the pool, on no chart and out of the physician's queue;
+    the lists show it under `later` with who parked it and when. Preparing
+    it later (ready, file, set aside) moves it on. Only from the pool; a fax
+    someone else holds is refused, and the caller's own hold is let go so
+    anyone can pick it up. Parking it again replaces the note.
+    """
+    refusal = _gate(request, 'POST')
+    if refusal:
+        return refusal
+    body = _body(request)
+    if body is None:
+        return _refuse('invalid_json', 400)
+    with transaction.atomic():
+        doc, review = _locked(document_id)
+        if doc is None or not _can_reach(request.user, doc):
+            return _not_found()
+        if review is not None and review.state == DocumentReview.SET_ASIDE:
+            return _refuse('set_aside', 409)
+        if doc.patient_id is not None:
+            return _refuse('not_in_pool', 409, state=review.state if review else None)
+        if _held_by_other(request.user, doc):
+            return _refuse('already_claimed', 409, claimed_by_name=_display(doc.claimed_by))
+        if review is None:
+            review = DocumentReview(document=doc, team_id=doc.team_id)
+        if doc.claimed_by_id == request.user.id:
+            doc.claimed_by = None
+            doc.claimed_at = None
+            doc.save(update_fields=['claimed_by', 'claimed_at'])
+        review.state = DocumentReview.LATER
+        review.later_by = request.user
+        review.later_at = timezone.now()
+        if 'note' in body:
+            review.note = str(body.get('note') or '')[:MAX_NOTE]
+        review.save()
+        answer = review_json(review)
+    _log('fax_review_later', request, document_id=doc.id)
     return JsonResponse({'success': True, 'review': answer})
 
 
