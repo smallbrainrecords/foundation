@@ -43,6 +43,18 @@ SYNCING = False
 # the feature off on every Mac without an app update.
 TODO_SUGGESTIONS_ENABLED = env.bool('TODO_SUGGESTIONS_ENABLED', default=True)
 
+# Faxes the clinic line receives, imported from RingCentral into a team's
+# unassigned pool (emr.inbound_fax, 2026-11-16). OFF unless all three are
+# set, so deploying the code changes nothing: INBOUND_FAX_ENABLED=true, the
+# physician whose team pool receives them (INBOUND_FAX_TEAM_ID), and the
+# moment from which faxes are imported (INBOUND_FAX_START, ISO 8601 with a
+# time zone) — faxes received before it were handled the old way and are
+# never imported. Setting INBOUND_FAX_ENABLED=false stops every import with
+# no app update.
+INBOUND_FAX_ENABLED = env.bool('INBOUND_FAX_ENABLED', default=False)
+INBOUND_FAX_TEAM_ID = env.int('INBOUND_FAX_TEAM_ID', default=0)
+INBOUND_FAX_START = env.str('INBOUND_FAX_START', default='')
+
 # Per-patient access check on the mobile chart endpoint (mobile_patient_full).
 # Off, the check only LOGS the requests it would refuse
 # (`patient_full_would_refuse` on the smallbrain.patient_access logger) and

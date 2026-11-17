@@ -251,7 +251,7 @@ class InboundFaxListTests(SimpleTestCase):
             'id': 11, 'received': '2026-11-16T13:42:00Z', 'from_number': '+12315550140',
             'from_name': 'NMRL', 'to_numbers': ['+12315388295'], 'to_keys': ['phoneNumber'], 'pages': 3,
             'read_status': 'Unread', 'message_status': 'Received',
-            'attachments': [{'content_type': 'application/pdf', 'size': 81234}]}])
+            'attachments': [{'id': None, 'content_type': 'application/pdf', 'size': 81234}]}])
         self.assertTrue(trace['complete'])
         self.assertEqual(trace['stopped'], 'last_page')
 
@@ -430,3 +430,66 @@ class CheckRingCentralInboundCommandTests(SimpleTestCase):
         rows, _, error = self._run(configured=False)
         self.assertIsNotNone(error)
         self.assertEqual(set(rows), {'config', 'summary'})
+
+
+class FaxAttachmentTests(SimpleTestCase):
+    """`fax_attachment` downloads one received fax's PDF with the clinic's token."""
+
+    setUp = RingCentralFaxTests.setUp
+    _http = RingCentralFaxTests._http
+    TOKEN = RingCentralFaxTests.TOKEN
+
+    def _with_bytes(self, *answers):
+        self.byte_calls = []
+        queue = list(answers)
+
+        def fake(url, headers):
+            self.byte_calls.append((url, headers))
+            return queue.pop(0)
+        patcher = mock.patch.object(rc, '_http_bytes', fake)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_it_asks_for_the_attachment_on_the_configured_server_with_the_token(self):
+        self.answers = [self.TOKEN]
+        self._with_bytes((200, b'%PDF-1.4 x', 'application/pdf; charset=binary', {}))
+        data, content_type = rc.fax_attachment(11, 901)
+        self.assertEqual((data, content_type), (b'%PDF-1.4 x', 'application/pdf'))
+        url, headers = self.byte_calls[0]
+        self.assertEqual(url, 'https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/message-store/11/content/901')
+        self.assertEqual(headers['Authorization'], 'Bearer tok')
+
+    def test_a_401_gets_one_fresh_token(self):
+        self.answers = [self.TOKEN, (200, {'access_token': 'tok2', 'expires_in': 7199})]
+        self._with_bytes((401, b'', '', {}), (200, b'%PDF', 'application/pdf', {}))
+        self.assertEqual(rc.fax_attachment(1, 2)[0], b'%PDF')
+        self.assertEqual(self.byte_calls[1][1]['Authorization'], 'Bearer tok2')
+
+    def test_a_refusal_raises_with_its_status(self):
+        self.answers = [self.TOKEN]
+        self._with_bytes((429, b'', '', {'message': 'Request rate exceeded'}))
+        with self.assertRaises(rc.FaxError) as caught:
+            rc.fax_attachment(1, 2)
+        self.assertEqual(caught.exception.status, 429)
+        self.assertIn('rate exceeded', str(caught.exception))
+
+    def test_odd_ids_never_reach_a_url(self):
+        with self.assertRaises(rc.FaxError):
+            rc.fax_attachment('1/../2', 3)
+
+    def test_a_file_over_thirty_megabytes_is_refused(self):
+        self.answers = [self.TOKEN]
+        self._with_bytes((200, b'%PDF' + b'0' * (30 * 1024 * 1024), 'application/pdf', {}))
+        with self.assertRaises(rc.FaxError) as caught:
+            rc.fax_attachment(1, 2)
+        self.assertEqual(caught.exception.status, 413)
+
+    def test_redirects_are_followed_only_to_ringcentral(self):
+        for url, allowed in (('https://media.ringcentral.com/x', True),
+                             ('https://platform.ringcentral.com/x', True),
+                             ('https://ringcentral.com.evil.example/x', False),
+                             ('https://example.com/x', False)):
+            with self.subTest(url=url):
+                self.assertEqual(rc._ringcentral_host(url), allowed)
+        handler = rc._RingCentralOnlyRedirect()
+        self.assertIsNone(handler.redirect_request(None, None, 302, 'Found', {}, 'https://example.com/steal'))
