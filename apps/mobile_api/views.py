@@ -2494,6 +2494,25 @@ def _unassigned_doc_dict(doc):
         'claimed_by_id': doc.claimed_by_id,
         'claimed_by_name': claimed_by_name,
         'claimed_at': doc.claimed_at.isoformat() if doc.claimed_at else None,
+        # Imported from the clinic line by emr.inbound_fax (2026-11-16):
+        # 'ringcentral', when it was received, and RingCentral's page count.
+        # None for a document uploaded from a Mac.
+        **_inbound_fax_fields(doc),
+    }
+
+
+def _inbound_fax_fields(doc):
+    from django.core.exceptions import ObjectDoesNotExist
+    try:
+        fax = doc.inbound_fax
+    except ObjectDoesNotExist:
+        fax = None
+    if fax is None:
+        return {'source': None, 'received_at': None, 'page_count': None}
+    return {
+        'source': 'ringcentral',
+        'received_at': fax.received_at.isoformat() if fax.received_at else None,
+        'page_count': fax.page_count,
     }
 
 
@@ -2574,7 +2593,7 @@ def mobile_unassigned_documents_list(request):
     else:
         qs = qs.filter(team_id__in=allowed)
 
-    qs = qs.select_related('author', 'claimed_by').order_by('-created_on')
+    qs = qs.select_related('author', 'claimed_by', 'inbound_fax').order_by('-created_on')
 
     return JsonResponse({
         'success': True,
@@ -2831,7 +2850,11 @@ def mobile_unassigned_document_assign(request, document_id):
 def mobile_unassigned_document_delete(request, document_id):
     """DELETE -> hard-delete an unassigned-pool row + its GCS object.
     Allowed only when the doc is unclaimed or claimed by the caller. No
-    patient timeline to audit to — operational log only."""
+    patient timeline to audit to — operational log only.
+
+    PATCH -> rename it (see `_rename_unassigned_document`)."""
+    if request.method == 'PATCH':
+        return _rename_unassigned_document(request, document_id)
     if request.method != 'DELETE':
         return JsonResponse({'error': 'DELETE required'}, status=405)
 
@@ -2878,6 +2901,66 @@ def mobile_unassigned_document_delete(request, document_id):
     }))
 
     return JsonResponse({'success': True})
+
+
+def _rename_unassigned_document(request, document_id):
+    """PATCH {document_name, if_document_name?} -> rename a pool document.
+
+    Added 2026-11-16 (inbound-fax plan phase 1): a fax imported from
+    RingCentral arrives named "Fax from <sender>", and the Mac that first
+    opens it may name it from its pages. Before this there was no way to
+    rename a pool document after upload, so such a name could never reach the
+    other Macs.
+
+    `if_document_name` makes it compare-and-set: the rename happens only if
+    the name is still that, so an automatic name can never replace one a
+    person typed meanwhile. A mismatch answers 409 with the current name.
+    No audit row (a pool document belongs to no chart yet); the change is
+    logged on `smallbrain.unassigned_docs` without the names, which a person
+    may have typed a patient into.
+    """
+    try:
+        body = json.loads(request.body or b'{}')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    if not isinstance(body, dict):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    name = (body.get('document_name') or '').strip()
+    expected = body.get('if_document_name')
+    if not name:
+        return JsonResponse({'error': 'document_name is required'}, status=400)
+    if len(name) > 255:
+        return JsonResponse({'error': 'document_name is too long'}, status=400)
+
+    with transaction.atomic():
+        try:
+            doc = Document.objects.select_for_update().get(
+                id=document_id, patient__isnull=True, team__isnull=False)
+        except Document.DoesNotExist:
+            return JsonResponse({'error': 'Document not found'}, status=404)
+        if not _assert_team_access(request.user, doc.team_id):
+            return JsonResponse({'error': 'Document not found'}, status=404)
+        if expected is not None and (doc.document_name or '') != expected:
+            return JsonResponse({
+                'success': False, 'reason': 'name_changed',
+                'document_name': doc.document_name or '',
+            }, status=409)
+        if (doc.document_name or '') == name:
+            return JsonResponse({'success': True, 'document_name': name, 'changed': False})
+        doc.document_name = name
+        doc.save(update_fields=['document_name'])
+        team_id = doc.team_id
+
+    _UNASSIGNED_DOCS_LOGGER.info(json.dumps({
+        'severity': 'INFO',
+        'message': 'unassigned_document_renamed',
+        'document_id': int(document_id),
+        'team_id': team_id,
+        'actor_id': request.user.id,
+        'compare_and_set': expected is not None,
+        'serviceContext': {'service': 'smallbrain-api'},
+    }))
+    return JsonResponse({'success': True, 'document_name': name, 'changed': True})
 
 
 @csrf_exempt
@@ -7494,6 +7577,49 @@ def mobile_fax_requisition(request, patient_id):
     if sent.get('state') in ('delivered', 'failed'):
         row = _settle_fax(row.id, sent)
     return JsonResponse({'success': True, 'transmission': _fax_transmission_json(row)})
+
+
+# One import pass per server process per this many seconds, however many
+# Macs ask (emr.inbound_fax; the importer itself never imports a fax twice).
+_INBOX_CHECK_SECONDS = 55
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_inbox_check(request):
+    """POST -> import faxes the clinic line received since the last pass into
+    the configured team's unassigned pool (inbound-fax plan phase 1,
+    2026-11-16).
+
+    The server has no scheduler, so staff Macs ask from their background tick
+    (and a Cloud Run job may run `import_inbound_faxes` on a schedule). Off
+    unless configured: the answer is then `configured: false` with the
+    `problem`, and nothing is read from RingCentral. A pass is at most a few
+    downloads (`emr.inbound_fax.DEFAULT_BATCH`), so this request stays short;
+    `waiting` says how many are left for the next one. RingCentral being
+    unreachable answers 502 `ringcentral_unavailable`.
+    """
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Not found'}, status=404)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    from django.core.cache import cache
+    from emr import inbound_fax, ringcentral_fax
+
+    cfg = inbound_fax.config()
+    if not cfg['ok']:
+        return JsonResponse({'success': True, 'configured': False, 'problem': cfg['problem']})
+    if not cache.add('inbound-fax-check', True, _INBOX_CHECK_SECONDS):
+        return JsonResponse({'success': True, 'configured': True, 'checked': False})
+    try:
+        summary = inbound_fax.import_new_faxes(trigger='app')
+    except (ringcentral_fax.FaxError, ringcentral_fax.FaxNotConfigured) as error:
+        inbound_fax.LOGGER.info(json.dumps({
+            'severity': 'WARNING', 'message': 'inbound_fax_list_failed',
+            'error': str(error)[:300], 'serviceContext': {'service': 'smallbrain-api'}}))
+        return JsonResponse({'error': 'ringcentral_unavailable', 'message': str(error)[:300]}, status=502)
+    summary.update(success=True, checked=True)
+    return JsonResponse(summary)
 
 
 @csrf_exempt

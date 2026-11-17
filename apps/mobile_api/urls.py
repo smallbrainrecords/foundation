@@ -126,6 +126,7 @@ urlpatterns = [
     url(r'^fax/import-candidates$', views.mobile_fax_import_candidates),
     url(r'^fax/import$', views.mobile_fax_import),
     url(r'^fax/transmissions$', views.mobile_fax_transmissions),
+    url(r'^fax/inbox/check$', views.mobile_fax_inbox_check),
     url(r'^patient/(?P<patient_id>\d+)/fax/requisition$', views.mobile_fax_requisition),
     # Error reporting
     url(r'^errors/batch/$', views.mobile_batch_errors),

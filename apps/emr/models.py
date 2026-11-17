@@ -1898,3 +1898,38 @@ class FaxTransmission(models.Model):
     class Meta:
         ordering = ['-created_on']
         indexes = [models.Index(fields=['sender', 'created_on'], name='emr_fax_sender_created')]
+class InboundFax(models.Model):
+    """One fax the clinic line received, as Small Brain imported it from
+    RingCentral (2026-11-16, inbound-fax plan phase 1).
+
+    `emr.inbound_fax.import_new_faxes` reads the clinic line's mailbox and,
+    for each fax received after `INBOUND_FAX_START`, downloads the PDF and
+    files it as a Document in the configured team's unassigned pool. One row
+    per RingCentral message id (unique), so a fax is never imported twice,
+    whichever Mac or scheduled job asks.
+
+    `document` is NULL until the PDF has been stored; a fetch that fails
+    records `last_error` and counts an attempt, and the importer stops
+    trying after a few. RingCentral keeps only about a week of received
+    faxes on this account (measured 2026-11-16), so once a fax is imported
+    the Document is the only lasting copy.
+
+    The sender's number and name are kept for the senders report and for
+    naming senders later; `page_count` is RingCentral's.
+    """
+    rc_message_id = models.CharField(max_length=64, unique=True)
+    received_at = models.DateTimeField()
+    from_number = models.CharField(max_length=32, blank=True, default='')
+    from_name = models.CharField(max_length=255, blank=True, default='')
+    page_count = models.IntegerField(null=True, blank=True)
+    document = models.OneToOneField(
+        'Document', null=True, blank=True, related_name='inbound_fax', on_delete=models.SET_NULL)
+    attempts = models.IntegerField(default=0)
+    last_error = models.TextField(blank=True, default='')
+    created_on = models.DateTimeField(auto_now_add=True)
+    imported_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-received_at']
+
+

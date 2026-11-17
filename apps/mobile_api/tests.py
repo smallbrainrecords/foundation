@@ -3573,13 +3573,14 @@ class StampCoverageSweepTests(TestCase):
         'mobile_unassigned_document_claim': 'pool claim state, patient-unbound',
         'mobile_unassigned_document_claim_heartbeat': 'pool claim state, patient-unbound',
         'mobile_unassigned_document_release': 'pool claim state, patient-unbound',
-        'mobile_unassigned_document_delete': 'pool row never belonged to a patient',
+        'mobile_unassigned_document_delete': 'pool row never belonged to a patient (also PATCH: renames the pool row)',
         'mobile_save_my_story_entry': 'poll pull excludes My Story by design; liveness via tab-appear refetch (Gap C decision C2, 2026-07-10)',
         'mobile_document_text': 'derived OCR index, excluded from patient_full by design; a stamp would trigger pulls that fetch nothing, and a backfill would bump once per document. Liveness via document-texts refetch on search (2026-08-17)',
         'mobile_openemr_patient_link': 'cross-system link, not part of patient_full; the app reads it fresh on every ⌃O (2026-11-03)',
         'mobile_fax_recipients': 'practice fax directory, not chart data',
         'mobile_fax_recipient': 'practice fax directory, not chart data',
         'mobile_fax_import': 'practice fax directory, not chart data',
+        'mobile_fax_inbox_check': 'files received faxes into the team pool, patient-unbound until assign (which stamps)',
         'mobile_create_label': 'global label catalog, not patient-scoped',
         'mobile_update_label': 'global label catalog, not patient-scoped',
         'mobile_batch_events': 'analytics sink, not chart data',
@@ -8944,3 +8945,140 @@ class MobileFaxImportTests(_RBACTestBase):
 
     def test_no_entries_is_refused(self):
         self.assertEqual(self._import([])[0].status_code, 400)
+
+
+class MobileFaxInboxCheckTests(_RBACTestBase):
+    """POST /api/fax/inbox/check — staff Macs ask the server to import newly
+    received faxes (emr.inbound_fax). Off unless configured; one pass a
+    minute per process; RingCentral trouble is a 502 the app can tell apart."""
+
+    URL = '/api/fax/inbox/check'
+
+    def setUp(self):
+        super().setUp()
+        from django.core.cache import cache
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self._login(self.team_nurse)
+
+    def _configured(self):
+        from emr import ringcentral_fax
+        patcher = mock.patch.object(ringcentral_fax, 'is_configured', lambda: True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        settings = override_settings(INBOUND_FAX_ENABLED=True, INBOUND_FAX_TEAM_ID=self.attending.id,
+                                     INBOUND_FAX_START='2026-11-16T12:00:00Z')
+        settings.enable()
+        self.addCleanup(settings.disable)
+
+    def test_a_patient_gets_not_found(self):
+        self.client.logout()
+        self._login(self.patient)
+        self.assertEqual(self.client.post(self.URL).status_code, 404)
+
+    def test_only_post(self):
+        self.assertEqual(self.client.get(self.URL).status_code, 405)
+
+    def test_switched_off_reads_nothing_and_says_why(self):
+        from emr import inbound_fax
+        with mock.patch.object(inbound_fax, 'import_new_faxes') as run:
+            body = self.client.post(self.URL).json()
+        self.assertEqual(body, {'success': True, 'configured': False, 'problem': 'disabled'})
+        run.assert_not_called()
+
+    def test_one_pass_a_minute_however_many_macs_ask(self):
+        from emr import inbound_fax
+        self._configured()
+        summary = {'configured': True, 'listed': 3, 'imported': 2, 'already': 1, 'waiting': 0,
+                   'failed': 0, 'given_up': 0, 'rate_limited': False, 'complete': True}
+        with mock.patch.object(inbound_fax, 'import_new_faxes', return_value=dict(summary)) as run:
+            first = self.client.post(self.URL).json()
+            second = self.client.post(self.URL).json()
+        self.assertEqual(run.call_count, 1)
+        self.assertTrue(first['checked'])
+        self.assertEqual((first['imported'], first['already']), (2, 1))
+        self.assertEqual(second, {'success': True, 'configured': True, 'checked': False})
+
+    def test_ringcentral_trouble_is_a_502(self):
+        from emr import inbound_fax, ringcentral_fax
+        self._configured()
+        with mock.patch.object(inbound_fax, 'import_new_faxes',
+                               side_effect=ringcentral_fax.FaxError('RingCentral could not be reached: timed out')):
+            response = self.client.post(self.URL)
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.json()['error'], 'ringcentral_unavailable')
+
+
+class MobileUnassignedDocumentRenameTests(_RBACTestBase):
+    """PATCH /api/team/unassigned-document/<id> — renaming a pool document,
+    compare-and-set so an automatic name never replaces a typed one."""
+
+    def setUp(self):
+        super().setUp()
+        self.doc = Document.objects.create(
+            document_name='Fax from NMRL', author=self.attending, patient=None, team=self.attending)
+        self.url = f'/api/team/unassigned-document/{self.doc.id}'
+        self._login(self.team_nurse)
+
+    def _patch(self, body):
+        return self.client.patch(self.url, data=json.dumps(body), content_type='application/json')
+
+    def test_a_team_member_renames_it(self):
+        response = self._patch({'document_name': 'CMP', 'if_document_name': 'Fax from NMRL'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'success': True, 'document_name': 'CMP', 'changed': True})
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'CMP')
+
+    def test_a_name_changed_meanwhile_is_not_overwritten(self):
+        self.doc.document_name = 'Lipid panel, typed by Amy'
+        self.doc.save()
+        response = self._patch({'document_name': 'CMP', 'if_document_name': 'Fax from NMRL'})
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()['document_name'], 'Lipid panel, typed by Amy')
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document_name, 'Lipid panel, typed by Amy')
+
+    def test_without_a_condition_it_simply_renames(self):
+        self.assertEqual(self._patch({'document_name': 'CMP'}).status_code, 200)
+
+    def test_the_same_name_changes_nothing(self):
+        self.assertFalse(self._patch({'document_name': 'Fax from NMRL'}).json()['changed'])
+
+    def test_a_nurse_on_another_team_gets_not_found(self):
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        response = self._patch({'document_name': 'CMP'})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+    def test_a_document_on_a_chart_is_not_a_pool_document(self):
+        self.doc.patient, self.doc.team = self.patient, None
+        self.doc.save()
+        self.assertEqual(self._patch({'document_name': 'CMP'}).status_code, 404)
+
+    def test_an_empty_or_huge_name_is_refused(self):
+        self.assertEqual(self._patch({'document_name': '  '}).status_code, 400)
+        self.assertEqual(self._patch({'document_name': 'x' * 256}).status_code, 400)
+
+    def test_delete_still_deletes(self):
+        self.assertEqual(self.client.delete(self.url).status_code, 200)
+        self.assertFalse(Document.objects.filter(id=self.doc.id).exists())
+
+
+class UnassignedListInboundFaxFieldsTests(_RBACTestBase):
+    """The pool list says which rows came from the clinic line."""
+
+    def test_imported_rows_carry_their_fax_details(self):
+        from emr.models import InboundFax
+        imported = Document.objects.create(document_name='Fax from NMRL', author=self.attending,
+                                           patient=None, team=self.attending)
+        uploaded = Document.objects.create(document_name='scan.pdf', author=self.attending,
+                                           patient=None, team=self.attending)
+        InboundFax.objects.create(rc_message_id='77', received_at=timezone.now(), page_count=3,
+                                  document=imported)
+        self._login(self.attending)
+        rows = {row['id']: row for row in self.client.get('/api/team/unassigned-documents/list').json()['documents']}
+        self.assertEqual((rows[imported.id]['source'], rows[imported.id]['page_count']), ('ringcentral', 3))
+        self.assertIsNotNone(rows[imported.id]['received_at'])
+        self.assertEqual((rows[uploaded.id]['source'], rows[uploaded.id]['page_count']), (None, None))

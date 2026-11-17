@@ -419,7 +419,7 @@ def inbound_faxes(days=7, trace=None):
     newest first, as plain dicts:
     {'id', 'received', 'from_number', 'from_name', 'to_numbers', 'to_keys',
      'pages', 'read_status', 'message_status',
-     'attachments': [{'content_type', 'size'}]}.
+     'attachments': [{'id', 'content_type', 'size'}]}.
 
     Reads the message list only ("Light" rate group, ReadMessages permission)
     and never downloads a page. Read to the end of the list with
@@ -440,6 +440,7 @@ def inbound_faxes(days=7, trace=None):
             if isinstance(a, dict):
                 size = a.get('size')
                 attachments.append({
+                    'id': a.get('id'),
                     'content_type': (a.get('contentType') or '').strip(),
                     'size': size if isinstance(size, int) else None,
                 })
@@ -487,3 +488,74 @@ def extension_phone_numbers():
                 'features': sorted(f for f in record.get('features') or [] if isinstance(f, str)),
             })
     return found
+
+
+# ---------- Downloading a received fax ----------
+
+_MAX_FAX_BYTES = 30 * 1024 * 1024
+
+
+def _ringcentral_host(url):
+    host = (urllib.parse.urlsplit(url).hostname or '').lower()
+    return host == 'ringcentral.com' or host.endswith('.ringcentral.com')
+
+
+class _RingCentralOnlyRedirect(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect only to a RingCentral host. urllib copies the
+    Authorization header onto the redirected request, so a redirect anywhere
+    else would hand the clinic's token to a stranger; it is refused instead
+    and surfaces as the redirect status."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not _ringcentral_host(newurl):
+            return None
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _http_bytes(url, headers):
+    """One GET whose answer is a file. Returns (status, bytes, content type,
+    parsed JSON error or {}). The seam tests replace."""
+    opener = urllib.request.build_opener(_RingCentralOnlyRedirect)
+    request = urllib.request.Request(url, headers=headers, method='GET')
+    try:
+        with opener.open(request, timeout=TIMEOUT_SECONDS) as response:
+            raw = response.read(_MAX_FAX_BYTES + 1)
+            return response.status, raw, response.headers.get('Content-Type', ''), {}
+    except urllib.error.HTTPError as error:
+        raw = error.read()
+        try:
+            parsed = json.loads(raw) if raw else {}
+        except ValueError:
+            parsed = {}
+        return error.code, b'', '', parsed if isinstance(parsed, dict) else {}
+    except (urllib.error.URLError, OSError) as error:
+        raise FaxError('RingCentral could not be reached: %s' % error)
+
+
+def fax_attachment(message_id, attachment_id):
+    """The bytes and content type of one attachment of a received fax:
+    GET .../message-store/<message>/content/<attachment> on the configured
+    server, with the clinic's token ("Read Messages" permission).
+
+    Raises FaxError with RingCentral's status: 429 means "too many requests,
+    try later" and is not the fax's fault; anything else non-200 means this
+    fax could not be fetched. A file over 30 MB is refused rather than
+    stored, since nothing else in the app could serve it (Cloud Run's
+    32 MiB response cap). Added 2026-11-16 for the inbound-fax import.
+    """
+    if not str(message_id).isdigit() or not str(attachment_id).isdigit():
+        raise FaxError('RingCentral gave this fax an unexpected id.')
+    cfg = _config()
+    path = '/restapi/v1.0/account/~/extension/~/message-store/%s/content/%s' % (message_id, attachment_id)
+    for attempt in (0, 1):
+        token = _access_token(force=attempt == 1)
+        status, raw, content_type, parsed = _http_bytes(
+            cfg['server'] + path, {'Authorization': 'Bearer ' + token})
+        if status == 401 and attempt == 0:
+            continue
+        break
+    if status != 200:
+        raise FaxError('RingCentral did not send the fax: %s' % _message(parsed, status), status)
+    if len(raw) > _MAX_FAX_BYTES:
+        raise FaxError('The fax is larger than 30 MB.', 413)
+    return raw, (content_type or '').split(';')[0].strip().lower()
