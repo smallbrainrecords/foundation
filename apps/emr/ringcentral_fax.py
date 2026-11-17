@@ -240,19 +240,102 @@ _HISTORY_MAX_PAGES = 5
 HISTORY_DAYS = 365
 
 
-def _paged(path, query, max_pages):
-    """Records from a paged RingCentral list, following page numbers."""
+def _creation_days(records):
+    days = sorted((r.get('creationTime') or '')[:10] for r in records if r.get('creationTime'))
+    return (days[0], days[-1]) if days else ('', '')
+
+
+def _paged(path, query, max_pages, trace=None):
+    """Records from a paged RingCentral list, following page numbers.
+
+    It stops when `paging.totalPages` says the last page was read, and a
+    MISSING total counts as one page. `trace`, if given, records how the
+    read ended (see `check_ringcentral_inbound`); it changes nothing.
+    """
     records = []
+    stopped = 'max_pages'
+    pages = 0
     for page in range(1, max_pages + 1):
         params = dict(query, page=page)
         status, parsed = _authorized('GET', path + '?' + urllib.parse.urlencode(params))
         if status != 200:
             raise FaxError('RingCentral did not answer: %s' % _message(parsed, status), status)
+        pages = page
         batch = parsed.get('records') or []
         records.extend(r for r in batch if isinstance(r, dict))
         paging = parsed.get('paging') or {}
         if not batch or page >= int(paging.get('totalPages') or 1):
+            if not batch:
+                stopped = 'empty_page'
+            elif paging.get('totalPages') is None:
+                stopped = 'no_total_pages'
+            else:
+                stopped = 'last_page'
             break
+    if trace is not None:
+        oldest, newest = _creation_days(records)
+        trace.update(pages=pages, records=len(records), stopped=stopped, oldest=oldest, newest=newest)
+    return records
+
+
+def _as_int(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value.strip())
+    return None
+
+
+def _paged_through(path, query, max_pages, trace=None):
+    """Every record of a paged RingCentral list, read until the list says it
+    has ended.
+
+    Unlike `_paged`, a missing `paging.totalPages` is not taken as "one
+    page": the read goes on while a page comes back full or carries a
+    `navigation.nextPage` link, and stops on an empty page, on the stated
+    last page, or on a short page with no next link. Reaching `max_pages`
+    first leaves `trace['complete']` false, so a caller can say the list was
+    cut rather than pass it off as whole. `trace`, if given, also gets the
+    page size asked for and given, the `paging` and `navigation` keys seen,
+    and the oldest and newest `creationTime` day.
+    """
+    asked = _as_int(query.get('perPage')) or 0
+    records = []
+    info = {'pages': 0, 'asked_per_page': asked, 'given_per_page': None,
+            'stopped': 'max_pages', 'complete': False}
+    paging_keys, navigation_keys = set(), set()
+    for page in range(1, max_pages + 1):
+        params = dict(query, page=page)
+        status, parsed = _authorized('GET', path + '?' + urllib.parse.urlencode(params))
+        if status != 200:
+            raise FaxError('RingCentral did not answer: %s' % _message(parsed, status), status)
+        info['pages'] = page
+        batch = [r for r in parsed.get('records') or [] if isinstance(r, dict)]
+        records.extend(batch)
+        paging = parsed.get('paging') if isinstance(parsed.get('paging'), dict) else {}
+        navigation = parsed.get('navigation') if isinstance(parsed.get('navigation'), dict) else {}
+        paging_keys |= set(paging)
+        navigation_keys |= set(navigation)
+        given = _as_int(paging.get('perPage'))
+        if info['given_per_page'] is None and given:
+            info['given_per_page'] = given
+        page_size = given or asked
+        total = _as_int(paging.get('totalPages'))
+        if not batch:
+            info['stopped'], info['complete'] = 'empty_page', True
+            break
+        if total is not None and page >= total:
+            info['stopped'], info['complete'] = 'last_page', True
+            break
+        if total is None and 'nextPage' not in navigation and page_size and len(batch) < page_size:
+            info['stopped'], info['complete'] = 'short_page', True
+            break
+    if trace is not None:
+        oldest, newest = _creation_days(records)
+        trace.update(info, records=len(records), oldest=oldest, newest=newest,
+                     paging_keys=sorted(paging_keys), navigation_keys=sorted(navigation_keys))
     return records
 
 
@@ -284,7 +367,7 @@ def contact_fax_numbers():
     return found
 
 
-def sent_fax_numbers(days=HISTORY_DAYS):
+def sent_fax_numbers(days=HISTORY_DAYS, trace=None):
     """Where the clinic's faxes went in the last `days`:
     [{'fax_number', 'name', 'times_faxed', 'times_delivered', 'last_faxed'}],
     one entry per number as RingCentral wrote it.
@@ -297,7 +380,7 @@ def sent_fax_numbers(days=HISTORY_DAYS):
     records = _paged(
         '/restapi/v1.0/account/~/extension/~/message-store',
         {'messageType': 'Fax', 'direction': 'Outbound', 'dateFrom': since,
-         'perPage': _HISTORY_PAGE_SIZE}, _HISTORY_MAX_PAGES)
+         'perPage': _HISTORY_PAGE_SIZE}, _HISTORY_MAX_PAGES, trace)
     by_number = {}
     for record in records:
         created = record.get('creationTime') or ''
@@ -319,3 +402,88 @@ def sent_fax_numbers(days=HISTORY_DAYS):
             if created > entry['last_faxed']:
                 entry['last_faxed'] = created
     return list(by_number.values())
+
+
+_INBOUND_PAGE_SIZE = 250
+_INBOUND_MAX_PAGES = 40
+_OUTBOUND_MAX_PAGES = 20
+
+
+def _since(days):
+    import datetime
+    return (datetime.datetime.utcnow() - datetime.timedelta(days=days)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def inbound_faxes(days=7, trace=None):
+    """Faxes the credential owner's extension received in the last `days`,
+    newest first, as plain dicts:
+    {'id', 'received', 'from_number', 'from_name', 'to_numbers', 'to_keys',
+     'pages', 'read_status', 'message_status',
+     'attachments': [{'content_type', 'size'}]}.
+
+    Reads the message list only ("Light" rate group, ReadMessages permission)
+    and never downloads a page. Read to the end of the list with
+    `_paged_through`; `trace` says whether it got there. `to_keys` is which
+    fields RingCentral filled in the record's `to` entries, for the mailbox
+    check. Added 2026-11-16 for the inbound-fax plan.
+    """
+    records = _paged_through(
+        '/restapi/v1.0/account/~/extension/~/message-store',
+        {'messageType': 'Fax', 'direction': 'Inbound', 'dateFrom': _since(days),
+         'perPage': _INBOUND_PAGE_SIZE}, _INBOUND_MAX_PAGES, trace)
+    found = []
+    for record in records:
+        sender = record.get('from') if isinstance(record.get('from'), dict) else {}
+        parties = [party for party in record.get('to') or [] if isinstance(party, dict)]
+        attachments = []
+        for a in record.get('attachments') or []:
+            if isinstance(a, dict):
+                size = a.get('size')
+                attachments.append({
+                    'content_type': (a.get('contentType') or '').strip(),
+                    'size': size if isinstance(size, int) else None,
+                })
+        pages = record.get('faxPageCount')
+        found.append({
+            'id': record.get('id'),
+            'received': record.get('creationTime') or '',
+            'from_number': (sender.get('phoneNumber') or '').strip(),
+            'from_name': (sender.get('name') or '').strip(),
+            'to_numbers': [(party.get('phoneNumber') or '').strip() for party in parties],
+            'to_keys': sorted({key for party in parties for key, value in party.items() if value}),
+            'pages': pages if isinstance(pages, int) else None,
+            'read_status': record.get('readStatus') or '',
+            'message_status': record.get('messageStatus') or '',
+            'attachments': attachments,
+        })
+    return found
+
+
+def outbound_fax_records(days=HISTORY_DAYS, trace=None, max_pages=_OUTBOUND_MAX_PAGES):
+    """Every fax the credential owner's extension sent in the last `days`, as
+    RingCentral's message records (newest first), read to the end of the list
+    with `_paged_through`. Unlike `sent_fax_numbers`, nothing is merged."""
+    return _paged_through(
+        '/restapi/v1.0/account/~/extension/~/message-store',
+        {'messageType': 'Fax', 'direction': 'Outbound', 'dateFrom': _since(days),
+         'perPage': _HISTORY_PAGE_SIZE}, max_pages, trace)
+
+
+def extension_phone_numbers():
+    """The credential owner's own phone numbers:
+    [{'phone_number', 'usage_type', 'type', 'features'}].
+    Needs RingCentral's ReadAccounts permission, which the app was not given
+    on 2026-11-12, so a refusal here is expected and only means "unknown"."""
+    status, parsed = _authorized('GET', '/restapi/v1.0/account/~/extension/~/phone-number?perPage=100')
+    if status != 200:
+        raise FaxError('RingCentral did not answer: %s' % _message(parsed, status), status)
+    found = []
+    for record in parsed.get('records') or []:
+        if isinstance(record, dict):
+            found.append({
+                'phone_number': (record.get('phoneNumber') or '').strip(),
+                'usage_type': record.get('usageType') or '',
+                'type': record.get('type') or '',
+                'features': sorted(f for f in record.get('features') or [] if isinstance(f, str)),
+            })
+    return found
