@@ -3611,6 +3611,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_transmissions',
         'mobile_fax_import_candidates',
         'mobile_fax_reviews',
+        'mobile_fax_review',
         'mobile_patient_document_reviews',
         'mobile_fax_review_original',
         'mobile_untranscribed_encounters',
@@ -9607,3 +9608,54 @@ class FaxReviewStampTests(_FaxReviewBase):
     def test_setting_a_waiting_fax_aside_stamps_the_chart_it_leaves(self):
         self._prepared()
         self._moves(lambda: self._post('set-aside'))
+
+
+class FaxReviewFollowUpTests(_FaxReviewBase):
+    """One document's review, who may read a chart's reviews, how much the
+    lists carry, and which labels a review changes."""
+
+    def test_one_documents_review_says_which_pages_are_out(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self._login(self.team_nurse)
+        url = f'/api/fax/review/{self.doc.id}'
+        self.assertEqual(self.client.get(url).json()['review'], None)
+        self.client.post(f'/api/fax/review/{self.doc.id}/pages', data={
+            'removed_pages': '[1]', 'original_page_count': '3',
+            'file': SimpleUploadedFile('k.pdf', b'%PDF-1.4 kept', content_type='application/pdf')})
+        review = self.client.get(url).json()['review']
+        self.assertEqual((review['state'], [p['page'] for p in review['removed_pages']], review['has_original']),
+                         ('new', [1], True))
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.client.logout()
+        self._login(self.patient)
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_a_patient_cannot_read_their_charts_review_marks(self):
+        self._prepared()
+        self.client.logout()
+        self._login(self.patient)
+        response = self.client.get(f'/api/patient/{self.patient.id}/document-reviews')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+    def test_staff_get_the_queue_without_the_charts_orders(self):
+        self._prepared()
+        self.client.logout()
+        self._login(self.team_nurse)
+        row = self.client.get('/api/fax/reviews').json()['queue'][0]
+        self.assertNotIn('open_orders', row)
+        self.client.logout()
+        self._login(self.attending)
+        row = self.client.get('/api/fax/reviews').json()['queue'][0]
+        self.assertIn('open_orders', row)
+
+    def test_changing_the_type_label_keeps_screening(self):
+        screening = Label.objects.create(name='screening', is_all=True)
+        Label.objects.create(name='Imaging', is_all=True)
+        self._prepared()
+        self.doc.labels.add(screening)
+        self._post('approve', {'next_step': 'nothing_to_tell', 'edits': {'label': 'Imaging'}})
+        self.assertEqual(sorted(l.name for l in self.doc.labels.all()), ['Imaging', 'screening'])
+        self.assertEqual([c['field'] for c in json.loads(self._review().changes)], ['label'])

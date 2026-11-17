@@ -296,11 +296,15 @@ def mobile_fax_reviews(request):
     week = timezone.now() - datetime.timedelta(days=7)
     recent = DocumentReview.objects.filter(
         state=DocumentReview.APPROVED, approved_by=user, approved_at__gte=week)
+    approver = api._role_of(user) == 'physician'
     return JsonResponse({
         'success': True,
         'enabled': True,
-        'is_approver': api._role_of(user) == 'physician',
-        'queue': [review_json(r, detail=True) for r in queue],
+        'is_approver': approver,
+        # The chart's orders and problems ride along only where they are
+        # edited: the physician's queue, and what was sent back to staff.
+        # Staff Macs ask every 30 s for the counts.
+        'queue': [review_json(r, detail=approver) for r in queue],
         'returned': [review_json(r, detail=True) for r in returned],
         'set_aside': [review_json(r) for r in set_aside],
         'week': {'approved': recent.count(), 'changed': recent.exclude(changes='[]').count()},
@@ -315,7 +319,7 @@ def mobile_patient_document_reviews(request, patient_id):
     the Docs tab's mark ("Not yet reviewed" / "Reviewed by …"). Read-only."""
     if request.method != 'GET':
         return _refuse('GET required', 405)
-    if not api._assert_patient_access(request.user, patient_id):
+    if not api._fax_caller_is_staff(request.user) or not api._assert_patient_access(request.user, patient_id):
         return _not_found()
     if not enabled():
         return JsonResponse({'success': True, 'enabled': False, 'reviews': []})
@@ -337,6 +341,30 @@ def mobile_patient_document_reviews(request, patient_id):
     } for r in rows]})
 
 
+@csrf_exempt
+@login_required
+def mobile_fax_review(request, document_id):
+    """GET -> {review: one document's review, or null when it has none}.
+
+    The prepare sheet asks before it shows a pool fax, because the pool list
+    does not say whether pages were removed on another Mac: without the list
+    of removed pages a Mac would number pages from its own, possibly
+    outdated, copy of the file. Read-only."""
+    if request.method != 'GET':
+        return _refuse('GET required', 405)
+    if not api._fax_caller_is_staff(request.user):
+        return _not_found()
+    doc = Document.objects.filter(id=document_id).select_related('patient', 'inbound_fax').first()
+    if doc is None or not _can_reach(request.user, doc):
+        return _not_found()
+    if not enabled():
+        return JsonResponse({'success': True, 'enabled': False, 'review': None})
+    review = DocumentReview.objects.filter(document=doc).select_related(
+        'order_todo', 'order_todo__problem', 'prepared_by', 'returned_by', 'approved_by', 'set_aside_by').first()
+    return JsonResponse({'success': True, 'enabled': True,
+                         'review': review_json(review, detail=True) if review else None})
+
+
 # ---------------------------------------------------------------------------
 # Changing a document the way the existing endpoints do
 # ---------------------------------------------------------------------------
@@ -353,27 +381,34 @@ def _rename(request, doc, name):
     return True
 
 
+# The document-type labels. A document carries one of them; "screening" and
+# any ad-hoc label sit beside it and are never touched here.
+TYPE_LABELS = ('laboratory', 'imaging', 'procedure', 'correspondence', 'referral', 'medication')
+
+
 def _set_label(request, doc, name):
-    """The document carries exactly this label afterwards. An empty name
-    changes nothing. Same canonical-row rule and audit wording as
-    `mobile_document_label`."""
+    """The document's type label is exactly this one afterwards: another type
+    label it carried is taken off, other labels ("screening") stay. An empty
+    name changes nothing. Same canonical-row rule and audit wording as
+    `mobile_document_label`. Returns whether anything changed."""
     name = (name or '').strip()
     if not name:
         return False
     current = list(doc.labels.all())
-    if len(current) == 1 and (current[0].name or '').lower() == name.lower():
-        return False
     label = Label.objects.filter(name__iexact=name).order_by('-is_all', 'id').first()
     if label is None:
         label = Label.objects.create(name=name, css_class='', author=request.user)
+    changed = False
     for other in current:
-        if other.id != label.id:
+        if other.id != label.id and (other.name or '').lower() in TYPE_LABELS:
             doc.labels.remove(other)
             add_problem_activity(None, request.user, f"Removed label: {other.name or 'label'}")
+            changed = True
     if not any(other.id == label.id for other in current):
         doc.labels.add(label)
         add_problem_activity(None, request.user, f"Added label: {label.name or 'label'}")
-    return True
+        changed = True
+    return changed
 
 
 def _set_problems(request, doc, problem_ids):
