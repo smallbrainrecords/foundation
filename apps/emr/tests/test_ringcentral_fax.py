@@ -216,3 +216,217 @@ class CheckRingCentralFaxCommandTests(SimpleTestCase):
         rows, _, error = self._run(configured=False)
         self.assertIsNotNone(error)
         self.assertEqual(set(rows), {'config', 'summary'})
+
+
+class InboundFaxListTests(SimpleTestCase):
+    """`inbound_faxes` reads the received-fax list and nothing else, and the
+    pager under it reads to the end of a list."""
+
+    setUp = RingCentralFaxTests.setUp
+    _http = RingCentralFaxTests._http
+    TOKEN = RingCentralFaxTests.TOKEN
+
+    def _page(self, ids, **paging):
+        return (200, {'records': [{'id': i, 'creationTime': '2026-11-%02dT10:00:00Z' % (10 + i)} for i in ids],
+                      'paging': paging})
+
+    def test_it_asks_for_inbound_faxes_since_the_window_and_reads_each_record(self):
+        self.answers = [self.TOKEN, (200, {'records': [{
+            'id': 11, 'creationTime': '2026-11-16T13:42:00Z', 'faxPageCount': 3,
+            'readStatus': 'Unread', 'messageStatus': 'Received',
+            'from': {'phoneNumber': '+12315550140', 'name': 'NMRL'},
+            'to': [{'phoneNumber': '+12315388295', 'name': ''}],
+            'attachments': [{'contentType': 'application/pdf', 'size': 81234}],
+        }], 'paging': {'totalPages': 1}})]
+        trace = {}
+        faxes = rc.inbound_faxes(days=7, trace=trace)
+        method, url, _, body = self.calls[1]
+        self.assertEqual(method, 'GET')
+        self.assertIn('/message-store?', url)
+        self.assertIn('direction=Inbound', url)
+        self.assertIn('messageType=Fax', url)
+        self.assertIn('dateFrom=', url)
+        self.assertIsNone(body)
+        self.assertEqual(faxes, [{
+            'id': 11, 'received': '2026-11-16T13:42:00Z', 'from_number': '+12315550140',
+            'from_name': 'NMRL', 'to_numbers': ['+12315388295'], 'to_keys': ['phoneNumber'], 'pages': 3,
+            'read_status': 'Unread', 'message_status': 'Received',
+            'attachments': [{'content_type': 'application/pdf', 'size': 81234}]}])
+        self.assertTrue(trace['complete'])
+        self.assertEqual(trace['stopped'], 'last_page')
+
+    def test_odd_records_do_not_break_the_list(self):
+        self.answers = [self.TOKEN, (200, {'records': [{'id': 1, 'from': 'x', 'attachments': ['y'],
+                                                        'faxPageCount': 'two'}],
+                                           'paging': {'totalPages': 1}})]
+        fax = rc.inbound_faxes()[0]
+        self.assertEqual((fax['from_number'], fax['pages'], fax['attachments'], fax['to_keys']),
+                         ('', None, [], []))
+
+    def test_a_refused_list_raises(self):
+        self.answers = [self.TOKEN, (403, {'message': 'needs [ReadMessages] permission'})]
+        with self.assertRaises(rc.FaxError):
+            rc.inbound_faxes()
+
+    def test_a_missing_page_total_does_not_end_the_read_early(self):
+        """RingCentral can leave `totalPages` out; a full page means read on."""
+        self.answers = [self.TOKEN, self._page([1, 2], perPage=2), self._page([3], perPage=2)]
+        trace = {}
+        records = rc._paged_through('/x', {'perPage': 2}, 10, trace)
+        self.assertEqual([r['id'] for r in records], [1, 2, 3])
+        self.assertEqual((trace['stopped'], trace['complete'], trace['pages']), ('short_page', True, 2))
+        self.assertEqual((trace['oldest'], trace['newest']), ('2026-11-11', '2026-11-13'))
+        self.assertIn('page=2', self.calls[2][1])
+
+    def test_a_next_page_link_is_followed_even_after_a_short_page(self):
+        self.answers = [self.TOKEN, (200, {'records': [{'id': 1}], 'paging': {'perPage': 2},
+                                           'navigation': {'nextPage': {'uri': 'x'}}}),
+                        (200, {'records': [], 'paging': {'perPage': 2}})]
+        trace = {}
+        self.assertEqual(len(rc._paged_through('/x', {'perPage': 2}, 10, trace)), 1)
+        self.assertEqual((trace['stopped'], trace['complete']), ('empty_page', True))
+        self.assertEqual(trace['navigation_keys'], ['nextPage'])
+
+    def test_running_out_of_pages_is_reported_as_incomplete(self):
+        self.answers = [self.TOKEN, self._page([1, 2], perPage=2), self._page([3, 4], perPage=2)]
+        trace = {}
+        self.assertEqual(len(rc._paged_through('/x', {'perPage': 2}, 2, trace)), 4)
+        self.assertEqual((trace['stopped'], trace['complete']), ('max_pages', False))
+
+    def test_the_import_pager_still_stops_without_a_total_and_says_so(self):
+        """`_paged` (what the directory import uses) is unchanged; the trace names why it stopped."""
+        self.answers = [self.TOKEN, self._page([1, 2], perPage=2)]
+        trace = {}
+        self.assertEqual(len(rc._paged('/x', {'perPage': 2}, 5, trace)), 2)
+        self.assertEqual((trace['stopped'], trace['pages'], trace['records']), ('no_total_pages', 1, 2))
+
+    def test_the_extension_numbers_are_read_when_allowed(self):
+        self.answers = [self.TOKEN, (200, {'records': [{'phoneNumber': '+12315388295', 'usageType': 'DirectNumber',
+                                                        'type': 'VoiceFax', 'features': ['FaxNumber', 'CallerId']}]})]
+        self.assertEqual(rc.extension_phone_numbers(), [{
+            'phone_number': '+12315388295', 'usage_type': 'DirectNumber', 'type': 'VoiceFax',
+            'features': ['CallerId', 'FaxNumber']}])
+
+
+class CheckRingCentralInboundCommandTests(SimpleTestCase):
+    """`manage.py check_ringcentral_inbound` prints counts, dates and the last
+    four digits of the practice's own numbers; never a name or a full number."""
+
+    FAXES = [
+        {'id': 1, 'received': '2026-11-16T13:42:00Z', 'from_number': '+12315550140', 'from_name': 'NMRL',
+         'to_numbers': ['+12315388295'], 'to_keys': ['name', 'phoneNumber'], 'pages': 3, 'read_status': 'Read',
+         'message_status': 'Received', 'attachments': [{'content_type': 'application/pdf', 'size': None}]},
+        {'id': 2, 'received': '2026-11-16T14:00:00Z', 'from_number': '+12315550140', 'from_name': '',
+         'to_numbers': ['+12315388295'], 'to_keys': ['phoneNumber'], 'pages': 1, 'read_status': 'Unread',
+         'message_status': 'Received', 'attachments': [{'content_type': 'application/pdf', 'size': 5000}]},
+        {'id': 3, 'received': '2026-11-15T09:00:00Z', 'from_number': '', 'from_name': 'Anonymous',
+         'to_numbers': [''], 'to_keys': ['name'], 'pages': None, 'read_status': 'Unread',
+         'message_status': 'Received', 'attachments': []},
+    ]
+    SENT = [
+        {'id': 9, 'creationTime': '2099-01-01T10:00:00Z', 'to': [{'phoneNumber': '+12315388253', 'name': 'James'}]},
+        {'id': 8, 'creationTime': '2026-01-05T10:00:00Z', 'to': [{'phoneNumber': '(231) 538-8253'}]},
+        {'id': 7, 'creationTime': '2026-01-04T10:00:00Z', 'to': [{'phoneNumber': '+12315550140'}]},
+    ]
+
+    def _run(self, faxes=None, inbound_error=None, contacts_error=None, configured=True):
+        import io
+        import json
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+
+        def read_inbound(days=7, trace=None):
+            if inbound_error:
+                raise rc.FaxError(inbound_error)
+            if trace is not None:
+                trace.update(pages=1, stopped='last_page', complete=True)
+            return faxes or []
+
+        def read_outbound(days=365, trace=None, max_pages=20):
+            if trace is not None:
+                trace.update(records=3, oldest='2026-01-04', newest='2099-01-01', complete=True)
+            return self.SENT
+
+        def read_import(days=365, trace=None):
+            if trace is not None:
+                trace.update(records=3, stopped='no_total_pages', oldest='2026-01-04')
+            return []
+
+        def read_contacts():
+            if contacts_error:
+                raise rc.FaxError(contacts_error)
+            return [{'fax_number': '231-555-0140', 'name': 'NMRL', 'note': ''}]
+
+        def read_own_numbers():
+            raise rc.FaxError('needs [ReadAccounts] permission')
+
+        out = io.StringIO()
+        error = None
+        with mock.patch.object(rc, 'is_configured', lambda: configured), \
+                mock.patch.object(rc, '_access_token', lambda force=False: 'tok'), \
+                mock.patch.object(rc, 'inbound_faxes', read_inbound), \
+                mock.patch.object(rc, 'outbound_fax_records', read_outbound), \
+                mock.patch.object(rc, 'sent_fax_numbers', read_import), \
+                mock.patch.object(rc, 'contact_fax_numbers', read_contacts), \
+                mock.patch.object(rc, 'extension_phone_numbers', read_own_numbers), \
+                mock.patch('emr.management.commands.check_ringcentral_inbound.FaxRecipient') as recipients:
+            recipients.objects.filter.return_value.values_list.return_value = ['12315550140', '17345550000']
+            try:
+                call_command('check_ringcentral_inbound', stdout=out)
+            except CommandError as raised:
+                error = raised
+        text = out.getvalue()
+        return {row['kind']: row for row in map(json.loads, text.splitlines())}, text, error
+
+    def test_it_reports_counts_and_no_names_or_full_numbers(self):
+        rows, text, error = self._run(self.FAXES)
+        self.assertIsNone(error)
+        self.assertEqual(rows['inbound']['faxes'], 3)
+        self.assertTrue(rows['inbound']['complete'])
+        self.assertEqual(rows['inbound']['to_clinic_line'], 2)
+        self.assertEqual((rows['inbound']['read'], rows['inbound']['unread']), (1, 2))
+        self.assertEqual(rows['receiving_numbers']['by_last_four'], {'8295': 2})
+        self.assertEqual(rows['receiving_numbers']['faxes_with_no_to_number'], 1)
+        self.assertEqual(rows['receiving_numbers']['to_fields_seen'], {'name': 2, 'phoneNumber': 2})
+        self.assertEqual(rows['by_day']['days'], {'2026-11-15': 1, '2026-11-16': 2})
+        self.assertEqual((rows['pages']['total'], rows['pages']['largest'], rows['pages']['unknown']), (4, 3, 1))
+        self.assertEqual((rows['attachments']['with_pdf'], rows['attachments']['with_none'],
+                          rows['attachments']['sizes_reported']), (2, 1, 1))
+        self.assertEqual(rows['senders'], {
+            'kind': 'senders', 'distinct': 1, 'no_number': 1, 'with_sender_name': 2,
+            'directory_entries': 2, 'in_directory': 1, 'faxes_from_directory_numbers': 2,
+            'faxed_by_clinic_in_history': 1, 'faxes_from_numbers_faxed_by_clinic': 2,
+            'in_contacts': 1, 'contacts_reason': None})
+        self.assertEqual((rows['refaxed_to_physician']['in_window'], rows['refaxed_to_physician']['in_history']), (1, 2))
+        self.assertEqual(rows['history_reach']['as_the_import_reads_it']['stopped'], 'no_total_pages')
+        self.assertTrue(rows['history_reach']['read_to_the_end']['complete'])
+        self.assertTrue(rows['summary']['ok'])
+        for secret in ('NMRL', 'Anonymous', 'James', '5550140', '5388253', '5388295', '5550000'):
+            self.assertNotIn(secret, text)
+
+    def test_the_optional_reads_failing_does_not_fail_the_check(self):
+        rows, _, error = self._run(self.FAXES, contacts_error='needs [ReadContacts] permission')
+        self.assertIsNone(error)
+        self.assertFalse(rows['extension_numbers']['ok'])
+        self.assertIn('ReadAccounts', rows['extension_numbers']['reason'])
+        self.assertIsNone(rows['senders']['in_contacts'])
+        self.assertIn('ReadContacts', rows['senders']['contacts_reason'])
+        self.assertTrue(rows['summary']['ok'])
+
+    def test_a_refused_inbound_list_is_named_and_fails_the_command(self):
+        rows, _, error = self._run(inbound_error='needs [ReadMessages] permission')
+        self.assertIsNotNone(error)
+        self.assertFalse(rows['inbound']['ok'])
+        self.assertIn('ReadMessages', rows['inbound']['reason'])
+        self.assertFalse(rows['summary']['ok'])
+
+    def test_an_empty_mailbox_is_reported_as_zero_not_an_error(self):
+        rows, _, error = self._run([])
+        self.assertIsNone(error)
+        self.assertEqual(rows['inbound']['faxes'], 0)
+        self.assertIsNone(rows['pages']['largest'])
+
+    def test_an_unconfigured_server_stops_at_once(self):
+        rows, _, error = self._run(configured=False)
+        self.assertIsNotNone(error)
+        self.assertEqual(set(rows), {'config', 'summary'})
