@@ -51,6 +51,7 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/edit$', document_edit.mobile_document_edit),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/edits$', document_edit.mobile_document_edits),
     url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/before-edits$', document_edit.mobile_document_before_edits),
+    url(r'^patient/(?P<patient_id>\d+)/document/(?P<document_id>\d+)/restore$', document_edit.mobile_document_restore),
     # PR-5 (2026-06-11) Shared unassigned documents pool (per-team).
     url(r'^team/(?P<team_id>\d+)/unassigned-document/upload$', views.mobile_upload_unassigned_document),
     url(r'^team/unassigned-documents/list$', views.mobile_unassigned_documents_list),
