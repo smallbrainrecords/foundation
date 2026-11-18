@@ -1792,10 +1792,15 @@ def mobile_document_file(request, document_id):
         return JsonResponse({'error': 'Document not found'}, status=404)
 
     # If it's assigned to a patient, assert patient access.
+    # If it's in the Office list (2026-11-18), any staff member may read it.
     # If it's an unassigned document (patient=None, team!=None), assert team access.
     # Otherwise (true orphan), deny.
+    from emr.models import OfficeDocument
     if doc.patient_id is not None:
         if not _assert_patient_access(request.user, doc.patient_id):
+            return JsonResponse({'error': 'Document not found'}, status=404)
+    elif OfficeDocument.objects.filter(document_id=doc.id).exists():
+        if not _fax_caller_is_staff(request.user):
             return JsonResponse({'error': 'Document not found'}, status=404)
     elif doc.team_id is not None:
         if not _assert_team_access(request.user, doc.team_id):
@@ -2585,10 +2590,12 @@ def mobile_unassigned_documents_list(request):
     _sweep_expired_claims()
 
     allowed = _user_team_ids(request.user)
-    # A fax set aside (emr.DocumentReview) is kept, off every chart, and is
-    # not pool work: it is listed by mobile_fax_reviews instead.
+    # A document in the Office list (emr.OfficeDocument, 2026-11-18) is not
+    # pool work: it is listed by apps.mobile_api.office instead. A fax still
+    # in the retired `set_aside` state is left out until
+    # `move_parked_faxes_to_office` moves it to Office.
     qs = Document.objects.filter(patient__isnull=True, team__isnull=False).exclude(
-        review__state='set_aside')
+        office__isnull=False).exclude(review__state='set_aside')
     if allowed is None:
         pass  # admin: no further filter
     elif not allowed:
@@ -7027,6 +7034,8 @@ def _fax_transmission_json(row):
         'fax_number': row.fax_number,
         'display_number': _display_fax_number(row.fax_number),
         'todo_ids': todo_ids,
+        # An Office document faxed out (2026-11-18); None for a requisition.
+        'document_id': row.document_id,
         'error': row.error,
         'page_count': row.page_count,
         'created_on': _iso_z(row.created_on) if row.created_on else None,
@@ -7367,7 +7376,9 @@ def _settle_fax(row_id, reading):
     Delivered: each order's Activity says so, and the directory entry's
     delivered count goes up. Failed: each order's Activity says why, and the
     sender is tagged on each order as New, so the order comes back to their
-    My Tagged Todos — the failure reaches the person who sent it.
+    My Tagged Todos — the failure reaches the person who sent it. An Office
+    document's fax that fails is handed back to its sender instead
+    (2026-11-18), so it shows in their Documents for you.
     """
     from emr.models import FaxRecipient, FaxTransmission
     from django.db.models import F
@@ -7402,6 +7413,8 @@ def _settle_fax(row_id, reading):
         else:
             reason = row.error or row.rc_status or 'no reason given'
             activity = 'Fax to %s failed: %s' % (row.recipient_name, reason)
+        if state == 'failed' and row.sender_id and row.document_id:
+            _hand_failed_office_fax_back(row, activity)
         for todo in todos:
             add_todo_activity(todo, row.sender, activity)
             if state == 'failed' and row.sender_id:
@@ -7417,6 +7430,27 @@ def _settle_fax(row_id, reading):
             'recipient_id': row.recipient_id, 'fax_number': row.fax_number,
             'rc_status': row.rc_status, 'error': row.error}))
         return row
+
+
+def _hand_failed_office_fax_back(row, activity):
+    """A fax out of the Office list failed: hand the document back to the
+    person who sent it, with the reason as the note. Nothing happens when
+    the document has left Office since."""
+    from emr.models import OfficeDocument, OfficeHandoff
+    from django.utils import timezone
+
+    if not OfficeDocument.objects.filter(document_id=row.document_id).exists():
+        return
+    now = timezone.now()
+    handoff, created = OfficeHandoff.objects.get_or_create(
+        document_id=row.document_id, user_id=row.sender_id,
+        defaults={'handed_by_id': row.sender_id, 'handed_at': now, 'note': activity})
+    if not created:
+        handoff.handed_at = now
+        handoff.note = activity
+        handoff.seen_at = None
+        handoff.done_at = None
+        handoff.save()
 
 
 def _refresh_fax(row):

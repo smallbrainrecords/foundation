@@ -3564,6 +3564,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_review_approve': 'FaxReviewStampTests',
         'mobile_fax_review_set_aside': 'FaxReviewStampTests',
         'mobile_fax_review_pages': 'FaxReviewStampTests',
+        'mobile_office_move_in': 'OfficeMoveInTests',
     }
 
     ALLOWLIST = {
@@ -3587,8 +3588,18 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_recipient': 'practice fax directory, not chart data',
         'mobile_fax_import': 'practice fax directory, not chart data',
         'mobile_fax_inbox_check': 'files received faxes into the team pool, patient-unbound until assign (which stamps)',
-        'mobile_fax_review_restore': 'a set-aside fax returns to the team pool, patient-unbound',
-        'mobile_fax_review_later': 'parks a pool fax for staff to finish later; it stays in the team pool, patient-unbound',
+        'mobile_fax_review_restore': 'an Office (or set-aside) document returns to the team pool, patient-unbound',
+        'mobile_fax_review_later': 'retired; moves a pool fax to the Office list, patient-unbound (pool only)',
+        'mobile_office_upload': 'a document straight into the Office list, which is on no chart',
+        'mobile_office_document': 'renames or deletes an Office document, which is on no chart',
+        'mobile_office_to_unassigned': 'an Office document returns to the team pool, patient-unbound until assign (which stamps)',
+        'mobile_office_hand': 'Office hand-offs, not chart data',
+        'mobile_office_handoff_seen': 'Office hand-offs, not chart data',
+        'mobile_office_handoff_done': 'Office hand-offs, not chart data',
+        'mobile_office_handoff_remove': 'Office hand-offs, not chart data',
+        'mobile_office_edit': 'edits an Office document, which is on no chart',
+        'mobile_office_restore': 'restores a version of an Office document, which is on no chart',
+        'mobile_office_fax': 'faxes an Office document out, not chart data',
         'mobile_create_label': 'global label catalog, not patient-scoped',
         'mobile_update_label': 'global label catalog, not patient-scoped',
         'mobile_batch_events': 'analytics sink, not chart data',
@@ -3618,6 +3629,9 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_review_original',
         'mobile_document_edits',
         'mobile_document_before_edits',
+        'mobile_office_documents',
+        'mobile_office_edits',
+        'mobile_office_before_edits',
         'mobile_untranscribed_encounters',
         'mobile_encounter_transcripts',
         'mobile_untimed_encounters',
@@ -8462,6 +8476,7 @@ class _FakeRingCentral:
         self.status_reading = {'state': 'queued', 'rc_status': 'Queued', 'error': '', 'page_count': None}
         self.status_calls = 0
         self.next_id = 9000
+        self.filenames = []
 
     def install(self, test):
         from unittest import mock
@@ -8480,6 +8495,7 @@ class _FakeRingCentral:
         if self.send_error:
             raise ringcentral_fax.FaxError(self.send_error)
         self.sent.append((pdf_bytes, to_number))
+        self.filenames.append(filename)
         self.next_id += 1
         return dict(self.send_reading, message_id=str(self.next_id))
 
@@ -9332,13 +9348,17 @@ class FaxReviewFileTests(_FaxReviewBase):
         self.doc.refresh_from_db()
         self.assertIsNone(self.doc.patient_id)
 
-    def test_a_filed_fax_can_be_set_aside_and_filed_again(self):
+    def test_a_filed_fax_moved_to_office_comes_back_and_is_filed_again(self):
         self._login(self.team_nurse)
         self.assertEqual(self._file().status_code, 200)
-        self.assertEqual(self._post('set-aside').status_code, 200)
+        self.assertEqual(self.client.post(f'/api/office/document/{self.doc.id}/move-in', data='{}',
+                                          content_type='application/json').status_code, 200)
         self.doc.refresh_from_db()
         self.assertIsNone(self.doc.patient_id)
-        self.assertEqual(self._post('restore').status_code, 200)
+        # In Office it is refused until it goes back to the pool.
+        self.assertEqual(self._file().json()['error'], 'in_office')
+        self.assertEqual(self.client.post(f'/api/office/document/{self.doc.id}/to-unassigned', data='{}',
+                                          content_type='application/json').status_code, 200)
         self.assertEqual(self._file().status_code, 200)
         self.assertEqual(self._review().state, 'filed')
 
@@ -9350,53 +9370,26 @@ class FaxReviewFileTests(_FaxReviewBase):
 
 
 class FaxReviewLaterTests(_FaxReviewBase):
-    """POST /api/fax/review/<id>/later — "do it later": staff park a pool
-    fax to finish another time (owner decision 2026-11-17)."""
+    """POST /api/fax/review/<id>/later — retired 2026-11-18: build 86's "Do it
+    later" button now moves the pool fax to the Office list, note and all."""
 
     def _later(self, **body):
         return self._post('later', body)
 
-    def test_a_parked_fax_stays_in_the_pool_off_every_chart_and_queue(self):
+    def test_a_parked_fax_goes_to_office_with_its_note(self):
+        from emr.models import OfficeDocument
         self._login(self.team_nurse)
         response = self._later(note='Waiting on the office to say which patient')
         self.assertEqual(response.status_code, 200)
         self.doc.refresh_from_db()
         self.assertEqual((self.doc.patient_id, self.doc.team_id), (None, self.attending.id))
-        review = self._review()
-        self.assertEqual((review.state, review.later_by_id, review.note),
+        office = OfficeDocument.objects.get(document=self.doc)
+        self.assertEqual((office.source, office.moved_by_id, office.note),
                          ('later', self.team_nurse.id, 'Waiting on the office to say which patient'))
-        self.assertIsNotNone(review.later_at)
         pool = self.client.get('/api/team/unassigned-documents/list').json()
-        self.assertIn(self.doc.id, [row['id'] for row in pool['documents']])
+        self.assertNotIn(self.doc.id, [row['id'] for row in pool['documents']])
         lists = self.client.get('/api/fax/reviews').json()
-        self.assertEqual([(r['document_id'], r['state'], r['later_by_name']) for r in lists['later']],
-                         [(self.doc.id, 'later', 'Amy Stone')])
-        self.assertEqual(lists['queue'], [])
-
-    def test_the_physician_does_not_get_it_in_his_queue(self):
-        self._login(self.team_nurse)
-        self._later()
-        self.client.logout()
-        self._login(self.attending)
-        lists = self.client.get('/api/fax/reviews').json()
-        self.assertEqual(lists['queue'], [])
-        self.assertEqual([r['document_id'] for r in lists['later']], [self.doc.id])
-        # Not on a chart, so there is nothing to approve.
-        self.assertEqual(self._post('approve', {'next_step': 'nothing_to_tell'}).status_code, 404)
-        self.assertEqual(self._review().state, 'later')
-
-    def test_a_parked_fax_is_finished_later_by_ready_or_file(self):
-        self._login(self.team_nurse)
-        self._later()
-        self.assertEqual(self._ready().status_code, 200)
-        self.assertEqual(self._review().state, 'ready')
-
-    def test_a_parked_fax_can_be_filed(self):
-        self._login(self.team_nurse)
-        self._later()
-        response = self._post('file', {'patient_id': self.patient.id, 'label': 'Correspondence'})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(self._review().state, 'filed')
+        self.assertEqual((lists['later'], lists['set_aside'], lists['queue']), ([], [], []))
 
     def test_parking_lets_go_of_the_callers_own_hold(self):
         self.doc.claimed_by, self.doc.claimed_at = self.team_nurse, timezone.now()
@@ -9407,11 +9400,12 @@ class FaxReviewLaterTests(_FaxReviewBase):
         self.assertIsNone(self.doc.claimed_by_id)
 
     def test_a_fax_someone_else_is_working_is_refused(self):
+        from emr.models import OfficeDocument
         self.doc.claimed_by, self.doc.claimed_at = self.attending, timezone.now()
         self.doc.save()
         self._login(self.team_nurse)
         self.assertEqual(self._later().status_code, 409)
-        self.assertFalse(DocumentProblem.objects.filter(document=self.doc).exists())
+        self.assertFalse(OfficeDocument.objects.filter(document=self.doc).exists())
 
     def test_only_a_fax_in_the_pool_can_be_parked(self):
         self._prepared()
@@ -9421,11 +9415,13 @@ class FaxReviewLaterTests(_FaxReviewBase):
         self.assertEqual((response.status_code, response.json()['error']), (409, 'not_in_pool'))
         self.assertEqual(self._review().state, 'ready')
 
-    def test_a_set_aside_fax_is_restored_not_parked(self):
+    def test_parking_twice_keeps_one_office_row(self):
+        from emr.models import OfficeDocument
         self._login(self.team_nurse)
-        self._post('set-aside')
-        response = self._later()
-        self.assertEqual((response.status_code, response.json()['error']), (409, 'set_aside'))
+        self._later(note='first')
+        self.assertEqual(self._later(note='second').status_code, 200)
+        self.assertEqual(list(OfficeDocument.objects.filter(document=self.doc).values_list('note', flat=True)),
+                         ['second'])
 
     def test_parking_touches_no_chart(self):
         self._login(self.team_nurse)
@@ -9433,11 +9429,11 @@ class FaxReviewLaterTests(_FaxReviewBase):
         self.assertIsNone(self._stamp())
 
     def test_switched_off_refuses(self):
+        from emr.models import OfficeDocument
         self._login(self.team_nurse)
         with override_settings(FAX_REVIEW_ENABLED=False):
             self.assertEqual(self._later().status_code, 503)
-        from emr.models import DocumentReview
-        self.assertFalse(DocumentReview.objects.filter(document=self.doc).exists())
+        self.assertFalse(OfficeDocument.objects.filter(document=self.doc).exists())
 
 
 class DocumentEditTests(_FaxReviewBase):
@@ -9928,21 +9924,24 @@ class FaxReviewApproveTests(_FaxReviewBase):
 
 
 class FaxReviewSetAsideTests(_FaxReviewBase):
-    """Set aside, restore within 30 days, and the purge command."""
+    """Set aside and restore — retired 2026-11-18. Build 86 still calls them:
+    set aside moves the document to the Office list, restore sends an Office
+    document back to the pool."""
 
-    def test_a_pool_fax_set_aside_leaves_the_pool_list_and_can_come_back(self):
+    def test_a_pool_fax_set_aside_goes_to_office_and_restore_brings_it_back(self):
+        from emr.models import OfficeDocument
         self._login(self.team_nurse)
         self.assertEqual(self._post('set-aside').status_code, 200)
-        pool = self.client.get('/api/team/unassigned-documents/list').json()['documents']
-        self.assertEqual(pool, [])
-        body = self.client.get('/api/fax/reviews').json()
-        self.assertEqual([r['document_id'] for r in body['set_aside']], [self.doc.id])
-        self.assertEqual(body['set_aside'][0]['set_aside_by_name'], 'Amy Stone')
+        self.assertEqual(self.client.get('/api/team/unassigned-documents/list').json()['documents'], [])
+        self.assertEqual(OfficeDocument.objects.get(document=self.doc).source, 'pool')
+        self.assertEqual(self.client.get('/api/fax/reviews').json()['set_aside'], [])
         self.assertEqual(self._post('restore').status_code, 200)
+        self.assertFalse(OfficeDocument.objects.filter(document=self.doc).exists())
         pool = self.client.get('/api/team/unassigned-documents/list').json()['documents']
         self.assertEqual([d['id'] for d in pool], [self.doc.id])
 
-    def test_a_waiting_fax_set_aside_leaves_the_chart(self):
+    def test_a_waiting_fax_set_aside_leaves_the_chart_for_office(self):
+        from emr.models import OfficeDocument
         self._prepared()
         self.assertEqual(self._post('set-aside').status_code, 200)
         self.doc.refresh_from_db()
@@ -9951,40 +9950,23 @@ class FaxReviewSetAsideTests(_FaxReviewBase):
         self.assertTrue(ProblemActivity.objects.filter(
             problem=self.problem, activity='Removed document: CMP').exists())
         self.assertEqual(self.client.get(f'/api/patient/{self.patient.id}/document-reviews').json()['reviews'], [])
+        self.assertEqual(OfficeDocument.objects.get(document=self.doc).source, 'queue')
+        self.assertEqual(self._review().state, 'new')
 
     def test_an_approved_fax_cannot_be_set_aside(self):
+        from emr.models import OfficeDocument
         self._prepared()
         self._post('approve', {'next_step': 'nothing_to_tell'})
         self.assertEqual(self._post('set-aside').status_code, 409)
         self.doc.refresh_from_db()
         self.assertEqual(self.doc.patient_id, self.patient.id)
+        self.assertFalse(OfficeDocument.objects.filter(document=self.doc).exists())
 
-    def test_restore_ends_after_thirty_days_and_the_purge_is_a_dry_run_by_default(self):
-        from io import StringIO
-        from django.core.management import call_command
-        from emr.models import DocumentReview
+    def test_restore_of_a_document_never_in_office_does_nothing(self):
         self._login(self.team_nurse)
-        self._post('set-aside')
-        DocumentReview.objects.filter(document=self.doc).update(
-            set_aside_at=timezone.now() - datetime.timedelta(days=31))
-        self.assertEqual(self._post('restore').status_code, 409)
-        self.assertEqual(self.client.get('/api/fax/reviews').json()['set_aside'], [])
-        out = StringIO()
-        call_command('purge_set_aside_faxes', stdout=out)
-        self.assertEqual((json.loads(out.getvalue())['found'], Document.objects.filter(id=self.doc.id).count()),
-                         (1, 1))
-        out = StringIO()
-        call_command('purge_set_aside_faxes', '--apply', stdout=out)
-        self.assertEqual(json.loads(out.getvalue())['deleted'], 1)
-        self.assertFalse(Document.objects.filter(id=self.doc.id).exists())
-
-    def test_the_purge_never_takes_a_recent_or_filed_fax(self):
-        from io import StringIO
-        from django.core.management import call_command
-        self._login(self.team_nurse)
-        self._post('set-aside')
-        call_command('purge_set_aside_faxes', '--apply', '--days', '1', stdout=StringIO())
-        self.assertTrue(Document.objects.filter(id=self.doc.id).exists())
+        self._ready()
+        self.assertEqual(self._post('restore').json().get('already'), True)
+        self.assertEqual(self._review().state, 'ready')
 
 
 class FaxReviewPagesTests(_FaxReviewBase):
@@ -10152,3 +10134,500 @@ class FaxReviewFollowUpTests(_FaxReviewBase):
         self._post('approve', {'next_step': 'nothing_to_tell', 'edits': {'label': 'Imaging'}})
         self.assertEqual(sorted(l.name for l in self.doc.labels.all()), ['Imaging', 'screening'])
         self.assertEqual([c['field'] for c in json.loads(self._review().changes)], ['label'])
+
+
+# ---------------------------------------------------------------------------
+# The Office list (2026-11-18): apps/mobile_api/office.py
+# ---------------------------------------------------------------------------
+
+class _OfficeBase(_FaxReviewBase):
+    """A fax in the attending's pool (from `_FaxReviewBase`), plus a
+    secretary on nobody's team: everyone on staff sees Office."""
+
+    def setUp(self):
+        super().setUp()
+        self.secretary = User.objects.create_user(
+            username='sec_c', password='top_secret', email='s@x.com', first_name='Kelly', last_name='Moss')
+        UserProfile.objects.create(user=self.secretary, role='secretary')
+        self.attending.first_name, self.attending.last_name = 'James', 'Ryan'
+        self.attending.save()
+
+    def _office(self, action, body=None, doc=None, method='post'):
+        url = f'/api/office/document/{(doc or self.doc).id}' + (f'/{action}' if action else '')
+        call = getattr(self.client, method)
+        return call(url, data=json.dumps(body or {}), content_type='application/json')
+
+    def _move_in(self, **body):
+        return self._office('move-in', body)
+
+    def _list(self):
+        return self.client.get('/api/office/documents').json()
+
+    def _row(self, doc=None):
+        rows = [d for d in self._list()['documents'] if d['id'] == (doc or self.doc).id]
+        return rows[0] if rows else None
+
+
+class OfficeListTests(_OfficeBase):
+    """GET /api/office/documents."""
+
+    def test_every_staff_member_sees_office_and_a_patient_does_not(self):
+        self._login(self.team_nurse)
+        self.assertEqual(self._move_in(note='Audit request').status_code, 200)
+        self.client.logout()
+        for user in (self.secretary, self.stranger_nurse, self.stranger_doc, self.admin_user):
+            self._login(user)
+            body = self._list()
+            self.assertTrue(body['enabled'])
+            self.assertEqual([d['id'] for d in body['documents']], [self.doc.id], user.username)
+            self.client.logout()
+        self._login(self.patient)
+        self.assertEqual(self.client.get('/api/office/documents').status_code, 404)
+
+    def test_a_row_says_where_it_came_from_and_who_moved_it(self):
+        self._login(self.team_nurse)
+        self._move_in(note='Audit request')
+        row = self._row()
+        self.assertEqual((row['document_name'], row['source'], row['moved_by_name'], row['note'], row['team_id']),
+                         ('Fax from NMRL', 'pool', 'Amy Stone', 'Audit request', self.attending.id))
+        self.assertTrue(row['file_path'])
+        self.assertEqual((row['handoffs'], row['faxes'], row['edited']), ([], [], False))
+
+    def test_people_are_the_active_staff(self):
+        self.stranger_nurse.is_active = False
+        self.stranger_nurse.save()
+        self._login(self.secretary)
+        names = [p['name'] for p in self._list()['people']]
+        self.assertIn('Kelly Moss', names)
+        self.assertIn('Amy Stone', names)
+        self.assertNotIn('nurse_b', names)
+        self.assertNotIn('Nora Vance', names)
+
+    def test_switched_off(self):
+        self._login(self.team_nurse)
+        with override_settings(OFFICE_ENABLED=False):
+            self.assertEqual(self._list(), {'success': True, 'enabled': False})
+            self.assertEqual(self._move_in().status_code, 503)
+
+
+class OfficeMoveInTests(_OfficeBase):
+    """POST /api/office/document/<id>/move-in — from the pool, or off a chart
+    while the fax is in review. Taking a document off a chart moves that
+    chart's stamp (the URL carries the document, not the patient)."""
+
+    def test_from_the_pool_it_leaves_the_pool_list(self):
+        from emr.models import OfficeDocument
+        self._login(self.team_nurse)
+        self.assertEqual(self._move_in(note='Not for a chart').status_code, 200)
+        self.assertEqual(self.client.get('/api/team/unassigned-documents/list').json()['documents'], [])
+        office = OfficeDocument.objects.get(document=self.doc)
+        self.assertEqual((office.source, office.moved_by_id, office.note), ('pool', self.team_nurse.id, 'Not for a chart'))
+        self.assertIsNone(self._stamp())
+
+    def test_the_callers_hold_is_let_go_and_someone_elses_refuses(self):
+        self.doc.claimed_by, self.doc.claimed_at = self.attending, timezone.now()
+        self.doc.save()
+        self._login(self.team_nurse)
+        response = self._move_in()
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'already_claimed'))
+        self.client.logout()
+        self._login(self.attending)
+        self.assertEqual(self._move_in().status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.claimed_by_id)
+
+    def test_off_the_physicians_queue_it_leaves_the_chart_and_stamps_it(self):
+        from emr.models import OfficeDocument
+        self._prepared()
+        before = self._stamp()
+        self.assertEqual(self._move_in(note='Belongs to the office').status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual((self.doc.patient_id, self.doc.team_id), (None, self.attending.id))
+        self.assertTrue(ProblemActivity.objects.filter(
+            problem=self.problem, activity='Removed document: CMP').exists())
+        self.assertEqual(OfficeDocument.objects.get(document=self.doc).source, 'queue')
+        self.assertEqual((self._review().state, self._review().order_todo_id), ('new', None))
+        after = self._stamp()
+        self.assertTrue(after is not None and (before is None or after > before))
+
+    def test_a_fax_sent_back_is_recorded_as_returned(self):
+        from emr.models import OfficeDocument
+        self._prepared()
+        self._post('send-back', {'note': 'wrong patient'})
+        self.client.logout()
+        self._login(self.team_nurse)
+        self.assertEqual(self._move_in().status_code, 200)
+        self.assertEqual(OfficeDocument.objects.get(document=self.doc).source, 'returned')
+        self.assertEqual(self._review().returned_note, '')
+
+    def test_an_approved_fax_is_refused(self):
+        self._prepared()
+        self._post('approve', {'next_step': 'nothing_to_tell'})
+        response = self._move_in()
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'already_approved'))
+
+    def test_a_chart_document_filed_the_old_way_is_refused(self):
+        self.doc.patient, self.doc.team = self.patient, None
+        self.doc.save()
+        self._login(self.attending)
+        response = self._move_in()
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'not_in_review'))
+
+    def test_moving_it_again_answers_already(self):
+        self._login(self.team_nurse)
+        self._move_in()
+        self.client.logout()
+        self._login(self.secretary)
+        response = self._move_in()
+        self.assertEqual((response.status_code, response.json()['already']), (200, True))
+
+    def test_someone_who_cannot_reach_the_pool_is_refused(self):
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._move_in().status_code, 404)
+        self.client.logout()
+        self._login(self.patient)
+        self.assertEqual(self._move_in().status_code, 404)
+
+    def test_handed_to_people_in_the_same_step(self):
+        self._login(self.team_nurse)
+        response = self._move_in(note='Audit', hand_to=[self.secretary.id, self.attending.id], hand_note='Fill page 2')
+        self.assertEqual(response.status_code, 200)
+        handoffs = response.json()['document']['handoffs']
+        self.assertEqual(sorted((h['name'], h['note']) for h in handoffs),
+                         [('James Ryan', 'Fill page 2'), ('Kelly Moss', 'Fill page 2')])
+
+    def test_a_bad_hand_off_moves_nothing(self):
+        from emr.models import OfficeDocument
+        self._login(self.team_nurse)
+        response = self._move_in(hand_to=[self.patient.id])
+        self.assertEqual((response.status_code, response.json()['error']), (400, 'person_not_found'))
+        self.assertFalse(OfficeDocument.objects.filter(document=self.doc).exists())
+
+
+class OfficeHandoffTests(_OfficeBase):
+    """Handing a document to several people, and each person's own seen/done."""
+
+    def setUp(self):
+        super().setUp()
+        self._login(self.team_nurse)
+        self._move_in()
+
+    def test_hand_to_several_and_each_marks_their_own(self):
+        response = self._office('hand', {'user_ids': [self.secretary.id, self.attending.id], 'note': 'Please sign'})
+        self.assertEqual(response.status_code, 200)
+        self.client.logout()
+        self._login(self.secretary)
+        self.assertEqual(self._office('handoff/seen').status_code, 200)
+        self.assertEqual(self._office('handoff/done', {'done': True}).status_code, 200)
+        states = {h['name']: (h['seen_at'] is not None, h['done_at'] is not None) for h in self._row()['handoffs']}
+        self.assertEqual(states, {'Kelly Moss': (True, True), 'James Ryan': (False, False)})
+        self.assertEqual(self._office('handoff/done', {'done': False}).status_code, 200)
+        self.assertIsNone([h for h in self._row()['handoffs'] if h['name'] == 'Kelly Moss'][0]['done_at'])
+
+    def test_handing_again_reopens_with_the_new_note(self):
+        self._office('hand', {'user_ids': [self.secretary.id], 'note': 'first'})
+        self.client.logout()
+        self._login(self.secretary)
+        self._office('handoff/done', {'done': True})
+        self.client.logout()
+        self._login(self.team_nurse)
+        self._office('hand', {'user_ids': [self.secretary.id], 'note': 'one more page'})
+        row = self._row()['handoffs'][0]
+        self.assertEqual((row['note'], row['seen_at'], row['done_at'], row['handed_by_name']),
+                         ('one more page', None, None, 'Amy Stone'))
+
+    def test_only_active_staff_can_be_handed_to(self):
+        for bad in ([self.patient.id], [999999], ['x']):
+            response = self._office('hand', {'user_ids': bad, 'note': ''})
+            self.assertEqual(response.status_code, 400, bad)
+
+    def test_someone_not_handed_to_has_no_done_to_mark(self):
+        response = self._office('handoff/done', {'done': True})
+        self.assertEqual((response.status_code, response.json()['error']), (404, 'not_handed_to_you'))
+
+    def test_a_hand_off_can_be_taken_back(self):
+        self._office('hand', {'user_ids': [self.secretary.id], 'note': ''})
+        response = self.client.delete(f'/api/office/document/{self.doc.id}/handoff/{self.secretary.id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._row()['handoffs'], [])
+
+
+class OfficeDocumentTests(_OfficeBase):
+    """Rename, delete, back to Unassigned, upload, and the file route."""
+
+    def _upload(self, uuid='22222222-2222-2222-2222-222222222222', name='Annova audit request'):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post('/api/office/documents/upload', data={
+            'file': SimpleUploadedFile('audit.pdf', b'%PDF-1.4 audit', content_type='application/pdf'),
+            'client_uuid': uuid, 'document_name': name, 'note': 'Due Friday'})
+
+    def test_rename(self):
+        self._login(self.team_nurse)
+        self._move_in()
+        self.client.logout()
+        self._login(self.secretary)
+        response = self._office('', {'document_name': 'Annova request'}, method='patch')
+        self.assertEqual((response.status_code, response.json()['document']['document_name']), (200, 'Annova request'))
+
+    def test_delete_removes_the_file_and_every_earlier_version(self):
+        from django.core.files.base import ContentFile
+        from django.core.files.storage import default_storage
+        from emr.models import DocumentEdit, DocumentReview, OfficeHandoff
+        self._login(self.team_nurse)
+        self._move_in(hand_to=[self.secretary.id])
+        old_name = self.doc.document.name
+        self.doc.refresh_from_db()
+        self.doc.document.save('v2.pdf', ContentFile(b'%PDF-1.4 v2'))
+        DocumentEdit.objects.create(document=self.doc, edited_by=self.team_nurse, kind='edit',
+                                    previous_file=old_name, new_file=self.doc.document.name, client_uuid='e1')
+        original = default_storage.save('original.pdf', ContentFile(b'%PDF-1.4 original'))
+        DocumentReview.objects.update_or_create(document=self.doc, defaults={'original_file': original})
+        files = [old_name, self.doc.document.name, original]
+        self.assertTrue(all(default_storage.exists(f) for f in files))
+        self.client.logout()
+        self._login(self.secretary)
+        self.assertEqual(self._office('', method='delete').status_code, 200)
+        self.assertFalse(Document.objects.filter(id=self.doc.id).exists())
+        self.assertFalse(OfficeHandoff.objects.exists())
+        self.assertFalse(any(default_storage.exists(f) for f in files))
+        self.assertEqual(self._office('', method='delete').json().get('already'), True)
+
+    def test_a_pool_document_is_not_deleted_through_office(self):
+        self._login(self.team_nurse)
+        self.assertEqual(self._office('', method='delete').json().get('already'), True)
+        self.assertTrue(Document.objects.filter(id=self.doc.id).exists())
+
+    def test_back_to_unassigned_returns_it_to_its_teams_pool(self):
+        self._login(self.team_nurse)
+        self._move_in(hand_to=[self.secretary.id])
+        self.client.logout()
+        self._login(self.secretary)
+        response = self._office('to-unassigned')
+        self.assertEqual((response.status_code, response.json()['team_id']), (200, self.attending.id))
+        self.client.logout()
+        self._login(self.team_nurse)
+        pool = self.client.get('/api/team/unassigned-documents/list').json()['documents']
+        self.assertEqual([d['id'] for d in pool], [self.doc.id])
+        self.assertEqual(self._list()['documents'], [])
+
+    def test_an_upload_needs_a_team_of_the_callers_to_go_to_unassigned(self):
+        self._login(self.team_nurse)
+        doc_id = self._upload().json()['document']['id']
+        doc = Document.objects.get(id=doc_id)
+        self.assertEqual(self._office('to-unassigned', doc=doc).json()['error'], 'team_required')
+        self.assertEqual(self._office('to-unassigned', {'team_id': self.stranger_doc.id}, doc=doc).json()['error'],
+                         'team_not_allowed')
+        response = self._office('to-unassigned', {'team_id': self.attending.id}, doc=doc)
+        self.assertEqual(response.status_code, 200)
+        doc.refresh_from_db()
+        self.assertEqual(doc.team_id, self.attending.id)
+
+    def test_upload_is_idempotent(self):
+        self._login(self.secretary)
+        first = self._upload().json()
+        self.assertTrue(first['created'])
+        self.assertEqual((first['document']['source'], first['document']['note'], first['document']['team_id']),
+                         ('upload', 'Due Friday', None))
+        again = self._upload().json()
+        self.assertEqual((again['created'], again['document']['id']), (False, first['document']['id']))
+        self.assertEqual(self._upload(uuid='not-a-uuid').status_code, 400)
+
+    def test_any_staff_member_downloads_an_office_document_and_a_patient_cannot(self):
+        self._login(self.team_nurse)
+        self._move_in()
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        response = self.client.get(f'/api/media/document/{self.doc.id}/file')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b''.join(response.streaming_content), b'%PDF-1.4 as received')
+        self.client.logout()
+        self._login(self.patient)
+        self.assertEqual(self.client.get(f'/api/media/document/{self.doc.id}/file').status_code, 404)
+
+
+class OfficeEditTests(_OfficeBase):
+    """The chart editor's routes over Office documents."""
+
+    def setUp(self):
+        super().setUp()
+        self._login(self.team_nurse)
+        self._move_in()
+
+    def _edit(self, uuid='33333333-3333-3333-3333-333333333333', doc=None, url=None, **fields):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        data = {'file': SimpleUploadedFile('e.pdf', b'%PDF-1.4 edited', content_type='application/pdf'),
+                'client_uuid': uuid, **fields}
+        return self.client.post(url or f'/api/office/document/{(doc or self.doc).id}/edit', data=data)
+
+    def test_text_and_a_signature_make_a_new_version(self):
+        from emr.models import DocumentEdit
+        previous = self.doc.document.name
+        response = self._edit(text_count='2', pages='[1]', signed='true')
+        self.assertEqual(response.status_code, 200)
+        edit = DocumentEdit.objects.get(document=self.doc)
+        self.assertEqual((edit.kind, edit.signed, edit.signature_of_id, edit.previous_file),
+                         ('edit', True, self.team_nurse.id, previous))
+        self.assertTrue(self._row()['edited'])
+        # No chart, so no chart audit row.
+        self.assertFalse(ProblemActivity.objects.filter(activity__contains='Signed document').exists())
+
+    def test_the_physician_the_editor_works_for_may_be_signed_for_and_no_one_else(self):
+        self.assertEqual(self._edit(signed='true', signature_of=str(self.attending.id)).status_code, 200)
+        response = self._edit(uuid='44444444-4444-4444-4444-444444444444', signed='true',
+                              signature_of=str(self.stranger_doc.id))
+        self.assertEqual((response.status_code, response.json()['error']), (400, 'signature_not_allowed'))
+
+    def test_an_edited_copy_uploaded_whole(self):
+        from emr.models import DocumentEdit
+        response = self._edit(kind='upload')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(DocumentEdit.objects.get(document=self.doc).kind, 'upload')
+
+    def test_a_change_made_on_an_old_copy_is_refused(self):
+        response = self._edit(text_count='1', base_file='documents/old.pdf')
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'file_changed'))
+
+    def test_history_restore_and_before_edits(self):
+        previous = self.doc.document.name
+        edit_id = self._edit(text_count='1').json()['edit']['id']
+        edits = self.client.get(f'/api/office/document/{self.doc.id}/edits').json()['edits']
+        self.assertEqual([e['id'] for e in edits], [edit_id])
+        before = self.client.get(f'/api/office/document/{self.doc.id}/before-edits')
+        self.assertEqual(b''.join(before.streaming_content), b'%PDF-1.4 as received')
+        response = self._office('restore', {'edit_id': edit_id, 'client_uuid': 'r1'})
+        self.assertEqual(response.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.document.name, previous)
+
+    def test_the_routes_do_not_cross(self):
+        # An Office document is on no chart; a chart document is not in Office.
+        chart_url = f'/api/patient/{self.patient.id}/document/{self.doc.id}/edit'
+        self.assertEqual(self._edit(text_count='1', url=chart_url).status_code, 404)
+        other = Document.objects.create(document_name='On a chart', author=self.attending, patient=self.patient)
+        self.assertEqual(self._edit(text_count='1', doc=other).status_code, 404)
+
+
+class OfficeFaxTests(_OfficeBase):
+    """POST /api/office/document/<id>/fax, and a failure handed back."""
+
+    def setUp(self):
+        super().setUp()
+        from emr.models import FaxRecipient
+        self.rc = _FakeRingCentral()
+        self.rc.install(self)
+        self.recipient = FaxRecipient.objects.create(name='Annova Health', fax_number='15865551234')
+        self._login(self.team_nurse)
+        self._move_in()
+
+    def _send(self, uuid='55555555-5555-5555-5555-555555555555', recipient_id=None, cover='1'):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post(f'/api/office/document/{self.doc.id}/fax', data={
+            'file': SimpleUploadedFile('out.pdf', b'%PDF-1.4 cover and document', content_type='application/pdf'),
+            'client_uuid': uuid, 'recipient_id': str(recipient_id or self.recipient.id), 'cover': cover})
+
+    def test_the_mac_built_pdf_is_sent_and_recorded_against_the_document(self):
+        from emr.models import FaxTransmission
+        response = self._send()
+        self.assertEqual(response.status_code, 200)
+        body = response.json()['transmission']
+        self.assertEqual((body['document_id'], body['patient_id'], body['status'], body['todo_ids']),
+                         (self.doc.id, None, 'queued', []))
+        self.assertEqual(self.rc.sent, [(b'%PDF-1.4 cover and document', '15865551234')])
+        self.assertEqual(self.rc.filenames, ['document.pdf'])
+        row = FaxTransmission.objects.get()
+        self.assertEqual((row.document_id, row.sender_id), (self.doc.id, self.team_nurse.id))
+        self.assertEqual(self._row()['faxes'][0]['recipient_name'], 'Annova Health')
+
+    def test_a_retry_never_faxes_twice(self):
+        self._send()
+        again = self._send()
+        self.assertEqual((again.status_code, again.json().get('replayed')), (200, True))
+        self.assertEqual(len(self.rc.sent), 1)
+
+    def test_ringcentral_refusing_answers_502(self):
+        self.rc.send_error = 'invalid number'
+        response = self._send()
+        self.assertEqual((response.status_code, response.json()['error']), (502, 'fax_send_failed'))
+
+    def test_not_configured_and_unknown_recipient(self):
+        self.assertEqual(self._send(recipient_id=999999).json()['error'], 'recipient_not_found')
+        self.rc.configured = False
+        self.assertEqual(self._send().status_code, 503)
+
+    def test_a_failed_fax_is_handed_back_to_its_sender(self):
+        from emr.models import OfficeHandoff
+        self._send()
+        self.rc.status_reading = {'state': 'failed', 'rc_status': 'SendingFailed', 'error': 'LineBusy', 'page_count': 3}
+        self.client.logout()
+        self._login(self.secretary)
+        row = self._row()
+        self.assertEqual(row['faxes'][0]['status'], 'failed')
+        handoff = OfficeHandoff.objects.get(document=self.doc)
+        self.assertEqual((handoff.user_id, handoff.done_at), (self.team_nurse.id, None))
+        self.assertIn('failed', handoff.note)
+
+    def test_a_delivered_fax_hands_nothing_back(self):
+        from emr.models import OfficeHandoff
+        self._send()
+        self.rc.status_reading = {'state': 'delivered', 'rc_status': 'Sent', 'error': '', 'page_count': 3}
+        self.assertEqual(self._row()['faxes'][0]['status'], 'delivered')
+        self.assertFalse(OfficeHandoff.objects.exists())
+
+    def test_the_senders_transmissions_include_it(self):
+        self._send()
+        mine = self.client.get('/api/fax/transmissions').json()['transmissions']
+        self.assertEqual([t['document_id'] for t in mine], [self.doc.id])
+
+
+class FaxReviewOfficeRefusalTests(_OfficeBase):
+    """A document in Office goes back to the pool before it is prepared."""
+
+    def test_ready_file_and_pages_refuse_an_office_document(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self._login(self.team_nurse)
+        self._move_in()
+        self.assertEqual(self._ready().json()['error'], 'in_office')
+        self.assertEqual(self._post('file', {'patient_id': self.patient.id, 'label': 'Correspondence'}).json()['error'],
+                         'in_office')
+        response = self.client.post(f'/api/fax/review/{self.doc.id}/pages', data={
+            'removed_pages': '[1]', 'original_page_count': '2',
+            'file': SimpleUploadedFile('k.pdf', b'%PDF-1.4 kept', content_type='application/pdf')})
+        self.assertEqual(response.json()['error'], 'in_office')
+
+
+class MoveParkedFaxesToOfficeTests(_OfficeBase):
+    """`manage.py move_parked_faxes_to_office`: the retired states' faxes."""
+
+    def _run(self, *args):
+        from io import StringIO
+        from django.core.management import call_command
+        out = StringIO()
+        call_command('move_parked_faxes_to_office', *args, stdout=out)
+        return json.loads(out.getvalue())
+
+    def test_dry_run_then_apply_then_nothing_left(self):
+        from emr.models import DocumentReview, OfficeDocument
+        parked_at = timezone.now() - datetime.timedelta(hours=3)
+        DocumentReview.objects.create(document=self.doc, team=self.attending, state='later',
+                                      later_by=self.team_nurse, later_at=parked_at, note='Call the sender')
+        aside = Document.objects.create(document_name='Junk fax', author=self.attending, team=self.attending)
+        DocumentReview.objects.create(document=aside, team=self.attending, state='set_aside',
+                                      set_aside_by=self.attending, set_aside_at=parked_at)
+        filed = Document.objects.create(document_name='Filed since', author=self.attending, patient=self.patient)
+        DocumentReview.objects.create(document=filed, team=self.attending, state='later')
+
+        dry = self._run()
+        self.assertEqual((dry['later'], dry['set_aside'], dry['on_a_chart'], dry['moved']), (2, 1, 1, 0))
+        self.assertFalse(OfficeDocument.objects.exists())
+
+        applied = self._run('--apply')
+        self.assertEqual(applied['moved'], 2)
+        later = OfficeDocument.objects.get(document=self.doc)
+        self.assertEqual((later.source, later.moved_by_id, later.note, later.moved_at),
+                         ('later', self.team_nurse.id, 'Call the sender', parked_at))
+        self.assertEqual(OfficeDocument.objects.get(document=aside).source, 'set_aside')
+        self.assertFalse(OfficeDocument.objects.filter(document=filed).exists())
+        self.assertEqual(DocumentReview.objects.get(document=self.doc).state, 'new')
+
+        again = self._run('--apply')
+        self.assertEqual((again['later'], again['set_aside'], again['moved']), (1, 0, 0))
