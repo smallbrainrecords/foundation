@@ -2029,3 +2029,43 @@ class DocumentReview(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['state', 'team'], name='emr_docreview_state_team')]
+
+
+class DocumentEdit(models.Model):
+    """One change to a chart document's file made in the app (2026-11-17).
+
+    `kind`:
+      * 'edit' — text and/or a signature burned into a new PDF on the Mac.
+        `signed` says a signature was placed and `signature_of` whose it is:
+        the editor's own, or (owner decision 2026-11-17, "staff can add my
+        sig without my approval") a physician the editor works for;
+        `edited_by` is always who placed it. `text_count` and `pages` say what
+        else was added and where.
+      * 'pages' — pages taken out on the Mac; `removed_pages` are their
+        numbers in the file the change was made on.
+      * 'restore' — an earlier version brought back: the file as it was
+        before `restored_edit`.
+
+    Every version stays: `previous_file` is the file before the change and is
+    never deleted, so the earliest change's `previous_file` is the document
+    as it was filed. `client_uuid` makes a retried request return the first
+    one instead of writing a second version.
+
+    Written only by `apps.mobile_api.document_edit`.
+    """
+    document = models.ForeignKey(Document, related_name='edits', on_delete=models.CASCADE)
+    edited_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    edited_at = models.DateTimeField(auto_now_add=True)
+    kind = models.CharField(max_length=16, default='edit')
+    signed = models.BooleanField(default=False)
+    signature_of = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    text_count = models.PositiveIntegerField(default=0)
+    pages = models.TextField(default='[]')
+    removed_pages = models.TextField(default='[]')
+    restored_edit = models.ForeignKey('self', null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    previous_file = models.CharField(max_length=255)
+    new_file = models.CharField(max_length=255)
+    client_uuid = models.CharField(max_length=64, unique=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['document', 'edited_at'], name='emr_docedit_doc_at')]

@@ -3616,6 +3616,8 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_review',
         'mobile_patient_document_reviews',
         'mobile_fax_review_original',
+        'mobile_document_edits',
+        'mobile_document_before_edits',
         'mobile_untranscribed_encounters',
         'mobile_encounter_transcripts',
         'mobile_untimed_encounters',
@@ -9436,6 +9438,279 @@ class FaxReviewLaterTests(_FaxReviewBase):
             self.assertEqual(self._later().status_code, 503)
         from emr.models import DocumentReview
         self.assertFalse(DocumentReview.objects.filter(document=self.doc).exists())
+
+
+class DocumentEditTests(_FaxReviewBase):
+    """POST /api/patient/<pid>/document/<id>/edit — a chart document's PDF
+    edited in the app (text, the editor's own signature), with every earlier
+    version kept (2026-11-17)."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core.files.base import ContentFile
+        self.chart_doc = Document.objects.create(
+            document=ContentFile(b'%PDF-1.4 as it arrived', name='order.pdf'),
+            document_name='Home health order', author=self.attending, patient=self.patient)
+
+    def _edit(self, doc=None, patient=None, client_uuid='edit-1', signed=False, text_count=1,
+              pages='[1]', content=b'%PDF-1.4 edited', base_file=None, signature_of=None, removed_pages=None):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        doc = doc or self.chart_doc
+        patient = patient or self.patient
+        data = {
+            'file': SimpleUploadedFile('edited.pdf', content, content_type='application/pdf'),
+            'client_uuid': client_uuid, 'signed': 'true' if signed else 'false',
+            'text_count': str(text_count), 'pages': pages}
+        if base_file is not None:
+            data['base_file'] = base_file
+        if signature_of is not None:
+            data['signature_of'] = str(signature_of)
+        if removed_pages is not None:
+            data['removed_pages'] = removed_pages
+        return self.client.post(f'/api/patient/{patient.id}/document/{doc.id}/edit', data=data)
+
+    def _restore(self, edit_id, client_uuid='restore-1', base_file=None, patient=None):
+        body = {'edit_id': edit_id, 'client_uuid': client_uuid}
+        if base_file is not None:
+            body['base_file'] = base_file
+        return self.client.post(
+            f'/api/patient/{(patient or self.patient).id}/document/{self.chart_doc.id}/restore',
+            data=json.dumps(body), content_type='application/json')
+
+    def test_an_edit_replaces_the_file_and_keeps_the_one_before(self):
+        from django.core.files.storage import default_storage
+        from emr.models import DocumentEdit
+        before = self.chart_doc.document.name
+        self._login(self.team_nurse)
+        response = self._edit()
+        self.assertEqual(response.status_code, 200)
+        self.chart_doc.refresh_from_db()
+        self.assertNotEqual(self.chart_doc.document.name, before)
+        self.assertEqual(response.json()['file_path'], self.chart_doc.document.name)
+        self.assertEqual(self.chart_doc.file_size, len(b'%PDF-1.4 edited'))
+        edit = DocumentEdit.objects.get(document=self.chart_doc)
+        self.assertEqual((edit.previous_file, edit.new_file, edit.edited_by_id, edit.signed, edit.text_count),
+                         (before, self.chart_doc.document.name, self.team_nurse.id, False, 1))
+        self.assertTrue(default_storage.exists(before))
+        with default_storage.open(before, 'rb') as handle:
+            self.assertEqual(handle.read(), b'%PDF-1.4 as it arrived')
+        self.assertIn('Edited document: Home health order',
+                      list(ProblemActivity.objects.values_list('activity', flat=True)))
+
+    def test_a_signed_edit_is_recorded_as_signed(self):
+        from emr.models import DocumentEdit
+        self._login(self.attending)
+        self.assertEqual(self._edit(signed=True, text_count=0).status_code, 200)
+        edit = DocumentEdit.objects.get(document=self.chart_doc)
+        self.assertEqual((edit.signed, edit.edited_by_id), (True, self.attending.id))
+        activities = list(ProblemActivity.objects.values_list('activity', flat=True))
+        self.assertIn('Signed document: Home health order', activities)
+        self.assertNotIn('Edited document: Home health order', activities)
+
+    def test_a_retry_writes_nothing_twice(self):
+        from emr.models import DocumentEdit
+        self._login(self.team_nurse)
+        first = self._edit().json()
+        self.chart_doc.refresh_from_db()
+        name = self.chart_doc.document.name
+        again = self._edit(content=b'%PDF-1.4 a second copy').json()
+        self.assertTrue(again['already'])
+        self.assertEqual(again['edit']['id'], first['edit']['id'])
+        self.chart_doc.refresh_from_db()
+        self.assertEqual(self.chart_doc.document.name, name)
+        self.assertEqual(DocumentEdit.objects.filter(document=self.chart_doc).count(), 1)
+
+    def test_an_edit_made_on_an_old_copy_is_refused(self):
+        self._login(self.team_nurse)
+        original = self.chart_doc.document.name
+        self.assertEqual(self._edit(client_uuid='edit-1', base_file=original).status_code, 200)
+        self.chart_doc.refresh_from_db()
+        current = self.chart_doc.document.name
+        # Another Mac still holds the file as it arrived.
+        response = self._edit(client_uuid='edit-2', base_file=original, content=b'%PDF-1.4 old copy')
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'file_changed'))
+        self.assertEqual(response.json()['file_path'], current)
+        self.chart_doc.refresh_from_db()
+        self.assertEqual(self.chart_doc.document.name, current)
+        self.assertEqual(self.chart_doc.edits.count(), 1)
+        # Made on the current file, it is saved.
+        self.assertEqual(self._edit(client_uuid='edit-3', base_file=current).status_code, 200)
+
+    def test_a_retry_is_answered_even_though_its_base_file_is_now_old(self):
+        self._login(self.team_nurse)
+        original = self.chart_doc.document.name
+        first = self._edit(client_uuid='edit-1', base_file=original).json()
+        again = self._edit(client_uuid='edit-1', base_file=original)
+        self.assertEqual(again.status_code, 200)
+        self.assertEqual((again.json()['already'], again.json()['edit']['id']), (True, first['edit']['id']))
+
+    def test_staff_place_the_physicians_signature_and_the_record_says_who(self):
+        from emr.models import DocumentEdit
+        self._login(self.team_nurse)
+        response = self._edit(signed=True, text_count=0, signature_of=self.attending.id)
+        self.assertEqual(response.status_code, 200)
+        edit = DocumentEdit.objects.get(document=self.chart_doc)
+        self.assertEqual((edit.signed, edit.signature_of_id, edit.edited_by_id),
+                         (True, self.attending.id, self.team_nurse.id))
+        physician = self.attending.get_full_name() or self.attending.username
+        self.assertIn(f"Signed document: Home health order with {physician}'s signature",
+                      list(ProblemActivity.objects.values_list('activity', flat=True)))
+        listed = self.client.get(f'/api/patient/{self.patient.id}/document/{self.chart_doc.id}/edits').json()['edits']
+        self.assertEqual((listed[0]['signature_of_name'], listed[0]['edited_by_name']), (physician, 'Amy Stone'))
+
+    def test_a_signature_of_someone_the_editor_does_not_work_for_is_refused(self):
+        self._login(self.team_nurse)
+        for who in (self.stranger_doc, self.patient):
+            response = self._edit(signed=True, text_count=0, signature_of=who.id, client_uuid=f'sig-{who.id}')
+            self.assertEqual((response.status_code, response.json()['error']), (400, 'signature_not_allowed'))
+        # A physician the nurse works for, who can't open this chart.
+        PhysicianTeam.objects.create(physician=self.stranger_doc, member=self.team_nurse)
+        response = self._edit(signed=True, text_count=0, signature_of=self.stranger_doc.id, client_uuid='sig-x')
+        self.assertEqual((response.status_code, response.json()['error']), (400, 'signature_not_allowed'))
+        self.chart_doc.refresh_from_db()
+        self.assertFalse(self.chart_doc.edits.exists())
+
+    def test_pages_removed_on_the_chart_are_recorded_and_the_text_read_again(self):
+        from django.core.files.storage import default_storage
+        from emr.models import DocumentEdit
+        self.chart_doc.extracted_text = 'page one page two page three'
+        self.chart_doc.save()
+        before = self.chart_doc.document.name
+        self._login(self.team_nurse)
+        response = self._edit(text_count=0, pages='[]', removed_pages='[3, 2]', content=b'%PDF-1.4 kept')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual((response.json()['edit']['kind'], response.json()['edit']['removed_pages']), ('pages', [2, 3]))
+        self.chart_doc.refresh_from_db()
+        self.assertIsNone(self.chart_doc.extracted_text)
+        edit = DocumentEdit.objects.get(document=self.chart_doc)
+        self.assertEqual((edit.kind, edit.previous_file), ('pages', before))
+        self.assertTrue(default_storage.exists(before))
+        self.assertIn('Removed pages 2, 3 of Home health order',
+                      list(ProblemActivity.objects.values_list('activity', flat=True)))
+
+    def test_a_restore_brings_back_an_earlier_version_and_keeps_the_one_it_replaces(self):
+        from emr.models import DocumentEdit
+        self._login(self.team_nurse)
+        original = self.chart_doc.document.name
+        first = self._edit(client_uuid='edit-1', content=b'%PDF-1.4 with text').json()['edit']
+        self.chart_doc.refresh_from_db()
+        with_text = self.chart_doc.document.name
+        second = self._edit(client_uuid='edit-2', text_count=0, pages='[]', removed_pages='[1]',
+                            content=b'%PDF-1.4 a page out').json()['edit']
+        self.chart_doc.refresh_from_db()
+        a_page_out = self.chart_doc.document.name
+        self.chart_doc.extracted_text = 'read since'
+        self.chart_doc.save()
+
+        # Another Mac still holds the file before the page came out.
+        stale = self._restore(second['id'], base_file=with_text)
+        self.assertEqual((stale.status_code, stale.json()['error']), (409, 'file_changed'))
+
+        response = self._restore(second['id'], base_file=a_page_out)
+        self.assertEqual(response.status_code, 200)
+        self.chart_doc.refresh_from_db()
+        self.assertEqual(self.chart_doc.document.name, with_text)
+        self.assertEqual(response.json()['file_path'], with_text)
+        self.assertIsNone(self.chart_doc.extracted_text, 'the pages changed, so the text is read again')
+        restore = DocumentEdit.objects.get(kind='restore')
+        self.assertEqual((restore.previous_file, restore.new_file, restore.restored_edit_id, restore.edited_by_id),
+                         (a_page_out, with_text, second['id'], self.team_nurse.id))
+        self.assertIn('Restored an earlier version of document: Home health order',
+                      list(ProblemActivity.objects.values_list('activity', flat=True)))
+        # A retry answers the first restore; restoring what is already there is refused.
+        again = self._restore(second['id'], base_file=a_page_out)
+        self.assertTrue(again.json()['already'])
+        same = self._restore(second['id'], client_uuid='restore-2')
+        self.assertEqual((same.status_code, same.json()['error']), (409, 'already_current'))
+        # Back to the file as it was filed; the page-out version is still kept.
+        self.assertEqual(self._restore(first['id'], client_uuid='restore-3').status_code, 200)
+        self.chart_doc.refresh_from_db()
+        self.assertEqual(self.chart_doc.document.name, original)
+        url = f'/api/patient/{self.patient.id}/document/{self.chart_doc.id}/before-edits'
+        self.assertEqual(b''.join(self.client.get(url).streaming_content), b'%PDF-1.4 as it arrived')
+
+    def test_a_restore_is_staff_only_and_only_of_this_documents_changes(self):
+        self._login(self.team_nurse)
+        edit = self._edit().json()['edit']
+        response = self._restore(9999999, client_uuid='restore-x')
+        self.assertEqual((response.status_code, response.json()['error']), (404, 'edit_not_found'))
+        self.client.logout()
+        self._login(self.patient)
+        response = self._restore(edit['id'], client_uuid='restore-y')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+    def test_an_edit_that_adds_nothing_or_is_not_a_pdf_is_refused(self):
+        self._login(self.team_nurse)
+        response = self._edit(text_count=0)
+        self.assertEqual((response.status_code, response.json()['error']), (400, 'nothing_added'))
+        response = self._edit(client_uuid='edit-2', content=b'GIF89a not a pdf')
+        self.assertEqual((response.status_code, response.json()['error']), (400, 'not_a_pdf'))
+
+    def test_a_patient_and_a_stranger_get_a_json_not_found(self):
+        for who in (self.patient, self.stranger_nurse):
+            self._login(who)
+            response = self._edit()
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(response['Content-Type'], 'application/json')
+            self.client.logout()
+        self.chart_doc.refresh_from_db()
+        self.assertFalse(self.chart_doc.edits.exists())
+
+    def test_a_document_on_another_chart_is_not_found(self):
+        PatientController.objects.create(patient=self.other_patient, physician=self.attending)
+        self._login(self.team_nurse)
+        self.assertEqual(self._edit(patient=self.other_patient).status_code, 404)
+
+    def test_switched_off_refuses(self):
+        self._login(self.team_nurse)
+        with override_settings(DOCUMENT_EDIT_ENABLED=False):
+            response = self._edit()
+        self.assertEqual((response.status_code, response.json()['error']), (503, 'document_edit_disabled'))
+
+    def test_the_history_says_who_edited_and_whether_they_signed(self):
+        self._login(self.team_nurse)
+        self._edit(client_uuid='edit-1', text_count=2, pages='[1, 2]')
+        self.client.logout()
+        self._login(self.attending)
+        self._edit(client_uuid='edit-2', signed=True, text_count=0, pages='[2]')
+        edits = self.client.get(f'/api/patient/{self.patient.id}/document/{self.chart_doc.id}/edits').json()['edits']
+        self.assertEqual([(e['edited_by_name'], e['signed'], e['text_count'], e['pages']) for e in edits],
+                         [('Amy Stone', False, 2, [1, 2]), (self.attending.get_full_name() or self.attending.username,
+                                                             True, 0, [2])])
+
+    def test_the_version_before_the_first_edit_is_served(self):
+        self._login(self.team_nurse)
+        url = f'/api/patient/{self.patient.id}/document/{self.chart_doc.id}/before-edits'
+        response = self.client.get(url)
+        self.assertEqual((response.status_code, response.json()['error']), (404, 'not_edited'))
+        self._edit(client_uuid='edit-1')
+        self._edit(client_uuid='edit-2', content=b'%PDF-1.4 edited twice')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b''.join(response.streaming_content), b'%PDF-1.4 as it arrived')
+
+    def test_pages_cannot_be_removed_once_a_fax_was_edited(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self._prepared()  # filed to the chart, waiting for the physician
+        response = self._edit(doc=self.doc, signed=True, text_count=0)
+        self.assertEqual(response.status_code, 200)
+        review = self.client.get(f'/api/fax/review/{self.doc.id}').json()['review']
+        self.assertTrue(review['edited'])
+        self.doc.refresh_from_db()
+        self.assertEqual(review['file_path'], self.doc.document.name)
+        response = self.client.post(f'/api/fax/review/{self.doc.id}/pages', data={
+            'removed_pages': '[1]', 'original_page_count': '2',
+            'file': SimpleUploadedFile('k.pdf', b'%PDF-1.4 kept', content_type='application/pdf')})
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'document_edited'))
+
+    def test_an_edit_stamps_the_chart(self):
+        self._login(self.team_nurse)
+        before = self._stamp()
+        self._edit()
+        after = self._stamp()
+        self.assertIsNotNone(after)
+        self.assertTrue(before is None or after > before)
 
 
 class FaxReviewListTests(_FaxReviewBase):

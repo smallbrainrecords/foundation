@@ -70,6 +70,12 @@ FAX_REVIEW_ENABLED = env.bool('FAX_REVIEW_ENABLED', default=True)
 # every fax goes to the physician.
 FAX_STAFF_FILE_ENABLED = env.bool('FAX_STAFF_FILE_ENABLED', default=True)
 
+# Editing a chart document's PDF in the app (apps.mobile_api.document_edit,
+# 2026-11-17): text and the editor's own signature, burned in on the Mac.
+# DOCUMENT_EDIT_ENABLED=false refuses every save with no app update; the edit
+# history stays readable.
+DOCUMENT_EDIT_ENABLED = env.bool('DOCUMENT_EDIT_ENABLED', default=True)
+
 # Per-patient access check on the mobile chart endpoint (mobile_patient_full).
 # Off, the check only LOGS the requests it would refuse
 # (`patient_full_would_refuse` on the smallbrain.patient_access logger) and
