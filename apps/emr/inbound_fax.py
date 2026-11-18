@@ -29,6 +29,14 @@ Rules, each load-bearing:
   * **RingCentral is not a backup.** It keeps about a week of received faxes
     on this account (measured 2026-11-16), so the window read is a little
     over a week and the stored Document is the only lasting copy.
+  * **A deleted fax stays deleted** (fixed 2026-11-18). Deleting the
+    Document empties `InboundFax.document` (SET_NULL), and the importer used
+    to read that as "not imported yet" and fetch the fax again on the next
+    pass, as long as RingCentral still had it: in production 14 faxes came
+    back after being deleted, one of them 7 times. `imported_on` is set in
+    the same save that attaches the document, so a row with `imported_on`
+    and no document had its document deleted; it is skipped, and counted as
+    `deleted`.
 """
 import datetime
 import json
@@ -134,6 +142,9 @@ def _import_one(fax, team, trigger):
             })
         if row.document_id:
             return 'already'
+        if row.imported_on is not None:
+            # Imported once, then its document was deleted: never again.
+            return 'deleted'
         if row.attempts >= MAX_ATTEMPTS:
             return 'given_up'
 
@@ -217,17 +228,23 @@ def import_new_faxes(batch=DEFAULT_BATCH, trigger='app', days=IMPORT_WINDOW_DAYS
     eligible.sort(key=lambda pair: pair[0])
 
     summary = {'configured': True, 'listed': len(eligible), 'imported': 0, 'already': 0,
-               'waiting': 0, 'failed': 0, 'given_up': 0, 'rate_limited': False,
+               'deleted': 0, 'waiting': 0, 'failed': 0, 'given_up': 0, 'rate_limited': False,
                'complete': bool(trace.get('complete'))}
     known = dict(
-        (message_id, (document_id, attempts)) for message_id, document_id, attempts in
+        (message_id, (document_id, attempts, imported_on))
+        for message_id, document_id, attempts, imported_on in
         InboundFax.objects.filter(rc_message_id__in=[str(f['id']) for _, f in eligible])
-        .values_list('rc_message_id', 'document_id', 'attempts'))
+        .values_list('rc_message_id', 'document_id', 'attempts', 'imported_on'))
     tried = 0
     for _, fax in eligible:
-        document_id, attempts = known.get(str(fax['id']), (None, 0))
+        document_id, attempts, imported_on = known.get(str(fax['id']), (None, 0, None))
         if document_id:
             summary['already'] += 1
+            continue
+        if imported_on is not None:
+            # Imported once, then someone deleted the document. Taking a
+            # place in the batch would fetch it back from RingCentral.
+            summary['deleted'] += 1
             continue
         if attempts >= MAX_ATTEMPTS:
             # Given up on an earlier pass: counted, not retried, and it

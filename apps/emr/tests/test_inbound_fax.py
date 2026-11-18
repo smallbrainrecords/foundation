@@ -115,6 +115,23 @@ class InboundFaxImportTests(TestCase):
         self.assertEqual(len(self.downloads), 2)
         self.assertEqual(Document.objects.filter(team=self.team).count(), 2)
 
+    def test_a_deleted_fax_is_never_imported_again(self):
+        # 2026-11-18: deleting a pool fax emptied InboundFax.document, and the
+        # next pass fetched the fax again — 14 faxes came back in production,
+        # one of them 7 times.
+        self.listed = [fax(1), fax(2)]
+        inbound_fax.import_new_faxes()
+        doc = InboundFax.objects.get(rc_message_id='1').document
+        doc.delete()
+        self.assertIsNone(InboundFax.objects.get(rc_message_id='1').document_id)
+        summary = inbound_fax.import_new_faxes()
+        self.assertEqual((summary['imported'], summary['already'], summary['deleted']), (0, 1, 1))
+        self.assertEqual(len(self.downloads), 2, 'nothing fetched again')
+        self.assertEqual(Document.objects.filter(team=self.team).count(), 1)
+        # The per-fax guard holds too, for a pass that reaches it directly.
+        self.assertEqual(inbound_fax._import_one(fax(1), self.team, 'test'), 'deleted')
+        self.assertEqual(len(self.downloads), 2)
+
     def test_a_pass_fetches_at_most_its_batch_and_leaves_the_rest_waiting(self):
         self.listed = [fax(1), fax(2, '2026-11-16T14:00:00Z'), fax(3, '2026-11-16T15:00:00Z')]
         first = inbound_fax.import_new_faxes(batch=2)
