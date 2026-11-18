@@ -37,6 +37,16 @@ Rules, each load-bearing:
     the same save that attaches the document, so a row with `imported_on`
     and no document had its document deleted; it is skipped, and counted as
     `deleted`.
+  * **A stored fax leaves RingCentral** (owner, 2026-11-18: "ok to delete
+    documents from ring central once we have downloaded"). The scheduled job
+    moves every fax it finds stored here (`imported_on` set) from the clinic
+    line's mailbox to RingCentral's Deleted folder: deleted, not purged, so
+    RingCentral still holds it until it empties that folder. Only faxes the
+    list shows as 'Alive' are sent: a second DELETE would purge. Only the
+    job does it (`delete_batch`); the Macs' once-a-minute check stays short.
+    It needs the app's EditMessages permission, read from the token's scope
+    (`rc_delete: no_permission` until it is granted), and
+    `INBOUND_FAX_DELETE_IMPORTED=false` switches it off.
 """
 import datetime
 import json
@@ -59,6 +69,11 @@ LOGGER = logging.getLogger('smallbrain.inbound_fax')
 IMPORT_WINDOW_DAYS = 8
 MAX_ATTEMPTS = 5
 DEFAULT_BATCH = 5
+# Stored faxes the job moves to RingCentral's Deleted folder per run. Deletes
+# share RingCentral's "Medium" rate group (40 a minute) with downloads; in
+# steady state a run deletes a few.
+DELETE_PER_RUN = 20
+DELETE_PERMISSION = 'EditMessages'
 # Fixed namespace for the Documents' client_uuid: uuid5(namespace, message id).
 _UUID_NAMESPACE = uuid.UUID('6f1c2f0e-7a4e-4b8e-9d55-3d1f0c2a9b71')
 
@@ -196,8 +211,11 @@ def _import_one(fax, team, trigger):
     return 'imported'
 
 
-def import_new_faxes(batch=DEFAULT_BATCH, trigger='app', days=IMPORT_WINDOW_DAYS, dry_run=False):
-    """One import pass. Returns a summary dict:
+def import_new_faxes(batch=DEFAULT_BATCH, trigger='app', days=IMPORT_WINDOW_DAYS, dry_run=False,
+                     delete_batch=0):
+    """One import pass. With `delete_batch` above 0 (the scheduled job), it
+    then moves up to that many stored faxes to RingCentral's Deleted folder
+    (`remove_stored_from_ringcentral`). Returns a summary dict:
 
       configured   — false (with `problem`) when the import is off
       listed       — faxes received since the start that RingCentral holds
@@ -210,6 +228,8 @@ def import_new_faxes(batch=DEFAULT_BATCH, trigger='app', days=IMPORT_WINDOW_DAYS
       complete     — RingCentral's list was read to its end
       would_import — with `dry_run`: how many this pass would fetch (nothing
                      is downloaded or written)
+      rc_delete, rc_deleted, rc_waiting, would_delete_from_ringcentral —
+                     see `remove_stored_from_ringcentral`
 
     Listing the mailbox can raise `ringcentral_fax.FaxError`; the caller
     reports it. Downloads never raise: each fax's outcome is counted.
@@ -264,4 +284,77 @@ def import_new_faxes(batch=DEFAULT_BATCH, trigger='app', days=IMPORT_WINDOW_DAYS
             summary['waiting'] += 1
         else:
             summary[outcome] += 1
+    if summary['rate_limited']:
+        # Deletes share the rate group RingCentral just said to slow down in.
+        summary.update(rc_delete='rate_limited', rc_deleted=0)
+    else:
+        summary.update(remove_stored_from_ringcentral(
+            [fax for _, fax in eligible], delete_batch, trigger=trigger, dry_run=dry_run))
     return summary
+
+
+def remove_stored_from_ringcentral(faxes, limit, trigger='job', dry_run=False):
+    """Moves up to `limit` of `faxes` (the pass's list) that are stored here
+    to RingCentral's Deleted folder, oldest first. Stored means `imported_on`
+    is set: the PDF was saved as a Document, which a person may have deleted
+    since. A fax still waiting, failed or given up stays in RingCentral, and
+    so does one the list does not show as 'Alive' (deleting it again would
+    purge it). Returns:
+
+      rc_delete  — 'not_this_pass' (limit 0: a Mac's check), 'off'
+                   (INBOUND_FAX_DELETE_IMPORTED=false), 'dry_run',
+                   'nothing_to_delete', 'no_permission' (the token lacks
+                   EditMessages), 'done', or why it stopped: 'not_allowed'
+                   (403), 'rate_limited' (429), 'failed'
+      rc_deleted — moved to the Deleted folder this pass
+      rc_waiting — stored faxes still in RingCentral after this pass
+      would_delete_from_ringcentral — with `dry_run`
+
+    Never raises: a refused or failed delete is logged, and the next run
+    tries again from a fresh list.
+    """
+    result = {'rc_delete': 'not_this_pass', 'rc_deleted': 0}
+    if limit <= 0:
+        return result
+    if not getattr(settings, 'INBOUND_FAX_DELETE_IMPORTED', False):
+        result['rc_delete'] = 'off'
+        return result
+    alive = [str(fax['id']) for fax in faxes
+             if fax.get('id') is not None and fax.get('availability') == 'Alive']
+    stored = dict(InboundFax.objects.filter(rc_message_id__in=alive, imported_on__isnull=False)
+                  .values_list('rc_message_id', 'document_id'))
+    candidates = [message_id for message_id in alive if message_id in stored]
+    result['rc_waiting'] = len(candidates)
+    if dry_run:
+        result.update(rc_delete='dry_run', would_delete_from_ringcentral=len(candidates))
+        return result
+    if not candidates:
+        result['rc_delete'] = 'nothing_to_delete'
+        return result
+    try:
+        granted = ringcentral_fax.granted_permissions()
+    except (ringcentral_fax.FaxError, ringcentral_fax.FaxNotConfigured) as error:
+        result['rc_delete'] = 'failed'
+        _log('inbound_fax_ringcentral_delete_failed', error=str(error)[:200], trigger=trigger)
+        return result
+    if granted is not None and DELETE_PERMISSION not in granted:
+        result['rc_delete'] = 'no_permission'
+        return result
+    result['rc_delete'] = 'done'
+    for message_id in candidates[:limit]:
+        try:
+            ringcentral_fax.move_fax_to_deleted(message_id)
+        except ringcentral_fax.FaxError as error:
+            if error.status == 404:
+                # No longer in RingCentral: nothing left to delete.
+                result['rc_waiting'] -= 1
+                continue
+            result['rc_delete'] = {403: 'not_allowed', 429: 'rate_limited'}.get(error.status, 'failed')
+            _log('inbound_fax_ringcentral_delete_failed', rc_message_id=message_id, status=error.status,
+                 error=str(error)[:200], trigger=trigger)
+            break
+        result['rc_deleted'] += 1
+        result['rc_waiting'] -= 1
+        _log('inbound_fax_removed_from_ringcentral', rc_message_id=message_id,
+             document_id=stored[message_id], trigger=trigger)
+    return result
