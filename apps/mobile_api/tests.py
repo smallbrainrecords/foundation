@@ -3207,6 +3207,17 @@ class MobileDocumentTextTests(TestCase):
         self.assertIsNotNone(row['extracted_text_at'])
         self.assertTrue(body['server_time'].endswith('Z'))
 
+    def test_an_emoji_in_the_text_is_stored_as_a_replacement_character(self):
+        """Field case 2026-11-18: document 52269's OCR text held one emoji
+        (U+1F642) and its upload answered 500 about 3,000 times in a week,
+        from every Mac that held it. Django connects to MySQL as three-byte
+        `utf8`, which refuses four-byte UTF-8, so the save threw. Characters
+        outside the Basic Multilingual Plane are stored as U+FFFD."""
+        resp = self._set_text('Follow up in 2 weeks \U0001F642 thanks' + self.FF + 'page two')
+        self.assertEqual(resp.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, 'Follow up in 2 weeks \ufffd thanks' + self.FF + 'page two')
+
     def test_page_separator_round_trips(self):
         """Pages are joined by form feed; splitting must recover them intact.
         This is what gives search a page number to jump to."""
@@ -3371,6 +3382,12 @@ class MobileUnassignedDocumentAssignTextTests(TestCase):
         self.assertEqual(self.doc.extracted_text, 'echo report findings')
         self.assertEqual(self.doc.extracted_text_version, 1)
         self.assertIsNotNone(self.doc.extracted_text_at)
+
+    def test_assign_text_with_an_emoji_is_stored_with_a_replacement_character(self):
+        resp = self._assign({'patient_id': self.patient.id, 'extracted_text': 'echo \U0001F642 normal'})
+        self.assertEqual(resp.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, 'echo \ufffd normal')
 
     def test_assign_without_text_still_succeeds(self):
         """An assign that races extraction just omits the key; the client
@@ -9192,6 +9209,13 @@ class FaxReviewReadyTests(_FaxReviewBase):
         self.assertIn('Renamed document: Fax from NMRL -> CMP', activities)
         self.assertIn('Linked document: CMP', activities)
 
+    def test_page_text_with_an_emoji_does_not_stop_ready(self):
+        self._login(self.team_nurse)
+        response = self._ready(extracted_text='CMP \U0001F642 potassium 5.9')
+        self.assertEqual(response.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, 'CMP \ufffd potassium 5.9')
+
     def test_staff_linking_a_problem_leaves_its_attestation_alone(self):
         self.problem.authenticated = True
         self.problem.save()
@@ -9626,6 +9650,19 @@ class DocumentEditTests(_FaxReviewBase):
         url = f'/api/patient/{self.patient.id}/document/{self.chart_doc.id}/before-edits'
         self.assertEqual(b''.join(self.client.get(url).streaming_content), b'%PDF-1.4 as it arrived')
 
+    def test_a_restore_works_on_a_storage_whose_exists_always_says_no(self):
+        """Same production storage behaviour: every restore was refused as
+        file_missing."""
+        from django.core.files.storage import FileSystemStorage
+        self._login(self.team_nurse)
+        first = self._edit(client_uuid='edit-1', content=b'%PDF-1.4 with text').json()['edit']
+        with mock.patch.object(FileSystemStorage, 'exists', lambda storage, name: False):
+            response = self._restore(first['id'], client_uuid='restore-gcs')
+        self.assertEqual(response.status_code, 200, response.content)
+        self.chart_doc.refresh_from_db()
+        with self.chart_doc.document.open('rb') as handle:
+            self.assertEqual(handle.read(), b'%PDF-1.4 as it arrived', 'back to the file as it was filed')
+
     def test_a_restore_is_staff_only_and_only_of_this_documents_changes(self):
         self._login(self.team_nurse)
         edit = self._edit().json()['edit']
@@ -9998,6 +10035,18 @@ class FaxReviewPagesTests(_FaxReviewBase):
         original = self.client.get(f'/api/fax/review/{self.doc.id}/original')
         self.assertEqual(b''.join(original.streaming_content), b'%PDF-1.4 as received')
         self.assertEqual(self.doc.file_size, len(b'%PDF-1.4 kept pages'))
+
+    def test_the_original_is_served_by_a_storage_whose_exists_always_says_no(self):
+        """Production 2026-11-18: django-storages' GoogleCloudStorage.exists()
+        answers False whenever file_overwrite is on (the default), so every
+        original was refused with no_original right after a removal."""
+        from django.core.files.storage import FileSystemStorage
+        self._login(self.team_nurse)
+        with mock.patch.object(FileSystemStorage, 'exists', lambda storage, name: False):
+            self.assertEqual(self._pages([1]).status_code, 200)
+            original = self.client.get(f'/api/fax/review/{self.doc.id}/original')
+            self.assertEqual(original.status_code, 200)
+            self.assertEqual(b''.join(original.streaming_content), b'%PDF-1.4 as received')
 
     def test_a_second_removal_keeps_the_first_entry_and_the_same_original(self):
         self._login(self.team_nurse)
@@ -10682,3 +10731,46 @@ class OfficeToChartTests(_OfficeBase):
     def test_a_document_not_in_office_is_not_found(self):
         self._office('to-chart', {'patient_id': self.patient.id})
         self.assertEqual(self._office('to-chart', {'patient_id': self.patient.id}).status_code, 404)
+
+
+class StorableTests(TestCase):
+    """emr.storable (2026-11-18): text the database connection can carry, and
+    a file check that really asks the storage."""
+
+    def test_text_outside_the_basic_plane_becomes_a_replacement_character(self):
+        from emr.storable import storable_text
+        self.assertEqual(storable_text('a \U0001F642 b \U0001D465 c'), 'a \ufffd b \ufffd c')
+        self.assertEqual(storable_text('caf\u00e9 \u2014 \u00b0F'), 'caf\u00e9 \u2014 \u00b0F', 'BMP text is untouched')
+        self.assertEqual(storable_text('lone \ud83d surrogate'), 'lone \ufffd surrogate')
+        self.assertIsNone(storable_text(None))
+        self.assertEqual(storable_text(''), '')
+
+    def test_a_file_check_asks_the_storage_not_exists(self):
+        from django.core.files.base import ContentFile
+        from django.core.files.storage import FileSystemStorage
+        import shutil
+        import tempfile
+        from emr.storable import stored_file_exists
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        storage = FileSystemStorage(location=media)
+        name = storage.save('documents/kept.pdf', ContentFile(b'%PDF-1.4'))
+        with mock.patch.object(FileSystemStorage, 'exists', lambda s, n: False):
+            self.assertTrue(stored_file_exists(name, storage))
+            self.assertFalse(stored_file_exists('documents/gone.pdf', storage))
+        self.assertFalse(stored_file_exists('', storage))
+
+    def test_no_route_trusts_storage_exists(self):
+        """GoogleCloudStorage.exists() always says no in production. Every
+        check goes through emr.storable.stored_file_exists."""
+        import pathlib
+        import re as _re
+        apps_dir = pathlib.Path(__file__).resolve().parents[1]
+        offenders = []
+        for path in apps_dir.rglob('*.py'):
+            if 'tests' in path.parts or path.name.startswith('test') or path.name == 'storable.py':
+                continue
+            for number, line in enumerate(path.read_text().splitlines(), start=1):
+                if _re.search(r'storage\.exists\(', line) and not line.lstrip().startswith('#'):
+                    offenders.append('%s:%d' % (path.relative_to(apps_dir), number))
+        self.assertEqual(offenders, [])
