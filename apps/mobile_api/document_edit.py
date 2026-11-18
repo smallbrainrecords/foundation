@@ -57,6 +57,7 @@ from django.http import FileResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from emr.models import Document, DocumentEdit, PhysicianTeam
+from emr.storable import stored_file_exists
 
 from . import views as api
 from .views import touches_patient_stamp
@@ -306,7 +307,9 @@ def restore_document_edit(request, *, base, document_id, may_access, audit, log_
         version = target.previous_file
         if version == doc.document.name:
             return _refuse('already_current', 409)
-        if not default_storage.exists(version):
+        # Not default_storage.exists(): on Google Cloud Storage it always
+        # says no (emr.storable), which refused every restore in production.
+        if not stored_file_exists(version):
             return _refuse('file_missing', 409)
         previous = doc.document.name
         doc.document.name = version

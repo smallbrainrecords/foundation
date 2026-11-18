@@ -66,6 +66,7 @@ from emr.models import (
 )
 from emr.mutation_stamp import touch_patient_stamp
 from emr.problem_authentication import apply_problem_authentication
+from emr.storable import storable_text, stored_file_exists
 from problems_app.operations import add_problem_activity
 from todo_app.operations import add_todo_activity
 
@@ -561,7 +562,7 @@ def _assign_from_pool(request, doc, patient, body):
     new_name = (body.get('document_name') or '').strip()[:MAX_NAME] or old_name
     doc.document_name = new_name
     fields = ['patient', 'team', 'claimed_by', 'claimed_at', 'document_name']
-    text = body.get('extracted_text')
+    text = storable_text(body.get('extracted_text'))
     if isinstance(text, str) and (text or not doc.extracted_text):
         doc.extracted_text = text
         doc.extracted_text_at = timezone.now()
@@ -1154,7 +1155,9 @@ def mobile_fax_review_original(request, document_id):
     if doc is None or not _can_reach(request.user, doc):
         return _not_found()
     review = DocumentReview.objects.filter(document=doc).first()
-    if review is None or not review.original_file or not default_storage.exists(review.original_file):
+    # Not default_storage.exists(): on Google Cloud Storage it always says
+    # no (emr.storable), which refused every original in production.
+    if review is None or not review.original_file or not stored_file_exists(review.original_file):
         return _refuse('no_original', 404)
     response = FileResponse(default_storage.open(review.original_file, 'rb'), content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename="original.pdf"'

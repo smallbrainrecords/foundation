@@ -42,6 +42,7 @@ from emr.problem_authentication import (
     apply_problem_authentication,
     is_attesting_actor,
 )
+from emr.storable import storable_text
 from emr.todo_suggestions import patient_title_history, suggestions_for
 from emr.usual_vitals import (
     apply_usual_vitals,
@@ -2803,7 +2804,7 @@ def mobile_unassigned_document_assign(request, document_id):
         # pays a second OCR later. Optional: an assign that races extraction
         # just omits the key and the client fills it in afterwards via
         # mobile_document_text. Blank never clobbers existing text.
-        incoming_text = body.get('extracted_text')
+        incoming_text = storable_text(body.get('extracted_text'))
         if isinstance(incoming_text, str) and (
             incoming_text or not doc.extracted_text
         ):
@@ -3023,6 +3024,8 @@ def mobile_document_text(request, patient_id, document_id):
         text = ''
     if not isinstance(text, str):
         return JsonResponse({'error': 'extracted_text must be a string'}, status=400)
+    # An emoji read off a page made this save throw (emr.storable).
+    text = storable_text(text)
 
     # Never let a blank result clobber a good one (see docstring).
     if text == '' and doc.extracted_text:
