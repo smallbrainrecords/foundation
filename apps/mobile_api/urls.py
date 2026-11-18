@@ -2,6 +2,7 @@ from django.urls import re_path as url
 from . import views
 from . import fax_review
 from . import document_edit
+from . import office
 
 urlpatterns = [
     url(r'^healthz/?$', views.mobile_healthz),
@@ -148,6 +149,22 @@ urlpatterns = [
     url(r'^fax/review/(?P<document_id>\d+)/restore$', fax_review.mobile_fax_review_restore),
     url(r'^fax/review/(?P<document_id>\d+)/pages$', fax_review.mobile_fax_review_pages),
     url(r'^fax/review/(?P<document_id>\d+)/original$', fax_review.mobile_fax_review_original),
+    # The Office list (2026-11-18): documents that belong on no chart. Replaces
+    # the fax review's set aside / do it later. See apps/mobile_api/office.py.
+    url(r'^office/documents$', office.mobile_office_documents),
+    url(r'^office/documents/upload$', office.mobile_office_upload),
+    url(r'^office/document/(?P<document_id>\d+)$', office.mobile_office_document),
+    url(r'^office/document/(?P<document_id>\d+)/move-in$', office.mobile_office_move_in),
+    url(r'^office/document/(?P<document_id>\d+)/to-unassigned$', office.mobile_office_to_unassigned),
+    url(r'^office/document/(?P<document_id>\d+)/hand$', office.mobile_office_hand),
+    url(r'^office/document/(?P<document_id>\d+)/handoff/seen$', office.mobile_office_handoff_seen),
+    url(r'^office/document/(?P<document_id>\d+)/handoff/done$', office.mobile_office_handoff_done),
+    url(r'^office/document/(?P<document_id>\d+)/handoff/(?P<user_id>\d+)$', office.mobile_office_handoff_remove),
+    url(r'^office/document/(?P<document_id>\d+)/edit$', office.mobile_office_edit),
+    url(r'^office/document/(?P<document_id>\d+)/restore$', office.mobile_office_restore),
+    url(r'^office/document/(?P<document_id>\d+)/edits$', office.mobile_office_edits),
+    url(r'^office/document/(?P<document_id>\d+)/before-edits$', office.mobile_office_before_edits),
+    url(r'^office/document/(?P<document_id>\d+)/fax$', office.mobile_office_fax),
     # Error reporting
     url(r'^errors/batch/$', views.mobile_batch_errors),
     # Terminology mapping

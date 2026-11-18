@@ -1886,6 +1886,10 @@ class FaxTransmission(models.Model):
     recipient_name = models.CharField(max_length=255)
     fax_number = models.CharField(max_length=16)
     todo_ids = models.TextField(default='[]')
+    # An Office document faxed out (2026-11-18): the document sent, with no
+    # patient and no orders. Kept when the document is deleted (SET_NULL) so
+    # the record of what left the building stays.
+    document = models.ForeignKey(Document, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     status = models.CharField(max_length=16, default=SENDING)
     rc_message_id = models.CharField(max_length=64, blank=True, default='')
     rc_status = models.CharField(max_length=64, blank=True, default='')
@@ -1949,19 +1953,18 @@ class DocumentReview(models.Model):
 
     States:
       new        — in the pool, nothing decided (a row exists only because a
-                   page was removed, or it was restored from set-aside)
-      later      — "do it later": staff parked it to finish later
-                   (`later_by`, `later_at`, an optional `note`). Still in the
-                   pool, on no chart, not in the physician's queue
+                   page was removed, or the document came back from Office)
+      later      — RETIRED 2026-11-18: "do it later" was replaced by the
+                   Office list (`OfficeDocument`). No row is written in this
+                   state; `move_parked_faxes_to_office` moved the old ones
       ready      — filed to the chart by staff, waiting for the physician
       filed      — filed to the chart by staff with no review (staff decide,
                    fax by fax; `FAX_STAFF_FILE_ENABLED`); never in the
                    physician's queue
       returned   — sent back to staff with `returned_note`; still on the chart
       approved   — reviewed; `next_step` says what happens with the patient
-      set_aside  — not for a chart. The document is off every chart and out
-                   of the pool list; `restore` puts it back in the pool for
-                   30 days, after which `purge_set_aside_faxes` may delete it
+      set_aside  — RETIRED 2026-11-18, replaced by the Office list like
+                   `later`; the old rows were moved there too
 
     `team` is the physician whose pool the document came in on, kept here
     because assigning a document clears `Document.team`. That physician is
@@ -2069,3 +2072,64 @@ class DocumentEdit(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['document', 'edited_at'], name='emr_docedit_doc_at')]
+
+
+class OfficeDocument(models.Model):
+    """A document in the practice's Office list (2026-11-18): office business
+    that belongs on no chart — audit requests, forms to fill in and fax back.
+
+    Owner decisions, same day: it replaces the fax review's "set aside" and
+    "do it later"; every staff member sees the list (patients never); a
+    document stays until someone deletes it or sends it back to the
+    unassigned pool (the one way to a chart); it can be handed to several
+    people at once (`OfficeHandoff`) and faxed out with a cover page.
+
+    The `Document` row keeps its file, its versions (`DocumentEdit`) and,
+    when it came from a pool, its `team`, which is where "back to
+    unassigned" returns it. A document is in Office exactly when this row
+    exists; the pool list leaves such documents out.
+
+    `source` says where it came from: `pool`, `queue` (taken off a chart
+    from the physician's queue), `returned` (taken off a chart after being
+    sent back), `upload` (added straight to Office), or `later` /
+    `set_aside` (moved from the retired fax review states).
+
+    Written only by `apps.mobile_api.office` (and the fax review's
+    compatibility routes, which call it).
+    """
+    POOL = 'pool'
+    QUEUE = 'queue'
+    RETURNED = 'returned'
+    UPLOAD = 'upload'
+    LATER = 'later'
+    SET_ASIDE = 'set_aside'
+
+    document = models.OneToOneField(Document, related_name='office', on_delete=models.CASCADE)
+    moved_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    moved_at = models.DateTimeField()
+    source = models.CharField(max_length=16, default=POOL)
+    note = models.TextField(blank=True, default='')
+
+
+class OfficeHandoff(models.Model):
+    """One person an Office document was handed to (2026-11-18).
+
+    One row per (document, person). Handing it to someone again reopens the
+    row: the new note replaces the old, `seen_at` and `done_at` are cleared.
+    `done_at` is that person saying their part is finished; the document
+    stays in Office either way. A fax out of Office that fails is handed
+    back to its sender this way, so the failure reaches them.
+
+    Written only by `apps.mobile_api.office` (and `_settle_fax`).
+    """
+    document = models.ForeignKey(Document, related_name='office_handoffs', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
+    handed_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    handed_at = models.DateTimeField()
+    note = models.TextField(blank=True, default='')
+    seen_at = models.DateTimeField(null=True, blank=True)
+    done_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [('document', 'user')]
+        indexes = [models.Index(fields=['user', 'done_at'], name='emr_officehandoff_user_done')]

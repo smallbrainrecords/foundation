@@ -166,7 +166,13 @@ def _lock(patient_id, document_id, client_uuid, base_file):
     """Inside a transaction: the locked document, or a response to return.
     A retry of an earlier request answers with it; a change made on an old
     copy is refused."""
-    doc = Document.objects.select_for_update().filter(id=document_id, patient_id=patient_id).first()
+    return _lock_in(Document.objects.filter(patient_id=patient_id), document_id, client_uuid, base_file)
+
+
+def _lock_in(base, document_id, client_uuid, base_file):
+    """`_lock` over any set of documents: a chart's (`patient_id`) or the
+    Office list's (`office__isnull=False`, apps.mobile_api.office)."""
+    doc = base.select_for_update().filter(id=document_id).first()
     if doc is None:
         return None, _not_found()
     earlier = DocumentEdit.objects.filter(client_uuid=client_uuid).select_related(
@@ -182,21 +188,16 @@ def _lock(patient_id, document_id, client_uuid, base_file):
     return doc, None
 
 
-@csrf_exempt
-@login_required
-@touches_patient_stamp
-def mobile_document_edit(request, patient_id, document_id):
-    """POST multipart {file, client_uuid, signed, signature_of, text_count,
-    pages, removed_pages, base_file} -> the document's file becomes the new
-    PDF; the file before it is kept.
+def save_document_edit(request, *, base, document_id, may_access, signer_allowed, audit, log_fields,
+                       allow_upload=False):
+    """The edit route's work, shared by charts and the Office list.
 
-    `signed` is "true" when a signature was placed and `signature_of` the id
-    of the person whose it is (the uploader when left out); `text_count` is
-    how many pieces of text were added and `pages` (JSON) the pages touched,
-    from 1; `removed_pages` (JSON) the pages taken out, numbered in the file
-    the change was made on; `base_file` that file's stored name
-    (`file_path` from the chart's documents), checked when sent. A change
-    that adds and removes nothing is refused.
+    `base` is the documents the route may touch; `may_access()` says whether
+    the caller may change them; `signer_allowed(editor, signer)` whether a
+    signature is theirs to place; `audit(doc, user, line)` writes the audit
+    row (None writes none); `log_fields` are added to the log line.
+    `allow_upload` accepts `kind=upload`: a copy edited outside the app,
+    uploaded whole (the Office list's "replace with edited copy").
     """
     if request.method != 'POST':
         return _refuse('POST required', 405)
@@ -214,6 +215,7 @@ def mobile_document_edit(request, patient_id, document_id):
     client_uuid = str(request.POST.get('client_uuid') or '').strip()[:64]
     if not client_uuid:
         return _refuse('client_uuid_required', 400)
+    uploaded_copy = allow_upload and str(request.POST.get('kind') or '').strip() == 'upload'
     signed = str(request.POST.get('signed') or '').lower() in ('1', 'true', 'yes')
     try:
         text_count = max(0, int(request.POST.get('text_count') or 0))
@@ -221,9 +223,12 @@ def mobile_document_edit(request, patient_id, document_id):
         text_count = 0
     pages = _page_numbers(request.POST.get('pages'))
     removed = _page_numbers(request.POST.get('removed_pages'))
-    if not signed and text_count == 0 and not removed:
+    if uploaded_copy:
+        # A whole new file: what was drawn on it is not the app's to say.
+        signed, text_count, pages, removed = False, 0, [], []
+    elif not signed and text_count == 0 and not removed:
         return _refuse('nothing_added', 400)
-    if not api._assert_patient_access(request.user, patient_id):
+    if not may_access():
         return _not_found()
     signer = None
     if signed:
@@ -235,42 +240,39 @@ def mobile_document_edit(request, patient_id, document_id):
                 signer = None
         else:
             signer = request.user
-        if not may_place_signature(request.user, signer, patient_id):
+        if not signer_allowed(request.user, signer):
             return _refuse('signature_not_allowed', 400)
-    kind = 'pages' if removed else 'edit'
+    kind = 'upload' if uploaded_copy else ('pages' if removed else 'edit')
     base_file = str(request.POST.get('base_file') or '').strip()
 
     with transaction.atomic():
-        doc, response = _lock(patient_id, document_id, client_uuid, base_file)
+        doc, response = _lock_in(base, document_id, client_uuid, base_file)
         if response is not None:
             return response
         previous = doc.document.name
         doc.document = upload
         doc.file_size = upload.size
         fields = ['document', 'file_size']
-        if removed:
+        if removed or uploaded_copy:
             fields += _clear_text(doc)
         doc.save(update_fields=fields)
         edit = DocumentEdit.objects.create(
             document=doc, edited_by=request.user, kind=kind, signed=signed, signature_of=signer,
             text_count=text_count, pages=json.dumps(pages), removed_pages=json.dumps(removed),
             previous_file=previous, new_file=doc.document.name, client_uuid=client_uuid)
-        api._emit_document_audit(doc, request.user, _audit_line(
-            doc.document_name or 'document', kind=kind, signed=signed, signer=signer, editor=request.user,
-            removed=removed))
+        if audit is not None:
+            audit(doc, request.user, _audit_line(
+                doc.document_name or 'document', kind=kind, signed=signed, signer=signer, editor=request.user,
+                removed=removed))
 
-    _log('document_edited', request, document_id=doc.id, patient_id=int(patient_id), kind=kind, signed=signed,
-         signature_of=signer.id if signer else None, text_count=text_count, pages=pages, removed_pages=removed)
+    _log('document_edited', request, document_id=doc.id, kind=kind, signed=signed,
+         signature_of=signer.id if signer else None, text_count=text_count, pages=pages, removed_pages=removed,
+         **log_fields)
     return _answer(doc, edit)
 
 
-@csrf_exempt
-@login_required
-@touches_patient_stamp
-def mobile_document_restore(request, patient_id, document_id):
-    """POST JSON {edit_id, client_uuid, base_file} -> the document's file
-    becomes the file as it was before that change. The file it replaces is
-    kept, so a restore can itself be undone the same way."""
+def restore_document_edit(request, *, base, document_id, may_access, audit, log_fields):
+    """The restore route's work, shared by charts and the Office list."""
     if request.method != 'POST':
         return _refuse('POST required', 405)
     if not api._fax_caller_is_staff(request.user):
@@ -290,12 +292,12 @@ def mobile_document_restore(request, patient_id, document_id):
         edit_id = int(body.get('edit_id'))
     except (TypeError, ValueError):
         return _refuse('edit_required', 400)
-    if not api._assert_patient_access(request.user, patient_id):
+    if not may_access():
         return _not_found()
     base_file = str(body.get('base_file') or '').strip()
 
     with transaction.atomic():
-        doc, response = _lock(patient_id, document_id, client_uuid, base_file)
+        doc, response = _lock_in(base, document_id, client_uuid, base_file)
         if response is not None:
             return response
         target = DocumentEdit.objects.filter(id=edit_id, document=doc).first()
@@ -316,10 +318,70 @@ def mobile_document_restore(request, patient_id, document_id):
         edit = DocumentEdit.objects.create(
             document=doc, edited_by=request.user, kind='restore', restored_edit=target,
             previous_file=previous, new_file=version, client_uuid=client_uuid)
-        api._emit_document_audit(doc, request.user, _audit_line(doc.document_name or 'document', kind='restore'))
+        if audit is not None:
+            audit(doc, request.user, _audit_line(doc.document_name or 'document', kind='restore'))
 
-    _log('document_restored', request, document_id=doc.id, patient_id=int(patient_id), edit_id=edit_id)
+    _log('document_restored', request, document_id=doc.id, edit_id=edit_id, **log_fields)
     return _answer(doc, edit)
+
+
+def edits_response(doc):
+    """{edits: who changed this document, when and how, oldest first}."""
+    edits = DocumentEdit.objects.filter(document=doc).select_related(
+        'edited_by', 'signature_of').order_by('edited_at', 'id')
+    return JsonResponse({'success': True, 'edits': [edit_json(e) for e in edits]})
+
+
+def before_edits_response(doc):
+    """The document's file as it was before its first change, or a JSON 404
+    (`not_edited`) when nobody has changed it."""
+    first = DocumentEdit.objects.filter(document=doc).order_by('edited_at', 'id').first()
+    if first is None or not first.previous_file:
+        return _refuse('not_edited', 404)
+    try:
+        handle = default_storage.open(first.previous_file, 'rb')
+    except Exception:
+        LOGGER.exception('the file before the first edit could not be opened')
+        return _refuse('file_missing', 404)
+    response = FileResponse(handle, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="before-edits.pdf"'
+    return response
+
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_document_edit(request, patient_id, document_id):
+    """POST multipart {file, client_uuid, signed, signature_of, text_count,
+    pages, removed_pages, base_file} -> the document's file becomes the new
+    PDF; the file before it is kept.
+
+    `signed` is "true" when a signature was placed and `signature_of` the id
+    of the person whose it is (the uploader when left out); `text_count` is
+    how many pieces of text were added and `pages` (JSON) the pages touched,
+    from 1; `removed_pages` (JSON) the pages taken out, numbered in the file
+    the change was made on; `base_file` that file's stored name
+    (`file_path` from the chart's documents), checked when sent. A change
+    that adds and removes nothing is refused.
+    """
+    return save_document_edit(
+        request, base=Document.objects.filter(patient_id=patient_id), document_id=document_id,
+        may_access=lambda: api._assert_patient_access(request.user, patient_id),
+        signer_allowed=lambda editor, signer: may_place_signature(editor, signer, patient_id),
+        audit=api._emit_document_audit, log_fields={'patient_id': int(patient_id)})
+
+
+@csrf_exempt
+@login_required
+@touches_patient_stamp
+def mobile_document_restore(request, patient_id, document_id):
+    """POST JSON {edit_id, client_uuid, base_file} -> the document's file
+    becomes the file as it was before that change. The file it replaces is
+    kept, so a restore can itself be undone the same way."""
+    return restore_document_edit(
+        request, base=Document.objects.filter(patient_id=patient_id), document_id=document_id,
+        may_access=lambda: api._assert_patient_access(request.user, patient_id),
+        audit=api._emit_document_audit, log_fields={'patient_id': int(patient_id)})
 
 
 @csrf_exempt
@@ -334,9 +396,7 @@ def mobile_document_edits(request, patient_id, document_id):
     doc = Document.objects.filter(id=document_id, patient_id=patient_id).first()
     if doc is None:
         return _not_found()
-    edits = DocumentEdit.objects.filter(document=doc).select_related(
-        'edited_by', 'signature_of').order_by('edited_at', 'id')
-    return JsonResponse({'success': True, 'edits': [edit_json(e) for e in edits]})
+    return edits_response(doc)
 
 
 @csrf_exempt
@@ -351,14 +411,4 @@ def mobile_document_before_edits(request, patient_id, document_id):
     doc = Document.objects.filter(id=document_id, patient_id=patient_id).first()
     if doc is None:
         return _not_found()
-    first = DocumentEdit.objects.filter(document=doc).order_by('edited_at', 'id').first()
-    if first is None or not first.previous_file:
-        return _refuse('not_edited', 404)
-    try:
-        handle = default_storage.open(first.previous_file, 'rb')
-    except Exception:
-        LOGGER.exception('the file before the first edit could not be opened')
-        return _refuse('file_missing', 404)
-    response = FileResponse(handle, content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="before-edits.pdf"'
-    return response
+    return before_edits_response(doc)
