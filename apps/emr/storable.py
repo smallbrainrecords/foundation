@@ -51,3 +51,34 @@ def stored_file_exists(name, storage=None):
     except (FileNotFoundError, _BucketNotFound):
         return False
     return True
+
+
+def document_files(doc):
+    """Every stored file that belongs to `doc`: its current file, each file a
+    PDF edit replaced or brought back, and the fax as received that page
+    removal keeps (2026-11-18). Collect them BEFORE the row is deleted; the
+    edit and review rows go with it."""
+    from emr.models import DocumentEdit, DocumentReview
+    files = set()
+    if doc.document:
+        files.add(doc.document.name)
+    for edit in DocumentEdit.objects.filter(document=doc):
+        files.update(name for name in (edit.previous_file, edit.new_file) if name)
+    review = DocumentReview.objects.filter(document=doc).first()
+    if review is not None and review.original_file:
+        files.add(review.original_file)
+    return files
+
+
+def delete_stored_files(names, storage=None):
+    """Deletes each of `names`; answers how many could not be deleted. A
+    missing file is not an error (GCS and local storage both pass)."""
+    storage = storage or default_storage
+    failed = 0
+    for name in names:
+        try:
+            storage.delete(name)
+        except Exception:
+            failed += 1
+    return failed
+

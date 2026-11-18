@@ -42,7 +42,7 @@ from emr.problem_authentication import (
     apply_problem_authentication,
     is_attesting_actor,
 )
-from emr.storable import storable_text
+from emr.storable import delete_stored_files, document_files, storable_text
 from emr.todo_suggestions import patient_title_history, suggestions_for
 from emr.usual_vitals import (
     apply_usual_vitals,
@@ -2371,12 +2371,14 @@ def mobile_delete_document(request, patient_id, document_id):
         DocumentTodo.objects.filter(document=doc).select_related('todo')
     )
 
-    if doc.document:
-        # Triggers the django-storages GCS backend delete, removing the
-        # binary. Set save=False since we follow with doc.delete() right
-        # after.
-        doc.document.delete(save=False)
+    # Every stored copy goes with the row (2026-11-18): the current file,
+    # earlier versions from PDF editing, and the fax as received that page
+    # removal keeps. Before, only the current file was removed and the rest
+    # stayed in the bucket with nothing pointing at them. Collected before
+    # the delete, which cascades the edit and review rows.
+    files = document_files(doc)
     doc.delete()  # CASCADE wipes DocumentProblem + DocumentTodo rows.
+    delete_stored_files(files)
 
     audit_msg = f"Removed document: {document_name}"
     if linked_problems:

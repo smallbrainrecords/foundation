@@ -10007,6 +10007,42 @@ class FaxReviewSetAsideTests(_FaxReviewBase):
         self.assertEqual(self._review().state, 'ready')
 
 
+class ChartDocumentDeleteFilesTests(_FaxReviewBase):
+    """DELETE /api/patient/<pid>/document/<id> (2026-11-18, the Delete
+    button on "Faxes for you"): every stored copy goes with the row, the fax
+    as received and earlier edit versions included. Before, only the current
+    file was removed."""
+
+    def _stored(self, name):
+        from django.core.files.storage import default_storage
+        return default_storage.exists(name)  # local storage: a real check
+
+    def test_a_fax_in_the_queue_is_deleted_with_its_original(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from emr.models import DocumentReview
+        self._prepared()
+        self.client.post(f'/api/fax/review/{self.doc.id}/pages', data={
+            'removed_pages': json.dumps([1]), 'original_page_count': '3',
+            'file': SimpleUploadedFile('kept.pdf', b'%PDF-1.4 kept pages', content_type='application/pdf')})
+        review = self._review()
+        self.doc.refresh_from_db()
+        kept, original = self.doc.document.name, review.original_file
+        self.assertTrue(self._stored(kept) and self._stored(original))
+        self.client.logout()
+        self._login(self.attending)
+        response = self.client.delete(f'/api/patient/{self.patient.id}/document/{self.doc.id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Document.objects.filter(id=self.doc.id).exists())
+        self.assertFalse(DocumentReview.objects.filter(document_id=self.doc.id).exists())
+        self.assertFalse(self._stored(kept), 'the current file is deleted')
+        self.assertFalse(self._stored(original), 'the fax as received is deleted too')
+        self.assertTrue(ProblemActivity.objects.filter(activity__startswith='Removed document:').exists())
+        self.assertEqual(self._list_queue(), [], 'it leaves the queue')
+
+    def _list_queue(self):
+        return self.client.get('/api/fax/reviews').json().get('queue', [])
+
+
 class FaxReviewPagesTests(_FaxReviewBase):
     """POST /api/fax/review/<id>/pages — the kept pages replace the file; the
     fax as received is kept and can be served and restored."""

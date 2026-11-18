@@ -56,6 +56,7 @@ from emr.models import (
     Document, DocumentEdit, DocumentReview, FaxTransmission, OfficeDocument, OfficeHandoff, PhysicianTeam,
 )
 from emr.mutation_stamp import touch_patient_stamp
+from emr.storable import delete_stored_files, document_files
 
 from . import document_edit
 from . import fax_review
@@ -481,23 +482,12 @@ def _delete(request, document_id):
         if doc is None:
             # Already gone: the same answer as a delete that worked.
             return JsonResponse({'success': True, 'already': True})
-        files = set()
-        if doc.document:
-            files.add(doc.document.name)
-        for edit in DocumentEdit.objects.filter(document=doc):
-            files.update(name for name in (edit.previous_file, edit.new_file) if name)
-        review = DocumentReview.objects.filter(document=doc).first()
-        if review is not None and review.original_file:
-            files.add(review.original_file)
+        files = document_files(doc)
         snapshot = {'document_id': doc.id, 'source': doc.office.source, 'file_count': len(files)}
         doc.delete()
-    missing = 0
-    for name in files:
-        try:
-            default_storage.delete(name)
-        except Exception:
-            missing += 1
-            LOGGER.exception('an Office file could not be deleted')
+    missing = delete_stored_files(files)
+    if missing:
+        LOGGER.warning('%d Office file(s) could not be deleted', missing)
     _log('office_deleted', request, files_not_deleted=missing, **snapshot)
     return JsonResponse({'success': True})
 
