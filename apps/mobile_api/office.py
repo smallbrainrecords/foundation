@@ -9,9 +9,12 @@ back — that never goes on a chart. Owner decisions, same day:
   * **Every staff member sees the list.** Patients never: they get a JSON
     404, like every refusal here (never 403 — the app reads 403 as signed
     out).
-  * **A document stays until someone deletes it or sends it back to the
-    unassigned pool**, the one way to a chart (from there the usual assign or
-    prepare-for-the-physician steps file it). Nothing expires.
+  * **A document stays until someone deletes it, files it to a chart, or
+    sends it back to the unassigned pool.** Nothing expires. Filing straight
+    from Office (`to-chart`, owner ask 2026-11-18: "we will need a way to
+    assign a document to a patient in the office section") does what the
+    pool's assign does: the chart's "Added document" audit (after "Renamed
+    document" when the name changed), the chart's stamp, no review.
   * **Any staff member may delete**, permanently: the file, every earlier
     version and the fax as received go with the row. The app warns first.
   * **A document can be handed to several people** (`OfficeHandoff`). Each
@@ -532,6 +535,57 @@ def mobile_office_to_unassigned(request, document_id):
         OfficeDocument.objects.filter(document=doc).delete()
     _log('office_to_unassigned', request, document_id=doc.id, team_id=team_id)
     return JsonResponse({'success': True, 'team_id': team_id})
+
+
+@csrf_exempt
+@login_required
+def mobile_office_to_chart(request, document_id):
+    """POST {patient_id, document_name?} -> file the document to that
+    patient's chart, as the pool's assign does: it leaves Office (hand-offs
+    removed), "Renamed document" is written when the name changed, then
+    "Added document", and the chart's stamp moves. No review. The caller
+    must be able to open the chart (404 `patient_not_found` otherwise)."""
+    refusal = _gate(request, 'POST')
+    if refusal:
+        return refusal
+    body = _body(request)
+    if body is None:
+        return _refuse('invalid_json', 400)
+    try:
+        patient_id = int(body.get('patient_id'))
+    except (TypeError, ValueError):
+        return _refuse('patient_required', 400)
+    if not api._assert_patient_access(request.user, patient_id):
+        return _refuse('patient_not_found', 404)
+    patient = User.objects.filter(id=patient_id).first()
+    if patient is None or api._role_of(patient) != 'patient':
+        return _refuse('patient_not_found', 404)
+    new_name = str(body.get('document_name') or '').strip()[:MAX_NAME]
+
+    with transaction.atomic():
+        doc = _locked_office(document_id)
+        if doc is None:
+            return _not_found()
+        renamed_from = None
+        if new_name and new_name != (doc.document_name or ''):
+            renamed_from = doc.document_name or ''
+            doc.document_name = new_name
+        doc.patient = patient
+        doc.team = None
+        doc.claimed_by = None
+        doc.claimed_at = None
+        doc.save(update_fields=['patient', 'team', 'claimed_by', 'claimed_at', 'document_name'])
+        OfficeHandoff.objects.filter(document=doc).delete()
+        OfficeDocument.objects.filter(document=doc).delete()
+        # The pool assign's wording, so one query finds every rename and add.
+        if renamed_from is not None:
+            api._emit_document_audit(
+                doc, request.user, f"Renamed document: {renamed_from or 'document'} -> {doc.document_name}")
+        api._emit_document_audit(doc, request.user, f"Added document: {doc.document_name or 'document'}")
+        # Manual stamp: the patient is in the body, not the URL.
+        touch_patient_stamp(patient_id)
+    _log('office_to_chart', request, document_id=doc.id, patient_id=patient_id, renamed=renamed_from is not None)
+    return JsonResponse({'success': True, 'document_id': doc.id, 'patient_id': patient_id})
 
 
 # ---------------------------------------------------------------------------

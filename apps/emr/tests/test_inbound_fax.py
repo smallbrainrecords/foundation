@@ -23,13 +23,15 @@ def fax(i, received='2026-11-16T13:00:00Z', **extra):
     record = {
         'id': i, 'received': received, 'from_number': '+12315550140', 'from_name': 'NMRL',
         'to_numbers': [], 'to_keys': [], 'pages': 2, 'read_status': 'Read', 'message_status': 'Received',
+        'availability': 'Alive',
         'attachments': [{'id': 900 + i, 'content_type': 'application/pdf', 'size': None}],
     }
     record.update(extra)
     return record
 
 
-class InboundFaxImportTests(TestCase):
+class _InboundFaxBase(TestCase):
+    """RingCentral replaced, a team pool, the import switched on."""
 
     def setUp(self):
         media = tempfile.mkdtemp()
@@ -46,9 +48,15 @@ class InboundFaxImportTests(TestCase):
         self.downloads = []
         self.failures = {}
         self.body = PDF
+        # RingCentral deletion: no permission unless a test grants it.
+        self.granted = set()
+        self.rc_deleted = []
+        self.delete_failures = {}
         for patcher in (mock.patch.object(rc, 'is_configured', lambda: True),
                         mock.patch.object(rc, 'inbound_faxes', self._list),
-                        mock.patch.object(rc, 'fax_attachment', self._download)):
+                        mock.patch.object(rc, 'fax_attachment', self._download),
+                        mock.patch.object(rc, 'granted_permissions', lambda: self.granted),
+                        mock.patch.object(rc, 'move_fax_to_deleted', self._delete)):
             patcher.start()
             self.addCleanup(patcher.stop)
 
@@ -58,11 +66,19 @@ class InboundFaxImportTests(TestCase):
             trace.update(complete=True)
         return self.listed
 
+    def _delete(self, message_id):
+        self.rc_deleted.append(message_id)
+        if message_id in self.delete_failures:
+            raise self.delete_failures[message_id]
+
     def _download(self, message_id, attachment_id):
         self.downloads.append((message_id, attachment_id))
         if message_id in self.failures:
             raise self.failures[message_id]
         return self.body, 'application/pdf'
+
+
+class InboundFaxImportTests(_InboundFaxBase):
 
     # Off unless configured
 
@@ -114,6 +130,23 @@ class InboundFaxImportTests(TestCase):
         self.assertEqual((summary['imported'], summary['already']), (0, 2))
         self.assertEqual(len(self.downloads), 2)
         self.assertEqual(Document.objects.filter(team=self.team).count(), 2)
+
+    def test_a_deleted_fax_is_never_imported_again(self):
+        # 2026-11-18: deleting a pool fax emptied InboundFax.document, and the
+        # next pass fetched the fax again — 14 faxes came back in production,
+        # one of them 7 times.
+        self.listed = [fax(1), fax(2)]
+        inbound_fax.import_new_faxes()
+        doc = InboundFax.objects.get(rc_message_id='1').document
+        doc.delete()
+        self.assertIsNone(InboundFax.objects.get(rc_message_id='1').document_id)
+        summary = inbound_fax.import_new_faxes()
+        self.assertEqual((summary['imported'], summary['already'], summary['deleted']), (0, 1, 1))
+        self.assertEqual(len(self.downloads), 2, 'nothing fetched again')
+        self.assertEqual(Document.objects.filter(team=self.team).count(), 1)
+        # The per-fax guard holds too, for a pass that reaches it directly.
+        self.assertEqual(inbound_fax._import_one(fax(1), self.team, 'test'), 'deleted')
+        self.assertEqual(len(self.downloads), 2)
 
     def test_a_pass_fetches_at_most_its_batch_and_leaves_the_rest_waiting(self):
         self.listed = [fax(1), fax(2, '2026-11-16T14:00:00Z'), fax(3, '2026-11-16T15:00:00Z')]
@@ -193,3 +226,120 @@ class InboundFaxImportTests(TestCase):
         with mock.patch.object(rc, 'inbound_faxes', refuse), self.assertRaises(CommandError):
             call_command('import_inbound_faxes', stdout=out)
         self.assertFalse(json.loads(out.getvalue())['ok'])
+
+
+class RemoveStoredFaxesFromRingCentralTests(_InboundFaxBase):
+    """Once a fax is stored here, the scheduled job moves it to RingCentral's
+    Deleted folder (owner, 2026-11-18: "ok to delete documents from ring
+    central once we have downloaded"). Deleted, never purged; only the job;
+    only with the EditMessages permission."""
+
+    def setUp(self):
+        super().setUp()
+        self.granted = {'ReadMessages', 'Faxes', 'EditMessages'}
+
+    def job(self, **kwargs):
+        kwargs.setdefault('delete_batch', inbound_fax.DELETE_PER_RUN)
+        return inbound_fax.import_new_faxes(batch=kwargs.pop('batch', 25), trigger='job', **kwargs)
+
+    def test_the_job_stores_each_fax_then_deletes_it_from_ringcentral(self):
+        self.listed = [fax(1), fax(2)]
+        summary = self.job()
+        self.assertEqual(summary['imported'], 2)
+        self.assertEqual(self.rc_deleted, ['1', '2'])
+        self.assertEqual((summary['rc_delete'], summary['rc_deleted'], summary['rc_waiting']), ('done', 2, 0))
+        self.assertEqual(Document.objects.filter(team=self.team, patient=None).count(), 2, 'the stored copies stay')
+
+    def test_a_mac_check_never_deletes(self):
+        self.listed = [fax(1)]
+        summary = inbound_fax.import_new_faxes(trigger='app')
+        self.assertEqual(summary['imported'], 1)
+        self.assertEqual(self.rc_deleted, [])
+        self.assertEqual(summary['rc_delete'], 'not_this_pass')
+
+    def test_a_fax_not_stored_here_stays_in_ringcentral(self):
+        self.failures['2'] = rc.FaxError('boom', 500)
+        self.listed = [fax(1), fax(2), fax(3, received='2026-11-15T09:00:00Z'), fax(4, attachments=[])]
+        self.job()
+        self.assertEqual(self.rc_deleted, ['1'], 'failed, before the start and given up all stay')
+
+    def test_only_a_live_fax_is_deleted_so_none_is_ever_purged(self):
+        self.listed = [fax(1)]
+        self.job(delete_batch=0)
+        self.listed = [fax(1, availability='Deleted'), fax(5, availability='Purged')]
+        summary = self.job()
+        self.assertEqual(self.rc_deleted, [], 'a second DELETE would purge it')
+        self.assertEqual(summary['rc_delete'], 'nothing_to_delete')
+
+    def test_a_record_with_no_availability_is_left_alone(self):
+        self.listed = [fax(1, availability='')]
+        self.job()
+        self.assertEqual(self.rc_deleted, [])
+
+    def test_a_fax_deleted_here_still_leaves_ringcentral(self):
+        self.listed = [fax(1)]
+        self.job(delete_batch=0)
+        Document.objects.filter(team=self.team).delete()
+        summary = self.job()
+        self.assertEqual(self.rc_deleted, ['1'])
+        self.assertEqual(summary['deleted'], 1)
+
+    def test_without_the_permission_nothing_is_sent(self):
+        self.granted = {'ReadMessages', 'Faxes', 'ReadContacts'}
+        self.listed = [fax(1), fax(2)]
+        summary = self.job()
+        self.assertEqual(self.rc_deleted, [])
+        self.assertEqual((summary['rc_delete'], summary['rc_waiting']), ('no_permission', 2))
+
+    def test_an_unknown_scope_tries_and_a_refusal_stops_the_run(self):
+        self.granted = None
+        self.listed = [fax(1), fax(2)]
+        self.delete_failures['1'] = rc.FaxError('needs EditMessages', 403)
+        summary = self.job()
+        self.assertEqual(self.rc_deleted, ['1'])
+        self.assertEqual((summary['rc_delete'], summary['rc_deleted'], summary['rc_waiting']), ('not_allowed', 0, 2))
+
+    def test_a_message_already_gone_is_not_a_failure(self):
+        self.listed = [fax(1), fax(2)]
+        self.delete_failures['1'] = rc.FaxError('not found', 404)
+        summary = self.job()
+        self.assertEqual(self.rc_deleted, ['1', '2'])
+        self.assertEqual((summary['rc_delete'], summary['rc_deleted'], summary['rc_waiting']), ('done', 1, 0))
+
+    def test_switched_off_deletes_nothing(self):
+        self.listed = [fax(1)]
+        with override_settings(INBOUND_FAX_DELETE_IMPORTED=False):
+            summary = self.job()
+        self.assertEqual(self.rc_deleted, [])
+        self.assertEqual(summary['rc_delete'], 'off')
+
+    def test_each_run_deletes_at_most_its_share_oldest_first(self):
+        self.listed = [fax(3, received='2026-11-16T15:00:00Z'), fax(1), fax(2, received='2026-11-16T14:00:00Z')]
+        summary = self.job(delete_batch=2)
+        self.assertEqual(self.rc_deleted, ['1', '2'])
+        self.assertEqual(summary['rc_waiting'], 1)
+
+    def test_a_rate_limited_import_deletes_nothing(self):
+        self.failures['1'] = rc.FaxError('slow down', 429)
+        self.listed = [fax(1)]
+        summary = self.job()
+        self.assertEqual(self.rc_deleted, [])
+        self.assertEqual(summary['rc_delete'], 'rate_limited')
+
+    def test_a_dry_run_only_counts(self):
+        self.listed = [fax(1)]
+        self.job(delete_batch=0)
+        summary = self.job(dry_run=True)
+        self.assertEqual(self.rc_deleted, [])
+        self.assertEqual((summary['rc_delete'], summary['would_delete_from_ringcentral']), ('dry_run', 1))
+
+    def test_the_command_deletes_by_default_and_can_skip_it(self):
+        self.listed = [fax(1)]
+        out = io.StringIO()
+        call_command('import_inbound_faxes', '--delete-batch', '0', stdout=out)
+        self.assertEqual(json.loads(out.getvalue())['rc_delete'], 'not_this_pass')
+        self.assertEqual(self.rc_deleted, [])
+        out = io.StringIO()
+        call_command('import_inbound_faxes', stdout=out)
+        self.assertEqual(json.loads(out.getvalue())['rc_deleted'], 1)
+        self.assertEqual(self.rc_deleted, ['1'])

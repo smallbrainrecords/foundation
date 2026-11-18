@@ -3565,6 +3565,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_review_set_aside': 'FaxReviewStampTests',
         'mobile_fax_review_pages': 'FaxReviewStampTests',
         'mobile_office_move_in': 'OfficeMoveInTests',
+        'mobile_office_to_chart': 'OfficeToChartTests',
     }
 
     ALLOWLIST = {
@@ -10631,3 +10632,53 @@ class MoveParkedFaxesToOfficeTests(_OfficeBase):
 
         again = self._run('--apply')
         self.assertEqual((again['later'], again['set_aside'], again['moved']), (1, 0, 0))
+
+
+class OfficeToChartTests(_OfficeBase):
+    """POST /api/office/document/<id>/to-chart: filing an Office document to a
+    patient's chart (owner ask 2026-11-18), as the pool's assign does."""
+
+    def setUp(self):
+        super().setUp()
+        self._login(self.team_nurse)
+        self._move_in(hand_to=[self.secretary.id])
+
+    def test_it_lands_on_the_chart_with_the_audit_and_the_stamp(self):
+        from emr.models import OfficeDocument, OfficeHandoff
+        before = self._stamp()
+        response = self._office('to-chart', {'patient_id': self.patient.id, 'document_name': 'Lab results'})
+        self.assertEqual(response.status_code, 200)
+        self.doc.refresh_from_db()
+        self.assertEqual((self.doc.patient_id, self.doc.team_id, self.doc.document_name),
+                         (self.patient.id, None, 'Lab results'))
+        self.assertFalse(OfficeDocument.objects.filter(document=self.doc).exists())
+        self.assertFalse(OfficeHandoff.objects.filter(document=self.doc).exists())
+        activities = list(ProblemActivity.objects.filter(problem=None).order_by('id')
+                          .values_list('activity', flat=True))
+        self.assertEqual(activities[-2:], ['Renamed document: Fax from NMRL -> Lab results',
+                                           'Added document: Lab results'])
+        after = self._stamp()
+        self.assertTrue(after is not None and (before is None or after > before))
+        self.assertEqual(self._list()['documents'], [])
+
+    def test_the_name_left_alone_writes_no_rename(self):
+        self._office('to-chart', {'patient_id': self.patient.id})
+        self.assertFalse(ProblemActivity.objects.filter(activity__startswith='Renamed document').exists())
+        self.assertTrue(ProblemActivity.objects.filter(activity='Added document: Fax from NMRL').exists())
+
+    def test_a_chart_the_caller_cannot_open_is_refused(self):
+        self.client.logout()
+        self._login(self.secretary)
+        response = self._office('to-chart', {'patient_id': self.patient.id})
+        self.assertEqual((response.status_code, response.json()['error']), (404, 'patient_not_found'))
+        self.doc.refresh_from_db()
+        self.assertIsNone(self.doc.patient_id)
+
+    def test_only_a_patient_can_receive_it(self):
+        response = self._office('to-chart', {'patient_id': self.attending.id})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self._office('to-chart', {}).status_code, 400)
+
+    def test_a_document_not_in_office_is_not_found(self):
+        self._office('to-chart', {'patient_id': self.patient.id})
+        self.assertEqual(self._office('to-chart', {'patient_id': self.patient.id}).status_code, 404)
