@@ -365,6 +365,19 @@ def mobile_register(request):
     return JsonResponse({'success': True, 'id': user.id})
 
 
+def portrait_version(profile):
+    """A short tag that changes whenever the chart photo changes, or None
+    when the chart has none (the legacy default avatar counts as none).
+    The app downloads the photo from `/api/media/portrait/<id>` when this
+    differs from the one it last stored (check-in, 2026-11-17)."""
+    if profile is None or not profile.portrait_image:
+        return None
+    name = profile.portrait_image.name or ''
+    if not name or name.startswith('/static/'):
+        return None
+    return hashlib.sha1(name.encode('utf-8')).hexdigest()[:12]
+
+
 def _user_dict(user, profile=None):
     """Serialize a Django User + UserProfile to a flat dict."""
     if profile is None:
@@ -412,6 +425,7 @@ def _user_dict(user, profile=None):
         'phone_number': profile.phone_number if profile else '',
         'summary': profile.summary if profile else '',
         'portrait_image_url': portrait_url,
+        'portrait_version': portrait_version(profile),
         'cover_image_url': cover_url,
         # Provider identity — populated only for physicians; empty strings
         # for everyone else. macOS reads these off the resolved physician in
