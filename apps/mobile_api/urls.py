@@ -156,6 +156,7 @@ urlpatterns = [
     url(r'^office/document/(?P<document_id>\d+)$', office.mobile_office_document),
     url(r'^office/document/(?P<document_id>\d+)/move-in$', office.mobile_office_move_in),
     url(r'^office/document/(?P<document_id>\d+)/to-unassigned$', office.mobile_office_to_unassigned),
+    url(r'^office/document/(?P<document_id>\d+)/to-chart$', office.mobile_office_to_chart),
     url(r'^office/document/(?P<document_id>\d+)/hand$', office.mobile_office_hand),
     url(r'^office/document/(?P<document_id>\d+)/handoff/seen$', office.mobile_office_handoff_seen),
     url(r'^office/document/(?P<document_id>\d+)/handoff/done$', office.mobile_office_handoff_done),
