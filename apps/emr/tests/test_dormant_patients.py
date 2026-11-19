@@ -24,7 +24,8 @@ def years_ago(n, days=0):
     return timezone.now() - timedelta(days=round(365.25 * n) + days)
 
 
-class InactivateDormantPatientsTests(TransactionTestCase):
+class DormantPatientsFixtures(TransactionTestCase):
+    """Shared fixtures; holds no tests of its own."""
 
     def setUp(self):
         self._drop_backup()
@@ -65,6 +66,9 @@ class InactivateDormantPatientsTests(TransactionTestCase):
         with connection.cursor() as cursor:
             cursor.execute(f'SELECT user_id FROM {command.BACKUP_TABLE} ORDER BY user_id')
             return [row[0] for row in cursor.fetchall()]
+
+
+class InactivateDormantPatientsTests(DormantPatientsFixtures):
 
     # -- who is switched off ------------------------------------------------
 
@@ -221,3 +225,76 @@ class InactivateDormantPatientsTests(TransactionTestCase):
         self.assertEqual(command.cutoff_for(now, 7), datetime(2019, 11, 19, 15, 0, tzinfo=dt_tz.utc))
         leap = datetime(2028, 2, 29, 12, 0, tzinfo=dt_tz.utc)
         self.assertEqual(command.cutoff_for(leap, 7), datetime(2021, 2, 28, 12, 0, tzinfo=dt_tz.utc))
+
+
+class SpareChartedPatientsTests(DormantPatientsFixtures):
+    """`--spare-charted`: a dormant patient whose chart got a todo or a
+    document in the past 12 months is left alone (owner decision 2026-11-19)."""
+
+    def todo(self, patient, when):
+        from emr.models import ToDo
+        row = ToDo.objects.create(patient=patient, todo='refill')
+        ToDo.objects.filter(pk=row.pk).update(created_on=when)
+
+    def document(self, patient, when):
+        from emr.models import Document
+        row = Document.objects.create(author=self.physician, patient=patient, document_name='fax')
+        Document.objects.filter(pk=row.pk).update(created_on=when)
+
+    def test_a_recent_todo_spares_the_patient(self):
+        patient = self.person('charted')
+        self.visit(patient, years_ago(8))
+        self.todo(patient, years_ago(0, days=30))
+
+        out = self.run_command('--apply', '--spare-charted')
+
+        self.assertTrue(self.is_active(patient))
+        self.assertIn(f'left active: {command.SPARED_REASON}', out)
+
+    def test_a_recent_document_spares_the_patient(self):
+        patient = self.person('faxed')
+        self.document(patient, years_ago(0, days=200))
+
+        self.run_command('--apply', '--spare-charted')
+
+        self.assertTrue(self.is_active(patient))
+
+    def test_without_the_option_a_charted_patient_is_switched_off(self):
+        patient = self.person('charted')
+        self.todo(patient, years_ago(0, days=30))
+
+        self.run_command('--apply')
+
+        self.assertFalse(self.is_active(patient))
+
+    def test_chart_activity_older_than_a_year_spares_nothing(self):
+        patient = self.person('stale')
+        self.todo(patient, years_ago(2))
+        self.document(patient, years_ago(1, days=10))
+
+        self.run_command('--apply', '--spare-charted')
+
+        self.assertFalse(self.is_active(patient))
+
+    def test_spared_and_dormant_patients_are_told_apart(self):
+        charted, dormant = self.person('charted'), self.person('dormant')
+        self.todo(charted, years_ago(0, days=5))
+
+        self.run_command('--apply', '--spare-charted')
+
+        self.assertTrue(self.is_active(charted))
+        self.assertFalse(self.is_active(dormant))
+        self.assertEqual(self.backup_ids(), [dormant.pk])
+
+    def test_a_patient_charted_after_the_plan_was_made_is_left_alone(self):
+        patient = self.person('old')
+        now = timezone.now()
+        cutoff = command.cutoff_for(now, 7)
+        since = now - command.CHARTED_WINDOW
+        plan, _ = command.build_plan(cutoff, charted_since=since)
+        self.todo(patient, timezone.now())
+
+        written = command.apply_inactivation(plan, cutoff, charted_since=since)
+
+        self.assertEqual(written, 0)
+        self.assertTrue(self.is_active(patient))

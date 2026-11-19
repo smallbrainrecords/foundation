@@ -3,6 +3,7 @@
     python manage.py inactivate_dormant_patients                    # dry run: counts only
     python manage.py inactivate_dormant_patients --apply            # write
     python manage.py inactivate_dormant_patients --apply --limit 20 # canary slice
+    python manage.py inactivate_dormant_patients --spare-charted    # keep charts still in use
     python manage.py inactivate_dormant_patients --rollback         # make them active again
 
 Owner request 2026-11-19: "make any patient who has not had an appointment in
@@ -26,8 +27,12 @@ Which patients. Accounts with role 'patient' that are active now and have no
 encounter that STARTED within the window. A patient whose account was created
 within the window is left alone unless `--include-new` is given: they have not
 yet gone N years without a visit (a new patient waiting for a first visit has
-no encounter at all). The UPDATE re-checks both conditions per row, so a
-patient seen, or switched off by hand, after the plan was made is left alone.
+no encounter at all). With `--spare-charted`, a patient with a todo or a
+document added in the past 12 months is also left alone: someone is still
+working that chart (owner decision 2026-11-19, after the production dry run
+found 21 such patients among 293, five of them Ryan family charts with no
+recorded visit). The UPDATE re-checks every condition per row, so a patient
+seen, charted, or switched off by hand after the plan was made is left alone.
 
 Undo record. Before each batch the patient id and their last encounter go to
 the table `emr_dormant_patient_inactivation` (user_id, last_encounter,
@@ -63,6 +68,8 @@ BACKUP_TABLE = 'emr_dormant_patient_inactivation'
 BATCH_SIZE = 200
 DEFAULT_PAUSE = 0.2
 DEFAULT_YEARS = 7
+CHARTED_WINDOW = timedelta(days=365)
+SPARED_REASON = 'todo or document added in the past 12 months'
 
 Candidate = namedtuple('Candidate', 'user_id last_encounter date_joined last_login')
 
@@ -75,9 +82,10 @@ def cutoff_for(now, years):
         return now.replace(year=now.year - years, day=28)
 
 
-def build_plan(cutoff, include_new=False):
+def build_plan(cutoff, include_new=False, charted_since=None):
     """-> (candidates, skipped): who would be made inactive, and why the other
-    dormant patients are left alone. Reads only."""
+    dormant patients are left alone. With `charted_since`, a patient with a
+    todo or document added since then is left alone. Reads only."""
     active_patients = (
         UserProfile.objects
         .filter(role='patient', user__is_active=True)
@@ -97,6 +105,10 @@ def build_plan(cutoff, include_new=False):
             skipped['account created within the window'] += 1
             continue
         candidates.append(Candidate(user_id, last, date_joined, last_login))
+    if charted_since is not None:
+        charted = recently_charted((c.user_id for c in candidates), charted_since)
+        skipped[SPARED_REASON] += sum(1 for c in candidates if c.user_id in charted)
+        candidates = [c for c in candidates if c.user_id not in charted]
     candidates.sort(key=lambda c: c.user_id)
     return candidates, skipped
 
@@ -128,11 +140,13 @@ def _ensure_backup_table():
         )
 
 
-def apply_inactivation(candidates, cutoff, include_new=False, progress=None, pause=0.0):
+def apply_inactivation(candidates, cutoff, include_new=False, progress=None, pause=0.0,
+                       charted_since=None):
     """Switch `candidates` off in short transactions; -> rows written.
 
-    The UPDATE carries the plan's conditions, so a patient seen since the plan
-    was made (or already inactive) matches nothing and is left alone.
+    The UPDATE carries the plan's conditions, so a patient seen (or, with
+    `charted_since`, charted) since the plan was made, or already inactive,
+    matches nothing and is left alone.
     """
     _ensure_backup_table()
     backup = connection.ops.quote_name(BACKUP_TABLE)
@@ -142,6 +156,15 @@ def apply_inactivation(candidates, cutoff, include_new=False, progress=None, pau
     applied_at = adapt(timezone.now())
     cut = adapt(cutoff)
     joined_clause = '' if include_new else ' AND date_joined < %s'
+    charted_clause, charted_params = '', []
+    if charted_since is not None:
+        todo = connection.ops.quote_name(ToDo._meta.db_table)
+        document = connection.ops.quote_name(Document._meta.db_table)
+        charted_clause = (
+            f' AND NOT EXISTS (SELECT 1 FROM {todo} t WHERE t.patient_id = {user}.id AND t.created_on >= %s)'
+            f' AND NOT EXISTS (SELECT 1 FROM {document} d WHERE d.patient_id = {user}.id AND d.created_on >= %s)'
+        )
+        charted_params = [adapt(charted_since), adapt(charted_since)]
 
     written = 0
     for start in range(0, len(candidates), BATCH_SIZE):
@@ -153,12 +176,13 @@ def apply_inactivation(candidates, cutoff, include_new=False, progress=None, pau
                  for c in batch],
             )
             for c in batch:
-                params = [c.user_id] + ([] if include_new else [cut]) + [cut]
+                params = [c.user_id] + ([] if include_new else [cut]) + [cut] + charted_params
                 cursor.execute(
                     f'UPDATE {user} SET is_active = 0 '
                     f'WHERE id = %s AND is_active = 1{joined_clause} '
                     f'AND NOT EXISTS (SELECT 1 FROM {encounter} e '
-                    f'WHERE e.patient_id = {user}.id AND e.starttime >= %s)',
+                    f'WHERE e.patient_id = {user}.id AND e.starttime >= %s)'
+                    f'{charted_clause}',
                     params,
                 )
                 written += cursor.rowcount
@@ -213,6 +237,8 @@ class Command(BaseCommand):
                             help=f'Window in calendar years (default {DEFAULT_YEARS}).')
         parser.add_argument('--include-new', action='store_true',
                             help='Also switch off patients whose account was created within the window.')
+        parser.add_argument('--spare-charted', action='store_true',
+                            help='Leave alone patients with a todo or document added in the past 12 months.')
         parser.add_argument('--limit', type=int, default=None, metavar='N',
                             help='With --apply: switch off only the first N patients by id (a canary slice).')
         parser.add_argument('--rollback', action='store_true',
@@ -241,15 +267,16 @@ class Command(BaseCommand):
         started = time.monotonic()
         now = timezone.now()
         cutoff = cutoff_for(now, years)
+        charted_since = now - CHARTED_WINDOW if options['spare_charted'] else None
 
-        candidates, skipped = build_plan(cutoff, include_new)
+        candidates, skipped = build_plan(cutoff, include_new, charted_since)
         patients = UserProfile.objects.filter(role='patient')
         total = patients.count()
         active = patients.filter(user__is_active=True).count()
         never = sum(1 for c in candidates if c.last_encounter is None)
         by_year = Counter(c.last_encounter.year for c in candidates if c.last_encounter)
         logged_in = sum(1 for c in candidates if c.last_login and c.last_login >= cutoff)
-        charted = sorted(recently_charted((c.user_id for c in candidates), now - timedelta(days=365)))
+        charted = sorted(recently_charted((c.user_id for c in candidates), now - CHARTED_WINDOW))
         first_visit = Encounter.objects.order_by('starttime').values_list('starttime', flat=True).first()
 
         self.stdout.write('=== Dormant patients ===')
@@ -279,7 +306,7 @@ class Command(BaseCommand):
             self.stdout.write(f"--limit {options['limit']}: switching off the first {len(candidates)} only.")
 
         written = apply_inactivation(candidates, cutoff, include_new,
-                                     self._progress(started), options['pause'])
+                                     self._progress(started), options['pause'], charted_since)
         self.stdout.write('')
         self.stdout.write(f'patients made inactive  : {written}')
         self.stdout.write(f'changed since the plan  : {len(candidates) - written} (left alone)')
@@ -291,6 +318,7 @@ class Command(BaseCommand):
             'planned': len(candidates),
             'years': years,
             'include_new': include_new,
+            'spare_charted': charted_since is not None,
         }))
 
     def _progress(self, started):
