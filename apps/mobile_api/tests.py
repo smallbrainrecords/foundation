@@ -3583,6 +3583,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_review_pages': 'FaxReviewStampTests',
         'mobile_office_move_in': 'OfficeMoveInTests',
         'mobile_office_to_chart': 'OfficeToChartTests',
+        'mobile_office_from_chart': 'OfficeFromChartTests',
     }
 
     ALLOWLIST = {
@@ -3609,6 +3610,8 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_review_restore': 'an Office (or set-aside) document returns to the team pool, patient-unbound',
         'mobile_fax_review_later': 'retired; moves a pool fax to the Office list, patient-unbound (pool only)',
         'mobile_office_upload': 'a document straight into the Office list, which is on no chart',
+        'mobile_inbox_read_next': 'a lease on a pool document, patient-unbound',
+        'mobile_inbox_read': 'pool document text and match rows; a chart refreshes its chip on its own',
         'mobile_office_document': 'renames or deletes an Office document, which is on no chart',
         'mobile_office_to_unassigned': 'an Office document returns to the team pool, patient-unbound until assign (which stamps)',
         'mobile_office_hand': 'Office hand-offs, not chart data',
@@ -3648,6 +3651,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_document_edits',
         'mobile_document_before_edits',
         'mobile_office_documents',
+        'mobile_patient_waiting_faxes',
         'mobile_office_edits',
         'mobile_office_before_edits',
         'mobile_untranscribed_encounters',
@@ -3688,7 +3692,9 @@ class StampCoverageSweepTests(TestCase):
         self.assertGreaterEqual(
             len(callbacks), 40,
             'mobile_api URL enumeration looks broken (too few views)')
-        self.assertLessEqual(len(callbacks), 120)
+        # Raised from 120 on 2026-11-18 (waiting faxes, chart fax): the API
+        # outgrew it; the bound only guards against a broken enumeration.
+        self.assertLessEqual(len(callbacks), 160)
 
         unaccounted = []
         multi = []
@@ -10810,3 +10816,305 @@ class StorableTests(TestCase):
                 if _re.search(r'storage\.exists\(', line) and not line.lstrip().startswith('#'):
                     offenders.append('%s:%d' % (path.relative_to(apps_dir), number))
         self.assertEqual(offenders, [])
+
+
+class WaitingFaxesTests(_FaxReviewBase):
+    """Waiting faxes on the chart (2026-11-18): Macs read pool documents in
+    the background (read-next, read); a chart lists its patient's matches
+    (waiting-faxes) and can say "not this patient"."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core.files.base import ContentFile
+        from emr.models import InboundFax
+        self.other_patient.first_name, self.other_patient.last_name = 'Otto', 'Field'
+        self.other_patient.save()
+        PatientController.objects.create(physician=self.attending, patient=self.other_patient)
+        self.unreached = User.objects.create_user(username='pt_c', password='top_secret')
+        UserProfile.objects.create(user=self.unreached, role='patient')
+        self.second = Document.objects.create(
+            document=ContentFile(b'%PDF-1.4 second', name='fax2.pdf'),
+            document_name='Fax from Quest', author=self.attending, patient=None, team=self.attending)
+        InboundFax.objects.create(rc_message_id='rc-1', received_at=timezone.now(),
+                                  from_number='+1 (586) 555-1234', page_count=2, document=self.doc)
+
+    def _next(self):
+        return self.client.post('/api/inbox/read-next', data='{}', content_type='application/json').json()
+
+    def _read(self, doc, matches=(), text='page text', **extra):
+        body = dict({'matches': list(matches), 'text': text}, **extra)
+        return self.client.post(f'/api/inbox/document/{doc.id}/read', data=json.dumps(body),
+                                content_type='application/json')
+
+    def _waiting(self, patient=None):
+        return self.client.get(f'/api/patient/{(patient or self.patient).id}/waiting-faxes')
+
+    def test_each_document_is_leased_to_one_mac_oldest_first(self):
+        self._login(self.team_nurse)
+        first = self._next()
+        self.assertEqual(first['document_id'], self.doc.id)
+        self.assertEqual((first['file_ext'], first['lease_seconds']), ('.pdf', 600))
+        self.client.logout()
+        self._login(self.attending)
+        self.assertEqual(self._next()['document_id'], self.second.id, 'a leased document is not handed out twice')
+        self.assertEqual(self._next(), {'success': True, 'none': True})
+
+    def test_an_expired_lease_is_handed_out_again(self):
+        from emr.models import FaxScan
+        self._login(self.team_nurse)
+        self._next()
+        FaxScan.objects.filter(document=self.doc).update(leased_until=timezone.now() - datetime.timedelta(minutes=1))
+        self.assertEqual(self._next()['document_id'], self.doc.id)
+
+    def test_office_chart_and_other_pools_are_never_offered(self):
+        from emr.models import OfficeDocument
+        OfficeDocument.objects.create(document=self.second, moved_by=self.attending, moved_at=timezone.now())
+        self.doc.patient = self.patient
+        self.doc.save()
+        self._login(self.team_nurse)
+        self.assertTrue(self._next().get('none'))
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        self.assertTrue(self._next().get('none'), 'another team cannot see this pool')
+        self.client.logout()
+        self._login(self.patient)
+        self.assertEqual(self.client.post('/api/inbox/read-next').status_code, 404)
+
+    def test_a_read_stores_safe_text_and_keeps_only_reachable_patients(self):
+        self._login(self.team_nurse)
+        response = self._read(self.doc, [
+            {'patient_id': self.patient.id, 'strength': 'strong', 'reasons': ['name', 'dob', 'bogus']},
+            {'patient_id': self.unreached.id, 'strength': 'strong', 'reasons': ['name']},
+            {'patient_id': self.team_nurse.id, 'strength': 'possible', 'reasons': ['full_name']},
+            {'patient_id': self.other_patient.id, 'strength': 'sure', 'reasons': []},
+        ], text='Nora Vance \U0001F642 DOB 1/2/1950')
+        self.assertEqual(response.json(), {'success': True, 'matches': 1})
+        self.doc.refresh_from_db()
+        self.assertEqual(self.doc.extracted_text, 'Nora Vance \ufffd DOB 1/2/1950')
+        from emr.models import FaxPatientMatch, FaxScan
+        match = FaxPatientMatch.objects.get(document=self.doc)
+        self.assertEqual((match.patient_id, match.strength, json.loads(match.reasons)),
+                         (self.patient.id, 'strong', ['name', 'dob']))
+        self.assertIsNotNone(FaxScan.objects.get(document=self.doc).scanned_at)
+        self.assertTrue(self._next()['document_id'] == self.second.id, 'a read document is not offered again')
+
+    def test_a_dismissal_outlives_a_new_read_and_stale_matches_go(self):
+        self._login(self.team_nurse)
+        self._read(self.doc, [{'patient_id': self.patient.id, 'strength': 'strong', 'reasons': ['name', 'dob']},
+                              {'patient_id': self.other_patient.id, 'strength': 'possible', 'reasons': ['full_name']}])
+        self.client.post(f'/api/patient/{self.patient.id}/waiting-faxes/{self.doc.id}/not-this-patient')
+        self._read(self.doc, [{'patient_id': self.patient.id, 'strength': 'strong', 'reasons': ['name', 'dob']}])
+        from emr.models import FaxPatientMatch
+        rows = {m.patient_id: m for m in FaxPatientMatch.objects.filter(document=self.doc)}
+        self.assertEqual(set(rows), {self.patient.id}, 'what the new read no longer finds goes')
+        self.assertIsNotNone(rows[self.patient.id].dismissed_at, 'the dismissal is kept')
+
+    def test_failed_reads_are_counted_then_given_up(self):
+        self._login(self.team_nurse)
+        for attempt in (1, 2, 3):
+            self.assertEqual(self._read(self.doc, failed=True, error='download').json()['attempts'], attempt)
+        offered = [self._next().get('document_id') for _ in range(2)]
+        self.assertNotIn(self.doc.id, offered)
+
+    def test_the_chart_lists_its_matches_strong_first_with_the_faxed_number_signal(self):
+        from emr.models import FaxTransmission
+        FaxTransmission.objects.create(client_uuid='u1', patient=self.patient, recipient_name='NMRL',
+                                       fax_number='15865551234', status='delivered')
+        self._login(self.team_nurse)
+        self._read(self.doc, [{'patient_id': self.patient.id, 'strength': 'possible', 'reasons': ['full_name']}],
+                   text='Nora Vance labs')
+        self._read(self.second, [{'patient_id': self.patient.id, 'strength': 'strong', 'reasons': ['name', 'dob']}])
+        body = self._waiting().json()
+        self.assertTrue(body['enabled'])
+        self.assertEqual([f['document_id'] for f in body['faxes']], [self.second.id, self.doc.id])
+        nmrl = body['faxes'][1]
+        self.assertEqual((nmrl['document_name'], nmrl['page_count'], nmrl['from_number'], nmrl['faxed_this_number']),
+                         ('Fax from NMRL', 2, '586-555-1234', True))
+        self.assertEqual(nmrl['text'], 'Nora Vance labs')
+        self.assertFalse(body['faxes'][0]['faxed_this_number'])
+
+    def test_a_document_that_left_the_pool_leaves_the_chart(self):
+        self._login(self.team_nurse)
+        self._read(self.doc, [{'patient_id': self.patient.id, 'strength': 'strong', 'reasons': ['name', 'dob']}])
+        self.doc.patient = self.other_patient
+        self.doc.team = None
+        self.doc.save()
+        self.assertEqual(self._waiting().json()['faxes'], [])
+
+    def test_not_this_patient_hides_it_on_this_chart_only(self):
+        self._login(self.team_nurse)
+        self._read(self.doc, [{'patient_id': self.patient.id, 'strength': 'strong', 'reasons': ['name', 'dob']},
+                              {'patient_id': self.other_patient.id, 'strength': 'possible', 'reasons': ['full_name']}])
+        response = self.client.post(f'/api/patient/{self.patient.id}/waiting-faxes/{self.doc.id}/not-this-patient')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._waiting().json()['faxes'], [])
+        self.assertEqual([f['document_id'] for f in self._waiting(self.other_patient).json()['faxes']], [self.doc.id])
+        unknown = self.client.post(f'/api/patient/{self.patient.id}/waiting-faxes/{self.second.id}/not-this-patient')
+        self.assertEqual(unknown.status_code, 404)
+
+    def test_access_and_the_switch(self):
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._waiting().status_code, 404, 'a chart the caller cannot open')
+        self.client.logout()
+        self._login(self.team_nurse)
+        with override_settings(WAITING_FAXES_ENABLED=False):
+            self.assertEqual(self._waiting().json(), {'success': True, 'enabled': False, 'faxes': []})
+            self.assertEqual(self.client.post('/api/inbox/read-next').status_code, 503)
+
+
+class ChartFaxTests(_FaxReviewBase):
+    """POST /api/patient/<pid>/fax/documents (2026-11-18): chart documents,
+    one or several, in one fax; logged on the chart; a failure comes back to
+    the sender in Office."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core.files.base import ContentFile
+        from emr.models import DocumentProblem, FaxRecipient
+        self.rc = _FakeRingCentral()
+        self.rc.install(self)
+        self.recipient = FaxRecipient.objects.create(name='Annova Health', fax_number='15865551234')
+        self.echo = Document.objects.create(document=ContentFile(b'%PDF-1.4 echo', name='echo.pdf'),
+                                            document_name='Echocardiogram', author=self.attending,
+                                            patient=self.patient)
+        DocumentProblem.objects.create(document=self.echo, problem=self.problem, author=self.attending)
+        self.labs = Document.objects.create(document=ContentFile(b'%PDF-1.4 labs', name='labs.pdf'),
+                                            document_name='Lab results', author=self.attending,
+                                            patient=self.patient)
+        self._login(self.team_nurse)
+
+    def _send(self, ids=None, uuid='77777777-7777-7777-7777-777777777777', patient=None):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        ids = ids if ids is not None else [self.echo.id, self.labs.id]
+        return self.client.post(f'/api/patient/{(patient or self.patient).id}/fax/documents', data={
+            'file': SimpleUploadedFile('out.pdf', b'%PDF-1.4 cover, echo, labs', content_type='application/pdf'),
+            'client_uuid': uuid, 'recipient_id': str(self.recipient.id), 'document_ids': json.dumps(ids),
+            'cover': '1'})
+
+    def _activities(self, prefix):
+        return list(ProblemActivity.objects.filter(activity__startswith=prefix)
+                    .order_by('id').values_list('problem_id', 'activity'))
+
+    def test_the_documents_are_faxed_and_each_is_logged_on_the_chart(self):
+        from django.core.files.storage import default_storage
+        from emr.models import FaxTransmission
+        response = self._send()
+        self.assertEqual(response.status_code, 200)
+        body = response.json()['transmission']
+        self.assertEqual((body['patient_id'], body['document_ids'], body['status']),
+                         (self.patient.id, [self.echo.id, self.labs.id], 'queued'))
+        self.assertEqual(self.rc.sent, [(b'%PDF-1.4 cover, echo, labs', '15865551234')])
+        self.assertEqual(self.rc.filenames, ['records.pdf'])
+        row = FaxTransmission.objects.get()
+        with default_storage.open(row.file_path, 'rb') as handle:
+            self.assertEqual(handle.read(), b'%PDF-1.4 cover, echo, labs', 'the pages as sent are kept')
+        self.assertEqual(self._activities('Faxed document:'), [
+            (self.problem.id, 'Faxed document: Echocardiogram to Annova Health (fax 586-555-1234)'),
+            (None, 'Faxed document: Lab results to Annova Health (fax 586-555-1234)')])
+
+    def test_every_document_must_be_on_this_chart(self):
+        from django.core.files.base import ContentFile
+        elsewhere = Document.objects.create(document=ContentFile(b'%PDF-1.4 x', name='x.pdf'),
+                                            document_name='Other', author=self.attending, patient=self.other_patient)
+        self.assertEqual(self._send([self.echo.id, elsewhere.id]).json()['error'], 'document_not_on_chart')
+        self.assertEqual(self._send([]).json()['error'], 'documents_required')
+        self.assertEqual(self.rc.sent, [])
+
+    def test_a_retry_never_faxes_twice(self):
+        self._send()
+        again = self._send()
+        self.assertEqual((again.status_code, again.json().get('replayed')), (200, True))
+        self.assertEqual(len(self.rc.sent), 1)
+        self.assertEqual(len(self._activities('Faxed document:')), 2)
+
+    def test_ringcentral_refusing_writes_nothing_on_the_chart(self):
+        from emr.models import FaxTransmission
+        self.rc.send_error = 'invalid number'
+        response = self._send()
+        self.assertEqual((response.status_code, response.json()['error']), (502, 'fax_send_failed'))
+        self.assertEqual(self._activities('Faxed document:'), [])
+        self.assertEqual(FaxTransmission.objects.get().file_path, '', 'nothing left: no copy kept')
+
+    def test_a_failed_fax_comes_back_to_the_sender_in_office(self):
+        from emr.models import OfficeDocument, OfficeHandoff
+        self._send()
+        self.rc.status_reading = {'state': 'failed', 'rc_status': 'SendingFailed', 'error': 'LineBusy', 'page_count': 3}
+        mine = self.client.get('/api/fax/transmissions').json()['transmissions']
+        self.assertEqual(mine[0]['status'], 'failed')
+        office = OfficeDocument.objects.get()
+        self.assertEqual((office.source, office.source_patient_id), ('chart', self.patient.id))
+        with office.document.document.open('rb') as handle:
+            self.assertEqual(handle.read(), b'%PDF-1.4 cover, echo, labs')
+        handoff = OfficeHandoff.objects.get(document=office.document)
+        self.assertEqual((handoff.user_id, handoff.done_at), (self.team_nurse.id, None))
+        self.assertIn('Fax of 2 documents to Annova Health failed: LineBusy', handoff.note)
+        self.assertEqual(len(self._activities('Fax of 2 documents to Annova Health failed')), 2)
+
+    def test_a_delivered_fax_is_logged_and_hands_nothing_back(self):
+        from emr.models import OfficeDocument
+        self._send([self.echo.id], uuid='88888888-8888-8888-8888-888888888888')
+        self.rc.status_reading = {'state': 'delivered', 'rc_status': 'Sent', 'error': '', 'page_count': 3}
+        self.client.get('/api/fax/transmissions')
+        self.assertEqual(self._activities('Fax of Echocardiogram'),
+                         [(self.problem.id, 'Fax of Echocardiogram to Annova Health delivered (3 pages)')])
+        self.assertFalse(OfficeDocument.objects.exists())
+
+    def test_staff_who_can_open_the_chart_only(self):
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._send().status_code, 404)
+        self.client.logout()
+        self._login(self.patient)
+        self.assertEqual(self._send().status_code, 404)
+        self.assertEqual(self.rc.sent, [])
+
+
+class OfficeFromChartTests(_OfficeBase):
+    """POST /api/office/documents/from-chart (2026-11-18): a copy of a chart
+    document in Office; the chart keeps its document."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core.files.base import ContentFile
+        self.chart_doc = Document.objects.create(
+            document=ContentFile(b'%PDF-1.4 chart copy', name='records.pdf'), document_name='Records request',
+            author=self.attending, patient=self.patient)
+        self._login(self.team_nurse)
+
+    def _copy(self, uuid='66666666-6666-6666-6666-666666666666', **body):
+        payload = dict({'patient_id': self.patient.id, 'document_id': self.chart_doc.id, 'client_uuid': uuid}, **body)
+        return self.client.post('/api/office/documents/from-chart', data=json.dumps(payload),
+                                content_type='application/json')
+
+    def test_a_copy_goes_to_office_and_the_chart_keeps_its_document(self):
+        from emr.models import OfficeHandoff
+        before = self._stamp()
+        response = self._copy(hand_to=[self.secretary.id])
+        self.assertEqual(response.status_code, 200)
+        row = response.json()['document']
+        self.assertEqual((row['source'], row['source_patient_id'], row['source_patient_name'], row['note']),
+                         ('chart', self.patient.id, 'Nora Vance', 'From Nora Vance\u2019s chart'))
+        copy = Document.objects.get(id=row['id'])
+        with copy.document.open('rb') as handle:
+            self.assertEqual(handle.read(), b'%PDF-1.4 chart copy')
+        self.assertNotEqual(copy.document.name, self.chart_doc.document.name, 'a file of its own')
+        self.chart_doc.refresh_from_db()
+        self.assertEqual(self.chart_doc.patient_id, self.patient.id)
+        self.assertEqual(OfficeHandoff.objects.get(document=copy).user_id, self.secretary.id)
+        self.assertTrue(ProblemActivity.objects.filter(activity='Copied document to Office: Records request').exists())
+        after = self._stamp()
+        self.assertTrue(after is not None and (before is None or after > before))
+        self.assertIn(copy.id, [d['id'] for d in self._list()['documents']])
+
+    def test_a_retry_answers_the_first_copy(self):
+        self._copy()
+        again = self._copy()
+        self.assertEqual((again.status_code, again.json().get('already')), (200, True))
+        self.assertEqual(Document.objects.filter(document_name='Records request').count(), 2, 'one copy only')
+
+    def test_access_and_validation(self):
+        self.assertEqual(self._copy(uuid='not-a-uuid').json()['error'], 'client_uuid_required')
+        self.client.logout()
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._copy().json()['error'], 'patient_not_found')
+

@@ -3,6 +3,8 @@ from . import views
 from . import fax_review
 from . import document_edit
 from . import office
+from . import waiting_faxes
+from . import chart_fax
 
 urlpatterns = [
     url(r'^healthz/?$', views.mobile_healthz),
@@ -134,6 +136,13 @@ urlpatterns = [
     url(r'^fax/import$', views.mobile_fax_import),
     url(r'^fax/transmissions$', views.mobile_fax_transmissions),
     url(r'^fax/inbox/check$', views.mobile_fax_inbox_check),
+    # Waiting faxes on the chart (2026-11-18): Macs read pool documents in
+    # the background; a chart lists the ones probably for its patient.
+    url(r'^inbox/read-next$', waiting_faxes.mobile_inbox_read_next),
+    url(r'^inbox/document/(?P<document_id>\d+)/read$', waiting_faxes.mobile_inbox_read),
+    url(r'^patient/(?P<patient_id>\d+)/waiting-faxes$', waiting_faxes.mobile_patient_waiting_faxes),
+    url(r'^patient/(?P<patient_id>\d+)/waiting-faxes/(?P<document_id>\d+)/not-this-patient$',
+        waiting_faxes.mobile_patient_waiting_fax_dismiss),
     url(r'^patient/(?P<patient_id>\d+)/fax/requisition$', views.mobile_fax_requisition),
     # Preparing and approving documents (emr.DocumentReview): the lists, a
     # chart's reviews, and each step. See apps/mobile_api/fax_review.py.
@@ -153,6 +162,9 @@ urlpatterns = [
     # the fax review's set aside / do it later. See apps/mobile_api/office.py.
     url(r'^office/documents$', office.mobile_office_documents),
     url(r'^office/documents/upload$', office.mobile_office_upload),
+    url(r'^office/documents/from-chart$', office.mobile_office_from_chart),
+    # Faxing chart documents (2026-11-18): one or several, one fax.
+    url(r'^patient/(?P<patient_id>\d+)/fax/documents$', chart_fax.mobile_fax_chart_documents),
     url(r'^office/document/(?P<document_id>\d+)$', office.mobile_office_document),
     url(r'^office/document/(?P<document_id>\d+)/move-in$', office.mobile_office_move_in),
     url(r'^office/document/(?P<document_id>\d+)/to-unassigned$', office.mobile_office_to_unassigned),

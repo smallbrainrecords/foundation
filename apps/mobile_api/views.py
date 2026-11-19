@@ -7025,6 +7025,14 @@ def _fax_recipient_json(recipient):
     }
 
 
+def _json_int_list(raw):
+    try:
+        values = json.loads(raw or '[]')
+    except ValueError:
+        return []
+    return [v for v in values if isinstance(v, int)] if isinstance(values, list) else []
+
+
 def _fax_transmission_json(row):
     try:
         todo_ids = json.loads(row.todo_ids or '[]')
@@ -7041,6 +7049,8 @@ def _fax_transmission_json(row):
         'todo_ids': todo_ids,
         # An Office document faxed out (2026-11-18); None for a requisition.
         'document_id': row.document_id,
+        # Chart documents faxed out together (2026-11-18); empty otherwise.
+        'document_ids': _json_int_list(row.document_ids),
         'error': row.error,
         'page_count': row.page_count,
         'created_on': _iso_z(row.created_on) if row.created_on else None,
@@ -7420,6 +7430,11 @@ def _settle_fax(row_id, reading):
             activity = 'Fax to %s failed: %s' % (row.recipient_name, reason)
         if state == 'failed' and row.sender_id and row.document_id:
             _hand_failed_office_fax_back(row, activity)
+        if row.patient_id and (row.document_ids or '[]') != '[]':
+            # Chart documents faxed out (2026-11-18): the chart says how it
+            # went, and a failure goes back to the sender in Office.
+            from . import chart_fax
+            chart_fax.settle_chart_fax(row, state, activity)
         for todo in todos:
             add_todo_activity(todo, row.sender, activity)
             if state == 'failed' and row.sender_id:

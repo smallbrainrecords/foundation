@@ -1890,6 +1890,12 @@ class FaxTransmission(models.Model):
     # patient and no orders. Kept when the document is deleted (SET_NULL) so
     # the record of what left the building stays.
     document = models.ForeignKey(Document, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    # Chart documents faxed out together (2026-11-18, apps.mobile_api.chart_fax):
+    # their ids, JSON, and the PDF as sent (cover included), kept as the
+    # record of what left the practice and as the copy a failed fax hands
+    # back to its sender in Office.
+    document_ids = models.TextField(default='[]')
+    file_path = models.CharField(max_length=255, blank=True, default='')
     status = models.CharField(max_length=16, default=SENDING)
     rc_message_id = models.CharField(max_length=64, blank=True, default='')
     rc_status = models.CharField(max_length=64, blank=True, default='')
@@ -1935,6 +1941,51 @@ class InboundFax(models.Model):
 
     class Meta:
         ordering = ['-received_at']
+
+
+class FaxScan(models.Model):
+    """A pool document read by a staff Mac in the background (2026-11-18,
+    waiting faxes on the chart; apps.mobile_api.waiting_faxes).
+
+    The server cannot read pages (OCR runs on the Macs), so a Mac asks for
+    the next unread pool document, holds a lease on it for ten minutes,
+    reads it, matches it against its roster and reports back. One row per
+    document; `scanned_at` set means read. A read that fails counts an
+    attempt; after three the document is no longer handed out.
+    """
+    document = models.OneToOneField(Document, related_name='fax_scan', on_delete=models.CASCADE)
+    leased_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    leased_until = models.DateTimeField(null=True, blank=True)
+    scanned_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    scanned_at = models.DateTimeField(null=True, blank=True)
+    attempts = models.IntegerField(default=0)
+    last_error = models.CharField(max_length=255, blank=True, default='')
+
+
+class FaxPatientMatch(models.Model):
+    """A patient a waiting pool document is probably for (2026-11-18).
+
+    Written when a Mac reads the document (`FaxScan`): `strong` = a name and
+    the birth date on the pages, `possible` = the full name alone or the
+    last name with the birth date. `reasons` is a JSON list of `name`,
+    `full_name`, `last_name`, `dob`. "Not this patient" sets `dismissed_*`
+    for this patient only; a later read keeps the dismissal.
+    """
+    STRONG = 'strong'
+    POSSIBLE = 'possible'
+
+    document = models.ForeignKey(Document, related_name='patient_matches', on_delete=models.CASCADE)
+    patient = models.ForeignKey(User, related_name='+', on_delete=models.CASCADE)
+    strength = models.CharField(max_length=16, default=POSSIBLE)
+    reasons = models.TextField(default='[]')
+    found_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    found_at = models.DateTimeField()
+    dismissed_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    dismissed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [('document', 'patient')]
+        indexes = [models.Index(fields=['patient', 'dismissed_at'], name='emr_faxmatch_patient_dismiss')]
 
 
 
@@ -2080,9 +2131,9 @@ class OfficeDocument(models.Model):
 
     Owner decisions, same day: it replaces the fax review's "set aside" and
     "do it later"; every staff member sees the list (patients never); a
-    document stays until someone deletes it or sends it back to the
-    unassigned pool (the one way to a chart); it can be handed to several
-    people at once (`OfficeHandoff`) and faxed out with a cover page.
+    document stays until someone deletes it, files it to a chart, or sends
+    it back to the unassigned pool; it can be handed to several people at
+    once (`OfficeHandoff`) and faxed out with a cover page.
 
     The `Document` row keeps its file, its versions (`DocumentEdit`) and,
     when it came from a pool, its `team`, which is where "back to
@@ -2091,8 +2142,10 @@ class OfficeDocument(models.Model):
 
     `source` says where it came from: `pool`, `queue` (taken off a chart
     from the physician's queue), `returned` (taken off a chart after being
-    sent back), `upload` (added straight to Office), or `later` /
-    `set_aside` (moved from the retired fax review states).
+    sent back), `upload` (added straight to Office), `later` / `set_aside`
+    (moved from the retired fax review states), or `chart` (a copy of a
+    chart document, or the pages of a chart fax that failed; the chart is
+    `source_patient`, 2026-11-18).
 
     Written only by `apps.mobile_api.office` (and the fax review's
     compatibility routes, which call it).
@@ -2103,12 +2156,14 @@ class OfficeDocument(models.Model):
     UPLOAD = 'upload'
     LATER = 'later'
     SET_ASIDE = 'set_aside'
+    CHART = 'chart'
 
     document = models.OneToOneField(Document, related_name='office', on_delete=models.CASCADE)
     moved_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     moved_at = models.DateTimeField()
     source = models.CharField(max_length=16, default=POOL)
     note = models.TextField(blank=True, default='')
+    source_patient = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
 
 
 class OfficeHandoff(models.Model):

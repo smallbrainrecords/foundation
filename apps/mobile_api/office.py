@@ -185,6 +185,10 @@ def office_json(doc, handoffs=None, faxes=None, edited=None):
         'moved_at': _iso(office.moved_at),
         'source': office.source,
         'note': office.note,
+        # A copy of a chart document, or the pages of a chart fax that
+        # failed (2026-11-18): the chart it came from.
+        'source_patient_id': office.source_patient_id,
+        'source_patient_name': _display(office.source_patient) if office.source_patient_id else '',
         'edited': bool(edited),
         'handoffs': [handoff_json(h) for h in handoffs],
         'faxes': [fax_json(f) for f in faxes],
@@ -198,7 +202,7 @@ def office_json(doc, handoffs=None, faxes=None, edited=None):
 
 def _office_documents():
     return Document.objects.filter(office__isnull=False).select_related(
-        'office', 'office__moved_by', 'inbound_fax')
+        'office', 'office__moved_by', 'office__source_patient', 'inbound_fax')
 
 
 @csrf_exempt
@@ -429,6 +433,73 @@ def mobile_office_upload(request):
         answer = office_json(doc)
     _log('office_uploaded', request, document_id=doc.id, created=created)
     return JsonResponse({'success': True, 'created': created, 'document': answer})
+
+
+@csrf_exempt
+@login_required
+def mobile_office_from_chart(request):
+    """POST {patient_id, document_id, client_uuid, note?, hand_to?, hand_note?}
+    -> a copy of a chart document in Office (owner decision 2026-11-18: a
+    copy, so the chart keeps its document), marked with the chart it came
+    from and handed to those people. The chart says "Copied document to
+    Office: <name>". A retry with the same client_uuid answers the first
+    copy."""
+    refusal = _gate(request, 'POST')
+    if refusal:
+        return refusal
+    body = _body(request)
+    if body is None:
+        return _refuse('invalid_json', 400)
+    try:
+        patient_id = int(body.get('patient_id'))
+        document_id = int(body.get('document_id'))
+    except (TypeError, ValueError):
+        return _refuse('document_required', 400)
+    try:
+        client_uuid = str(uuid.UUID(str(body.get('client_uuid') or '').strip()))
+    except ValueError:
+        return _refuse('client_uuid_required', 400)
+    if not api._assert_patient_access(request.user, patient_id):
+        return _refuse('patient_not_found', 404)
+    source = Document.objects.filter(id=document_id, patient_id=patient_id).select_related('patient').first()
+    if source is None:
+        return _not_found()
+    if not source.document:
+        return _refuse('no_file', 409)
+    note = _note(body.get('note'))
+    hand_to = body.get('hand_to') or []
+    hand_note = _note(body.get('hand_note')) or note
+
+    existing = Document.objects.filter(client_uuid=client_uuid).first()
+    if existing is not None:
+        if not OfficeDocument.objects.filter(document=existing).exists():
+            return _refuse('client_uuid_reused', 409)
+        return JsonResponse({'success': True, 'already': True,
+                             'document': office_json(_office_documents().get(id=existing.id))})
+    with source.document.open('rb') as handle:
+        data = handle.read()
+    from django.core.files.base import ContentFile
+    with transaction.atomic():
+        copy = Document.objects.create(
+            client_uuid=client_uuid, document=ContentFile(data, name=os.path.basename(source.document.name)),
+            document_name=source.document_name, author=request.user, patient=None, team=None,
+            file_size=len(data), original_file_name=source.original_file_name)
+        OfficeDocument.objects.create(
+            document=copy, moved_by=request.user, moved_at=timezone.now(), source=OfficeDocument.CHART,
+            note=note or ('From %s\u2019s chart' % _display(source.patient)), source_patient_id=patient_id)
+        if hand_to:
+            handed = _hand(request, copy, hand_to, hand_note)
+            if isinstance(handed, JsonResponse):
+                transaction.set_rollback(True)
+                return handed
+        api._emit_document_audit(source, request.user,
+                                 'Copied document to Office: %s' % (source.document_name or 'document'))
+        # Manual stamp: the patient is in the body, not the URL.
+        touch_patient_stamp(patient_id)
+        answer = office_json(_office_documents().get(id=copy.id))
+    _log('office_copied_from_chart', request, document_id=copy.id, source_document_id=source.id,
+         patient_id=patient_id, handed=len(hand_to))
+    return JsonResponse({'success': True, 'document': answer})
 
 
 # ---------------------------------------------------------------------------
