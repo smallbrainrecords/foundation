@@ -2,6 +2,7 @@ from django.urls import re_path as url
 from . import views
 from . import fax_review
 from . import document_edit
+from . import check_in
 from . import office
 from . import waiting_faxes
 from . import chart_fax
@@ -27,6 +28,23 @@ urlpatterns = [
     url(r'^media/document/(?P<document_id>\d+)/file$', views.mobile_document_file),
     url(r'^media/image/(?P<image_id>\d+)$', views.mobile_image_file),
     url(r'^media/signature/(?P<user_id>\d+)$', views.mobile_signature_file),
+    url(r'^media/portrait/(?P<user_id>\d+)$', check_in.mobile_portrait_file),
+    # Check-in iPads (2026-11-17). The kiosk routes authenticate by device
+    # token, never by session; see apps/mobile_api/check_in.py.
+    url(r'^checkin/kiosk/pair$', check_in.kiosk_pair),
+    url(r'^checkin/kiosk/current$', check_in.kiosk_current),
+    url(r'^checkin/kiosk/session/(?P<session_id>\d+)/verify$', check_in.kiosk_verify),
+    url(r'^checkin/kiosk/session/(?P<session_id>\d+)/photo$', check_in.kiosk_photo),
+    url(r'^checkin/kiosk/session/(?P<session_id>\d+)/submit$', check_in.kiosk_submit),
+    url(r'^checkin/kiosk/session/(?P<session_id>\d+)/abandon$', check_in.kiosk_abandon),
+    url(r'^checkin/devices$', check_in.mobile_check_in_devices),
+    url(r'^checkin/device/(?P<device_id>\d+)/pairing-code$', check_in.mobile_check_in_device_pairing_code),
+    url(r'^checkin/device/(?P<device_id>\d+)/remove$', check_in.mobile_check_in_device_remove),
+    url(r'^patient/(?P<patient_id>\d+)/checkin$', check_in.mobile_check_in_send),
+    url(r'^checkin/sessions$', check_in.mobile_check_in_sessions),
+    url(r'^checkin/session/(?P<session_id>\d+)/cancel$', check_in.mobile_check_in_cancel),
+    url(r'^checkin/session/(?P<session_id>\d+)/photo$', check_in.mobile_check_in_photo),
+    url(r'^checkin/session/(?P<session_id>\d+)/apply$', check_in.mobile_check_in_apply),
     # User profile self-update (mirrors macOS AuthService.updateUserProfile)
     # + signature upload (multipart, self-only).
     url(r'^user/(?P<user_id>\d+)/update/$', views.mobile_update_user),

@@ -2125,6 +2125,88 @@ class DocumentEdit(models.Model):
         indexes = [models.Index(fields=['document', 'edited_at'], name='emr_docedit_doc_at')]
 
 
+def set_check_in_photo_path(instance, filename):
+    """Random object key for a check-in photo (2026-11-17). The patient's
+    name never goes into the key; the photo is re-encoded as JPEG on arrival,
+    so the extension is always .jpg."""
+    import uuid as _uuid
+    return 'check_in_photos/{0}.jpg'.format(_uuid.uuid4())
+
+
+class CheckInDevice(models.Model):
+    """An iPad the clinic hands to patients at check-in (2026-11-17).
+
+    The iPad never holds a staff login. It is paired once with a short code
+    a staff member makes on a Mac, and from then on it signs every request
+    with a long random token. Only the token's SHA-256 is stored here, as
+    with the pairing code. A token opens the `checkin/kiosk/...` routes and
+    nothing else: every other route in the API authenticates by session
+    cookie, which the iPad never has.
+
+    `revoked_at` set = the iPad can do nothing more; a new pairing code
+    brings it back with a new token (the old one stays dead).
+
+    Written only by `apps.mobile_api.check_in`.
+    """
+    name = models.CharField(max_length=80)
+    created_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    pairing_code_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    pairing_expires_at = models.DateTimeField(null=True, blank=True)
+    token_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    paired_at = models.DateTimeField(null=True, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+
+class CheckInSession(models.Model):
+    """One form sent from a Mac to a check-in iPad for one patient
+    (2026-11-17).
+
+    `status`:
+      * 'waiting'   — sent; the iPad shows it and asks for the date of birth.
+      * 'verified'  — the patient proved who they are; the form is open.
+      * 'submitted' — answers (and the photo, when taken) are in; the form
+        was filed to the chart as a document (`document`). Staff still have
+        to look at it: the photo and any new phone or email reach the chart
+        only when someone applies them (`reviewed_at`).
+      * 'reviewed'  — a staff member looked at it and applied what they chose.
+      * 'cancelled' — staff took it back, or a newer form was sent to the
+        same iPad.
+      * 'locked'    — the date of birth was wrong three times.
+      * 'abandoned' — nobody touched the iPad for too long mid-form.
+      * 'expired'   — nobody started it in time.
+
+    `answers` is JSON keyed by the form's field keys. `submit_client_uuid`
+    makes a retried submit return the first one instead of filing the form
+    twice.
+
+    Written only by `apps.mobile_api.check_in`.
+    """
+    device = models.ForeignKey(CheckInDevice, null=True, blank=True, related_name='sessions', on_delete=models.SET_NULL)
+    patient = models.ForeignKey(User, related_name='check_in_sessions', on_delete=models.CASCADE)
+    sent_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    form_key = models.CharField(max_length=40)
+    form_version = models.PositiveIntegerField(default=1)
+    status = models.CharField(max_length=16, default='waiting', db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    verify_attempts = models.PositiveSmallIntegerField(default=0)
+    answers = models.TextField(default='{}')
+    photo = models.FileField(upload_to=set_check_in_photo_path, null=True, blank=True)
+    document = models.ForeignKey(Document, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    applied = models.TextField(default='[]')
+    client_uuid = models.CharField(max_length=64, unique=True)
+    submit_client_uuid = models.CharField(max_length=64, null=True, blank=True, unique=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['patient', 'created_at'], name='emr_checkin_patient_at')]
+
+
 class OfficeDocument(models.Model):
     """A document in the practice's Office list (2026-11-18): office business
     that belongs on no chart — audit requests, forms to fill in and fax back.

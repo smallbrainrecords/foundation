@@ -38,6 +38,7 @@ from emr.models import (
     ObservationValueAudit,
     EncounterTranscriptTiming,
     TodoSuggestionStat,
+    CheckInDevice, CheckInSession,
     TodoProblem,
     ProblemLabel,
     MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry,
@@ -3581,6 +3582,8 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_review_approve': 'FaxReviewStampTests',
         'mobile_fax_review_set_aside': 'FaxReviewStampTests',
         'mobile_fax_review_pages': 'FaxReviewStampTests',
+        'kiosk_submit': 'CheckInStampTests',
+        'mobile_check_in_apply': 'CheckInStampTests',
         'mobile_office_move_in': 'OfficeMoveInTests',
         'mobile_office_to_chart': 'OfficeToChartTests',
         'mobile_office_from_chart': 'OfficeFromChartTests',
@@ -3625,6 +3628,15 @@ class StampCoverageSweepTests(TestCase):
         'mobile_update_label': 'global label catalog, not patient-scoped',
         'mobile_batch_events': 'analytics sink, not chart data',
         'mobile_batch_errors': 'error-report sink, not chart data',
+        'kiosk_pair': 'check-in iPad pairing, not chart data',
+        'kiosk_verify': 'check-in session state; nothing reaches the chart until submit (which stamps)',
+        'kiosk_photo': 'held on the check-in session; reaches the chart only through apply (which stamps)',
+        'kiosk_abandon': 'check-in session state, nothing filed',
+        'mobile_check_in_devices': 'check-in iPad list, not chart data',
+        'mobile_check_in_device_pairing_code': 'check-in iPad pairing, not chart data',
+        'mobile_check_in_device_remove': 'check-in iPad state, not chart data',
+        'mobile_check_in_send': 'check-in session state; nothing reaches the chart until submit (which stamps)',
+        'mobile_check_in_cancel': 'check-in session state, nothing filed',
     }
 
     GET_ONLY = {
@@ -3662,6 +3674,10 @@ class StampCoverageSweepTests(TestCase):
         'mobile_search_charts',
         'mobile_patient_search_text',
         'get_snomed_to_icd10',
+        'kiosk_current',
+        'mobile_check_in_sessions',
+        'mobile_check_in_photo',
+        'mobile_portrait_file',
     }
 
     @staticmethod
@@ -10226,6 +10242,602 @@ class FaxReviewFollowUpTests(_FaxReviewBase):
         self._post('approve', {'next_step': 'nothing_to_tell', 'edits': {'label': 'Imaging'}})
         self.assertEqual(sorted(l.name for l in self.doc.labels.all()), ['Imaging', 'screening'])
         self.assertEqual([c['field'] for c in json.loads(self._review().changes)], ['label'])
+
+
+# ---------------------------------------------------------------------------
+# Check-in iPads (2026-11-17) — apps/mobile_api/check_in.py
+# ---------------------------------------------------------------------------
+
+from apps.mobile_api import views as api_views  # noqa: E402
+
+def _jpeg(width=40, height=30, color=(200, 120, 90), orientation=None):
+    from PIL import Image
+    image = Image.new('RGB', (width, height), color)
+    out = io.BytesIO()
+    if orientation:
+        exif = Image.Exif()
+        exif[0x0112] = orientation
+        image.save(out, format='JPEG', exif=exif)
+    else:
+        image.save(out, format='JPEG')
+    return out.getvalue()
+
+
+class _CheckInBase(_RBACTestBase):
+    """A paired iPad, a patient with a date of birth, phone and email, and
+    the team nurse who sends the forms."""
+
+    DOB = datetime.date(1961, 4, 9)
+
+    def setUp(self):
+        super().setUp()
+        import shutil
+        import tempfile
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, True)
+        override = override_settings(MEDIA_ROOT=media)
+        override.enable()
+        self.addCleanup(override.disable)
+        self.patient.first_name, self.patient.last_name = 'Nora', 'Vance'
+        self.patient.email = 'nora@example.com'
+        self.patient.save()
+        profile = self.patient.profile
+        profile.date_of_birth = timezone.make_aware(
+            datetime.datetime(1961, 4, 9), timezone.get_default_timezone())
+        profile.phone_number = '2315550100'
+        profile.save()
+        self.kiosk = Client()
+        self.device_id, self.token = self._pair('Front desk iPad')
+
+    # -- helpers ---------------------------------------------------------
+    def _login(self, user, password='top_secret'):
+        self.client.logout()
+        self.assertTrue(self.client.login(username=user.username, password=password))
+
+    def _post(self, url, body=None, client=None, **extra):
+        return (client or self.client).post(url, data=json.dumps(body or {}),
+                                            content_type='application/json', **extra)
+
+    def _pair(self, name):
+        self._login(self.team_nurse)
+        made = self._post('/api/checkin/devices', {'name': name}).json()
+        paired = self._post('/api/checkin/kiosk/pair', {'code': made['pairing_code']}, client=Client())
+        self.assertEqual(paired.status_code, 200, paired.content)
+        return made['device']['id'], paired.json()['token']
+
+    def _auth(self, token=None):
+        return {'HTTP_AUTHORIZATION': 'Bearer %s' % (token or self.token)}
+
+    def _kiosk_get(self, path, token=None):
+        return self.kiosk.get(path, **self._auth(token))
+
+    def _kiosk_post(self, path, body=None, token=None):
+        return self._post(path, body, client=self.kiosk, **self._auth(token))
+
+    def _send(self, form_key='checkin', device_id=None, sender=None, patient=None):
+        self._login(sender or self.team_nurse)
+        response = self._post('/api/patient/%d/checkin' % (patient or self.patient).id, {
+            'device_id': device_id or self.device_id, 'form_key': form_key,
+            'client_uuid': str(__import__('uuid').uuid4())})
+        return response
+
+    def _sent_session_id(self, **kwargs):
+        response = self._send(**kwargs)
+        self.assertEqual(response.status_code, 200, response.content)
+        return response.json()['session']['id']
+
+    def _verify(self, session_id, dob='1961-04-09', token=None):
+        return self._kiosk_post('/api/checkin/kiosk/session/%d/verify' % session_id,
+                                {'date_of_birth': dob}, token=token)
+
+    def _photo(self, session_id, data=None, token=None):
+        return self.kiosk.post('/api/checkin/kiosk/session/%d/photo' % session_id,
+                               data={'file': SimpleUploadedFile('p.jpg', data or _jpeg(), content_type='image/jpeg')},
+                               **self._auth(token))
+
+    GOOD = {'reason': 'Cough for a week', 'phone': '(231) 555-0199', 'email': 'Nora.V@Example.com',
+            'meds_changed': True, 'meds_changes': 'Stopped lisinopril', 'new_allergies': False,
+            'allergies_detail': 'should be dropped', 'other': ''}
+
+    def _submit(self, session_id, answers=None, client_uuid='sub-1', token=None):
+        return self._kiosk_post('/api/checkin/kiosk/session/%d/submit' % session_id,
+                                {'client_uuid': client_uuid, 'answers': self.GOOD if answers is None else answers},
+                                token=token)
+
+    def _submitted(self, photo=True):
+        sid = self._sent_session_id()
+        self.assertEqual(self._verify(sid).status_code, 200)
+        if photo:
+            self.assertEqual(self._photo(sid).status_code, 200)
+        response = self._submit(sid)
+        self.assertEqual(response.status_code, 200, response.content)
+        return sid
+
+    def _stamp(self, patient=None):
+        row = PatientMutationStamp.objects.filter(patient=patient or self.patient).first()
+        return row.last_mutation_at if row else None
+
+
+class CheckInDeviceTests(_CheckInBase):
+    """Pairing, and what a device token can and cannot open."""
+
+    def test_only_staff_see_or_add_devices(self):
+        for user in (self.patient, self.no_profile):
+            self.client.logout()
+            self.client.login(username=user.username, password='x' if user is self.patient else 'top_secret')
+            self.assertEqual(self.client.get('/api/checkin/devices').status_code, 404)
+            self.assertEqual(self._post('/api/checkin/devices', {'name': 'x'}).status_code, 404)
+
+    def test_list_names_the_paired_ipad_and_the_forms(self):
+        self._login(self.team_nurse)
+        data = self.client.get('/api/checkin/devices').json()
+        self.assertTrue(data['enabled'])
+        self.assertEqual([(d['name'], d['state']) for d in data['devices']], [('Front desk iPad', 'paired')])
+        self.assertEqual([f['key'] for f in data['forms']], ['checkin', 'annual', 'phq9', 'gad7', 'photo'])
+
+    def test_a_code_works_once_and_a_wrong_or_late_code_does_not(self):
+        self._login(self.team_nurse)
+        made = self._post('/api/checkin/devices', {'name': 'Room 2'}).json()
+        code = made['pairing_code']
+        self.assertEqual(len(code), 8)
+        self.assertEqual(self._post('/api/checkin/kiosk/pair', {'code': 'ABCDEFGH'}, client=Client()).status_code, 400)
+        self.assertEqual(self._post('/api/checkin/kiosk/pair', {'code': code.lower()}, client=Client()).status_code, 200)
+        self.assertEqual(self._post('/api/checkin/kiosk/pair', {'code': code}, client=Client()).status_code, 400)
+        late = self._post('/api/checkin/devices', {'name': 'Room 3'}).json()
+        CheckInDevice.objects.filter(pk=late['device']['id']).update(
+            pairing_expires_at=timezone.now() - datetime.timedelta(seconds=1))
+        self.assertEqual(self._post('/api/checkin/kiosk/pair', {'code': late['pairing_code']}, client=Client()).status_code, 400)
+
+    def test_only_hashes_are_stored(self):
+        device = CheckInDevice.objects.get(pk=self.device_id)
+        self.assertNotIn(self.token, device.token_hash)
+        self.assertEqual(len(device.token_hash), 64)
+
+    def test_a_device_token_opens_nothing_outside_the_kiosk_routes(self):
+        for path in ('/api/patients/', '/api/patient/%d/full' % self.patient.id,
+                     '/api/checkin/sessions', '/api/checkin/devices',
+                     '/api/media/portrait/%d' % self.patient.id):
+            response = self.kiosk.get(path, **self._auth())
+            self.assertIn(response.status_code, (302, 401, 403, 404), path)
+            self.assertNotIn(b'Vance', response.content, path)
+
+    def test_a_staff_session_is_not_a_device(self):
+        self._login(self.team_nurse)
+        self.assertEqual(self.client.get('/api/checkin/kiosk/current').status_code, 401)
+        self.assertEqual(self.kiosk.get('/api/checkin/kiosk/current').status_code, 401)
+        self.assertEqual(self.kiosk.get('/api/checkin/kiosk/current', HTTP_AUTHORIZATION='Bearer nope').status_code, 401)
+
+    def test_removing_an_ipad_kills_its_token_and_cancels_its_form(self):
+        sid = self._sent_session_id()
+        self._login(self.team_nurse)
+        self.assertEqual(self._post('/api/checkin/device/%d/remove' % self.device_id).status_code, 200)
+        self.assertEqual(self._kiosk_get('/api/checkin/kiosk/current').status_code, 401)
+        self.assertEqual(CheckInSession.objects.get(pk=sid).status, 'cancelled')
+
+    def test_a_new_pairing_code_retires_the_old_token(self):
+        self._login(self.team_nurse)
+        code = self._post('/api/checkin/device/%d/pairing-code' % self.device_id).json()['pairing_code']
+        self.assertEqual(self._kiosk_get('/api/checkin/kiosk/current').status_code, 401)
+        token = self._post('/api/checkin/kiosk/pair', {'code': code}, client=Client()).json()['token']
+        self.assertEqual(self._kiosk_get('/api/checkin/kiosk/current', token=token).status_code, 200)
+
+
+class CheckInSendTests(_CheckInBase):
+    """Sending a form to an iPad."""
+
+    def test_staff_without_the_chart_and_patients_get_404(self):
+        self.assertEqual(self._send(sender=self.stranger_nurse).status_code, 404)
+        self.client.logout()
+        self.client.login(username='pt_a', password='x')
+        response = self._post('/api/patient/%d/checkin' % self.patient.id,
+                              {'device_id': self.device_id, 'form_key': 'checkin', 'client_uuid': 'u'})
+        self.assertEqual(response.status_code, 404)
+
+    def test_unknown_form_and_unpaired_ipad_are_refused(self):
+        self.assertEqual(self._send(form_key='nope').json()['error'], 'unknown_form')
+        self._login(self.team_nurse)
+        unpaired = self._post('/api/checkin/devices', {'name': 'New'}).json()['device']['id']
+        response = self._send(device_id=unpaired)
+        self.assertEqual((response.status_code, response.json()['error']), (409, 'device_not_paired'))
+
+    def test_a_new_form_replaces_the_one_open_on_that_ipad(self):
+        first = self._sent_session_id()
+        second = self._sent_session_id(form_key='photo')
+        self.assertEqual(CheckInSession.objects.get(pk=first).status, 'cancelled')
+        current = self._kiosk_get('/api/checkin/kiosk/current').json()['session']
+        self.assertEqual(current['id'], second)
+
+    def test_a_retried_send_creates_nothing_twice(self):
+        self._login(self.team_nurse)
+        body = {'device_id': self.device_id, 'form_key': 'checkin', 'client_uuid': 'same'}
+        one = self._post('/api/patient/%d/checkin' % self.patient.id, body).json()
+        two = self._post('/api/patient/%d/checkin' % self.patient.id, body).json()
+        self.assertEqual(one['session']['id'], two['session']['id'])
+        self.assertTrue(two['already'])
+        self.assertEqual(CheckInSession.objects.count(), 1)
+
+    def test_staff_can_take_it_back(self):
+        sid = self._sent_session_id()
+        self.assertEqual(self._post('/api/checkin/session/%d/cancel' % sid).json()['session']['status'], 'cancelled')
+        self.assertIsNone(self._kiosk_get('/api/checkin/kiosk/current').json()['session'])
+        self._login(self.stranger_nurse)
+        self.assertEqual(self._post('/api/checkin/session/%d/cancel' % sid).status_code, 404)
+
+
+class CheckInVerifyTests(_CheckInBase):
+    """Nothing about the patient reaches the iPad before they prove who they are."""
+
+    def test_before_the_date_of_birth_the_ipad_knows_only_that_a_form_waits(self):
+        self._sent_session_id()
+        response = self._kiosk_get('/api/checkin/kiosk/current')
+        session = response.json()['session']
+        self.assertEqual(session['verify'], 'date_of_birth')
+        for key in ('first_name', 'form', 'prefill'):
+            self.assertNotIn(key, session)
+        for text in (b'Nora', b'Vance', b'nora@example.com', b'555', b'1961'):
+            self.assertNotIn(text, response.content)
+
+    def test_the_right_date_opens_the_form_with_phone_and_email_prefilled(self):
+        sid = self._sent_session_id()
+        session = self._verify(sid).json()['session']
+        self.assertEqual(session['first_name'], 'Nora')
+        self.assertEqual(session['form']['key'], 'checkin')
+        self.assertEqual(session['prefill'], {'phone': '231-555-0100', 'email': 'nora@example.com'})
+        self.assertEqual(self._kiosk_get('/api/checkin/kiosk/current').json()['session']['status'], 'verified')
+
+    def test_a_utc_midnight_legacy_date_of_birth_still_matches(self):
+        profile = self.patient.profile
+        profile.date_of_birth = datetime.datetime(1961, 4, 9, tzinfo=datetime.timezone.utc)
+        profile.save()
+        self.assertEqual(self._verify(self._sent_session_id()).status_code, 200)
+
+    def test_three_wrong_dates_lock_the_form(self):
+        sid = self._sent_session_id()
+        self.assertEqual(self._verify(sid, '1961-04-10').json(), {'success': False, 'error': 'no_match', 'attempts_left': 2})
+        self._verify(sid, 'not a date')
+        locked = self._verify(sid, '1960-01-01')
+        self.assertEqual((locked.status_code, locked.json()['error']), (409, 'locked'))
+        self.assertEqual(self._verify(sid).status_code, 409)
+        self.assertIsNone(self._kiosk_get('/api/checkin/kiosk/current').json()['session'])
+
+    def test_a_chart_with_no_date_of_birth_asks_for_the_last_name(self):
+        profile = self.patient.profile
+        profile.date_of_birth = None
+        profile.save()
+        sid = self._sent_session_id()
+        self.assertEqual(self._kiosk_get('/api/checkin/kiosk/current').json()['session']['verify'], 'last_name')
+        self.assertEqual(self._kiosk_post('/api/checkin/kiosk/session/%d/verify' % sid, {'last_name': 'vanc'}).status_code, 400)
+        self.assertEqual(self._kiosk_post('/api/checkin/kiosk/session/%d/verify' % sid, {'last_name': ' VANCE '}).status_code, 200)
+
+    def test_another_ipad_cannot_touch_this_form(self):
+        sid = self._sent_session_id()
+        _, other = self._pair('Other iPad')
+        self.assertEqual(self._verify(sid, token=other).status_code, 404)
+
+    def test_an_unstarted_form_expires(self):
+        sid = self._sent_session_id()
+        CheckInSession.objects.filter(pk=sid).update(created_at=timezone.now() - datetime.timedelta(minutes=31))
+        self.assertIsNone(self._kiosk_get('/api/checkin/kiosk/current').json()['session'])
+        self.assertEqual(CheckInSession.objects.get(pk=sid).status, 'expired')
+
+
+class CheckInPhotoTests(_CheckInBase):
+
+    def test_the_photo_is_re_encoded_upright_without_metadata(self):
+        from PIL import Image
+        sid = self._sent_session_id()
+        self._verify(sid)
+        # Orientation 6 = the camera was turned; the stored photo is upright.
+        self.assertEqual(self._photo(sid, _jpeg(40, 30, orientation=6)).status_code, 200)
+        session = CheckInSession.objects.get(pk=sid)
+        self.assertTrue(session.photo.name.startswith('check_in_photos/'))
+        self.assertNotIn('Vance', session.photo.name)
+        with session.photo.open('rb') as handle:
+            stored = Image.open(io.BytesIO(handle.read()))
+            self.assertEqual(stored.size, (30, 40))
+            self.assertNotIn(0x0112, stored.getexif())
+
+    def test_not_an_image_and_not_yet_verified_are_refused(self):
+        sid = self._sent_session_id()
+        self.assertEqual(self._photo(sid).status_code, 409)
+        self._verify(sid)
+        self.assertEqual(self._photo(sid, b'not a jpeg').json()['error'], 'not_an_image')
+
+    def test_retaking_replaces_the_photo(self):
+        sid = self._sent_session_id()
+        self._verify(sid)
+        self._photo(sid)
+        first = CheckInSession.objects.get(pk=sid).photo.name
+        self._photo(sid, _jpeg(color=(10, 10, 10)))
+        self.assertNotEqual(CheckInSession.objects.get(pk=sid).photo.name, first)
+
+
+class CheckInSubmitTests(_CheckInBase):
+
+    def test_answers_are_checked_against_the_form(self):
+        sid = self._sent_session_id()
+        self._verify(sid)
+        self.assertEqual(self._submit(sid, {'phone': '555'}).json()['error'], 'bad_value')
+        self.assertEqual(self._submit(sid, {'meds_changed': False, 'new_allergies': False}).json(),
+                         {'success': False, 'error': 'required', 'field': 'reason'})
+        self.assertEqual(self._submit(sid, dict(self.GOOD, ssn='1')).json()['field'], 'ssn')
+        self.assertEqual(self._submit(sid, dict(self.GOOD, meds_changed='yes')).json()['error'], 'bad_value')
+        self.assertEqual(self._submit(sid, dict(self.GOOD, email='not-an-email')).json()['field'], 'email')
+
+    def test_submitting_files_the_form_to_the_chart_with_its_text(self):
+        sid = self._submitted()
+        session = CheckInSession.objects.get(pk=sid)
+        self.assertEqual(session.status, 'submitted')
+        answers = json.loads(session.answers)
+        self.assertEqual(answers['phone'], '231-555-0199')
+        self.assertEqual(answers['email'], 'nora.v@example.com')
+        self.assertNotIn('allergies_detail', answers)  # hidden: no new allergies
+        self.assertNotIn('other', answers)
+        doc = session.document
+        self.assertEqual(doc.patient_id, self.patient.id)
+        self.assertEqual(doc.author_id, self.team_nurse.id)
+        self.assertTrue(doc.document_name.startswith('Check-in form '))
+        self.assertIn('Cough for a week', doc.extracted_text)
+        self.assertIn('Stopped lisinopril', doc.extracted_text)
+        with doc.document.open('rb') as handle:
+            pdf = handle.read()
+        self.assertTrue(pdf.startswith(b'%PDF-1.4'))
+        self.assertIn(b'(Cough for a week) Tj', pdf)
+        self.assertIn(b'/DCTDecode', pdf)  # the photo is on the page
+        self.assertTrue(ProblemActivity.objects.filter(activity__startswith='Added document: Check-in form').exists())
+        # The photo and the new phone are NOT on the chart yet.
+        profile = UserProfile.objects.get(user=self.patient)
+        self.assertEqual(profile.phone_number, '2315550100')
+        self.assertIsNone(api_views.portrait_version(profile))
+
+    def test_a_retried_submit_files_nothing_twice(self):
+        sid = self._submitted(photo=False)
+        again = self._submit(sid)
+        self.assertEqual(again.json(), {'success': True, 'already': True})
+        self.assertEqual(Document.objects.filter(patient=self.patient).count(), 1)
+        self.assertEqual(self._submit(sid, client_uuid='other').status_code, 409)
+
+    def test_the_photo_form_needs_a_photo_and_files_no_document(self):
+        sid = self._sent_session_id(form_key='photo')
+        self._verify(sid)
+        self.assertEqual(self._submit(sid, {}).json()['error'], 'photo_required')
+        self._photo(sid)
+        self.assertEqual(self._submit(sid, {}).status_code, 200)
+        self.assertIsNone(CheckInSession.objects.get(pk=sid).document)
+        self.assertFalse(Document.objects.filter(patient=self.patient).exists())
+
+    def test_walking_away_abandons_and_files_nothing(self):
+        sid = self._sent_session_id()
+        self._verify(sid)
+        self.assertEqual(self._kiosk_post('/api/checkin/kiosk/session/%d/abandon' % sid).json()['status'], 'abandoned')
+        self.assertEqual(self._submit(sid).status_code, 409)
+        self.assertFalse(Document.objects.filter(patient=self.patient).exists())
+
+
+class CheckInReviewTests(_CheckInBase):
+
+    def test_the_list_shows_open_forms_and_check_ins_to_review_for_charts_the_caller_can_open(self):
+        open_sid = self._sent_session_id(device_id=self._pair('Second')[0])
+        review_sid = self._submitted()
+        self._login(self.team_nurse)
+        data = self.client.get('/api/checkin/sessions').json()
+        self.assertEqual([s['id'] for s in data['open']], [open_sid])
+        review = data['to_review'][0]
+        self.assertEqual(review['id'], review_sid)
+        self.assertTrue(review['has_photo'])
+        self.assertIn({'question': 'What brings you in today?', 'answer': 'Cough for a week'}, review['answers'])
+        self.assertEqual(review['proposed'], [
+            {'field': 'phone', 'current': '2315550100', 'new': '231-555-0199'},
+            {'field': 'email', 'current': 'nora@example.com', 'new': 'nora.v@example.com'}])
+        self._login(self.stranger_nurse)
+        data = self.client.get('/api/checkin/sessions').json()
+        self.assertEqual((data['open'], data['to_review']), ([], []))
+        self.assertEqual(self.client.get('/api/checkin/session/%d/photo' % review_sid).status_code, 404)
+
+    def test_applying_puts_the_photo_and_contact_details_on_the_chart_once(self):
+        sid = self._submitted()
+        self._login(self.team_nurse)
+        self.assertEqual(self.client.get('/api/checkin/session/%d/photo' % sid).status_code, 200)
+        response = self._post('/api/checkin/session/%d/apply' % sid, {'photo': True, 'phone': True, 'email': False})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()['session']['applied'], ['photo', 'phone'])
+        profile = UserProfile.objects.get(user=self.patient)
+        self.assertEqual(profile.phone_number, '231-555-0199')
+        self.assertEqual(User.objects.get(pk=self.patient.id).email, 'nora@example.com')
+        version = api_views.portrait_version(profile)
+        self.assertIsNotNone(version)
+        self.assertEqual(response.json()['portrait_version'], version)
+        self.assertIn('portrait-', profile.portrait_image.name)
+        self.assertEqual(self._post('/api/checkin/session/%d/apply' % sid, {'photo': True}).json()['error'], 'already_reviewed')
+        # The chart photo is served to people who can open the chart, and its
+        # version reaches the patient list.
+        self.assertEqual(self.client.get('/api/media/portrait/%d' % self.patient.id).status_code, 200)
+        patients = self.client.get('/api/patients/').json()['patients']
+        self.assertEqual([p['portrait_version'] for p in patients if p['id'] == self.patient.id], [version])
+        self._login(self.stranger_nurse)
+        self.assertEqual(self.client.get('/api/media/portrait/%d' % self.patient.id).status_code, 404)
+
+    def test_two_photos_never_share_a_storage_name(self):
+        first = self._submitted()
+        self._login(self.team_nurse)
+        self._post('/api/checkin/session/%d/apply' % first, {'photo': True})
+        name_one = UserProfile.objects.get(user=self.patient).portrait_image.name
+        second = self._sent_session_id()
+        self._verify(second)
+        self._photo(second, _jpeg(color=(1, 2, 3)))
+        self._submit(second, client_uuid='sub-2')
+        self._login(self.team_nurse)
+        self._post('/api/checkin/session/%d/apply' % second, {'photo': True})
+        self.assertNotEqual(UserProfile.objects.get(user=self.patient).portrait_image.name, name_one)
+
+    def test_reviewing_without_applying_changes_nothing_but_the_status(self):
+        sid = self._submitted()
+        self._login(self.team_nurse)
+        response = self._post('/api/checkin/session/%d/apply' % sid, {})
+        self.assertEqual(response.json()['session']['status'], 'reviewed')
+        self.assertIsNone(api_views.portrait_version(UserProfile.objects.get(user=self.patient)))
+        recent = self.client.get('/api/checkin/sessions').json()['recent']
+        self.assertEqual([s['id'] for s in recent], [sid])
+
+    def test_a_stranger_cannot_apply(self):
+        sid = self._submitted()
+        self._login(self.stranger_doc)
+        self.assertEqual(self._post('/api/checkin/session/%d/apply' % sid, {'photo': True}).status_code, 404)
+
+
+class CheckInAnnualFormTests(_CheckInBase):
+    """The yearly PCMH form: the partnership box, the social-needs screen and
+    the follow-up flags (BCBSM PCMH 1.x, 2.20, 2.21, 4.x, 10.5, 11.7)."""
+
+    ANSWERS = {'partnership': True, 'language': 'Spanish', 'interpreter': True,
+               'forms_help': 'Very sure', 'support': False, 'housing': 'I have a steady place to live',
+               'food_worry': True, 'transportation': False,
+               'want_help': ['Transportation', 'Food'], 'advance_directive': 'Yes',
+               'advance_directive_copy': False, 'health_goal': 'Walk more'}
+
+    def _open(self):
+        sid = self._sent_session_id(form_key='annual')
+        self._verify(sid)
+        return sid
+
+    def test_the_partnership_box_must_be_ticked(self):
+        sid = self._open()
+        self.assertEqual(self._submit(sid, {'partnership': False}).json(),
+                         {'success': False, 'error': 'required', 'field': 'partnership'})
+        self.assertEqual(self._submit(sid, {'partnership': 'yes'}).json()['error'], 'bad_value')
+        self.assertEqual(self._submit(sid, {'partnership': True, 'language': 'Klingon'}).json()['field'], 'language')
+        self.assertEqual(self._submit(sid, {'partnership': True}).status_code, 200)
+
+    def test_needs_are_flagged_for_the_care_team_and_lead_the_document(self):
+        sid = self._open()
+        self.assertEqual(self._submit(sid, self.ANSWERS).status_code, 200, )
+        self._login(self.team_nurse)
+        review = self.client.get('/api/checkin/sessions').json()['to_review'][0]
+        self.assertEqual(review['flags'], [
+            'Wants an interpreter', 'No one to help when sick', 'Food',
+            'Asked for help with: Food, Transportation',
+            'Has an advance directive we may not have a copy of'])
+        doc = CheckInSession.objects.get(pk=sid).document
+        self.assertTrue(doc.document_name.startswith('Yearly update form '))
+        text = doc.extracted_text
+        self.assertLess(text.index('For the care team to follow up'), text.index('How sure are you'))
+        self.assertIn('I have read how we work together.\nYes', text)
+
+    def test_the_mac_learns_when_each_form_was_last_done(self):
+        self._login(self.team_nurse)
+        self.assertEqual(self.client.get('/api/checkin/sessions?patient_id=%d' % self.patient.id).json()['last_completed'], {})
+        sid = self._open()
+        self._submit(sid, {'partnership': True})
+        self._login(self.team_nurse)
+        last = self.client.get('/api/checkin/sessions?patient_id=%d' % self.patient.id).json()['last_completed']
+        self.assertEqual(list(last), ['annual'])
+        self.assertNotIn('last_completed', self.client.get('/api/checkin/sessions').json())
+
+
+class CheckInScreeningTests(_CheckInBase):
+    """PHQ-9 and GAD-7: scored on the server, a self-harm answer marked
+    urgent, nothing scored when an item is missing."""
+
+    def _answers(self, prefix, count, value, **extra):
+        answers = {'%s_%d' % (prefix, i): value for i in range(1, count + 1)}
+        answers.update(extra)
+        return answers
+
+    def _review(self, form_key, answers):
+        sid = self._sent_session_id(form_key=form_key)
+        self._verify(sid)
+        response = self._submit(sid, answers)
+        self.assertEqual(response.status_code, 200, response.content)
+        self._login(self.team_nurse)
+        return sid, self.client.get('/api/checkin/sessions').json()['to_review'][0]
+
+    def test_every_item_is_required_and_answers_are_the_standard_wording(self):
+        sid = self._sent_session_id(form_key='phq9')
+        self._verify(sid)
+        answers = self._answers('phq9', 9, 'Several days')
+        del answers['phq9_5']
+        self.assertEqual(self._submit(sid, answers).json()['field'], 'phq9_5')
+        self.assertEqual(self._submit(sid, dict(answers, phq9_5='Sometimes')).json()['error'], 'bad_value')
+
+    def test_phq9_is_scored_and_banded(self):
+        answers = self._answers('phq9', 9, 'More than half the days', phq9_9='Not at all',
+                                phq9_difficulty='Very difficult')
+        sid, review = self._review('phq9', answers)
+        self.assertEqual(review['scores'], [{'name': 'PHQ-2', 'total': 4, 'band': 'positive'},
+                                            {'name': 'PHQ-9', 'total': 16, 'band': 'moderately severe'}])
+        self.assertEqual(review['urgent'], [])
+        self.assertIn('PHQ-9 depression score 16 (moderately severe)', review['flags'])
+        self.assertIn('PHQ-2 positive 4 (positive)', review['flags'])
+        text = CheckInSession.objects.get(pk=sid).document.extracted_text
+        self.assertIn('PHQ-9: 16 (moderately severe)', text)
+
+    def test_any_yes_to_item_nine_is_urgent_and_heads_the_document(self):
+        answers = self._answers('phq9', 9, 'Not at all', phq9_9='Several days')
+        sid, review = self._review('phq9', answers)
+        self.assertEqual(len(review['urgent']), 1)
+        self.assertIn('speak with the patient before they leave', review['urgent'][0])
+        text = CheckInSession.objects.get(pk=sid).document.extracted_text
+        self.assertLess(text.index('URGENT'), text.index('Scores'))
+
+    def test_gad7_is_scored(self):
+        _, review = self._review('gad7', self._answers('gad7', 7, 'Nearly every day'))
+        self.assertEqual(review['scores'], [{'name': 'GAD-7', 'total': 21, 'band': 'severe'}])
+        self.assertIn('GAD-7 anxiety score 21 (severe)', review['flags'])
+
+
+class CheckInStampTests(_CheckInBase):
+    """Submitting (a document reaches the chart) and applying (the profile
+    changes) move the chart's stamp; the session routes carry no patient id."""
+
+    def test_submit_and_apply_stamp_the_chart(self):
+        sid = self._sent_session_id()
+        self._verify(sid)
+        self._photo(sid)
+        before = self._stamp()
+        self._submit(sid)
+        after_submit = self._stamp()
+        self.assertIsNotNone(after_submit)
+        self.assertTrue(before is None or after_submit > before)
+        self._login(self.team_nurse)
+        self._post('/api/checkin/session/%d/apply' % sid, {'photo': True})
+        self.assertGreater(self._stamp(), after_submit)
+
+    def test_sending_and_verifying_do_not(self):
+        sid = self._sent_session_id()
+        self._verify(sid)
+        self.assertIsNone(self._stamp())
+
+
+class CheckInSwitchTests(_CheckInBase):
+
+    def test_switched_off_everything_answers_503_and_the_lists_say_so(self):
+        sid = self._sent_session_id()
+        with override_settings(CHECK_IN_ENABLED=False):
+            self._login(self.team_nurse)
+            self.assertFalse(self.client.get('/api/checkin/devices').json()['enabled'])
+            self.assertFalse(self.client.get('/api/checkin/sessions').json()['enabled'])
+            self.assertEqual(self._send().status_code, 503)
+            self.assertEqual(self._kiosk_get('/api/checkin/kiosk/current').status_code, 503)
+            self.assertEqual(self._verify(sid).status_code, 503)
+
+
+class SimplePdfTests(TestCase):
+
+    def test_long_text_wraps_onto_more_pages_and_escapes_parentheses(self):
+        from emr import simple_pdf
+        doc = simple_pdf.Document()
+        for i in range(120):
+            doc.text('Line %d (with parentheses) and a back\\slash ' % i + 'word ' * 30)
+        pdf = doc.render()
+        self.assertGreater(pdf.count(b'/Type /Page '), 3)
+        self.assertIn(b'\\(with parentheses\\)', pdf)
+        self.assertTrue(pdf.rstrip().endswith(b'%%EOF'))
+
+    def test_every_line_fits_the_page(self):
+        from emr import simple_pdf
+        width = simple_pdf.PAGE_W - 2 * simple_pdf.MARGIN
+        for line in simple_pdf.wrap('W' * 400 + ' short ' + 'm' * 90, 11, width, bold=True):
+            self.assertLessEqual(simple_pdf.text_width(line, 11, True), width)
 
 
 # ---------------------------------------------------------------------------
