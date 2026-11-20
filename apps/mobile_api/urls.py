@@ -3,6 +3,9 @@ from . import views
 from . import fax_review
 from . import document_edit
 from . import check_in
+from . import office
+from . import waiting_faxes
+from . import chart_fax
 
 urlpatterns = [
     url(r'^healthz/?$', views.mobile_healthz),
@@ -151,6 +154,13 @@ urlpatterns = [
     url(r'^fax/import$', views.mobile_fax_import),
     url(r'^fax/transmissions$', views.mobile_fax_transmissions),
     url(r'^fax/inbox/check$', views.mobile_fax_inbox_check),
+    # Waiting faxes on the chart (2026-11-18): Macs read pool documents in
+    # the background; a chart lists the ones probably for its patient.
+    url(r'^inbox/read-next$', waiting_faxes.mobile_inbox_read_next),
+    url(r'^inbox/document/(?P<document_id>\d+)/read$', waiting_faxes.mobile_inbox_read),
+    url(r'^patient/(?P<patient_id>\d+)/waiting-faxes$', waiting_faxes.mobile_patient_waiting_faxes),
+    url(r'^patient/(?P<patient_id>\d+)/waiting-faxes/(?P<document_id>\d+)/not-this-patient$',
+        waiting_faxes.mobile_patient_waiting_fax_dismiss),
     url(r'^patient/(?P<patient_id>\d+)/fax/requisition$', views.mobile_fax_requisition),
     # Preparing and approving documents (emr.DocumentReview): the lists, a
     # chart's reviews, and each step. See apps/mobile_api/fax_review.py.
@@ -166,6 +176,26 @@ urlpatterns = [
     url(r'^fax/review/(?P<document_id>\d+)/restore$', fax_review.mobile_fax_review_restore),
     url(r'^fax/review/(?P<document_id>\d+)/pages$', fax_review.mobile_fax_review_pages),
     url(r'^fax/review/(?P<document_id>\d+)/original$', fax_review.mobile_fax_review_original),
+    # The Office list (2026-11-18): documents that belong on no chart. Replaces
+    # the fax review's set aside / do it later. See apps/mobile_api/office.py.
+    url(r'^office/documents$', office.mobile_office_documents),
+    url(r'^office/documents/upload$', office.mobile_office_upload),
+    url(r'^office/documents/from-chart$', office.mobile_office_from_chart),
+    # Faxing chart documents (2026-11-18): one or several, one fax.
+    url(r'^patient/(?P<patient_id>\d+)/fax/documents$', chart_fax.mobile_fax_chart_documents),
+    url(r'^office/document/(?P<document_id>\d+)$', office.mobile_office_document),
+    url(r'^office/document/(?P<document_id>\d+)/move-in$', office.mobile_office_move_in),
+    url(r'^office/document/(?P<document_id>\d+)/to-unassigned$', office.mobile_office_to_unassigned),
+    url(r'^office/document/(?P<document_id>\d+)/to-chart$', office.mobile_office_to_chart),
+    url(r'^office/document/(?P<document_id>\d+)/hand$', office.mobile_office_hand),
+    url(r'^office/document/(?P<document_id>\d+)/handoff/seen$', office.mobile_office_handoff_seen),
+    url(r'^office/document/(?P<document_id>\d+)/handoff/done$', office.mobile_office_handoff_done),
+    url(r'^office/document/(?P<document_id>\d+)/handoff/(?P<user_id>\d+)$', office.mobile_office_handoff_remove),
+    url(r'^office/document/(?P<document_id>\d+)/edit$', office.mobile_office_edit),
+    url(r'^office/document/(?P<document_id>\d+)/restore$', office.mobile_office_restore),
+    url(r'^office/document/(?P<document_id>\d+)/edits$', office.mobile_office_edits),
+    url(r'^office/document/(?P<document_id>\d+)/before-edits$', office.mobile_office_before_edits),
+    url(r'^office/document/(?P<document_id>\d+)/fax$', office.mobile_office_fax),
     # Error reporting
     url(r'^errors/batch/$', views.mobile_batch_errors),
     # Terminology mapping

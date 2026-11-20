@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('emr', '0203_documentedit'),
+        ('emr', '0211_officedocument_source_patient'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

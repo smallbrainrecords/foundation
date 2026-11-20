@@ -54,6 +54,15 @@ TODO_SUGGESTIONS_ENABLED = env.bool('TODO_SUGGESTIONS_ENABLED', default=True)
 INBOUND_FAX_ENABLED = env.bool('INBOUND_FAX_ENABLED', default=False)
 INBOUND_FAX_TEAM_ID = env.int('INBOUND_FAX_TEAM_ID', default=0)
 INBOUND_FAX_START = env.str('INBOUND_FAX_START', default='')
+# Once a fax is stored, the scheduled import job moves it to RingCentral's
+# Deleted folder (owner, 2026-11-18). Needs the RingCentral app's
+# EditMessages permission; INBOUND_FAX_DELETE_IMPORTED=false on the job stops it.
+INBOUND_FAX_DELETE_IMPORTED = env.bool('INBOUND_FAX_DELETE_IMPORTED', default=True)
+
+# Waiting faxes on the chart (apps.mobile_api.waiting_faxes, 2026-11-18): staff
+# Macs read pool documents in the background and a chart lists the ones
+# probably for its patient. False quiets every Mac with no app update.
+WAITING_FAXES_ENABLED = env.bool('WAITING_FAXES_ENABLED', default=True)
 
 # Preparing and approving documents (apps.mobile_api.fax_review, 2026-11-17):
 # staff prepare each fax from the pool and the physician approves it. With

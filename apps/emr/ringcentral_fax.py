@@ -69,7 +69,7 @@ class FaxError(Exception):
 
 
 _token_lock = threading.Lock()
-_token = {'value': None, 'expires': 0.0}
+_token = {'value': None, 'expires': 0.0, 'scope': None}
 
 
 def _config():
@@ -132,6 +132,10 @@ def _access_token(force=False):
         if status != 200 or not parsed.get('access_token'):
             raise FaxError('RingCentral sign-in failed: %s' % _message(parsed, status), status)
         _token['value'] = parsed['access_token']
+        # The app's permissions, space separated (TokenInfo.scope); None
+        # when RingCentral sent none, which means "unknown", not "nothing".
+        scope = parsed.get('scope')
+        _token['scope'] = scope if isinstance(scope, str) else None
         # Renew five minutes early; never trust a lifetime under a minute.
         _token['expires'] = time.time() + max(60, int(parsed.get('expires_in', 3600)) - 300)
         return _token['value']
@@ -141,6 +145,19 @@ def forget_token():
     with _token_lock:
         _token['value'] = None
         _token['expires'] = 0.0
+        _token['scope'] = None
+
+
+def granted_permissions():
+    """The app permissions the current access token carries, as a set
+    ({'ReadMessages', 'Faxes', ...}), or None when RingCentral's token answer
+    did not list them. Signs in when there is no token yet; raises like any
+    request. A permission added in the developer console reaches a new token
+    only, so this can lag the console by up to the token's lifetime."""
+    _access_token()
+    with _token_lock:
+        scope = _token['scope']
+    return None if scope is None else set(scope.split())
 
 
 def _authorized(method, path, headers=None, body=None):
@@ -455,6 +472,10 @@ def inbound_faxes(days=7, trace=None):
             'pages': pages if isinstance(pages, int) else None,
             'read_status': record.get('readStatus') or '',
             'message_status': record.get('messageStatus') or '',
+            # 'Alive', 'Deleted' (in RingCentral's Deleted folder, restorable)
+            # or 'Purged'. The importer deletes only 'Alive' faxes: a second
+            # DELETE of a deleted message purges it.
+            'availability': (record.get('availability') or '').strip(),
             'attachments': attachments,
         })
     return found
@@ -530,6 +551,24 @@ def _http_bytes(url, headers):
         return error.code, b'', '', parsed if isinstance(parsed, dict) else {}
     except (urllib.error.URLError, OSError) as error:
         raise FaxError('RingCentral could not be reached: %s' % error)
+
+
+def move_fax_to_deleted(message_id):
+    """DELETE .../message-store/<message> on the credential owner's mailbox,
+    with no `purge`: RingCentral moves the message to its Deleted folder,
+    where it keeps it, attachments and all, and it can be restored.
+
+    From RingCentral's OpenAPI spec (rc-platform.yml, read 2026-11-18):
+    "Medium" rate group, EditMessages permission, 204 when done, and "the
+    first call of this method transfers the message to the 'Delete' status.
+    The second call transfers the deleted message to the 'Purged' status."
+    So send this only for a message the list showed as 'Alive', never twice
+    on a guess. Raises FaxError, with the status, unless RingCentral answers
+    204 (a 404 means the message is no longer there)."""
+    path = '/restapi/v1.0/account/~/extension/~/message-store/%s' % urllib.parse.quote(str(message_id), safe='')
+    status, parsed = _authorized('DELETE', path)
+    if status not in (200, 204):
+        raise FaxError('RingCentral did not delete the fax: %s' % _message(parsed, status), status)
 
 
 def fax_attachment(message_id, attachment_id):

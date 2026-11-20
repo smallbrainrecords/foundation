@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('emr', '0204_checkindevice'),
+        ('emr', '0212_checkindevice'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

@@ -13,13 +13,12 @@ Rules, each load-bearing:
     shows the document at once, marked not yet reviewed, so staff can answer
     a patient's call about it.
   * **Staff decide, fax by fax** (owner decision 2026-11-17, whatever the
-    fax's type): send it to the physician (`ready`), file it to the chart
-    themselves with no review (`file`), or park it in "do it later"
-    (`later`) to finish another time. Filing is refused for a flagged fax
+    fax's type): send it to the physician (`ready`) or file it to the chart
+    themselves with no review (`file`). Filing is refused for a flagged fax
     (409 `flagged`: turn the flag off first) and when
-    `FAX_STAFF_FILE_ENABLED=false` (409 `staff_filing_off`). A parked fax
-    stays in the pool, on no chart and out of the physician's queue, until
-    someone prepares it.
+    `FAX_STAFF_FILE_ENABLED=false` (409 `staff_filing_off`). A fax that is
+    not for a chart, or not to be finished now, goes to the Office list
+    (`apps.mobile_api.office`, 2026-11-18).
   * **Only the physician whose pool the fax came in on approves or sends
     back.** Staff, other physicians and admins get 403 `not_approver`.
   * **Approval makes the follow-through, in one transaction**: the fax is
@@ -32,9 +31,12 @@ Rules, each load-bearing:
     and nothing is written.
   * **Approving twice does nothing the second time.** The row is locked; a
     repeat answers `already: true` and makes no second set of todos.
-  * **Set aside takes the document off the chart and out of the pool list**
-    and keeps it. Restore returns it to the pool for 30 days; deleting older
-    ones is `manage.py purge_set_aside_faxes`, which nothing schedules.
+  * **"Set aside" and "do it later" are retired** (owner decision
+    2026-11-18): the Office list replaces both. Their routes stay for Macs
+    on build 86 and move the fax to Office; `restore` sends an Office
+    document back to the pool. The lists answer them empty. A document in
+    Office is refused by ready, file and pages (409 `in_office`): it goes
+    back to the pool first.
   * **Removing pages never destroys the fax as received.** The Mac cuts the
     pages (the server has no PDF library) and uploads the kept-pages file;
     the first time, the file as received is remembered on the review and is
@@ -59,11 +61,12 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from emr.models import (
-    Document, DocumentEdit, DocumentProblem, DocumentReview, DocumentTodo, Label, Problem,
-    TaggedToDoOrder, ToDo,
+    Document, DocumentEdit, DocumentProblem, DocumentReview, DocumentTodo, Label, OfficeDocument,
+    OfficeHandoff, Problem, TaggedToDoOrder, ToDo,
 )
 from emr.mutation_stamp import touch_patient_stamp
 from emr.problem_authentication import apply_problem_authentication
+from emr.storable import storable_text, stored_file_exists
 from problems_app.operations import add_problem_activity
 from todo_app.operations import add_todo_activity
 
@@ -146,6 +149,10 @@ def _held_by_other(user, doc):
         return False
     cutoff = timezone.now() - datetime.timedelta(seconds=api._UNASSIGNED_CLAIM_TTL_SECONDS)
     return doc.claimed_at >= cutoff
+
+
+def _in_office(doc):
+    return OfficeDocument.objects.filter(document=doc).exists()
 
 
 def _locked(document_id):
@@ -285,9 +292,8 @@ def mobile_fax_reviews(request):
       queue      — prepared, waiting for the physician: flagged first, then
                    the longest waiting. Staff see it too, read-only.
       returned   — sent back to staff with a note
-      later      — parked by staff to finish later, the longest parked
-                   first; still in the pool
-      set_aside  — set aside in the last 30 days (restorable)
+      later, set_aside — always empty since 2026-11-18 (the Office list
+                   replaced both); kept for older Macs
       week       — approvals in the last 7 days and how many the physician
                    changed
 
@@ -306,10 +312,6 @@ def mobile_fax_reviews(request):
     queue = _visible(_reviews(DocumentReview.READY), user)
     queue.sort(key=lambda r: (0 if r.flagged else 1, r.prepared_at or r.created_on))
     returned = _visible(_reviews(DocumentReview.RETURNED).order_by('-returned_at'), user)
-    later = _visible(_reviews(DocumentReview.LATER).order_by('later_at', 'id'), user)
-    cutoff = timezone.now() - datetime.timedelta(days=RESTORE_DAYS)
-    set_aside = _visible(
-        _reviews(DocumentReview.SET_ASIDE).filter(set_aside_at__gte=cutoff).order_by('-set_aside_at'), user)
 
     week = timezone.now() - datetime.timedelta(days=7)
     recent = DocumentReview.objects.filter(
@@ -324,8 +326,10 @@ def mobile_fax_reviews(request):
         # Staff Macs ask every 30 s for the counts.
         'queue': [review_json(r, detail=approver) for r in queue],
         'returned': [review_json(r, detail=True) for r in returned],
-        'later': [review_json(r) for r in later],
-        'set_aside': [review_json(r) for r in set_aside],
+        # Retired 2026-11-18 (the Office list replaced them). Kept, empty,
+        # for Macs on build 86, which read them.
+        'later': [],
+        'set_aside': [],
         'week': {'approved': recent.count(), 'changed': recent.exclude(changes='[]').count()},
         'restore_days': RESTORE_DAYS,
     })
@@ -558,7 +562,7 @@ def _assign_from_pool(request, doc, patient, body):
     new_name = (body.get('document_name') or '').strip()[:MAX_NAME] or old_name
     doc.document_name = new_name
     fields = ['patient', 'team', 'claimed_by', 'claimed_at', 'document_name']
-    text = body.get('extracted_text')
+    text = storable_text(body.get('extracted_text'))
     if isinstance(text, str) and (text or not doc.extracted_text):
         doc.extracted_text = text
         doc.extracted_text_at = timezone.now()
@@ -618,6 +622,8 @@ def mobile_fax_review_ready(request, document_id):
             return _refuse('already_approved', 409)
         if review is not None and review.state == DocumentReview.SET_ASIDE:
             return _refuse('set_aside', 409)
+        if _in_office(doc):
+            return _refuse('in_office', 409)
         from_pool = doc.patient_id is None
         if from_pool and _held_by_other(request.user, doc):
             return _refuse('already_claimed', 409, claimed_by_name=_display(doc.claimed_by))
@@ -706,6 +712,8 @@ def mobile_fax_review_file(request, document_id):
             return _not_found()
         if review is not None and review.state == DocumentReview.SET_ASIDE:
             return _refuse('set_aside', 409)
+        if _in_office(doc):
+            return _refuse('in_office', 409)
         if doc.patient_id is not None:
             return _refuse('not_in_pool', 409, state=review.state if review else None)
         if _held_by_other(request.user, doc):
@@ -738,106 +746,96 @@ def mobile_fax_review_file(request, document_id):
 @csrf_exempt
 @login_required
 def mobile_fax_review_later(request, document_id):
-    """POST {note?} -> "do it later": staff park a pool fax to finish another
-    time (owner decision 2026-11-17).
+    """POST {note?} -> RETIRED 2026-11-18: "do it later" was replaced by the
+    Office list. Kept for Macs on build 86, whose "Do it later" button calls
+    it: the fax goes to Office with the note (`office.move_to_office`).
 
-    The fax stays in the pool, on no chart and out of the physician's queue;
-    the lists show it under `later` with who parked it and when. Preparing
-    it later (ready, file, set aside) moves it on. Only from the pool; a fax
-    someone else holds is refused, and the caller's own hold is let go so
-    anyone can pick it up. Parking it again replaces the note.
+    Only from the pool, as before: a fax on a chart answers 409
+    `not_in_pool`; one someone else holds, 409 `already_claimed`.
     """
+    from . import office
     refusal = _gate(request, 'POST')
     if refusal:
         return refusal
     body = _body(request)
     if body is None:
         return _refuse('invalid_json', 400)
+    note = str(body.get('note') or '').strip()[:MAX_NOTE] or None
     with transaction.atomic():
         doc, review = _locked(document_id)
-        if doc is None or not _can_reach(request.user, doc):
+        if doc is None:
             return _not_found()
-        if review is not None and review.state == DocumentReview.SET_ASIDE:
-            return _refuse('set_aside', 409)
-        if doc.patient_id is not None:
-            return _refuse('not_in_pool', 409, state=review.state if review else None)
-        if _held_by_other(request.user, doc):
-            return _refuse('already_claimed', 409, claimed_by_name=_display(doc.claimed_by))
-        if review is None:
-            review = DocumentReview(document=doc, team_id=doc.team_id)
-        if doc.claimed_by_id == request.user.id:
-            doc.claimed_by = None
-            doc.claimed_at = None
-            doc.save(update_fields=['claimed_by', 'claimed_at'])
-        review.state = DocumentReview.LATER
-        review.later_by = request.user
-        review.later_at = timezone.now()
-        if 'note' in body:
-            review.note = str(body.get('note') or '')[:MAX_NOTE]
-        review.save()
-        answer = review_json(review)
-    _log('fax_review_later', request, document_id=doc.id)
-    return JsonResponse({'success': True, 'review': answer})
+        if not _in_office(doc):
+            if not _can_reach(request.user, doc):
+                return _not_found()
+            if doc.patient_id is not None:
+                return _refuse('not_in_pool', 409, state=review.state if review else None)
+        result = office.move_to_office(request, doc, review, note=note, source=OfficeDocument.LATER)
+        if isinstance(result, JsonResponse):
+            return result
+        moved, already, _left = result
+        answer = review_json(review) if review is not None else None
+    _log('fax_review_later_to_office', request, document_id=doc.id, already=already)
+    return JsonResponse({'success': True, 'office': True, 'review': answer})
 
 
 @csrf_exempt
 @login_required
 def mobile_fax_review_set_aside(request, document_id):
-    """POST -> not for a chart. One button, no reason asked.
-
-    From the pool: any member of the pool's team (unless someone else holds
-    the claim). From a chart, while it waits or was sent back: the approver
-    or anyone who can open the chart; the document leaves the chart with
-    "Removed document" where it was linked. An approved fax is refused.
-    """
+    """POST -> RETIRED 2026-11-18: "set aside" was replaced by the Office
+    list. Kept for Macs on build 86: the document goes to Office
+    (`office.move_to_office`) — from the pool, or off a chart while it is
+    in review, as set aside did. An approved fax is refused."""
+    from . import office
     refusal = _gate(request, 'POST')
     if refusal:
         return refusal
     with transaction.atomic():
         doc, review = _locked(document_id)
-        if doc is None or not _can_reach(request.user, doc):
+        if doc is None:
             return _not_found()
-        if review is not None and review.state == DocumentReview.APPROVED:
-            return _refuse('already_approved', 409)
-        if review is not None and review.state == DocumentReview.SET_ASIDE:
-            return JsonResponse({'success': True, 'already': True, 'review': review_json(review)})
-        if doc.patient_id is None and _held_by_other(request.user, doc):
-            return _refuse('already_claimed', 409, claimed_by_name=_display(doc.claimed_by))
-        if doc.patient_id is not None and review is None:
-            return _refuse('not_in_review', 409)
-        if review is None:
-            review = DocumentReview(document=doc, team_id=doc.team_id)
-        left = None
-        if doc.patient_id is not None:
-            left = _take_off_chart(request, doc)
-            doc.patient = None
-            doc.team_id = review.team_id
-            doc.claimed_by = None
-            doc.claimed_at = None
-            doc.save(update_fields=['patient', 'team', 'claimed_by', 'claimed_at'])
-            review.order_todo = None
-        review.state = DocumentReview.SET_ASIDE
-        review.set_aside_by = request.user
-        review.set_aside_at = timezone.now()
-        review.save()
+        if not _in_office(doc) and not _can_reach(request.user, doc):
+            return _not_found()
+        result = office.move_to_office(request, doc, review)
+        if isinstance(result, JsonResponse):
+            return result
+        moved, already, left = result
         if left:
             # Manual stamp: the chart it left is not in the URL.
             touch_patient_stamp(left)
-        answer = review_json(review)
-    _log('fax_review_set_aside', request, document_id=doc.id, left_patient_id=left)
-    return JsonResponse({'success': True, 'review': answer})
+        answer = review_json(review) if review is not None else None
+    _log('fax_review_set_aside_to_office', request, document_id=doc.id, already=already, left_patient_id=left)
+    return JsonResponse({'success': True, 'already': already, 'office': True, 'review': answer})
 
 
 @csrf_exempt
 @login_required
 def mobile_fax_review_restore(request, document_id):
-    """POST -> a set-aside fax goes back to the pool, within 30 days."""
+    """POST -> back to the pool. For an Office document (build 86's "Restore"
+    on a fax it set aside), it leaves Office for the team whose pool it came
+    from; a fax still in the retired `set_aside` state goes back as before."""
     refusal = _gate(request, 'POST')
     if refusal:
         return refusal
     with transaction.atomic():
         doc, review = _locked(document_id)
-        if doc is None or review is None or not _can_reach(request.user, doc):
+        if doc is None:
+            return _not_found()
+        if _in_office(doc):
+            team_id = doc.team_id or (review.team_id if review is not None else None)
+            if team_id is None:
+                return _refuse('no_team', 409)
+            if not api._assert_team_access(request.user, team_id):
+                return _not_found()
+            doc.team_id = team_id
+            doc.claimed_by = None
+            doc.claimed_at = None
+            doc.save(update_fields=['team', 'claimed_by', 'claimed_at'])
+            OfficeHandoff.objects.filter(document=doc).delete()
+            OfficeDocument.objects.filter(document=doc).delete()
+            _log('fax_review_restored_from_office', request, document_id=doc.id)
+            return JsonResponse({'success': True})
+        if review is None or not _can_reach(request.user, doc):
             return _not_found()
         if review.state != DocumentReview.SET_ASIDE:
             return JsonResponse({'success': True, 'already': True})
@@ -1088,6 +1086,8 @@ def mobile_fax_review_pages(request, document_id):
             return _not_found()
         if review is not None and review.state in (DocumentReview.APPROVED, DocumentReview.SET_ASIDE):
             return _refuse('already_approved' if review.state == DocumentReview.APPROVED else 'set_aside', 409)
+        if _in_office(doc):
+            return _refuse('in_office', 409)
         if doc.patient_id is None and _held_by_other(request.user, doc):
             return _refuse('already_claimed', 409, claimed_by_name=_display(doc.claimed_by))
         if not doc.document:
@@ -1155,7 +1155,9 @@ def mobile_fax_review_original(request, document_id):
     if doc is None or not _can_reach(request.user, doc):
         return _not_found()
     review = DocumentReview.objects.filter(document=doc).first()
-    if review is None or not review.original_file or not default_storage.exists(review.original_file):
+    # Not default_storage.exists(): on Google Cloud Storage it always says
+    # no (emr.storable), which refused every original in production.
+    if review is None or not review.original_file or not stored_file_exists(review.original_file):
         return _refuse('no_original', 404)
     response = FileResponse(default_storage.open(review.original_file, 'rb'), content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename="original.pdf"'

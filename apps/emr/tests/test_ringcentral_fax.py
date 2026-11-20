@@ -156,6 +156,43 @@ class RingCentralFaxTests(SimpleTestCase):
         self.assertIn('dateFrom=', url)
 
 
+class MoveFaxToDeletedTests(SimpleTestCase):
+    """Deleting a received fax from RingCentral (owner, 2026-11-18): one
+    DELETE, never a purge, and the app's permissions read off the token."""
+
+    setUp = RingCentralFaxTests.setUp
+    _http = RingCentralFaxTests._http
+    TOKEN = RingCentralFaxTests.TOKEN
+
+    def test_it_is_one_delete_of_that_message_and_never_a_purge(self):
+        self.answers = [self.TOKEN, (204, {})]
+        rc.move_fax_to_deleted('3903777950022')
+        method, url, headers, body = self.calls[1]
+        self.assertEqual(method, 'DELETE')
+        self.assertTrue(url.endswith('/restapi/v1.0/account/~/extension/~/message-store/3903777950022'), url)
+        self.assertNotIn('purge', url)
+        self.assertIsNone(body)
+        self.assertEqual(headers['Authorization'], 'Bearer tok')
+
+    def test_a_refusal_raises_with_its_status(self):
+        self.answers = [self.TOKEN, (403, {'message': 'In order to call this API endpoint, application needs to have [EditMessages] permission'})]
+        with self.assertRaises(rc.FaxError) as caught:
+            rc.move_fax_to_deleted('7')
+        self.assertEqual(caught.exception.status, 403)
+        self.assertIn('EditMessages', str(caught.exception))
+
+    def test_the_permissions_come_from_the_token(self):
+        self.answers = [(200, {'access_token': 'tok', 'expires_in': 7199,
+                               'scope': 'ReadMessages Faxes ReadContacts EditMessages'})]
+        self.assertEqual(rc.granted_permissions(), {'ReadMessages', 'Faxes', 'ReadContacts', 'EditMessages'})
+        self.assertEqual(len(self.calls), 1, 'one sign-in, reused')
+        self.assertIn('EditMessages', rc.granted_permissions())
+
+    def test_a_token_without_a_scope_says_unknown_not_nothing(self):
+        self.answers = [self.TOKEN]
+        self.assertIsNone(rc.granted_permissions())
+
+
 class CheckRingCentralFaxCommandTests(SimpleTestCase):
     """`manage.py check_ringcentral_fax` prints counts and never a name or
     a number. (The directory count is patched: no database here.)"""
@@ -233,7 +270,7 @@ class InboundFaxListTests(SimpleTestCase):
     def test_it_asks_for_inbound_faxes_since_the_window_and_reads_each_record(self):
         self.answers = [self.TOKEN, (200, {'records': [{
             'id': 11, 'creationTime': '2026-11-16T13:42:00Z', 'faxPageCount': 3,
-            'readStatus': 'Unread', 'messageStatus': 'Received',
+            'readStatus': 'Unread', 'messageStatus': 'Received', 'availability': 'Alive',
             'from': {'phoneNumber': '+12315550140', 'name': 'NMRL'},
             'to': [{'phoneNumber': '+12315388295', 'name': ''}],
             'attachments': [{'contentType': 'application/pdf', 'size': 81234}],
@@ -250,7 +287,7 @@ class InboundFaxListTests(SimpleTestCase):
         self.assertEqual(faxes, [{
             'id': 11, 'received': '2026-11-16T13:42:00Z', 'from_number': '+12315550140',
             'from_name': 'NMRL', 'to_numbers': ['+12315388295'], 'to_keys': ['phoneNumber'], 'pages': 3,
-            'read_status': 'Unread', 'message_status': 'Received',
+            'read_status': 'Unread', 'message_status': 'Received', 'availability': 'Alive',
             'attachments': [{'id': None, 'content_type': 'application/pdf', 'size': 81234}]}])
         self.assertTrue(trace['complete'])
         self.assertEqual(trace['stopped'], 'last_page')

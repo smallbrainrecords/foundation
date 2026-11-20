@@ -42,6 +42,7 @@ from emr.problem_authentication import (
     apply_problem_authentication,
     is_attesting_actor,
 )
+from emr.storable import delete_stored_files, document_files, storable_text
 from emr.todo_suggestions import patient_title_history, suggestions_for
 from emr.usual_vitals import (
     apply_usual_vitals,
@@ -1806,10 +1807,15 @@ def mobile_document_file(request, document_id):
         return JsonResponse({'error': 'Document not found'}, status=404)
 
     # If it's assigned to a patient, assert patient access.
+    # If it's in the Office list (2026-11-18), any staff member may read it.
     # If it's an unassigned document (patient=None, team!=None), assert team access.
     # Otherwise (true orphan), deny.
+    from emr.models import OfficeDocument
     if doc.patient_id is not None:
         if not _assert_patient_access(request.user, doc.patient_id):
+            return JsonResponse({'error': 'Document not found'}, status=404)
+    elif OfficeDocument.objects.filter(document_id=doc.id).exists():
+        if not _fax_caller_is_staff(request.user):
             return JsonResponse({'error': 'Document not found'}, status=404)
     elif doc.team_id is not None:
         if not _assert_team_access(request.user, doc.team_id):
@@ -2379,12 +2385,14 @@ def mobile_delete_document(request, patient_id, document_id):
         DocumentTodo.objects.filter(document=doc).select_related('todo')
     )
 
-    if doc.document:
-        # Triggers the django-storages GCS backend delete, removing the
-        # binary. Set save=False since we follow with doc.delete() right
-        # after.
-        doc.document.delete(save=False)
+    # Every stored copy goes with the row (2026-11-18): the current file,
+    # earlier versions from PDF editing, and the fax as received that page
+    # removal keeps. Before, only the current file was removed and the rest
+    # stayed in the bucket with nothing pointing at them. Collected before
+    # the delete, which cascades the edit and review rows.
+    files = document_files(doc)
     doc.delete()  # CASCADE wipes DocumentProblem + DocumentTodo rows.
+    delete_stored_files(files)
 
     audit_msg = f"Removed document: {document_name}"
     if linked_problems:
@@ -2599,10 +2607,12 @@ def mobile_unassigned_documents_list(request):
     _sweep_expired_claims()
 
     allowed = _user_team_ids(request.user)
-    # A fax set aside (emr.DocumentReview) is kept, off every chart, and is
-    # not pool work: it is listed by mobile_fax_reviews instead.
+    # A document in the Office list (emr.OfficeDocument, 2026-11-18) is not
+    # pool work: it is listed by apps.mobile_api.office instead. A fax still
+    # in the retired `set_aside` state is left out until
+    # `move_parked_faxes_to_office` moves it to Office.
     qs = Document.objects.filter(patient__isnull=True, team__isnull=False).exclude(
-        review__state='set_aside')
+        office__isnull=False).exclude(review__state='set_aside')
     if allowed is None:
         pass  # admin: no further filter
     elif not allowed:
@@ -2810,7 +2820,7 @@ def mobile_unassigned_document_assign(request, document_id):
         # pays a second OCR later. Optional: an assign that races extraction
         # just omits the key and the client fills it in afterwards via
         # mobile_document_text. Blank never clobbers existing text.
-        incoming_text = body.get('extracted_text')
+        incoming_text = storable_text(body.get('extracted_text'))
         if isinstance(incoming_text, str) and (
             incoming_text or not doc.extracted_text
         ):
@@ -3030,6 +3040,8 @@ def mobile_document_text(request, patient_id, document_id):
         text = ''
     if not isinstance(text, str):
         return JsonResponse({'error': 'extracted_text must be a string'}, status=400)
+    # An emoji read off a page made this save throw (emr.storable).
+    text = storable_text(text)
 
     # Never let a blank result clobber a good one (see docstring).
     if text == '' and doc.extracted_text:
@@ -7027,6 +7039,14 @@ def _fax_recipient_json(recipient):
     }
 
 
+def _json_int_list(raw):
+    try:
+        values = json.loads(raw or '[]')
+    except ValueError:
+        return []
+    return [v for v in values if isinstance(v, int)] if isinstance(values, list) else []
+
+
 def _fax_transmission_json(row):
     try:
         todo_ids = json.loads(row.todo_ids or '[]')
@@ -7041,6 +7061,10 @@ def _fax_transmission_json(row):
         'fax_number': row.fax_number,
         'display_number': _display_fax_number(row.fax_number),
         'todo_ids': todo_ids,
+        # An Office document faxed out (2026-11-18); None for a requisition.
+        'document_id': row.document_id,
+        # Chart documents faxed out together (2026-11-18); empty otherwise.
+        'document_ids': _json_int_list(row.document_ids),
         'error': row.error,
         'page_count': row.page_count,
         'created_on': _iso_z(row.created_on) if row.created_on else None,
@@ -7381,7 +7405,9 @@ def _settle_fax(row_id, reading):
     Delivered: each order's Activity says so, and the directory entry's
     delivered count goes up. Failed: each order's Activity says why, and the
     sender is tagged on each order as New, so the order comes back to their
-    My Tagged Todos — the failure reaches the person who sent it.
+    My Tagged Todos — the failure reaches the person who sent it. An Office
+    document's fax that fails is handed back to its sender instead
+    (2026-11-18), so it shows in their Documents for you.
     """
     from emr.models import FaxRecipient, FaxTransmission
     from django.db.models import F
@@ -7416,6 +7442,13 @@ def _settle_fax(row_id, reading):
         else:
             reason = row.error or row.rc_status or 'no reason given'
             activity = 'Fax to %s failed: %s' % (row.recipient_name, reason)
+        if state == 'failed' and row.sender_id and row.document_id:
+            _hand_failed_office_fax_back(row, activity)
+        if row.patient_id and (row.document_ids or '[]') != '[]':
+            # Chart documents faxed out (2026-11-18): the chart says how it
+            # went, and a failure goes back to the sender in Office.
+            from . import chart_fax
+            chart_fax.settle_chart_fax(row, state, activity)
         for todo in todos:
             add_todo_activity(todo, row.sender, activity)
             if state == 'failed' and row.sender_id:
@@ -7431,6 +7464,27 @@ def _settle_fax(row_id, reading):
             'recipient_id': row.recipient_id, 'fax_number': row.fax_number,
             'rc_status': row.rc_status, 'error': row.error}))
         return row
+
+
+def _hand_failed_office_fax_back(row, activity):
+    """A fax out of the Office list failed: hand the document back to the
+    person who sent it, with the reason as the note. Nothing happens when
+    the document has left Office since."""
+    from emr.models import OfficeDocument, OfficeHandoff
+    from django.utils import timezone
+
+    if not OfficeDocument.objects.filter(document_id=row.document_id).exists():
+        return
+    now = timezone.now()
+    handoff, created = OfficeHandoff.objects.get_or_create(
+        document_id=row.document_id, user_id=row.sender_id,
+        defaults={'handed_by_id': row.sender_id, 'handed_at': now, 'note': activity})
+    if not created:
+        handoff.handed_at = now
+        handoff.note = activity
+        handoff.seen_at = None
+        handoff.done_at = None
+        handoff.save()
 
 
 def _refresh_fax(row):
