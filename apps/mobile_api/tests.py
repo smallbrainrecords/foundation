@@ -3584,6 +3584,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_fax_review_pages': 'FaxReviewStampTests',
         'kiosk_submit': 'CheckInStampTests',
         'mobile_check_in_apply': 'CheckInStampTests',
+        'mobile_user_portrait_upload': 'UserPortraitUploadTests',
         'mobile_office_move_in': 'OfficeMoveInTests',
         'mobile_office_to_chart': 'OfficeToChartTests',
         'mobile_office_from_chart': 'OfficeFromChartTests',
@@ -10838,6 +10839,174 @@ class CheckInSwitchTests(_CheckInBase):
             self.assertEqual(self._send().status_code, 503)
             self.assertEqual(self._kiosk_get('/api/checkin/kiosk/current').status_code, 503)
             self.assertEqual(self._verify(sid).status_code, 503)
+
+
+class UserPortraitUploadTests(_RBACTestBase):
+    """POST /api/user/<id>/portrait (2026-11-21): a new profile photo from the
+    app's Settings → Edit Profile. The person themself, an admin, or staff for
+    a patient whose chart they can open; everyone else a JSON 404 (never 403,
+    which the app reads as signed out). The photo
+    is re-encoded, a patient's chart stamp moves, and the photo it replaces is
+    kept in PortraitHistory (source `app`). This is also the dedicated stamp
+    test `StampCoverageSweepTests.MANUAL_TOUCH` names."""
+
+    def setUp(self):
+        super().setUp()
+        import shutil
+        import tempfile
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, True)
+        override = override_settings(MEDIA_ROOT=media)
+        override.enable()
+        self.addCleanup(override.disable)
+
+    def _login(self, user, password='top_secret'):
+        self.client.logout()
+        self.assertTrue(self.client.login(username=user.username, password=password))
+
+    def _upload(self, user_id, data=None, name='p.jpg'):
+        return self.client.post('/api/user/%d/portrait' % user_id, data={
+            'file': SimpleUploadedFile(name, data if data is not None else _jpeg(), content_type='image/jpeg')})
+
+    def _stamp(self, user):
+        row = PatientMutationStamp.objects.filter(patient=user).first()
+        return row.last_mutation_at if row else None
+
+    def _stored(self, user):
+        from PIL import Image
+        profile = UserProfile.objects.get(user=user)
+        with profile.portrait_image.open('rb') as handle:
+            data = handle.read()
+        return data, Image.open(io.BytesIO(data))
+
+    def test_a_patient_changes_their_own_photo(self):
+        self._login(self.patient, password='x')
+        response = self._upload(self.patient.id)
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        profile = UserProfile.objects.get(user=self.patient)
+        self.assertTrue(body['success'])
+        self.assertEqual(body['portrait_version'], api_views.portrait_version(profile))
+        self.assertIsNotNone(body['portrait_version'])
+        self.assertIn('portrait-', profile.portrait_image.name)
+        self.assertNotIn('pt_a', profile.portrait_image.name)
+        self.assertEqual(self._stored(self.patient)[1].format, 'JPEG')
+
+    def test_staff_change_their_own_photo_and_no_chart_is_stamped(self):
+        self._login(self.team_nurse)
+        response = self._upload(self.team_nurse.id)
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertIsNotNone(api_views.portrait_version(UserProfile.objects.get(user=self.team_nurse)))
+        self.assertFalse(PatientMutationStamp.objects.exists())
+
+    def test_an_admin_changes_anyones_photo_and_it_is_logged(self):
+        self._login(self.admin_user)
+        with self.assertLogs('smallbrain.profile_edits', level='INFO') as logs:
+            response = self._upload(self.patient.id)
+        self.assertEqual(response.status_code, 200, response.content)
+        line = json.loads(logs.records[0].getMessage())
+        self.assertEqual((line['fields'], line['editor_id'], line['target_user_id'], line['source']),
+                         (['portrait_image'], self.admin_user.id, self.patient.id, 'app'))
+
+    def test_a_self_change_is_not_logged_as_someone_elses_edit(self):
+        self._login(self.patient, password='x')
+        with mock.patch.object(logging.getLogger('smallbrain.profile_edits'), 'info') as info:
+            self._upload(self.patient.id)
+        info.assert_not_called()
+
+    def test_staff_who_can_open_the_chart_change_a_patients_photo(self):
+        # Owner decision 2026-11-21: as check-in already allowed.
+        self._login(self.team_nurse)
+        with self.assertLogs('smallbrain.profile_edits', level='INFO') as logs:
+            first = self._upload(self.patient.id)
+        self.assertEqual(first.status_code, 200, first.content)
+        line = json.loads(logs.records[0].getMessage())
+        self.assertEqual((line['editor_id'], line['editor_role'], line['target_user_id']),
+                         (self.team_nurse.id, 'nurse', self.patient.id))
+        self.assertIsNotNone(self._stamp(self.patient))
+        self._login(self.attending)
+        second = self._upload(self.patient.id, _jpeg(color=(1, 2, 3)))
+        self.assertEqual(second.status_code, 200, second.content)
+        row = PortraitHistory.objects.get()
+        self.assertEqual((row.replaced_by, row.source), (self.attending, PortraitHistory.SOURCE_APP))
+
+    def test_everyone_else_gets_a_json_404_and_nothing_changes(self):
+        before = UserProfile.objects.get(user=self.patient).portrait_image.name
+        # Staff who can't open the chart, and another patient.
+        for user in (self.stranger_doc, self.stranger_nurse, self.other_patient, self.no_profile):
+            self._login(user)
+            response = self._upload(self.patient.id)
+            self.assertEqual(response.status_code, 404, user.username)
+            self.assertEqual(response.json()['error'], 'not_found')
+        self._login(self.admin_user)
+        self.assertEqual(self._upload(999999).json()['error'], 'not_found')
+        self.assertEqual(UserProfile.objects.get(user=self.patient).portrait_image.name, before)
+        self.assertFalse(PortraitHistory.objects.exists())
+        self.assertIsNone(self._stamp(self.patient))
+
+    def test_staff_may_not_change_another_staff_members_photo(self):
+        # Chart access is about patients; a colleague's or an admin's photo
+        # stays theirs (or an admin's) to change.
+        self._login(self.team_nurse)
+        for target in (self.attending, self.admin_user):
+            response = self._upload(target.id)
+            self.assertEqual(response.status_code, 404, target.username)
+            self.assertIsNone(api_views.portrait_version(UserProfile.objects.get(user=target)))
+
+    def test_signed_out_and_wrong_method_change_nothing(self):
+        self.client.logout()
+        self.assertNotEqual(self._upload(self.patient.id).status_code, 200)
+        self._login(self.patient, password='x')
+        self.assertEqual(self.client.get('/api/user/%d/portrait' % self.patient.id).status_code, 405)
+        self.assertIsNone(api_views.portrait_version(UserProfile.objects.get(user=self.patient)))
+
+    def test_not_an_image_no_file_and_too_large_are_refused(self):
+        from apps.mobile_api import check_in
+        self._login(self.patient, password='x')
+        self.assertEqual(self._upload(self.patient.id, b'not a jpeg').json()['error'], 'not_an_image')
+        missing = self.client.post('/api/user/%d/portrait' % self.patient.id, data={})
+        self.assertEqual((missing.status_code, missing.json()['error']), (400, 'no_file'))
+        with mock.patch.object(check_in, 'PHOTO_MAX_BYTES', 10):
+            self.assertEqual(self._upload(self.patient.id).json()['error'], 'too_large')
+        self.assertIsNone(api_views.portrait_version(UserProfile.objects.get(user=self.patient)))
+
+    def test_the_photo_is_re_encoded_upright_small_and_without_metadata(self):
+        self._login(self.patient, password='x')
+        # Orientation 6 = the camera was turned; the stored photo is upright.
+        self._upload(self.patient.id, _jpeg(40, 30, orientation=6))
+        _, image = self._stored(self.patient)
+        self.assertEqual(image.size, (30, 40))
+        self.assertNotIn(0x0112, image.getexif())
+        self._upload(self.patient.id, _jpeg(2400, 1600))
+        self.assertEqual(self._stored(self.patient)[1].size, (1200, 800))
+
+    def test_a_patients_chart_stamp_moves(self):
+        self._login(self.patient, password='x')
+        self._upload(self.patient.id)
+        first = self._stamp(self.patient)
+        self.assertIsNotNone(first)
+        self._login(self.admin_user)
+        self._upload(self.patient.id, _jpeg(color=(1, 2, 3)))
+        self.assertGreater(self._stamp(self.patient), first)
+
+    def test_the_photo_it_replaces_is_kept(self):
+        self._login(self.patient, password='x')
+        self._upload(self.patient.id)
+        # The first photo replaced only the default avatar: nothing to keep.
+        self.assertFalse(PortraitHistory.objects.exists())
+        name_one = UserProfile.objects.get(user=self.patient).portrait_image.name
+        bytes_one = self._stored(self.patient)[0]
+        self._login(self.admin_user)
+        response = self._upload(self.patient.id, _jpeg(color=(1, 2, 3)))
+        row = PortraitHistory.objects.get()
+        self.assertEqual((row.user, row.original_name, row.replaced_by, row.source),
+                         (self.patient, name_one, self.admin_user, PortraitHistory.SOURCE_APP))
+        with row.image.open('rb') as kept:
+            self.assertEqual(kept.read(), bytes_one)
+        # The new photo is a different object, and its version changed.
+        profile = UserProfile.objects.get(user=self.patient)
+        self.assertNotEqual(profile.portrait_image.name, name_one)
+        self.assertEqual(response.json()['portrait_version'], api_views.portrait_version(profile))
 
 
 class SimplePdfTests(TestCase):
