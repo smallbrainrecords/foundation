@@ -29,6 +29,9 @@ urlpatterns = [
     url(r'^media/image/(?P<image_id>\d+)$', views.mobile_image_file),
     url(r'^media/signature/(?P<user_id>\d+)$', views.mobile_signature_file),
     url(r'^media/portrait/(?P<user_id>\d+)$', check_in.mobile_portrait_file),
+    # A new profile photo from the app's Settings (2026-11-21): self, or an
+    # admin for anyone; the photo it replaces is kept (PortraitHistory).
+    url(r'^user/(?P<user_id>\d+)/portrait$', check_in.mobile_user_portrait_upload),
     # Check-in iPads (2026-11-17). The kiosk routes authenticate by device
     # token, never by session; see apps/mobile_api/check_in.py.
     url(r'^checkin/kiosk/pair$', check_in.kiosk_pair),

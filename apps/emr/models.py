@@ -2307,6 +2307,7 @@ class PortraitHistory(models.Model):
     still says what the profile held. Rows are never deleted by app code.
     """
     SOURCE_CHECK_IN = 'check_in'
+    SOURCE_APP = 'app'          # Settings → Edit Profile in the app (2026-11-21)
     SOURCE_UNKNOWN = 'unknown'
 
     user = models.ForeignKey(User, related_name='portrait_history', on_delete=models.CASCADE)

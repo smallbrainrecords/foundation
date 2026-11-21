@@ -956,3 +956,56 @@ def mobile_portrait_file(request, user_id):
         return FileResponse(profile.portrait_image.open('rb'), content_type='image/jpeg')
     except Exception:
         return _not_found()
+
+
+@csrf_exempt
+@login_required
+def mobile_user_portrait_upload(request, user_id):
+    """POST multipart `file` -> a new profile photo from the app's Settings →
+    Edit Profile (2026-11-21). Answers {success, portrait_version}.
+
+    The person themself, or an admin for anyone. Everyone else, and a user
+    that does not exist, gets JSON 404 `not_found` — never 403, which the app
+    reads as "signed out". (Staff editing a patient's demographics may not
+    change the photo: that matches `mobile_update_user`, where photos stay
+    self-or-admin.)
+
+    The photo is re-encoded like a check-in photo (upright, at most
+    PHOTO_MAX_SIDE px, no metadata), saved under a fresh random name, and the
+    save keeps the photo it replaces (`PortraitHistory`, source `app`). A
+    patient's chart stamp moves, so an open chart on another Mac pulls the new
+    `portrait_version` and downloads the photo."""
+    if request.method != 'POST':
+        return _refuse('method_not_allowed', 405)
+    try:
+        target_id = int(user_id)
+    except (TypeError, ValueError):
+        return _not_found()
+    caller_role = getattr(_profile(request.user), 'role', None)
+    is_self = request.user.id == target_id
+    if not (is_self or caller_role == 'admin'):
+        return _not_found()
+    target = User.objects.filter(pk=target_id).first()
+    if target is None:
+        return _not_found()
+    upload = request.FILES.get('file')
+    if upload is None:
+        return _refuse('no_file', 400)
+    if upload.size > PHOTO_MAX_BYTES:
+        return _refuse('too_large', 400)
+    jpeg = _clean_photo(upload.read())
+    if jpeg is None:
+        return _refuse('not_an_image', 400)
+    with transaction.atomic():
+        profile, _ = UserProfile.objects.select_for_update().get_or_create(user=target)
+        set_new_portrait(profile, jpeg, actor=request.user, source=PortraitHistory.SOURCE_APP)
+        profile.save(update_fields=['portrait_image'])
+        if profile.role == 'patient':
+            touch_patient_stamp(target.id)
+    if not is_self:
+        logging.getLogger('smallbrain.profile_edits').info(json.dumps({
+            'event': 'profile_edited', 'source': 'app', 'fields': ['portrait_image'],
+            'editor_id': request.user.id, 'editor_role': caller_role, 'target_user_id': target.id,
+        }))
+    _log('portrait_changed', user_id=target.id, actor_id=request.user.id, bytes=len(jpeg))
+    return JsonResponse({'success': True, 'portrait_version': portrait_version(profile)})
