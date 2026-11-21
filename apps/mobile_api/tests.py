@@ -10843,8 +10843,9 @@ class CheckInSwitchTests(_CheckInBase):
 
 class UserPortraitUploadTests(_RBACTestBase):
     """POST /api/user/<id>/portrait (2026-11-21): a new profile photo from the
-    app's Settings → Edit Profile. The person themself or an admin; everyone
-    else a JSON 404 (never 403, which the app reads as signed out). The photo
+    app's Settings → Edit Profile. The person themself, an admin, or staff for
+    a patient whose chart they can open; everyone else a JSON 404 (never 403,
+    which the app reads as signed out). The photo
     is re-encoded, a patient's chart stamp moves, and the photo it replaces is
     kept in PortraitHistory (source `app`). This is also the dedicated stamp
     test `StampCoverageSweepTests.MANUAL_TOUCH` names."""
@@ -10913,14 +10914,27 @@ class UserPortraitUploadTests(_RBACTestBase):
             self._upload(self.patient.id)
         info.assert_not_called()
 
+    def test_staff_who_can_open_the_chart_change_a_patients_photo(self):
+        # Owner decision 2026-11-21: as check-in already allowed.
+        self._login(self.team_nurse)
+        with self.assertLogs('smallbrain.profile_edits', level='INFO') as logs:
+            first = self._upload(self.patient.id)
+        self.assertEqual(first.status_code, 200, first.content)
+        line = json.loads(logs.records[0].getMessage())
+        self.assertEqual((line['editor_id'], line['editor_role'], line['target_user_id']),
+                         (self.team_nurse.id, 'nurse', self.patient.id))
+        self.assertIsNotNone(self._stamp(self.patient))
+        self._login(self.attending)
+        second = self._upload(self.patient.id, _jpeg(color=(1, 2, 3)))
+        self.assertEqual(second.status_code, 200, second.content)
+        row = PortraitHistory.objects.get()
+        self.assertEqual((row.replaced_by, row.source), (self.attending, PortraitHistory.SOURCE_APP))
+
     def test_everyone_else_gets_a_json_404_and_nothing_changes(self):
         before = UserProfile.objects.get(user=self.patient).portrait_image.name
-        # The attending and the team nurse can open the chart, and may edit
-        # its demographics, but not its photo (self-or-admin, as in
-        # mobile_update_user).
-        for user, password in ((self.attending, 'top_secret'), (self.team_nurse, 'top_secret'),
-                               (self.stranger_doc, 'top_secret'), (self.other_patient, 'top_secret')):
-            self._login(user, password)
+        # Staff who can't open the chart, and another patient.
+        for user in (self.stranger_doc, self.stranger_nurse, self.other_patient, self.no_profile):
+            self._login(user)
             response = self._upload(self.patient.id)
             self.assertEqual(response.status_code, 404, user.username)
             self.assertEqual(response.json()['error'], 'not_found')
@@ -10929,6 +10943,15 @@ class UserPortraitUploadTests(_RBACTestBase):
         self.assertEqual(UserProfile.objects.get(user=self.patient).portrait_image.name, before)
         self.assertFalse(PortraitHistory.objects.exists())
         self.assertIsNone(self._stamp(self.patient))
+
+    def test_staff_may_not_change_another_staff_members_photo(self):
+        # Chart access is about patients; a colleague's or an admin's photo
+        # stays theirs (or an admin's) to change.
+        self._login(self.team_nurse)
+        for target in (self.attending, self.admin_user):
+            response = self._upload(target.id)
+            self.assertEqual(response.status_code, 404, target.username)
+            self.assertIsNone(api_views.portrait_version(UserProfile.objects.get(user=target)))
 
     def test_signed_out_and_wrong_method_change_nothing(self):
         self.client.logout()

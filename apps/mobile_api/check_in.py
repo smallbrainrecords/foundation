@@ -964,11 +964,12 @@ def mobile_user_portrait_upload(request, user_id):
     """POST multipart `file` -> a new profile photo from the app's Settings →
     Edit Profile (2026-11-21). Answers {success, portrait_version}.
 
-    The person themself, or an admin for anyone. Everyone else, and a user
-    that does not exist, gets JSON 404 `not_found` — never 403, which the app
-    reads as "signed out". (Staff editing a patient's demographics may not
-    change the photo: that matches `mobile_update_user`, where photos stay
-    self-or-admin.)
+    Who may: the person themself; an admin for anyone; and staff (physician,
+    mid-level, nurse, secretary) for a PATIENT whose chart they can open
+    (`_assert_patient_access`; owner decision 2026-11-21 — check-in already
+    let any staff member with chart access apply a patient's photo).
+    Everyone else, and a user that does not exist, gets JSON 404
+    `not_found` — never 403, which the app reads as "signed out".
 
     The photo is re-encoded like a check-in photo (upright, at most
     PHOTO_MAX_SIDE px, no metadata), saved under a fresh random name, and the
@@ -983,7 +984,11 @@ def mobile_user_portrait_upload(request, user_id):
         return _not_found()
     caller_role = getattr(_profile(request.user), 'role', None)
     is_self = request.user.id == target_id
-    if not (is_self or caller_role == 'admin'):
+    staff_for_patient = (
+        caller_role in ('physician', 'mid-level', 'nurse', 'secretary')
+        and UserProfile.objects.filter(user_id=target_id, role='patient').exists()
+        and api._assert_patient_access(request.user, target_id))
+    if not (is_self or caller_role == 'admin' or staff_for_patient):
         return _not_found()
     target = User.objects.filter(pk=target_id).first()
     if target is None:
