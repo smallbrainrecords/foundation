@@ -56,8 +56,9 @@ from django.views.decorators.csrf import csrf_exempt
 
 from emr import check_in_forms as forms
 from emr import simple_pdf
-from emr.models import CheckInDevice, CheckInSession, Document, UserProfile
+from emr.models import CheckInDevice, CheckInSession, Document, PortraitHistory, UserProfile
 from emr.mutation_stamp import touch_patient_stamp
+from emr.portrait_history import set_new_portrait
 from problems_app.operations import add_problem_activity
 
 from . import views as api
@@ -899,9 +900,9 @@ def mobile_check_in_apply(request, session_id):
                 return _refuse('no_photo', 400)
             with session.photo.open('rb') as handle:
                 jpeg = handle.read()
-            # A unique name every time: GCS storage overwrites by default,
-            # and a fixed name would put every patient's photo in one object.
-            profile.portrait_image.save('portrait-%s.jpg' % uuid.uuid4(), ContentFile(jpeg), save=False)
+            # A unique name every time (GCS overwrites by default); the
+            # save below keeps the photo this one replaces (PortraitHistory).
+            set_new_portrait(profile, jpeg, actor=request.user, source=PortraitHistory.SOURCE_CHECK_IN)
             applied.append('photo')
         if body.get('phone') is True and answers.get('phone'):
             profile.phone_number = answers['phone']

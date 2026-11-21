@@ -310,6 +310,16 @@ class UserProfile(models.Model):
     def __unicode__(self):
         return '%s' % (self.user.get_full_name())
 
+    def save(self, *args, **kwargs):
+        # A photo this save replaces is copied into PortraitHistory FIRST,
+        # whoever is saving (2026-11-20, see emr.portrait_history). Raises,
+        # and so saves nothing, if the old photo could not be kept.
+        update_fields = kwargs.get('update_fields')
+        if self.pk and (update_fields is None or 'portrait_image' in update_fields):
+            from emr.portrait_history import keep_replaced_portrait
+            keep_replaced_portrait(self)
+        super().save(*args, **kwargs)
+
 
 # Many To Many Relation
 class PatientController(models.Model):
@@ -2270,3 +2280,41 @@ class OfficeHandoff(models.Model):
     class Meta:
         unique_together = [('document', 'user')]
         indexes = [models.Index(fields=['user', 'done_at'], name='emr_officehandoff_user_done')]
+
+
+def set_portrait_history_path(instance, filename):
+    """Random object key for a kept copy of a replaced chart photo
+    (2026-11-20). The name never carries the patient's; the extension of
+    the photo it copies is kept."""
+    import uuid as _uuid
+    ext = os.path.splitext(filename or '')[1].lower()
+    if not ext or len(ext) > 6:
+        ext = '.jpg'
+    return 'portrait_history/{0}{1}'.format(_uuid.uuid4(), ext)
+
+
+class PortraitHistory(models.Model):
+    """A profile photo that was replaced, kept (2026-11-20).
+
+    One row per replaced photo, written by `UserProfile.save()` through
+    `emr.portrait_history.keep_replaced_portrait` BEFORE the new photo is
+    saved, so every writer is covered: the check-in iPad's apply, the
+    Django admin, the retired web forms. `image` is a
+    COPY of the old file under its own random key, so nothing a profile
+    later writes can reach it (legacy uploads were named after the user's
+    file, and GCS overwrites by default). Empty `image` = the old file was
+    already missing from storage when it was replaced; `original_name`
+    still says what the profile held. Rows are never deleted by app code.
+    """
+    SOURCE_CHECK_IN = 'check_in'
+    SOURCE_UNKNOWN = 'unknown'
+
+    user = models.ForeignKey(User, related_name='portrait_history', on_delete=models.CASCADE)
+    image = models.FileField(upload_to=set_portrait_history_path, max_length=255, blank=True)
+    original_name = models.CharField(max_length=255)
+    replaced_at = models.DateTimeField(default=timezone.now)
+    replaced_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    source = models.CharField(max_length=16, default=SOURCE_UNKNOWN)
+
+    class Meta:
+        indexes = [models.Index(fields=['user', 'replaced_at'], name='emr_portraithist_user_at')]

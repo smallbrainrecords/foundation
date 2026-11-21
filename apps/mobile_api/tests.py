@@ -38,7 +38,7 @@ from emr.models import (
     ObservationValueAudit,
     EncounterTranscriptTiming,
     TodoSuggestionStat,
-    CheckInDevice, CheckInSession,
+    CheckInDevice, CheckInSession, PortraitHistory,
     TodoProblem,
     ProblemLabel,
     MyStoryTab, MyStoryTextComponent, MyStoryTextComponentEntry,
@@ -10669,6 +10669,25 @@ class CheckInReviewTests(_CheckInBase):
         self._login(self.team_nurse)
         self._post('/api/checkin/session/%d/apply' % second, {'photo': True})
         self.assertNotEqual(UserProfile.objects.get(user=self.patient).portrait_image.name, name_one)
+
+    def test_applying_a_second_photo_keeps_the_first(self):
+        first = self._submitted()
+        self._login(self.team_nurse)
+        self._post('/api/checkin/session/%d/apply' % first, {'photo': True})
+        name_one = UserProfile.objects.get(user=self.patient).portrait_image.name
+        self.assertFalse(PortraitHistory.objects.exists())
+        second = self._sent_session_id()
+        self._verify(second)
+        self._photo(second, _jpeg(color=(1, 2, 3)))
+        self._submit(second, client_uuid='sub-2')
+        self._login(self.team_nurse)
+        self._post('/api/checkin/session/%d/apply' % second, {'photo': True})
+        row = PortraitHistory.objects.get()
+        self.assertEqual((row.user, row.original_name, row.replaced_by, row.source),
+                         (self.patient, name_one, self.team_nurse, 'check_in'))
+        with row.image.open('rb') as kept:
+            with CheckInSession.objects.get(pk=first).photo.open('rb') as taken:
+                self.assertEqual(kept.read(), taken.read())
 
     def test_reviewing_without_applying_changes_nothing_but_the_status(self):
         sid = self._submitted()
