@@ -9,6 +9,7 @@ import logging
 import mimetypes
 import datetime
 import os
+import uuid
 import re
 
 from django.conf import settings
@@ -69,6 +70,71 @@ def _iso_z(dt):
     string decodes to a space unless percent-encoded; emitting Z keeps the
     server_time -> cursor round trip safe for careless clients."""
     return dt.isoformat().replace('+00:00', 'Z')
+
+
+def requires_patient_access(view):
+    """Answer only for a chart the caller may open (`_assert_patient_access`).
+
+    For views whose URL names the chart as `patient_id`. Goes directly inside
+    `login_required` (so a signed-out caller still gets the sign-in answer)
+    and outside `transaction.atomic` / `touches_patient_stamp` (so a refusal
+    opens no transaction and moves no stamp).
+
+    The refusal is a JSON 404, never a 403: the app reads 401 and 403 as
+    "signed out" and abandons its whole push pass, and reads a 404 WITHOUT
+    JSON as "this server has no such route".
+
+    `ChartRouteAccessTests` fails when a route naming a chart has no check.
+    """
+    @functools.wraps(view)
+    def wrapped(request, *args, **kwargs):
+        patient_id = kwargs.get('patient_id')
+        if not _assert_patient_access(request.user, patient_id):
+            _patient_access_logger.warning(json.dumps({
+                'event': 'chart_access_refused',
+                'view': view.__name__,
+                'method': request.method,
+                'user_id': request.user.id,
+                'role': _role_of(request.user),
+                'patient_id': str(patient_id),
+                'serviceContext': {'service': 'smallbrain-api'},
+            }))
+            return JsonResponse({'error': 'patient_unavailable'}, status=404)
+        return view(request, *args, **kwargs)
+    wrapped._requires_patient_access = True
+    return wrapped
+
+
+def _has_clinic_standing(user):
+    """Whether a staff login currently works in the clinic: an admin, a
+    physician, or a member of a physician's team. A staff role by itself is
+    not enough to manage other people's accounts."""
+    role = _role_of(user)
+    if role in ('admin', 'physician'):
+        return True
+    if role in ('secretary', 'mid-level', 'nurse'):
+        return PhysicianTeam.objects.filter(
+            member=user, physician__profile__role='physician').exists()
+    return False
+
+
+def _staff_user(user_id):
+    """A staff account by id, or None. Where the caller supplies a user id
+    and the server answers with that person's name or details, only staff
+    may be named: any other id would read out a patient."""
+    from django.contrib.auth.models import User
+    try:
+        return User.objects.filter(
+            id=int(user_id), profile__role__in=_SEARCH_STAFF_ROLES).first()
+    except (TypeError, ValueError):
+        return None
+
+
+def _key_held_by_another_chart(model, client_uuid, patient_id, lookup):
+    """An idempotency key finds a row again; it never carries one to another
+    chart. `lookup` is the model's path to its patient id."""
+    return (model.objects.filter(client_uuid=client_uuid)
+            .exclude(**{lookup: patient_id}).exists())
 
 
 def touches_patient_stamp(view):
@@ -251,6 +317,9 @@ def mobile_register(request):
     except (UserProfile.DoesNotExist, AttributeError):
         caller_role = None
     if caller_role not in ('physician', 'mid-level', 'nurse', 'secretary', 'admin'):
+        return JsonResponse({'success': False, 'message': 'Staff access required'}, status=403)
+
+    if not _has_clinic_standing(request.user):
         return JsonResponse({'success': False, 'message': 'Staff access required'}, status=403)
 
     body = _parse_body(request)
@@ -484,6 +553,11 @@ def mobile_login(request):
     if not user or not user.is_active:
         return JsonResponse({'error': 'Invalid credentials'}, status=401)
 
+    # Every account the app knows has a profile. Refuse one without before a
+    # session exists for it, not after.
+    if not UserProfile.objects.filter(user=user).exists():
+        return JsonResponse({'error': 'No profile found'}, status=403)
+
     login(request, user)
 
     try:
@@ -587,7 +661,10 @@ def mobile_staff_set_password(request):
         if not (caller_is_admin or _assert_patient_access(request.user, target_user.id)):
             return JsonResponse({'error': 'User not found'}, status=404)
     elif target_role in ('physician', 'mid-level', 'nurse', 'secretary'):
-        pass  # any staff caller may reset a non-admin colleague
+        # Any working staff caller may reset a non-admin colleague (owner
+        # policy 2026-07-09). A login on no team is not working staff.
+        if not _has_clinic_standing(request.user):
+            return JsonResponse({'error': 'User not found'}, status=404)
     else:
         # admin target, or no resolvable role: admin only.
         if not caller_is_admin:
@@ -807,11 +884,20 @@ def mobile_upload_signature(request, user_id):
         return JsonResponse({'error': 'No file provided'}, status=400)
 
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
-    if profile.signature_image and getattr(profile.signature_image, 'name', None):
+    previous = getattr(profile.signature_image, 'name', None) if profile.signature_image else None
+    # Uploads made before 2026-11-22 share keys (every Mac sends
+    # "signature.png"): delete the old object only if nobody else points at it.
+    if previous and not (UserProfile.objects.filter(signature_image=previous)
+                         .exclude(pk=profile.pk).exists()):
         try:
             profile.signature_image.delete(save=False)
         except Exception:
             pass
+    # A key of the server's choosing: storage overwrites by name, so an
+    # uploaded file's own name must never pick the object.
+    ext = os.path.splitext(sig_file.name or '')[1].lower()
+    sig_file.name = 'signature-%s%s' % (
+        uuid.uuid4().hex, ext if ext in ('.png', '.jpg', '.jpeg') else '.png')
     profile.signature_image = sig_file
     profile.save()
 
@@ -904,8 +990,21 @@ def mobile_toggle_patient_active(request):
     except User.DoesNotExist:
         return JsonResponse({'error': 'User not found'}, status=404)
 
+    if profile.role != 'admin' and not (
+            _role_of(target_user) == 'patient'
+            and _assert_patient_access(request.user, target_user.id)):
+        # Settings offers Active only for a patient whose chart is open.
+        # A staff account is an admin's to switch.
+        return JsonResponse({'error': 'User not found'}, status=404)
     target_user.is_active = bool(is_active)
     target_user.save()
+    logging.getLogger('smallbrain.profile_edits').info(json.dumps({
+        'event': 'account_active_changed',
+        'editor_id': request.user.id,
+        'editor_role': profile.role,
+        'target_user_id': target_user.id,
+        'is_active': target_user.is_active,
+    }))
     return JsonResponse({'success': True})
 
 
@@ -1110,6 +1209,9 @@ def mobile_team_assign(request):
     try:
         member = User.objects.get(id=int(user_id))
     except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    if _role_of(member) not in _SEARCH_STAFF_ROLES:
+        # A team lists each member's details, so it holds staff only.
         return JsonResponse({'error': 'User not found'}, status=404)
 
     tm, created = PhysicianTeam.objects.get_or_create(physician=physician, member=member)
@@ -1994,6 +2096,11 @@ def _apply_encounter_relationships_and_events(encounter, body):
             parsed_dt = parse_datetime(dt_str) if dt_str else None
             if parsed_dt:
                 defaults['timestamp'] = parsed_dt
+            if _key_held_by_another_chart(
+                    EncounterEvent, client_uuid, encounter.patient_id,
+                    'encounter__patient_id'):
+                # Not this chart's event: never moved here, never rewritten.
+                continue
             ev, _ = EncounterEvent.objects.update_or_create(
                 client_uuid=client_uuid,
                 defaults=defaults,
@@ -2013,6 +2120,7 @@ def _apply_encounter_relationships_and_events(encounter, body):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @transaction.atomic
 @touches_patient_stamp
 def mobile_upload_encounter_audio(request, patient_id):
@@ -2054,6 +2162,8 @@ def mobile_upload_encounter_audio(request, patient_id):
         defaults['stoptime'] = parse_datetime(stop_time)
 
     if client_uuid:
+        if _key_held_by_another_chart(Encounter, client_uuid, patient_id, 'patient_id'):
+            return JsonResponse({'error': 'client_uuid_reused'}, status=409)
         enc, created = Encounter.objects.update_or_create(
             client_uuid=client_uuid,
             defaults=defaults,
@@ -2077,6 +2187,7 @@ def mobile_upload_encounter_audio(request, patient_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @transaction.atomic
 @touches_patient_stamp
 def mobile_create_encounter(request, patient_id):
@@ -2116,6 +2227,8 @@ def mobile_create_encounter(request, patient_id):
         defaults['stoptime'] = parse_datetime(stop_time)
 
     if client_uuid:
+        if _key_held_by_another_chart(Encounter, client_uuid, patient_id, 'patient_id'):
+            return JsonResponse({'error': 'client_uuid_reused'}, status=409)
         enc, _ = Encounter.objects.update_or_create(
             client_uuid=client_uuid,
             defaults=defaults,
@@ -2136,6 +2249,7 @@ def mobile_create_encounter(request, patient_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @transaction.atomic
 @touches_patient_stamp
 def mobile_update_encounter(request, patient_id, encounter_id):
@@ -3557,6 +3671,7 @@ def mobile_delete_problem_image(request, patient_id, image_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 def mobile_save_my_story_entry(request, patient_id, component_id):
     """POST {text} -> create a new MyStoryTextComponentEntry."""
     if request.method != 'POST':
@@ -3570,7 +3685,9 @@ def mobile_save_my_story_entry(request, patient_id, component_id):
         return JsonResponse({'error': 'Patient not found'}, status=404)
 
     try:
-        component = MyStoryTextComponent.objects.get(id=component_id)
+        # This chart's own component, or one every chart shares.
+        component = MyStoryTextComponent.objects.get(
+            Q(patient_id=patient_id) | Q(is_all=True), id=component_id)
     except MyStoryTextComponent.DoesNotExist:
         return JsonResponse({'error': 'Component not found'}, status=404)
 
@@ -4849,6 +4966,7 @@ def _apply_usual_vitals_safely(problem):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_create_problem(request, patient_id):
     """POST {problem_name, concept_id?, icd10_code?, is_active?, is_controlled?} -> create Problem.
@@ -4931,6 +5049,7 @@ def mobile_create_problem(request, patient_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_update_problem(request, patient_id, problem_id):
     """PATCH {problem_name?, concept_id?, icd10_code?, is_active?, is_controlled?, old_problem_name?}.
@@ -5072,6 +5191,7 @@ def mobile_update_problem(request, patient_id, problem_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @transaction.atomic
 @touches_patient_stamp
 def mobile_create_problem_note(request, patient_id, problem_id):
@@ -5086,6 +5206,9 @@ def mobile_create_problem_note(request, patient_id, problem_id):
     body = _parse_body(request)
     client_uuid = body.get('client_uuid')
     if client_uuid:
+        if _key_held_by_another_chart(
+                ProblemNote, client_uuid, patient_id, 'problem__patient_id'):
+            return JsonResponse({'error': 'client_uuid_reused'}, status=409)
         existing = ProblemNote.objects.filter(client_uuid=client_uuid).first()
         if existing:
             return JsonResponse({'success': True, 'id': existing.id})
@@ -5134,6 +5257,7 @@ def mobile_create_problem_note(request, patient_id, problem_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_update_problem_note(request, patient_id, problem_id, note_id):
     """PATCH {note?, note_type?} -> update; DELETE -> remove ProblemNote.
@@ -5207,6 +5331,7 @@ def mobile_update_problem_note(request, patient_id, problem_id, note_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_create_problem_label(request, patient_id, problem_id):
     """POST {name, css_class?} -> create ProblemLabel and add to problem."""
@@ -5241,6 +5366,7 @@ def mobile_create_problem_label(request, patient_id, problem_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_create_problem_relationship(request, patient_id):
     """POST {source_id, target_id} -> create ProblemRelationship."""
@@ -5270,6 +5396,7 @@ def mobile_create_problem_relationship(request, patient_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_delete_problem_relationship(request, patient_id, relationship_id):
     """DELETE -> remove one ProblemRelationship.
@@ -5313,6 +5440,7 @@ def mobile_delete_problem_relationship(request, patient_id, relationship_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_create_todo(request, patient_id):
     """POST {todo, problem_id?, due_date?, order?} -> create ToDo."""
@@ -5395,6 +5523,7 @@ def _todo_due_day(value):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_update_todo(request, patient_id, todo_id):
     """PATCH {todo?, accomplished?, due_date?, order?, problem_id?}.
@@ -5546,12 +5675,9 @@ def _log_todo_requisition_output(request, patient_id, todo_id, verb):
 
     provider_name = ''
     if provider_id:
-        from django.contrib.auth.models import User
-        try:
-            provider = User.objects.get(id=int(provider_id))
+        provider = _staff_user(provider_id)
+        if provider is not None:
             provider_name = provider.get_full_name() or provider.username
-        except (User.DoesNotExist, TypeError, ValueError):
-            pass
 
     if provider_name:
         activity = f"{verb} requisition signed by {provider_name}"
@@ -5590,6 +5716,7 @@ def mobile_log_todo_download(request, patient_id, todo_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_create_todo_comment(request, patient_id, todo_id):
     """POST {comment} -> create ToDoComment."""
@@ -5672,6 +5799,7 @@ def mobile_update_todo_comment(request, patient_id, todo_id, comment_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_create_todo_label(request, patient_id, todo_id):
     """POST {name, css_class?} -> create Label and add to todo."""
@@ -5747,6 +5875,7 @@ def mobile_remove_todo_label(request, patient_id, todo_id, label_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_add_todo_member(request, patient_id, todo_id):
     """POST {user_id} -> tag a staff member on a todo."""
@@ -5768,6 +5897,10 @@ def mobile_add_todo_member(request, patient_id, todo_id):
     except User.DoesNotExist:
         return JsonResponse({'error': 'User not found'}, status=404)
 
+    if member.id != int(patient_id) and _role_of(member) not in _SEARCH_STAFF_ROLES:
+        # Tagging writes the person's name into this chart: staff, or the
+        # chart's own patient, never another patient.
+        return JsonResponse({'error': 'User not found'}, status=404)
     tto, created = TaggedToDoOrder.objects.get_or_create(todo=todo, user=member)
     # Only write the activity row on a fresh tag — get_or_create returning
     # an existing row means the member was already tagged, and emitting a
@@ -5786,6 +5919,7 @@ def mobile_add_todo_member(request, patient_id, todo_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_remove_todo_member(request, patient_id, todo_id, user_id):
     """DELETE -> untag a staff member from a todo."""
@@ -5820,6 +5954,7 @@ def mobile_remove_todo_member(request, patient_id, todo_id, user_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_create_observation_value(request, patient_id, component_id):
     """POST {value_quantity, effective_datetime?} -> create ObservationValue."""
@@ -6056,6 +6191,7 @@ def mobile_create_observation(request, patient_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_update_observation(request, patient_id, observation_id):
     """PATCH {comments?} -> update parent Observation fields.
@@ -6130,6 +6266,7 @@ def _observation_value_audit_row(value, observation, actor, action, old, new=Non
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @transaction.atomic
 @touches_patient_stamp
 def mobile_update_observation_value(request, patient_id, value_id):
@@ -6346,6 +6483,7 @@ def mobile_todo_suggestions(request, patient_id, problem_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_observation_pin(request, patient_id, observation_id, problem_id):
     """POST -> create (or no-op if already pinned) ObservationPinToProblem;
@@ -6417,6 +6555,7 @@ def mobile_observation_pin(request, patient_id, observation_id, problem_id):
 
 @csrf_exempt
 @login_required
+@requires_patient_access
 @touches_patient_stamp
 def mobile_authenticate_problem(request, patient_id, problem_id):
     """POST -> a physician vouches for this problem as it currently reads.
@@ -6493,6 +6632,10 @@ def mobile_my_tagged_todos(request):
                               'todo__extra_problem_links')
         )
 
+        accessible = _accessible_patient_ids(request.user)
+        if accessible is not None:
+            # A tag is not access to the chart it sits on.
+            tagged_orders = tagged_orders.filter(todo__patient_id__in=accessible)
         todos = []
         for tto in tagged_orders:
             t = tto.todo
@@ -6669,6 +6812,9 @@ def mobile_update_label(request, label_id):
     except Label.DoesNotExist:
         return JsonResponse({'error': 'Label not found'}, status=404)
 
+    if label.is_all and not _has_clinic_standing(request.user):
+        # A shared label appears on every chart that carries it.
+        return JsonResponse({'error': 'Label not found'}, status=404)
     if not label.is_all and label.author_id != request.user.id:
         return JsonResponse({'error': 'Permission denied'}, status=403)
 
@@ -7532,7 +7678,6 @@ def mobile_fax_requisition(request, patient_id):
     if not _assert_patient_access(request.user, patient_id):
         return JsonResponse({'error': 'Patient not found'}, status=404)
 
-    from django.contrib.auth.models import User
     from django.db import IntegrityError
     from django.utils import timezone
     from emr import ringcentral_fax
@@ -7573,11 +7718,9 @@ def mobile_fax_requisition(request, patient_id):
         return JsonResponse({'error': 'fax_not_configured'}, status=503)
 
     provider_name = ''
-    try:
-        provider = User.objects.get(id=int(request.POST.get('provider_id') or 0))
+    provider = _staff_user(request.POST.get('provider_id') or 0)
+    if provider is not None:
         provider_name = provider.get_full_name() or provider.username
-    except (User.DoesNotExist, ValueError):
-        pass
 
     # Claim the client_uuid before anything is faxed. The unique column is
     # the mutex: of two requests with one uuid, one creates the row.

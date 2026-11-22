@@ -15,6 +15,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 def home(request):
@@ -23,7 +24,14 @@ def home(request):
     # open Dependabot advisories, served unauthenticated for zero product
     # benefit) and no longer redirects authenticated users into the legacy
     # web app. The mobile app is the only client (owner policy, recorded
-    # 2026-07-09); Django exists to serve the mobile API. Track B2 removes
-    # the legacy routes and the static bundle itself — EXCEPT `^my_story/`,
-    # which the mobile app still calls (`/my_story/<pid>/get_my_story`).
+    # 2026-07-09); Django exists to serve the mobile API. The legacy routes
+    # are unmounted (2026-11-22; `project.urls` is the whole list), except
+    # `/my_story/<pid>/get_my_story`, which the mobile app still calls.
     return JsonResponse({'service': 'smallbrain-api', 'status': 'ok'})
+
+
+@csrf_exempt
+def signed_out(request):
+    """LOGIN_URL. The app reads 401 as "session expired" and asks for the
+    password; the retired sign-in page used to answer here."""
+    return JsonResponse({'success': False, 'error': 'signed_out'}, status=401)

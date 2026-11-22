@@ -43,6 +43,18 @@ def track_tab_click(request):
     return ajax_response(resp)
 
 
+def _without_other_patients(tabs, patient_id):
+    """A shared tab or component belongs to whichever chart it was first made
+    on, and its serializer nests that person. Never name them on another
+    chart. The app assigns everything to the chart it asked for."""
+    for tab in tabs:
+        for row in [tab] + list(tab.get('my_story_tab_components') or []):
+            owner = row.get('patient')
+            if owner and owner.get('id') != patient_id:
+                row['patient'] = None
+    return tabs
+
+
 @login_required
 @timeit
 def get_my_story(request, patient_id):
@@ -70,7 +82,8 @@ def get_my_story(request, patient_id):
             myStoryTabQuerySet = myStoryTabQuerySet.filter(private=False)
 
         resp['success'] = True
-        resp['info'] = MyStoryTabSerializer(myStoryTabQuerySet, many=True).data
+        resp['info'] = _without_other_patients(
+            MyStoryTabSerializer(myStoryTabQuerySet, many=True).data, int(patient_id))
     return ajax_response(resp)
 
 

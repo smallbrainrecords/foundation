@@ -15,92 +15,32 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
-import django
 from django.conf.urls import include
-from django.contrib.auth import views
-from django.urls import path, re_path
+from django.contrib.auth.decorators import login_required
+from django.urls import re_path
 
-from a1c_app import urls as a1c_app_urls
-from apps.colons_app import urls as colons_app_urls
-from apps.data_app import urls as data_app_urls
-from apps.document_app import urls
-from apps.document_app import urls as document_app_urls
-from emr import views as emr_views
-from emr.views import LoginError
-from apps.encounters_app import urls as encounters_app_urls
-from apps.goals_app import urls as goals_app_urls
-from apps.inr_app import urls as inr_app_urls
-from apps.medication_app import urls as medication_app_urls
-from apps.my_story_app import urls as my_story_app_urls
-from apps.problems_app import urls as problems_app_urls
-from apps.project_admin_app import urls as project_admin_app_urls
-from apps.todo_app import urls as todo_app_urls
 from apps.mobile_api import urls as mobile_api_urls
-from apps.users_app import urls as users_app_urls
+from apps.mobile_api.views import requires_patient_access
+from apps.my_story_app.views import get_my_story
+from project.views import home, signed_out
 
-# import settings
-from project import settings
-from project.views import home
-
-# from genericadmin.admin import *
-
-
-# admin.autodiscover()
-
-
+# The app is the only client. This is the whole list of what the server
+# answers: the retired web application's routes are not mounted, and must not
+# be mounted again (`project.tests.test_routes` pins the list). A new route
+# belongs in `apps.mobile_api.urls`, behind that module's checks.
 urlpatterns = [
-    # path('__debug__/', include(debug_toolbar.urls)),
     re_path(r"^$", home, name="project_home"),
-    # re_path(r'^admin/', include(admin.site.urls)),
-    re_path(r"^project/admin/", include(project_admin_app_urls)),
-    re_path(r"^login-error/$", LoginError.as_view()),
-    # Old user views
-    # re_path(r'^logout/$', django.contrib.auth.views.LogoutView.as_view(), {'next_page': '/'}),
-    # Old views
-    re_path(r"^list_of_unregistered_users/$", emr_views.list_of_unregistered_users),
-    re_path(r"^register_users/$", emr_views.register_users),
-    re_path(r"^list_of_users/$", emr_views.list_users),
-    re_path(r"^get_problems/(?P<patient_id>\d+)/$", emr_views.get_patient_data),
-    re_path(r"^change_status/$", emr_views.change_status),
-    re_path(r"^patient/(?P<patient_id>\d+)/add_problem/$", emr_views.add_problem),
-    re_path(
-        r"^add_patient_summary/(?P<patient_id>\d+)/$", emr_views.save_patient_summary
-    ),
-    re_path(r"^update/$", emr_views.update),
-    # New URLS
-    re_path(r"^list_terms/$", emr_views.list_snomed_terms),
-    # Mobile API (CSRF-exempt for iOS app)
     re_path(r"^api/", include(mobile_api_urls)),
-    # Users
-    re_path(r"^u/", include(users_app_urls)),
-    # Problems
-    re_path(r"^p/", include(problems_app_urls)),
-    # Goals
-    re_path(r"^g/", include(goals_app_urls)),
-    # Encounters
-    re_path(r"^enc/", include(encounters_app_urls)),
-    # Todos
-    re_path(r"^todo/", include(todo_app_urls)),
-    # Observations
-    re_path(r"^a1c/", include(a1c_app_urls)),
-    # colon cancer
-    re_path(r"^colon_cancer/", include(colons_app_urls)),
-    # my story
-    re_path(r"^my_story/", include(my_story_app_urls)),
-    # data
-    re_path(r"^data/", include(data_app_urls)),
-    # inr
-    re_path(r"^inr/", include(inr_app_urls)),
-    re_path(r"^medication/", include(medication_app_urls)),
-    # document
-    re_path(r"^docs/", include(document_app_urls)),
-    # Pain Avatars
-    re_path(r"session_security/", include("session_security.urls")),
-    # MEDIA AND STATIC FILES
-    re_path(r"^media/(?P<path>.*)$", emr_views.serve_private_file),
+    # LOGIN_URL: where `login_required` sends a signed-out request. It must
+    # answer 401. A 404 here reads to older app builds as "that record is
+    # gone", and they drop the edit they were sending.
+    re_path(r"^u/login/?$", signed_out),
+    # The one route of the old web app that the mobile app still calls.
     re_path(
-        r"^static/(?P<path>.*)$",
-        django.views.static.serve,
-        {"document_root": settings.STATIC_ROOT, "show_indexes": True},
+        r"^my_story/(?P<patient_id>\d+)/get_my_story$",
+        login_required(requires_patient_access(get_my_story)),
     ),
+    # SessionSecurityMiddleware reverses this name on signed-in requests;
+    # without it every such request is a 500.
+    re_path(r"^session_security/", include("session_security.urls")),
 ]

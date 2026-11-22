@@ -86,13 +86,10 @@ FAX_STAFF_FILE_ENABLED = env.bool('FAX_STAFF_FILE_ENABLED', default=True)
 DOCUMENT_EDIT_ENABLED = env.bool('DOCUMENT_EDIT_ENABLED', default=True)
 
 # Per-patient access check on the mobile chart endpoint (mobile_patient_full).
-# Off, the check only LOGS the requests it would refuse
-# (`patient_full_would_refuse` on the smallbrain.patient_access logger) and
-# serves them as before; on, it refuses them. Starts off because staff with no
-# team assignment read charts today, and refusing them unannounced would lock
-# a clinician out mid-clinic. Turn on by setting the environment variable
-# PATIENT_FULL_ACCESS_ENFORCED=true on the service once the log is clean.
-PATIENT_FULL_ACCESS_ENFORCED = env.bool('PATIENT_FULL_ACCESS_ENFORCED', default=False)
+# ON since 2026-11-22, after a month report-only with nobody it would have
+# refused. PATIENT_FULL_ACCESS_ENFORCED=false on the service is the emergency
+# off switch: refusals are then only logged (`patient_full_would_refuse`).
+PATIENT_FULL_ACCESS_ENFORCED = env.bool('PATIENT_FULL_ACCESS_ENFORCED', default=True)
 
 SECRET_KEY = env('SECRET_KEY', default="{~9@e\1VKr|zlM&vl5ZJTOqBX#b!Aa1cv;pN!J\H=cL=<48<|7r4s1Z!U")
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

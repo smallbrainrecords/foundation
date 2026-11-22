@@ -45,6 +45,15 @@ from emr.models import (
 )
 
 
+def _give_chart(physician, *patients):
+    """Make `physician` each patient's physician: chart routes answer only
+    someone who may open the chart (2026-11-22)."""
+    UserProfile.objects.get_or_create(user=physician, defaults={'role': 'physician'})
+    for patient in patients:
+        UserProfile.objects.get_or_create(user=patient, defaults={'role': 'patient'})
+        PatientController.objects.get_or_create(physician=physician, patient=patient)
+
+
 class MobileUpdateEncounterTests(TestCase):
     def setUp(self):
         self.physician = User.objects.create_user(
@@ -69,6 +78,7 @@ class MobileUpdateEncounterTests(TestCase):
 
         self.client = Client()
         self.client.login(username='doc_a', password='top_secret')
+        _give_chart(self.physician, self.patient, self.other_patient)
 
     # ---- success path ----
 
@@ -186,6 +196,8 @@ class MobileEncounterAudioEndOffsetTests(TestCase):
         )
         self.url = f'/api/patient/{self.patient.id}/encounter/{self.encounter.id}'
         self.client = Client()
+        _give_chart(self.physician, self.patient)
+        _give_chart(self.colleague, self.patient)
 
     def _patch(self, body, as_user='doc_owner'):
         self.client.logout()
@@ -297,6 +309,7 @@ class MobileCreateEncounterTests(TestCase):
         )
         self.client = Client()
         self.client.login(username='doc_a', password='top_secret')
+        _give_chart(self.physician, self.patient)
 
     def test_creates_encounter_with_all_fields(self):
         url = f'/api/patient/{self.patient.id}/encounter'
@@ -367,6 +380,7 @@ class MobileEncounterClientUuidIdempotencyTests(TestCase):
         self.client = Client()
         self.client.login(username='doc_a', password='top_secret')
         self.url = f'/api/patient/{self.patient.id}/encounter'
+        _give_chart(self.physician, self.patient)
 
     def test_repeat_create_with_same_client_uuid_returns_same_row(self):
         body = {
@@ -456,6 +470,7 @@ class MobileEncounterRelationshipsAndEventsTests(TestCase):
             client_uuid='dddddddd-dddd-dddd-dddd-dddddddddddd',
         )
         self.url = f'/api/patient/{self.patient.id}/encounter/{self.enc.id}'
+        _give_chart(self.physician, self.patient)
 
     def test_patch_with_relationships_replaces_links(self):
         body = {
@@ -607,6 +622,7 @@ class MobileEncounterStaleAndCrossPatientLinkTests(TestCase):
             client_uuid='ffffffff-1111-2222-3333-ffffffffffff',
         )
         self.url = f'/api/patient/{self.patient.id}/encounter/{self.enc.id}'
+        _give_chart(self.physician, self.patient, self.other_patient)
 
     def _patch(self, body):
         return self.client.patch(self.url, data=json.dumps(body),
@@ -723,6 +739,7 @@ class MobileDeleteProblemRelationshipTests(TestCase):
 
         self.client = Client()
         self.client.login(username='rel_doc', password='top_secret')
+        _give_chart(self.physician, self.patient, self.other_patient)
 
     def _url(self, patient_id=None, relationship_id=None):
         pid = patient_id if patient_id is not None else self.patient.id
@@ -808,6 +825,7 @@ class MobileUpdateProblemNoteTests(TestCase):
         )
         self.client = Client()
         self.client.login(username='doc_a', password='top_secret')
+        _give_chart(self.physician, self.patient)
 
     def _url(self, note_id=None):
         nid = note_id if note_id is not None else self.note.id
@@ -937,6 +955,7 @@ class MobileUpdateProblemNoteTests(TestCase):
         other = User.objects.create_user(
             username='pt_b', password='unused', email='pt_b@example.com',
         )
+        _give_chart(self.physician, other)  # the join under test, not the gate
         url = f'/api/patient/{other.id}/problem/{self.problem.id}/note/{self.note.id}'
         # DELETE on a wrong patient URL collapses into the same "DoesNotExist
         # under this join" code path as a genuinely-gone note. We return 200
@@ -981,6 +1000,7 @@ class _ObservationTestBase(TestCase):
         )
         self.client = Client()
         self.client.login(username='doc_a', password='top_secret')
+        _give_chart(self.physician, self.patient)
 
     def pin_to(self, problem):
         return ObservationPinToProblem.objects.create(
@@ -1261,12 +1281,7 @@ class MobileObservationValueAuditRowTests(_ObservationTestBase):
         self.assertFalse(ObservationValueAudit.objects.exists())
 
     def test_patient_full_lists_deleted_value_ids_under_the_observations_gate(self):
-        # The chart read is access-checked (mobile_patient_full); give this
-        # fixture's users the roles and the link a real physician and patient
-        # have, so the test holds with enforcement on.
-        UserProfile.objects.create(user=self.physician, role='physician')
-        UserProfile.objects.create(user=self.patient, role='patient')
-        PatientController.objects.create(patient=self.patient, physician=self.physician)
+        # The base fixture gives the physician this chart (`_give_chart`).
         vid = self.value.id
         # Before any delete: key present, empty — "prune nothing".
         resp = self.client.get(f'/api/patient/{self.patient.id}/full')
@@ -2408,7 +2423,7 @@ class MobileCreateProblemNoteTests(TestCase):
         
         # Create Medical Assistant (MA)
         self.ma_user = User.objects.create_user(username='ma1')
-        UserProfile.objects.create(user=self.ma_user, role='ma')
+        UserProfile.objects.create(user=self.ma_user, role='nurse')  # 'ma' was never a role
         
         # Create Problem
         self.problem = Problem.objects.create(
@@ -2417,6 +2432,7 @@ class MobileCreateProblemNoteTests(TestCase):
         )
         
         self.url = f"/api/patient/{self.patient.id}/problem/{self.problem.id}/note"
+        PhysicianTeam.objects.create(physician=self.physician, member=self.ma_user)
 
     def test_physician_creates_note(self):
         self.client.force_login(self.physician)
@@ -5210,6 +5226,7 @@ class MobileCreateTodoProblemBeltTests(TestCase):
         self.url = f'/api/patient/{self.patient.id}/todo'
         self.client = Client()
         self.client.login(username='doc_belt', password='top_secret')
+        _give_chart(self.physician, self.patient, self.other_patient)
 
     def _post(self, body):
         return self.client.post(
@@ -5300,6 +5317,9 @@ class ProblemAuthenticationRuleTests(TestCase):
         self.problem = Problem.objects.create(
             patient=self.patient, problem_name='Hypertension')
         self.pid = self.patient.id
+        # Both can open the chart: what is under test is the attestation rule.
+        for member in (self.nurse, self.midlevel):
+            PhysicianTeam.objects.create(physician=self.physician, member=member)
 
     # -- helpers -------------------------------------------------------
 
@@ -7766,8 +7786,8 @@ class MobileTodoProblemLinkTests(_RBACTestBase):
 @override_settings(PATIENT_FULL_ACCESS_ENFORCED=True)
 class MobilePatientFullAccessTests(_RBACTestBase):
     """`mobile_patient_full` answers only for a chart the caller may see,
-    once `PATIENT_FULL_ACCESS_ENFORCED` is on (see the report-only tests
-    below for the default).
+    while `PATIENT_FULL_ACCESS_ENFORCED` is on, as it is by default (see the
+    report-only tests below for the switched-off behaviour).
 
     Until 2026-10-22 it checked only that someone was signed in, so any
     account — a patient's included — could read any chart by id.
@@ -7830,9 +7850,8 @@ class MobilePatientFullAccessTests(_RBACTestBase):
 
 
 class MobilePatientFullReportOnlyTests(_RBACTestBase):
-    """With `PATIENT_FULL_ACCESS_ENFORCED` off (the default), a request the
-    check would refuse is served exactly as before and logged, so the owner
-    can see who would be locked out before switching enforcement on."""
+    """With `PATIENT_FULL_ACCESS_ENFORCED` switched off (the emergency
+    switch), a request the check would refuse is served and logged."""
 
     LOGGER = 'smallbrain.patient_access'
 
@@ -7840,9 +7859,9 @@ class MobilePatientFullReportOnlyTests(_RBACTestBase):
         super().setUp()
         Problem.objects.create(patient=self.patient, problem_name='Hypertension')
 
-    def test_enforcement_is_off_unless_the_environment_turns_it_on(self):
+    def test_enforcement_is_on_unless_the_environment_turns_it_off(self):
         from django.conf import settings
-        self.assertFalse(settings.PATIENT_FULL_ACCESS_ENFORCED)
+        self.assertTrue(settings.PATIENT_FULL_ACCESS_ENFORCED)
 
     @override_settings(PATIENT_FULL_ACCESS_ENFORCED=False)
     def test_a_request_it_would_refuse_is_served_and_logged(self):
