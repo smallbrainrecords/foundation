@@ -16,6 +16,7 @@ import sys
 from django.test import TestCase, TransactionTestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.db.models.fields.files import FieldFile
 from unittest import mock
 from django.db import transaction
@@ -3604,6 +3605,7 @@ class StampCoverageSweepTests(TestCase):
         'mobile_office_move_in': 'OfficeMoveInTests',
         'mobile_office_to_chart': 'OfficeToChartTests',
         'mobile_office_from_chart': 'OfficeFromChartTests',
+        'mobile_update_label': 'OfflineCopyStampTests',
     }
 
     ALLOWLIST = {
@@ -3620,7 +3622,6 @@ class StampCoverageSweepTests(TestCase):
         'mobile_unassigned_document_claim_heartbeat': 'pool claim state, patient-unbound',
         'mobile_unassigned_document_release': 'pool claim state, patient-unbound',
         'mobile_unassigned_document_delete': 'pool row never belonged to a patient (also PATCH: renames the pool row)',
-        'mobile_save_my_story_entry': 'poll pull excludes My Story by design; liveness via tab-appear refetch (Gap C decision C2, 2026-07-10)',
         'mobile_document_text': 'derived OCR index, excluded from patient_full by design; a stamp would trigger pulls that fetch nothing, and a backfill would bump once per document. Liveness via document-texts refetch on search (2026-08-17)',
         'mobile_openemr_patient_link': 'cross-system link, not part of patient_full; the app reads it fresh on every ⌃O (2026-11-03)',
         'mobile_fax_recipients': 'practice fax directory, not chart data',
@@ -3642,7 +3643,6 @@ class StampCoverageSweepTests(TestCase):
         'mobile_office_restore': 'restores a version of an Office document, which is on no chart',
         'mobile_office_fax': 'faxes an Office document out, not chart data',
         'mobile_create_label': 'global label catalog, not patient-scoped',
-        'mobile_update_label': 'global label catalog, not patient-scoped',
         'mobile_batch_events': 'analytics sink, not chart data',
         'mobile_batch_errors': 'error-report sink, not chart data',
         'kiosk_pair': 'check-in iPad pairing, not chart data',
@@ -3695,6 +3695,9 @@ class StampCoverageSweepTests(TestCase):
         'mobile_check_in_sessions',
         'mobile_check_in_photo',
         'mobile_portrait_file',
+        'mobile_offline_charts',
+        'mobile_offline_files',
+        'mobile_offline_file_urls',
     }
 
     @staticmethod
@@ -3788,10 +3791,10 @@ class StampCoverageSweepTests(TestCase):
         for view_name, test_class_name in self.MANUAL_TOUCH.items():
             self.assertIn(view_name, callbacks)
             src = inspect.getsource(inspect.unwrap(callbacks[view_name]))
-            self.assertIn(
-                'touch_patient_stamp(', src,
+            self.assertRegex(
+                src, r'touch_patient_stamps?\(',
                 '%s is in MANUAL_TOUCH but its source has no '
-                'touch_patient_stamp call' % view_name)
+                'touch_patient_stamp(s) call' % view_name)
             self.assertTrue(
                 hasattr(module, test_class_name),
                 'MANUAL_TOUCH names a missing test class: %s' % test_class_name)
@@ -11937,3 +11940,546 @@ class OfficeFromChartTests(_OfficeBase):
         self._login(self.stranger_nurse)
         self.assertEqual(self._copy().json()['error'], 'patient_not_found')
 
+
+
+# ---------------------------------------------------------------------------
+# The offline copy (2026-11-22): what is in each Mac's copy, and for whom
+# ---------------------------------------------------------------------------
+
+class _OfflineCopyTestBase(_RBACTestBase):
+    """`self.patient` is the attending's; `stranger_patient` the stranger
+    physician's; `inactive` the attending's, switched off."""
+
+    def setUp(self):
+        super().setUp()
+        self.stranger_patient = self._patient('pt_stranger', self.stranger_doc)
+        self.inactive = self._patient('pt_inactive', self.attending)
+        User.objects.filter(id=self.inactive.id).update(is_active=False)
+        self.now = timezone.now()
+
+    def _patient(self, username, physician):
+        user = User.objects.create_user(username=username, password='top_secret')
+        UserProfile.objects.create(user=user, role='patient')
+        PatientController.objects.create(patient=user, physician=physician)
+        return user
+
+    def _document(self, path, patient=None, team=None, created=None, size=1234):
+        document = Document.objects.create(
+            author=self.attending, patient=patient, team=team,
+            document_name=path, file_size=size, extracted_text='potassium 4.1 ' * 300)
+        Document.objects.filter(id=document.id).update(
+            document=path, created_on=created or self.now)
+        return document
+
+    def _office(self, document):
+        from emr.models import OfficeDocument
+        return OfficeDocument.objects.create(document=document, moved_at=self.now)
+
+    def _image(self, patient, path='problem_images/a.jpg', with_problem=True):
+        problem = Problem.objects.create(patient=patient, problem_name='Rash') if with_problem else None
+        image = PatientImage.objects.create(patient=patient, problem=problem)
+        PatientImage.objects.filter(id=image.id).update(image=path)
+        return image
+
+    def _portrait(self, patient, path='cover_image/p.jpg'):
+        # update(), not save(): saving keeps the replaced photo, which needs storage.
+        UserProfile.objects.filter(user=patient).update(portrait_image=path)
+
+    def _get(self, path, user=None, **query):
+        self.client.force_login(user or self.attending)
+        return self.client.get('/api/offline/' + path, query)
+
+
+class OfflineCopyChartListTests(_OfflineCopyTestBase):
+
+    def _ids(self, user):
+        return set(self._get('charts', user).json()['patient_ids'])
+
+    def test_each_role_gets_exactly_the_active_charts_it_may_open(self):
+        from apps.mobile_api.views import _assert_patient_access
+        patients = [self.patient, self.other_patient, self.stranger_patient, self.inactive]
+        for user in (self.attending, self.stranger_doc, self.team_nurse, self.stranger_nurse,
+                     self.admin_user):
+            expected = {
+                p.id for p in patients
+                if p.id != self.inactive.id and _assert_patient_access(user, p.id)
+            }
+            listed = self._ids(user)
+            self.assertEqual(listed & {p.id for p in patients}, expected, user.username)
+            self.assertNotIn(self.inactive.id, listed, user.username)
+            self.assertNotIn(self.attending.id, listed, 'staff are not charts')
+
+    def test_patients_and_profileless_logins_get_a_json_404(self):
+        for user in (self.other_patient, self.no_profile):
+            for path in ('charts', 'files', 'file-urls'):
+                response = self._get(path, user, keys='document:1')
+                self.assertEqual(response.status_code, 404, (user.username, path))
+                self.assertEqual(response.json()['error'], 'not_found', 'never 403, never HTML')
+
+    def test_a_signed_out_request_is_sent_to_sign_in(self):
+        self.client.logout()
+        self.assertEqual(self.client.get('/api/offline/charts').status_code, 302)
+
+    def test_the_first_list_carries_every_stamp(self):
+        PatientMutationStamp.objects.create(
+            patient=self.patient, last_mutation_at=self.now - datetime.timedelta(days=40))
+        body = self._get('charts').json()
+        self.assertTrue(body['success'] and body['enabled'] and body['full'])
+        self.assertEqual([row['id'] for row in body['changed']], [self.patient.id])
+
+    def test_since_narrows_the_stamps_never_the_chart_ids(self):
+        quiet = self._patient('pt_quiet', self.attending)
+        PatientMutationStamp.objects.create(
+            patient=quiet, last_mutation_at=self.now - datetime.timedelta(hours=2))
+        PatientMutationStamp.objects.create(patient=self.patient, last_mutation_at=self.now)
+        since = (self.now - datetime.timedelta(hours=1)).isoformat()
+        body = self._get('charts', since=since).json()
+        self.assertFalse(body['full'])
+        self.assertEqual(set(body['patient_ids']), {self.patient.id, quiet.id})
+        self.assertEqual([row['id'] for row in body['changed']], [self.patient.id])
+
+    def test_another_physicians_stamp_is_not_listed(self):
+        PatientMutationStamp.objects.create(patient=self.stranger_patient, last_mutation_at=self.now)
+        self.assertEqual(self._get('charts').json()['changed'], [])
+
+    def test_an_unencoded_plus_and_a_bad_since(self):
+        spaced = (self.now - datetime.timedelta(hours=1)).isoformat().replace('+', ' ')
+        self.assertEqual(self._get('charts', since=spaced).status_code, 200)
+        for bad in ('yesterday', '2026-02-31T09:00:00Z'):
+            response = self._get('charts', since=bad)
+            self.assertEqual(response.status_code, 400, bad)
+            self.assertEqual(response.json()['error'], 'invalid_since')
+
+    def test_server_time_is_read_before_the_lists(self):
+        from apps.mobile_api import offline_copy
+        read_at = []
+        real = offline_copy.active_patient_ids
+
+        def spy(*args, **kwargs):
+            read_at.append(timezone.now())
+            return real(*args, **kwargs)
+
+        with mock.patch.object(offline_copy, 'active_patient_ids', side_effect=spy):
+            body = self._get('charts').json()
+        self.assertLessEqual(parse_datetime(body['server_time']), read_at[0])
+
+    def test_the_first_list_is_most_recently_active_first(self):
+        seen = self._patient('pt_seen', self.attending)
+        edited = self._patient('pt_edited', self.attending)
+        for patient in (self.patient, seen):
+            Encounter.objects.create(physician=self.attending, patient=patient)
+        PatientMutationStamp.objects.create(patient=edited, last_mutation_at=self.now)
+        never = self._patient('pt_never', self.attending)
+        ordered = self._get('charts').json()['patient_ids']
+        self.assertEqual(set(ordered[:2]), {seen.id, edited.id})
+        self.assertEqual(ordered[2], self.patient.id)
+        self.assertEqual(ordered[-1], never.id)
+
+    def test_a_patient_made_active_again_is_listed_with_no_stamp(self):
+        User.objects.filter(id=self.inactive.id).update(is_active=True)
+        body = self._get('charts', since=self.now.isoformat()).json()
+        self.assertIn(self.inactive.id, body['patient_ids'])
+
+    def test_patient_full_and_the_list_write_the_stamp_identically(self):
+        PatientMutationStamp.objects.create(patient=self.patient, last_mutation_at=self.now)
+        listed = self._get('charts').json()['changed'][0]['changed_at']
+        full = self.client.get('/api/patient/%d/full' % self.patient.id).json()
+        self.assertEqual(full['chart_changed_at'], listed, 'the app compares these strings')
+
+    def test_patient_full_has_the_key_before_any_stamp(self):
+        self.client.force_login(self.attending)
+        full = self.client.get('/api/patient/%d/full' % self.patient.id).json()
+        self.assertIn('chart_changed_at', full)
+        self.assertIsNone(full['chart_changed_at'])
+
+    @override_settings(OFFLINE_COPY_ENABLED=False)
+    def test_the_kill_switch(self):
+        for path in ('charts', 'files', 'file-urls'):
+            body = self._get(path, keys='document:1').json()
+            self.assertEqual(body, {'success': True, 'enabled': False}, path)
+
+    def test_only_get(self):
+        self.client.force_login(self.attending)
+        self.assertEqual(self.client.post('/api/offline/charts').status_code, 405)
+
+    def test_the_query_count_does_not_grow_with_charts(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        self.client.force_login(self.attending)
+
+        def count(path):
+            with CaptureQueriesContext(connection) as queries:
+                self.assertEqual(self.client.get('/api/offline/' + path).status_code, 200)
+            return len([q for q in queries if 'django_session' not in q['sql']
+                        and 'SAVEPOINT' not in q['sql']])
+
+        count('charts')  # the first request writes session state
+        before = {path: count(path) for path in ('charts', 'files')}
+        for n in range(6):
+            patient = self._patient('pt_many_%d' % n, self.attending)
+            PatientMutationStamp.objects.create(patient=patient, last_mutation_at=self.now)
+            self._document('documents/many%d.pdf' % n, patient=patient)
+        self.assertEqual({path: count(path) for path in ('charts', 'files')}, before)
+
+
+class OfflineCopyFileListTests(_OfflineCopyTestBase):
+
+    def _files(self, user=None):
+        return {f['key']: f for f in self._get('files', user).json()['files']}
+
+    def test_chart_files_of_the_past_year_on_active_charts_only(self):
+        recent = self._document('documents/recent.pdf', patient=self.patient)
+        old = self._document('documents/old.pdf', patient=self.patient,
+                             created=self.now - datetime.timedelta(days=370))
+        inactive = self._document('documents/inactive.pdf', patient=self.inactive)
+        theirs = self._document('documents/theirs.pdf', patient=self.stranger_patient)
+        fileless = self._document('', patient=self.patient)
+        files = self._files()
+        row = files['document:%d' % recent.id]
+        self.assertEqual(
+            (row['kind'], row['patient_id'], row['file_path'], row['file_size']),
+            ('chart', self.patient.id, 'documents/recent.pdf', 1234))
+        for absent in (old, inactive, theirs, fileless):
+            self.assertNotIn('document:%d' % absent.id, files)
+
+    def test_the_window_is_a_calendar_year(self):
+        from apps.mobile_api.offline_copy import files_since
+        utc = datetime.timezone.utc
+        self.assertEqual(files_since(datetime.datetime(2026, 11, 22, 9, tzinfo=utc)),
+                         datetime.datetime(2025, 11, 22, 9, tzinfo=utc))
+        self.assertEqual(files_since(datetime.datetime(2028, 2, 29, tzinfo=utc)),
+                         datetime.datetime(2027, 2, 28, tzinfo=utc))
+
+    def test_the_pool_is_the_logins_own_teams_whatever_its_age(self):
+        from emr.models import DocumentReview
+        waiting = self._document('documents/waiting.pdf', team=self.attending,
+                                 created=self.now - datetime.timedelta(days=400))
+        theirs = self._document('documents/their_fax.pdf', team=self.stranger_doc)
+        aside = self._document('documents/aside.pdf', team=self.attending)
+        DocumentReview.objects.create(document=aside, state='set_aside')
+        for user in (self.attending, self.team_nurse):
+            files = self._files(user)
+            self.assertEqual(files['document:%d' % waiting.id]['kind'], 'pool')
+            self.assertEqual(files['document:%d' % waiting.id]['team_id'], self.attending.id)
+            self.assertNotIn('document:%d' % theirs.id, files)
+            self.assertNotIn('document:%d' % aside.id, files)
+        self.assertIn('document:%d' % theirs.id, self._files(self.admin_user))
+
+    def test_the_list_says_what_it_covers(self):
+        body = self._get('files', self.team_nurse).json()
+        self.assertEqual(body['team_ids'], [self.attending.id])
+        self.assertEqual(body['patient_ids'], [self.patient.id])
+        self.assertTrue(body['since'].endswith('Z'))
+        self.assertIsNone(self._get('files', self.admin_user).json()['team_ids'])
+
+    def test_every_staff_member_gets_every_office_document_once(self):
+        document = self._document('documents/audit.pdf', team=self.attending,
+                                  created=self.now - datetime.timedelta(days=500))
+        self._office(document)
+        for user in (self.attending, self.team_nurse, self.stranger_nurse):
+            rows = [f for f in self._get('files', user).json()['files'] if f['id'] == document.id]
+            self.assertEqual([f['kind'] for f in rows], ['office'], user.username)
+
+    @override_settings(OFFICE_ENABLED=False)
+    def test_no_office_files_while_office_is_off(self):
+        self._office(self._document('documents/audit.pdf'))
+        self.assertEqual(self._files(), {})
+
+    def test_problem_photos_of_any_age_and_chart_photos(self):
+        from apps.mobile_api.views import portrait_version
+        photo = self._image(self.patient)
+        PatientImage.objects.filter(id=photo.id).update(
+            datetime=self.now - datetime.timedelta(days=900))
+        off_chart = self._image(self.patient, 'problem_images/b.jpg', with_problem=False)
+        theirs = self._image(self.stranger_patient, 'problem_images/c.jpg')
+        self._portrait(self.patient)
+        files = self._files()
+        self.assertEqual(files['image:%d' % photo.id]['patient_id'], self.patient.id)
+        self.assertNotIn('image:%d' % off_chart.id, files, 'on no problem, so on no chart')
+        self.assertNotIn('image:%d' % theirs.id, files)
+        portrait = files['portrait:%d' % self.patient.id]
+        self.assertEqual(portrait['version'],
+                         portrait_version(UserProfile.objects.get(user=self.patient)))
+
+    def test_the_default_avatar_is_no_photo(self):
+        self.assertNotIn('portrait:%d' % self.patient.id, self._files())
+
+    def test_newest_first(self):
+        older = self._document('documents/older.pdf', patient=self.patient,
+                               created=self.now - datetime.timedelta(days=3))
+        newer = self._document('documents/newer.pdf', patient=self.patient)
+        keys = [f['key'] for f in self._get('files').json()['files']]
+        self.assertEqual(keys, ['document:%d' % newer.id, 'document:%d' % older.id])
+
+    def test_a_new_version_shows_as_a_new_file_path(self):
+        document = self._document('documents/v1.pdf', patient=self.patient)
+        Document.objects.filter(id=document.id).update(document='documents/v2.pdf')
+        self.assertEqual(self._files()['document:%d' % document.id]['file_path'], 'documents/v2.pdf')
+
+
+class OfflineCopyFileURLTests(_OfflineCopyTestBase):
+
+    def _urls(self, keys, user=None, url='https://storage.example/signed'):
+        sign = mock.Mock(return_value=url)
+        with mock.patch('apps.mobile_api.views._media_url_signer', return_value=sign) as factory:
+            response = self._get('file-urls', user, keys=','.join(keys))
+        return response, sign, factory
+
+    def test_signs_what_the_list_holds_with_one_signer(self):
+        chart = self._document('documents/chart.pdf', patient=self.patient)
+        pool = self._document('documents/pool.pdf', team=self.attending)
+        office = self._document('documents/office.pdf')
+        self._office(office)
+        photo = self._image(self.patient)
+        self._portrait(self.patient)
+        keys = ['document:%d' % chart.id, 'document:%d' % pool.id, 'document:%d' % office.id,
+                'image:%d' % photo.id, 'portrait:%d' % self.patient.id]
+        response, sign, factory = self._urls(keys)
+        body = response.json()
+        self.assertEqual([u['key'] for u in body['urls']], keys)
+        self.assertEqual(body['unavailable'], [])
+        self.assertEqual(body['expires_in'], 900)
+        self.assertEqual([u['file_path'] for u in body['urls'][:2]],
+                         ['documents/chart.pdf', 'documents/pool.pdf'])
+        self.assertEqual(factory.call_count, 1, 'one credential refresh for the batch')
+        self.assertEqual(sign.call_count, len(keys))
+
+    def test_every_listed_file_can_be_signed_and_nothing_else(self):
+        mine = [
+            self._document('documents/a.pdf', patient=self.patient),
+            self._document('documents/b.pdf', team=self.attending),
+        ]
+        not_mine = [
+            self._document('documents/c.pdf', patient=self.stranger_patient),
+            self._document('documents/d.pdf', patient=self.inactive),
+            self._document('documents/e.pdf', team=self.stranger_doc),
+            self._document('documents/f.pdf'),
+        ]
+        stranger_photo = self._image(self.stranger_patient)
+        self._portrait(self.stranger_patient)
+        refused = (['document:%d' % d.id for d in not_mine]
+                   + ['document:999999999', 'image:%d' % stranger_photo.id,
+                      'portrait:%d' % self.stranger_patient.id, 'portrait:%d' % self.patient.id])
+        allowed = ['document:%d' % d.id for d in mine]
+        response, sign, _ = self._urls(allowed + refused)
+        body = response.json()
+        self.assertEqual([u['key'] for u in body['urls']], allowed)
+        self.assertEqual(body['unavailable'], refused)
+        self.assertEqual(sign.call_count, len(allowed), 'nothing else is signed')
+
+    def test_a_signing_failure_is_null_and_never_bytes(self):
+        chart = self._document('documents/chart.pdf', patient=self.patient)
+        response, _, _ = self._urls(['document:%d' % chart.id], url=None)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        self.assertIsNone(response.json()['urls'][0]['url'])
+
+    def test_bad_and_oversized_requests(self):
+        for keys in ([], ['document:abc'], ['secret:1'], ['1'],
+                     ['document:%d' % n for n in range(21)]):
+            response, sign, _ = self._urls(keys)
+            self.assertEqual(response.status_code, 400, keys)
+            self.assertEqual(sign.call_count, 0)
+
+    def test_a_signer_refreshes_credentials_once(self):
+        from apps.mobile_api import views
+        credentials = mock.Mock(service_account_email='run@example', token='t')
+        storage = mock.Mock()
+        storage.bucket.blob.return_value.generate_signed_url.return_value = 'https://x'
+        with mock.patch('google.auth.default', return_value=(credentials, None)):
+            sign = views._media_url_signer()
+            self.assertEqual([sign(storage, 'a'), sign(storage, 'b')], ['https://x', 'https://x'])
+        self.assertEqual(credentials.refresh.call_count, 1)
+
+    def test_a_signer_never_raises(self):
+        from apps.mobile_api import views
+        self.assertIsNone(views._media_url_signer()(None, 'a'))
+
+
+class OfflineCopyQueryPlanTests(_OfflineCopyTestBase):
+    """The two reads that touch big tables, asked of MySQL as it runs them.
+    2026-11-06 was a list query reading document rows with fax text inline."""
+
+    def _plan(self, run):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        if connection.vendor != 'mysql':
+            self.skipTest('query plans are checked on MySQL, which production runs')
+        with CaptureQueriesContext(connection) as queries:
+            run()
+        [sql] = [q['sql'] for q in queries.captured_queries if q['sql'].startswith('SELECT')]
+        with connection.cursor() as cursor:
+            cursor.execute('EXPLAIN FORMAT=TREE ' + sql)
+            return cursor.fetchone()[0]
+
+    def test_chart_files_come_from_the_index_alone(self):
+        from apps.mobile_api import offline_copy
+        for n in range(12):
+            self._document('documents/%d.pdf' % n, patient=self.patient,
+                           created=self.now - datetime.timedelta(days=n * 60))
+        since = offline_copy.files_since(self.now)
+        plan = self._plan(lambda: list(offline_copy._chart_document_rows(since)))
+        self.assertIn('Covering index', plan, plan)
+        self.assertIn('emr_doc_created_file_idx', plan, plan)
+
+    def test_latest_visit_comes_from_the_patient_index(self):
+        from django.db.models import Max
+        for _ in range(5):
+            Encounter.objects.create(physician=self.attending, patient=self.patient,
+                                     transcript='words ' * 2000)
+        plan = self._plan(lambda: list(
+            Encounter.objects.order_by().values('patient_id').annotate(latest=Max('id'))))
+        self.assertIn('Covering index', plan, plan)
+
+
+class OfflineCopyStampTests(_OfflineCopyTestBase):
+    """Each Mac's copy learns of a change from the stamp alone, so these
+    writes must move it (they did not before 2026-11-22)."""
+
+    def _stamped(self):
+        return set(PatientMutationStamp.objects.values_list('patient_id', flat=True))
+
+    def test_a_my_story_entry_stamps_its_chart(self):
+        tab = MyStoryTab.objects.create(name='Social', patient=self.patient, author=self.attending)
+        component = MyStoryTextComponent.objects.create(
+            name='Work', tab=tab, patient=self.patient, author=self.attending)
+        self.client.force_login(self.attending)
+        url = '/api/patient/%d/my-story/%d/entry' % (self.patient.id, component.id)
+        response = self.client.post(url, json.dumps({'text': 'retired'}), content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._stamped(), {self.patient.id})
+
+    def test_an_empty_my_story_entry_stamps_nothing(self):
+        tab = MyStoryTab.objects.create(name='Social', patient=self.patient, author=self.attending)
+        component = MyStoryTextComponent.objects.create(
+            name='Work', tab=tab, patient=self.patient, author=self.attending)
+        self.client.force_login(self.attending)
+        url = '/api/patient/%d/my-story/%d/entry' % (self.patient.id, component.id)
+        response = self.client.post(url, json.dumps({'text': ' '}), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self._stamped(), set())
+
+    def _label_on_two_charts(self):
+        label = Label.objects.create(name='Imaging', css_class='todo-label-purple', is_all=True)
+        ToDo.objects.create(patient=self.patient, todo='mri').labels.add(label)
+        self._document('documents/x.pdf', patient=self.stranger_patient).labels.add(label)
+        self._document('documents/pool.pdf', team=self.attending).labels.add(label)
+        return label
+
+    def _patch_label(self, label, body):
+        self.client.force_login(self.attending)
+        return self.client.patch('/api/labels/%d' % label.id, json.dumps(body),
+                                 content_type='application/json')
+
+    def test_renaming_a_label_stamps_every_chart_carrying_it(self):
+        label = self._label_on_two_charts()
+        self.assertEqual(self._patch_label(label, {'name': 'Radiology'}).status_code, 200)
+        self.assertEqual(self._stamped(), {self.patient.id, self.stranger_patient.id})
+
+    def test_recolouring_a_label_stamps_too(self):
+        label = self._label_on_two_charts()
+        self._patch_label(label, {'css_class': 'todo-label-red'})
+        self.assertEqual(self._stamped(), {self.patient.id, self.stranger_patient.id})
+
+    def test_an_unchanged_label_stamps_nothing(self):
+        label = self._label_on_two_charts()
+        self._patch_label(label, {'name': 'Imaging', 'is_all': True})
+        self.assertEqual(self._stamped(), set())
+
+    def test_touching_many_updates_old_stamps_and_creates_missing_ones(self):
+        from emr.mutation_stamp import touch_patient_stamps
+        long_ago = self.now - datetime.timedelta(days=30)
+        PatientMutationStamp.objects.create(patient=self.patient, last_mutation_at=long_ago)
+        touch_patient_stamps([self.patient.id, self.stranger_patient.id, None, self.patient.id])
+        stamps = dict(PatientMutationStamp.objects.values_list('patient_id', 'last_mutation_at'))
+        self.assertEqual(set(stamps), {self.patient.id, self.stranger_patient.id})
+        self.assertGreater(stamps[self.patient.id], long_ago)
+
+    def test_consolidate_labels_stamps_the_charts_it_repoints(self):
+        from django.core.management import call_command
+        Label.objects.create(name='Imaging', css_class='todo-label-purple', is_all=True)
+        duplicate = Label.objects.create(name='Imaging', css_class='', is_all=False)
+        ToDo.objects.create(patient=self.patient, todo='mri').labels.add(duplicate)
+        call_command('consolidate_labels', stdout=io.StringIO())
+        self.assertEqual(self._stamped(), set(), 'a dry run writes nothing')
+        call_command('consolidate_labels', '--apply', stdout=io.StringIO())
+        self.assertEqual(self._stamped(), {self.patient.id})
+
+
+class CommandStampSweepTests(TestCase):
+    """Every management command is in exactly one bucket, so a new job that
+    writes chart data cannot forget the stamp: without it, no Mac's copy
+    learns of the change for up to 30 days."""
+
+    STAMPS = {
+        'apply_icd_decisions', 'backfill_icd10', 'backfill_todo_accomplished_at',
+        'consolidate_labels', 'heal_freetext_problems', 'map_top_500',
+        'remap_retired_concepts', 'repair_icd10_codes',
+    }
+
+    STAMPS_THROUGH = {
+        'apply_usual_vital_pins': 'apply_usual_vitals writes an activity row, which stamps',
+    }
+
+    NO_CHART_WRITES = {
+        'audit_dob': 'read-only report',
+        'audit_doc_files': 'read-only report',
+        'audit_encounter_audio': 'read-only report',
+        'audit_image_files': 'read-only report',
+        'backfill_document_sizes': 'a file size the list serializer would fill by itself',
+        'build_todo_suggestion_stats': 'the suggestion table, not a chart',
+        'check_ringcentral_fax': 'read-only report',
+        'check_ringcentral_inbound': 'read-only report',
+        'debug_encounter_events': 'read-only report',
+        'doc_stats': 'read-only report',
+        'dump_encounter_family_subset': 'read-only export',
+        'encounter_stats': 'read-only report',
+        'import_inbound_faxes': 'pool documents, on no chart until assign (which stamps)',
+        'inactivate_dormant_patients': 'active flags, which every offline chart list carries',
+        'list_encounter_ids': 'read-only report',
+        'list_sbr1_encounter_ids': 'read-only report',
+        'list_user_ids': 'read-only report',
+        'load_icd10_map': 'the code map, not stored codes',
+        'load_snomed': 'terminology tables',
+        'move_parked_faxes_to_office': 'faxes on no chart',
+        'obs_stats': 'read-only report',
+        'preview_sbr1_encounter_wipe': 'read-only report',
+        'problem_stats': 'read-only report',
+        'replay_todo_suggestions': 'read-only report',
+        'report_document_renames': 'read-only report',
+        'report_search_list_timing': 'read-only report',
+        'sync_team': 'access, which every offline chart list carries',
+        'todo_stats': 'read-only report',
+        'user_stats': 'read-only report',
+    }
+
+    #: The June 2026 move off the old VM. Never run against a live practice
+    #: again; one that had to be would need stamps first.
+    RETIRED_IMPORTS = {
+        'import_doc_family', 'import_encounter_family', 'import_misc_family',
+        'import_mystory_family', 'import_obs_family', 'import_problem_family',
+        'import_team_tables', 'import_todo_family', 'import_user_delta',
+    }
+
+    def _commands(self):
+        import os
+        import emr.management.commands as package
+        folder = os.path.dirname(package.__file__)
+        return {
+            name[:-3]: os.path.join(folder, name) for name in os.listdir(folder)
+            if name.endswith('.py') and not name.startswith('_')
+        }
+
+    def test_every_command_has_exactly_one_decision(self):
+        buckets = [self.STAMPS, set(self.STAMPS_THROUGH), set(self.NO_CHART_WRITES), self.RETIRED_IMPORTS]
+        commands = set(self._commands())
+        self.assertEqual(commands - set().union(*buckets), set(),
+                         'decide whether the new command must stamp the charts it changes')
+        self.assertEqual(set().union(*buckets) - commands, set(), 'listed, but no such command')
+        self.assertEqual(sum(len(b) for b in buckets), len(commands), 'in two buckets')
+
+    def test_the_stamping_commands_really_stamp(self):
+        commands = self._commands()
+        for name in self.STAMPS:
+            with open(commands[name]) as source:
+                self.assertRegex(source.read(), r'touch_patient_stamps?\(', name)

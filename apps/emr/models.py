@@ -1586,6 +1586,13 @@ class Document(models.Model):
             # Spec: ChartSearchListTests.test_changed_at_reads_an_index_not_the_documents.
             models.Index(fields=['patient', 'extracted_text_at'],
                          name='emr_doc_patient_text_at'),
+            # The offline copy's file list (`offline_copy._chart_document_rows`,
+            # every few minutes from every Mac): the past year's documents
+            # with patient, stored name and size, from the index alone, so
+            # the same never happens to it. `created_on` first, for the
+            # range. Spec: OfflineCopyQueryPlanTests.
+            models.Index(fields=['created_on', 'patient', 'document', 'file_size'],
+                         name='emr_doc_created_file_idx'),
         ]
 
     def __unicode__(self):

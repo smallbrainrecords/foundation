@@ -45,3 +45,35 @@ def touch_patient_stamp(patient_or_id):
                 PatientMutationStamp.objects.filter(patient_id=pid).update(last_mutation_at=now)
     except Exception:
         logger.exception('touch_patient_stamp failed for patient %s (non-fatal)', pid)
+
+
+_STAMP_CHUNK = 500
+
+
+def touch_patient_stamps(patient_ids):
+    """`touch_patient_stamp` for many patients at once: a catalogue label
+    rename, or a job that changes many charts. A few queries per 500
+    patients instead of one or more each. Same contract: best-effort,
+    savepoint-wrapped, None skipped.
+
+    Every Mac re-pulls every chart stamped here. Only stamp a chart whose
+    content really changed.
+    """
+    ids = sorted({getattr(p, 'pk', p) for p in patient_ids if p})
+    if not ids:
+        return
+    now = timezone.now()
+    try:
+        with transaction.atomic():
+            for start in range(0, len(ids), _STAMP_CHUNK):
+                chunk = ids[start:start + _STAMP_CHUNK]
+                stamps = PatientMutationStamp.objects.filter(patient_id__in=chunk)
+                stamps.update(last_mutation_at=now)
+                have = set(stamps.values_list('patient_id', flat=True))
+                PatientMutationStamp.objects.bulk_create(
+                    [PatientMutationStamp(patient_id=pid, last_mutation_at=now)
+                     for pid in chunk if pid not in have],
+                    ignore_conflicts=True,
+                )
+    except Exception:
+        logger.exception('touch_patient_stamps failed for %d patients (non-fatal)', len(ids))

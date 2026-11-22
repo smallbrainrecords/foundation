@@ -3,6 +3,7 @@ import os
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from emr.models import SnomedIcd10Map, Problem
+from emr.mutation_stamp import touch_patient_stamps
 
 class Command(BaseCommand):
     help = 'Backfill legacy ICD-10 codes for top 500 problems and isolate ambiguous mappings'
@@ -42,10 +43,15 @@ class Command(BaseCommand):
                         
                         # Perform a bulk update on the legacy data
                         # Only backfill where icd10_code is missing or empty
-                        updated = Problem.objects.filter(
+                        uncoded = Problem.objects.filter(
                             Q(icd10_code__isnull=True) | Q(icd10_code=''),
                             concept_id=concept_id
-                        ).update(icd10_code=icd10_code)
+                        )
+                        changed_patients = set(uncoded.order_by().values_list('patient_id', flat=True))
+                        updated = uncoded.update(icd10_code=icd10_code)
+                        # The code is on the chart, and the Macs' copies only
+                        # learn of it from the stamp.
+                        touch_patient_stamps(changed_patients)
                         
                         # Print success log to stdout
                         self.stdout.write(f"Mapped {problem_name} to {icd10_code} (Updated {updated} records)")

@@ -6,6 +6,7 @@ from . import check_in
 from . import office
 from . import waiting_faxes
 from . import chart_fax
+from . import offline_copy
 
 urlpatterns = [
     url(r'^healthz/?$', views.mobile_healthz),
@@ -199,6 +200,11 @@ urlpatterns = [
     url(r'^office/document/(?P<document_id>\d+)/edits$', office.mobile_office_edits),
     url(r'^office/document/(?P<document_id>\d+)/before-edits$', office.mobile_office_before_edits),
     url(r'^office/document/(?P<document_id>\d+)/fax$', office.mobile_office_fax),
+    # The full copy each clinic Mac keeps (2026-11-22): which charts and
+    # files it holds, and signed URLs for the files. Read-only, staff only.
+    url(r'^offline/charts$', offline_copy.mobile_offline_charts),
+    url(r'^offline/files$', offline_copy.mobile_offline_files),
+    url(r'^offline/file-urls$', offline_copy.mobile_offline_file_urls),
     # Error reporting
     url(r'^errors/batch/$', views.mobile_batch_errors),
     # Terminology mapping

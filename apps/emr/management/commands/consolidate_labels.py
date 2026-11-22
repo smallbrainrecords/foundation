@@ -41,6 +41,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from emr.models import Label
+from emr.mutation_stamp import touch_patient_stamps
 
 CANONICAL = [
     ("Laboratory",     "todo-label-red",    "108252007"),
@@ -73,6 +74,14 @@ class Command(BaseCommand):
             "documents": label.document_set.count(),
             "lists": label.labeledtodolist_set.count(),
         }
+
+    @staticmethod
+    def patients_carrying(label):
+        """The charts that show `label`, to stamp when it changes."""
+        patients = set(label.todo_set.order_by().values_list("patient_id", flat=True))
+        patients.update(label.document_set.filter(patient__isnull=False).order_by()
+                        .values_list("patient_id", flat=True))
+        return patients
 
     def handle(self, *args, **options):
         apply_changes = options["apply"]
@@ -122,6 +131,7 @@ class Command(BaseCommand):
                     continue
 
                 with transaction.atomic():
+                    changed_patients = self.patients_carrying(dup)
                     # Repoint every reference before the row can be deleted.
                     for todo in dup.todo_set.all():
                         todo.labels.add(keeper)
@@ -129,6 +139,7 @@ class Command(BaseCommand):
                     for doc in dup.document_set.all():
                         doc.labels.add(keeper)
                         doc.labels.remove(dup)
+                    touch_patient_stamps(changed_patients)
                     for lst in dup.labeledtodolist_set.all():
                         lst.labels.add(keeper)
                         lst.labels.remove(dup)
@@ -160,7 +171,9 @@ class Command(BaseCommand):
                     f"todos={c['todos']} docs={c['documents']}{mark}"
                 )
                 if apply_changes and l.name in prune:
+                    changed_patients = self.patients_carrying(l)
                     l.delete()
+                    touch_patient_stamps(changed_patients)
                     deleted += 1
 
         self.stdout.write("")

@@ -85,6 +85,11 @@ FAX_STAFF_FILE_ENABLED = env.bool('FAX_STAFF_FILE_ENABLED', default=True)
 # history stays readable.
 DOCUMENT_EDIT_ENABLED = env.bool('DOCUMENT_EDIT_ENABLED', default=True)
 
+# The full copy each clinic Mac keeps (apps.mobile_api.offline_copy,
+# 2026-11-22). False makes every Mac stop filling it and go back to loading
+# each chart as it is opened, with no app update.
+OFFLINE_COPY_ENABLED = env.bool('OFFLINE_COPY_ENABLED', default=True)
+
 # Per-patient access check on the mobile chart endpoint (mobile_patient_full).
 # ON since 2026-11-22, after a month report-only with nobody it would have
 # refused. PATIENT_FULL_ACCESS_ENFORCED=false on the service is the emergency

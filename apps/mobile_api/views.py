@@ -38,7 +38,7 @@ from emr.models import (
     ObservationValueAudit,
 )
 from emr.icd_codes import billable_codes, resolve_incoming_icd
-from emr.mutation_stamp import touch_patient_stamp
+from emr.mutation_stamp import touch_patient_stamp, touch_patient_stamps
 from emr.problem_authentication import (
     apply_problem_authentication,
     is_attesting_actor,
@@ -148,8 +148,9 @@ def touches_patient_stamp(view):
     is savepoint-wrapped, so a stamp failure can neither fail nor poison the
     clinical write.
 
-    Deliberately NOT applied to mobile_save_my_story_entry: the poll's pull
-    excludes My Story, so a bump there would only buy a wasted pull.
+    My Story entries are stamped since 2026-11-22: each Mac keeps a copy of
+    every chart and learns of changes from the stamp alone, so a write that
+    moves no stamp is a write that copy never gets.
     New patient-scoped write endpoints MUST add this decorator (or call
     touch_patient_stamp manually if patient_id isn't a URL kwarg — see
     mobile_unassigned_document_assign). That invariant is enforced by
@@ -442,7 +443,12 @@ def portrait_version(profile):
     differs from the one it last stored (check-in, 2026-11-17)."""
     if profile is None or not profile.portrait_image:
         return None
-    name = profile.portrait_image.name or ''
+    return portrait_version_for_name(profile.portrait_image.name)
+
+
+def portrait_version_for_name(name):
+    """`portrait_version` from the stored name alone (the offline copy's
+    file list reads names, not profiles)."""
     if not name or name.startswith('/static/'):
         return None
     return hashlib.sha1(name.encode('utf-8')).hexdigest()[:12]
@@ -1341,6 +1347,11 @@ def _mobile_patient_full_inner(request, patient_id):
     # Captured BEFORE any query runs so a client using it as its poll cursor
     # can only over-pull (see mobile_patient_changed), never miss a write.
     server_time = timezone.now()
+    # The chart's stamp, read before anything else on the chart. A Mac stores
+    # it with its copy and compares it exactly with `offline/charts`: a write
+    # landing while this response is built only makes that chart look changed.
+    chart_changed_at = PatientMutationStamp.objects.filter(
+        patient_id=patient_id).values_list('last_mutation_at', flat=True).first()
 
     try:
         patient_user = User.objects.select_related('profile').get(id=patient_id)
@@ -1788,6 +1799,7 @@ def _mobile_patient_full_inner(request, patient_id):
     return JsonResponse({
         'success': True,
         'server_time': _iso_z(server_time),
+        'chart_changed_at': _iso_z(chart_changed_at) if chart_changed_at else None,
         'patient': patient,
         'problems': problems,
         'relationships': relationships,
@@ -3672,6 +3684,7 @@ def mobile_delete_problem_image(request, patient_id, image_id):
 @csrf_exempt
 @login_required
 @requires_patient_access
+@touches_patient_stamp
 def mobile_save_my_story_entry(request, patient_id, component_id):
     """POST {text} -> create a new MyStoryTextComponentEntry."""
     if request.method != 'POST':
@@ -3812,8 +3825,9 @@ _AUDIO_REDIRECT_THRESHOLD = 30 * 1024 * 1024
 _SIGNED_URL_TTL = datetime.timedelta(minutes=15)
 
 
-def _signed_media_url(field_file):
-    """A time-limited direct URL for a stored object, or None.
+def _media_url_signer():
+    """`sign(storage, name)` -> a time-limited direct URL for a stored
+    object, or None.
 
     NOT `field_file.url`: django-storages asks the credentials to sign
     themselves, and on Cloud Run those are compute credentials holding only a
@@ -3822,32 +3836,48 @@ def _signed_media_url(field_file):
     service account to hold roles/iam.serviceAccountTokenCreator ON ITSELF
     (granted 2026-09-20).
 
-    Returns None rather than raising: a caller that cannot get a URL falls
-    back to serving the bytes, which is exactly the behaviour that existed
-    before. A signing outage must not take the whole endpoint down.
+    One signer refreshes the credentials once, however many names it signs,
+    so a batch (`offline/file-urls`) costs one refresh and a SignBlob per
+    file. `sign` returns None rather than raising: a signing outage must not
+    take an endpoint down.
     """
-    try:
-        import google.auth
-        from google.auth.transport import requests as google_requests
+    held = {}
 
-        blob = field_file.storage.bucket.blob(field_file.name)
-        credentials, _ = google.auth.default()
-        credentials.refresh(google_requests.Request())
-        return blob.generate_signed_url(
-            version='v4',
-            expiration=_SIGNED_URL_TTL,
-            method='GET',
-            service_account_email=credentials.service_account_email,
-            access_token=credentials.token,
-        )
-    except Exception as exc:
-        logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
-            'event': 'signed_url_failed',
-            'name': getattr(field_file, 'name', None),
-            'error': type(exc).__name__,
-            'detail': str(exc)[:200],
-        }))
-        return None
+    def sign(storage, name):
+        try:
+            import google.auth
+            from google.auth.transport import requests as google_requests
+
+            blob = storage.bucket.blob(name)
+            if 'credentials' not in held:
+                credentials, _ = google.auth.default()
+                credentials.refresh(google_requests.Request())
+                held['credentials'] = credentials
+            credentials = held['credentials']
+            return blob.generate_signed_url(
+                version='v4',
+                expiration=_SIGNED_URL_TTL,
+                method='GET',
+                service_account_email=credentials.service_account_email,
+                access_token=credentials.token,
+            )
+        except Exception as exc:
+            logging.getLogger('smallbrain.encounter_audio').warning(json.dumps({
+                'event': 'signed_url_failed',
+                'name': name,
+                'error': type(exc).__name__,
+                'detail': str(exc)[:200],
+            }))
+            return None
+
+    return sign
+
+
+def _signed_media_url(field_file):
+    """One stored file's direct URL (see `_media_url_signer`), or None, in
+    which case the caller serves the bytes itself."""
+    return _media_url_signer()(
+        getattr(field_file, 'storage', None), getattr(field_file, 'name', None))
 
 
 @csrf_exempt
@@ -6819,6 +6849,7 @@ def mobile_update_label(request, label_id):
         return JsonResponse({'error': 'Permission denied'}, status=403)
 
     body = _parse_body(request)
+    shown_before = (label.name, label.css_class)
     if 'name' in body:
         label.name = body['name'].strip()
     if 'css_class' in body:
@@ -6826,6 +6857,14 @@ def mobile_update_label(request, label_id):
     if 'is_all' in body:
         label.is_all = bool(body['is_all'])
     label.save()
+    if (label.name, label.css_class) != shown_before:
+        # A rename or new colour shows on every chart carrying the label, and
+        # each Mac's copy learns of changes from the stamp alone (2026-11-22).
+        carrying = set(ToDo.objects.filter(labels=label).order_by()
+                       .values_list('patient_id', flat=True))
+        carrying.update(Document.objects.filter(labels=label, patient__isnull=False).order_by()
+                        .values_list('patient_id', flat=True))
+        touch_patient_stamps(carrying)
     return JsonResponse({
         'success': True,
         'id': label.id,
