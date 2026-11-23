@@ -12446,6 +12446,7 @@ class CommandStampSweepTests(TestCase):
         'preview_sbr1_encounter_wipe': 'read-only report',
         'problem_stats': 'read-only report',
         'replay_todo_suggestions': 'read-only report',
+        'report_chart_access': 'read-only report',
         'report_document_renames': 'read-only report',
         'report_search_list_timing': 'read-only report',
         'sync_team': 'access, which every offline chart list carries',

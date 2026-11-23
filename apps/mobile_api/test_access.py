@@ -578,3 +578,102 @@ class AccountRuleTests(Clinic):
         listed = lambda user: len(self.send(user, 'GET', '/api/my-tagged-todos/').json()['todos'])
         self.assertEqual([listed(self.idle_nurse), listed(self.outsider)], [0, 0])
         self.assertEqual([listed(self.team_nurse), listed(self.admin)], [1, 1])
+
+
+@override_settings(MEDIA_ROOT=_MEDIA, OFFICE_ENABLED=True, OFFLINE_COPY_ENABLED=True)
+class OfflineCopyIsolationTests(Clinic):
+    """The offline copy's routes hand nobody another chart's files (2026-11-22).
+
+    The sweep above catches another chart's TEXT in an answer. These routes
+    answer with ids, stored file names and signed URLs, which carry none of
+    it, so they are checked by key and by name: another chart's documents,
+    photos and chart photo, and a pool fax of a team the caller is not on,
+    never appear in a list and are never signed.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.theirs = self.seed(self.patient, MARK)
+        UserProfile.objects.filter(user=self.patient).update(portrait_image='cover_image/victim.jpg')
+        from django.utils import timezone
+        PatientMutationStamp.objects.create(patient=self.patient, last_mutation_at=timezone.now())
+        self.pool_doc = Document.objects.create(
+            team=self.doctor, author=self.doctor, document_name='fax', client_uuid=uuid.uuid4())
+        self.pool_doc.document.save('victim_fax.pdf', ContentFile(b'%PDF fax'), save=True)
+        # Staff on another physician's team, with charts of their own.
+        self.other_nurse = make_user('other_nurse', 'nurse')
+        PhysicianTeam.objects.create(physician=self.other_doctor, member=self.other_nurse)
+        self.own_patient = make_user('own_patient', 'patient')
+        PatientController.objects.create(physician=self.other_doctor, patient=self.own_patient)
+        self.own = self.seed(self.own_patient, 'OWNDATA')
+
+    def their_keys(self):
+        return {'document:%d' % self.theirs['document'].id,
+                'image:%d' % self.theirs['image'].id,
+                'portrait:%d' % self.patient.id,
+                'document:%d' % self.pool_doc.id}
+
+    def their_names(self):
+        return [self.theirs['document'].document.name, self.theirs['image'].image.name,
+                'cover_image/victim.jpg', self.pool_doc.document.name]
+
+    def get(self, user, route, **query):
+        return self.client_for(user).get('/api/offline/' + route, query)
+
+    def assert_nothing_of_theirs(self, response, who):
+        body = body_of(response)
+        self.assertNotIn(MARK.encode(), body, who)
+        for name in self.their_names():
+            self.assertNotIn(name.encode(), body, '%s: %s' % (who, name))
+
+    def test_patients_and_profileless_logins_are_refused_as_missing(self):
+        keys = ','.join(sorted(self.their_keys()))
+        for user in (self.outsider, self.patient, self.no_profile):
+            for route in ('charts', 'files', 'file-urls'):
+                response = self.get(user, route, keys=keys)
+                with self.subTest(user=user.username, route=route):
+                    self.assertEqual(response.status_code, 404)
+                    self.assertEqual(response.json(), {'success': False, 'error': 'not_found'})
+                    self.assert_nothing_of_theirs(response, user.username)
+
+    def test_staff_without_the_chart_get_none_of_its_files(self):
+        keys = ','.join(sorted(self.their_keys()))
+        for user in (self.idle_nurse, self.other_doctor, self.other_nurse):
+            who = user.username
+            charts = self.get(user, 'charts')
+            self.assertEqual(charts.status_code, 200, who)
+            self.assertNotIn(self.patient.id, charts.json()['patient_ids'], who)
+            self.assertNotIn(self.patient.id, [row['id'] for row in charts.json()['changed']], who)
+            self.assert_nothing_of_theirs(charts, who)
+
+            files = self.get(user, 'files')
+            self.assertEqual(files.status_code, 200, who)
+            listed = {f['key'] for f in files.json()['files']}
+            self.assertEqual(listed & self.their_keys(), set(), who)
+            self.assertNotIn(self.patient.id, files.json()['patient_ids'], who)
+            self.assert_nothing_of_theirs(files, who)
+
+            urls = self.get(user, 'file-urls', keys=keys)
+            self.assertEqual(urls.status_code, 200, who)
+            self.assertEqual(urls.json()['urls'], [], who)
+            self.assertEqual(set(urls.json()['unavailable']), self.their_keys(), who)
+            self.assert_nothing_of_theirs(urls, who)
+
+    def test_staff_on_another_team_still_get_their_own_charts(self):
+        own_document = 'document:%d' % self.own['document'].id
+        for user in (self.other_doctor, self.other_nurse):
+            self.assertIn(self.own_patient.id, self.get(user, 'charts').json()['patient_ids'])
+            self.assertIn(own_document, {f['key'] for f in self.get(user, 'files').json()['files']})
+            signed = self.get(user, 'file-urls', keys=own_document).json()
+            self.assertEqual([u['key'] for u in signed['urls']], [own_document], user.username)
+
+    def test_the_charts_own_people_get_its_files(self):
+        keys = ','.join(sorted(self.their_keys()))
+        for user in (self.doctor, self.team_nurse, self.admin):
+            who = user.username
+            self.assertIn(self.patient.id, self.get(user, 'charts').json()['patient_ids'], who)
+            listed = {f['key'] for f in self.get(user, 'files').json()['files']}
+            self.assertEqual(listed & self.their_keys(), self.their_keys(), who)
+            signed = self.get(user, 'file-urls', keys=keys).json()
+            self.assertEqual({u['key'] for u in signed['urls']}, self.their_keys(), who)
+            self.assertEqual(signed['unavailable'], [], who)
