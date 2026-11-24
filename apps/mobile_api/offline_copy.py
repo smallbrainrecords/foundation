@@ -31,6 +31,13 @@ ids, the stamp table's index and the encounter table's patient index; the
 chart-file half of the file list is answered by `emr_doc_created_file_idx`
 alone (`OfflineCopyQueryPlanTests`).
 
+**A file storage does not have is left out of the list** (2026-11-24). The
+list never asks storage, so a record whose file is gone was listed for good,
+and every Mac that listed it said "Not complete" for good (17 legacy photos
+on the first real fill). `check_offline_files` asks storage once and records
+those files in `MissingStoredFile`; `_without_missing` drops them, matched on
+the stored name too, so a record that gets a new file is listed again.
+
 `OFFLINE_COPY_ENABLED=false` switches it off: every route answers
 `enabled: false` and each Mac returns to loading charts as they are opened.
 """
@@ -48,7 +55,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.gzip import gzip_page
 
 from emr.models import (
-    Document, Encounter, OfficeDocument, PatientImage, PatientMutationStamp, UserProfile,
+    Document, Encounter, MissingStoredFile, OfficeDocument, PatientImage, PatientMutationStamp,
+    UserProfile,
 )
 
 from . import views as api
@@ -285,6 +293,17 @@ def _portrait_files(patients):
     return found
 
 
+def _without_missing(files):
+    """`files` without those storage was found not to have
+    (`check_offline_files`): no Mac can ever copy them, and each that lists
+    one says "Not complete" for good. Matched on the stored name as well as
+    the key, so a record that gets a new file is listed again."""
+    missing = dict(MissingStoredFile.objects.values_list('key', 'file_path'))
+    if not missing:
+        return files
+    return [f for f in files if missing.get(f['key']) != f['file_path']]
+
+
 @csrf_exempt
 @login_required
 @gzip_page
@@ -296,7 +315,8 @@ def mobile_offline_files(request):
     `file_path` is the stored name; a new version of a document has a new
     one, which is how a Mac knows its copy is old. `patient_ids` and
     `team_ids` (null: every team) say what the list covers, so a Mac deletes
-    a cached file only when this list really would have named it.
+    a cached file only when this list really would have named it. A file
+    storage is known not to have is left out (`_without_missing`).
     """
     refusal = _gate(request)
     if refusal:
@@ -307,8 +327,9 @@ def mobile_offline_files(request):
     patients = active_patient_ids(request.user)
     team_ids = api._user_team_ids(request.user)
 
-    files = (_chart_files(patients, since) + _pool_files(team_ids) + _office_files()
-             + _image_files(patients) + _portrait_files(patients))
+    files = _without_missing(
+        _chart_files(patients, since) + _pool_files(team_ids) + _office_files()
+        + _image_files(patients) + _portrait_files(patients))
     # Newest first: the order a Mac downloads in.
     files.sort(key=lambda f: (f['created_on'] or '', f['key']), reverse=True)
 

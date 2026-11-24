@@ -2326,3 +2326,25 @@ class PortraitHistory(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['user', 'replaced_at'], name='emr_portraithist_user_at')]
+
+
+class MissingStoredFile(models.Model):
+    """A file a record names that storage does not have (2026-11-24).
+
+    The offline copy's file list is built from the database alone: nothing
+    asks storage while a list is built (thousands of files, every few
+    minutes, from every Mac). A record whose file is gone can then never be
+    copied, and every Mac that lists it says "Not complete" for good. The
+    first real fill (2026-11-23) met 17: eight problem photos from 2022 and
+    nine chart photos, all 404 in the bucket.
+
+    `check_offline_files` asks storage once for every file the list could
+    offer and keeps one row per record whose file it found missing; the list
+    leaves those out. `key` is the list's own key ('image:531'). `file_path`
+    is the stored name storage didn't have, so a record that later gets a
+    new file (a new name) is listed again. A row only leaves a file out of
+    the list; nothing about the record itself changes.
+    """
+    key = models.CharField(max_length=40, unique=True)
+    file_path = models.TextField()
+    checked_on = models.DateTimeField(default=timezone.now)

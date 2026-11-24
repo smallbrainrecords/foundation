@@ -12216,6 +12216,140 @@ class OfflineCopyFileListTests(_OfflineCopyTestBase):
         Document.objects.filter(id=document.id).update(document='documents/v2.pdf')
         self.assertEqual(self._files()['document:%d' % document.id]['file_path'], 'documents/v2.pdf')
 
+    def test_a_file_storage_lacks_is_left_out_until_the_record_has_a_new_one(self):
+        """2026-11-24: 17 legacy photos the bucket doesn't have kept every
+        Mac's copy "Not complete" for good."""
+        from emr.models import MissingStoredFile
+        gone = self._image(self.patient, 'problem_images/gone.jpg')
+        kept = self._image(self.patient, 'problem_images/kept.jpg')
+        self._portrait(self.patient, 'cover_image/gone.jpg')
+        document = self._document('documents/gone.pdf', patient=self.patient)
+        for key, path in (('image:%d' % gone.id, 'problem_images/gone.jpg'),
+                          ('portrait:%d' % self.patient.id, 'cover_image/gone.jpg'),
+                          ('document:%d' % document.id, 'documents/gone.pdf')):
+            MissingStoredFile.objects.create(key=key, file_path=path)
+        self.assertEqual(set(self._files()), {'image:%d' % kept.id})
+        PatientImage.objects.filter(id=gone.id).update(image='problem_images/retaken.jpg')
+        self.assertEqual(self._files()['image:%d' % gone.id]['file_path'], 'problem_images/retaken.jpg')
+
+
+class CheckOfflineFilesTests(_OfflineCopyTestBase):
+    """check_offline_files (2026-11-24): the files any login's list could
+    offer that storage doesn't have are recorded, so the list leaves them
+    out. Storage answers come from `self.present` unless a test says so."""
+
+    COMMAND = 'emr.management.commands.check_offline_files.stored_file_exists'
+
+    def setUp(self):
+        super().setUp()
+        self.present = set()
+
+    def _run(self, *args, exists=None):
+        from django.core.management import call_command
+        out = io.StringIO()
+        answer = exists or (lambda name, storage=None: name in self.present)
+        with mock.patch(self.COMMAND, side_effect=answer):
+            call_command('check_offline_files', *args, stdout=out)
+        return out.getvalue()
+
+    def _recorded(self):
+        from emr.models import MissingStoredFile
+        return dict(MissingStoredFile.objects.values_list('key', 'file_path'))
+
+    def test_a_dry_run_reports_and_writes_nothing(self):
+        self._document('documents/here.pdf', patient=self.patient)
+        gone = self._image(self.patient, 'problem_images/gone.jpg')
+        self.present = {'documents/here.pdf'}
+        result = json.loads(self._run())
+        self.assertFalse(result['applied'])
+        self.assertEqual(result['missing'], ['image:%d' % gone.id])
+        self.assertEqual(result['would_add'], ['image:%d' % gone.id])
+        self.assertEqual(result['checked_total'], 2)
+        self.assertEqual(self._recorded(), {})
+
+    def test_apply_records_every_kind_on_every_logins_list(self):
+        chart = self._document('documents/gone.pdf', patient=self.patient)
+        theirs = self._document('documents/theirs.pdf', patient=self.stranger_patient)
+        fax = self._document('documents/fax.pdf', team=self.stranger_doc)
+        audit = self._document('documents/audit.pdf', team=self.attending)
+        self._office(audit)
+        photo = self._image(self.patient, 'problem_images/gone.jpg')
+        self._portrait(self.patient, 'cover_image/gone.jpg')
+        self._document('documents/here.pdf', patient=self.patient)
+        self.present = {'documents/here.pdf'}
+        result = json.loads(self._run('--apply'))
+        self.assertEqual(self._recorded(), {
+            'document:%d' % chart.id: 'documents/gone.pdf',
+            'document:%d' % theirs.id: 'documents/theirs.pdf',
+            'document:%d' % fax.id: 'documents/fax.pdf',
+            'document:%d' % audit.id: 'documents/audit.pdf',
+            'image:%d' % photo.id: 'problem_images/gone.jpg',
+            'portrait:%d' % self.patient.id: 'cover_image/gone.jpg',
+        })
+        self.assertEqual(result['checked'], {'chart': 3, 'pool': 1, 'office': 1, 'image': 1, 'portrait': 1})
+        self.assertEqual(len(result['added']), 6)
+
+    def test_inactive_charts_and_documents_past_the_year_are_not_asked_about(self):
+        self._document('documents/inactive.pdf', patient=self.inactive)
+        self._document('documents/old.pdf', patient=self.patient,
+                       created=self.now - datetime.timedelta(days=400))
+        result = json.loads(self._run('--apply'))
+        self.assertEqual(result['checked_total'], 0)
+        self.assertEqual(self._recorded(), {})
+
+    def test_a_file_found_again_or_replaced_moves_its_row(self):
+        from emr.models import MissingStoredFile
+        restored = self._image(self.patient, 'problem_images/restored.jpg')
+        replaced = self._image(self.patient, 'problem_images/old.jpg')
+        unasked = MissingStoredFile.objects.create(key='image:999999', file_path='problem_images/x.jpg')
+        self._run('--apply')
+        self.present = {'problem_images/restored.jpg'}
+        PatientImage.objects.filter(id=replaced.id).update(image='problem_images/new.jpg')
+        result = json.loads(self._run('--apply'))
+        self.assertEqual(result['removed'], ['image:%d' % restored.id])
+        self.assertEqual(result['added'], ['image:%d' % replaced.id])
+        self.assertEqual(self._recorded(), {
+            'image:%d' % replaced.id: 'problem_images/new.jpg',
+            unasked.key: 'problem_images/x.jpg',
+        })
+
+    def test_any_other_storage_error_stops_the_run_with_nothing_written(self):
+        self._image(self.patient, 'problem_images/gone.jpg')
+        self._document('documents/flaky.pdf', patient=self.patient)
+
+        def flaky(name, storage=None):
+            if name == 'documents/flaky.pdf':
+                raise ConnectionError('storage unreachable')
+            return False
+        with self.assertRaises(ConnectionError):
+            self._run('--apply', exists=flaky)
+        self.assertEqual(self._recorded(), {})
+
+    def test_the_report_names_records_never_files(self):
+        self._image(self.patient, 'problem_images/Jane_Doe_rash.jpg')
+        out = self._run()
+        self.assertIn('image:', out)
+        self.assertNotIn('Jane_Doe', out)
+
+    def test_it_asks_the_real_storage_of_each_record(self):
+        """No stand-in: a file saved through the document field's storage is
+        found, a name nothing was saved under is not."""
+        import shutil
+        import tempfile
+        from django.core.files.base import ContentFile
+        from django.core.management import call_command
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        with override_settings(MEDIA_ROOT=media):
+            storage = Document._meta.get_field('document').storage
+            saved = storage.save('documents/real.pdf', ContentFile(b'%PDF-1.4 real'))
+            here = self._document(saved, patient=self.patient)
+            gone = self._document('documents/never_saved.pdf', patient=self.patient)
+            out = io.StringIO()
+            call_command('check_offline_files', '--apply', stdout=out)
+        self.assertEqual(self._recorded(), {'document:%d' % gone.id: 'documents/never_saved.pdf'})
+        self.assertNotIn('document:%d' % here.id, json.loads(out.getvalue())['missing'])
+
 
 class OfflineCopyFileURLTests(_OfflineCopyTestBase):
 
@@ -12428,6 +12562,7 @@ class CommandStampSweepTests(TestCase):
         'audit_image_files': 'read-only report',
         'backfill_document_sizes': 'a file size the list serializer would fill by itself',
         'build_todo_suggestion_stats': 'the suggestion table, not a chart',
+        'check_offline_files': 'the missing-file list the offline copy leaves out, not a chart',
         'check_ringcentral_fax': 'read-only report',
         'check_ringcentral_inbound': 'read-only report',
         'debug_encounter_events': 'read-only report',
