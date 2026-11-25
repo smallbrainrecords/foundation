@@ -96,6 +96,7 @@ urlpatterns = [
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/note/(?P<note_id>\d+)$', views.mobile_update_problem_note),
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/label$', views.mobile_create_problem_label),
     url(r'^patient/(?P<patient_id>\d+)/problem/(?P<problem_id>\d+)/authenticate$', views.mobile_authenticate_problem),
+    url(r'^patient/(?P<patient_id>\d+)/problem-order$', views.mobile_problem_order),
     url(r'^patient/(?P<patient_id>\d+)/problem/relationship$', views.mobile_create_problem_relationship),
     url(r'^patient/(?P<patient_id>\d+)/problem/relationship/(?P<relationship_id>\d+)$', views.mobile_delete_problem_relationship),
     # Todo CRUD

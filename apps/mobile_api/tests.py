@@ -12619,3 +12619,129 @@ class CommandStampSweepTests(TestCase):
         for name in self.STAMPS:
             with open(commands[name]) as source:
                 self.assertRegex(source.read(), r'touch_patient_stamps?\(', name)
+
+
+class MobileProblemOrderTests(TestCase):
+    """The chart's problem order (2026-11-24; `mobile_problem_order`).
+
+    Owner decisions this pins: one order per chart, set by a physician; a
+    problem never placed (NULL) is shown at the top, newest first; reordering
+    changes nothing else about the problems.
+    """
+
+    def setUp(self):
+        self.physician = User.objects.create_user(
+            username='order_doc', password='top_secret', email='order_doc@example.com')
+        self.patient = User.objects.create_user(
+            username='order_pt', password='unused', email='order_pt@example.com')
+        self.other_patient = User.objects.create_user(
+            username='order_pt2', password='unused', email='order_pt2@example.com')
+        _give_chart(self.physician, self.patient, self.other_patient)
+        self.a, self.b, self.c = [
+            Problem.objects.create(patient=self.patient, problem_name=name)
+            for name in ('Asthma', 'Back pain', 'Cough')
+        ]
+        self.theirs = Problem.objects.create(
+            patient=self.other_patient, problem_name='Their problem', sort_order=7)
+        self.client = Client()
+        self.client.login(username='order_doc', password='top_secret')
+
+    def _post(self, ids, patient=None, client=None):
+        pid = (patient or self.patient).id
+        return (client or self.client).post(
+            f'/api/patient/{pid}/problem-order',
+            json.dumps({'problem_ids': ids}), content_type='application/json')
+
+    def _orders(self, *problems):
+        return [Problem.objects.get(id=p.id).sort_order for p in problems]
+
+    def test_new_problems_have_no_place(self):
+        self.assertEqual(self._orders(self.a, self.b, self.c), [None, None, None])
+
+    def test_positions_follow_the_list(self):
+        resp = self._post([self.c.id, self.a.id, self.b.id])
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.content)
+        self.assertEqual(body['order'], [self.c.id, self.a.id, self.b.id])
+        self.assertEqual(body['ignored'], [])
+        self.assertEqual(self._orders(self.c, self.a, self.b), [0, 1, 2])
+
+    def test_a_problem_left_out_keeps_its_place(self):
+        """A problem added on another Mac after this list was made stays at
+        the top (NULL); an inactive one keeps the place it had."""
+        self.b.sort_order = 5
+        self.b.is_active = False
+        self.b.save()
+        self._post([self.c.id, self.a.id])
+        self.assertEqual(self._orders(self.c, self.a, self.b), [0, 1, 5])
+        d = Problem.objects.create(patient=self.patient, problem_name='Dizziness')
+        self._post([self.a.id, self.c.id])
+        self.assertEqual(self._orders(self.a, self.c, d), [0, 1, None])
+
+    def test_another_charts_ids_change_nothing(self):
+        resp = self._post([self.theirs.id, self.a.id])
+        body = json.loads(resp.content)
+        self.assertEqual(body['order'], [self.a.id])
+        self.assertEqual(body['ignored'], [self.theirs.id])
+        self.assertEqual(self._orders(self.theirs, self.a), [7, 0])
+
+    def test_duplicates_count_once(self):
+        self._post([self.b.id, self.b.id, self.a.id])
+        self.assertEqual(self._orders(self.b, self.a), [0, 1])
+
+    def test_only_a_physician_may_reorder(self):
+        for role in ('nurse', 'secretary', 'mid-level', 'admin'):
+            user = User.objects.create_user(username='order_' + role, password='pw-12345678')
+            UserProfile.objects.create(user=user, role=role)
+            PhysicianTeam.objects.get_or_create(physician=self.physician, member=user)
+            client = Client()
+            client.login(username=user.username, password='pw-12345678')
+            resp = self._post([self.c.id, self.b.id, self.a.id], client=client)
+            self.assertEqual(resp.status_code, 404, role)
+            self.assertEqual(json.loads(resp.content)['error'], 'problem_order_forbidden', role)
+        self.assertEqual(self._orders(self.a, self.b, self.c), [None, None, None])
+
+    def test_a_refusal_moves_no_stamp(self):
+        nurse = User.objects.create_user(username='order_nurse2', password='pw-12345678')
+        UserProfile.objects.create(user=nurse, role='nurse')
+        PhysicianTeam.objects.get_or_create(physician=self.physician, member=nurse)
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        client = Client()
+        client.login(username='order_nurse2', password='pw-12345678')
+        self._post([self.a.id], client=client)
+        self.assertFalse(PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_reordering_moves_the_stamp(self):
+        """Other Macs learn of it through /changed, and the offline copy
+        through the chart's stamp."""
+        PatientMutationStamp.objects.filter(patient=self.patient).delete()
+        self._post([self.b.id, self.a.id])
+        self.assertTrue(PatientMutationStamp.objects.filter(patient=self.patient).exists())
+
+    def test_reordering_changes_nothing_else(self):
+        before = list(Problem.objects.filter(patient=self.patient).order_by('id').values_list(
+            'id', 'problem_name', 'is_active', 'is_controlled', 'authenticated', 'concept_id'))
+        activity = ProblemActivity.objects.count()
+        self._post([self.c.id, self.b.id, self.a.id])
+        after = list(Problem.objects.filter(patient=self.patient).order_by('id').values_list(
+            'id', 'problem_name', 'is_active', 'is_controlled', 'authenticated', 'concept_id'))
+        self.assertEqual(before, after)
+        self.assertEqual(ProblemActivity.objects.count(), activity)
+
+    def test_a_bad_body_is_refused(self):
+        for bad in ('x', None, [1, 'two'], [True], list(range(1001))):
+            resp = self.client.post(
+                f'/api/patient/{self.patient.id}/problem-order',
+                json.dumps({'problem_ids': bad}), content_type='application/json')
+            self.assertEqual(resp.status_code, 400, repr(bad)[:40])
+
+    def test_only_post(self):
+        resp = self.client.get(f'/api/patient/{self.patient.id}/problem-order')
+        self.assertEqual(resp.status_code, 405)
+
+    def test_the_chart_pull_carries_the_order(self):
+        self._post([self.b.id, self.a.id])
+        resp = self.client.get(f'/api/patient/{self.patient.id}/full')
+        self.assertEqual(resp.status_code, 200)
+        orders = {p['id']: p['sort_order'] for p in json.loads(resp.content)['problems']}
+        self.assertEqual(orders, {self.a.id: 1, self.b.id: 0, self.c.id: None})

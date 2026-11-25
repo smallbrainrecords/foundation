@@ -522,6 +522,13 @@ class Problem(MPTTModel):
     start_time = models.TimeField(auto_now_add=True, null=True, blank=True)
     old_problem_name = models.CharField(max_length=200, blank=True, null=True)
     icd10_code = models.CharField(max_length=15, blank=True, null=True)
+    # The chart's problem order, set by its physician dragging the app's
+    # Active list (2026-11-24; `mobile_problem_order`). One order per chart,
+    # shared by everyone. NULL = never placed: such problems are listed ABOVE
+    # the placed ones, newest first, so a new problem starts at the top and a
+    # chart nobody arranged reads newest first. Placed problems follow in
+    # ascending order. The legacy web's per-user `ProblemOrder` is not read.
+    sort_order = models.IntegerField(null=True, blank=True)
 
     labels = models.ManyToManyField(ProblemLabel, blank=True)
     medications = models.ManyToManyField('Medication', through='MedicationPinToProblem')

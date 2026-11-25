@@ -1394,6 +1394,8 @@ def _mobile_patient_full_inner(request, patient_id):
             'authenticated': p.authenticated,
             'start_date': p.start_date.isoformat() if p.start_date else None,
             'old_problem_name': p.old_problem_name or '',
+            # NULL = never placed: listed above the placed ones, newest first.
+            'sort_order': p.sort_order,
         }
 
         # Notes for this problem
@@ -6581,6 +6583,75 @@ def mobile_observation_pin(request, patient_id, observation_id, problem_id):
     # its values is not — that is a chart-level write, not a problem one.
     apply_problem_authentication(request, problem)
     return JsonResponse({'success': True, 'id': pin.id, 'created': created})
+
+
+PROBLEM_ORDER_MAX_IDS = 1000
+
+
+@csrf_exempt
+@login_required
+@requires_patient_access
+@touches_patient_stamp
+def mobile_problem_order(request, patient_id):
+    """POST {"problem_ids": [...]} -> the chart's problem order (2026-11-24).
+
+    The app's physician drags the Active list and sends that list, top to
+    bottom. Each listed problem on THIS chart gets its position as
+    `sort_order` (0, 1, 2, ...). Owner decisions:
+
+    - **One order per chart**, shared by everyone, kept on the problems
+      themselves. The legacy web's per-user `ProblemOrder` rows are not read
+      or written.
+    - **Physician only.** Anyone else gets JSON 404 `problem_order_forbidden`
+      (never 403, which the app reads as signed out and retries forever).
+    - **Problems not listed keep their place.** A problem added since the
+      caller's list was made stays NULL, which the app shows at the top,
+      newest first; inactive problems keep the place they had.
+    - Ids that are not problems on this chart are ignored and returned in
+      `ignored`, so another chart's ids in the body change nothing.
+    - **Nothing else changes**: no activity row, no `authenticated` flag, no
+      visit timeline. Reordering says nothing about the problems.
+
+    A retry is harmless: the same list writes the same positions.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    if getattr(getattr(request.user, 'profile', None), 'role', None) != 'physician':
+        return JsonResponse({'error': 'problem_order_forbidden'}, status=404)
+
+    try:
+        body = json.loads(request.body or b'{}')
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'invalid_json'}, status=400)
+    raw = body.get('problem_ids') if isinstance(body, dict) else None
+    if not isinstance(raw, list) or len(raw) > PROBLEM_ORDER_MAX_IDS:
+        return JsonResponse({'error': 'problem_ids_required'}, status=400)
+    if any(isinstance(i, bool) or not isinstance(i, int) for i in raw):
+        return JsonResponse({'error': 'problem_ids_required'}, status=400)
+
+    ids = list(dict.fromkeys(raw))
+    with transaction.atomic():
+        found = {
+            p.id: p for p in
+            Problem.objects.select_for_update().filter(patient_id=patient_id, id__in=ids)
+        }
+        placed = [i for i in ids if i in found]
+        changed = []
+        for position, problem_id in enumerate(placed):
+            problem = found[problem_id]
+            if problem.sort_order != position:
+                problem.sort_order = position
+                changed.append(problem)
+        if changed:
+            Problem.objects.bulk_update(changed, ['sort_order'])
+
+    return JsonResponse({
+        'success': True,
+        'order': placed,
+        'ignored': [i for i in ids if i not in found],
+        'updated': len(changed),
+    })
 
 
 @csrf_exempt
