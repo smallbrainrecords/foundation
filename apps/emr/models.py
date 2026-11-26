@@ -1881,6 +1881,52 @@ class FaxRecipient(models.Model):
         ordering = ['name']
 
 
+class FaxSet(models.Model):
+    """A named group of directory entries that one fax can go to at once
+    (2026-11-25), e.g. "Corewell lab" with its three fax numbers.
+
+    Shared by the whole practice, like the directory, and maintained by any
+    staff member. A set holds entries, never numbers: each number is its
+    entry's, typed twice when it was added. An entry joins a set only after
+    a fax to it has been delivered (`delivered_count > 0`), so a typo can
+    never be saved into a set and reused. A member retired or reset after it
+    joined stays listed, and the app skips it.
+
+    Sets are retired (`is_active = False`), never deleted. Written only by
+    the `mobile_fax_sets` / `mobile_fax_set` endpoints, which log every
+    change to `smallbrain.fax`. Sending is unchanged: the app sends one fax
+    per member through the ordinary send routes.
+    """
+    name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+
+class FaxSetMember(models.Model):
+    """One directory entry in a fax set (2026-11-25).
+
+    Its own table rather than a ManyToManyField on `FaxSet`, so that each
+    migration creates exactly one table: MySQL DDL is not transactional, and
+    a boot that died between a set table and its join table would strand
+    the migration.
+    """
+    fax_set = models.ForeignKey(FaxSet, related_name='members', on_delete=models.CASCADE)
+    recipient = models.ForeignKey(FaxRecipient, related_name='set_memberships', on_delete=models.PROTECT)
+    added_by = models.ForeignKey(User, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
+    added_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['fax_set', 'recipient'], name='uniq_fax_set_member'),
+        ]
+
+
 class FaxTransmission(models.Model):
     """One fax the practice sent, and what became of it (2026-11-12).
 

@@ -79,6 +79,13 @@ FAX_REVIEW_ENABLED = env.bool('FAX_REVIEW_ENABLED', default=True)
 # every fax goes to the physician.
 FAX_STAFF_FILE_ENABLED = env.bool('FAX_STAFF_FILE_ENABLED', default=True)
 
+# Fax sets (2026-11-25): named groups of directory entries one fax can go to
+# at once. With this off the fax directory answers without `sets` and the set
+# routes refuse, so FAX_SETS_ENABLED=false on the service stops every Mac
+# showing sets with no app update. Sending to several numbers needs no switch:
+# the app sends one fax per number through the ordinary routes.
+FAX_SETS_ENABLED = env.bool('FAX_SETS_ENABLED', default=True)
+
 # Editing a chart document's PDF in the app (apps.mobile_api.document_edit,
 # 2026-11-17): text and the editor's own signature, burned in on the Mac.
 # DOCUMENT_EDIT_ENABLED=false refuses every save with no app update; the edit

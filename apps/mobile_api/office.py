@@ -902,7 +902,9 @@ def mobile_office_fax(request, document_id):
         row.save()
         _log('office_fax_not_accepted', request, document_id=doc.id, transmission_id=row.id,
              recipient_id=recipient.id, error=row.error)
-        return _refuse('fax_send_failed', 502, detail=row.error)
+        # `busy`: RingCentral's per-minute limit, gone in a minute (2026-11-25).
+        busy = {'busy': True} if ringcentral_fax.is_busy(error) else {}
+        return _refuse('fax_send_failed', 502, detail=row.error, **busy)
 
     row.rc_message_id = sent['message_id']
     row.rc_status = sent.get('rc_status') or ''

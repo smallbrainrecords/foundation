@@ -68,6 +68,13 @@ class FaxError(Exception):
         self.status = status
 
 
+def is_busy(error):
+    """Whether RingCentral refused because the clinic's credential has sent
+    too many faxes this minute (429; fax sends are in its "Heavy" group, 10 a
+    minute by default for every Mac together). Waiting a minute fixes it."""
+    return getattr(error, 'status', None) == 429
+
+
 _token_lock = threading.Lock()
 _token = {'value': None, 'expires': 0.0, 'scope': None}
 

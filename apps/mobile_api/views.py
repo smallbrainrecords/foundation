@@ -7353,7 +7353,7 @@ def _read_recipient_fields(body, existing=None):
 @csrf_exempt
 @login_required
 def mobile_fax_recipients(request):
-    """GET -> {configured, recipients: [active entries]}.
+    """GET -> {configured, recipients: [active entries], sets: [active sets]}.
     POST {name, fax_number, fax_number_confirm, note?} -> the new entry.
 
     Any staff role may read and add (owner decision 2026-11-12). A number
@@ -7367,11 +7367,16 @@ def mobile_fax_recipients(request):
 
     if request.method == 'GET':
         rows = FaxRecipient.objects.filter(is_active=True).order_by('name', 'id')
-        return JsonResponse({
+        answer = {
             'success': True,
             'configured': ringcentral_fax.is_configured(),
             'recipients': [_fax_recipient_json(r) for r in rows],
-        })
+        }
+        # Fax sets (2026-11-25). Absent, not empty, when switched off: an
+        # app reads "no `sets`" as a server without sets and hides them.
+        if _fax_sets_enabled():
+            answer['sets'] = [_fax_set_json(fax_set) for fax_set in _active_fax_sets()]
+        return JsonResponse(answer)
     if request.method != 'POST':
         return JsonResponse({'error': 'GET or POST required'}, status=405)
 
@@ -7452,6 +7457,216 @@ def mobile_fax_recipient(request, recipient_id):
         'after': {'name': recipient.name, 'fax_number': recipient.fax_number},
         'actor_id': request.user.id}))
     return JsonResponse({'success': True, 'recipient': _fax_recipient_json(recipient)})
+
+
+# Fax sets (2026-11-25; PLAN_FAX_SETS_2026-11.md in the app's repository).
+# A set is a name for several directory entries, so one fax can go to all of
+# them: "Corewell lab" and its three numbers. Sending is unchanged; the app
+# sends one fax per member through the ordinary routes, each its own
+# FaxTransmission. Owner decisions: shared by the whole practice, every staff
+# role maintains them, at most 5 numbers, and an entry joins a set only once
+# a fax to it has been delivered.
+_FAX_SET_MAX_MEMBERS = 5
+
+
+def _fax_sets_enabled():
+    return bool(getattr(settings, 'FAX_SETS_ENABLED', True))
+
+
+def _fax_person(user):
+    return (user.get_full_name() or user.username) if user else ''
+
+
+def _active_fax_sets():
+    from emr.models import FaxSet
+    return (FaxSet.objects.filter(is_active=True)
+            .select_related('created_by', 'updated_by')
+            .prefetch_related('members__recipient')
+            .order_by('name', 'id'))
+
+
+def _fax_set_json(fax_set):
+    """A set with its members as directory entries, retired ones included:
+    the directory list holds active entries only, so each member carries its
+    own `is_active` and `delivered_count`, and the app decides from those
+    which members a fax goes to."""
+    members = sorted((m.recipient for m in fax_set.members.all()),
+                     key=lambda r: (r.name.lower(), r.id))
+    return {
+        'id': fax_set.id,
+        'name': fax_set.name,
+        'members': [_fax_recipient_json(r) for r in members],
+        'created_by_name': _fax_person(fax_set.created_by),
+        'created_on': _iso_z(fax_set.created_on) if fax_set.created_on else None,
+        'updated_by_name': _fax_person(fax_set.updated_by),
+        'updated_on': _iso_z(fax_set.updated_on) if fax_set.updated_on else None,
+    }
+
+
+def _fax_set_refused(error, status=400, **extra):
+    return JsonResponse(dict({'error': error}, **extra), status=status)
+
+
+def _read_fax_set_ids(body):
+    """The ids asked for, in order and without repeats, or None when the
+    body holds no list of ids."""
+    raw = body.get('recipient_ids')
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except ValueError:
+            return None
+    if not isinstance(raw, list):
+        return None
+    ids = []
+    for value in raw:
+        if isinstance(value, bool) or not isinstance(value, int):
+            return None
+        if value not in ids:
+            ids.append(value)
+    return ids
+
+
+def _check_fax_set_members(ids, current_ids=()):
+    """(recipients, refusal). Every entry ADDED must be active and have had a
+    fax delivered (owner decision 2026-11-25: a typo saved in a set would
+    send every later fax to a stranger). An entry already in the set keeps
+    its place when it is later retired or its number reset; the app lists
+    it and skips it."""
+    from emr.models import FaxRecipient
+    if not ids:
+        return None, _fax_set_refused('set_needs_a_number')
+    if len(ids) > _FAX_SET_MAX_MEMBERS:
+        return None, _fax_set_refused('set_too_many_numbers', limit=_FAX_SET_MAX_MEMBERS)
+    found = {r.id: r for r in FaxRecipient.objects.filter(id__in=ids)}
+    for recipient_id in ids:
+        recipient = found.get(recipient_id)
+        if recipient is None:
+            return None, _fax_set_refused('recipient_not_found', recipient_id=recipient_id)
+        if recipient_id in current_ids:
+            continue
+        if not recipient.is_active:
+            return None, _fax_set_refused('recipient_retired', recipient_id=recipient_id)
+        if recipient.delivered_count <= 0:
+            return None, _fax_set_refused('recipient_not_proven', recipient_id=recipient_id)
+    return [found[i] for i in ids], None
+
+
+def _fax_set_name_clash(name, exclude_id=None):
+    """The active set already called `name`, ignoring case, if any."""
+    from emr.models import FaxSet
+    clash = FaxSet.objects.filter(is_active=True, name__iexact=name)
+    if exclude_id is not None:
+        clash = clash.exclude(id=exclude_id)
+    return clash.first()
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_sets(request):
+    """POST {name, recipient_ids} -> the new set (2026-11-25).
+
+    Any staff role (the directory's rule); anyone else gets a JSON 404. The
+    sets themselves are listed with the directory (GET /api/fax/recipients).
+    """
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Not found'}, status=404)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    if not _fax_sets_enabled():
+        return _fax_set_refused('fax_sets_off', 503)
+    from emr.models import FaxSet, FaxSetMember
+
+    body = _parse_body(request)
+    name = str(body.get('name') or '').strip()[:100]
+    if not name:
+        return _fax_set_refused('name_required')
+    ids = _read_fax_set_ids(body)
+    recipients, refusal = _check_fax_set_members(ids or [])
+    if refusal is not None:
+        return refusal
+    with transaction.atomic():
+        clash = _fax_set_name_clash(name)
+        if clash is not None:
+            return _fax_set_refused('set_name_taken', 409, existing=_fax_set_json(clash))
+        fax_set = FaxSet.objects.create(name=name, created_by=request.user, updated_by=request.user)
+        FaxSetMember.objects.bulk_create([
+            FaxSetMember(fax_set=fax_set, recipient=r, added_by=request.user) for r in recipients])
+    _FAX_LOGGER.info(json.dumps({
+        'event': 'fax_set_added', 'set_id': fax_set.id, 'name': fax_set.name,
+        'recipient_ids': [r.id for r in recipients], 'actor_id': request.user.id}))
+    fax_set = _active_fax_sets().get(id=fax_set.id)
+    return JsonResponse({'success': True, 'set': _fax_set_json(fax_set)})
+
+
+@csrf_exempt
+@login_required
+def mobile_fax_set(request, set_id):
+    """PATCH {name?, recipient_ids?} -> the set; `recipient_ids` is the whole
+    member list. DELETE -> retires the set (kept, never deleted, like
+    entries). Any staff role; anyone else gets a JSON 404. The last change
+    wins: sets change rarely, and the app shows a set's members before every
+    send."""
+    if not _fax_caller_is_staff(request.user):
+        return JsonResponse({'error': 'Not found'}, status=404)
+    if request.method not in ('PATCH', 'DELETE'):
+        return JsonResponse({'error': 'PATCH or DELETE required'}, status=405)
+    if not _fax_sets_enabled():
+        return _fax_set_refused('fax_sets_off', 503)
+    from emr.models import FaxSet, FaxSetMember
+    try:
+        fax_set = FaxSet.objects.get(id=set_id)
+    except FaxSet.DoesNotExist:
+        return _fax_set_refused('set_not_found', 404)
+
+    if request.method == 'DELETE':
+        if fax_set.is_active:
+            fax_set.is_active = False
+            fax_set.updated_by = request.user
+            fax_set.save(update_fields=['is_active', 'updated_by', 'updated_on'])
+            _FAX_LOGGER.info(json.dumps({
+                'event': 'fax_set_removed', 'set_id': fax_set.id, 'name': fax_set.name,
+                'actor_id': request.user.id}))
+        return JsonResponse({'success': True})
+
+    if not fax_set.is_active:
+        return _fax_set_refused('set_not_found', 404)
+    body = _parse_body(request)
+    before = {'name': fax_set.name,
+              'recipient_ids': sorted(fax_set.members.values_list('recipient_id', flat=True))}
+    name = fax_set.name
+    if 'name' in body:
+        name = str(body.get('name') or '').strip()[:100]
+        if not name:
+            return _fax_set_refused('name_required')
+    recipients = None
+    if 'recipient_ids' in body:
+        ids = _read_fax_set_ids(body)
+        recipients, refusal = _check_fax_set_members(ids or [], current_ids=set(before['recipient_ids']))
+        if refusal is not None:
+            return refusal
+    with transaction.atomic():
+        if name.lower() != fax_set.name.lower():
+            clash = _fax_set_name_clash(name, exclude_id=fax_set.id)
+            if clash is not None:
+                return _fax_set_refused('set_name_taken', 409, existing=_fax_set_json(clash))
+        fax_set.name = name
+        fax_set.updated_by = request.user
+        fax_set.save(update_fields=['name', 'updated_by', 'updated_on'])
+        if recipients is not None:
+            wanted = {r.id for r in recipients}
+            fax_set.members.exclude(recipient_id__in=wanted).delete()
+            have = set(fax_set.members.values_list('recipient_id', flat=True))
+            FaxSetMember.objects.bulk_create([
+                FaxSetMember(fax_set=fax_set, recipient=r, added_by=request.user)
+                for r in recipients if r.id not in have])
+    fax_set = _active_fax_sets().get(id=fax_set.id)
+    after = {'name': fax_set.name,
+             'recipient_ids': sorted(m.recipient_id for m in fax_set.members.all())}
+    _FAX_LOGGER.info(json.dumps({
+        'event': 'fax_set_edited', 'set_id': fax_set.id, 'before': before, 'after': after,
+        'actor_id': request.user.id}))
+    return JsonResponse({'success': True, 'set': _fax_set_json(fax_set)})
 
 
 _FAX_CANDIDATE_CACHE = {'at': 0.0, 'value': None}
@@ -7878,7 +8093,11 @@ def mobile_fax_requisition(request, patient_id):
             'event': 'fax_not_accepted', 'transmission_id': row.id,
             'patient_id': row.patient_id, 'sender_id': request.user.id,
             'recipient_id': recipient.id, 'error': row.error}))
-        return JsonResponse({'error': 'fax_send_failed', 'detail': row.error}, status=502)
+        refusal = {'error': 'fax_send_failed', 'detail': row.error}
+        # `busy`: RingCentral's per-minute limit, gone in a minute (2026-11-25).
+        if ringcentral_fax.is_busy(error):
+            refusal['busy'] = True
+        return JsonResponse(refusal, status=502)
 
     row.rc_message_id = sent['message_id']
     row.rc_status = sent.get('rc_status') or ''

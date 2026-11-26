@@ -155,6 +155,9 @@ urlpatterns = [
     # requisition, and the sender's recent transmissions.
     url(r'^fax/recipients$', views.mobile_fax_recipients),
     url(r'^fax/recipient/(?P<recipient_id>\d+)$', views.mobile_fax_recipient),
+    # Fax sets (2026-11-25): named groups of directory entries.
+    url(r'^fax/sets$', views.mobile_fax_sets),
+    url(r'^fax/set/(?P<set_id>\d+)$', views.mobile_fax_set),
     url(r'^fax/import-candidates$', views.mobile_fax_import_candidates),
     url(r'^fax/import$', views.mobile_fax_import),
     url(r'^fax/transmissions$', views.mobile_fax_transmissions),

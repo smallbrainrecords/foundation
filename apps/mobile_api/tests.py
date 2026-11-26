@@ -3626,6 +3626,8 @@ class StampCoverageSweepTests(TestCase):
         'mobile_openemr_patient_link': 'cross-system link, not part of patient_full; the app reads it fresh on every ⌃O (2026-11-03)',
         'mobile_fax_recipients': 'practice fax directory, not chart data',
         'mobile_fax_recipient': 'practice fax directory, not chart data',
+        'mobile_fax_sets': 'practice fax directory (named groups of its entries), not chart data',
+        'mobile_fax_set': 'practice fax directory (named groups of its entries), not chart data',
         'mobile_fax_import': 'practice fax directory, not chart data',
         'mobile_fax_inbox_check': 'files received faxes into the team pool, patient-unbound until assign (which stamps)',
         'mobile_fax_review_restore': 'an Office (or set-aside) document returns to the team pool, patient-unbound',
@@ -8535,6 +8537,8 @@ class _FakeRingCentral:
         self.configured = True
         self.sent = []
         self.send_error = None
+        # RingCentral's HTTP status for `send_error` (429: too many this minute).
+        self.send_status = None
         self.send_reading = {'state': 'queued', 'rc_status': 'Queued', 'error': '', 'page_count': None}
         self.status_reading = {'state': 'queued', 'rc_status': 'Queued', 'error': '', 'page_count': None}
         self.status_calls = 0
@@ -8556,7 +8560,7 @@ class _FakeRingCentral:
     def _send(self, pdf_bytes, to_number, filename='requisition.pdf'):
         from emr import ringcentral_fax
         if self.send_error:
-            raise ringcentral_fax.FaxError(self.send_error)
+            raise ringcentral_fax.FaxError(self.send_error, self.send_status)
         self.sent.append((pdf_bytes, to_number))
         self.filenames.append(filename)
         self.next_id += 1
@@ -8565,6 +8569,151 @@ class _FakeRingCentral:
     def _status(self, message_id):
         self.status_calls += 1
         return dict(self.status_reading)
+
+
+class MobileFaxSetTests(_RBACTestBase):
+    """POST /api/fax/sets and PATCH/DELETE /api/fax/set/<id> (2026-11-25):
+    named groups of directory entries one fax can go to at once. Shared by
+    the practice, maintained by any staff role, at most 5 numbers, an entry
+    joins only once a fax to it has been delivered, and sets are retired,
+    never deleted. Listed with the directory."""
+
+    def setUp(self):
+        super().setUp()
+        from emr.models import FaxRecipient
+        self.rc = _FakeRingCentral()
+        self.rc.install(self)
+        self._login(self.team_nurse)
+        self.entries = [
+            FaxRecipient.objects.create(
+                name='Corewell Lab %s' % letter, fax_number='1586555%04d' % n, delivered_count=3)
+            for n, letter in enumerate('ABCDEF', start=1)]
+        self.unproven = FaxRecipient.objects.create(name='New Clinic', fax_number='15865559999')
+
+    def _ids(self, *indexes):
+        return [self.entries[i].id for i in indexes]
+
+    def _post(self, name='Corewell lab', ids=None):
+        body = {'name': name, 'recipient_ids': self._ids(0, 1, 2) if ids is None else ids}
+        return self.client.post('/api/fax/sets', data=json.dumps(body), content_type='application/json')
+
+    def _patch(self, set_id, **body):
+        return self.client.generic(
+            'PATCH', '/api/fax/set/%d' % set_id, json.dumps(body), content_type='application/json')
+
+    def _sets(self):
+        return json.loads(self.client.get('/api/fax/recipients').content).get('sets')
+
+    def test_a_nurse_makes_a_set_and_the_directory_lists_it(self):
+        resp = self._post()
+        self.assertEqual(resp.status_code, 200)
+        made = resp.json()['set']
+        self.assertEqual(made['name'], 'Corewell lab')
+        self.assertEqual([m['name'] for m in made['members']],
+                         ['Corewell Lab A', 'Corewell Lab B', 'Corewell Lab C'])
+        self.assertEqual(made['created_by_name'],
+                         self.team_nurse.get_full_name() or self.team_nurse.username)
+        listed = self._sets()
+        self.assertEqual([s['name'] for s in listed], ['Corewell lab'])
+        self.assertEqual(listed[0]['members'][0]['delivered_count'], 3)
+        self.assertEqual(listed[0]['members'][0]['display_number'], '586-555-0001')
+
+    def test_every_staff_role_and_no_patient(self):
+        self._login(self.attending)
+        made = self._post().json()['set']
+        self._login(self.patient)
+        self.assertEqual(self._post(name='Other').status_code, 404)
+        self.assertEqual(self._patch(made['id'], name='Mine').status_code, 404)
+        self.assertEqual(self.client.delete('/api/fax/set/%d' % made['id']).status_code, 404)
+        self.assertEqual(self.client.get('/api/fax/recipients').status_code, 404)
+
+    def test_the_name_is_required_and_unique_among_sets_in_use(self):
+        self.assertEqual(self._post(name='   ').json()['error'], 'name_required')
+        first = self._post().json()['set']
+        again = self._post(name='  COREWELL LAB ', ids=self._ids(3))
+        self.assertEqual((again.status_code, again.json()['error']), (409, 'set_name_taken'))
+        self.assertEqual(again.json()['existing']['id'], first['id'])
+        self.assertEqual(self.client.delete('/api/fax/set/%d' % first['id']).status_code, 200)
+        self.assertEqual(self._post(ids=self._ids(3)).status_code, 200, 'a removed set frees its name')
+
+    def test_a_set_holds_one_to_five_numbers(self):
+        self.assertEqual(self._post(ids=[]).json()['error'], 'set_needs_a_number')
+        too_many = self._post(ids=self._ids(0, 1, 2, 3, 4, 5))
+        self.assertEqual((too_many.json()['error'], too_many.json()['limit']), ('set_too_many_numbers', 5))
+        self.assertEqual(self._post(name='Single', ids=self._ids(0)).status_code, 200)
+        repeats = self._post(name='Repeats', ids=self._ids(1, 1, 2)).json()['set']
+        self.assertEqual([m['name'] for m in repeats['members']], ['Corewell Lab B', 'Corewell Lab C'],
+                         'a repeated id counts once')
+
+    def test_only_entries_proven_and_in_use_can_join(self):
+        from emr.models import FaxSet
+        unproven = self._post(ids=[self.unproven.id])
+        self.assertEqual((unproven.json()['error'], unproven.json()['recipient_id']),
+                         ('recipient_not_proven', self.unproven.id))
+        self.client.delete('/api/fax/recipient/%d' % self.entries[3].id)
+        self.assertEqual(self._post(ids=self._ids(3)).json()['error'], 'recipient_retired')
+        self.assertEqual(self._post(ids=[999999]).json()['error'], 'recipient_not_found')
+        self.assertEqual(self._post(ids='not a list').json()['error'], 'set_needs_a_number')
+        self.assertEqual(FaxSet.objects.count(), 0)
+
+    def test_a_member_retired_or_reset_after_joining_stays_listed(self):
+        made = self._post().json()['set']
+        self.client.delete('/api/fax/recipient/%d' % self.entries[0].id)
+        changed = self.client.generic(
+            'PATCH', '/api/fax/recipient/%d' % self.entries[1].id,
+            json.dumps({'fax_number': '586-555-7777', 'fax_number_confirm': '586-555-7777'}),
+            content_type='application/json')
+        self.assertEqual(changed.status_code, 200)
+        members = {m['name']: m for m in self._sets()[0]['members']}
+        self.assertFalse(members['Corewell Lab A']['is_active'])
+        self.assertEqual(members['Corewell Lab B']['delivered_count'], 0)
+        renamed = self._patch(made['id'], name='Corewell labs', recipient_ids=self._ids(0, 1, 2))
+        self.assertEqual(renamed.status_code, 200, 'members already in the set keep their place')
+        self.assertEqual(len(renamed.json()['set']['members']), 3)
+        refused = self._patch(made['id'], recipient_ids=self._ids(0, 1, 2) + [self.unproven.id])
+        self.assertEqual(refused.json()['error'], 'recipient_not_proven')
+
+    def test_editing_replaces_the_members_and_logs_both_sides(self):
+        from emr.models import FaxSetMember
+        made = self._post().json()['set']
+        with self.assertLogs('smallbrain.fax', level='INFO') as logs:
+            resp = self._patch(made['id'], recipient_ids=self._ids(1, 3))
+        self.assertEqual([m['name'] for m in resp.json()['set']['members']],
+                         ['Corewell Lab B', 'Corewell Lab D'])
+        self.assertEqual(sorted(FaxSetMember.objects.values_list('recipient_id', flat=True)),
+                         sorted(self._ids(1, 3)))
+        line = json.loads(logs.records[0].getMessage())
+        self.assertEqual(line['event'], 'fax_set_edited')
+        self.assertEqual(line['before']['recipient_ids'], sorted(self._ids(0, 1, 2)))
+        self.assertEqual(line['after']['recipient_ids'], sorted(self._ids(1, 3)))
+        self.assertEqual(line['actor_id'], self.team_nurse.id)
+        other = self._post(name='Hospital', ids=self._ids(4)).json()['set']
+        clash = self._patch(other['id'], name='corewell LAB')
+        self.assertEqual((clash.status_code, clash.json()['error']), (409, 'set_name_taken'))
+
+    def test_removing_retires_the_set_and_hides_it(self):
+        from emr.models import FaxSet
+        made = self._post().json()['set']
+        self.assertEqual(self.client.delete('/api/fax/set/%d' % made['id']).status_code, 200)
+        self.assertEqual(self.client.delete('/api/fax/set/%d' % made['id']).status_code, 200)
+        self.assertFalse(FaxSet.objects.get(id=made['id']).is_active)
+        self.assertEqual(self._sets(), [])
+        self.assertEqual(self._patch(made['id'], name='Back').json()['error'], 'set_not_found')
+        self.assertEqual(self._patch(999999, name='Nothing').status_code, 404)
+
+    def test_an_entry_in_a_set_is_never_deleted_from_the_table(self):
+        from django.db.models import ProtectedError
+        self._post()
+        with self.assertRaises(ProtectedError):
+            self.entries[0].delete()
+
+    @override_settings(FAX_SETS_ENABLED=False)
+    def test_switched_off_the_directory_has_no_sets_and_writes_are_refused(self):
+        listed = json.loads(self.client.get('/api/fax/recipients').content)
+        self.assertNotIn('sets', listed)
+        self.assertEqual(len(listed['recipients']), 7)
+        refused = self._post()
+        self.assertEqual((refused.status_code, refused.json()['error']), (503, 'fax_sets_off'))
 
 
 class MobileFaxRecipientTests(_RBACTestBase):
@@ -8810,6 +8959,19 @@ class MobileFaxRequisitionTests(_RBACTestBase):
         self.assertEqual(json.loads(retry.content)['transmission']['status'], 'queued')
         self.assertEqual(len(self.rc.sent), 1)
         self.assertEqual(len(self._activities(self.todo)), 1)
+
+    def test_ringcentral_busy_says_busy_and_a_plain_refusal_does_not(self):
+        self.rc.send_error = 'RingCentral did not accept the fax: HTTP 429'
+        self.rc.send_status = 429
+        busy = self._send()
+        self.assertEqual((busy.status_code, busy.json()['error'], busy.json().get('busy')),
+                         (502, 'fax_send_failed', True))
+        self.rc.send_status = 500
+        plain = self._send()
+        self.assertEqual(plain.status_code, 502)
+        self.assertNotIn('busy', plain.json())
+        self.rc.send_error = None
+        self.assertEqual(self._send().status_code, 200, 'the same id goes once RingCentral takes it')
 
     def test_a_second_request_while_the_first_is_still_sending_waits(self):
         from emr.models import FaxTransmission
@@ -11462,6 +11624,14 @@ class OfficeFaxTests(_OfficeBase):
         self.rc.send_error = 'invalid number'
         response = self._send()
         self.assertEqual((response.status_code, response.json()['error']), (502, 'fax_send_failed'))
+        self.assertNotIn('busy', response.json())
+
+    def test_ringcentral_busy_says_busy(self):
+        self.rc.send_error = 'RingCentral did not accept the fax: HTTP 429'
+        self.rc.send_status = 429
+        response = self._send()
+        self.assertEqual((response.status_code, response.json()['error'], response.json().get('busy')),
+                         (502, 'fax_send_failed', True))
 
     def test_not_configured_and_unknown_recipient(self):
         self.assertEqual(self._send(recipient_id=999999).json()['error'], 'recipient_not_found')
@@ -11856,6 +12026,15 @@ class ChartFaxTests(_FaxReviewBase):
         self.assertEqual((response.status_code, response.json()['error']), (502, 'fax_send_failed'))
         self.assertEqual(self._activities('Faxed document:'), [])
         self.assertEqual(FaxTransmission.objects.get().file_path, '', 'nothing left: no copy kept')
+        self.assertNotIn('busy', response.json())
+
+    def test_ringcentral_busy_says_busy(self):
+        self.rc.send_error = 'RingCentral did not accept the fax: HTTP 429'
+        self.rc.send_status = 429
+        response = self._send()
+        self.assertEqual((response.status_code, response.json()['error'], response.json().get('busy')),
+                         (502, 'fax_send_failed', True))
+        self.assertEqual(self._activities('Faxed document:'), [])
 
     def test_a_failed_fax_comes_back_to_the_sender_in_office(self):
         from emr.models import OfficeDocument, OfficeHandoff
